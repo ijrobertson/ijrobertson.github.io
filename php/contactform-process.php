@@ -44,7 +44,7 @@ $Body .= $terms;
 $Body .= "\n";
 
 // send email
-$success = mail($EmailTo, $Subject, $Body, "From:".$mail.linguabud.com);
+$success = mail($EmailTo, $Subject, $Body, "From:"$mail_host = "mail.linguabud.com");
 
 // redirect to success page
 if ($success && $errorMSG == ""){
