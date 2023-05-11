@@ -25,7 +25,7 @@ if (empty($_POST["terms"])) {
     $terms = $_POST["terms"];
 }
 
-$EmailTo = "user@linguabud.com";
+$EmailTo = 'user@linguabud.com';
 $Subject = "New message from Lingua Bud landing page";
 
 // prepare email body text
