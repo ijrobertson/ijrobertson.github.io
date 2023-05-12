@@ -25,7 +25,7 @@ if (empty($_POST["terms"])) {
     $terms = $_POST["terms"];
 }
 
-$EmailTo = 'linguabud.com';
+$EmailTo = 'user@linguabud.com';
 $Subject = "New message from Lingua Bud landing page";
 
 // prepare email body text
@@ -44,7 +44,7 @@ $Body .= $terms;
 $Body .= "\n";
 
 // send email
-$success = mail($EmailTo, $Subject, $Body, 'From: admin@linguabud.com');
+$success = mail($EmailTo, $Subject, $Body, 'From: linguabud.com');
 
 // redirect to success page
 if ($success && $errorMSG == ""){
