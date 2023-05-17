@@ -1,6 +1,8 @@
 <?php
 $errorMSG = "";
 
+error_reporting(E_ALL);
+
 if (empty($_POST["name"])) {
     $errorMSG = "Name is required ";
 } else {
@@ -25,7 +27,7 @@ if (empty($_POST["terms"])) {
     $terms = $_POST["terms"];
 }
 
-$EmailTo = 'user@linguabud.com';
+$EmailTo = 'ianjack1643@gmail.com';
 $Subject = "New message from Lingua Bud landing page";
 
 // prepare email body text
