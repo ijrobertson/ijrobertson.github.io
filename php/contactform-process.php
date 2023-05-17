@@ -29,6 +29,13 @@ if (empty($_POST["terms"])) {
 
 $EmailTo = 'ianjack1643@gmail.com';
 $Subject = "New message from Lingua Bud landing page";
+$headers = "From: Your Name <ianjack1643@gmail.com.com>\r\n";
+$headers .= "Reply-To: Ianjack1643@gmail.com.com\r\n";
+$headers .= "Content-Type: text/plain; charset=utf-8\r\n";
+
+// send email
+$success = mail($EmailTo, $Subject, $Body, $headers);
+
 
 // prepare email body text
 $Body = "";
@@ -46,7 +53,7 @@ $Body .= $terms;
 $Body .= "\n";
 
 // send email
-$success = mail($EmailTo, $Subject, $Body, 'From: admin@linguabud.com');
+$success = mail($EmailTo, $Subject, $Body, $headers,'From: admin@linguabud.com');
 
 // redirect to success page
 if ($success && $errorMSG == ""){
