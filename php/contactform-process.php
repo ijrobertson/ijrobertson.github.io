@@ -27,7 +27,7 @@ if (empty($_POST["terms"])) {
     $terms = $_POST["terms"];
 }
 
-$EmailTo = 'ianjack1643@gmail.com';
+$EmailTo = 'user@linguabud.com';
 $Subject = "New message from Lingua Bud landing page";
 $headers = "From: Your Name <ianjack1643@gmail.com.com>\r\n";
 $headers .= "Reply-To: ianjack1643@gmail.com.com\r\n";
