@@ -90,51 +90,67 @@
   </div>
 
   <script type="module">
-    import { supabase } from './lib/supabaseClient.js';
+  import { supabase } from './lib/supabaseClient.js';
 
-    let isLogin = true;
+  let isLogin = true;
 
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const authBtn = document.getElementById('auth-btn');
-    const toggleText = document.getElementById('toggle-mode');
-    const formTitle = document.getElementById('form-title');
-    const statusText = document.getElementById('status');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const authBtn = document.getElementById('auth-btn');
+  const toggleText = document.getElementById('toggle-mode');
+  const formTitle = document.getElementById('form-title');
+  const statusText = document.getElementById('status');
 
-    document.getElementById('auth-btn').addEventListener('click', async () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
+  authBtn.addEventListener('click', async () => {
+    const email = emailInput.value;
+    const password = passwordInput.value;
 
-      statusText.textContent = 'Processing...';
+    statusText.textContent = 'Processing...';
 
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          statusText.textContent = error.message;
-        } else {
-          statusText.textContent = 'Logged in! Redirecting...';
-          window.location.href = '/dashboard.html';
-        }
+    if (!email || !password) {
+      statusText.textContent = 'Please fill in all fields.';
+      return;
+    }
+
+    if (isLogin) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        statusText.textContent = error.message;
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-          statusText.textContent = error.message;
-        } else {
-          statusText.style.color = 'green';
-          statusText.textContent = 'Signup successful! Check your email to confirm.';
-        }
+        statusText.style.color = 'green';
+        statusText.textContent = 'Logged in! Redirecting...';
+        setTimeout(() => {
+          window.location.href = 'dashboard.html';
+        }, 1000);
       }
-    });
+    } else {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+      });
 
-    toggleText.addEventListener('click', () => {
-      isLogin = !isLogin;
-      authBtn.textContent = isLogin ? 'Log In' : 'Sign Up';
-      formTitle.textContent = isLogin ? 'Instructor Login' : 'Instructor Sign Up';
-      toggleText.textContent = isLogin
-        ? 'Need an account? Sign up'
-        : 'Already have an account? Log in';
-      statusText.textContent = '';
-    });
-  </script>
+      if (error) {
+        statusText.textContent = error.message;
+      } else {
+        statusText.style.color = 'green';
+        statusText.textContent = 'Signup successful! Please check your email.';
+      }
+    }
+  });
+
+  toggleText.addEventListener('click', () => {
+    isLogin = !isLogin;
+    authBtn.textContent = isLogin ? 'Log In' : 'Sign Up';
+    formTitle.textContent = isLogin ? 'Instructor Login' : 'Instructor Sign Up';
+    toggleText.textContent = isLogin
+      ? 'Need an account? Sign up'
+      : 'Already have an account? Log in';
+    statusText.textContent = '';
+  });
+</script>
 </body>
 </html>
