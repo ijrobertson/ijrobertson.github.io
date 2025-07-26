@@ -2,79 +2,142 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Instructor Dashboard</title>
+  <style>
+    :root {
+      --turquoise: #20bcba;
+      --white: #ffffff;
+      --light-grey: #f5f5f5;
+      --dark-grey: #444444;
+      --navy-blue: #002b5b;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--light-grey);
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: var(--white);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: var(--navy-blue);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 16px;
+      color: var(--dark-grey);
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      margin-top: 24px;
+      width: 100%;
+      background-color: var(--turquoise);
+      color: var(--white);
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--navy-blue);
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 16px;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
-  <h2>Welcome, Instructor</h2>
+  <div class="container">
+    <h2>Your Instructor Profile</h2>
+    <label for="name">Full Name</label>
+    <input type="text" id="name" />
 
-  <form id="profile-form">
-    <input type="text" id="name" placeholder="Name" required />
-    <textarea id="bio" placeholder="Short bio"></textarea>
-    <input type="text" id="languages" placeholder="Languages (e.g. English, Spanish)" />
-    <input type="number" id="price" placeholder="Price per hour" />
-    <button type="submit">Save Profile</button>
-  </form>
+    <label for="language">Language(s) You Teach</label>
+    <input type="text" id="language" />
 
-  <p id="status"></p>
+    <label for="price">Price per Lesson ($)</label>
+    <input type="number" id="price" />
+
+    <label for="bio">Short Bio</label>
+    <textarea id="bio" rows="4"></textarea>
+
+    <label for="country">Country</label>
+    <input type="text" id="country" />
+
+    <button id="save-btn">Save Profile</button>
+    <div class="status" id="status"></div>
+  </div>
 
   <script type="module">
     import { supabase } from './lib/supabaseClient.js';
 
-    const form = document.getElementById('profile-form');
-    const statusText = document.getElementById('status');
-
-    let currentUserId = null;
-
-    async function getCurrentUser() {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        window.location.href = "/login.html"; // redirect if not logged in
-      } else {
-        currentUserId = data.user.id;
-        await loadProfile();
-      }
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
     }
 
-    async function loadProfile() {
-      const { data, error } = await supabase
-        .from('instructors')
-        .select('*')
-        .eq('user_id', currentUserId)
-        .single();
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      const user = await getUser();
+      const name = document.getElementById('name').value;
+      const language = document.getElementById('language').value;
+      const price = document.getElementById('price').value;
+      const bio = document.getElementById('bio').value;
+      const country = document.getElementById('country').value;
+      const status = document.getElementById('status');
 
-      if (data) {
-        document.getElementById('name').value = data.name || '';
-        document.getElementById('bio').value = data.bio || '';
-        document.getElementById('languages').value = data.languages || '';
-        document.getElementById('price').value = data.price || '';
-      } else {
-        // No profile yet — create a blank one
-        await supabase.from('instructors').insert([
-          { user_id: currentUserId, name: '', bio: '', languages: '', price: 0 }
-        ]);
+      if (!user) {
+        status.textContent = 'Not logged in.';
+        return;
       }
-    }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const profile = {
-        user_id: currentUserId,
-        name: document.getElementById('name').value,
-        bio: document.getElementById('bio').value,
-        languages: document.getElementById('languages').value,
-        price: parseFloat(document.getElementById('price').value),
-      };
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('instructors')
-        .upsert(profile, { onConflict: ['user_id'] });
+        .upsert({
+          user_id: user.id,
+          name,
+          language,
+          price,
+          bio,
+          country
+        }, { onConflict: ['user_id'] });
 
-      statusText.innerText = error ? error.message : 'Profile saved!';
+      if (error) {
+        status.textContent = error.message;
+        status.style.color = 'red';
+      } else {
+        status.textContent = 'Profile saved successfully!';
+        status.style.color = 'green';
+      }
     });
-
-    // Start by getting the current user
-    getCurrentUser();
   </script>
 </body>
 </html>
