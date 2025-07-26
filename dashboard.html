@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Instructor Dashboard</title>
+</head>
+<body>
+  <h2>Welcome, Instructor</h2>
+
+  <form id="profile-form">
+    <input type="text" id="name" placeholder="Name" required />
+    <textarea id="bio" placeholder="Short bio"></textarea>
+    <input type="text" id="languages" placeholder="Languages (e.g. English, Spanish)" />
+    <input type="number" id="price" placeholder="Price per hour" />
+    <button type="submit">Save Profile</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script type="module">
+    import { supabase } from './lib/supabaseClient.js';
+
+    const form = document.getElementById('profile-form');
+    const statusText = document.getElementById('status');
+
+    async function getCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
+
+    async function loadProfile(userId) {
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (data) {
+        document.getElementById('name').value = data.name || '';
+        document.getElementById('bio').value = data.bio || '';
+        document.getElementById('languages').value = data.languages || '';
+        document.getElementById('price').value = data.price || '';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = await getCurrentUser();
+      const userId = user.id;
+
+      const profile = {
+        user_id: userId,
+        name: document.getElementById('name').value,
+        bio: document.getElementById('bio').value,
+        languages: document.getElementById('languages').value,
+        price: parseFloat(document.getElementById('price').value),
+      };
+
+      const { data, error } = await supabase
+        .from('instructors')
+        .upsert(profile, { onConflict: ['user_id'] });
+
+      statusText.innerText = error ? error.message : 'Profile saved!';
+    });
+
+    // Load profile on page load
+    getCurrentUser().then(user => {
+      if (user) loadProfile(user.id);
+      else window.location.href = '/login.html'; // redirect if not logged in
+    });
+  </script>
+</body>
+</html>
