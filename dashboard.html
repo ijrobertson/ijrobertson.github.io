@@ -23,16 +23,23 @@
     const form = document.getElementById('profile-form');
     const statusText = document.getElementById('status');
 
+    let currentUserId = null;
+
     async function getCurrentUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) {
+        window.location.href = "/login.html"; // redirect if not logged in
+      } else {
+        currentUserId = data.user.id;
+        await loadProfile();
+      }
     }
 
-    async function loadProfile(userId) {
+    async function loadProfile() {
       const { data, error } = await supabase
         .from('instructors')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', currentUserId)
         .single();
 
       if (data) {
@@ -40,16 +47,19 @@
         document.getElementById('bio').value = data.bio || '';
         document.getElementById('languages').value = data.languages || '';
         document.getElementById('price').value = data.price || '';
+      } else {
+        // No profile yet — create a blank one
+        await supabase.from('instructors').insert([
+          { user_id: currentUserId, name: '', bio: '', languages: '', price: 0 }
+        ]);
       }
     }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const user = await getCurrentUser();
-      const userId = user.id;
 
       const profile = {
-        user_id: userId,
+        user_id: currentUserId,
         name: document.getElementById('name').value,
         bio: document.getElementById('bio').value,
         languages: document.getElementById('languages').value,
@@ -63,11 +73,8 @@
       statusText.innerText = error ? error.message : 'Profile saved!';
     });
 
-    // Load profile on page load
-    getCurrentUser().then(user => {
-      if (user) loadProfile(user.id);
-      else window.location.href = '/login.html'; // redirect if not logged in
-    });
+    // Start by getting the current user
+    getCurrentUser();
   </script>
 </body>
 </html>
