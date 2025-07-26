@@ -42,13 +42,18 @@
       color: var(--dark-grey);
     }
 
-    input, textarea, select {
+    input, select, textarea {
       width: 100%;
       padding: 10px;
       margin-top: 6px;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 16px;
+    }
+
+    .currency-select {
+      display: flex;
+      gap: 10px;
     }
 
     button {
@@ -78,20 +83,38 @@
 <body>
   <div class="container">
     <h2>Your Instructor Profile</h2>
+
     <label for="name">Full Name</label>
     <input type="text" id="name" />
 
+    <label for="language_spoken">Language(s) You Speak</label>
+    <select id="language_spoken" multiple></select>
+
     <label for="language">Language(s) You Teach</label>
-    <input type="text" id="language" />
+    <select id="language" multiple></select>
 
-    <label for="price">Price per Lesson ($)</label>
-    <input type="number" id="price" />
+    <label for="price">Price per Lesson</label>
+    <div class="currency-select">
+      <input type="number" id="price" />
+      <select id="currency">
+        <option value="USD">USD ($)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="GBP">GBP (£)</option>
+        <option value="JPY">JPY (¥)</option>
+        <option value="INR">INR (₹)</option>
+        <option value="CAD">CAD ($)</option>
+        <option value="AUD">AUD ($)</option>
+        <option value="MXN">MXN ($)</option>
+        <option value="BRL">BRL (R$)</option>
+        <option value="CNY">CNY (¥)</option>
+      </select>
+    </div>
 
-    <label for="bio">Short Bio</label>
+    <label for="bio">About Me</label>
     <textarea id="bio" rows="4"></textarea>
 
-    <label for="country">Country</label>
-    <input type="text" id="country" />
+    <label for="country">Native Country</label>
+    <select id="country"></select>
 
     <button id="save-btn">Save Profile</button>
     <div class="status" id="status"></div>
@@ -99,6 +122,56 @@
 
   <script type="module">
     import { supabase } from './lib/supabaseClient.js';
+
+    const languages = [
+      "Mandarin Chinese", "English", "Hindi", "Spanish", "French", "Arabic", "Bengali",
+      "Russian", "Portuguese", "Urdu", "Indonesian", "German", "Japanese", "Swahili",
+      "Marathi", "Telugu", "Turkish", "Tamil", "Vietnamese", "Korean", "Italian", "Thai",
+      "Gujarati", "Polish", "Ukrainian", "Persian", "Malayalam", "Kannada", "Dutch", "Punjabi",
+      "Romanian", "Greek", "Hungarian", "Czech", "Swedish", "Hebrew", "Norwegian", "Danish",
+      "Finnish", "Serbian", "Slovak", "Bulgarian", "Croatian", "Nepali", "Sinhala", "Tagalog",
+      "Amharic", "Zulu", "Hausa", "Burmese"
+    ];
+
+    const countries = [
+      "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
+      "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina",
+      "Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic",
+      "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti",
+      "Dominica","Dominican Republic","East Timor","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini",
+      "Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea",
+      "Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
+      "Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Korea, North","Korea, South","Kosovo","Kuwait",
+      "Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar",
+      "Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova",
+      "Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand",
+      "Nicaragua","Niger","Nigeria","North Macedonia","Norway","Oman","Pakistan","Palau","Panama","Papua New Guinea","Paraguay",
+      "Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia",
+      "Saint Vincent","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone",
+      "Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Sudan","Spain","Sri Lanka","Sudan",
+      "Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago",
+      "Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
+      "Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+    ];
+
+    const languageSelects = [document.getElementById('language'), document.getElementById('language_spoken')];
+    const countrySelect = document.getElementById('country');
+
+    languageSelects.forEach(select => {
+      languages.forEach(lang => {
+        const opt = document.createElement('option');
+        opt.value = lang;
+        opt.textContent = lang;
+        select.appendChild(opt);
+      });
+    });
+
+    countries.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      countrySelect.appendChild(opt);
+    });
 
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -108,8 +181,10 @@
     document.getElementById('save-btn').addEventListener('click', async () => {
       const user = await getUser();
       const name = document.getElementById('name').value;
-      const language = document.getElementById('language').value;
+      const language = Array.from(document.getElementById('language').selectedOptions).map(opt => opt.value);
+      const language_spoken = Array.from(document.getElementById('language_spoken').selectedOptions).map(opt => opt.value);
       const price = document.getElementById('price').value;
+      const currency = document.getElementById('currency').value;
       const bio = document.getElementById('bio').value;
       const country = document.getElementById('country').value;
       const status = document.getElementById('status');
@@ -125,7 +200,9 @@
           user_id: user.id,
           name,
           language,
+          language_spoken,
           price,
+          currency,
           bio,
           country
         }, { onConflict: ['user_id'] });
