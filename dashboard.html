@@ -1,123 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Instructor Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    :root {
-      --turquoise: #20bcba;
-      --white: #ffffff;
-      --light-grey: #f5f5f5;
-      --dark-grey: #444444;
-      --navy-blue: #002b5b;
-    }
-
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: var(--light-grey);
+      background-color: #f4f4f4;
       margin: 0;
-      padding: 0;
+      padding: 20px;
+      color: #333;
     }
 
     .container {
       max-width: 600px;
-      margin: 40px auto;
-      background-color: var(--white);
+      background: white;
+      margin: 0 auto;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    h2 {
-      color: var(--navy-blue);
+    h1 {
       text-align: center;
-      margin-bottom: 24px;
+      color: #20bcba;
     }
 
     label {
-      font-weight: 600;
       display: block;
-      margin-top: 16px;
-      color: var(--dark-grey);
+      margin-top: 20px;
+      margin-bottom: 5px;
+      font-weight: 600;
     }
 
-    input, select, textarea {
+    input, select, textarea, button {
       width: 100%;
       padding: 10px;
-      margin-top: 6px;
+      margin-top: 5px;
+      font-size: 1rem;
       border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    .currency-select {
-      display: flex;
-      gap: 10px;
+      border-radius: 6px;
+      box-sizing: border-box;
     }
 
     button {
-      margin-top: 24px;
-      width: 100%;
-      background-color: var(--turquoise);
-      color: var(--white);
+      background-color: #20bcba;
+      color: white;
       border: none;
-      padding: 14px;
-      border-radius: 10px;
-      font-size: 16px;
+      margin-top: 20px;
       cursor: pointer;
-      transition: 0.3s ease;
+      transition: 0.3s;
     }
 
     button:hover {
-      background-color: var(--navy-blue);
+      background-color: #179c9b;
     }
 
-    .status {
+    #status {
+      margin-top: 15px;
       text-align: center;
-      margin-top: 16px;
-      font-weight: 600;
+    }
+
+    .language-group {
+      margin-bottom: 16px;
+    }
+
+    .language-group ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+    }
+
+    .language-group li {
+      display: inline-block;
+      background-color: #e0f7f7;
+      color: #003344;
+      padding: 6px 10px;
+      margin: 4px;
+      border-radius: 6px;
+    }
+
+    .language-group li span {
+      margin-left: 8px;
+      color: red;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Your Instructor Profile</h2>
+    <h1>Instructor Profile</h1>
 
     <label for="name">Full Name</label>
-    <input type="text" id="name" />
+    <input type="text" id="name" placeholder="Enter your full name">
 
     <label for="language_spoken">Language(s) You Speak</label>
-    <select id="language_spoken" multiple></select>
-
-    <label for="language">Language(s) You Teach</label>
-    <select id="language" multiple></select>
-
-    <label for="price">Price per Lesson</label>
-    <div class="currency-select">
-      <input type="number" id="price" />
-      <select id="currency">
-        <option value="USD">USD ($)</option>
-        <option value="EUR">EUR (€)</option>
-        <option value="GBP">GBP (£)</option>
-        <option value="JPY">JPY (¥)</option>
-        <option value="INR">INR (₹)</option>
-        <option value="CAD">CAD ($)</option>
-        <option value="AUD">AUD ($)</option>
-        <option value="MXN">MXN ($)</option>
-        <option value="BRL">BRL (R$)</option>
-        <option value="CNY">CNY (¥)</option>
-      </select>
+    <div class="language-group">
+      <select id="language_spoken_select"></select>
+      <button type="button" onclick="addLanguage('spoken')">Add Language</button>
+      <ul id="spoken_languages_list"></ul>
     </div>
 
+    <label for="language">Language(s) You Teach</label>
+    <div class="language-group">
+      <select id="language_select"></select>
+      <button type="button" onclick="addLanguage('teach')">Add Language</button>
+      <ul id="teach_languages_list"></ul>
+    </div>
+
+    <label for="price">Price per Lesson</label>
+    <input type="number" id="price" placeholder="e.g., 25">
+
+    <label for="currency">Currency</label>
+    <select id="currency">
+      <option value="USD">USD - US Dollar</option>
+      <option value="EUR">EUR - Euro</option>
+      <option value="GBP">GBP - British Pound</option>
+      <option value="CAD">CAD - Canadian Dollar</option>
+      <option value="AUD">AUD - Australian Dollar</option>
+      <option value="JPY">JPY - Japanese Yen</option>
+    </select>
+
     <label for="bio">About Me</label>
-    <textarea id="bio" rows="4"></textarea>
+    <textarea id="bio" placeholder="Write a short bio..." rows="4"></textarea>
 
     <label for="country">Native Country</label>
     <select id="country"></select>
 
     <button id="save-btn">Save Profile</button>
-    <div class="status" id="status"></div>
+    <div id="status"></div>
   </div>
 
   <script type="module">
@@ -134,63 +152,93 @@
     ];
 
     const countries = [
-      "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
-      "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina",
-      "Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic",
-      "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti",
-      "Dominica","Dominican Republic","East Timor","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini",
-      "Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea",
-      "Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
-      "Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Korea, North","Korea, South","Kosovo","Kuwait",
-      "Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar",
-      "Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova",
-      "Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand",
-      "Nicaragua","Niger","Nigeria","North Macedonia","Norway","Oman","Pakistan","Palau","Panama","Papua New Guinea","Paraguay",
-      "Peru","Philippines","Poland","Portugal","Puerto Rico","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia",
-      "Saint Vincent","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone",
-      "Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Sudan","Spain","Sri Lanka","Sudan",
-      "Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago",
-      "Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
-      "Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+      "United States", "United Kingdom", "Canada", "Australia", "Germany", "France", "India",
+      "China", "Japan", "South Korea", "Brazil", "Mexico", "Italy", "Spain", "Russia",
+      "Netherlands", "Sweden", "Norway", "South Africa", "Nigeria", "Argentina", "Colombia",
+      "Philippines", "Thailand", "Vietnam", "Indonesia", "Turkey", "Poland", "Egypt",
+      "Saudi Arabia", "Kenya", "Ukraine", "Pakistan", "Bangladesh", "Portugal", "Greece",
+      "Hungary", "Czech Republic", "Finland", "Denmark", "Switzerland", "Austria", "New Zealand",
+      "Ireland", "Israel", "Chile", "Singapore", "Malaysia", "Belgium"
     ];
 
-    const languageSelects = [document.getElementById('language'), document.getElementById('language_spoken')];
+    const teachLanguages = new Set();
+    const spokenLanguages = new Set();
+
+    const languageSelect = document.getElementById('language_select');
+    const spokenSelect = document.getElementById('language_spoken_select');
     const countrySelect = document.getElementById('country');
 
-    languageSelects.forEach(select => {
-      languages.forEach(lang => {
-        const opt = document.createElement('option');
-        opt.value = lang;
-        opt.textContent = lang;
-        select.appendChild(opt);
-      });
+    languages.forEach(lang => {
+      const opt1 = new Option(lang, lang);
+      const opt2 = new Option(lang, lang);
+      languageSelect.appendChild(opt1);
+      spokenSelect.appendChild(opt2);
     });
 
     countries.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
+      const opt = new Option(c, c);
       countrySelect.appendChild(opt);
     });
+
+    function addLanguage(type) {
+      const select = type === 'spoken' ? spokenSelect : languageSelect;
+      const ul = document.getElementById(type === 'spoken' ? 'spoken_languages_list' : 'teach_languages_list');
+      const lang = select.value;
+      const list = type === 'spoken' ? spokenLanguages : teachLanguages;
+
+      if (!list.has(lang)) {
+        list.add(lang);
+        const li = document.createElement('li');
+        li.textContent = lang;
+        const remove = document.createElement('span');
+        remove.textContent = '❌';
+        remove.onclick = () => {
+          list.delete(lang);
+          li.remove();
+        };
+        li.appendChild(remove);
+        ul.appendChild(li);
+      }
+    }
 
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
       return user;
     }
 
+    async function loadProfile() {
+      const user = await getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data) {
+        document.getElementById('name').value = data.name || '';
+        document.getElementById('price').value = data.price || '';
+        document.getElementById('currency').value = data.currency || '';
+        document.getElementById('bio').value = data.bio || '';
+        document.getElementById('country').value = data.country || '';
+
+        (data.language || []).forEach(lang => {
+          languageSelect.value = lang;
+          addLanguage('teach');
+        });
+
+        (data.language_spoken || []).forEach(lang => {
+          spokenSelect.value = lang;
+          addLanguage('spoken');
+        });
+      }
+    }
+
     document.getElementById('save-btn').addEventListener('click', async () => {
       const user = await getUser();
-      const name = document.getElementById('name').value;
-      const language = Array.from(document.getElementById('language').selectedOptions).map(opt => opt.value);
-      const language_spoken = Array.from(document.getElementById('language_spoken').selectedOptions).map(opt => opt.value);
-      const price = document.getElementById('price').value;
-      const currency = document.getElementById('currency').value;
-      const bio = document.getElementById('bio').value;
-      const country = document.getElementById('country').value;
-      const status = document.getElementById('status');
-
       if (!user) {
-        status.textContent = 'Not logged in.';
+        document.getElementById('status').textContent = 'Not logged in.';
         return;
       }
 
@@ -198,15 +246,16 @@
         .from('instructors')
         .upsert({
           user_id: user.id,
-          name,
-          language,
-          language_spoken,
-          price,
-          currency,
-          bio,
-          country
+          name: document.getElementById('name').value,
+          language: [...teachLanguages],
+          language_spoken: [...spokenLanguages],
+          price: document.getElementById('price').value,
+          currency: document.getElementById('currency').value,
+          bio: document.getElementById('bio').value,
+          country: document.getElementById('country').value
         }, { onConflict: ['user_id'] });
 
+      const status = document.getElementById('status');
       if (error) {
         status.textContent = error.message;
         status.style.color = 'red';
@@ -215,6 +264,8 @@
         status.style.color = 'green';
       }
     });
+
+    loadProfile();
   </script>
 </body>
 </html>
