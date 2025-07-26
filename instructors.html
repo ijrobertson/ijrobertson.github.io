@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Available Instructors - Lingua Bud</title>
+  <style>
+    :root {
+      --primary: #20bcba;
+      --white: #ffffff;
+      --light-grey: #f5f5f5;
+      --dark-grey: #333333;
+      --navy: #1a2a4f;
+    }
+
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--light-grey);
+      color: var(--dark-grey);
+    }
+
+    header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 1rem;
+      gap: 10px;
+    }
+
+    select {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .instructor-card {
+      background: var(--white);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem;
+      max-width: 400px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    .instructor-card h3 {
+      color: var(--primary);
+    }
+
+    .instructor-card button {
+      background: var(--primary);
+      color: var(--white);
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .instructor-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: var(--white);
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .modal-content input, .modal-content textarea {
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+    }
+
+    .close {
+      float: right;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .instructor-card {
+        margin: 1rem 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Available Instructors</h2>
+  </header>
+
+  <div class="filters">
+    <select id="language-filter">
+      <option value="">All Languages</option>
+    </select>
+
+    <select id="price-filter">
+      <option value="">All Prices</option>
+      <option value="low">Under $20</option>
+      <option value="mid">$20 - $50</option>
+      <option value="high">Over $50</option>
+    </select>
+  </div>
+
+  <div class="instructor-grid" id="instructors-list"></div>
+
+  <!-- Booking Modal -->
+  <div class="modal" id="booking-modal">
+    <div class="modal-content">
+      <span class="close" id="close-modal">&times;</span>
+      <h3>Book Instructor</h3>
+      <p id="booking-name"></p>
+      <input type="email" id="user-email" placeholder="Your email" required />
+      <textarea id="booking-message" placeholder="Your message/request"></textarea>
+      <button onclick="alert('Stripe coming soon!')">Pay & Book</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from './lib/supabaseClient.js';
+
+    const instructorsDiv = document.getElementById('instructors-list');
+    const languageFilter = document.getElementById('language-filter');
+    const priceFilter = document.getElementById('price-filter');
+
+    let allInstructors = [];
+
+    async function fetchInstructors() {
+      const { data, error } = await supabase.from('instructors').select('*');
+
+      if (error) {
+        instructorsDiv.innerHTML = `<p>Error loading instructors.</p>`;
+        return;
+      }
+
+      allInstructors = data;
+      populateLanguageFilter(data);
+      renderInstructors(data);
+    }
+
+    function populateLanguageFilter(instructors) {
+      const allLanguages = new Set();
+      instructors.forEach(i => {
+        if (i.languages) {
+          i.languages.split(',').forEach(lang => allLanguages.add(lang.trim()));
+        }
+      });
+
+      allLanguages.forEach(lang => {
+        const option = document.createElement('option');
+        option.value = lang;
+        option.textContent = lang;
+        languageFilter.appendChild(option);
+      });
+    }
+
+    function renderInstructors(data) {
+      instructorsDiv.innerHTML = '';
+      data.forEach(i => {
+        const card = document.createElement('div');
+        card.className = 'instructor-card';
+        card.innerHTML = `
+          <h3>${i.name}</h3>
+          <p><strong>Languages:</strong> ${i.languages}</p>
+          <p><strong>Bio:</strong> ${i.bio}</p>
+          <p><strong>Price:</strong> $${i.price}/hour</p>
+          <button onclick="openBooking('${i.name}')">Hire</button>
+        `;
+        instructorsDiv.appendChild(card);
+      });
+    }
+
+    function filterInstructors() {
+      let filtered = [...allInstructors];
+
+      const lang = languageFilter.value;
+      const price = priceFilter.value;
+
+      if (lang) {
+        filtered = filtered.filter(i => i.languages && i.languages.toLowerCase().includes(lang.toLowerCase()));
+      }
+
+      if (price === 'low') filtered = filtered.filter(i => i.price < 20);
+      if (price === 'mid') filtered = filtered.filter(i => i.price >= 20 && i.price <= 50);
+      if (price === 'high') filtered = filtered.filter(i => i.price > 50);
+
+      renderInstructors(filtered);
+    }
+
+    languageFilter.addEventListener('change', filterInstructors);
+    priceFilter.addEventListener('change', filterInstructors);
+
+    fetchInstructors();
+
+    // Booking modal logic
+    window.openBooking = function(name) {
+      document.getElementById('booking-name').textContent = `Instructor: ${name}`;
+      document.getElementById('booking-modal').style.display = 'flex';
+    }
+
+    document.getElementById('close-modal').addEventListener('click', () => {
+      document.getElementById('booking-modal').style.display = 'none';
+    });
+  </script>
+</body>
+</html>
