@@ -1,114 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Instructor Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Inter', sans-serif;
       background-color: #f4f4f4;
-      margin: 0;
-      padding: 20px;
       color: #333;
+      padding: 20px;
     }
-
+    h1 {
+      color: #20bcba;
+      text-align: center;
+    }
     .container {
-      max-width: 600px;
-      background: white;
+      background-color: white;
+      max-width: 700px;
       margin: 0 auto;
       padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
-    h1 {
-      text-align: center;
-      color: #20bcba;
-    }
-
     label {
       display: block;
       margin-top: 20px;
       margin-bottom: 5px;
       font-weight: 600;
     }
-
-    input, select, textarea, button {
+    input, textarea, select, button {
       width: 100%;
       padding: 10px;
-      margin-top: 5px;
-      font-size: 1rem;
+      margin-top: 6px;
       border: 1px solid #ccc;
       border-radius: 6px;
-      box-sizing: border-box;
+      font-size: 1rem;
     }
-
     button {
       background-color: #20bcba;
       color: white;
-      border: none;
-      margin-top: 20px;
+      font-weight: bold;
       cursor: pointer;
       transition: 0.3s;
     }
-
     button:hover {
-      background-color: #179c9b;
+      background-color: #169fa0;
     }
-
-    #status {
-      margin-top: 15px;
-      text-align: center;
-    }
-
-    .language-group {
-      margin-bottom: 16px;
-    }
-
     .language-group ul {
       list-style: none;
       padding: 0;
       margin-top: 10px;
     }
-
     .language-group li {
       display: inline-block;
       background-color: #e0f7f7;
-      color: #003344;
+      color: #003;
       padding: 6px 10px;
       margin: 4px;
       border-radius: 6px;
     }
-
     .language-group li span {
       margin-left: 8px;
       color: red;
       cursor: pointer;
     }
-
-    @media (max-width: 600px) {
-      .container {
-        padding: 20px;
-      }
+    .profile-picture-preview {
+      margin-top: 10px;
+      max-width: 120px;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Instructor Profile</h1>
-
+    <h1>Instructor Dashboard</h1>
     <label for="name">Full Name</label>
-    <input type="text" id="name" placeholder="Enter your full name">
+    <input type="text" id="name" />
 
-    <label for="language_spoken">Language(s) You Speak</label>
+    <label for="profile_picture">Profile Picture</label>
+    <input type="file" id="profile_picture" accept="image/*" />
+    <img id="preview" class="profile-picture-preview" style="display: none;" />
+
+    <label>Language(s) You Speak</label>
     <div class="language-group">
       <select id="language_spoken_select"></select>
       <button type="button" onclick="addLanguage('spoken')">Add Language</button>
       <ul id="spoken_languages_list"></ul>
     </div>
 
-    <label for="language">Language(s) You Teach</label>
+    <label>Language(s) You Teach</label>
     <div class="language-group">
       <select id="language_select"></select>
       <button type="button" onclick="addLanguage('teach')">Add Language</button>
@@ -116,95 +98,91 @@
     </div>
 
     <label for="price">Price per Lesson</label>
-    <input type="number" id="price" placeholder="e.g., 25">
+    <input type="number" id="price" min="0" step="0.01" />
 
     <label for="currency">Currency</label>
     <select id="currency">
-      <option value="USD">USD - US Dollar</option>
-      <option value="EUR">EUR - Euro</option>
-      <option value="GBP">GBP - British Pound</option>
-      <option value="CAD">CAD - Canadian Dollar</option>
-      <option value="AUD">AUD - Australian Dollar</option>
-      <option value="JPY">JPY - Japanese Yen</option>
-      <option value="BRL">BRL - Brazilian Real</option>
+      <option value="USD">USD</option>
+      <option value="EUR">EUR</option>
+      <option value="GBP">GBP</option>
+      <option value="CAD">CAD</option>
+      <option value="AUD">AUD</option>
+      <option value="JPY">JPY</option>
+      <option value="INR">INR</option>
+      <option value="CNY">CNY</option>
     </select>
 
     <label for="bio">About Me</label>
-    <textarea id="bio" placeholder="Write a short bio..." rows="4"></textarea>
+    <textarea id="bio" rows="4"></textarea>
 
     <label for="country">Native Country</label>
     <select id="country"></select>
 
     <button id="save-btn">Save Profile</button>
-    <div id="status"></div>
+    <p id="status"></p>
   </div>
 
   <script type="module">
     import { supabase } from './lib/supabaseClient.js';
 
-    const languages = [
-      "Mandarin Chinese", "English", "Hindi", "Spanish", "French", "Arabic", "Bengali",
-      "Russian", "Portuguese", "Urdu", "Indonesian", "German", "Japanese", "Swahili",
-      "Marathi", "Telugu", "Turkish", "Tamil", "Vietnamese", "Korean", "Italian", "Thai",
-      "Gujarati", "Polish", "Ukrainian", "Persian", "Malayalam", "Kannada", "Dutch", "Punjabi",
-      "Romanian", "Greek", "Hungarian", "Czech", "Swedish", "Hebrew", "Norwegian", "Danish",
-      "Finnish", "Serbian", "Slovak", "Bulgarian", "Croatian", "Nepali", "Sinhala", "Tagalog",
-      "Amharic", "Zulu", "Hausa", "Burmese"
+    const languages = [ "Mandarin Chinese", "English", "Hindi", "Spanish", "French", "Arabic", "Bengali",
+      "Russian", "Portuguese", "Urdu", "Indonesian", "German", "Japanese", "Swahili", "Marathi", "Telugu",
+      "Turkish", "Tamil", "Vietnamese", "Korean", "Italian", "Thai", "Gujarati", "Polish", "Ukrainian", "Persian",
+      "Malayalam", "Kannada", "Dutch", "Punjabi", "Romanian", "Greek", "Hungarian", "Czech", "Swedish",
+      "Hebrew", "Norwegian", "Danish", "Finnish", "Serbian", "Slovak", "Bulgarian", "Croatian", "Nepali",
+      "Sinhala", "Tagalog", "Amharic", "Zulu", "Hausa", "Burmese"
     ];
 
-    const countries = [
-      "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan", "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina", "Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic", "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti", "Dominica","Dominican Republic","East Timor","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini", "Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea", "Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy", "Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Korea, North","Korea, South","Kosovo","Kuwait", "Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar", "Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova", "Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand", "Nicaragua","Niger","Nigeria","North Macedonia","Norway","Oman","Pakistan","Palau","Panama","Papua New Guinea","Paraguay", "Peru","Philippines","Poland","Portugal","Puerto Rico","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia", "Saint Vincent","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone", "Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Sudan","Spain","Sri Lanka","Sudan", "Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago", "Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States", "Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
-    ];
-
-    const teachLanguages = new Set();
-    const spokenLanguages = new Set();
+    const countries = await fetch('https://restcountries.com/v3.1/all')
+      .then(res => res.json())
+      .then(data => data.map(c => c.name.common).sort());
 
     const languageSelect = document.getElementById('language_select');
     const spokenSelect = document.getElementById('language_spoken_select');
     const countrySelect = document.getElementById('country');
 
+    const spokenLanguages = new Set();
+    const teachLanguages = new Set();
+
     languages.forEach(lang => {
-      const opt1 = new Option(lang, lang);
-      const opt2 = new Option(lang, lang);
-      languageSelect.appendChild(opt1);
-      spokenSelect.appendChild(opt2);
+      const option1 = new Option(lang, lang);
+      const option2 = new Option(lang, lang);
+      spokenSelect.appendChild(option1);
+      languageSelect.appendChild(option2);
     });
 
-    countries.forEach(c => {
-      const opt = new Option(c, c);
-      countrySelect.appendChild(opt);
+    countries.forEach(country => {
+      countrySelect.appendChild(new Option(country, country));
     });
 
-    function addLanguage(type) {
-      const select = type === 'spoken' ? spokenSelect : languageSelect;
-      const ul = document.getElementById(type === 'spoken' ? 'spoken_languages_list' : 'teach_languages_list');
-      const lang = select.value;
-      const list = type === 'spoken' ? spokenLanguages : teachLanguages;
-
-      if (!list.has(lang)) {
-        list.add(lang);
+    function renderLanguages(set, listId) {
+      const ul = document.getElementById(listId);
+      ul.innerHTML = '';
+      set.forEach(lang => {
         const li = document.createElement('li');
         li.textContent = lang;
         const remove = document.createElement('span');
         remove.textContent = '❌';
         remove.onclick = () => {
-          list.delete(lang);
-          li.remove();
+          set.delete(lang);
+          renderLanguages(set, listId);
         };
         li.appendChild(remove);
         ul.appendChild(li);
-      }
+      });
     }
 
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    }
+    window.addLanguage = function(type) {
+      const select = type === 'spoken' ? spokenSelect : languageSelect;
+      const list = type === 'spoken' ? spokenLanguages : teachLanguages;
+      list.add(select.value);
+      renderLanguages(list, type === 'spoken' ? 'spoken_languages_list' : 'teach_languages_list');
+    };
 
-    async function loadProfile() {
-      const user = await getUser();
-      if (!user) return;
+    const user = (await supabase.auth.getUser()).data.user;
+    const status = document.getElementById('status');
 
+    if (user) {
       const { data, error } = await supabase
         .from('instructors')
         .select('*')
@@ -217,50 +195,54 @@
         document.getElementById('currency').value = data.currency || '';
         document.getElementById('bio').value = data.bio || '';
         document.getElementById('country').value = data.country || '';
-
-        (data.language || []).forEach(lang => {
-          languageSelect.value = lang;
-          addLanguage('teach');
-        });
-
-        (data.language_spoken || []).forEach(lang => {
-          spokenSelect.value = lang;
-          addLanguage('spoken');
-        });
+        if (data.language) {
+          data.language.forEach(l => teachLanguages.add(l));
+          renderLanguages(teachLanguages, 'teach_languages_list');
+        }
+        if (data.language_spoken) {
+          data.language_spoken.forEach(l => spokenLanguages.add(l));
+          renderLanguages(spokenLanguages, 'spoken_languages_list');
+        }
+        if (data.profile_picture) {
+          const preview = document.getElementById('preview');
+          preview.src = data.profile_picture;
+          preview.style.display = 'block';
+        }
       }
     }
 
-    document.getElementById('save-btn').addEventListener('click', async () => {
-      const user = await getUser();
-      if (!user) {
-        document.getElementById('status').textContent = 'Not logged in.';
-        return;
-      }
-
-      const { error } = await supabase
-        .from('instructors')
-        .upsert({
-          user_id: user.id,
-          name: document.getElementById('name').value,
-          language: [...teachLanguages],
-          language_spoken: [...spokenLanguages],
-          price: document.getElementById('price').value,
-          currency: document.getElementById('currency').value,
-          bio: document.getElementById('bio').value,
-          country: document.getElementById('country').value
-        }, { onConflict: ['user_id'] });
-
-      const status = document.getElementById('status');
-      if (error) {
-        status.textContent = error.message;
-        status.style.color = 'red';
-      } else {
-        status.textContent = 'Profile saved successfully!';
-        status.style.color = 'green';
+    document.getElementById('profile_picture').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const filePath = `${user.id}/${file.name}`;
+      const { error } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        document.getElementById('preview').src = publicUrl;
+        document.getElementById('preview').style.display = 'block';
+        document.getElementById('preview').dataset.url = publicUrl;
       }
     });
 
-    loadProfile();
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      if (!user) return status.textContent = 'Not logged in.';
+      const picture = document.getElementById('preview').dataset.url || '';
+
+      const { error } = await supabase.from('instructors').upsert({
+        user_id: user.id,
+        name: document.getElementById('name').value,
+        language: [...teachLanguages],
+        language_spoken: [...spokenLanguages],
+        price: parseFloat(document.getElementById('price').value),
+        currency: document.getElementById('currency').value,
+        bio: document.getElementById('bio').value,
+        country: document.getElementById('country').value,
+        profile_picture: picture
+      }, { onConflict: ['user_id'] });
+
+      status.textContent = error ? error.message : 'Profile saved!';
+      status.style.color = error ? 'red' : 'green';
+    });
   </script>
 </body>
 </html>
