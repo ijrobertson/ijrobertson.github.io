@@ -4,272 +4,276 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Instructor Dashboard</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" />
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f5f5;
+      background-color: #f4f4f4;
       margin: 0;
       padding: 20px;
       color: #333;
     }
-
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-
     h1 {
       color: #20bcba;
       text-align: center;
     }
-
-    label {
-      font-weight: bold;
-      margin-top: 10px;
-      display: block;
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-
-    select, input[type="text"], input[type="number"], textarea {
+    label {
+      display: block;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    input, select, textarea, button {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
+      border-radius: 6px;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      font-size: 16px;
     }
-
-    .language-list {
-      margin-top: 10px;
-    }
-
-    .language-item {
-      background-color: #e0f7f6;
-      display: flex;
-      justify-content: space-between;
-      padding: 8px;
-      border-radius: 5px;
-      margin-top: 5px;
-    }
-
-    .language-item button {
-      background: none;
-      border: none;
-      color: red;
-      cursor: pointer;
-    }
-
     button {
       background-color: #20bcba;
       color: white;
-      padding: 10px;
-      margin-top: 15px;
       border: none;
-      border-radius: 5px;
       cursor: pointer;
-      width: 100%;
     }
-
     button:hover {
-      background-color: #179a9a;
+      background-color: #1aa7a6;
     }
-
-    .profile-picture {
-      margin: 10px 0;
+    .language-list, .language-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-
-    .profile-picture img {
+    .language-item span {
+      flex-grow: 1;
+    }
+    .language-item button {
+      background-color: #e74c3c;
+      margin-left: 10px;
+      width: auto;
+      padding: 5px 10px;
+    }
+    img {
       max-width: 100px;
       border-radius: 50%;
-    }
-
-    input[type="file"] {
-      margin-top: 5px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
+  <h1>Instructor Dashboard</h1>
   <div class="container">
-    <h1>Instructor Dashboard</h1>
+    <label for="displayName">Display Name</label>
+    <input type="text" id="displayName" />
 
-    <label for="spokenLanguages">Languages You Speak</label>
-    <select id="spokenLanguages">
+    <label for="email">Email</label>
+    <input type="email" id="email" readonly />
+
+    <label for="avatar">Profile Picture</label>
+    <input type="file" id="avatar-input" />
+    <img id="avatar-preview" src="" alt="Your Avatar"/>
+
+    <label for="languagesSpoken">Languages You Speak</label>
+    <select id="languagesSpoken">
       <option value="">Select a language</option>
     </select>
-    <button type="button" onclick="addLanguage('spoken')">Add Language</button>
-    <div id="spokenLanguageList" class="language-list"></div>
+    <button onclick="addLanguage('spoken')">Add Language</button>
+    <div id="spokenLanguages" class="language-list"></div>
 
-    <label for="teachingLanguages">Languages You Teach</label>
-    <select id="teachingLanguages">
+    <label for="languagesTaught">Languages You Teach</label>
+    <select id="languagesTaught">
       <option value="">Select a language</option>
     </select>
-    <button type="button" onclick="addLanguage('teaching')">Add Language</button>
-    <div id="teachingLanguageList" class="language-list"></div>
+    <button onclick="addLanguage('taught')">Add Language</button>
+    <div id="taughtLanguages" class="language-list"></div>
+
+    <label for="price">Price per Lesson</label>
+    <input type="number" id="price" min="0" />
 
     <label for="currency">Currency</label>
     <select id="currency">
       <option value="USD">USD - US Dollar</option>
       <option value="EUR">EUR - Euro</option>
       <option value="GBP">GBP - British Pound</option>
+      <option value="CAD">CAD - Canadian Dollar</option>
+      <option value="AUD">AUD - Australian Dollar</option>
       <option value="JPY">JPY - Japanese Yen</option>
       <option value="INR">INR - Indian Rupee</option>
-      <option value="BRL">BRL - Brazilian Real</option>
-      <option value="CNY">CNY - Chinese Yuan</option>
-      <option value="CAD">CAD - Canadian Dollar</option>
     </select>
-
-    <label for="price">Price per Lesson</label>
-    <input type="number" id="price" min="0" />
-
-    <label for="bio">About Me</label>
-    <textarea id="bio" rows="4"></textarea>
 
     <label for="country">Native Country</label>
     <select id="country"></select>
 
-    <label for="profilePicture">Profile Picture</label>
-    <input type="file" id="profilePicture" accept="image/*" />
-
-    <div class="profile-picture" id="previewContainer"></div>
+    <label for="bio">About Me</label>
+    <textarea id="bio" rows="4"></textarea>
 
     <button onclick="saveProfile()">Save Profile</button>
   </div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  <script>
+    const supabase = supabase.createClient(
+      "https://fryhforpxlavbpimaljf.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI"
+    );
 
-    const supabase = createClient('https://YOUR_PROJECT.supabase.co', 'YOUR_PUBLIC_ANON_KEY');
+    let user = null;
 
-    const user = await supabase.auth.getUser();
-    const userId = user?.data?.user?.id;
+    const topLanguages = [
+      "English", "Mandarin Chinese", "Hindi", "Spanish", "French",
+      "Standard Arabic", "Bengali", "Russian", "Portuguese", "Urdu",
+      "German", "Japanese", "Swahili", "Marathi", "Telugu", "Turkish",
+      "Korean", "Vietnamese", "Italian", "Polish", "Dutch", "Thai",
+      "Greek", "Hebrew", "Hungarian", "Czech", "Romanian", "Malay",
+      "Persian", "Punjabi", "Tamil", "Twi", "Ukrainian", "Javanese", "Burmese",
+      "Filipino", "Malayalam", "Kannada", "Swedish", "Norwegian",
+      "Finnish", "Serbian", "Slovak", "Bulgarian", "Danish", "Zulu",
+      "Nepali", "Khmer", "Sinhala", "Hausa"
+    ];
 
-    if (!userId) {
-      alert("Please log in first.");
-      window.location.href = "login.html";
-    }
-
-    const topLanguages = ["English", "Mandarin", "Hindi", "Spanish", "French", "Arabic", "Bengali", "Portuguese", "Russian", "Urdu"];
-    const additionalLanguages = ["German", "Italian", "Japanese", "Korean", "Swahili", "Turkish", "Vietnamese", "Persian", "Polish", "Thai", "Dutch", "Romanian", "Czech", "Greek", "Hungarian", "Hebrew", "Malay", "Punjabi", "Telugu", "Tamil", "Ukrainian", "Javanese", "Marathi", "Hausa", "Burmese", "Pashto", "Kannada", "Yoruba", "Odia", "Zulu", "Amharic", "Nepali", "Sinhala", "Tagalog", "Malayalam"];
-    const allLanguages = [...topLanguages, ...additionalLanguages.sort()];
-
-    const countries = [...new Set([
-      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia",
-      "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
-      "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria",
-      "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad",
-      "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
-      "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea",
-      "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia",
-      "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
-      "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica",
-      "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
-      "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia",
-      "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova",
-      "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal",
-      "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman",
-      "Pakistan", "Palau", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar",
-      "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa",
-      "San Marino", "São Tomé e Príncipe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore",
-      "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka",
-      "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste",
-      "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine",
-      "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City",
+    const countries = [
+      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria",
+      "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
+      "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia",
+      "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)",
+      "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador",
+      "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon",
+      "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti",
+      "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica",
+      "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia",
+      "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands",
+      "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique",
+      "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea",
+      "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru",
+      "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar", "Republic of the Congo", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis",
+      "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "São Tomé e Príncipe", "Saudi Arabia", "Senegal",
+      "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa",
+      "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan",
+      "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
+      "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City",
       "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
-    ].sort())];
+    ];
 
-    function populateSelect(id, options) {
-      const select = document.getElementById(id);
-      options.forEach(option => {
-        const el = document.createElement("option");
-        el.value = option;
-        el.textContent = option;
-        select.appendChild(el);
-      });
+    // Populate dropdowns
+    const spokenSelect = document.getElementById('languagesSpoken');
+    const taughtSelect = document.getElementById('languagesTaught');
+    topLanguages.forEach(lang => {
+      const opt1 = new Option(lang, lang);
+      const opt2 = new Option(lang, lang);
+      spokenSelect.add(opt1);
+      taughtSelect.add(opt2);
+    });
+
+    const countrySelect = document.getElementById('country');
+    countries.sort().forEach(c => {
+      countrySelect.add(new Option(c, c));
+    });
+
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        alert("Please log in first.");
+        window.location.href = '/login.html';
+        return;
+      }
+      user = session.user;
+
+      document.getElementById('email').value = user.email;
+
+      // Fetch existing profile
+      const { data, error } = await supabase.from('instructors').select('*').eq('id', user.id).single();
+      if (data) {
+        document.getElementById('displayName').value = data.display_name || '';
+        document.getElementById('price').value = data.price || '';
+        document.getElementById('currency').value = data.currency || 'USD';
+        document.getElementById('country').value = data.country || '';
+        document.getElementById('bio').value = data.bio || '';
+        if (data.avatar_url) {
+          document.getElementById('avatar-preview').src = data.avatar_url;
+        }
+        populateLanguageList('spokenLanguages', data.languages_spoken || []);
+        populateLanguageList('taughtLanguages', data.languages_taught || []);
+      }
     }
-
-    populateSelect("spokenLanguages", allLanguages);
-    populateSelect("teachingLanguages", allLanguages);
-    populateSelect("country", countries);
-
-    let spokenLangs = [];
-    let teachingLangs = [];
 
     function addLanguage(type) {
-      const select = document.getElementById(type === 'spoken' ? 'spokenLanguages' : 'teachingLanguages');
+      const select = document.getElementById(type === 'spoken' ? 'languagesSpoken' : 'languagesTaught');
+      const container = document.getElementById(type === 'spoken' ? 'spokenLanguages' : 'taughtLanguages');
       const value = select.value;
-      if (!value) return;
+      if (!value || [...container.children].some(item => item.dataset.value === value)) return;
 
-      const list = type === 'spoken' ? spokenLangs : teachingLangs;
-      if (!list.includes(value)) list.push(value);
-      renderLanguages();
+      const item = document.createElement('div');
+      item.className = 'language-item';
+      item.dataset.value = value;
+      item.innerHTML = `<span>${value}</span><button onclick="this.parentElement.remove()">Remove</button>`;
+      container.appendChild(item);
     }
 
-    function removeLanguage(type, lang) {
-      const list = type === 'spoken' ? spokenLangs : teachingLangs;
-      const index = list.indexOf(lang);
-      if (index !== -1) list.splice(index, 1);
-      renderLanguages();
-    }
-
-    function renderLanguages() {
-      ["spoken", "teaching"].forEach(type => {
-        const list = type === "spoken" ? spokenLangs : teachingLangs;
-        const container = document.getElementById(type + "LanguageList");
-        container.innerHTML = "";
-        list.forEach(lang => {
-          const div = document.createElement("div");
-          div.className = "language-item";
-          div.innerHTML = `${lang} <button onclick="removeLanguage('${type}', '${lang}')">×</button>`;
-          container.appendChild(div);
-        });
+    function populateLanguageList(id, list) {
+      const container = document.getElementById(id);
+      container.innerHTML = '';
+      list.forEach(lang => {
+        const item = document.createElement('div');
+        item.className = 'language-item';
+        item.dataset.value = lang;
+        item.innerHTML = `<span>${lang}</span><button onclick="this.parentElement.remove()">Remove</button>`;
+        container.appendChild(item);
       });
     }
 
-    window.addLanguage = addLanguage;
-    window.removeLanguage = removeLanguage;
-
     async function saveProfile() {
-      const bio = document.getElementById("bio").value;
-      const country = document.getElementById("country").value;
-      const currency = document.getElementById("currency").value;
-      const price = document.getElementById("price").value;
-      const profilePicInput = document.getElementById("profilePicture");
-      let profile_pic_url = null;
+      const displayName = document.getElementById('displayName').value;
+      const price = document.getElementById('price').value;
+      const currency = document.getElementById('currency').value;
+      const country = document.getElementById('country').value;
+      const bio = document.getElementById('bio').value;
 
-      if (profilePicInput.files.length > 0) {
-        const file = profilePicInput.files[0];
-        const { data, error } = await supabase.storage.from('avatars').upload(`public/${userId}`, file, {
+      const languages_spoken = [...document.getElementById('spokenLanguages').children].map(el => el.dataset.value);
+      const languages_taught = [...document.getElementById('taughtLanguages').children].map(el => el.dataset.value);
+
+      let avatar_url = document.getElementById('avatar-preview').src;
+      const file = document.getElementById('avatar-input').files[0];
+      if (file) {
+        const { data, error } = await supabase.storage.from('avatars').upload(`avatars/${user.id}`, file, {
+          cacheControl: '3600',
           upsert: true,
         });
         if (!error) {
-          const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(`public/${userId}`);
-          profile_pic_url = publicUrlData.publicUrl;
+          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(`avatars/${user.id}`);
+          avatar_url = urlData.publicUrl;
         }
       }
 
-      const { error } = await supabase.from("instructors").upsert({
-        user_id: userId,
-        spoken_languages: spokenLangs,
-        teaching_languages: teachingLangs,
-        currency,
-        price_per_lesson: price,
-        bio,
-        country,
-        profile_pic_url
-      });
+      const { error } = await supabase
+        .from('instructors')
+        .upsert({
+          id: user.id,
+          display_name: displayName,
+          email: user.email,
+          price: price,
+          currency: currency,
+          country: country,
+          bio: bio,
+          avatar_url: avatar_url,
+          languages_spoken,
+          languages_taught,
+        });
 
       if (error) {
         alert("Error saving profile: " + error.message);
       } else {
-        alert("Profile saved successfully!");
+        alert("Profile saved!");
       }
     }
 
-    window.saveProfile = saveProfile;
+    init();
   </script>
 </body>
 </html>
