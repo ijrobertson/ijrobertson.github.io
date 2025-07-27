@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Instructor Dashboard</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f6f6f6;
+      background-color: #f5f5f5;
       margin: 0;
       padding: 20px;
       color: #333;
@@ -17,9 +19,9 @@
       max-width: 600px;
       margin: auto;
       background-color: white;
-      padding: 20px;
       border-radius: 10px;
-      box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
     }
 
     h1 {
@@ -28,284 +30,246 @@
     }
 
     label {
-      display: block;
-      margin-top: 15px;
       font-weight: bold;
+      margin-top: 10px;
+      display: block;
     }
 
-    input[type="text"],
-    input[type="number"],
-    textarea,
-    select {
+    select, input[type="text"], input[type="number"], textarea {
       width: 100%;
       padding: 10px;
-      margin-top: 6px;
-      border-radius: 6px;
+      margin-top: 5px;
       border: 1px solid #ccc;
-      font-size: 16px;
+      border-radius: 5px;
     }
 
-    textarea {
-      resize: vertical;
-    }
-
-    .language-group ul {
-      list-style: none;
-      padding: 0;
+    .language-list {
       margin-top: 10px;
     }
 
-    .language-group li {
-      display: inline-block;
-      background-color: #e0f7f7;
-      color: #003;
-      padding: 6px 10px;
-      margin: 4px;
-      border-radius: 6px;
+    .language-item {
+      background-color: #e0f7f6;
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      border-radius: 5px;
+      margin-top: 5px;
     }
 
-    .language-group li span {
-      margin-left: 8px;
+    .language-item button {
+      background: none;
+      border: none;
       color: red;
       cursor: pointer;
     }
 
-    button, input[type="submit"] {
+    button {
       background-color: #20bcba;
       color: white;
-      padding: 10px 16px;
+      padding: 10px;
+      margin-top: 15px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      margin-top: 15px;
+      width: 100%;
     }
 
     button:hover {
-      background-color: #179b9b;
+      background-color: #179a9a;
     }
 
-    #status {
-      margin-top: 20px;
-      font-weight: bold;
-      text-align: center;
+    .profile-picture {
+      margin: 10px 0;
     }
 
-    .avatar-preview {
-      margin-top: 10px;
-      max-width: 120px;
-      border-radius: 8px;
+    .profile-picture img {
+      max-width: 100px;
+      border-radius: 50%;
+    }
+
+    input[type="file"] {
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Instructor Dashboard</h1>
-    <label for="name">Full Name</label>
-    <input type="text" id="name" placeholder="Your name"/>
 
-    <label for="language_spoken_select">Language(s) You Speak</label>
-    <div class="language-group">
-      <select id="language_spoken_select"></select>
-      <button type="button" onclick="addLanguage('spoken')">Add Language</button>
-      <ul id="spoken_languages_list"></ul>
-    </div>
+    <label for="spokenLanguages">Languages You Speak</label>
+    <select id="spokenLanguages">
+      <option value="">Select a language</option>
+    </select>
+    <button type="button" onclick="addLanguage('spoken')">Add Language</button>
+    <div id="spokenLanguageList" class="language-list"></div>
 
-    <label for="language_select">Language(s) You Teach</label>
-    <div class="language-group">
-      <select id="language_select"></select>
-      <button type="button" onclick="addLanguage('teach')">Add Language</button>
-      <ul id="teach_languages_list"></ul>
-    </div>
-
-    <label for="price">Price Per Lesson</label>
-    <input type="number" id="price" placeholder="e.g. 25" min="1"/>
+    <label for="teachingLanguages">Languages You Teach</label>
+    <select id="teachingLanguages">
+      <option value="">Select a language</option>
+    </select>
+    <button type="button" onclick="addLanguage('teaching')">Add Language</button>
+    <div id="teachingLanguageList" class="language-list"></div>
 
     <label for="currency">Currency</label>
     <select id="currency">
-      <option value="USD">USD</option>
-      <option value="EUR">EUR</option>
-      <option value="GBP">GBP</option>
-      <option value="CAD">CAD</option>
-      <option value="AUD">AUD</option>
-      <option value="INR">INR</option>
-      <option value="JPY">JPY</option>
+      <option value="USD">USD - US Dollar</option>
+      <option value="EUR">EUR - Euro</option>
+      <option value="GBP">GBP - British Pound</option>
+      <option value="JPY">JPY - Japanese Yen</option>
+      <option value="INR">INR - Indian Rupee</option>
+      <option value="BRL">BRL - Brazilian Real</option>
+      <option value="CNY">CNY - Chinese Yuan</option>
+      <option value="CAD">CAD - Canadian Dollar</option>
     </select>
 
+    <label for="price">Price per Lesson</label>
+    <input type="number" id="price" min="0" />
+
     <label for="bio">About Me</label>
-    <textarea id="bio" rows="4" placeholder="Write a short bio..."></textarea>
+    <textarea id="bio" rows="4"></textarea>
 
     <label for="country">Native Country</label>
     <select id="country"></select>
 
-    <label for="avatar">Profile Picture</label>
-    <input type="file" id="avatar" accept="image/*"/>
-    <img id="avatar-preview" class="avatar-preview" />
+    <label for="profilePicture">Profile Picture</label>
+    <input type="file" id="profilePicture" accept="image/*" />
 
-    <button id="save-btn">Save Profile</button>
-    <div id="status"></div>
+    <div class="profile-picture" id="previewContainer"></div>
+
+    <button onclick="saveProfile()">Save Profile</button>
   </div>
 
   <script type="module">
-    import { supabase } from './lib/supabaseClient.js';
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const topLanguages = ["English", "Mandarin Chinese", "Hindi", "Spanish", "French", "Arabic", "Bengali", "Russian", "Portuguese", "Urdu"];
-    const otherLanguages = [
-      "Amharic", "Burmese", "Czech", "Danish", "Dutch", "Finnish", "German", "Greek", "Gujarati", "Hebrew",
-      "Hungarian", "Indonesian", "Italian", "Japanese", "Kannada", "Korean", "Malayalam", "Marathi", "Nepali",
-      "Norwegian", "Persian", "Polish", "Punjabi", "Romanian", "Serbian", "Sinhala", "Slovak", "Swahili", "Swedish",
-      "Tagalog", "Tamil", "Telugu", "Thai", "Turkish", "Twi", "Ukrainian", "Vietnamese", "Zulu"
-    ];
+    const supabase = createClient('https://YOUR_PROJECT.supabase.co', 'YOUR_PUBLIC_ANON_KEY');
 
-    const countries = [
-      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
-      "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
-      "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada",
-      "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
-      "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia",
-      "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Guatemala", "Guinea", "Guyana",
-      "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica",
-      "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya",
-      "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Mauritania", "Mexico",
-      "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nepal", "Netherlands", "New Zealand",
-      "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Panama", "Papua New Guinea",
-      "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar", "Romania", "Russia", "Rwanda", "Saint Lucia", "Samoa", "Saudi Arabia",
-      "Senegal", "Serbia", "Singapore", "Slovakia", "Slovenia", "Somalia", "South Africa", "South Korea", "Spain", "Sri Lanka", "Sudan",
-      "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad and Tobago",
-      "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay",
-      "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
-    ];
+    const user = await supabase.auth.getUser();
+    const userId = user?.data?.user?.id;
 
-    const languageSelect = document.getElementById('language_select');
-    const spokenSelect = document.getElementById('language_spoken_select');
-    const countrySelect = document.getElementById('country');
+    if (!userId) {
+      alert("Please log in first.");
+      window.location.href = "login.html";
+    }
 
-    function populateDropdown(select, items) {
-      select.innerHTML = '';
-      items.forEach(lang => {
-        const option = document.createElement('option');
-        option.value = lang;
-        option.textContent = lang;
-        select.appendChild(option);
+    const topLanguages = ["English", "Mandarin", "Hindi", "Spanish", "French", "Arabic", "Bengali", "Portuguese", "Russian", "Urdu"];
+    const additionalLanguages = ["German", "Italian", "Japanese", "Korean", "Swahili", "Turkish", "Vietnamese", "Persian", "Polish", "Thai", "Dutch", "Romanian", "Czech", "Greek", "Hungarian", "Hebrew", "Malay", "Punjabi", "Telugu", "Tamil", "Ukrainian", "Javanese", "Marathi", "Hausa", "Burmese", "Pashto", "Kannada", "Yoruba", "Odia", "Zulu", "Amharic", "Nepali", "Sinhala", "Tagalog", "Malayalam"];
+    const allLanguages = [...topLanguages, ...additionalLanguages.sort()];
+
+    const countries = [...new Set([
+      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia",
+      "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
+      "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria",
+      "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad",
+      "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
+      "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea",
+      "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia",
+      "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
+      "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast", "Jamaica",
+      "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon",
+      "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia",
+      "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova",
+      "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal",
+      "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman",
+      "Pakistan", "Palau", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Puerto Rico", "Qatar",
+      "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa",
+      "San Marino", "São Tomé e Príncipe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore",
+      "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka",
+      "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste",
+      "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine",
+      "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City",
+      "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+    ].sort())];
+
+    function populateSelect(id, options) {
+      const select = document.getElementById(id);
+      options.forEach(option => {
+        const el = document.createElement("option");
+        el.value = option;
+        el.textContent = option;
+        select.appendChild(el);
       });
     }
 
-    populateDropdown(spokenSelect, [...topLanguages, ...otherLanguages].sort((a, b) => a.localeCompare(b)));
-    populateDropdown(languageSelect, [...topLanguages, ...otherLanguages].sort((a, b) => a.localeCompare(b)));
-    populateDropdown(countrySelect, countries.sort((a, b) => a.localeCompare(b)));
+    populateSelect("spokenLanguages", allLanguages);
+    populateSelect("teachingLanguages", allLanguages);
+    populateSelect("country", countries);
 
-    const teachLanguages = new Set();
-    const spokenLanguages = new Set();
+    let spokenLangs = [];
+    let teachingLangs = [];
 
     function addLanguage(type) {
-      const select = type === 'spoken' ? spokenSelect : languageSelect;
-      const ul = document.getElementById(type === 'spoken' ? 'spoken_languages_list' : 'teach_languages_list');
-      const lang = select.value;
-      const list = type === 'spoken' ? spokenLanguages : teachLanguages;
+      const select = document.getElementById(type === 'spoken' ? 'spokenLanguages' : 'teachingLanguages');
+      const value = select.value;
+      if (!value) return;
 
-      if (!list.has(lang)) {
-        list.add(lang);
-        const li = document.createElement('li');
-        li.textContent = lang;
-        const remove = document.createElement('span');
-        remove.textContent = ' ❌';
-        remove.onclick = () => {
-          list.delete(lang);
-          li.remove();
-        };
-        li.appendChild(remove);
-        ul.appendChild(li);
-      }
+      const list = type === 'spoken' ? spokenLangs : teachingLangs;
+      if (!list.includes(value)) list.push(value);
+      renderLanguages();
     }
 
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
+    function removeLanguage(type, lang) {
+      const list = type === 'spoken' ? spokenLangs : teachingLangs;
+      const index = list.indexOf(lang);
+      if (index !== -1) list.splice(index, 1);
+      renderLanguages();
     }
 
-    async function preloadProfile(user) {
-      const { data, error } = await supabase
-        .from('instructors')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data) {
-        document.getElementById('name').value = data.name || '';
-        document.getElementById('price').value = data.price || '';
-        document.getElementById('currency').value = data.currency || 'USD';
-        document.getElementById('bio').value = data.bio || '';
-        document.getElementById('country').value = data.country || '';
-        if (data.avatar_url) document.getElementById('avatar-preview').src = data.avatar_url;
-
-        (data.language || []).forEach(lang => {
-          teachLanguages.add(lang);
-          addLanguageToUI('teach', lang);
+    function renderLanguages() {
+      ["spoken", "teaching"].forEach(type => {
+        const list = type === "spoken" ? spokenLangs : teachingLangs;
+        const container = document.getElementById(type + "LanguageList");
+        container.innerHTML = "";
+        list.forEach(lang => {
+          const div = document.createElement("div");
+          div.className = "language-item";
+          div.innerHTML = `${lang} <button onclick="removeLanguage('${type}', '${lang}')">×</button>`;
+          container.appendChild(div);
         });
-        (data.language_spoken || []).forEach(lang => {
-          spokenLanguages.add(lang);
-          addLanguageToUI('spoken', lang);
+      });
+    }
+
+    window.addLanguage = addLanguage;
+    window.removeLanguage = removeLanguage;
+
+    async function saveProfile() {
+      const bio = document.getElementById("bio").value;
+      const country = document.getElementById("country").value;
+      const currency = document.getElementById("currency").value;
+      const price = document.getElementById("price").value;
+      const profilePicInput = document.getElementById("profilePicture");
+      let profile_pic_url = null;
+
+      if (profilePicInput.files.length > 0) {
+        const file = profilePicInput.files[0];
+        const { data, error } = await supabase.storage.from('avatars').upload(`public/${userId}`, file, {
+          upsert: true,
         });
+        if (!error) {
+          const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(`public/${userId}`);
+          profile_pic_url = publicUrlData.publicUrl;
+        }
+      }
+
+      const { error } = await supabase.from("instructors").upsert({
+        user_id: userId,
+        spoken_languages: spokenLangs,
+        teaching_languages: teachingLangs,
+        currency,
+        price_per_lesson: price,
+        bio,
+        country,
+        profile_pic_url
+      });
+
+      if (error) {
+        alert("Error saving profile: " + error.message);
+      } else {
+        alert("Profile saved successfully!");
       }
     }
 
-    function addLanguageToUI(type, lang) {
-      const ul = document.getElementById(type === 'spoken' ? 'spoken_languages_list' : 'teach_languages_list');
-      const li = document.createElement('li');
-      li.textContent = lang;
-      const remove = document.createElement('span');
-      remove.textContent = ' ❌';
-      remove.onclick = () => {
-        (type === 'spoken' ? spokenLanguages : teachLanguages).delete(lang);
-        li.remove();
-      };
-      li.appendChild(remove);
-      ul.appendChild(li);
-    }
-
-    document.getElementById('avatar').addEventListener('change', async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const user = await getUser();
-      const filePath = `avatars/${user.id}_${file.name}`;
-      const { data, error } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
-
-      if (!error) {
-        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        document.getElementById('avatar-preview').src = publicUrl;
-        document.getElementById('avatar-preview').dataset.url = publicUrl;
-      }
-    });
-
-    document.getElementById('save-btn').addEventListener('click', async () => {
-      const user = await getUser();
-      if (!user) return alert('Not logged in');
-
-      const profile = {
-        user_id: user.id,
-        name: document.getElementById('name').value,
-        language: [...teachLanguages],
-        language_spoken: [...spokenLanguages],
-        price: parseFloat(document.getElementById('price').value),
-        currency: document.getElementById('currency').value,
-        bio: document.getElementById('bio').value,
-        country: document.getElementById('country').value,
-        avatar_url: document.getElementById('avatar-preview').dataset.url || ''
-      };
-
-      const { error } = await supabase
-        .from('instructors')
-        .upsert(profile, { onConflict: ['user_id'] });
-
-      const status = document.getElementById('status');
-      status.textContent = error ? error.message : 'Profile saved!';
-      status.style.color = error ? 'red' : 'green';
-    });
-
-    (async () => {
-      const user = await getUser();
-      if (user) await preloadProfile(user);
-    })();
+    window.saveProfile = saveProfile;
   </script>
 </body>
 </html>
