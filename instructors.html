@@ -10,6 +10,7 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #f5f5f5;
     }
+
     header {
       background-color: #20bcba;
       color: white;
@@ -17,6 +18,7 @@
       text-align: center;
       font-size: 1.8rem;
     }
+
     .filters {
       display: flex;
       flex-wrap: wrap;
@@ -26,17 +28,20 @@
       padding: 1rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
     select {
       padding: 0.5rem;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
+
     .instructor-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
+      gap: 2rem;
       padding: 2rem;
     }
+
     .card {
       background: white;
       border-radius: 10px;
@@ -44,21 +49,26 @@
       padding: 1rem;
       text-align: center;
     }
+
     .card img {
       width: 100px;
       height: 100px;
       border-radius: 50%;
       object-fit: cover;
       margin-bottom: 1rem;
+      border: 2px solid #20bcba;
     }
+
     .card h3 {
       margin: 0.5rem 0;
       color: #1e1e1e;
     }
+
     .card p {
       margin: 0.3rem 0;
       color: #555;
     }
+
     .hire-btn {
       margin-top: 1rem;
       padding: 0.6rem 1.2rem;
@@ -68,9 +78,11 @@
       border-radius: 6px;
       cursor: pointer;
     }
+
     .hire-btn:hover {
       background-color: #1a9d9b;
     }
+
     @media (max-width: 600px) {
       .filters {
         flex-direction: column;
@@ -81,6 +93,7 @@
 </head>
 <body>
   <header>Lingua Bud Instructors</header>
+
   <div class="filters">
     <select id="languageFilter">
       <option value="">Filter by Language</option>
@@ -119,7 +132,6 @@
       }
 
       instructorGrid.innerHTML = '';
-
       const languagesSet = new Set();
 
       data.forEach(instructor => {
@@ -149,13 +161,13 @@
         const spoken = JSON.parse(instructor.languages_spoken || '[]');
         const teaching = JSON.parse(instructor.languages_teaching || '[]');
         const price = instructor.price_per_lesson || '';
-        const currency = instructor.currency || '';
-        const imgSrc = instructor.avatar_url || 'https://via.placeholder.com/100';
+        const currency = instructor.currency || '$';
+        const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
 
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-          <img src="${imgSrc}" alt="${instructor.name}'s avatar">
+          <img src="${avatar}" alt="${instructor.name}'s avatar">
           <h3>${instructor.name}</h3>
           <p><strong>Speaks:</strong> ${spoken.join(', ')}</p>
           <p><strong>Teaches:</strong> ${teaching.join(', ')}</p>
