@@ -269,7 +269,7 @@
         languages_teaching: teaching,
         price_per_lesson: parseFloat(document.getElementById('price').value) || null,
         currency: document.getElementById('currency').value,
-        bio: (document.getElementById('bio').value || "").trim(),
+        about_me: (document.getElementById('about_me').value || "").trim(),
         native_country: document.getElementById('country').value,
         avatar_url: avatar_url.startsWith('data:') ? null : avatar_url, // only store real URLs
         email: user.email,
@@ -296,7 +296,7 @@
         document.getElementById('name').value = data.name || '';
         document.getElementById('price').value = data.price_per_lesson || '';
         document.getElementById('currency').value = data.currency || '';
-        document.getElementById('bio').value = data.about_me || '';
+        document.getElementById('about_me').value = data.about_me || '';
         document.getElementById('country').value = data.native_country || '';
         // Avatar:
         if (data.avatar_url) {
@@ -335,7 +335,7 @@
       // Set email in UI?
     }
     function clearProfileFields() {
-      ["name", "price", "bio", "avatar"].forEach(id => {
+      ["name", "price", "about_me", "avatar"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = "";
       });
@@ -392,8 +392,8 @@
     <input type="number" id="price" min="0" placeholder="Enter price" />
     <select id="currency"></select>
 
-    <label for="bio">About Me</label>
-    <textarea id="bio" rows="5" placeholder="Write a short bio..."></textarea>
+    <label for="about_me">About Me</label>
+    <textarea id="about_me" rows="5" placeholder="Write a short bio..."></textarea>
 
     <label for="country">Native Country</label>
     <select id="country"></select>
