@@ -3,217 +3,209 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lingua Bud Instructors</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Instructors - Lingua Bud</title>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
   <style>
     body {
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      font-family: "Segoe UI", sans-serif;
       background-color: #f4f4f4;
       color: #333;
     }
 
     header {
       background-color: #20bcba;
-      padding: 1rem;
-      text-align: center;
       color: white;
-      font-size: 2rem;
+      padding: 20px;
+      text-align: center;
+      font-size: 28px;
     }
 
     .filters {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 1rem;
-      padding: 1rem;
-      background-color: #e8f6f6;
+      gap: 15px;
+      padding: 20px;
+      background-color: #e0f7f7;
     }
 
-    select {
-      padding: 0.5rem;
-      font-size: 1rem;
+    .filters select, .filters input {
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
 
-    .grid {
+    .instructor-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-      padding: 2rem;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 30px;
     }
 
     .card {
       background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.02);
     }
 
     .card img {
-      width: 120px;
-      height: 120px;
+      width: 100px;
+      height: 100px;
       object-fit: cover;
       border-radius: 50%;
-      margin-bottom: 1rem;
-      border: 2px solid #20bcba;
+      margin-bottom: 10px;
     }
 
     .card h3 {
-      margin: 0.5rem 0;
-      color: #0e3d4d;
+      margin: 10px 0 5px;
+      color: #002b3e;
     }
 
     .card p {
-      margin: 0.25rem 0;
+      margin: 4px 0;
+      font-size: 15px;
     }
 
     .hire-btn {
-      margin-top: 1rem;
+      margin-top: 10px;
       background-color: #20bcba;
       color: white;
       border: none;
-      padding: 0.6rem 1.2rem;
-      border-radius: 5px;
+      padding: 10px 16px;
+      border-radius: 6px;
       cursor: pointer;
     }
 
     .hire-btn:hover {
-      background-color: #179ca0;
+      background-color: #199f9e;
     }
   </style>
 </head>
 <body>
-  <header>Lingua Bud Instructors</header>
 
-  <div class="filters">
-    <select id="languageFilter">
-      <option value="">All Languages</option>
-    </select>
+<header>Meet Our Instructors</header>
 
-    <select id="priceFilter">
-      <option value="">All Prices</option>
-      <option value="low">Under $15</option>
-      <option value="mid">$15–30</option>
-      <option value="high">Over $30</option>
-    </select>
-  </div>
+<div class="filters">
+  <select id="languageFilter">
+    <option value="">Filter by Language</option>
+    <option value="English">English</option>
+    <option value="Spanish">Spanish</option>
+    <option value="Mandarin">Mandarin</option>
+    <option value="Arabic">Arabic</option>
+    <option value="Hindi">Hindi</option>
+    <option value="Portuguese">Portuguese</option>
+    <option value="Russian">Russian</option>
+    <option value="Japanese">Japanese</option>
+    <option value="French">French</option>
+    <option value="German">German</option>
+    <!-- Add more as needed -->
+  </select>
 
-  <div class="grid" id="instructorsGrid"></div>
+  <input type="number" id="priceFilter" placeholder="Max Price ($)">
+</div>
 
-  <script>
-    const supabase = createClient(
-      "https://fryhforpxlavbpimaljf.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI"
-    );
+<div class="instructor-grid" id="instructorGrid"></div>
 
-    async function fetchInstructors() {
-      const { data, error } = await supabase
-        .from("instructors")
-        .select("*")
-        .order("created_at", { ascending: false });
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-      if (error) {
-        console.error("Error fetching instructors:", error);
-        return;
-      }
+  const supabaseUrl = 'https://fryhforpxlavbpimaljf.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI';
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-      displayInstructors(data);
-      populateLanguageFilter(data);
+  const grid = document.getElementById('instructorGrid');
+  const languageFilter = document.getElementById('languageFilter');
+  const priceFilter = document.getElementById('priceFilter');
+
+  async function loadInstructors() {
+    let { data: instructors, error } = await supabase
+      .from('instructors')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      grid.innerHTML = '<p>Error loading instructors</p>';
+      return;
     }
 
-    function displayInstructors(instructors) {
-      const grid = document.getElementById("instructorsGrid");
-      grid.innerHTML = "";
+    displayInstructors(instructors);
+  }
 
-      instructors.forEach(instructor => {
-        const card = document.createElement("div");
-        card.className = "card";
+  function displayInstructors(instructors) {
+    grid.innerHTML = '';
 
-        const img = document.createElement("img");
-        img.src = instructor.avatar_url || "https://via.placeholder.com/120";
-        card.appendChild(img);
+    const language = languageFilter.value;
+    const maxPrice = parseFloat(priceFilter.value);
 
-        const name = document.createElement("h3");
-        name.textContent = instructor.name || "No Name";
-        card.appendChild(name);
+    const filtered = instructors.filter(instr => {
+      const teaches = instr.languages_teaching?.toLowerCase() || '';
+      const price = parseFloat(instr.price_per_lesson);
+      return (!language || teaches.includes(language.toLowerCase())) &&
+             (!maxPrice || (price && price <= maxPrice));
+    });
 
-        const speaks = document.createElement("p");
-        speaks.textContent = `Speaks: ${instructor.languages_spoken || "N/A"}`;
-        card.appendChild(speaks);
-
-        const teaches = document.createElement("p");
-        teaches.textContent = `Teaches: ${instructor.languages_teaching || "N/A"}`;
-        card.appendChild(teaches);
-
-        const about = document.createElement("p");
-        about.textContent = instructor.about_me || "No bio available.";
-        card.appendChild(about);
-
-        const price = document.createElement("p");
-        const currency = instructor.currency || "$";
-        price.textContent = `Price: ${currency}${instructor.price_per_lesson || "N/A"} / lesson`;
-        card.appendChild(price);
-
-        const hireBtn = document.createElement("button");
-        hireBtn.className = "hire-btn";
-        hireBtn.textContent = "Hire";
-        // You can attach link or action here
-        card.appendChild(hireBtn);
-
-        grid.appendChild(card);
-      });
+    if (filtered.length === 0) {
+      grid.innerHTML = '<p>No instructors match your filters.</p>';
+      return;
     }
 
-    function populateLanguageFilter(instructors) {
-      const langSet = new Set();
-      instructors.forEach(i => {
-        const langs = i.languages_teaching?.split(",") || [];
-        langs.forEach(lang => langSet.add(lang.trim()));
-      });
+    filtered.forEach(instr => {
+      const card = document.createElement('div');
+      card.className = 'card';
 
-      const languageFilter = document.getElementById("languageFilter");
-      langSet.forEach(lang => {
-        const option = document.createElement("option");
-        option.value = lang;
-        option.textContent = lang;
-        languageFilter.appendChild(option);
-      });
-    }
+      const img = document.createElement('img');
+      img.src = instr.avatar_url || 'https://via.placeholder.com/100';
+      img.alt = instr.name;
 
-    document.getElementById("languageFilter").addEventListener("change", applyFilters);
-    document.getElementById("priceFilter").addEventListener("change", applyFilters);
+      const name = document.createElement('h3');
+      name.textContent = instr.name || 'Unnamed';
 
-    async function applyFilters() {
-      const selectedLang = document.getElementById("languageFilter").value;
-      const selectedPrice = document.getElementById("priceFilter").value;
+      const speak = document.createElement('p');
+      speak.textContent = `Speaks: ${instr.languages_spoken || 'N/A'}`;
 
-      const { data } = await supabase
-        .from("instructors")
-        .select("*");
+      const teach = document.createElement('p');
+      teach.textContent = `Teaches: ${instr.languages_teaching || 'N/A'}`;
 
-      const filtered = data.filter(i => {
-        const langMatch = selectedLang
-          ? (i.languages_teaching?.includes(selectedLang))
-          : true;
+      const about = document.createElement('p');
+      about.textContent = instr.about_me || '';
 
-        const price = parseFloat(i.price_per_lesson || 0);
-        const priceMatch =
-          selectedPrice === "low" ? price < 15 :
-          selectedPrice === "mid" ? price >= 15 && price <= 30 :
-          selectedPrice === "high" ? price > 30 :
-          true;
+      const price = document.createElement('p');
+      const currency = instr.currency || '$';
+      price.textContent = `Price: ${currency}${instr.price_per_lesson || '?'}`;
 
-        return langMatch && priceMatch;
-      });
+      const button = document.createElement('button');
+      button.className = 'hire-btn';
+      button.textContent = 'Hire';
+      button.onclick = () => alert(`You selected ${instr.name}`);
 
-      displayInstructors(filtered);
-    }
+      card.appendChild(img);
+      card.appendChild(name);
+      card.appendChild(speak);
+      card.appendChild(teach);
+      card.appendChild(about);
+      card.appendChild(price);
+      card.appendChild(button);
 
-    fetchInstructors();
-  </script>
+      grid.appendChild(card);
+    });
+  }
+
+  languageFilter.addEventListener('change', loadInstructors);
+  priceFilter.addEventListener('input', loadInstructors);
+
+  loadInstructors();
+</script>
+
 </body>
 </html>
