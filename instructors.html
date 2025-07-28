@@ -2,38 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Available Instructors - Lingua Bud</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lingua Bud Instructors</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root {
-      --primary: #20bcba;
-      --white: #ffffff;
-      --light-grey: #f5f5f5;
-      --dark-grey: #333333;
-      --navy: #1a2a4f;
-    }
-
     body {
-      font-family: sans-serif;
       margin: 0;
-      padding: 0;
-      background: var(--light-grey);
-      color: var(--dark-grey);
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
     }
 
     header {
-      background: var(--navy);
-      color: var(--white);
+      background-color: #20bcba;
       padding: 1rem;
       text-align: center;
+      color: white;
+      font-size: 2rem;
     }
 
     .filters {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
+      gap: 1rem;
       padding: 1rem;
-      gap: 10px;
+      background-color: #e8f6f6;
     }
 
     select {
@@ -41,192 +35,185 @@
       font-size: 1rem;
     }
 
-    .instructor-card {
-      background: var(--white);
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1rem;
-      max-width: 400px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    }
-
-    .instructor-card h3 {
-      color: var(--primary);
-    }
-
-    .instructor-card button {
-      background: var(--primary);
-      color: var(--white);
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .instructor-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      background: var(--white);
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
       padding: 2rem;
-      border-radius: 10px;
-      max-width: 400px;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
     }
 
-    .modal-content input, .modal-content textarea {
-      width: 100%;
+    .card img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
       margin-bottom: 1rem;
-      padding: 0.5rem;
+      border: 2px solid #20bcba;
     }
 
-    .close {
-      float: right;
-      font-size: 1.5rem;
+    .card h3 {
+      margin: 0.5rem 0;
+      color: #0e3d4d;
+    }
+
+    .card p {
+      margin: 0.25rem 0;
+    }
+
+    .hire-btn {
+      margin-top: 1rem;
+      background-color: #20bcba;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 5px;
       cursor: pointer;
     }
 
-    @media (max-width: 600px) {
-      .instructor-card {
-        margin: 1rem 0.5rem;
-      }
+    .hire-btn:hover {
+      background-color: #179ca0;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h2>Available Instructors</h2>
-  </header>
+  <header>Lingua Bud Instructors</header>
 
   <div class="filters">
-    <select id="language-filter">
+    <select id="languageFilter">
       <option value="">All Languages</option>
     </select>
 
-    <select id="price-filter">
+    <select id="priceFilter">
       <option value="">All Prices</option>
-      <option value="low">Under $20</option>
-      <option value="mid">$20 - $50</option>
-      <option value="high">Over $50</option>
+      <option value="low">Under $15</option>
+      <option value="mid">$15–30</option>
+      <option value="high">Over $30</option>
     </select>
   </div>
 
-  <div class="instructor-grid" id="instructors-list"></div>
+  <div class="grid" id="instructorsGrid"></div>
 
-  <!-- Booking Modal -->
-  <div class="modal" id="booking-modal">
-    <div class="modal-content">
-      <span class="close" id="close-modal">&times;</span>
-      <h3>Book Instructor</h3>
-      <p id="booking-name"></p>
-      <input type="email" id="user-email" placeholder="Your email" required />
-      <textarea id="booking-message" placeholder="Your message/request"></textarea>
-      <button onclick="alert('Stripe coming soon!')">Pay & Book</button>
-    </div>
-  </div>
-
-  <script type="module">
-    import { supabase } from './lib/supabaseClient.js';
-
-    const instructorsDiv = document.getElementById('instructors-list');
-    const languageFilter = document.getElementById('language-filter');
-    const priceFilter = document.getElementById('price-filter');
-
-    let allInstructors = [];
+  <script>
+    const supabase = createClient(
+      "https://fryhforpxlavbpimaljf.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI"
+    );
 
     async function fetchInstructors() {
-      const { data, error } = await supabase.from('instructors').select('*');
+      const { data, error } = await supabase
+        .from("instructors")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) {
-        instructorsDiv.innerHTML = `<p>Error loading instructors.</p>`;
+        console.error("Error fetching instructors:", error);
         return;
       }
 
-      allInstructors = data;
+      displayInstructors(data);
       populateLanguageFilter(data);
-      renderInstructors(data);
+    }
+
+    function displayInstructors(instructors) {
+      const grid = document.getElementById("instructorsGrid");
+      grid.innerHTML = "";
+
+      instructors.forEach(instructor => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const img = document.createElement("img");
+        img.src = instructor.avatar_url || "https://via.placeholder.com/120";
+        card.appendChild(img);
+
+        const name = document.createElement("h3");
+        name.textContent = instructor.name || "No Name";
+        card.appendChild(name);
+
+        const speaks = document.createElement("p");
+        speaks.textContent = `Speaks: ${instructor.languages_spoken || "N/A"}`;
+        card.appendChild(speaks);
+
+        const teaches = document.createElement("p");
+        teaches.textContent = `Teaches: ${instructor.languages_teaching || "N/A"}`;
+        card.appendChild(teaches);
+
+        const about = document.createElement("p");
+        about.textContent = instructor.about_me || "No bio available.";
+        card.appendChild(about);
+
+        const price = document.createElement("p");
+        const currency = instructor.currency || "$";
+        price.textContent = `Price: ${currency}${instructor.price_per_lesson || "N/A"} / lesson`;
+        card.appendChild(price);
+
+        const hireBtn = document.createElement("button");
+        hireBtn.className = "hire-btn";
+        hireBtn.textContent = "Hire";
+        // You can attach link or action here
+        card.appendChild(hireBtn);
+
+        grid.appendChild(card);
+      });
     }
 
     function populateLanguageFilter(instructors) {
-      const allLanguages = new Set();
+      const langSet = new Set();
       instructors.forEach(i => {
-        if (i.languages) {
-          i.languages.split(',').forEach(lang => allLanguages.add(lang.trim()));
-        }
+        const langs = i.languages_teaching?.split(",") || [];
+        langs.forEach(lang => langSet.add(lang.trim()));
       });
 
-      allLanguages.forEach(lang => {
-        const option = document.createElement('option');
+      const languageFilter = document.getElementById("languageFilter");
+      langSet.forEach(lang => {
+        const option = document.createElement("option");
         option.value = lang;
         option.textContent = lang;
         languageFilter.appendChild(option);
       });
     }
 
-    function renderInstructors(data) {
-      instructorsDiv.innerHTML = '';
-      data.forEach(i => {
-        const card = document.createElement('div');
-        card.className = 'instructor-card';
-        card.innerHTML = `
-          <h3>${i.name}</h3>
-          <p><strong>Languages I Speak:</strong> ${i.languages_spoken}</p>
-          <p><strong>Bio:</strong> ${i.about_me}</p>
-          <p><strong>Price per Lesson:</strong> $${i.price_per_lesson}/hour</p>
-          <button onclick="openBooking('${i.name}')">Hire</button>
-        `;
-        instructorsDiv.appendChild(card);
+    document.getElementById("languageFilter").addEventListener("change", applyFilters);
+    document.getElementById("priceFilter").addEventListener("change", applyFilters);
+
+    async function applyFilters() {
+      const selectedLang = document.getElementById("languageFilter").value;
+      const selectedPrice = document.getElementById("priceFilter").value;
+
+      const { data } = await supabase
+        .from("instructors")
+        .select("*");
+
+      const filtered = data.filter(i => {
+        const langMatch = selectedLang
+          ? (i.languages_teaching?.includes(selectedLang))
+          : true;
+
+        const price = parseFloat(i.price_per_lesson || 0);
+        const priceMatch =
+          selectedPrice === "low" ? price < 15 :
+          selectedPrice === "mid" ? price >= 15 && price <= 30 :
+          selectedPrice === "high" ? price > 30 :
+          true;
+
+        return langMatch && priceMatch;
       });
+
+      displayInstructors(filtered);
     }
-
-    function filterInstructors() {
-      let filtered = [...allInstructors];
-
-      const lang = languageFilter.value;
-      const price = priceFilter.value;
-
-      if (lang) {
-        filtered = filtered.filter(i => i.languages && i.languages.toLowerCase().includes(lang.toLowerCase()));
-      }
-
-      if (price === 'low') filtered = filtered.filter(i => i.price < 20);
-      if (price === 'mid') filtered = filtered.filter(i => i.price >= 20 && i.price <= 50);
-      if (price === 'high') filtered = filtered.filter(i => i.price > 50);
-
-      renderInstructors(filtered);
-    }
-
-    languageFilter.addEventListener('change', filterInstructors);
-    priceFilter.addEventListener('change', filterInstructors);
 
     fetchInstructors();
-
-    // Booking modal logic
-    window.openBooking = function(name) {
-      document.getElementById('booking-name').textContent = `Instructor: ${name}`;
-      document.getElementById('booking-modal').style.display = 'flex';
-    }
-
-    document.getElementById('close-modal').addEventListener('click', () => {
-      document.getElementById('booking-modal').style.display = 'none';
-    });
   </script>
 </body>
 </html>
