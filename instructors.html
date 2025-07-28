@@ -3,209 +3,174 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Instructors - Lingua Bud</title>
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
+  <title>Lingua Bud Instructors</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      background-color: #f4f4f4;
-      color: #333;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
     }
-
     header {
       background-color: #20bcba;
       color: white;
-      padding: 20px;
+      padding: 1rem;
       text-align: center;
-      font-size: 28px;
+      font-size: 1.8rem;
     }
-
     .filters {
       display: flex;
       flex-wrap: wrap;
+      gap: 1rem;
       justify-content: center;
-      gap: 15px;
-      padding: 20px;
-      background-color: #e0f7f7;
+      background: #fff;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-
-    .filters select, .filters input {
-      padding: 8px;
-      font-size: 16px;
+    select {
+      padding: 0.5rem;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 4px;
     }
-
     .instructor-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-      padding: 30px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
     }
-
     .card {
-      background-color: white;
+      background: white;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: transform 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 1rem;
+      text-align: center;
     }
-
-    .card:hover {
-      transform: scale(1.02);
-    }
-
     .card img {
       width: 100px;
       height: 100px;
-      object-fit: cover;
       border-radius: 50%;
-      margin-bottom: 10px;
+      object-fit: cover;
+      margin-bottom: 1rem;
     }
-
     .card h3 {
-      margin: 10px 0 5px;
-      color: #002b3e;
+      margin: 0.5rem 0;
+      color: #1e1e1e;
     }
-
     .card p {
-      margin: 4px 0;
-      font-size: 15px;
+      margin: 0.3rem 0;
+      color: #555;
     }
-
     .hire-btn {
-      margin-top: 10px;
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
       background-color: #20bcba;
       color: white;
       border: none;
-      padding: 10px 16px;
       border-radius: 6px;
       cursor: pointer;
     }
-
     .hire-btn:hover {
-      background-color: #199f9e;
+      background-color: #1a9d9b;
+    }
+    @media (max-width: 600px) {
+      .filters {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   </style>
 </head>
 <body>
+  <header>Lingua Bud Instructors</header>
+  <div class="filters">
+    <select id="languageFilter">
+      <option value="">Filter by Language</option>
+    </select>
+    <select id="priceFilter">
+      <option value="">Filter by Max Price</option>
+      <option value="10">$10</option>
+      <option value="15">$15</option>
+      <option value="20">$20</option>
+      <option value="25">$25</option>
+      <option value="30">$30</option>
+    </select>
+  </div>
 
-<header>Meet Our Instructors</header>
+  <div class="instructor-grid" id="instructorGrid">
+    <!-- Cards go here -->
+  </div>
 
-<div class="filters">
-  <select id="languageFilter">
-    <option value="">Filter by Language</option>
-    <option value="English">English</option>
-    <option value="Spanish">Spanish</option>
-    <option value="Mandarin">Mandarin</option>
-    <option value="Arabic">Arabic</option>
-    <option value="Hindi">Hindi</option>
-    <option value="Portuguese">Portuguese</option>
-    <option value="Russian">Russian</option>
-    <option value="Japanese">Japanese</option>
-    <option value="French">French</option>
-    <option value="German">German</option>
-    <!-- Add more as needed -->
-  </select>
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-  <input type="number" id="priceFilter" placeholder="Max Price ($)">
-</div>
+    const supabase = createClient(
+      'https://fryhforpxlavbpimaljf.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI'
+    );
 
-<div class="instructor-grid" id="instructorGrid"></div>
+    const instructorGrid = document.getElementById('instructorGrid');
+    const languageFilter = document.getElementById('languageFilter');
+    const priceFilter = document.getElementById('priceFilter');
 
-<script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    async function loadInstructors() {
+      const { data, error } = await supabase.from('instructors').select('*');
+      if (error) {
+        console.error('Error fetching instructors:', error);
+        return;
+      }
 
-  const supabaseUrl = 'https://fryhforpxlavbpimaljf.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI';
-  const supabase = createClient(supabaseUrl, supabaseKey);
+      instructorGrid.innerHTML = '';
 
-  const grid = document.getElementById('instructorGrid');
-  const languageFilter = document.getElementById('languageFilter');
-  const priceFilter = document.getElementById('priceFilter');
+      const languagesSet = new Set();
 
-  async function loadInstructors() {
-    let { data: instructors, error } = await supabase
-      .from('instructors')
-      .select('*')
-      .order('created_at', { ascending: false });
+      data.forEach(instructor => {
+        const spoken = JSON.parse(instructor.languages_spoken || '[]');
+        const teaching = JSON.parse(instructor.languages_teaching || '[]');
+        spoken.forEach(lang => languagesSet.add(lang));
+        teaching.forEach(lang => languagesSet.add(lang));
+      });
 
-    if (error) {
-      grid.innerHTML = '<p>Error loading instructors</p>';
-      return;
+      languageFilter.innerHTML = `<option value="">Filter by Language</option>`;
+      [...languagesSet].sort().forEach(lang => {
+        languageFilter.innerHTML += `<option value="${lang}">${lang}</option>`;
+      });
+
+      const selectedLang = languageFilter.value;
+      const maxPrice = parseFloat(priceFilter.value);
+
+      const filtered = data.filter(instructor => {
+        const price = parseFloat(instructor.price_per_lesson);
+        const teaches = JSON.parse(instructor.languages_teaching || '[]');
+        const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
+        const matchesPrice = maxPrice ? price <= maxPrice : true;
+        return matchesLang && matchesPrice;
+      });
+
+      filtered.forEach(instructor => {
+        const spoken = JSON.parse(instructor.languages_spoken || '[]');
+        const teaching = JSON.parse(instructor.languages_teaching || '[]');
+        const price = instructor.price_per_lesson || '';
+        const currency = instructor.currency || '';
+        const imgSrc = instructor.avatar_url || 'https://via.placeholder.com/100';
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img src="${imgSrc}" alt="${instructor.name}'s avatar">
+          <h3>${instructor.name}</h3>
+          <p><strong>Speaks:</strong> ${spoken.join(', ')}</p>
+          <p><strong>Teaches:</strong> ${teaching.join(', ')}</p>
+          <p><strong>About Me:</strong> ${instructor.about_me || 'No bio yet'}</p>
+          <p><strong>Price:</strong> ${currency}${price} per hour</p>
+          <button class="hire-btn">Hire</button>
+        `;
+        instructorGrid.appendChild(card);
+      });
     }
 
-    displayInstructors(instructors);
-  }
+    languageFilter.addEventListener('change', loadInstructors);
+    priceFilter.addEventListener('change', loadInstructors);
 
-  function displayInstructors(instructors) {
-    grid.innerHTML = '';
-
-    const language = languageFilter.value;
-    const maxPrice = parseFloat(priceFilter.value);
-
-    const filtered = instructors.filter(instr => {
-      const teaches = instr.languages_teaching?.toLowerCase() || '';
-      const price = parseFloat(instr.price_per_lesson);
-      return (!language || teaches.includes(language.toLowerCase())) &&
-             (!maxPrice || (price && price <= maxPrice));
-    });
-
-    if (filtered.length === 0) {
-      grid.innerHTML = '<p>No instructors match your filters.</p>';
-      return;
-    }
-
-    filtered.forEach(instr => {
-      const card = document.createElement('div');
-      card.className = 'card';
-
-      const img = document.createElement('img');
-      img.src = instr.avatar_url || 'https://via.placeholder.com/100';
-      img.alt = instr.name;
-
-      const name = document.createElement('h3');
-      name.textContent = instr.name || 'Unnamed';
-
-      const speak = document.createElement('p');
-      speak.textContent = `Speaks: ${instr.languages_spoken || 'N/A'}`;
-
-      const teach = document.createElement('p');
-      teach.textContent = `Teaches: ${instr.languages_teaching || 'N/A'}`;
-
-      const about = document.createElement('p');
-      about.textContent = instr.about_me || '';
-
-      const price = document.createElement('p');
-      const currency = instr.currency || '$';
-      price.textContent = `Price: ${currency}${instr.price_per_lesson || '?'}`;
-
-      const button = document.createElement('button');
-      button.className = 'hire-btn';
-      button.textContent = 'Hire';
-      button.onclick = () => alert(`You selected ${instr.name}`);
-
-      card.appendChild(img);
-      card.appendChild(name);
-      card.appendChild(speak);
-      card.appendChild(teach);
-      card.appendChild(about);
-      card.appendChild(price);
-      card.appendChild(button);
-
-      grid.appendChild(card);
-    });
-  }
-
-  languageFilter.addEventListener('change', loadInstructors);
-  priceFilter.addEventListener('input', loadInstructors);
-
-  loadInstructors();
-</script>
-
+    loadInstructors();
+  </script>
 </body>
 </html>
