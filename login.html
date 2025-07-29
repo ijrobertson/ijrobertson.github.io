@@ -2,122 +2,155 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login / Sign Up - Lingua Bud</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@latest/css/pico.min.css"/>
+  <title>Lingua Bud - Instructor Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --primary: #20bcba;
+      --white: #ffffff;
+      --light-grey: #f5f5f5;
+      --dark-grey: #333333;
+      --navy: #1a2a4f;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--light-grey);
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 5rem auto;
+      background: var(--white);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--navy);
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      cursor: pointer;
+    }
+
+    p#status {
+      text-align: center;
+      color: red;
+      margin-top: 1rem;
+    }
+
+    .toggle {
+      text-align: center;
+      margin-top: 1rem;
+      color: var(--dark-grey);
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .toggle span {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    #confirm-password {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <main class="container" style="max-width: 500px;">
-    <h1 id="form-title">Log In</h1>
-
+  <div class="container">
+    <h2 id="form-title">Instructor Login</h2>
     <form id="auth-form">
-      <label for="email">Email</label>
-      <input type="email" id="email" required />
-
-      <label for="password">Password</label>
-      <input type="password" id="password" required />
-
-      <div id="confirm-password-container" style="display: none;">
-        <label for="confirm-password">Confirm Password</label>
-        <input type="password" id="confirm-password" />
-      </div>
-
-      <button type="submit" id="submit-btn">Log In</button>
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <input type="password" id="confirm-password" placeholder="Confirm Password" />
+      <button type="submit" id="auth-btn">Log In</button>
     </form>
 
-    <button id="toggle-form" class="secondary">Don't have an account? Sign Up</button>
+    <p id="status"></p>
+    <div class="toggle">
+      <span id="toggle-mode">Need an account? Sign up</span>
+    </div>
+  </div>
 
-    <p id="error-msg" style="color: red;"></p>
-    <p id="success-msg" style="color: green;"></p>
+  <script type="module">
+    import { supabase } from './lib/supabaseClient.js';
 
-    <button id="logout-btn" class="contrast" style="display: none; margin-top: 20px;">Log Out</button>
-  </main>
+    let isLogin = true;
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const supabase = createClient(
-      "https://fryhforpxlavbpimaljf.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI"
-    );
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm-password');
+    const authBtn = document.getElementById('auth-btn');
+    const toggleText = document.getElementById('toggle-mode');
+    const formTitle = document.getElementById('form-title');
+    const statusText = document.getElementById('status');
 
-    const form = document.getElementById("auth-form");
-    const toggleBtn = document.getElementById("toggle-form");
-    const submitBtn = document.getElementById("submit-btn");
-    const formTitle = document.getElementById("form-title");
-    const confirmPasswordContainer = document.getElementById("confirm-password-container");
-    const logoutBtn = document.getElementById("logout-btn");
+    toggleText.addEventListener('click', () => {
+      isLogin = !isLogin;
+      formTitle.textContent = isLogin ? 'Instructor Login' : 'Instructor Sign Up';
+      authBtn.textContent = isLogin ? 'Log In' : 'Sign Up';
+      toggleText.textContent = isLogin
+        ? 'Need an account? Sign up'
+        : 'Already have an account? Log in';
 
-    const errorMsg = document.getElementById("error-msg");
-    const successMsg = document.getElementById("success-msg");
-
-    let isSignUp = false;
-
-    // Toggle between Login and Sign Up
-    toggleBtn.addEventListener("click", () => {
-      isSignUp = !isSignUp;
-      if (isSignUp) {
-        formTitle.textContent = "Sign Up";
-        submitBtn.textContent = "Sign Up";
-        toggleBtn.textContent = "Already have an account? Log In";
-        confirmPasswordContainer.style.display = "block";
-      } else {
-        formTitle.textContent = "Log In";
-        submitBtn.textContent = "Log In";
-        toggleBtn.textContent = "Don't have an account? Sign Up";
-        confirmPasswordContainer.style.display = "none";
-      }
-      errorMsg.textContent = "";
-      successMsg.textContent = "";
+      confirmInput.style.display = isLogin ? 'none' : 'block';
+      statusText.textContent = '';
     });
 
-    // Check if already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        logoutBtn.style.display = "inline-block";
-        // Optional: redirect directly to dashboard
-        window.location.href = "dashboard.html";
-      }
-    });
-
-    // Auth form submission
-    form.addEventListener("submit", async (e) => {
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const confirmPassword = document.getElementById("confirm-password").value;
 
-      errorMsg.textContent = "";
-      successMsg.textContent = "";
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      const confirmPassword = confirmInput.value;
 
-      if (isSignUp) {
-        if (password !== confirmPassword) {
-          errorMsg.textContent = "Passwords do not match.";
-          return;
-        }
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-          errorMsg.textContent = error.message;
-        } else {
-          successMsg.textContent = "Sign up successful! Please check your email to confirm.";
-          form.reset();
-        }
-      } else {
+      if (!isLogin && password !== confirmPassword) {
+        statusText.textContent = 'Passwords do not match.';
+        return;
+      }
+
+      statusText.textContent = 'Processing...';
+
+      if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
-          errorMsg.textContent = error.message;
+          statusText.textContent = error.message;
         } else {
-          // Optional: you could check user's role here if you're using custom claims
-          window.location.href = "dashboard.html";
+          statusText.textContent = 'Logged in! Redirecting...';
+          window.location.href = '/dashboard.html';
+        }
+      } else {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+          statusText.textContent = error.message;
+        } else {
+          statusText.style.color = 'green';
+          statusText.textContent = 'Signup successful! Check your email to confirm.';
         }
       }
-    });
-
-    // Logout handler
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      logoutBtn.style.display = "none";
-      successMsg.textContent = "Logged out.";
-      window.location.reload();
     });
   </script>
 </body>
