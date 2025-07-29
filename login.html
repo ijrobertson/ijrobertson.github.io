@@ -139,8 +139,7 @@
         if (error) {
           statusText.textContent = error.message;
         } else {
-          statusText.textContent = 'Logged in! Redirecting...';
-          window.location.href = '/dashboard.html';
+          window.location.href = 'dashboard.html'; // ⬅️ Ensure this points to the right file
         }
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
