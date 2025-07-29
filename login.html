@@ -2,152 +2,184 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lingua Bud - Instructor Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login / Signup</title>
   <style>
-    :root {
-      --primary: #20bcba;
-      --white: #ffffff;
-      --light-grey: #f5f5f5;
-      --dark-grey: #333333;
-      --navy: #1a2a4f;
-    }
-
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: var(--light-grey);
+      background-color: #f4f4f4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
       margin: 0;
-      padding: 0;
     }
-
-    .container {
-      max-width: 400px;
-      margin: 5rem auto;
-      background: var(--white);
+    .card {
+      background: white;
       padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      width: 320px;
     }
-
     h2 {
       text-align: center;
-      color: var(--navy);
     }
-
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+    }
     input {
       width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0;
-      font-size: 1rem;
+      padding: 0.6rem;
+      margin-top: 0.3rem;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 4px;
     }
-
-    button {
+    .btn {
       width: 100%;
-      padding: 0.75rem;
-      background: var(--primary);
-      color: var(--white);
+      padding: 0.8rem;
+      margin-top: 1rem;
+      background-color: #20bcba;
       border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      margin-top: 0.5rem;
+      color: white;
+      font-weight: bold;
       cursor: pointer;
     }
-
-    p#status {
-      text-align: center;
-      color: red;
-      margin-top: 1rem;
+    .btn:hover {
+      background-color: #199c9a;
     }
-
-    .toggle {
+    .toggle-link {
       text-align: center;
       margin-top: 1rem;
-      color: var(--dark-grey);
-      font-size: 0.9rem;
       cursor: pointer;
-    }
-
-    .toggle span {
-      color: var(--primary);
+      color: #20bcba;
       text-decoration: underline;
     }
-
-    #confirm-password {
-      display: none;
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2 id="form-title">Instructor Login</h2>
-    <form id="auth-form">
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <input type="password" id="confirm-password" placeholder="Confirm Password" />
-      <button type="submit" id="auth-btn">Log In</button>
-    </form>
+  <div class="card">
+    <h2 id="form-title">Sign In</h2>
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@example.com" />
 
-    <p id="status"></p>
-    <div class="toggle">
-      <span id="toggle-mode">Need an account? Sign up</span>
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Enter password" />
+
+    <div id="confirm-password-container" style="display: none;">
+      <label>Confirm Password</label>
+      <input type="password" id="confirm-password" placeholder="Re-enter password" />
     </div>
+
+    <button class="btn" id="submit-btn">Sign In</button>
+    <div class="toggle-link" id="toggle-form">Don't have an account? Sign Up</div>
+
+    <div class="error" id="error-message"></div>
   </div>
 
   <script type="module">
-    import { supabase } from './lib/supabaseClient.js';
+    // Supabase setup
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    let isLogin = true;
+    const SUPABASE_URL = 'https://fryhforpxlavbpimaljf.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const confirmInput = document.getElementById('confirm-password');
-    const authBtn = document.getElementById('auth-btn');
-    const toggleText = document.getElementById('toggle-mode');
+    let isSignup = false;
+
+    const emailEl = document.getElementById('email');
+    const passwordEl = document.getElementById('password');
+    const confirmPasswordEl = document.getElementById('confirm-password');
+    const submitBtn = document.getElementById('submit-btn');
+    const toggleFormLink = document.getElementById('toggle-form');
     const formTitle = document.getElementById('form-title');
-    const statusText = document.getElementById('status');
+    const confirmContainer = document.getElementById('confirm-password-container');
+    const errorMessage = document.getElementById('error-message');
 
-    toggleText.addEventListener('click', () => {
-      isLogin = !isLogin;
-      formTitle.textContent = isLogin ? 'Instructor Login' : 'Instructor Sign Up';
-      authBtn.textContent = isLogin ? 'Log In' : 'Sign Up';
-      toggleText.textContent = isLogin
-        ? 'Need an account? Sign up'
-        : 'Already have an account? Log in';
-
-      confirmInput.style.display = isLogin ? 'none' : 'block';
-      statusText.textContent = '';
+    toggleFormLink.addEventListener('click', () => {
+      isSignup = !isSignup;
+      if (isSignup) {
+        formTitle.textContent = 'Sign Up';
+        submitBtn.textContent = 'Sign Up';
+        toggleFormLink.textContent = 'Already have an account? Sign In';
+        confirmContainer.style.display = 'block';
+      } else {
+        formTitle.textContent = 'Sign In';
+        submitBtn.textContent = 'Sign In';
+        toggleFormLink.textContent = "Don't have an account? Sign Up";
+        confirmContainer.style.display = 'none';
+      }
+      errorMessage.textContent = '';
     });
 
-    document.getElementById('auth-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    submitBtn.addEventListener('click', async () => {
+      const email = emailEl.value.trim();
+      const password = passwordEl.value.trim();
+      const confirmPassword = confirmPasswordEl.value.trim();
 
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      const confirmPassword = confirmInput.value;
+      errorMessage.textContent = '';
 
-      if (!isLogin && password !== confirmPassword) {
-        statusText.textContent = 'Passwords do not match.';
+      if (!email || !password) {
+        errorMessage.textContent = 'Please enter email and password.';
         return;
       }
 
-      statusText.textContent = 'Processing...';
-
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          statusText.textContent = error.message;
-        } else {
-          window.location.href = 'dashboard.html'; // ⬅️ Ensure this points to the right file
+      if (isSignup) {
+        if (password !== confirmPassword) {
+          errorMessage.textContent = 'Passwords do not match.';
+          return;
         }
-      } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) {
-          statusText.textContent = error.message;
+          errorMessage.textContent = error.message;
         } else {
-          statusText.style.color = 'green';
-          statusText.textContent = 'Signup successful! Check your email to confirm.';
+          alert('Check your email for confirmation and then sign in.');
+          toggleFormLink.click(); // switch to login
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          errorMessage.textContent = error.message;
+        } else {
+          // Check role in instructors table
+          const { data: profile, error: roleError } = await supabase
+            .from('instructors')
+            .select('user_id')
+            .eq('user_id', data.user.id)
+            .single();
+
+          if (roleError) {
+            // If user not found in instructors table, assume different role
+            window.location.href = '/student-dashboard.html';
+          } else {
+            // Redirect to instructor dashboard
+            window.location.href = '/dashboard.html';
+          }
+        }
+      }
+    });
+
+    // Optional: auto-redirect if already logged in
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        // Redirect automatically based on user role
+        const { data: profile } = await supabase
+          .from('instructors')
+          .select('user_id')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (profile) {
+          window.location.href = '/dashboard.html';
+        } else {
+          window.location.href = '/student-dashboard.html';
         }
       }
     });
