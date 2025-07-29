@@ -307,8 +307,8 @@
           document.getElementById('avatarPreview').style.display = 'none';
         }
         // Languages:
-        const spokenDiv = document.getElementById('spokenLanguages');
-        (data.spoken_languages || []).forEach(lang => {
+        const spokenDiv = document.getElementById('languages_spoken');
+        (data.languages_spoken || []).forEach(lang => {
           const span = document.createElement('span');
           span.className = 'tag';
           span.textContent = lang;
@@ -316,8 +316,8 @@
           span.onclick = () => span.remove();
           spokenDiv.appendChild(span);
         });
-        const teachingDiv = document.getElementById('teachingLanguages');
-        (data.teaching_languages || []).forEach(lang => {
+        const teachingDiv = document.getElementById('languages_teaching');
+        (data.languages_teaching || []).forEach(lang => {
           const span = document.createElement('span');
           span.className = 'tag';
           span.textContent = lang;
@@ -341,8 +341,8 @@
       });
       document.getElementById('avatarPreview').src = "#";
       document.getElementById('avatarPreview').style.display = 'none';
-      document.getElementById('spokenLanguages').innerHTML = "";
-      document.getElementById('teachingLanguages').innerHTML = "";
+      document.getElementById('languages_spoken').innerHTML = "";
+      document.getElementById('languages_teaching').innerHTML = "";
     }
   </script>
 </head>
@@ -374,19 +374,19 @@
     <input type="file" id="avatar" accept="image/*" />
     <img id="avatarPreview" class="profile-pic-preview" src="#" alt="" style="display:none;"/>
 
-    <label for="spokenLanguage">Languages You Speak</label>
+    <label for="languages_spoken">Languages You Speak</label>
     <div class="horizontal-btns" style="gap:0.5rem; align-items: center;">
-      <select id="spokenLanguage"></select>
+      <select id="languages_spoken"></select>
       <button type="button" id="add-spoken-btn">Add</button>
     </div>
-    <div id="spokenLanguages"></div>
+    <div id="languages_spoken"></div>
 
-    <label for="teachingLanguage">Languages You Teach</label>
+    <label for="language_teaching">Languages You Teach</label>
     <div class="horizontal-btns" style="gap:0.5rem; align-items: center;">
-      <select id="teachingLanguage"></select>
+      <select id="languages_teaching"></select>
       <button type="button" id="add-teaching-btn">Add</button>
     </div>
-    <div id="teachingLanguages"></div>
+    <div id="languages_teaching"></div>
 
     <label for="price">Price Per Lesson</label>
     <input type="number" id="price" min="0" placeholder="Enter price" />
