@@ -1,3 +1,4 @@
+<!-- login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,12 +85,12 @@
   </div>
 
   <script type="module">
-    // Supabase setup
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const SUPABASE_URL = 'https://fryhforpxlavbpimaljf.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(
+      'https://fryhforpxlavbpimaljf.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI'
+    );
 
     let isSignup = false;
 
@@ -104,17 +105,12 @@
 
     toggleFormLink.addEventListener('click', () => {
       isSignup = !isSignup;
-      if (isSignup) {
-        formTitle.textContent = 'Sign Up';
-        submitBtn.textContent = 'Sign Up';
-        toggleFormLink.textContent = 'Already have an account? Sign In';
-        confirmContainer.style.display = 'block';
-      } else {
-        formTitle.textContent = 'Sign In';
-        submitBtn.textContent = 'Sign In';
-        toggleFormLink.textContent = "Don't have an account? Sign Up";
-        confirmContainer.style.display = 'none';
-      }
+      formTitle.textContent = isSignup ? 'Sign Up' : 'Sign In';
+      submitBtn.textContent = isSignup ? 'Sign Up' : 'Sign In';
+      toggleFormLink.textContent = isSignup
+        ? 'Already have an account? Sign In'
+        : "Don't have an account? Sign Up";
+      confirmContainer.style.display = isSignup ? 'block' : 'none';
       errorMessage.textContent = '';
     });
 
@@ -135,51 +131,21 @@
           errorMessage.textContent = 'Passwords do not match.';
           return;
         }
+
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) {
           errorMessage.textContent = error.message;
         } else {
-          alert('Check your email for confirmation and then sign in.');
-          toggleFormLink.click(); // switch to login
+          alert('Check your email to confirm your account, then sign in.');
+          toggleFormLink.click();
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           errorMessage.textContent = error.message;
         } else {
-          // Check role in instructors table
-          const { data: profile, error: roleError } = await supabase
-            .from('instructors')
-            .select('user_id')
-            .eq('user_id', data.user.id)
-            .single();
-
-          if (roleError) {
-            // If user not found in instructors table, assume different role
-            window.location.href = '/student-dashboard.html';
-          } else {
-            // Redirect to instructor dashboard
-            window.location.href = '/dashboard.html';
-          }
-        }
-      }
-    });
-
-    // Optional: auto-redirect if already logged in
-    document.addEventListener('DOMContentLoaded', async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        // Redirect automatically based on user role
-        const { data: profile } = await supabase
-          .from('instructors')
-          .select('user_id')
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (profile) {
+          // ✅ ONLY REDIRECT TO INSTRUCTOR DASHBOARD
           window.location.href = '/dashboard.html';
-        } else {
-          window.location.href = '/student-dashboard.html';
         }
       }
     });
