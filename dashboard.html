@@ -165,6 +165,7 @@
 
     <label for="price">Price Per Lesson</label>
     <input type="number" id="price" min="0" placeholder="Enter price" />
+    <label for="currency">Currency</label>
     <select id="currency"></select>
 
     <label for="about_me">About Me</label>
@@ -179,5 +180,256 @@
     </div>
     <div id="status" class="status-message"></div>
   </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    // SETUP: Use your values
+    const SUPABASE_URL = "https://fryhforpxlavbpimaljf.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Your language/country/currency data
+    const languages = [
+      "Mandarin Chinese", "Spanish", "English", "Hindi", "Arabic", "Bengali", "Portuguese", "Russian", "Urdu", "Indonesian",
+      "German", "French", "Japanese", "Punjabi", "Turkish", "Vietnamese", "Korean", "Italian", "Thai", "Polish",
+      "Ukrainian", "Persian", "Dutch", "Romanian", "Czech", "Greek", "Hungarian", "Swedish", "Hebrew", "Danish",
+      "Norwegian", "Finnish", "Malayalam", "Telugu", "Tamil", "Marathi", "Swahili", "Javanese", "Burmese", "Serbian",
+      "Slovak", "Croatian", "Bulgarian", "Malay", "Filipino", "Amharic", "Zulu", "Kazakh", "Nepali", "Sinhala"
+    ];
+    const countries = [
+      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
+      "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia",
+      "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada",
+      "Cape Verde", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Brazzaville)", "Congo (Kinshasa)", "Costa Rica",
+      "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "East Timor", "Ecuador",
+      "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France",
+      "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau",
+      "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland",
+      "Israel", "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait",
+      "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+      "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico",
+      "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru",
+      "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman",
+      "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
+      "Puerto Rico", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent", "Samoa", "San Marino",
+      "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia",
+      "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
+      "São Tomé and Príncipe", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey",
+      "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu",
+      "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+    ];
+    const currencies = [
+      { code: "USD", name: "US Dollar", symbol: "$" },
+      { code: "EUR", name: "Euro", symbol: "€" },
+      { code: "GBP", name: "British Pound", symbol: "£" },
+      { code: "CAD", name: "Canadian Dollar", symbol: "$" },
+      { code: "AUD", name: "Australian Dollar", symbol: "$" },
+    ];
+
+    // TRACK selected languages in JS ARRAYS.
+    let spokenLanguages = [];
+    let teachingLanguages = [];
+    let avatarPublicUrl = null; // Holds public url after upload
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Populate selects on load
+      populateSelect('spokenLanguage', languages);
+      populateSelect('teachingLanguage', languages);
+      populateSelect('country', countries);
+      populateCurrency();
+
+      document.getElementById('add-spoken-btn').onclick = () => addLanguage('spoken');
+      document.getElementById('add-teaching-btn').onclick = () => addLanguage('teaching');
+      document.getElementById('save-btn').onclick = saveProfile;
+      document.getElementById('logout-btn').onclick = async () => {
+        await supabase.auth.signOut();
+        window.location.href = "login.html"; // Optional: redirect to login
+      };
+      document.getElementById('avatar').addEventListener('change', onAvatarFileSelect);
+
+      // Load user/profile
+      await loadProfile();
+    });
+
+    function populateSelect(id, items) {
+      const select = document.getElementById(id);
+      select.innerHTML = "";
+      items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item;
+        option.text = item;
+        select.appendChild(option);
+      });
+    }
+    function populateCurrency() {
+      const select = document.getElementById("currency");
+      select.innerHTML = "";
+      currencies.forEach(cur => {
+        const option = document.createElement('option');
+        option.value = cur.code;
+        option.text = `${cur.symbol} ${cur.code}`;
+        select.appendChild(option);
+      });
+    }
+
+    function addLanguage(type) {
+      const select = document.getElementById(type + 'Language');
+      const value = select.value;
+      const list = type === 'spoken' ? spokenLanguages : teachingLanguages;
+      const div = document.getElementById(type === 'spoken' ? 'languages_spoken' : 'languages_teaching');
+      if (!value || list.includes(value)) return;
+      list.push(value);
+      renderLanguages();
+    }
+    function renderLanguages() {
+      const spokenDiv = document.getElementById('languages_spoken');
+      spokenDiv.innerHTML = "";
+      spokenLanguages.forEach(lang => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = lang;
+        span.title = "Click to remove";
+        span.onclick = function() {
+          spokenLanguages = spokenLanguages.filter(l => l !== lang);
+          renderLanguages();
+        };
+        spokenDiv.appendChild(span);
+      });
+
+      const teachingDiv = document.getElementById('languages_teaching');
+      teachingDiv.innerHTML = "";
+      teachingLanguages.forEach(lang => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = lang;
+        span.title = "Click to remove";
+        span.onclick = function() {
+          teachingLanguages = teachingLanguages.filter(l => l !== lang);
+          renderLanguages();
+        };
+        teachingDiv.appendChild(span);
+      });
+    }
+
+    // Avatar upload logic
+    async function onAvatarFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setStatus("Please log in to upload a profile picture.", true);
+        return;
+      }
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = document.getElementById('avatarPreview');
+        img.src = reader.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+
+      // Upload to Supabase Storage (avatars bucket)
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}.${fileExt}`;
+      // upload replaces previous
+      const { error } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+      if (error) {
+        setStatus("Profile image upload failed: " + error.message, true);
+        return;
+      }
+      // Get public URL
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      avatarPublicUrl = data.publicUrl;
+      setStatus("Profile picture uploaded!", false);
+
+      // Automatically save the profile with new avatar url
+      await saveProfile(true); // true = avatar-only, see below
+    }
+
+    // Status helper message
+    function setStatus(msg, isError) {
+      const el = document.getElementById('status');
+      el.textContent = msg || "";
+      el.style.color = isError ? "red" : "green";
+    }
+
+    // Save profile; avatarOnly if true = do not clear form status
+    async function saveProfile(avatarOnly = false) {
+      if (!avatarOnly) setStatus(""); // clear only on full save
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setStatus('Please log in first.', true);
+        return;
+      }
+      // Use current field values
+      const profile = {
+        user_id: user.id,
+        name: (document.getElementById('name').value || "").trim(),
+        languages_spoken: spokenLanguages,
+        languages_teaching: teachingLanguages,
+        price_per_lesson: parseFloat(document.getElementById('price').value) || null,
+        currency: document.getElementById('currency').value,
+        about_me: (document.getElementById('about_me').value || "").trim(),
+        native_country: document.getElementById('country').value,
+        avatar_url: avatarPublicUrl, // always use latest uploaded, or null
+        email: user.email,
+      };
+      const { error } = await supabase.from('instructors').upsert(profile, { onConflict: 'user_id' });
+      if (error) setStatus("Error saving profile: " + error.message, true);
+      else if (!avatarOnly) setStatus("Profile saved successfully!", false);
+    }
+
+    // Load profile and fields
+    async function loadProfile() {
+      setStatus("Loading profile...");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setStatus("Not logged in!", true);
+        return;
+      }
+      // Get profile
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      // clear all first
+      document.getElementById('name').value = "";
+      document.getElementById('price').value = "";
+      document.getElementById('currency').value = "";
+      document.getElementById('about_me').value = "";
+      document.getElementById('country').value = "";
+      spokenLanguages = [];
+      teachingLanguages = [];
+      avatarPublicUrl = null;
+      document.getElementById('avatarPreview').src = "#";
+      document.getElementById('avatarPreview').style.display = 'none';
+
+      if (data) {
+        document.getElementById('name').value = data.name || "";
+        document.getElementById('price').value = data.price_per_lesson || "";
+        document.getElementById('currency').value = data.currency || "";
+        document.getElementById('about_me').value = data.about_me || "";
+        document.getElementById('country').value = data.native_country || "";
+        // Assign spoken and teaching language arrays and re-render tags
+        spokenLanguages = Array.isArray(data.languages_spoken) ? data.languages_spoken : [];
+        teachingLanguages = Array.isArray(data.languages_teaching) ? data.languages_teaching : [];
+        renderLanguages();
+        // Avatar public url
+        if (data.avatar_url) {
+          avatarPublicUrl = data.avatar_url;
+          document.getElementById('avatarPreview').src = avatarPublicUrl;
+          document.getElementById('avatarPreview').style.display = 'block';
+        }
+        setStatus("");
+      } else if (error && error.code !== "PGRST116") {
+        setStatus("Error loading profile: " + error.message, true);
+      } else {
+        setStatus("");
+      }
+    }
+  </script>
 </body>
 </html>
