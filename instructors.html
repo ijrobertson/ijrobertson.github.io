@@ -96,15 +96,10 @@
 
   <div class="filters">
     <select id="languageFilter">
-      <option value="">All Languages</option>
-      <option value="English">English</option>
-      <option value="Spanish">Spanish</option>
-      <option value="French">French</option>
-      <option value="Portuguese">Portuguese</option>
-      <option value="Italian">Italian</option>
+      <option value="">Filter by Language</option>
     </select>
     <select id="priceFilter">
-      <option value="">Any Price</option>
+      <option value="">Filter by Max Price</option>
       <option value="10">$10</option>
       <option value="15">$15</option>
       <option value="20">$20</option>
@@ -114,11 +109,11 @@
   </div>
 
   <div class="instructor-grid" id="instructorGrid">
-    <!-- Cards go here -->
+    <!-- Cards will appear here -->
   </div>
 
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
     const supabase = createClient(
       'https://fryhforpxlavbpimaljf.supabase.co',
@@ -129,37 +124,52 @@
     const languageFilter = document.getElementById('languageFilter');
     const priceFilter = document.getElementById('priceFilter');
 
-    async function loadInstructors() {
+    let allInstructors = [];
+
+    async function fetchInstructors() {
       const { data, error } = await supabase.from('instructors').select('*');
       if (error) {
         console.error('Error fetching instructors:', error);
         return;
       }
+      allInstructors = data;
+      populateLanguageOptions(data);
+      renderInstructors();
+    }
 
-      instructorGrid.innerHTML = '';
-      const languagesSet = new Set();
-
+    function populateLanguageOptions(data) {
+      const languages = new Set();
       data.forEach(instructor => {
-        const spoken = JSON.parse(instructor.languages_spoken || '[]');
-        const teaching = JSON.parse(instructor.languages_teaching || '[]');
-        spoken.forEach(lang => languagesSet.add(lang));
-        teaching.forEach(lang => languagesSet.add(lang));
+        try {
+          const teaching = JSON.parse(instructor.languages_teaching || '[]');
+          teaching.forEach(lang => languages.add(lang));
+        } catch {}
       });
 
       languageFilter.innerHTML = `<option value="">Filter by Language</option>`;
-      [...languagesSet].sort().forEach(lang => {
-        languageFilter.innerHTML += `<option value="${lang}">${lang}</option>`;
+      Array.from(languages).sort().forEach(lang => {
+        const option = document.createElement('option');
+        option.value = lang;
+        option.textContent = lang;
+        languageFilter.appendChild(option);
       });
+    }
 
-      const selectedLang = parseFloat(languageFilter.value);
+    function renderInstructors() {
+      const selectedLang = languageFilter.value;
       const maxPrice = parseFloat(priceFilter.value);
+      instructorGrid.innerHTML = '';
 
-      const filtered = data.filter(instructor => {
-        const price = parseFloat(instructor.price_per_lesson);
-        const teaches = JSON.parse(instructor.languages_teaching || '[]');
-        const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
-        const matchesPrice = maxPrice ? price <= maxPrice : true;
-        return matchesLang && matchesPrice;
+      const filtered = allInstructors.filter(instructor => {
+        try {
+          const teaches = JSON.parse(instructor.languages_teaching || '[]');
+          const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
+          const price = parseFloat(instructor.price_per_lesson);
+          const matchesPrice = maxPrice ? price <= maxPrice : true;
+          return matchesLang && matchesPrice;
+        } catch {
+          return false;
+        }
       });
 
       filtered.forEach(instructor => {
@@ -184,10 +194,10 @@
       });
     }
 
-    languageFilter.addEventListener('change', loadInstructors);
-    priceFilter.addEventListener('change', loadInstructors);
+    languageFilter.addEventListener('change', renderInstructors);
+    priceFilter.addEventListener('change', renderInstructors);
 
-    loadInstructors();
+    fetchInstructors();
   </script>
 </body>
 </html>
