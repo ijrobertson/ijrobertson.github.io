@@ -1,249 +1,356 @@
-<!-- student-dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>Student Dashboard - Lingua Bud</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Student Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #20bcba;
-      --primary-dark: #199c9a;
-      --light-gray: #f5f5f5;
-      --dark-gray: #333;
       --white: #ffffff;
+      --light-grey: #f5f5f5;
+      --dark-grey: #333333;
+      --navy: #1a2a4f;
+      --radius: 10px;
+      --shadow: 0 6px 18px rgba(0,0,0,0.08);
     }
-
+    * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--light-gray);
       margin: 0;
-      padding: 0;
-      color: var(--dark-gray);
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--light-grey);
+      color: #222;
     }
-
     header {
       background-color: var(--primary);
-      color: var(--white);
-      padding: 1rem;
+      color: white;
+      padding: 1rem 1.5rem;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      position: relative;
     }
-
     header h1 {
       margin: 0;
       font-size: 1.5rem;
     }
-
-    #avatarPreview {
+    #top-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    #avatar-small {
       width: 50px;
       height: 50px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid var(--white);
+      border: 2px solid white;
+    }
+    #logout-btn {
+      background: white;
+      color: var(--primary);
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
       cursor: pointer;
-    }
-
-    .container {
-      max-width: 700px;
-      margin: 2rem auto;
-      background: var(--white);
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    label {
-      display: block;
-      margin-top: 1rem;
-      margin-bottom: 0.5rem;
       font-weight: bold;
     }
-
-    input, textarea, select, button {
-      width: 100%;
-      padding: 0.7rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      margin-bottom: 1rem;
-      font-size: 1rem;
+    #logout-btn:hover {
+      background: #f0f0f0;
     }
-
-    button {
-      background-color: var(--primary);
-      color: var(--white);
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s;
+    .page {
+      max-width: 900px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1rem;
     }
-
-    button:hover {
-      background-color: var(--primary-dark);
+    .profile-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.5rem 1.5rem 2rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      position: relative;
     }
-
-    .status-message {
-      text-align: center;
+    .profile-left, .profile-right {
+      flex: 1 1 300px;
+      min-width: 280px;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
       font-weight: 600;
-      margin-bottom: 1rem;
+      color: var(--navy);
     }
-
-    @media (max-width: 768px) {
-      .container {
-        margin: 1rem;
-        padding: 1.5rem;
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 1rem;
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d3d3d3;
+      border-radius: 6px;
+      font-size: 1rem;
+      resize: vertical;
+    }
+    textarea {
+      min-height: 100px;
+    }
+    .save-btn {
+      margin-top: 1rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .save-btn:hover {
+      background: #199c9a;
+    }
+    .small-note {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 4px;
+    }
+    .status {
+      margin-top: 10px;
+      font-weight: 600;
+    }
+    .profile-picture-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .avatar-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--primary);
+      margin-bottom: 8px;
+    }
+    @media (max-width: 800px) {
+      .profile-card {
+        flex-direction: column;
       }
-
-      header h1 {
-        font-size: 1.2rem;
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      #top-right {
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Student Dashboard</h1>
-    <img id="avatarPreview" src="#" alt="Profile" style="display:none"/>
+    <div>
+      <h1>Student Dashboard</h1>
+    </div>
+    <div id="top-right">
+      <div id="profile-snapshot">
+        <img id="avatar-small" src="https://via.placeholder.com/50" alt="Profile" />
+      </div>
+      <button id="logout-btn">Log Out</button>
+    </div>
   </header>
 
-  <div class="container">
-    <div id="status" class="status-message"></div>
+  <div class="page">
+    <div class="profile-card">
+      <!-- Left / editable fields -->
+      <div class="profile-left">
+        <div class="section-title">Your Profile</div>
 
-    <label for="name">Full Name</label>
-    <input type="text" id="name" placeholder="Your name" />
+        <label for="name">Full Name</label>
+        <input id="name" type="text" placeholder="Your full name" />
 
-    <label for="about_me">About Me</label>
-    <textarea id="about_me" placeholder="Tell instructors about yourself..."></textarea>
+        <label for="native_country">Native Country</label>
+        <select id="native_country">
+          <!-- populated dynamically -->
+        </select>
 
-    <label for="learningLanguage">Learning Language</label>
-    <select id="learningLanguage"></select>
+        <label for="about_me">About Me</label>
+        <textarea id="about_me" placeholder="Tell us a bit about yourself"></textarea>
 
-    <label for="country">Country</label>
-    <select id="country"></select>
+        <button class="save-btn" id="save-profile">Save Profile</button>
+        <div class="status" id="status-msg"></div>
+      </div>
 
-    <label for="avatar">Profile Picture</label>
-    <input type="file" id="avatar" accept="image/*" />
-
-    <button id="save-btn">Save Profile</button>
-    <button id="logout-btn" style="background-color:#c0392b; margin-top:0.5rem;">Logout</button>
+      <!-- Right / avatar -->
+      <div class="profile-right">
+        <div class="section-title">Profile Picture</div>
+        <div class="profile-picture-wrapper">
+          <img id="avatarPreview" class="avatar-preview" src="https://via.placeholder.com/120" alt="Avatar" />
+          <input type="file" id="avatar" accept="image/*" />
+          <div class="small-note">Upload your profile picture. It will be stored publicly.</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    
-    const SUPABASE_URL = "https://fryhforpxlavbpimaljf.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI";
+
+    const SUPABASE_URL = 'https://fryhforpxlavbpimaljf.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI';
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const languages = ["Spanish", "French", "German", "Italian", "Japanese", "Mandarin Chinese", "Portuguese"];
-    const countries = ["United States", "Puerto Rico", "Canada", "United Kingdom", "Australia", "Mexico", "Brazil", "Spain"];
+    const countries = [
+      "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
+      "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia",
+      "Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada",
+      "Cape Verde","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Brazzaville)","Congo (Kinshasa)","Costa Rica",
+      "Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","East Timor","Ecuador",
+      "Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France",
+      "Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau",
+      "Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland",
+      "Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait",
+      "Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg",
+      "Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico",
+      "Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru",
+      "Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman",
+      "Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal",
+      "Puerto Rico","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent","Samoa","San Marino",
+      "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia",
+      "South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria",
+      "São Tomé and Príncipe","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey",
+      "Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
+      "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+    ];
 
-    // Populate dropdowns
-    const langSelect = document.getElementById("learningLanguage");
-    languages.forEach(lang => {
-      const option = document.createElement('option');
-      option.value = lang;
-      option.textContent = lang;
-      langSelect.appendChild(option);
-    });
+    // Utility to populate country select
+    function populateCountries() {
+      const sel = document.getElementById('native_country');
+      sel.innerHTML = '';
+      countries.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c;
+        o.textContent = c;
+        sel.appendChild(o);
+      });
+    }
 
-    const countrySelect = document.getElementById("country");
-    countries.forEach(c => {
-      const option = document.createElement('option');
-      option.value = c;
-      option.textContent = c;
-      countrySelect.appendChild(option);
-    });
-
-    const avatarInput = document.getElementById('avatar');
-    const avatarPreview = document.getElementById('avatarPreview');
-    avatarInput.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          avatarPreview.src = reader.result;
-          avatarPreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+    // Load user and initialize form
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         window.location.href = '/login.html';
         return;
       }
+      const user = session.user;
 
-      const { data, error } = await supabase
-        .from('students')
+      // Check role from users table
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
-      if (data) {
-        document.getElementById('name').value = data.name || '';
-        document.getElementById('about_me').value = data.about_me || '';
-        document.getElementById('learningLanguage').value = data.learning_language || '';
-        document.getElementById('country').value = data.country || '';
-        if (data.avatar_url) {
-          avatarPreview.src = data.avatar_url;
-          avatarPreview.style.display = 'block';
-        }
+      if (profileError) {
+        console.error(profileError);
+        document.getElementById('status-msg').textContent = 'Error loading profile.';
+        return;
       }
+
+      if (profile.role !== 'student') {
+        // If not student, redirect to instructor dashboard
+        window.location.href = '/dashboard.html';
+        return;
+      }
+
+      // Populate UI
+      document.getElementById('name').value = profile.name || '';
+      document.getElementById('about_me').value = profile.about_me || '';
+      if (profile.native_country) document.getElementById('native_country').value = profile.native_country;
+
+      // Avatar small and large
+      const avatarUrl = profile.avatar_url || 'https://via.placeholder.com/120';
+      document.getElementById('avatarPreview').src = avatarUrl;
+      document.getElementById('avatarPreview').style.display = 'block';
+      document.getElementById('avatar-small').src = avatarUrl;
+
+      // Populate countries dropdown
+      populateCountries();
     }
 
-    async function saveProfile() {
-      document.getElementById('status').textContent = '';
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return alert("Please log in first.");
+    // Upload preview
+    document.getElementById('avatar').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById('avatarPreview').src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
 
-      const name = document.getElementById('name').value;
-      const about_me = document.getElementById('about_me').value;
-      const learningLanguage = document.getElementById('learningLanguage').value;
-      const country = document.getElementById('country').value;
+    // Save profile
+    document.getElementById('save-profile').addEventListener('click', async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/login.html';
+        return;
+      }
+      const user = session.user;
 
-      let avatar_url = avatarPreview.src;
-      const avatarFile = avatarInput.files[0];
-      if (avatarFile && avatar_url.startsWith('data')) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const filePath = `avatars/${user.id}.${fileExt}`;
-        let { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile, { upsert: true });
-        if (!uploadError) {
-          const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      let avatar_url = document.getElementById('avatarPreview').src;
+      const fileInput = document.getElementById('avatar');
+      if (fileInput.files[0] && avatar_url.startsWith('data:')) {
+        const file = fileInput.files[0];
+        const ext = file.name.split('.').pop();
+        const path = `avatars/${user.id}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+        if (!uploadErr) {
+          const { data } = supabase.storage.from('avatars').getPublicUrl(path);
           avatar_url = data.publicUrl;
         }
       }
 
-      const { error } = await supabase.from('students').upsert({
-        user_id: user.id,
-        name,
-        about_me,
-        learning_language: learningLanguage,
-        country,
+      const updates = {
+        id: user.id,
+        name: document.getElementById('name').value.trim(),
+        native_country: document.getElementById('native_country').value,
+        about_me: document.getElementById('about_me').value.trim(),
         avatar_url: avatar_url.startsWith('data:') ? null : avatar_url,
-        email: user.email
-      }, { onConflict: 'user_id' });
+        role: 'student'
+      };
 
-      const status = document.getElementById('status');
+      const { error } = await supabase.from('users').upsert(updates, { onConflict: 'id' });
+      const statusEl = document.getElementById('status-msg');
       if (error) {
-        status.textContent = "Error saving profile: " + error.message;
-        status.style.color = "red";
+        statusEl.textContent = 'Error saving profile.';
+        statusEl.style.color = 'red';
+        console.error(error);
       } else {
-        status.textContent = "Profile saved successfully!";
-        status.style.color = "green";
+        statusEl.textContent = 'Saved!';
+        statusEl.style.color = 'green';
+        // update small snapshot
+        if (updates.avatar_url) {
+          document.getElementById('avatar-small').src = updates.avatar_url;
+        }
       }
-    }
+    });
 
-    document.getElementById('save-btn').addEventListener('click', saveProfile);
+    // Logout
     document.getElementById('logout-btn').addEventListener('click', async () => {
       await supabase.auth.signOut();
       window.location.href = '/login.html';
     });
 
-    loadProfile();
+    // Kick off
+    init();
   </script>
 </body>
 </html>
