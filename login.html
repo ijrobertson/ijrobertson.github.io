@@ -1,8 +1,8 @@
-<!-- login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login / Signup</title>
   <style>
     body {
@@ -19,7 +19,8 @@
       padding: 2rem;
       border-radius: 8px;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-      width: 320px;
+      width: 90%;
+      max-width: 360px;
     }
     h2 {
       text-align: center;
@@ -62,12 +63,16 @@
       margin-top: 0.5rem;
       text-align: center;
     }
+    @media (max-width: 500px) {
+      .card {
+        padding: 1.5rem;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <h2 id="form-title">Sign In</h2>
-    
     <label>Email</label>
     <input type="email" id="email" placeholder="you@example.com" />
 
@@ -80,7 +85,7 @@
     </div>
 
     <div id="role-container" style="display: none;">
-      <label>Role</label>
+      <label>Sign up as:</label>
       <select id="role">
         <option value="student">Student</option>
         <option value="instructor">Instructor</option>
@@ -89,12 +94,11 @@
 
     <button class="btn" id="submit-btn">Sign In</button>
     <div class="toggle-link" id="toggle-form">Don't have an account? Sign Up</div>
-
     <div class="error" id="error-message"></div>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabase = createClient(
       'https://fryhforpxlavbpimaljf.supabase.co',
@@ -107,11 +111,11 @@
     const passwordEl = document.getElementById('password');
     const confirmPasswordEl = document.getElementById('confirm-password');
     const roleEl = document.getElementById('role');
-    const roleContainer = document.getElementById('role-container');
     const submitBtn = document.getElementById('submit-btn');
     const toggleFormLink = document.getElementById('toggle-form');
     const formTitle = document.getElementById('form-title');
     const confirmContainer = document.getElementById('confirm-password-container');
+    const roleContainer = document.getElementById('role-container');
     const errorMessage = document.getElementById('error-message');
 
     toggleFormLink.addEventListener('click', () => {
@@ -145,57 +149,39 @@
           return;
         }
 
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { role }
+          }
+        });
 
         if (error) {
           errorMessage.textContent = error.message;
         } else {
-          // Insert into users table
-          const { error: insertError } = const userId = data?.user?.id;
-
-if (userId) {
-  const { error: insertError } = await supabase
-    .from('users')
-    .insert({ id: userId, email: email, role: role });
-
-  if (insertError) {
-    console.error('Insert error:', insertError.message);
-  }
-} else {
-  console.error('User ID not returned from signUp');
-}
-
-          if (insertError) {
-            console.error(insertError);
-          }
-
           alert('Check your email to confirm your account, then sign in.');
           toggleFormLink.click();
         }
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
 
         if (error) {
           errorMessage.textContent = error.message;
         } else {
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
-
-          if (userError || !userData) {
+          const userRole = data.user.user_metadata.role;
+          if (!userRole) {
             errorMessage.textContent = 'Unable to find user role.';
             return;
           }
 
-          // ✅ Redirect based on role
-          if (userData.role === 'instructor') {
+          if (userRole === 'instructor') {
             window.location.href = '/dashboard.html';
-          } else if (userData.role === 'student') {
-            window.location.href = '/student.html'; // Create this page later
           } else {
-            errorMessage.textContent = 'Unrecognized role.';
+            window.location.href = '/student-dashboard.html';
           }
         }
       }
