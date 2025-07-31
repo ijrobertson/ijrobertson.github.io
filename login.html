@@ -151,9 +151,19 @@
           errorMessage.textContent = error.message;
         } else {
           // Insert into users table
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert({ id: data.user.id, email: email, role: role });
+          const { error: insertError } = const userId = data?.user?.id;
+
+if (userId) {
+  const { error: insertError } = await supabase
+    .from('users')
+    .insert({ id: userId, email: email, role: role });
+
+  if (insertError) {
+    console.error('Insert error:', insertError.message);
+  }
+} else {
+  console.error('User ID not returned from signUp');
+}
 
           if (insertError) {
             console.error(insertError);
