@@ -97,95 +97,74 @@
     <div class="error" id="error-message"></div>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script>
+  const supabase = supabase.createClient('https://fryhforpxlavbpimaljf.supabase.co', 'YOUR_PUBLIC_ANON_KEY');
 
-    const supabase = createClient(
-      'https://fryhforpxlavbpimaljf.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI'
-    );
+  async function signUp() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    const role = document.querySelector('input[name="role"]:checked')?.value;
 
-    let isSignup = false;
+    if (!role) {
+      alert('Please select a role.');
+      return;
+    }
 
-    const emailEl = document.getElementById('email');
-    const passwordEl = document.getElementById('password');
-    const confirmPasswordEl = document.getElementById('confirm-password');
-    const roleEl = document.getElementById('role');
-    const submitBtn = document.getElementById('submit-btn');
-    const toggleFormLink = document.getElementById('toggle-form');
-    const formTitle = document.getElementById('form-title');
-    const confirmContainer = document.getElementById('confirm-password-container');
-    const roleContainer = document.getElementById('role-container');
-    const errorMessage = document.getElementById('error-message');
+    if (password !== confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
 
-    toggleFormLink.addEventListener('click', () => {
-      isSignup = !isSignup;
-      formTitle.textContent = isSignup ? 'Sign Up' : 'Sign In';
-      submitBtn.textContent = isSignup ? 'Sign Up' : 'Sign In';
-      toggleFormLink.textContent = isSignup
-        ? 'Already have an account? Sign In'
-        : "Don't have an account? Sign Up";
-      confirmContainer.style.display = isSignup ? 'block' : 'none';
-      roleContainer.style.display = isSignup ? 'block' : 'none';
-      errorMessage.textContent = '';
+    const { user, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          role: role,
+        }
+      }
     });
 
-    submitBtn.addEventListener('click', async () => {
-      const email = emailEl.value.trim();
-      const password = passwordEl.value.trim();
-      const confirmPassword = confirmPasswordEl.value.trim();
-      const role = roleEl.value;
+    if (error) {
+      alert("Signup error: " + error.message);
+    } else {
+      alert("Sign-up successful! Redirecting...");
+      // Redirect to appropriate dashboard
+      if (role === 'instructor') {
+        window.location.href = 'dashboard.html';
+      } else {
+        window.location.href = 'student-dashboard.html';
+      }
+    }
+  }
 
-      errorMessage.textContent = '';
+  async function signIn() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-      if (!email || !password) {
-        errorMessage.textContent = 'Please enter email and password.';
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert("Login error: " + error.message);
+    } else {
+      const user = data.user;
+      const role = user.user_metadata.role;
+      if (!role) {
+        alert("Unable to find user role.");
         return;
       }
 
-      if (isSignup) {
-        if (password !== confirmPassword) {
-          errorMessage.textContent = 'Passwords do not match.';
-          return;
-        }
-
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { role }
-          }
-        });
-
-        if (error) {
-          errorMessage.textContent = error.message;
-        } else {
-          alert('Check your email to confirm your account, then sign in.');
-          toggleFormLink.click();
-        }
+      if (role === 'instructor') {
+        window.location.href = 'dashboard.html';
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-
-        if (error) {
-          errorMessage.textContent = error.message;
-        } else {
-          const userRole = data.user.user_metadata.role;
-          if (!userRole) {
-            errorMessage.textContent = 'Unable to find user role.';
-            return;
-          }
-
-          if (userRole === 'instructor') {
-            window.location.href = '/dashboard.html';
-          } else {
-            window.location.href = '/student-dashboard.html';
-          }
-        }
+        window.location.href = 'student-dashboard.html';
       }
-    });
-  </script>
+    }
+  }
+</script>
 </body>
 </html>
