@@ -98,94 +98,106 @@
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const supabase = createClient(
-      'https://fryhforpxlavbpimaljf.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI'
-    );
+  const supabase = createClient(
+    'https://fryhforpxlavbpimaljf.supabase.co',
+    'your-anon-key-here' // Make sure this is correct
+  );
 
-    let isSignup = false;
+  let isSignup = false;
 
-    const emailEl = document.getElementById('email');
-    const passwordEl = document.getElementById('password');
-    const confirmPasswordEl = document.getElementById('confirm-password');
-    const roleEl = document.getElementById('role');
-    const submitBtn = document.getElementById('submit-btn');
-    const toggleFormLink = document.getElementById('toggle-form');
-    const formTitle = document.getElementById('form-title');
-    const confirmContainer = document.getElementById('confirm-password-container');
-    const roleContainer = document.getElementById('role-container');
-    const errorMessage = document.getElementById('error-message');
+  const emailEl = document.getElementById('email');
+  const passwordEl = document.getElementById('password');
+  const confirmPasswordEl = document.getElementById('confirm-password');
+  const roleEl = document.getElementById('role');
+  const submitBtn = document.getElementById('submit-btn');
+  const toggleFormLink = document.getElementById('toggle-form');
+  const formTitle = document.getElementById('form-title');
+  const confirmContainer = document.getElementById('confirm-password-container');
+  const roleContainer = document.getElementById('role-container');
+  const errorMessage = document.getElementById('error-message');
 
-    toggleFormLink.addEventListener('click', () => {
-      isSignup = !isSignup;
-      formTitle.textContent = isSignup ? 'Sign Up' : 'Sign In';
-      submitBtn.textContent = isSignup ? 'Sign Up' : 'Sign In';
-      toggleFormLink.textContent = isSignup
-        ? 'Already have an account? Sign In'
-        : "Don't have an account? Sign Up";
-      confirmContainer.style.display = isSignup ? 'block' : 'none';
-      roleContainer.style.display = isSignup ? 'block' : 'none';
-      errorMessage.textContent = '';
-    });
+  toggleFormLink.addEventListener('click', () => {
+    isSignup = !isSignup;
+    formTitle.textContent = isSignup ? 'Sign Up' : 'Sign In';
+    submitBtn.textContent = isSignup ? 'Sign Up' : 'Sign In';
+    toggleFormLink.textContent = isSignup
+      ? 'Already have an account? Sign In'
+      : "Don't have an account? Sign Up";
+    confirmContainer.style.display = isSignup ? 'block' : 'none';
+    roleContainer.style.display = isSignup ? 'block' : 'none';
+    errorMessage.textContent = '';
+  });
 
-    submitBtn.addEventListener('click', async () => {
-      const email = emailEl.value.trim();
-      const password = passwordEl.value.trim();
-      const confirmPassword = confirmPasswordEl.value.trim();
-      const role = roleEl.value;
+  submitBtn.addEventListener('click', async () => {
+    const email = emailEl.value.trim();
+    const password = passwordEl.value.trim();
+    const confirmPassword = confirmPasswordEl.value.trim();
+    const role = roleEl.value;
 
-      errorMessage.textContent = '';
+    errorMessage.textContent = '';
 
-      if (!email || !password) {
-        errorMessage.textContent = 'Please enter email and password.';
+    if (!email || !password) {
+      errorMessage.textContent = 'Please enter email and password.';
+      return;
+    }
+
+    if (isSignup) {
+      if (password !== confirmPassword) {
+        errorMessage.textContent = 'Passwords do not match.';
         return;
       }
 
-      if (isSignup) {
-        if (password !== confirmPassword) {
-          errorMessage.textContent = 'Passwords do not match.';
-          return;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { role }
         }
+      });
 
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { role }
-          }
-        });
-
-        if (error) {
-          errorMessage.textContent = error.message;
-        } else {
-          alert('Check your email to confirm your account, then sign in.');
-          toggleFormLink.click();
-        }
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-
-        if (error) {
-          errorMessage.textContent = error.message;
-        } else {
-          const userRole = data.user.user_metadata.role;
-          if (!userRole) {
-            errorMessage.textContent = 'Unable to find user role.';
-            return;
-          }
-
-          if (userRole === 'instructor') {
-            window.location.href = '/dashboard.html';
-          } else {
-            window.location.href = '/student-dashboard.html';
-          }
-        }
+      if (error) {
+        errorMessage.textContent = error.message;
+        return;
       }
-    });
-  </script>
+
+      alert('Check your email to confirm your account.');
+      toggleFormLink.click();
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        errorMessage.textContent = error.message;
+        return;
+      }
+
+      const userId = data.user.id;
+
+      // Now fetch the role from the `users` table
+      const { data: userProfile, error: profileError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (profileError || !userProfile) {
+        errorMessage.textContent = 'Unable to find user role.';
+        return;
+      }
+
+      const userRole = userProfile.role;
+
+      if (userRole === 'instructor') {
+        window.location.href = '/dashboard.html';
+      } else if (userRole === 'student') {
+        window.location.href = '/student-dashboard.html';
+      } else {
+        errorMessage.textContent = 'Unknown user role.';
+      }
+    }
+  });
+</script>
+
 </body>
 </html>
