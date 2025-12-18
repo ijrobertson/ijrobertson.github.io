@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Dashboard - Lingua Bud</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #20bcba;
+      --white: #ffffff;
+      --light-grey: #f5f5f5;
+      --dark-grey: #333333;
+      --navy: #1a2a4f;
+      --radius: 10px;
+      --shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--light-grey);
+      color: #222;
+    }
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    #top-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    #avatar-small {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
+    }
+    #logout-btn {
+      background: white;
+      color: var(--primary);
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #logout-btn:hover {
+      background: #f0f0f0;
+    }
+    .page {
+      max-width: 900px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1rem;
+    }
+    .profile-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.5rem 1.5rem 2rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      position: relative;
+    }
+    .profile-left, .profile-right {
+      flex: 1 1 300px;
+      min-width: 280px;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--navy);
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 1rem;
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d3d3d3;
+      border-radius: 6px;
+      font-size: 1rem;
+      resize: vertical;
+    }
+    textarea {
+      min-height: 100px;
+    }
+    .save-btn {
+      margin-top: 1rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .save-btn:hover {
+      background: #199c9a;
+    }
+    .small-note {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 4px;
+    }
+    .status {
+      margin-top: 10px;
+      font-weight: 600;
+    }
+    .profile-picture-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .avatar-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--primary);
+      margin-bottom: 8px;
+    }
+    @media (max-width: 800px) {
+      .profile-card {
+        flex-direction: column;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      #top-right {
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Student Dashboard</h1>
+    </div>
+    <div id="top-right">
+      <div id="profile-snapshot">
+        <img id="avatar-small" src="https://via.placeholder.com/50" alt="Profile" />
+      </div>
+      <button id="logout-btn">Log Out</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="profile-card">
+      <!-- Left / editable fields -->
+      <div class="profile-left">
+        <div class="section-title">Your Profile</div>
+
+        <label for="name">Full Name</label>
+        <input id="name" type="text" placeholder="Your full name" />
+
+        <label for="native_country">Native Country</label>
+        <select id="native_country">
+          <!-- populated dynamically -->
+        </select>
+
+        <label for="about_me">About Me</label>
+        <textarea id="about_me" placeholder="Tell us a bit about yourself"></textarea>
+
+        <button class="save-btn" id="save-profile">Save Profile</button>
+        <div class="status" id="status-msg"></div>
+      </div>
+
+      <!-- Right / avatar -->
+      <div class="profile-right">
+        <div class="section-title">Profile Picture</div>
+        <div class="profile-picture-wrapper">
+          <img id="avatarPreview" class="avatar-preview" src="https://via.placeholder.com/120" alt="Avatar" />
+          <label for="avatar_url">Profile Picture URL</label>
+          <input type="url" id="avatar_url" placeholder="https://example.com/your-photo.jpg" />
+          <div class="small-note">Paste a link to your profile picture.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      auth,
+      db,
+      signOut,
+      onAuthStateChanged,
+      doc,
+      getDoc,
+      setDoc
+    } from '../lib/firebaseClient.js';
+
+    const countries = [
+      "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
+      "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia",
+      "Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada",
+      "Cape Verde","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Brazzaville)","Congo (Kinshasa)","Costa Rica",
+      "Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","East Timor","Ecuador",
+      "Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France",
+      "Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau",
+      "Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland",
+      "Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait",
+      "Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg",
+      "Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico",
+      "Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru",
+      "Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman",
+      "Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal",
+      "Puerto Rico","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent","Samoa","San Marino",
+      "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia",
+      "South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria",
+      "São Tomé and Príncipe","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey",
+      "Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
+      "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+    ];
+
+    let currentUser = null;
+
+    // Utility to populate country select
+    function populateCountries() {
+      const sel = document.getElementById('native_country');
+      sel.innerHTML = '';
+      countries.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c;
+        o.textContent = c;
+        sel.appendChild(o);
+      });
+    }
+
+    // Load user profile
+    async function loadProfile() {
+      try {
+        const docSnap = await getDoc(doc(db, 'users', currentUser.uid));
+
+        if (docSnap.exists()) {
+          const profile = docSnap.data();
+
+          // Check role
+          if (profile.role !== 'student') {
+            window.location.href = 'dashboard.html';
+            return;
+          }
+
+          // Populate UI
+          document.getElementById('name').value = profile.name || '';
+          document.getElementById('about_me').value = profile.about_me || '';
+          document.getElementById('avatar_url').value = profile.avatar_url || '';
+          if (profile.native_country) {
+            document.getElementById('native_country').value = profile.native_country;
+          }
+
+          // Avatar display
+          const avatarUrl = profile.avatar_url || 'https://via.placeholder.com/120';
+          document.getElementById('avatarPreview').src = avatarUrl;
+          document.getElementById('avatar-small').src = avatarUrl;
+        }
+      } catch (error) {
+        console.error(error);
+        document.getElementById('status-msg').textContent = 'Error loading profile.';
+        document.getElementById('status-msg').style.color = 'red';
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      populateCountries();
+
+      // Avatar URL preview
+      document.getElementById('avatar_url').addEventListener('input', (e) => {
+        const url = e.target.value.trim();
+        const previewImg = document.getElementById('avatarPreview');
+        const smallImg = document.getElementById('avatar-small');
+        if (url) {
+          previewImg.src = url;
+          smallImg.src = url;
+          previewImg.onerror = () => {
+            previewImg.src = 'https://via.placeholder.com/120';
+            smallImg.src = 'https://via.placeholder.com/50';
+          };
+        } else {
+          previewImg.src = 'https://via.placeholder.com/120';
+          smallImg.src = 'https://via.placeholder.com/50';
+        }
+      });
+
+      // Listen for auth state
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          currentUser = user;
+          await loadProfile();
+        } else {
+          window.location.href = '../login.html';
+        }
+      });
+    });
+
+    // Save profile
+    document.getElementById('save-profile').addEventListener('click', async () => {
+      if (!currentUser) {
+        window.location.href = '../login.html';
+        return;
+      }
+
+      const statusEl = document.getElementById('status-msg');
+      statusEl.textContent = 'Saving...';
+      statusEl.style.color = '#666';
+
+      const updates = {
+        name: document.getElementById('name').value.trim(),
+        native_country: document.getElementById('native_country').value,
+        about_me: document.getElementById('about_me').value.trim(),
+        avatar_url: document.getElementById('avatar_url').value.trim(),
+        role: 'student',
+        email: currentUser.email,
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
+        statusEl.textContent = 'Saved!';
+        statusEl.style.color = 'green';
+
+        // Update small avatar
+        if (updates.avatar_url) {
+          document.getElementById('avatar-small').src = updates.avatar_url;
+        }
+      } catch (error) {
+        statusEl.textContent = 'Error saving profile.';
+        statusEl.style.color = 'red';
+        console.error(error);
+      }
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = '../login.html';
+    });
+  </script>
+</body>
+</html>
