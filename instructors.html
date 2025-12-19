@@ -83,6 +83,12 @@
       background-color: #1a9d9b;
     }
 
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
     @media (max-width: 600px) {
       .filters {
         flex-direction: column;
@@ -109,16 +115,11 @@
   </div>
 
   <div class="instructor-grid" id="instructorGrid">
-    <!-- Cards will appear here -->
+    <div class="loading">Loading instructors...</div>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-    const supabase = createClient(
-      'https://fryhforpxlavbpimaljf.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI'
-    );
+    import { db, collection, getDocs } from './lib/firebaseClient.js';
 
     const instructorGrid = document.getElementById('instructorGrid');
     const languageFilter = document.getElementById('languageFilter');
@@ -127,23 +128,27 @@
     let allInstructors = [];
 
     async function fetchInstructors() {
-      const { data, error } = await supabase.from('instructors').select('*');
-      if (error) {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'instructors'));
+        allInstructors = [];
+        querySnapshot.forEach((doc) => {
+          allInstructors.push({ id: doc.id, ...doc.data() });
+        });
+        populateLanguageOptions(allInstructors);
+        renderInstructors();
+      } catch (error) {
         console.error('Error fetching instructors:', error);
-        return;
+        instructorGrid.innerHTML = '<div class="loading">Error loading instructors. Please try again later.</div>';
       }
-      allInstructors = data;
-      populateLanguageOptions(data);
-      renderInstructors();
     }
 
     function populateLanguageOptions(data) {
       const languages = new Set();
       data.forEach(instructor => {
-        try {
-          const teaching = JSON.parse(instructor.languages_teaching || '[]');
+        const teaching = instructor.languages_teaching || [];
+        if (Array.isArray(teaching)) {
           teaching.forEach(lang => languages.add(lang));
-        } catch {}
+        }
       });
 
       languageFilter.innerHTML = `<option value="">Filter by Language</option>`;
@@ -155,39 +160,60 @@
       });
     }
 
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     function renderInstructors() {
       const selectedLang = languageFilter.value;
       const maxPrice = parseFloat(priceFilter.value);
       instructorGrid.innerHTML = '';
 
       const filtered = allInstructors.filter(instructor => {
-        try {
-          const teaches = JSON.parse(instructor.languages_teaching || '[]');
-          const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
-          const price = parseFloat(instructor.price_per_lesson);
-          const matchesPrice = maxPrice ? price <= maxPrice : true;
-          return matchesLang && matchesPrice;
-        } catch {
-          return false;
-        }
+        const teaches = instructor.languages_teaching || [];
+        const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
+        const price = parseFloat(instructor.price_per_lesson) || 0;
+        const matchesPrice = maxPrice ? price <= maxPrice : true;
+        return matchesLang && matchesPrice;
       });
 
+      if (filtered.length === 0) {
+        instructorGrid.innerHTML = '<div class="loading">No instructors found matching your filters.</div>';
+        return;
+      }
+
       filtered.forEach(instructor => {
-        const spoken = JSON.parse(instructor.languages_spoken || '[]');
-        const teaching = JSON.parse(instructor.languages_teaching || '[]');
+        const spoken = instructor.languages_spoken || [];
+        const teaching = instructor.languages_teaching || [];
         const price = instructor.price_per_lesson || '';
-        const currency = instructor.currency || '$';
+        const currency = escapeHtml(instructor.currency || '$');
         const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
+        const name = escapeHtml(instructor.name || 'Unnamed Instructor');
+        const aboutMe = escapeHtml(instructor.about_me || 'No bio yet');
+        const spokenText = Array.isArray(spoken) ? escapeHtml(spoken.join(', ')) : 'Not specified';
+        const teachingText = Array.isArray(teaching) ? escapeHtml(teaching.join(', ')) : 'Not specified';
 
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `
-          <img src="${avatar}" alt="${instructor.name}'s avatar">
-          <h3>${instructor.name}</h3>
-          <p><strong>Speaks:</strong> ${spoken.join(', ')}</p>
-          <p><strong>Teaches:</strong> ${teaching.join(', ')}</p>
-          <p><strong>About Me:</strong> ${instructor.about_me || 'No bio yet'}</p>
-          <p><strong>Price:</strong> ${currency}${price} per hour</p>
+
+        const img = document.createElement('img');
+        img.src = avatar;
+        img.alt = `${name}'s avatar`;
+        img.onerror = function() { this.src = 'https://via.placeholder.com/100'; };
+
+        const h3 = document.createElement('h3');
+        h3.textContent = instructor.name || 'Unnamed Instructor';
+
+        card.appendChild(img);
+        card.appendChild(h3);
+        card.innerHTML += `
+          <p><strong>Speaks:</strong> ${spokenText}</p>
+          <p><strong>Teaches:</strong> ${teachingText}</p>
+          <p><strong>About Me:</strong> ${aboutMe}</p>
+          <p><strong>Price:</strong> ${currency}${escapeHtml(String(price))} per hour</p>
           <button class="hire-btn">Hire</button>
         `;
         instructorGrid.appendChild(card);

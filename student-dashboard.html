@@ -192,20 +192,24 @@
         <div class="section-title">Profile Picture</div>
         <div class="profile-picture-wrapper">
           <img id="avatarPreview" class="avatar-preview" src="https://via.placeholder.com/120" alt="Avatar" />
-          <input type="file" id="avatar" accept="image/*" />
-          <div class="small-note">Upload your profile picture. It will be stored publicly.</div>
+          <label for="avatar_url">Profile Picture URL</label>
+          <input type="url" id="avatar_url" placeholder="https://example.com/your-photo.jpg" />
+          <div class="small-note">Paste a link to your profile picture.</div>
         </div>
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    const SUPABASE_URL = 'https://fryhforpxlavbpimaljf.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeWhmb3JweGxhdmJwaW1hbGpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4ODIwNDEsImV4cCI6MjA2NjQ1ODA0MX0.S5XbzUZeq4lCR2O-_siaSg86b6FQwLxvizF3yVvpidI';
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    import {
+      auth,
+      db,
+      signOut,
+      onAuthStateChanged,
+      doc,
+      getDoc,
+      setDoc
+    } from './lib/firebaseClient.js';
 
     const countries = [
       "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
@@ -230,6 +234,8 @@
       "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
     ];
 
+    let currentUser = null;
+
     // Utility to populate country select
     function populateCountries() {
       const sel = document.getElementById('native_country');
@@ -242,115 +248,115 @@
       });
     }
 
-    // Load user and initialize form
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.href = '/login.html';
-        return;
-      }
-      const user = session.user;
+    // Load user profile
+    async function loadProfile() {
+      try {
+        const docSnap = await getDoc(doc(db, 'users', currentUser.uid));
 
-      // Check role from users table
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+        if (docSnap.exists()) {
+          const profile = docSnap.data();
 
-      if (profileError) {
-        console.error(profileError);
+          // Check role
+          if (profile.role !== 'student') {
+            window.location.href = '/dashboard.html';
+            return;
+          }
+
+          // Populate UI
+          document.getElementById('name').value = profile.name || '';
+          document.getElementById('about_me').value = profile.about_me || '';
+          document.getElementById('avatar_url').value = profile.avatar_url || '';
+          if (profile.native_country) {
+            document.getElementById('native_country').value = profile.native_country;
+          }
+
+          // Avatar display
+          const avatarUrl = profile.avatar_url || 'https://via.placeholder.com/120';
+          document.getElementById('avatarPreview').src = avatarUrl;
+          document.getElementById('avatar-small').src = avatarUrl;
+        }
+      } catch (error) {
+        console.error(error);
         document.getElementById('status-msg').textContent = 'Error loading profile.';
-        return;
+        document.getElementById('status-msg').style.color = 'red';
       }
-
-      if (profile.role !== 'student') {
-        // If not student, redirect to instructor dashboard
-        window.location.href = '/dashboard.html';
-        return;
-      }
-
-      // Populate UI
-      document.getElementById('name').value = profile.name || '';
-      document.getElementById('about_me').value = profile.about_me || '';
-      if (profile.native_country) document.getElementById('native_country').value = profile.native_country;
-
-      // Avatar small and large
-      const avatarUrl = profile.avatar_url || 'https://via.placeholder.com/120';
-      document.getElementById('avatarPreview').src = avatarUrl;
-      document.getElementById('avatarPreview').style.display = 'block';
-      document.getElementById('avatar-small').src = avatarUrl;
-
-      // Populate countries dropdown
-      populateCountries();
     }
 
-    // Upload preview
-    document.getElementById('avatar').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        document.getElementById('avatarPreview').src = reader.result;
-      };
-      reader.readAsDataURL(file);
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      populateCountries();
+
+      // Avatar URL preview
+      document.getElementById('avatar_url').addEventListener('input', (e) => {
+        const url = e.target.value.trim();
+        const previewImg = document.getElementById('avatarPreview');
+        const smallImg = document.getElementById('avatar-small');
+        if (url) {
+          previewImg.src = url;
+          smallImg.src = url;
+          previewImg.onerror = () => {
+            previewImg.src = 'https://via.placeholder.com/120';
+            smallImg.src = 'https://via.placeholder.com/50';
+          };
+        } else {
+          previewImg.src = 'https://via.placeholder.com/120';
+          smallImg.src = 'https://via.placeholder.com/50';
+        }
+      });
+
+      // Listen for auth state
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          currentUser = user;
+          await loadProfile();
+        } else {
+          window.location.href = '/login.html';
+        }
+      });
     });
 
     // Save profile
     document.getElementById('save-profile').addEventListener('click', async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!currentUser) {
         window.location.href = '/login.html';
         return;
       }
-      const user = session.user;
 
-      let avatar_url = document.getElementById('avatarPreview').src;
-      const fileInput = document.getElementById('avatar');
-      if (fileInput.files[0] && avatar_url.startsWith('data:')) {
-        const file = fileInput.files[0];
-        const ext = file.name.split('.').pop();
-        const path = `avatars/${user.id}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
-        if (!uploadErr) {
-          const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-          avatar_url = data.publicUrl;
-        }
-      }
+      const statusEl = document.getElementById('status-msg');
+      statusEl.textContent = 'Saving...';
+      statusEl.style.color = '#666';
 
       const updates = {
-        id: user.id,
         name: document.getElementById('name').value.trim(),
         native_country: document.getElementById('native_country').value,
         about_me: document.getElementById('about_me').value.trim(),
-        avatar_url: avatar_url.startsWith('data:') ? null : avatar_url,
-        role: 'student'
+        avatar_url: document.getElementById('avatar_url').value.trim(),
+        role: 'student',
+        email: currentUser.email,
+        updatedAt: new Date().toISOString()
       };
 
-      const { error } = await supabase.from('users').upsert(updates, { onConflict: 'id' });
-      const statusEl = document.getElementById('status-msg');
-      if (error) {
-        statusEl.textContent = 'Error saving profile.';
-        statusEl.style.color = 'red';
-        console.error(error);
-      } else {
+      try {
+        await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
         statusEl.textContent = 'Saved!';
         statusEl.style.color = 'green';
-        // update small snapshot
+
+        // Update small avatar
         if (updates.avatar_url) {
           document.getElementById('avatar-small').src = updates.avatar_url;
         }
+      } catch (error) {
+        statusEl.textContent = 'Error saving profile.';
+        statusEl.style.color = 'red';
+        console.error(error);
       }
     });
 
     // Logout
     document.getElementById('logout-btn').addEventListener('click', async () => {
-      await supabase.auth.signOut();
+      await signOut(auth);
       window.location.href = '/login.html';
     });
-
-    // Kick off
-    init();
   </script>
 </body>
 </html>
