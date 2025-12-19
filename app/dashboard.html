@@ -412,10 +412,30 @@ onAuthStateChanged(auth, (user) => {
   const avatarPreview = document.getElementById("avatarPreview");
 
   avatarInput.addEventListener("change", async (e) => {
-    if (!currentUser) {
-      alert("Please log in first");
-      return;
-    }
+  if (!authReady) return; // wait for Firebase
+  if (!currentUser) return;
+
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+    await uploadBytes(avatarRef, file);
+    const downloadURL = await getDownloadURL(avatarRef);
+
+    await updateDoc(doc(db, "users", currentUser.uid), {
+      avatar_url: downloadURL
+    });
+
+    avatarPreview.src = downloadURL;
+    avatarPreview.style.display = "block";
+
+  } catch (err) {
+    console.error(err);
+    alert("Upload failed");
+  }
+});
+
 
     const file = e.target.files[0];
     if (!file) return;
