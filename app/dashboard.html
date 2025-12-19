@@ -392,17 +392,21 @@
   const db = getFirestore(app);
 
   // 4️⃣ Track logged-in user
-  let currentUser = null;
+ let currentUser = null;
+let authReady = false;
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUser = user;
-      console.log("Logged in as:", user.uid);
-    } else {
-      alert("Please log in first");
-      window.location.href = "login.html";
-    }
-  });
+onAuthStateChanged(auth, (user) => {
+  authReady = true;
+
+  if (user) {
+    currentUser = user;
+    console.log("User authenticated:", user.uid);
+  } else {
+    console.log("No user session");
+    window.location.href = "login.html";
+  }
+});
+
 
     const avatarInput = document.getElementById("avatar");
   const avatarPreview = document.getElementById("avatarPreview");
