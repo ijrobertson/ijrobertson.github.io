@@ -403,6 +403,49 @@
     }
   });
 
+    const avatarInput = document.getElementById("avatar");
+  const avatarPreview = document.getElementById("avatarPreview");
+
+  avatarInput.addEventListener("change", async (e) => {
+    if (!currentUser) {
+      alert("Please log in first");
+      return;
+    }
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const avatarRef = ref(
+        storage,
+        `avatars/${currentUser.uid}.${fileExt}`
+      );
+
+      // Upload to Firebase Storage
+      await uploadBytes(avatarRef, file);
+
+      // Get image URL
+      const downloadURL = await getDownloadURL(avatarRef);
+
+      // Save URL to Firestore
+      await updateDoc(
+        doc(db, "users", currentUser.uid),
+        { avatar_url: downloadURL }
+      );
+
+      // Show preview
+      avatarPreview.src = downloadURL;
+      avatarPreview.style.display = "block";
+
+      alert("Profile picture updated!");
+    } catch (err) {
+      console.error(err);
+      alert("Image upload failed");
+    }
+  });
+</script>
+
   
 </body>
 </html>
