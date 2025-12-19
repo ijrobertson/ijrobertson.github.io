@@ -417,10 +417,8 @@
 
     try {
       const fileExt = file.name.split('.').pop();
-      const avatarRef = ref(
-        storage,
-        `avatars/${currentUser.uid}.${fileExt}`
-      );
+      const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+
 
       // Upload to Firebase Storage
       await uploadBytes(avatarRef, file);
