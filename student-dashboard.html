@@ -46,6 +46,7 @@
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid white;
+      background-color: #f0f0f0;
     }
     #logout-btn {
       background: white;
@@ -128,13 +129,45 @@
       flex-direction: column;
       align-items: flex-start;
     }
+    .avatar-container {
+      position: relative;
+      display: inline-block;
+    }
     .avatar-preview {
       width: 120px;
       height: 120px;
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid var(--primary);
-      margin-bottom: 8px;
+      background-color: #f0f0f0;
+    }
+    .avatar-edit-btn {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      margin: 0;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .avatar-edit-btn:hover {
+      background: #199c9a;
+    }
+    .avatar-edit-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: white;
+    }
+    #avatar {
+      display: none;
     }
     @media (max-width: 800px) {
       .profile-card {
@@ -160,7 +193,7 @@
     </div>
     <div id="top-right">
       <div id="profile-snapshot">
-        <img id="avatar-small" src="https://via.placeholder.com/50" alt="Profile" />
+        <img id="avatar-small" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile" />
       </div>
       <button id="logout-btn">Log Out</button>
     </div>
@@ -191,10 +224,14 @@
       <div class="profile-right">
         <div class="section-title">Profile Picture</div>
         <div class="profile-picture-wrapper">
-          <img id="avatarPreview" class="avatar-preview" src="https://via.placeholder.com/120" alt="Avatar" />
-          <label for="avatar_url">Profile Picture URL</label>
-          <input type="url" id="avatar_url" placeholder="https://example.com/your-photo.jpg" />
-          <div class="small-note">Paste a link to your profile picture.</div>
+          <div class="avatar-container">
+            <img id="avatarPreview" class="avatar-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Avatar" />
+            <button type="button" class="avatar-edit-btn" id="avatar-edit-btn" title="Change photo">
+              <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            </button>
+            <input type="file" id="avatar" accept="image/*" />
+          </div>
+          <div class="small-note">Click the pencil to change your photo.</div>
         </div>
       </div>
     </div>
@@ -204,11 +241,15 @@
     import {
       auth,
       db,
+      storage,
       signOut,
       onAuthStateChanged,
       doc,
       getDoc,
-      setDoc
+      setDoc,
+      ref,
+      uploadBytes,
+      getDownloadURL
     } from './lib/firebaseClient.js';
 
     const countries = [
@@ -233,6 +274,9 @@
       "Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
       "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
     ];
+
+    // Default avatar placeholder (inline SVG)
+    const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
 
     let currentUser = null;
 
@@ -265,15 +309,16 @@
           // Populate UI
           document.getElementById('name').value = profile.name || '';
           document.getElementById('about_me').value = profile.about_me || '';
-          document.getElementById('avatar_url').value = profile.avatar_url || '';
           if (profile.native_country) {
             document.getElementById('native_country').value = profile.native_country;
           }
 
           // Avatar display
-          const avatarUrl = profile.avatar_url || 'https://via.placeholder.com/120';
-          document.getElementById('avatarPreview').src = avatarUrl;
-          document.getElementById('avatar-small').src = avatarUrl;
+          if (profile.avatar_url) {
+            document.getElementById('avatarPreview').src = profile.avatar_url;
+            document.getElementById('avatar-small').src = profile.avatar_url;
+            localStorage.setItem('student_avatar', profile.avatar_url);
+          }
         }
       } catch (error) {
         console.error(error);
@@ -284,23 +329,46 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
+      // Load cached avatar immediately
+      const cachedAvatar = localStorage.getItem('student_avatar');
+      if (cachedAvatar) {
+        document.getElementById('avatarPreview').src = cachedAvatar;
+        document.getElementById('avatar-small').src = cachedAvatar;
+      }
+
       populateCountries();
 
-      // Avatar URL preview
-      document.getElementById('avatar_url').addEventListener('input', (e) => {
-        const url = e.target.value.trim();
-        const previewImg = document.getElementById('avatarPreview');
-        const smallImg = document.getElementById('avatar-small');
-        if (url) {
-          previewImg.src = url;
-          smallImg.src = url;
-          previewImg.onerror = () => {
-            previewImg.src = 'https://via.placeholder.com/120';
-            smallImg.src = 'https://via.placeholder.com/50';
-          };
-        } else {
-          previewImg.src = 'https://via.placeholder.com/120';
-          smallImg.src = 'https://via.placeholder.com/50';
+      // Avatar edit button triggers file input
+      document.getElementById('avatar-edit-btn').onclick = () => {
+        document.getElementById('avatar').click();
+      };
+
+      // Avatar file upload
+      document.getElementById('avatar').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentUser) return;
+
+        const statusEl = document.getElementById('status-msg');
+        statusEl.textContent = 'Uploading photo...';
+        statusEl.style.color = '#666';
+
+        try {
+          const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+          await uploadBytes(avatarRef, file);
+          const downloadURL = await getDownloadURL(avatarRef);
+
+          await setDoc(doc(db, 'users', currentUser.uid),
+            { avatar_url: downloadURL }, { merge: true });
+
+          document.getElementById('avatarPreview').src = downloadURL;
+          document.getElementById('avatar-small').src = downloadURL;
+          localStorage.setItem('student_avatar', downloadURL);
+          statusEl.textContent = 'Photo uploaded!';
+          statusEl.style.color = 'green';
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = 'Photo upload failed: ' + err.message;
+          statusEl.style.color = 'red';
         }
       });
 
@@ -330,7 +398,6 @@
         name: document.getElementById('name').value.trim(),
         native_country: document.getElementById('native_country').value,
         about_me: document.getElementById('about_me').value.trim(),
-        avatar_url: document.getElementById('avatar_url').value.trim(),
         role: 'student',
         email: currentUser.email,
         updatedAt: new Date().toISOString()
@@ -340,11 +407,6 @@
         await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
         statusEl.textContent = 'Saved!';
         statusEl.style.color = 'green';
-
-        // Update small avatar
-        if (updates.avatar_url) {
-          document.getElementById('avatar-small').src = updates.avatar_url;
-        }
       } catch (error) {
         statusEl.textContent = 'Error saving profile.';
         statusEl.style.color = 'red';

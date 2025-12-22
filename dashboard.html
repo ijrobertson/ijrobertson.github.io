@@ -67,11 +67,47 @@
     .secondary {
       background: #c0392b;
     }
-    .profile-pic-preview {
-      max-width: 150px;
-      max-height: 150px;
+    .avatar-wrapper {
+      position: relative;
+      display: inline-block;
       margin-bottom: 1rem;
+    }
+    .profile-pic-preview {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
       border-radius: 50%;
+      border: 3px solid #20bcba;
+      background-color: #f0f0f0;
+    }
+    .avatar-edit-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      padding: 0;
+      margin: 0;
+      border-radius: 50%;
+      background: #20bcba;
+      border: 2px solid white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .avatar-edit-btn:hover {
+      background: #199c9a;
+    }
+    .avatar-edit-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: white;
+    }
+    #avatar {
+      display: none;
     }
     .horizontal-btns {
       display: flex;
@@ -94,14 +130,14 @@
     <label for="name">Full Name</label>
     <input type="text" id="name" />
 
-    <label for="avatar">Profile Picture</label>
-<input type="file" id="avatar" accept="image/*" />
-
-<img
-  id="avatarPreview"
-  class="profile-pic-preview"
-  style="display:none;"
-/>
+    <label>Profile Picture</label>
+    <div class="avatar-wrapper">
+      <img id="avatarPreview" class="profile-pic-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile" />
+      <button type="button" class="avatar-edit-btn" id="avatar-edit-btn" title="Change photo">
+        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+      </button>
+      <input type="file" id="avatar" accept="image/*" />
+    </div>
 
 
     <label for="spokenLanguage">Languages You Speak</label>
@@ -140,12 +176,16 @@
     import {
       auth,
       db,
+      storage,
       signOut,
       onAuthStateChanged,
       doc,
       getDoc,
-      setDoc
-    } from '../lib/firebaseClient.js';
+      setDoc,
+      ref,
+      uploadBytes,
+      getDownloadURL
+    } from './lib/firebaseClient.js';
 
     // Language/country/currency data
     const languages = [
@@ -185,12 +225,21 @@
       { code: "AUD", name: "Australian Dollar", symbol: "$" },
     ];
 
+    // Default avatar placeholder (inline SVG)
+    const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+
     // Track selected languages
     let spokenLanguages = [];
     let teachingLanguages = [];
     let currentUser = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
+      // Load cached avatar immediately
+      const cachedAvatar = localStorage.getItem('instructor_avatar');
+      if (cachedAvatar) {
+        document.getElementById('avatarPreview').src = cachedAvatar;
+      }
+
       populateSelect('spokenLanguage', languages);
       populateSelect('teachingLanguage', languages);
       populateSelect('country', countries);
@@ -201,19 +250,34 @@
       document.getElementById('save-btn').onclick = saveProfile;
       document.getElementById('logout-btn').onclick = async () => {
         await signOut(auth);
-        window.location.href = "../login.html";
+        window.location.href = "./login.html";
       };
 
-      // Avatar URL preview
-      document.getElementById('avatar_url').addEventListener('input', (e) => {
-        const url = e.target.value.trim();
-        const img = document.getElementById('avatarPreview');
-        if (url) {
-          img.src = url;
-          img.style.display = 'block';
-          img.onerror = () => { img.style.display = 'none'; };
-        } else {
-          img.style.display = 'none';
+      // Avatar edit button triggers file input
+      document.getElementById('avatar-edit-btn').onclick = () => {
+        document.getElementById('avatar').click();
+      };
+
+      // Avatar file upload
+      document.getElementById('avatar').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentUser) return;
+
+        setStatus("Uploading photo...");
+        try {
+          const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+          await uploadBytes(avatarRef, file);
+          const downloadURL = await getDownloadURL(avatarRef);
+
+          await setDoc(doc(db, 'instructors', currentUser.uid),
+            { avatar_url: downloadURL }, { merge: true });
+
+          document.getElementById('avatarPreview').src = downloadURL;
+          localStorage.setItem('instructor_avatar', downloadURL);
+          setStatus("Photo uploaded!", false);
+        } catch (err) {
+          console.error(err);
+          setStatus("Photo upload failed: " + err.message, true);
         }
       });
 
@@ -224,7 +288,7 @@
           await loadProfile();
         } else {
           setStatus("Not logged in!", true);
-          window.location.href = "../login.html";
+          window.location.href = "./login.html";
         }
       });
     });
@@ -311,13 +375,12 @@
         currency: document.getElementById('currency').value,
         about_me: (document.getElementById('about_me').value || "").trim(),
         native_country: document.getElementById('country').value,
-        avatar_url: (document.getElementById('avatar_url').value || "").trim(),
         email: currentUser.email,
         updatedAt: new Date().toISOString()
       };
 
       try {
-        await setDoc(doc(db, 'instructors', currentUser.uid), profile);
+        await setDoc(doc(db, 'instructors', currentUser.uid), profile, { merge: true });
         setStatus("Profile saved successfully!", false);
       } catch (error) {
         setStatus("Error saving profile: " + error.message, true);
@@ -336,11 +399,9 @@
         document.getElementById('currency').value = "USD";
         document.getElementById('about_me').value = "";
         document.getElementById('country').value = "";
-        document.getElementById('avatar_url').value = "";
         spokenLanguages = [];
         teachingLanguages = [];
-        document.getElementById('avatarPreview').src = "#";
-        document.getElementById('avatarPreview').style.display = 'none';
+        document.getElementById('avatarPreview').src = defaultAvatar;
 
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -349,7 +410,6 @@
           document.getElementById('currency').value = data.currency || "USD";
           document.getElementById('about_me').value = data.about_me || "";
           document.getElementById('country').value = data.native_country || "";
-          document.getElementById('avatar_url').value = data.avatar_url || "";
 
           spokenLanguages = Array.isArray(data.languages_spoken) ? data.languages_spoken : [];
           teachingLanguages = Array.isArray(data.languages_teaching) ? data.languages_teaching : [];
@@ -357,7 +417,7 @@
 
           if (data.avatar_url) {
             document.getElementById('avatarPreview').src = data.avatar_url;
-            document.getElementById('avatarPreview').style.display = 'block';
+            localStorage.setItem('instructor_avatar', data.avatar_url);
           }
         }
         setStatus("");
@@ -366,9 +426,5 @@
       }
     }
   </script>
-
-<script type="module">   // 1️⃣ Import Firebase modules   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";   import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";    // 2️⃣ Your Firebase config (COPY from your login page)   const firebaseConfig = {   apiKey: "AIzaSyCQkMgY7a6t-qEcBiAO2tAhsdwbEIy9KKI",   authDomain: "linguabud-9a942.firebaseapp.com",   projectId: "linguabud-9a942",   storageBucket: "linguabud-9a942.firebasestorage.app",   messagingSenderId: "752734519356",   appId: "1:752734519356:web:d85200d4c3dd6728e44339",   measurementId: "G-2BEQ0MFFR6" };    // 3️⃣ Initialize Firebase   const app = initializeApp(firebaseConfig);   const auth = getAuth(app);   const storage = getStorage(app);   const db = getFirestore(app);    // 4️⃣ Track logged-in user  let currentUser = null; let authReady = false;  onAuthStateChanged(auth, (user) => {   authReady = true;    if (user) {     currentUser = user;     console.log("User authenticated:", user.uid);   } else {     console.log("No user session");     window.location.href = "login.html";   } });       const avatarInput = document.getElementById("avatar");   const avatarPreview = document.getElementById("avatarPreview");    avatarInput.addEventListener("change", async (e) => {   if (!authReady) return; // wait for Firebase   if (!currentUser) return;    const file = e.target.files[0];   if (!file) return;    try {     const avatarRef = ref(storage, `avatars/${currentUser.uid}`);     await uploadBytes(avatarRef, file);     const downloadURL = await getDownloadURL(avatarRef);      await updateDoc(doc(db, "users", currentUser.uid), {       avatar_url: downloadURL     });      avatarPreview.src = downloadURL;     avatarPreview.style.display = "block";    } catch (err) {     console.error(err);     alert("Upload failed");   } });       const file = e.target.files[0];     if (!file) return;      try {       const fileExt = file.name.split('.').pop();       const avatarRef = ref(storage, `avatars/${currentUser.uid}`);         // Upload to Firebase Storage       await uploadBytes(avatarRef, file);        // Get image URL       const downloadURL = await getDownloadURL(avatarRef);        // Save URL to Firestore       await updateDoc(         doc(db, "users", currentUser.uid),         { avatar_url: downloadURL }       );        // Show preview       avatarPreview.src = downloadURL;       avatarPreview.style.display = "block";        alert("Profile picture updated!");     } catch (err) {       console.error(err);       alert("Image upload failed");     }   }); </script>
-
-  
 </body>
 </html>
