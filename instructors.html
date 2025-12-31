@@ -60,6 +60,34 @@
             display: inline-block;
         }
 
+        /* Notification badge on profile picture */
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            border: 2px solid white;
+            animation: badgePulse 2s infinite;
+        }
+
+        .notification-badge.show {
+            display: flex;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
         .profile-dropdown-content {
             position: fixed;
             right: 1rem;
@@ -118,6 +146,10 @@
             transform: translateY(0);
         }
 
+        .profile-dropdown-content a.messages-link {
+            position: relative;
+        }
+
         .profile-dropdown-content a.messages-link i {
             transition: color 0.2s;
         }
@@ -125,6 +157,24 @@
         .profile-dropdown-content a.messages-link.has-unread i {
             color: #dc3545;
             animation: pulse 2s infinite;
+        }
+
+        /* Unread count badge in dropdown */
+        .unread-count {
+            display: none;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .unread-count.show {
+            display: inline-block;
         }
 
         @keyframes pulse {
@@ -698,9 +748,13 @@
             <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
                 <div class="profile-dropdown">
                     <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
                     <div class="profile-dropdown-content">
                         <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
-                        <a href="messages.html" class="messages-link" id="messagesLink"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="messages.html" class="messages-link" id="messagesLink">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span class="unread-count" id="unreadCount">0</span>
+                        </a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
@@ -1265,14 +1319,11 @@
         async function loadUnreadMessageCount() {
             if (!auth.currentUser) return;
 
-            console.log('📬 Setting up unread message listener...');
-
             const q = query(
                 collection(db, 'conversations'),
                 where('participants', 'array-contains', auth.currentUser.uid)
             );
 
-            // Listen for real-time updates
             onSnapshot(q, (snapshot) => {
                 let totalUnread = 0;
 
@@ -1283,14 +1334,33 @@
                     }
                 });
 
-                console.log(`📬 Unread messages: ${totalUnread}`);
-
                 const messagesLink = document.getElementById('messagesLink');
+                const unreadCount = document.getElementById('unreadCount');
+                const notificationBadge = document.getElementById('notificationBadge');
+
                 if (messagesLink) {
                     if (totalUnread > 0) {
                         messagesLink.classList.add('has-unread');
                     } else {
                         messagesLink.classList.remove('has-unread');
+                    }
+                }
+
+                if (unreadCount) {
+                    if (totalUnread > 0) {
+                        unreadCount.textContent = totalUnread > 99 ? '99+' : totalUnread;
+                        unreadCount.classList.add('show');
+                    } else {
+                        unreadCount.classList.remove('show');
+                    }
+                }
+
+                if (notificationBadge) {
+                    if (totalUnread > 0) {
+                        notificationBadge.textContent = totalUnread > 9 ? '9+' : totalUnread;
+                        notificationBadge.classList.add('show');
+                    } else {
+                        notificationBadge.classList.remove('show');
                     }
                 }
             });
