@@ -100,6 +100,13 @@
             transform: translateY(0);
         }
 
+        /* Mobile support - show dropdown when clicked */
+        .profile-dropdown-content.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
         .profile-dropdown-content a.messages-link i {
             transition: color 0.2s;
         }
@@ -608,6 +615,33 @@
             await signOut(auth);
             window.location.href = 'index.html';
         });
+
+        // Mobile dropdown toggle functionality
+        const profileDropdown = document.querySelector('.profile-dropdown');
+        const profileDropdownContent = document.querySelector('.profile-dropdown-content');
+
+        if (navProfilePic && profileDropdownContent) {
+            // Toggle dropdown on click (for mobile)
+            navProfilePic.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdownContent.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target)) {
+                    profileDropdownContent.classList.remove('show');
+                }
+            });
+
+            // Close dropdown when a link is clicked
+            const dropdownLinks = profileDropdownContent.querySelectorAll('a');
+            dropdownLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    profileDropdownContent.classList.remove('show');
+                });
+            });
+        }
 
         async function loadConversations() {
             try {
