@@ -760,7 +760,7 @@
             });
         }
 
-        async function openConversation(conversationId, otherUser, event = null) {
+        function openConversation(conversationId, otherUser, event = null) {
             console.log('🎨 openConversation called');
             console.log('  - conversationId:', conversationId);
             console.log('  - otherUser:', otherUser);
@@ -774,20 +774,6 @@
             });
             if (event && event.currentTarget) {
                 event.currentTarget.classList.add('active');
-            }
-
-            // Reset unread count for current user when opening conversation
-            try {
-                const convDoc = await getDoc(doc(db, 'conversations', conversationId));
-                const convData = convDoc.data();
-                const newUnreadCount = convData.unreadCount || {};
-                newUnreadCount[currentUser.uid] = 0;
-
-                await setDoc(doc(db, 'conversations', conversationId), {
-                    unreadCount: newUnreadCount
-                }, { merge: true });
-            } catch (error) {
-                console.error('Error resetting unread count:', error);
             }
 
             console.log('🖼️ Rendering chat interface...');
@@ -821,6 +807,26 @@
                 e.preventDefault();
                 sendMessage(conversationId);
             });
+
+            // Reset unread count for current user (non-blocking)
+            resetUnreadCount(conversationId);
+        }
+
+        async function resetUnreadCount(conversationId) {
+            try {
+                const convDoc = await getDoc(doc(db, 'conversations', conversationId));
+                if (!convDoc.exists()) return;
+
+                const convData = convDoc.data();
+                const newUnreadCount = convData.unreadCount || {};
+                newUnreadCount[currentUser.uid] = 0;
+
+                await setDoc(doc(db, 'conversations', conversationId), {
+                    unreadCount: newUnreadCount
+                }, { merge: true });
+            } catch (error) {
+                console.error('Error resetting unread count:', error);
+            }
         }
 
         async function loadMessages(conversationId) {
