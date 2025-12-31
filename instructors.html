@@ -779,13 +779,23 @@
         // Check authentication and load profile picture (optional for this page)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Load user's profile picture
+                // Load user's profile picture - check both instructors and users collections
                 try {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        if (userData.avatar_url) {
-                            navProfilePic.src = userData.avatar_url;
+                    // First check if user is an instructor
+                    const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorDoc.exists()) {
+                        const instructorData = instructorDoc.data();
+                        if (instructorData.avatar_url) {
+                            navProfilePic.src = instructorData.avatar_url;
+                        }
+                    } else {
+                        // If not an instructor, check users collection
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data();
+                            if (userData.avatar_url) {
+                                navProfilePic.src = userData.avatar_url;
+                            }
                         }
                     }
                 } catch (error) {
