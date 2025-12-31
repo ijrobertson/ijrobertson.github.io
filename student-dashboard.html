@@ -4,7 +4,20 @@
   <meta charset="UTF-8" />
   <title>Student Dashboard - Lingua Bud</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Styles -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
+  <link href="css/bootstrap.css" rel="stylesheet">
+  <link href="css/fontawesome-all.css" rel="stylesheet">
+  <link href="css/swiper.css" rel="stylesheet">
+  <link href="css/magnific-popup.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+
+  <!-- Favicon  -->
+  <link rel="icon" href="images/NuevoFavicon.png">
+
   <style>
     :root {
       --primary: #20bcba;
@@ -21,44 +34,95 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: var(--light-grey);
       color: #222;
+      padding-top: 4.5rem;
     }
-    header {
-      background-color: var(--primary);
-      color: white;
-      padding: 1rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: relative;
+
+    /* Navbar styles */
+    .navbar-custom {
+      background-color: #113448 !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    header h1 {
-      margin: 0;
-      font-size: 1.5rem;
-    }
-    #top-right {
+
+    .profile-nav-wrapper {
       display: flex;
       align-items: center;
       gap: 1rem;
+      margin-left: 1rem;
     }
-    #avatar-small {
-      width: 50px;
-      height: 50px;
+
+    .profile-pic-nav {
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid white;
-      background-color: #f0f0f0;
-    }
-    #logout-btn {
-      background: white;
-      color: var(--primary);
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
+      border: 2px solid #20bcba;
       cursor: pointer;
-      font-weight: bold;
+      transition: transform 0.2s;
     }
-    #logout-btn:hover {
-      background: #f0f0f0;
+
+    .profile-pic-nav:hover {
+      transform: scale(1.1);
+    }
+
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-dropdown-content {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border-radius: 8px;
+      z-index: 1000;
+      margin-top: 0.25rem;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      transition-delay: 0s;
+    }
+
+    .profile-dropdown-content a {
+      color: #333;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background 0.2s;
+    }
+
+    .profile-dropdown-content a:hover {
+      background-color: #f1f1f1;
+    }
+
+    .profile-dropdown-content a.messages-link i {
+      transition: color 0.2s;
+    }
+
+    .profile-dropdown-content a.messages-link.has-unread i {
+      color: #dc3545;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .profile-dropdown:hover .profile-dropdown-content {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition-delay: 0s;
+    }
+
+    .profile-dropdown-content:hover {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
     .page {
       max-width: 900px;
@@ -169,35 +233,151 @@
     #avatar {
       display: none;
     }
+    .tag {
+      background-color: var(--primary);
+      color: white;
+      border-radius: 15px;
+      padding: 0.4rem 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .tag .remove-tag {
+      cursor: pointer;
+      font-weight: bold;
+      padding: 0 0.3rem;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      line-height: 1;
+    }
+    .tag .remove-tag:hover {
+      background: rgba(255,255,255,0.5);
+    }
     @media (max-width: 800px) {
       .profile-card {
         flex-direction: column;
       }
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-      }
-      #top-right {
-        position: absolute;
-        right: 1rem;
-        top: 1rem;
-      }
+    }
+
+    /* Booking Card Styles */
+    .booking-card {
+      background: #f8f9fa;
+      padding: 1.25rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .booking-info h5 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+      font-size: 1.1rem;
+    }
+
+    .booking-detail {
+      color: #666;
+      font-size: 0.95rem;
+      margin: 0.25rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .cancel-booking-btn {
+      padding: 0.6rem 1.2rem;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .cancel-booking-btn:hover {
+      background: #c82333;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div>
-      <h1>Student Dashboard</h1>
-    </div>
-    <div id="top-right">
-      <div id="profile-snapshot">
-        <img id="avatar-small" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile" />
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+    <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-awesome fas fa-bars"></span>
+      <span class="navbar-toggler-awesome fas fa-times"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="index.html#header">HOME</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="NewFrenchPage.html"><span class="item-text">FRENCH</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="NewPortuguesePage.html"><span class="item-text">PORTUGUESE</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="NewItalianPage.html"><span class="item-text">ITALIAN</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+          </div>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
+        </li>
+      </ul>
+
+      <!-- Profile Picture Dropdown -->
+      <div class="profile-nav-wrapper" id="profileNavWrapper">
+        <div class="profile-dropdown">
+          <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+          <div class="profile-dropdown-content">
+            <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="messages.html" class="messages-link" id="messagesLink"><i class="fas fa-envelope"></i> Messages</a>
+            <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+            <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
       </div>
-      <button id="logout-btn">Log Out</button>
     </div>
-  </header>
+  </nav>
+  <!-- end of navbar -->
 
   <div class="page">
     <div class="profile-card">
@@ -212,6 +392,20 @@
         <select id="native_country">
           <!-- populated dynamically -->
         </select>
+
+        <label for="spokenLanguage">Languages I Speak</label>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <select id="spokenLanguage" style="flex: 1;"></select>
+          <button type="button" class="save-btn" id="add-spoken-btn" style="margin: 0; width: auto; padding: 0.75rem 1.5rem;">Add</button>
+        </div>
+        <div id="languages_spoken" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
+
+        <label for="learningLanguage">Languages I'm Learning</label>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <select id="learningLanguage" style="flex: 1;"></select>
+          <button type="button" class="save-btn" id="add-learning-btn" style="margin: 0; width: auto; padding: 0.75rem 1.5rem;">Add</button>
+        </div>
+        <div id="languages_learning" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
 
         <label for="about_me">About Me</label>
         <textarea id="about_me" placeholder="Tell us a bit about yourself"></textarea>
@@ -235,7 +429,29 @@
         </div>
       </div>
     </div>
+
+    <!-- Upcoming Lessons Section -->
+    <div class="profile-card" style="margin-top: 2rem;">
+      <h3 style="color: var(--primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fas fa-calendar-check"></i> My Upcoming Lessons
+      </h3>
+      <div id="student-bookings" style="min-height: 100px;">
+        <p style="text-align: center; color: #999;">Loading...</p>
+      </div>
+    </div>
   </div>
+
+  <!-- Scripts -->
+  <script src="js/jquery.min.js"></script>
+  <script src="js/popper.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/jquery.easing.min.js"></script>
+  <script src="js/swiper.min.js"></script>
+  <script src="js/jquery.magnific-popup.js"></script>
+  <script src="js/morphext.min.js"></script>
+  <script src="js/isotope.pkgd.min.js"></script>
+  <script src="js/validator.min.js"></script>
+  <script src="js/scripts.js"></script>
 
   <script type="module">
     import {
@@ -247,6 +463,12 @@
       doc,
       getDoc,
       setDoc,
+      collection,
+      getDocs,
+      query,
+      where,
+      updateDoc,
+      onSnapshot,
       ref,
       uploadBytes,
       getDownloadURL
@@ -275,14 +497,29 @@
       "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
     ];
 
+    const languages = [
+      "Mandarin Chinese", "Spanish", "English", "Hindi", "Arabic", "Bengali", "Portuguese", "Russian", "Urdu", "Indonesian",
+      "German", "French", "Japanese", "Punjabi", "Turkish", "Vietnamese", "Korean", "Italian", "Thai", "Polish",
+      "Ukrainian", "Persian", "Dutch", "Romanian", "Czech", "Greek", "Hungarian", "Swedish", "Hebrew", "Danish",
+      "Norwegian", "Finnish", "Malayalam", "Telugu", "Tamil", "Marathi", "Swahili", "Javanese", "Burmese", "Serbian",
+      "Slovak", "Croatian", "Bulgarian", "Malay", "Filipino", "Amharic", "Zulu", "Kazakh", "Nepali", "Sinhala"
+    ];
+
     // Default avatar placeholder (inline SVG)
     const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
 
     let currentUser = null;
+    let spokenLanguages = [];
+    let learningLanguages = [];
 
     // Utility to populate country select
     function populateCountries() {
+      console.log('🌍 Populating countries dropdown...');
       const sel = document.getElementById('native_country');
+      if (!sel) {
+        console.error('❌ Country select element not found!');
+        return;
+      }
       sel.innerHTML = '';
       countries.forEach(c => {
         const o = document.createElement('option');
@@ -290,19 +527,105 @@
         o.textContent = c;
         sel.appendChild(o);
       });
+      console.log(`✅ Populated ${countries.length} countries`);
     }
+
+    // Populate language selects
+    function populateLanguages() {
+      console.log('🗣️ Populating language dropdowns...');
+      const spokenSel = document.getElementById('spokenLanguage');
+      const learningSel = document.getElementById('learningLanguage');
+
+      if (!spokenSel || !learningSel) {
+        console.error('❌ Language select elements not found!');
+        return;
+      }
+
+      spokenSel.innerHTML = '';
+      learningSel.innerHTML = '';
+
+      languages.forEach(lang => {
+        const o1 = document.createElement('option');
+        o1.value = lang;
+        o1.textContent = lang;
+        spokenSel.appendChild(o1);
+
+        const o2 = document.createElement('option');
+        o2.value = lang;
+        o2.textContent = lang;
+        learningSel.appendChild(o2);
+      });
+      console.log(`✅ Populated ${languages.length} languages`);
+    }
+
+    // Add language to array and render
+    function addLanguage(type) {
+      const selectId = type === 'spoken' ? 'spokenLanguage' : 'learningLanguage';
+      const lang = document.getElementById(selectId).value;
+
+      if (!lang) return;
+
+      const arr = type === 'spoken' ? spokenLanguages : learningLanguages;
+
+      if (!arr.includes(lang)) {
+        arr.push(lang);
+        renderLanguages(type);
+      }
+    }
+
+    // Remove language
+    function removeLanguage(type, lang) {
+      if (type === 'spoken') {
+        spokenLanguages = spokenLanguages.filter(l => l !== lang);
+      } else {
+        learningLanguages = learningLanguages.filter(l => l !== lang);
+      }
+      renderLanguages(type);
+    }
+
+    // Render language tags
+    function renderLanguages(type) {
+      const containerId = type === 'spoken' ? 'languages_spoken' : 'languages_learning';
+      const container = document.getElementById(containerId);
+      const arr = type === 'spoken' ? spokenLanguages : learningLanguages;
+
+      container.innerHTML = '';
+      arr.forEach(lang => {
+        const tag = document.createElement('div');
+        tag.className = 'tag';
+
+        const langSpan = document.createElement('span');
+        langSpan.textContent = lang;
+
+        const removeSpan = document.createElement('span');
+        removeSpan.className = 'remove-tag';
+        removeSpan.textContent = '×';
+        removeSpan.style.cursor = 'pointer';
+        removeSpan.addEventListener('click', () => removeLanguage(type, lang));
+
+        tag.appendChild(langSpan);
+        tag.appendChild(removeSpan);
+        container.appendChild(tag);
+      });
+    }
+
+    // Track if this is a new user (first time saving)
+    let isNewUser = false;
 
     // Load user profile
     async function loadProfile() {
+      console.log('📂 Loading profile for user:', currentUser.uid);
       try {
         const docSnap = await getDoc(doc(db, 'users', currentUser.uid));
+        console.log('📄 Document exists:', docSnap.exists());
 
         if (docSnap.exists()) {
           const profile = docSnap.data();
+          console.log('✅ Profile data loaded:', profile);
 
           // Check role
           if (profile.role !== 'student') {
-            window.location.href = '/dashboard.html';
+            window.location.href = 'dashboard.html';
             return;
           }
 
@@ -313,30 +636,55 @@
             document.getElementById('native_country').value = profile.native_country;
           }
 
+          // Load languages
+          spokenLanguages = profile.languages_spoken || [];
+          learningLanguages = profile.languages_learning || [];
+          renderLanguages('spoken');
+          renderLanguages('learning');
+
           // Avatar display
           if (profile.avatar_url) {
             document.getElementById('avatarPreview').src = profile.avatar_url;
-            document.getElementById('avatar-small').src = profile.avatar_url;
+            document.getElementById('navProfilePic').src = profile.avatar_url;
             localStorage.setItem('student_avatar', profile.avatar_url);
           }
+
+          // Not a new user if profile exists
+          isNewUser = false;
+        } else {
+          // This is a new user (no profile document exists yet)
+          console.log('ℹ️ No existing profile found - new user');
+          isNewUser = true;
         }
       } catch (error) {
-        console.error(error);
-        document.getElementById('status-msg').textContent = 'Error loading profile.';
+        console.error('❌ Error loading profile:', error);
+        document.getElementById('status-msg').textContent = 'Error loading profile: ' + error.message;
         document.getElementById('status-msg').style.color = 'red';
       }
     }
 
+    // Make functions globally accessible for inline onclick
+    window.removeLanguage = removeLanguage;
+
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 DOM Content Loaded - Initializing student dashboard');
+
       // Load cached avatar immediately
       const cachedAvatar = localStorage.getItem('student_avatar');
       if (cachedAvatar) {
         document.getElementById('avatarPreview').src = cachedAvatar;
-        document.getElementById('avatar-small').src = cachedAvatar;
+        document.getElementById('navProfilePic').src = cachedAvatar;
       }
 
+      console.log('📋 Populating countries and languages...');
       populateCountries();
+      populateLanguages();
+      console.log('✅ Dropdowns populated');
+
+      // Add event listeners for language buttons
+      document.getElementById('add-spoken-btn').addEventListener('click', () => addLanguage('spoken'));
+      document.getElementById('add-learning-btn').addEventListener('click', () => addLanguage('learning'));
 
       // Avatar edit button triggers file input
       document.getElementById('avatar-edit-btn').onclick = () => {
@@ -361,7 +709,7 @@
             { avatar_url: downloadURL }, { merge: true });
 
           document.getElementById('avatarPreview').src = downloadURL;
-          document.getElementById('avatar-small').src = downloadURL;
+          document.getElementById('navProfilePic').src = downloadURL;
           localStorage.setItem('student_avatar', downloadURL);
           statusEl.textContent = 'Photo uploaded!';
           statusEl.style.color = 'green';
@@ -374,19 +722,46 @@
 
       // Listen for auth state
       onAuthStateChanged(auth, async (user) => {
+        console.log('🔐 Auth state changed:', user ? 'Logged in' : 'Not logged in');
         if (user) {
           currentUser = user;
-          await loadProfile();
+          console.log('👤 User ID:', user.uid);
+          console.log('📧 User email:', user.email);
+
+          try {
+            await loadProfile();
+            console.log('✅ Profile loaded successfully');
+          } catch (error) {
+            console.error('❌ Error in loadProfile:', error);
+          }
+
+          try {
+            await loadStudentBookings();
+            console.log('✅ Bookings loaded successfully');
+          } catch (error) {
+            console.error('❌ Error in loadStudentBookings:', error);
+          }
+
+          // Load unread message count
+          try {
+            await loadUnreadMessageCount();
+          } catch (error) {
+            console.error('❌ Error loading unread messages:', error);
+          }
         } else {
-          window.location.href = '/login.html';
+          console.log('🚫 No user, redirecting to login');
+          window.location.href = 'login.html';
         }
       });
     });
 
     // Save profile
     document.getElementById('save-profile').addEventListener('click', async () => {
+      console.log('💾 Save button clicked');
+
       if (!currentUser) {
-        window.location.href = '/login.html';
+        console.log('❌ No current user, redirecting to login');
+        window.location.href = 'login.html';
         return;
       }
 
@@ -397,28 +772,193 @@
       const updates = {
         name: document.getElementById('name').value.trim(),
         native_country: document.getElementById('native_country').value,
+        country: document.getElementById('native_country').value,
         about_me: document.getElementById('about_me').value.trim(),
+        languages_spoken: spokenLanguages,
+        languages_learning: learningLanguages,
         role: 'student',
         email: currentUser.email,
         updatedAt: new Date().toISOString()
       };
 
+      console.log('📝 Saving profile data:', updates);
+
       try {
         await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
-        statusEl.textContent = 'Saved!';
+        console.log('✅ Profile saved successfully!');
+        statusEl.textContent = 'Saved! Redirecting to Connect page...';
         statusEl.style.color = 'green';
+
+        // Redirect to Connect page after saving
+        setTimeout(() => {
+          window.location.href = 'connect.html';
+        }, 1500);
       } catch (error) {
-        statusEl.textContent = 'Error saving profile.';
+        console.error('❌ Error saving profile:', error);
+        statusEl.textContent = 'Error saving profile: ' + error.message;
         statusEl.style.color = 'red';
-        console.error(error);
       }
     });
 
-    // Logout
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-      await signOut(auth);
-      window.location.href = '/login.html';
-    });
+    // Logout from navbar
+    const logoutLink = document.getElementById('logoutLink');
+    if (logoutLink) {
+      logoutLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await signOut(auth);
+        window.location.href = 'login.html';
+      });
+    }
+
+    // BOOKING MANAGEMENT FUNCTIONS
+
+    async function loadStudentBookings() {
+      console.log('📅 Loading student bookings...');
+      if (!auth.currentUser) {
+        console.log('⚠️ No current user, skipping bookings load');
+        return;
+      }
+
+      const container = document.getElementById('student-bookings');
+
+      try {
+        const now = new Date();
+        console.log('🔍 Querying bookings for student:', auth.currentUser.uid);
+
+        const q = query(
+          collection(db, 'bookings'),
+          where('studentId', '==', auth.currentUser.uid),
+          where('status', '==', 'confirmed')
+        );
+
+        const querySnapshot = await getDocs(q);
+        console.log(`📊 Found ${querySnapshot.docs.length} total bookings`);
+
+        // Filter for future bookings and sort
+        const futureBookings = querySnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data(), dateTime: doc.data().dateTime.toDate() }))
+          .filter(b => b.dateTime >= now)
+          .sort((a, b) => a.dateTime - b.dateTime);
+
+        console.log(`📅 ${futureBookings.length} upcoming bookings`);
+
+        if (futureBookings.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: #666;">No upcoming lessons booked.</p><p style="text-align: center; color: #999; font-size: 0.9rem;">Browse <a href="instructors.html">instructors</a> to book your first lesson!</p>';
+          return;
+        }
+
+        container.innerHTML = '';
+        futureBookings.forEach(booking => {
+          container.appendChild(createBookingCard(booking));
+        });
+
+      } catch (error) {
+        console.error('❌ Error loading bookings:', error);
+        container.innerHTML = '<p style="color: #dc3545;">Error loading bookings: ' + error.message + '</p>';
+      }
+    }
+
+    function createBookingCard(booking) {
+      const card = document.createElement('div');
+      card.className = 'booking-card';
+
+      const dateTime = booking.dateTime;
+      const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      card.innerHTML = `
+        <div class="booking-info">
+          <h5>${escapeHtml(booking.instructorName)}</h5>
+          <div class="booking-detail">
+            <i class="fas fa-calendar"></i>
+            ${dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+          <div class="booking-detail">
+            <i class="fas fa-clock"></i>
+            ${dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+            <span style="color: #999; font-size: 0.85rem;">(${studentTZ})</span>
+          </div>
+          <div class="booking-detail" style="color: var(--primary);">
+            <i class="fas fa-hourglass-half"></i>
+            60 minutes
+          </div>
+        </div>
+        <button class="cancel-booking-btn" data-booking-id="${booking.id}">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+      `;
+
+      card.querySelector('.cancel-booking-btn').addEventListener('click', () => {
+        cancelBooking(booking.id);
+      });
+
+      return card;
+    }
+
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    async function cancelBooking(bookingId) {
+      if (!confirm('Are you sure you want to cancel this lesson?')) return;
+
+      try {
+        await updateDoc(doc(db, 'bookings', bookingId), {
+          status: 'cancelled',
+          cancelledAt: new Date()
+        });
+
+        alert('Lesson cancelled successfully.');
+        loadStudentBookings(); // Refresh
+
+      } catch (error) {
+        console.error('Error cancelling:', error);
+        alert('Error cancelling lesson. Please try again.');
+      }
+    }
+
+    // UNREAD MESSAGE COUNT
+
+    async function loadUnreadMessageCount() {
+      if (!auth.currentUser) return;
+
+      console.log('📬 Setting up unread message listener...');
+
+      const q = query(
+        collection(db, 'conversations'),
+        where('participants', 'array-contains', auth.currentUser.uid)
+      );
+
+      // Listen for real-time updates
+      onSnapshot(q, (snapshot) => {
+        let totalUnread = 0;
+
+        snapshot.forEach((doc) => {
+          const conv = doc.data();
+          if (conv.unreadCount && conv.unreadCount[auth.currentUser.uid]) {
+            totalUnread += conv.unreadCount[auth.currentUser.uid];
+          }
+        });
+
+        console.log(`📬 Unread messages: ${totalUnread}`);
+
+        const messagesLink = document.getElementById('messagesLink');
+        if (messagesLink) {
+          if (totalUnread > 0) {
+            messagesLink.classList.add('has-unread');
+          } else {
+            messagesLink.classList.remove('has-unread');
+          }
+        }
+      });
+    }
+
   </script>
 </body>
 </html>

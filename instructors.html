@@ -1,229 +1,1458 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lingua Bud Instructors</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f5f5;
-    }
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    header {
-      background-color: #20bcba;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.8rem;
-    }
+    <meta name="description" content="Find professional language instructors on Lingua Bud. Learn from experienced teachers worldwide!">
+    <meta name="author" content="Lingua Bud">
 
-    .filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: center;
-      background: #fff;
-      padding: 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+    <title>Find Language Instructors - Lingua Bud</title>
 
-    select {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
 
-    .instructor-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      padding: 2rem;
-    }
+    <!-- Favicon  -->
+    <link rel="icon" href="images/NuevoFavicon.png">
 
-    .card {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      padding: 1rem;
-      text-align: center;
-    }
+    <style>
+        body {
+            padding-top: 4.5rem;
+            background-color: #f8f9fa;
+        }
 
-    .card img {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 1rem;
-      border: 2px solid #20bcba;
-    }
+        /* Force navbar to have solid background */
+        .navbar-custom {
+            background-color: #113448 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
 
-    .card h3 {
-      margin: 0.5rem 0;
-      color: #1e1e1e;
-    }
+        /* Profile Picture in Navbar */
+        .profile-nav-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: 1rem;
+        }
 
-    .card p {
-      margin: 0.3rem 0;
-      color: #555;
-    }
+        .profile-pic-nav {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
 
-    .hire-btn {
-      margin-top: 1rem;
-      padding: 0.6rem 1.2rem;
-      background-color: #20bcba;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+        .profile-pic-nav:hover {
+            transform: scale(1.1);
+        }
 
-    .hire-btn:hover {
-      background-color: #1a9d9b;
-    }
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
 
-    .loading {
-      text-align: center;
-      padding: 2rem;
-      color: #666;
-    }
+        .profile-dropdown-content {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 1000;
+            margin-top: 0.25rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+            transition-delay: 0s;
+        }
 
-    @media (max-width: 600px) {
-      .filters {
-        flex-direction: column;
-        align-items: center;
-      }
-    }
-  </style>
+        .profile-dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background 0.2s;
+        }
+
+        .profile-dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        .profile-dropdown:hover .profile-dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 0s;
+        }
+
+        .profile-dropdown-content:hover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .profile-dropdown-content a.messages-link i {
+            transition: color 0.2s;
+        }
+
+        .profile-dropdown-content a.messages-link.has-unread i {
+            color: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Hero Section */
+        .instructors-hero {
+            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            color: white;
+            padding: 4.5rem 0 2rem;
+            margin-top: -1px;
+        }
+
+        .instructors-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .instructors-hero p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            color: white;
+        }
+
+        /* Filters Section */
+        .filters-section {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 2rem;
+            margin: -2rem auto 2rem;
+            border-radius: 12px;
+            max-width: 1200px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .filter-group select {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #20bcba;
+        }
+
+        /* Instructor Grid */
+        .instructor-grid-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .instructor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Instructor Cards */
+        .instructor-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .instructor-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .instructor-card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 2rem 1.5rem 1rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .instructor-card-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin: 0 auto 1rem;
+            display: block;
+        }
+
+        .instructor-card-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 0.5rem;
+        }
+
+        .instructor-card-price {
+            color: #20bcba;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .instructor-card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .language-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .language-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .language-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .language-tag {
+            background: #e8f8f7;
+            color: #20bcba;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .about-preview {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .instructor-card-footer {
+            padding: 0 1.5rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .hire-btn {
+            flex: 1;
+            padding: 0.85rem;
+            background: #20bcba;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .hire-btn:hover {
+            background: #1a9d9b;
+        }
+
+        .message-btn {
+            flex: 1;
+            padding: 0.85rem;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .message-btn:hover {
+            background: #5a6268;
+        }
+
+        .loading, .no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .loading i {
+            font-size: 3rem;
+            color: #20bcba;
+            margin-bottom: 1rem;
+        }
+
+        /* Profile Modal Styles */
+        .profile-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            overflow-y: auto;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .profile-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .profile-modal-content {
+            background-color: white;
+            border-radius: 16px;
+            max-width: 650px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .profile-modal-header {
+            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            color: white;
+            padding: 2.5rem 2rem 2rem;
+            border-radius: 16px 16px 0 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .profile-modal-close {
+            position: absolute;
+            right: 1.5rem;
+            top: 1rem;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            line-height: 1;
+            transition: transform 0.2s;
+            background: rgba(255,255,255,0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+        }
+
+        .profile-modal-close:hover {
+            transform: rotate(90deg);
+            background: rgba(255,255,255,0.3);
+        }
+
+        .profile-modal-avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid white;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .profile-modal-name {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .profile-modal-price {
+            margin-top: 0.5rem;
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.95);
+        }
+
+        .profile-modal-body {
+            padding: 2rem;
+        }
+
+        .profile-info-section {
+            margin-bottom: 2rem;
+        }
+
+        .profile-info-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .profile-info-section h4 {
+            color: #20bcba;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .profile-info-section p {
+            margin: 0;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        .profile-modal-actions {
+            display: flex;
+            gap: 1rem;
+            padding: 0 2rem 2rem;
+        }
+
+        .btn-profile-modal {
+            flex: 1;
+            padding: 1rem 2rem;
+            background-color: #20bcba;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-profile-modal:hover {
+            background-color: #1a9d9b;
+        }
+
+        .btn-profile-modal.secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-profile-modal.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .view-profile-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 0.75rem;
+        }
+
+        .view-profile-btn:hover {
+            background: #5a6268;
+        }
+
+        @media (max-width: 768px) {
+            .instructors-hero h1 {
+                font-size: 2rem;
+            }
+
+            .filters-section {
+                margin: -1rem 1rem 2rem;
+                padding: 1.5rem;
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .instructor-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .profile-modal-content {
+                margin: 1rem;
+            }
+
+            .profile-modal-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Booking Modal Styles */
+        #days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .day-column {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .day-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            border-bottom: 2px solid #20bcba;
+        }
+
+        .day-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .day-date {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .time-slots-list {
+            padding: 0.75rem 0.5rem;
+            min-height: 150px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .time-slot-btn {
+            width: 100%;
+            padding: 0.6rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #20bcba;
+            border-radius: 6px;
+            background: white;
+            color: #20bcba;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-slot-btn:hover:not(:disabled) {
+            background: #20bcba;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(32, 188, 186, 0.3);
+        }
+
+        .time-slot-btn:disabled {
+            background: #f0f0f0;
+            color: #999;
+            border-color: #ddd;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .no-slots-msg {
+            text-align: center;
+            padding: 2rem 0.5rem;
+            color: #999;
+            font-size: 0.85rem;
+        }
+    </style>
 </head>
 <body>
-  <header>Lingua Bud Instructors</header>
 
-  <div class="filters">
-    <select id="languageFilter">
-      <option value="">All Languages</option>
-    </select>
-    <select id="priceFilter">
-      <option value="">Any Price</option>
-      <option value="10">$10</option>
-      <option value="15">$15</option>
-      <option value="20">$20</option>
-      <option value="25">$25</option>
-      <option value="30">$30</option>
-    </select>
-  </div>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
 
-  <div class="instructor-grid" id="instructorGrid">
-    <div class="loading">Loading instructors...</div>
-  </div>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
 
-  <script type="module">
-    import { db, collection, getDocs } from './lib/firebaseClient.js';
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll active" href="instructors.html">INSTRUCTORS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
+                </li>
 
-    const instructorGrid = document.getElementById('instructorGrid');
-    const languageFilter = document.getElementById('languageFilter');
-    const priceFilter = document.getElementById('priceFilter');
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewFrenchPage.html"><span class="item-text">FRENCH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewPortuguesePage.html"><span class="item-text">PORTUGUESE</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewItalianPage.html"><span class="item-text">ITALIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+                    </div>
+                </li>
 
-    let allInstructors = [];
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
+                </li>
+            </ul>
 
-    async function fetchInstructors() {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'instructors'));
-        allInstructors = [];
-        querySnapshot.forEach((doc) => {
-          allInstructors.push({ id: doc.id, ...doc.data() });
+            <!-- Profile Picture Dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" class="messages-link" id="messagesLink"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sign In Link (shown when not logged in) -->
+            <div id="signInWrapper">
+                <a class="btn-solid-sm page-scroll" href="login.html" style="margin-left: 1rem;">SIGN IN</a>
+            </div>
+        </div>
+    </nav>
+    <!-- end of navbar -->
+
+    <!-- Hero Section -->
+    <div class="instructors-hero">
+        <div class="container text-center">
+            <h1>Find Your Perfect Language Instructor</h1>
+            <p>Learn from experienced teachers worldwide!</p>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="container">
+        <div class="filters-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="languageFilter"><i class="fas fa-graduation-cap"></i> Teaching Language</label>
+                    <select id="languageFilter">
+                        <option value="">All Languages</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="priceFilter"><i class="fas fa-dollar-sign"></i> Max Price (per hour)</label>
+                    <select id="priceFilter">
+                        <option value="">Any Price</option>
+                        <option value="10">$10</option>
+                        <option value="15">$15</option>
+                        <option value="20">$20</option>
+                        <option value="25">$25</option>
+                        <option value="30">$30</option>
+                        <option value="40">$40</option>
+                        <option value="50">$50</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructor Grid -->
+    <div class="instructor-grid-container">
+        <div class="instructor-grid" id="instructorGrid">
+            <div class="loading">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading instructors...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <script type="module">
+        import { db, auth, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, addDoc, query, where, orderBy, onSnapshot } from './lib/firebaseClient.js';
+
+        const instructorGrid = document.getElementById('instructorGrid');
+        const languageFilter = document.getElementById('languageFilter');
+        const priceFilter = document.getElementById('priceFilter');
+        const navProfilePic = document.getElementById('navProfilePic');
+        const profileNavWrapper = document.getElementById('profileNavWrapper');
+        const signInWrapper = document.getElementById('signInWrapper');
+        const logoutLink = document.getElementById('logoutLink');
+
+        let allInstructors = [];
+
+        // Booking Modal Variables
+        let currentInstructorId = null;
+        let currentInstructorName = null;
+        let currentWeekStart = null;
+        let instructorAvailability = null;
+        let existingBookings = [];
+
+        // Check authentication and load profile picture (optional for this page)
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Load user's profile picture
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        if (userData.avatar_url) {
+                            navProfilePic.src = userData.avatar_url;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading profile:', error);
+                }
+
+                // Show profile picture, hide sign in button
+                profileNavWrapper.style.display = 'block';
+                signInWrapper.style.display = 'none';
+
+                // Load unread message count
+                try {
+                    await loadUnreadMessageCount();
+                } catch (error) {
+                    console.error('Error loading unread messages:', error);
+                }
+            } else {
+                // Show sign in button, hide profile picture
+                profileNavWrapper.style.display = 'none';
+                signInWrapper.style.display = 'block';
+            }
         });
-        populateLanguageOptions(allInstructors);
-        renderInstructors();
-      } catch (error) {
-        console.error('Error fetching instructors:', error);
-        instructorGrid.innerHTML = '<div class="loading">Error loading instructors. Please try again later.</div>';
-      }
-    }
 
-    function populateLanguageOptions(data) {
-      const languages = new Set();
-      data.forEach(instructor => {
-        const teaching = instructor.languages_teaching || [];
-        if (Array.isArray(teaching)) {
-          teaching.forEach(lang => languages.add(lang));
+        // Logout functionality
+        if (logoutLink) {
+            logoutLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await signOut(auth);
+                window.location.href = 'index.html';
+            });
         }
-      });
 
-      languageFilter.innerHTML = `<option value="">Filter by Language</option>`;
-      Array.from(languages).sort().forEach(lang => {
-        const option = document.createElement('option');
-        option.value = lang;
-        option.textContent = lang;
-        languageFilter.appendChild(option);
-      });
-    }
+        async function fetchInstructors() {
+            try {
+                const querySnapshot = await getDocs(collection(db, 'instructors'));
+                allInstructors = [];
+                querySnapshot.forEach((doc) => {
+                    allInstructors.push({ id: doc.id, ...doc.data() });
+                });
+                populateLanguageOptions(allInstructors);
+                renderInstructors();
+            } catch (error) {
+                console.error('Error fetching instructors:', error);
+                instructorGrid.innerHTML = '<div class="loading">Error loading instructors. Please try again later.</div>';
+            }
+        }
 
-    // Escape HTML to prevent XSS
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
+        function populateLanguageOptions(data) {
+            const languages = new Set();
+            data.forEach(instructor => {
+                const teaching = instructor.languages_teaching || [];
+                if (Array.isArray(teaching)) {
+                    teaching.forEach(lang => languages.add(lang));
+                }
+            });
 
-    function renderInstructors() {
-      const selectedLang = languageFilter.value;
-      const maxPrice = parseFloat(priceFilter.value);
-      instructorGrid.innerHTML = '';
+            languageFilter.innerHTML = `<option value="">All Languages</option>`;
+            Array.from(languages).sort().forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang;
+                option.textContent = lang;
+                languageFilter.appendChild(option);
+            });
+        }
 
-      const filtered = allInstructors.filter(instructor => {
-        const teaches = instructor.languages_teaching || [];
-        const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
-        const price = parseFloat(instructor.price_per_lesson) || 0;
-        const matchesPrice = maxPrice ? price <= maxPrice : true;
-        return matchesLang && matchesPrice;
-      });
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-      if (filtered.length === 0) {
-        instructorGrid.innerHTML = '<div class="loading">No instructors found matching your filters.</div>';
-        return;
-      }
+        function renderInstructors() {
+            const selectedLang = languageFilter.value;
+            const maxPrice = parseFloat(priceFilter.value);
+            instructorGrid.innerHTML = '';
 
-      filtered.forEach(instructor => {
-        const spoken = instructor.languages_spoken || [];
-        const teaching = instructor.languages_teaching || [];
-        const price = instructor.price_per_lesson || '';
-        const currency = escapeHtml(instructor.currency || '$');
-        const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
-        const name = escapeHtml(instructor.name || 'Unnamed Instructor');
-        const aboutMe = escapeHtml(instructor.about_me || 'No bio yet');
-        const spokenText = Array.isArray(spoken) ? escapeHtml(spoken.join(', ')) : 'Not specified';
-        const teachingText = Array.isArray(teaching) ? escapeHtml(teaching.join(', ')) : 'Not specified';
+            const filtered = allInstructors.filter(instructor => {
+                const teaches = instructor.languages_teaching || [];
+                const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
+                const price = parseFloat(instructor.price_per_lesson) || 0;
+                const matchesPrice = maxPrice ? price <= maxPrice : true;
+                return matchesLang && matchesPrice;
+            });
 
-        const card = document.createElement('div');
-        card.className = 'card';
+            if (filtered.length === 0) {
+                instructorGrid.innerHTML = '<div class="no-results"><i class="fas fa-chalkboard-teacher" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No instructors found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';
+                return;
+            }
 
-        const img = document.createElement('img');
-        img.src = avatar;
-        img.alt = `${name}'s avatar`;
-        img.onerror = function() { this.src = 'https://via.placeholder.com/100'; };
+            filtered.forEach(instructor => {
+                const card = createInstructorCard(instructor);
+                instructorGrid.appendChild(card);
+            });
+        }
 
-        const h3 = document.createElement('h3');
-        h3.textContent = instructor.name || 'Unnamed Instructor';
+        function createInstructorCard(instructor) {
+            const spoken = instructor.languages_spoken || [];
+            const teaching = instructor.languages_teaching || [];
+            const price = instructor.price_per_lesson || '';
+            const currency = escapeHtml(instructor.currency || '$');
+            const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
+            const name = escapeHtml(instructor.name || 'Unnamed Instructor');
+            const aboutMe = escapeHtml(instructor.about_me || 'No bio yet');
 
-        card.appendChild(img);
-        card.appendChild(h3);
-        card.innerHTML += `
-          <p><strong>Speaks:</strong> ${spokenText}</p>
-          <p><strong>Teaches:</strong> ${teachingText}</p>
-          <p><strong>About Me:</strong> ${aboutMe}</p>
-          <p><strong>Price:</strong> ${currency}${escapeHtml(String(price))} per hour</p>
-          <button class="hire-btn">Hire</button>
-        `;
-        instructorGrid.appendChild(card);
-      });
-    }
+            const card = document.createElement('div');
+            card.className = 'instructor-card';
 
-    languageFilter.addEventListener('change', renderInstructors);
-    priceFilter.addEventListener('change', renderInstructors);
+            let cardHTML = `
+                <div class="instructor-card-header">
+                    <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
+                    <div class="instructor-card-name">${name}</div>
+                    <div class="instructor-card-price">${currency}${escapeHtml(String(price))}/hour</div>
+                </div>
+                <div class="instructor-card-body">
+            `;
 
-    fetchInstructors();
-  </script>
+            if (teaching.length > 0) {
+                cardHTML += `
+                    <div class="language-section">
+                        <div class="language-section-title">Teaches</div>
+                        <div class="language-tags">
+                            ${teaching.map(lang => `<span class="language-tag">${escapeHtml(lang)}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (spoken.length > 0) {
+                cardHTML += `
+                    <div class="language-section">
+                        <div class="language-section-title">Speaks</div>
+                        <div class="language-tags">
+                            ${spoken.map(lang => `<span class="language-tag">${escapeHtml(lang)}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (aboutMe && aboutMe !== 'No bio yet') {
+                cardHTML += `
+                    <div class="language-section">
+                        <div class="language-section-title">About</div>
+                        <div class="about-preview">${aboutMe}</div>
+                    </div>
+                `;
+            }
+
+            cardHTML += `
+                </div>
+                <div class="instructor-card-footer">
+                    <button class="view-profile-btn" data-instructor-id="${instructor.id}">
+                        <i class="fas fa-user"></i> View Profile
+                    </button>
+                </div>
+            `;
+
+            card.innerHTML = cardHTML;
+
+            // Add event listener for view profile button
+            const viewProfileBtn = card.querySelector('.view-profile-btn');
+            viewProfileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openProfileModal(instructor);
+            });
+
+            return card;
+        }
+
+        // Event listeners for filters
+        languageFilter.addEventListener('change', renderInstructors);
+        priceFilter.addEventListener('change', renderInstructors);
+
+        // Fetch instructors when page loads
+        fetchInstructors();
+
+        // BOOKING MODAL FUNCTIONS
+
+        async function openBookingModal(instructorId, instructorName) {
+            // Check authentication
+            if (!auth.currentUser) {
+                if (confirm('Please log in to book a lesson. Go to login page?')) {
+                    window.location.href = 'login.html';
+                }
+                return;
+            }
+
+            currentInstructorId = instructorId;
+            currentInstructorName = instructorName;
+
+            document.getElementById('modal-instructor-name').textContent = instructorName;
+
+            // Show student timezone
+            const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('student-timezone').textContent = studentTZ;
+
+            // Open modal
+            $('#bookingModal').modal('show');
+
+            // Reset view
+            document.getElementById('booking-loading').style.display = 'block';
+            document.getElementById('booking-calendar').style.display = 'none';
+            document.getElementById('no-availability').style.display = 'none';
+
+            // Set current week to start of this week
+            currentWeekStart = getMonday(new Date());
+
+            // Load data
+            try {
+                await loadInstructorAvailability(instructorId);
+                await loadInstructorBookings(instructorId);
+
+                if (!instructorAvailability || !instructorAvailability.weeklySchedule) {
+                    document.getElementById('booking-loading').style.display = 'none';
+                    document.getElementById('no-availability').style.display = 'block';
+                    return;
+                }
+
+                renderWeekCalendar();
+                document.getElementById('booking-loading').style.display = 'none';
+                document.getElementById('booking-calendar').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading availability:', error);
+                alert('Error loading availability. Please try again.');
+            }
+        }
+
+        async function loadInstructorAvailability(instructorId) {
+            const docSnap = await getDoc(doc(db, 'instructor_availability', instructorId));
+            instructorAvailability = docSnap.exists() ? docSnap.data() : null;
+        }
+
+        async function loadInstructorBookings(instructorId) {
+            const now = new Date();
+            const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+            const q = query(
+                collection(db, 'bookings'),
+                where('instructorId', '==', instructorId),
+                where('status', '==', 'confirmed')
+            );
+
+            const querySnapshot = await getDocs(q);
+            existingBookings = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                dateTime: doc.data().dateTime.toDate()
+            })).filter(b => b.dateTime >= now && b.dateTime <= futureDate);
+        }
+
+        function getMonday(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff));
+        }
+
+        function renderWeekCalendar() {
+            const daysGrid = document.getElementById('days-grid');
+            daysGrid.innerHTML = '';
+
+            const weekEnd = new Date(currentWeekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+
+            document.getElementById('current-week-label').textContent =
+                `${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(currentWeekStart);
+                date.setDate(date.getDate() + i);
+                daysGrid.appendChild(createDayColumn(date));
+            }
+        }
+
+        function createDayColumn(date) {
+            const column = document.createElement('div');
+            column.className = 'day-column';
+
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+            const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const dayKey = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+            column.innerHTML = `
+                <div class="day-header">
+                    <div class="day-name">${dayName}</div>
+                    <div class="day-date">${dayDate}</div>
+                </div>
+                <div class="time-slots-list"></div>
+            `;
+
+            const slots = generateSlotsForDay(date, dayKey);
+            const slotsContainer = column.querySelector('.time-slots-list');
+
+            if (slots.length === 0) {
+                slotsContainer.innerHTML = '<div class="no-slots-msg">No slots</div>';
+            } else {
+                slots.forEach(slot => {
+                    const btn = document.createElement('button');
+                    btn.className = 'time-slot-btn';
+                    btn.textContent = formatTime(slot.startTime);
+                    btn.disabled = slot.booked;
+                    btn.title = slot.booked ? 'Already booked' : 'Click to book';
+
+                    if (!slot.booked) {
+                        btn.onclick = () => confirmBooking(slot);
+                    }
+
+                    slotsContainer.appendChild(btn);
+                });
+            }
+
+            return column;
+        }
+
+        function generateSlotsForDay(date, dayKey) {
+            const now = new Date();
+            if (date < now.setHours(0, 0, 0, 0)) return [];
+
+            const daySlots = instructorAvailability.weeklySchedule[dayKey] || [];
+            const slots = [];
+
+            daySlots.forEach(range => {
+                const [startHour, startMin] = range.start.split(':').map(Number);
+                const [endHour, endMin] = range.end.split(':').map(Number);
+
+                let current = new Date(date);
+                current.setHours(startHour, startMin, 0, 0);
+
+                const end = new Date(date);
+                end.setHours(endHour, endMin, 0, 0);
+
+                while (current < end) {
+                    const slotEnd = new Date(current.getTime() + 60 * 60 * 1000);
+
+                    if (slotEnd <= end && current >= new Date()) {
+                        const isBooked = existingBookings.some(b =>
+                            Math.abs(b.dateTime - current) < 60000
+                        );
+
+                        slots.push({
+                            startTime: new Date(current),
+                            endTime: new Date(slotEnd),
+                            booked: isBooked
+                        });
+                    }
+
+                    current = slotEnd;
+                }
+            });
+
+            return slots;
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        async function confirmBooking(slot) {
+            const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            const message = `Confirm booking:\n\n` +
+                `Instructor: ${currentInstructorName}\n` +
+                `Date: ${slot.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}\n` +
+                `Time: ${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}\n` +
+                `Duration: 60 minutes\n\n` +
+                `This booking will be confirmed immediately.`;
+
+            if (!confirm(message)) return;
+
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', currentInstructorId));
+                const instructorData = instructorDoc.exists() ? instructorDoc.data() : {};
+
+                const bookingData = {
+                    instructorId: currentInstructorId,
+                    studentId: auth.currentUser.uid,
+                    dateTime: slot.startTime,
+                    durationMinutes: 60,
+                    status: 'confirmed',
+                    instructorTimezone: instructorAvailability.timezone,
+                    studentTimezone: studentTZ,
+                    bookedAt: new Date(),
+                    instructorName: instructorData.name || currentInstructorName,
+                    studentName: auth.currentUser.email
+                };
+
+                await addDoc(collection(db, 'bookings'), bookingData);
+
+                alert('Lesson booked successfully! You can view your bookings in your dashboard.');
+                $('#bookingModal').modal('hide');
+
+            } catch (error) {
+                console.error('Error booking lesson:', error);
+                alert('Error booking lesson. Please try again.');
+            }
+        }
+
+        // Week navigation
+        document.addEventListener('DOMContentLoaded', () => {
+            const prevBtn = document.getElementById('prev-week');
+            const nextBtn = document.getElementById('next-week');
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+                    renderWeekCalendar();
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+                    renderWeekCalendar();
+                });
+            }
+        });
+
+        // UNREAD MESSAGE COUNT
+
+        async function loadUnreadMessageCount() {
+            if (!auth.currentUser) return;
+
+            console.log('📬 Setting up unread message listener...');
+
+            const q = query(
+                collection(db, 'conversations'),
+                where('participants', 'array-contains', auth.currentUser.uid)
+            );
+
+            // Listen for real-time updates
+            onSnapshot(q, (snapshot) => {
+                let totalUnread = 0;
+
+                snapshot.forEach((doc) => {
+                    const conv = doc.data();
+                    if (conv.unreadCount && conv.unreadCount[auth.currentUser.uid]) {
+                        totalUnread += conv.unreadCount[auth.currentUser.uid];
+                    }
+                });
+
+                console.log(`📬 Unread messages: ${totalUnread}`);
+
+                const messagesLink = document.getElementById('messagesLink');
+                if (messagesLink) {
+                    if (totalUnread > 0) {
+                        messagesLink.classList.add('has-unread');
+                    } else {
+                        messagesLink.classList.remove('has-unread');
+                    }
+                }
+            });
+        }
+
+        // PROFILE MODAL FUNCTIONS
+
+        let currentProfileInstructor = null;
+
+        function openProfileModal(instructor) {
+            currentProfileInstructor = instructor;
+            const modal = document.getElementById('profileModal');
+
+            // Populate modal with instructor data
+            const avatar = instructor.avatar_url || 'https://via.placeholder.com/130';
+            const name = escapeHtml(instructor.name || 'Unnamed Instructor');
+            const price = instructor.price_per_lesson || '';
+            const currency = escapeHtml(instructor.currency || '$');
+            const spoken = instructor.languages_spoken || [];
+            const teaching = instructor.languages_teaching || [];
+            const country = escapeHtml(instructor.country || 'Not specified');
+            const aboutMe = escapeHtml(instructor.about_me || 'No bio yet');
+
+            document.getElementById('profileModalAvatar').src = avatar;
+            document.getElementById('profileModalName').textContent = name;
+            document.getElementById('profileModalPrice').textContent = `${currency}${price}/hour`;
+
+            // Languages spoken
+            const spokenContainer = document.getElementById('profileModalSpoken');
+            spokenContainer.innerHTML = '';
+            if (spoken.length > 0) {
+                spoken.forEach(lang => {
+                    const tag = document.createElement('span');
+                    tag.className = 'language-tag';
+                    tag.textContent = lang;
+                    spokenContainer.appendChild(tag);
+                });
+            } else {
+                spokenContainer.innerHTML = '<p style="color: #999; font-style: italic;">Not specified</p>';
+            }
+
+            // Languages teaching
+            const teachingContainer = document.getElementById('profileModalTeaching');
+            teachingContainer.innerHTML = '';
+            if (teaching.length > 0) {
+                teaching.forEach(lang => {
+                    const tag = document.createElement('span');
+                    tag.className = 'language-tag';
+                    tag.textContent = lang;
+                    teachingContainer.appendChild(tag);
+                });
+            } else {
+                teachingContainer.innerHTML = '<p style="color: #999; font-style: italic;">Not specified</p>';
+            }
+
+            document.getElementById('profileModalCountry').textContent = country;
+            document.getElementById('profileModalAbout').textContent = aboutMe;
+
+            // Show modal
+            modal.classList.add('show');
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.classList.remove('show');
+            currentProfileInstructor = null;
+        }
+
+        // Initialize profile modal event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const profileCloseBtn = document.querySelector('.profile-modal-close');
+            const profileCloseModalBtn = document.getElementById('profileCloseModalBtn');
+            const profileMessageBtn = document.getElementById('profileMessageBtn');
+            const profileBookBtn = document.getElementById('profileBookBtn');
+
+            if (profileCloseBtn) {
+                profileCloseBtn.addEventListener('click', closeProfileModal);
+            }
+
+            if (profileCloseModalBtn) {
+                profileCloseModalBtn.addEventListener('click', closeProfileModal);
+            }
+
+            if (profileMessageBtn) {
+                profileMessageBtn.addEventListener('click', () => {
+                    if (currentProfileInstructor) {
+                        sessionStorage.setItem('messageRecipientId', currentProfileInstructor.id);
+                        window.location.href = '/messages.html';
+                    }
+                });
+            }
+
+            if (profileBookBtn) {
+                profileBookBtn.addEventListener('click', () => {
+                    if (currentProfileInstructor) {
+                        // Store instructor data before closing modal (closeProfileModal sets currentProfileInstructor to null)
+                        const instructorId = currentProfileInstructor.id;
+                        const instructorName = currentProfileInstructor.name;
+
+                        closeProfileModal();
+                        // Small delay to allow profile modal to close before opening booking modal
+                        setTimeout(() => {
+                            openBookingModal(instructorId, instructorName);
+                        }, 300);
+                    }
+                });
+            }
+
+            // Close modal when clicking outside
+            const profileModal = document.getElementById('profileModal');
+            if (profileModal) {
+                profileModal.addEventListener('click', (e) => {
+                    if (e.target === profileModal) {
+                        closeProfileModal();
+                    }
+                });
+            }
+        });
+
+    </script>
+
+    <!-- Instructor Profile Modal -->
+    <div id="profileModal" class="profile-modal">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <button class="profile-modal-close">&times;</button>
+                <img id="profileModalAvatar" class="profile-modal-avatar" src="" alt="Instructor Avatar">
+                <h2 id="profileModalName" class="profile-modal-name">Instructor Name</h2>
+                <div id="profileModalPrice" class="profile-modal-price">$0/hour</div>
+            </div>
+            <div class="profile-modal-body">
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-chalkboard-teacher"></i> Teaches</h4>
+                    <div id="profileModalTeaching" class="language-tags"></div>
+                </div>
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-comments"></i> Speaks</h4>
+                    <div id="profileModalSpoken" class="language-tags"></div>
+                </div>
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-map-marker-alt"></i> Country</h4>
+                    <p id="profileModalCountry">Not specified</p>
+                </div>
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-user"></i> About</h4>
+                    <p id="profileModalAbout">No bio yet</p>
+                </div>
+            </div>
+            <div class="profile-modal-actions">
+                <button class="btn-profile-modal" id="profileMessageBtn">
+                    <i class="fas fa-envelope"></i> Send Message
+                </button>
+                <button class="btn-profile-modal" id="profileBookBtn">
+                    <i class="fas fa-calendar-check"></i> Book Lesson
+                </button>
+                <button class="btn-profile-modal secondary" id="profileCloseModalBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="modal fade" id="bookingModal" tabindex="-1" role="dialog" aria-labelledby="bookingModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%); color: white;">
+                    <h5 class="modal-title" id="bookingModalLabel">
+                        <i class="fas fa-calendar-alt"></i>
+                        Book a Lesson with <span id="modal-instructor-name"></span>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 1;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Timezone Banner -->
+                    <div style="background: #e8f8f7; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid #20bcba;">
+                        <i class="fas fa-info-circle" style="color: #20bcba;"></i>
+                        <strong>Your timezone:</strong> <span id="student-timezone"></span>
+                        <br>
+                        <small style="color: #666;">All times below are in your local timezone.</small>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="booking-loading" style="text-align: center; padding: 3rem;">
+                        <i class="fas fa-circle-notch fa-spin" style="font-size: 3rem; color: #20bcba;"></i>
+                        <p style="margin-top: 1rem; color: #666;">Loading available time slots...</p>
+                    </div>
+
+                    <!-- Calendar View -->
+                    <div id="booking-calendar" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <button id="prev-week" type="button" style="padding: 0.5rem 1rem; background: #fff; border: 1px solid #20bcba; color: #20bcba; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </button>
+                            <h6 id="current-week-label" style="margin: 0; color: #333;"></h6>
+                            <button id="next-week" type="button" style="padding: 0.5rem 1rem; background: #fff; border: 1px solid #20bcba; color: #20bcba; border-radius: 4px; cursor: pointer;">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div id="days-grid"></div>
+                    </div>
+
+                    <!-- No Availability Message -->
+                    <div id="no-availability" style="display: none; text-align: center; padding: 3rem; color: #666;">
+                        <i class="fas fa-calendar-times" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
+                        <p>This instructor hasn't set their availability yet.</p>
+                        <p style="font-size: 0.9rem;">Please check back later or contact them directly.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

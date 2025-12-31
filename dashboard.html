@@ -4,20 +4,115 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Instructor Dashboard</title>
+
+  <!-- Styles -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
+  <link href="css/bootstrap.css" rel="stylesheet">
+  <link href="css/fontawesome-all.css" rel="stylesheet">
+  <link href="css/swiper.css" rel="stylesheet">
+  <link href="css/magnific-popup.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+
+  <!-- Favicon  -->
+  <link rel="icon" href="images/NuevoFavicon.png">
+
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #f5f5f5;
       margin: 0;
-      padding: 0;
+      padding: 4.5rem 0 0;
       color: #333;
     }
-    header {
-      background-color: #20bcba;
-      color: white;
-      padding: 1rem;
-      text-align: center;
+
+    /* Navbar styles */
+    .navbar-custom {
+      background-color: #113448 !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .profile-nav-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-left: 1rem;
+    }
+
+    .profile-pic-nav {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #20bcba;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .profile-pic-nav:hover {
+      transform: scale(1.1);
+    }
+
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-dropdown-content {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border-radius: 8px;
+      z-index: 1000;
+      margin-top: 0.25rem;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+      transition-delay: 0s;
+    }
+
+    .profile-dropdown-content a {
+      color: #333;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background 0.2s;
+    }
+
+    .profile-dropdown-content a:hover {
+      background-color: #f1f1f1;
+    }
+
+    .profile-dropdown:hover .profile-dropdown-content {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition-delay: 0s;
+    }
+
+    .profile-dropdown-content:hover {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .profile-dropdown-content a.messages-link i {
+      transition: color 0.2s;
+    }
+
+    .profile-dropdown-content a.messages-link.has-unread i {
+      color: #dc3545;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
     }
     .container {
       max-width: 700px;
@@ -119,12 +214,152 @@
       margin: 1rem 0;
       font-weight: 600;
     }
+
+    /* Availability Schedule Grid */
+    .schedule-day-row {
+      display: grid;
+      grid-template-columns: 100px 1fr 40px;
+      gap: 1rem;
+      align-items: start;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .schedule-day-row:last-child {
+      border-bottom: none;
+    }
+
+    .day-label {
+      font-weight: 600;
+      color: #333;
+      padding-top: 0.5rem;
+    }
+
+    .time-slots {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .time-slot {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .time-slot input[type="time"] {
+      width: 110px;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .add-slot-btn, .remove-slot-btn {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      padding: 0;
+      margin: 0;
+      border: none;
+      border-radius: 50%;
+      background: #20bcba;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .remove-slot-btn {
+      background: #dc3545;
+    }
+
+    .add-slot-btn:hover {
+      background: #199c9a;
+      transform: scale(1.1);
+    }
+
+    .remove-slot-btn:hover {
+      background: #c82333;
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Instructor Dashboard</h1>
-  </header>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+    <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-awesome fas fa-bars"></span>
+      <span class="navbar-toggler-awesome fas fa-times"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="index.html#header">HOME</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="NewFrenchPage.html"><span class="item-text">FRENCH</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="NewPortuguesePage.html"><span class="item-text">PORTUGUESE</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="NewItalianPage.html"><span class="item-text">ITALIAN</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
+            <div class="dropdown-items-divide-hr"></div>
+            <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+          </div>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
+        </li>
+      </ul>
+
+      <!-- Profile Picture Dropdown -->
+      <div class="profile-nav-wrapper" id="profileNavWrapper">
+        <div class="profile-dropdown">
+          <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+          <div class="profile-dropdown-content">
+            <a href="dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+            <a href="messages.html" class="messages-link" id="messagesLink"><i class="fas fa-envelope"></i> Messages</a>
+            <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+            <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <!-- end of navbar -->
 
   <div class="container" id="profile-container">
     <label for="name">Full Name</label>
@@ -165,12 +400,48 @@
     <label for="country">Native Country</label>
     <select id="country"></select>
 
+    <!-- AVAILABILITY SECTION -->
+    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
+      <i class="fas fa-calendar-alt"></i> Teaching Availability
+    </h3>
+
+    <label for="timezone">Your Timezone</label>
+    <select id="timezone" style="margin-bottom: 1.5rem;">
+      <option value="">Select your timezone...</option>
+    </select>
+
+    <div style="margin-bottom: 2rem;">
+      <label style="display: block; margin-bottom: 1rem;">Weekly Schedule</label>
+      <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+        Set your regular teaching hours. All times are in your local timezone.
+      </p>
+      <div id="weekly-schedule-grid" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+        <!-- JavaScript will populate this -->
+      </div>
+    </div>
+
+    <button type="button" id="save-availability-btn"
+            style="background-color: #6c757d; margin-top: 0; margin-bottom: 2rem;">
+      <i class="fas fa-save"></i> Save Availability
+    </button>
+
     <div class="horizontal-btns">
       <button id="save-btn" type="button">Save Profile</button>
-      <button id="logout-btn" type="button" class="secondary">Log out</button>
     </div>
     <div id="status" class="status-message"></div>
   </div>
+
+  <!-- Scripts -->
+  <script src="js/jquery.min.js"></script>
+  <script src="js/popper.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/jquery.easing.min.js"></script>
+  <script src="js/swiper.min.js"></script>
+  <script src="js/jquery.magnific-popup.js"></script>
+  <script src="js/morphext.min.js"></script>
+  <script src="js/isotope.pkgd.min.js"></script>
+  <script src="js/validator.min.js"></script>
+  <script src="js/scripts.js"></script>
 
   <script type="module">
     import {
@@ -182,9 +453,14 @@
       doc,
       getDoc,
       setDoc,
+      collection,
+      getDocs,
+      query,
+      where,
       ref,
       uploadBytes,
-      getDownloadURL
+      getDownloadURL,
+      onSnapshot
     } from './lib/firebaseClient.js';
 
     // Language/country/currency data
@@ -233,6 +509,20 @@
     let teachingLanguages = [];
     let currentUser = null;
 
+    // Availability data
+    let weeklyScheduleData = {
+      monday: [], tuesday: [], wednesday: [], thursday: [],
+      friday: [], saturday: [], sunday: []
+    };
+
+    const commonTimezones = [
+      'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+      'America/Toronto', 'America/Mexico_City', 'America/Sao_Paulo', 'America/Buenos_Aires',
+      'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Madrid', 'Europe/Rome',
+      'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Seoul', 'Asia/Singapore', 'Asia/Dubai',
+      'Australia/Sydney', 'Australia/Melbourne', 'Pacific/Auckland'
+    ];
+
     document.addEventListener("DOMContentLoaded", async () => {
       // Load cached avatar immediately
       const cachedAvatar = localStorage.getItem('instructor_avatar');
@@ -244,14 +534,23 @@
       populateSelect('teachingLanguage', languages);
       populateSelect('country', countries);
       populateCurrency();
+      populateTimezoneSelect();
+      renderWeeklyScheduleGrid();
 
       document.getElementById('add-spoken-btn').onclick = () => addLanguage('spoken');
       document.getElementById('add-teaching-btn').onclick = () => addLanguage('teaching');
       document.getElementById('save-btn').onclick = saveProfile;
-      document.getElementById('logout-btn').onclick = async () => {
-        await signOut(auth);
-        window.location.href = "./login.html";
-      };
+      document.getElementById('save-availability-btn').onclick = saveAvailability;
+
+      // Logout from navbar
+      const logoutLink = document.getElementById('logoutLink');
+      if (logoutLink) {
+        logoutLink.addEventListener('click', async (e) => {
+          e.preventDefault();
+          await signOut(auth);
+          window.location.href = "login.html";
+        });
+      }
 
       // Avatar edit button triggers file input
       document.getElementById('avatar-edit-btn').onclick = () => {
@@ -286,6 +585,14 @@
         if (user) {
           currentUser = user;
           await loadProfile();
+          await loadAvailability();
+
+          // Load unread message count
+          try {
+            await loadUnreadMessageCount();
+          } catch (error) {
+            console.error('Error loading unread messages:', error);
+          }
         } else {
           setStatus("Not logged in!", true);
           window.location.href = "./login.html";
@@ -382,6 +689,11 @@
       try {
         await setDoc(doc(db, 'instructors', currentUser.uid), profile, { merge: true });
         setStatus("Profile saved successfully!", false);
+
+        // Redirect to instructors page after saving
+        setTimeout(() => {
+          window.location.href = 'instructors.html';
+        }, 1000);
       } catch (error) {
         setStatus("Error saving profile: " + error.message, true);
       }
@@ -417,6 +729,7 @@
 
           if (data.avatar_url) {
             document.getElementById('avatarPreview').src = data.avatar_url;
+            document.getElementById('navProfilePic').src = data.avatar_url;
             localStorage.setItem('instructor_avatar', data.avatar_url);
           }
         }
@@ -425,6 +738,198 @@
         setStatus("Error loading profile: " + error.message, true);
       }
     }
+
+    // AVAILABILITY FUNCTIONS
+
+    function populateTimezoneSelect() {
+      const select = document.getElementById('timezone');
+      const detectedTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      select.innerHTML = '<option value="">Select your timezone...</option>';
+
+      // Add detected timezone first if not in common list
+      if (detectedTZ && !commonTimezones.includes(detectedTZ)) {
+        select.innerHTML += `<option value="${detectedTZ}">${detectedTZ} (Detected)</option>`;
+      }
+
+      commonTimezones.forEach(tz => {
+        const selected = tz === detectedTZ ? 'selected' : '';
+        select.innerHTML += `<option value="${tz}" ${selected}>${tz}</option>`;
+      });
+    }
+
+    function renderWeeklyScheduleGrid() {
+      const container = document.getElementById('weekly-schedule-grid');
+      const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+      container.innerHTML = '';
+
+      weekDays.forEach(day => {
+        const dayRow = document.createElement('div');
+        dayRow.className = 'schedule-day-row';
+
+        dayRow.innerHTML = `
+          <div class="day-label">${capitalizeFirst(day)}</div>
+          <div class="time-slots" id="slots-${day}"></div>
+          <button class="add-slot-btn" type="button" data-day="${day}" title="Add time slot">
+            <i class="fas fa-plus"></i>
+          </button>
+        `;
+
+        container.appendChild(dayRow);
+
+        // Add click listener to add button
+        dayRow.querySelector('.add-slot-btn').onclick = () => addTimeSlot(day);
+
+        // Render existing slots
+        const slots = weeklyScheduleData[day] || [];
+        slots.forEach(slot => {
+          renderTimeSlot(day, slot.start, slot.end);
+        });
+      });
+    }
+
+    function capitalizeFirst(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function addTimeSlot(day) {
+      renderTimeSlot(day, '09:00', '17:00');
+    }
+
+    function renderTimeSlot(day, start = '09:00', end = '17:00') {
+      const container = document.getElementById(`slots-${day}`);
+      const slotDiv = document.createElement('div');
+      slotDiv.className = 'time-slot';
+
+      slotDiv.innerHTML = `
+        <input type="time" class="slot-start" value="${start}" />
+        <span style="color: #666;">to</span>
+        <input type="time" class="slot-end" value="${end}" />
+        <button class="remove-slot-btn" type="button" title="Remove slot">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+
+      container.appendChild(slotDiv);
+
+      slotDiv.querySelector('.remove-slot-btn').onclick = () => {
+        slotDiv.remove();
+      };
+    }
+
+    async function saveAvailability() {
+      if (!currentUser) {
+        setStatus('Please log in first.', true);
+        return;
+      }
+
+      const timezone = document.getElementById('timezone').value;
+      if (!timezone) {
+        setStatus('Please select your timezone.', true);
+        return;
+      }
+
+      // Collect weekly schedule
+      const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+      const weeklySchedule = {};
+
+      weekDays.forEach(day => {
+        const slots = [];
+        const slotElements = document.querySelectorAll(`#slots-${day} .time-slot`);
+
+        slotElements.forEach(slotEl => {
+          const start = slotEl.querySelector('.slot-start').value;
+          const end = slotEl.querySelector('.slot-end').value;
+
+          if (start && end && start < end) {
+            slots.push({ start, end });
+          }
+        });
+
+        weeklySchedule[day] = slots;
+      });
+
+      try {
+        setStatus('Saving availability...', false);
+
+        await setDoc(
+          doc(db, 'instructor_availability', currentUser.uid),
+          {
+            timezone,
+            weeklySchedule,
+            updatedAt: new Date().toISOString()
+          },
+          { merge: true }
+        );
+
+        setStatus('Availability saved successfully!', false);
+
+      } catch (error) {
+        console.error('Error saving availability:', error);
+        setStatus('Error saving availability: ' + error.message, true);
+      }
+    }
+
+    async function loadAvailability() {
+      if (!currentUser) return;
+
+      try {
+        const docSnap = await getDoc(doc(db, 'instructor_availability', currentUser.uid));
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          document.getElementById('timezone').value = data.timezone || '';
+
+          weeklyScheduleData = data.weeklySchedule || {
+            monday: [], tuesday: [], wednesday: [], thursday: [],
+            friday: [], saturday: [], sunday: []
+          };
+
+          renderWeeklyScheduleGrid();
+        }
+
+      } catch (error) {
+        console.error('Error loading availability:', error);
+      }
+    }
+
+    // UNREAD MESSAGE COUNT
+
+    async function loadUnreadMessageCount() {
+      if (!auth.currentUser) return;
+
+      console.log('📬 Setting up unread message listener...');
+
+      const q = query(
+        collection(db, 'conversations'),
+        where('participants', 'array-contains', auth.currentUser.uid)
+      );
+
+      // Listen for real-time updates
+      onSnapshot(q, (snapshot) => {
+        let totalUnread = 0;
+
+        snapshot.forEach((doc) => {
+          const conv = doc.data();
+          if (conv.unreadCount && conv.unreadCount[auth.currentUser.uid]) {
+            totalUnread += conv.unreadCount[auth.currentUser.uid];
+          }
+        });
+
+        console.log(`📬 Unread messages: ${totalUnread}`);
+
+        const messagesLink = document.getElementById('messagesLink');
+        if (messagesLink) {
+          if (totalUnread > 0) {
+            messagesLink.classList.add('has-unread');
+          } else {
+            messagesLink.classList.remove('has-unread');
+          }
+        }
+      });
+    }
+
   </script>
 </body>
 </html>

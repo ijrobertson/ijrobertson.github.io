@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <meta name="description" content="Find language learning partners on Lingua Bud. Connect with learners worldwide and practice together!">
+    <meta name="author" content="Lingua Bud">
+
+    <title>Find Language Partners - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- Favicon  -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        body {
+            padding-top: 4.5rem;
+            background-color: #f8f9fa;
+        }
+
+        /* Force navbar to have solid background */
+        .navbar-custom {
+            background-color: #113448 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Profile Picture in Navbar */
+        .profile-nav-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: 1rem;
+        }
+
+        .profile-pic-nav {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .profile-pic-nav:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-dropdown-content {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 1000;
+            margin-top: 0.25rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+            transition-delay: 0s;
+        }
+
+        .profile-dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background 0.2s;
+        }
+
+        .profile-dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        .profile-dropdown:hover .profile-dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            transition-delay: 0s;
+        }
+
+        .profile-dropdown-content:hover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .profile-dropdown-content a.messages-link i {
+            transition: color 0.2s;
+        }
+
+        .profile-dropdown-content a.messages-link.has-unread i {
+            color: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Hero Section */
+        .connect-hero {
+            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            color: white;
+            padding: 4.5rem 0 2rem;
+            margin-top: -1px;
+        }
+
+        .connect-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .connect-hero p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            color: white;
+        }
+
+        /* Filters Section */
+        .filters-section {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 2rem;
+            margin: -2rem auto 2rem;
+            border-radius: 12px;
+            max-width: 1200px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .filter-group select {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #20bcba;
+        }
+
+        /* User Grid */
+        .user-grid-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        /* User Cards */
+        .user-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .user-card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 2rem 1.5rem 1rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .user-card-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin: 0 auto 1rem;
+            display: block;
+        }
+
+        .user-card-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 0.5rem;
+        }
+
+        .user-card-country {
+            color: #666;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .user-card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .language-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .language-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .language-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .language-tag {
+            background: #e8f8f7;
+            color: #20bcba;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .incomplete-profile {
+            color: #999;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .user-card-footer {
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .view-profile-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: #20bcba;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .view-profile-btn:hover {
+            background: #1a9d9b;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            overflow-y: auto;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 16px;
+            max-width: 650px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            color: white;
+            padding: 2.5rem 2rem 2rem;
+            border-radius: 16px 16px 0 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 1.5rem;
+            top: 1rem;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            line-height: 1;
+            transition: transform 0.2s;
+            background: rgba(255,255,255,0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close:hover {
+            transform: rotate(90deg);
+            background: rgba(255,255,255,0.3);
+        }
+
+        .modal-avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid white;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .modal-name {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .info-section {
+            margin-bottom: 2rem;
+        }
+
+        .info-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-section h4 {
+            color: #20bcba;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .info-section p {
+            margin: 0;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            padding: 0 2rem 2rem;
+        }
+
+        .btn-primary-modal {
+            flex: 1;
+            padding: 1rem 2rem;
+            background-color: #20bcba;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-primary-modal:hover {
+            background-color: #1a9d9b;
+        }
+
+        .btn-secondary-modal {
+            flex: 1;
+            padding: 1rem 2rem;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary-modal:hover {
+            background-color: #5a6268;
+        }
+
+        .loading, .no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .loading i {
+            font-size: 3rem;
+            color: #20bcba;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .connect-hero h1 {
+                font-size: 2rem;
+            }
+
+            .filters-section {
+                margin: -1rem 1rem 2rem;
+                padding: 1.5rem;
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .user-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .modal-content {
+                margin: 1rem;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll active" href="connect.html">CONNECT</a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewFrenchPage.html"><span class="item-text">FRENCH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewPortuguesePage.html"><span class="item-text">PORTUGUESE</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewItalianPage.html"><span class="item-text">ITALIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
+                </li>
+            </ul>
+
+            <!-- Profile Picture Dropdown -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" class="messages-link" id="messagesLink"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sign In Link (shown when not logged in) -->
+            <div id="signInWrapper">
+                <a class="btn-solid-sm page-scroll" href="login.html" style="margin-left: 1rem;">SIGN IN</a>
+            </div>
+        </div>
+    </nav>
+    <!-- end of navbar -->
+
+    <!-- Hero Section -->
+    <div class="connect-hero">
+        <div class="container text-center">
+            <h1>Find Your Language Learning Partner</h1>
+            <p>Connect with learners worldwide and practice together!</p>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="container">
+        <div class="filters-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="learningFilter"><i class="fas fa-graduation-cap"></i> I want to learn</label>
+                    <select id="learningFilter">
+                        <option value="">All Languages</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="speakingFilter"><i class="fas fa-comments"></i> They speak</label>
+                    <select id="speakingFilter">
+                        <option value="">All Languages</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="countryFilter"><i class="fas fa-globe"></i> From country</label>
+                    <select id="countryFilter">
+                        <option value="">Any Country</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Grid -->
+    <div class="user-grid-container">
+        <div class="user-grid" id="userGrid">
+            <div class="loading">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading language partners...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <img id="modalAvatar" class="modal-avatar" src="" alt="User Avatar">
+                <h2 id="modalName" class="modal-name">User Name</h2>
+            </div>
+            <div class="modal-body">
+                <div class="info-section">
+                    <h4><i class="fas fa-comments"></i> Languages I Speak</h4>
+                    <div id="modalSpoken" class="language-tags"></div>
+                </div>
+                <div class="info-section">
+                    <h4><i class="fas fa-graduation-cap"></i> Languages I'm Learning</h4>
+                    <div id="modalLearning" class="language-tags"></div>
+                </div>
+                <div class="info-section">
+                    <h4><i class="fas fa-map-marker-alt"></i> Country</h4>
+                    <p id="modalCountry">Not specified</p>
+                </div>
+                <div class="info-section">
+                    <h4><i class="fas fa-user"></i> About Me</h4>
+                    <p id="modalAbout">No bio yet</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary-modal" id="sendMessageBtn">
+                    <i class="fas fa-envelope"></i> Send Message
+                </button>
+                <button class="btn-primary-modal" id="sendRequestBtn">
+                    <i class="fas fa-user-plus"></i> Send Friend Request
+                </button>
+                <button class="btn-secondary-modal" id="closeModalBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <script type="module">
+        import { db, auth, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, query, where, onSnapshot } from './lib/firebaseClient.js';
+
+        const userGrid = document.getElementById('userGrid');
+        const learningFilter = document.getElementById('learningFilter');
+        const speakingFilter = document.getElementById('speakingFilter');
+        const countryFilter = document.getElementById('countryFilter');
+        const modal = document.getElementById('userModal');
+        const closeBtn = document.querySelector('.close');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const sendRequestBtn = document.getElementById('sendRequestBtn');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const navProfilePic = document.getElementById('navProfilePic');
+        const profileNavWrapper = document.getElementById('profileNavWrapper');
+        const signInWrapper = document.getElementById('signInWrapper');
+        const logoutLink = document.getElementById('logoutLink');
+
+        let allUsers = [];
+        let currentUser = null;
+        let selectedUserId = null;
+
+        // Check authentication and load profile picture
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+
+                // Load user's profile picture
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        if (userData.avatar_url) {
+                            navProfilePic.src = userData.avatar_url;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading profile:', error);
+                }
+
+                // Show profile picture, hide sign in button
+                profileNavWrapper.style.display = 'block';
+                signInWrapper.style.display = 'none';
+
+                // Fetch users after authentication is confirmed
+                await fetchUsers();
+
+                // Load unread message count
+                try {
+                    await loadUnreadMessageCount();
+                } catch (error) {
+                    console.error('Error loading unread messages:', error);
+                }
+            } else {
+                // Show sign in button, hide profile picture
+                profileNavWrapper.style.display = 'none';
+                signInWrapper.style.display = 'block';
+
+                // Redirect to login if not authenticated
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Logout functionality
+        logoutLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            window.location.href = 'index.html';
+        });
+
+        async function fetchUsers() {
+            try {
+                console.log('Starting to fetch users...');
+
+                const querySnapshot = await getDocs(collection(db, 'users'));
+                console.log('Query snapshot received, docs count:', querySnapshot.size);
+
+                allUsers = [];
+                querySnapshot.forEach((doc) => {
+                    const userData = { id: doc.id, ...doc.data() };
+                    console.log('User data:', userData);
+
+                    // Only show student users (not instructors) and exclude current user
+                    if (currentUser && doc.id !== currentUser.uid && userData.role === 'student') {
+                        allUsers.push(userData);
+                    }
+                });
+
+                console.log('Fetched users after filtering:', allUsers.length);
+
+                populateFilterOptions(allUsers);
+                renderUsers();
+            } catch (error) {
+                console.error('Error fetching users - Full error:', error);
+                userGrid.innerHTML = `<div class="loading">Error loading users: ${error.message}<br><br>Please check the console for details.</div>`;
+            }
+        }
+
+        function populateFilterOptions(data) {
+            const learningLanguages = new Set();
+            const speakingLanguages = new Set();
+            const countries = new Set();
+
+            data.forEach(user => {
+                const learning = user.languages_learning || [];
+                const speaking = user.languages_spoken || [];
+
+                if (Array.isArray(learning)) {
+                    learning.forEach(lang => learningLanguages.add(lang));
+                }
+                if (Array.isArray(speaking)) {
+                    speaking.forEach(lang => speakingLanguages.add(lang));
+                }
+                if (user.country) {
+                    countries.add(user.country);
+                }
+            });
+
+            // Populate filters
+            learningFilter.innerHTML = `<option value="">All Languages</option>`;
+            Array.from(learningLanguages).sort().forEach(lang => {
+                learningFilter.innerHTML += `<option value="${lang}">${lang}</option>`;
+            });
+
+            speakingFilter.innerHTML = `<option value="">All Languages</option>`;
+            Array.from(speakingLanguages).sort().forEach(lang => {
+                speakingFilter.innerHTML += `<option value="${lang}">${lang}</option>`;
+            });
+
+            countryFilter.innerHTML = `<option value="">Any Country</option>`;
+            Array.from(countries).sort().forEach(country => {
+                countryFilter.innerHTML += `<option value="${country}">${country}</option>`;
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderUsers() {
+            const selectedLearning = learningFilter.value;
+            const selectedSpeaking = speakingFilter.value;
+            const selectedCountry = countryFilter.value;
+
+            userGrid.innerHTML = '';
+
+            const filtered = allUsers.filter(user => {
+                const learning = user.languages_learning || [];
+                const speaking = user.languages_spoken || [];
+
+                const matchesLearning = selectedLearning ? learning.includes(selectedLearning) : true;
+                const matchesSpeaking = selectedSpeaking ? speaking.includes(selectedSpeaking) : true;
+                const matchesCountry = selectedCountry ? user.country === selectedCountry : true;
+
+                return matchesLearning && matchesSpeaking && matchesCountry;
+            });
+
+            if (filtered.length === 0) {
+                userGrid.innerHTML = '<div class="no-results"><i class="fas fa-user-friends" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No language partners found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';
+                return;
+            }
+
+            filtered.forEach(user => {
+                const card = createUserCard(user);
+                userGrid.appendChild(card);
+            });
+        }
+
+        function createUserCard(user) {
+            const spoken = user.languages_spoken || [];
+            const learning = user.languages_learning || [];
+            const avatar = user.avatar_url || user.avatar || 'https://via.placeholder.com/100';
+            const name = escapeHtml(user.name || user.display_name || 'Anonymous User');
+            const country = escapeHtml(user.country || 'Not specified');
+
+            const card = document.createElement('div');
+            card.className = 'user-card';
+            card.onclick = () => openUserModal(user);
+
+            let cardHTML = `
+                <div class="user-card-header">
+                    <img class="user-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
+                    <div class="user-card-name">${name}</div>
+                    <div class="user-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>
+                </div>
+                <div class="user-card-body">
+            `;
+
+            if (spoken.length > 0) {
+                cardHTML += `
+                    <div class="language-section">
+                        <div class="language-section-title">Speaks</div>
+                        <div class="language-tags">
+                            ${spoken.map(lang => `<span class="language-tag">${escapeHtml(lang)}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (learning.length > 0) {
+                cardHTML += `
+                    <div class="language-section">
+                        <div class="language-section-title">Learning</div>
+                        <div class="language-tags">
+                            ${learning.map(lang => `<span class="language-tag">${escapeHtml(lang)}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (spoken.length === 0 && learning.length === 0) {
+                cardHTML += `<div class="incomplete-profile">Profile incomplete - languages not set</div>`;
+            }
+
+            cardHTML += `
+                </div>
+                <div class="user-card-footer">
+                    <button class="view-profile-btn">View Profile</button>
+                </div>
+            `;
+
+            card.innerHTML = cardHTML;
+            return card;
+        }
+
+        function openUserModal(user) {
+            console.log('👤 Opening modal for user:', user.id, user.name);
+            selectedUserId = user.id;
+            console.log('✅ selectedUserId set to:', selectedUserId);
+
+            const avatar = user.avatar_url || user.avatar || 'https://via.placeholder.com/150';
+            const name = escapeHtml(user.name || user.display_name || 'Anonymous User');
+            const spoken = user.languages_spoken || [];
+            const learning = user.languages_learning || [];
+            const country = escapeHtml(user.country || 'Not specified');
+            const about = escapeHtml(user.about_me || user.bio || 'No bio yet');
+
+            document.getElementById('modalAvatar').src = avatar;
+            document.getElementById('modalName').textContent = name;
+            document.getElementById('modalCountry').textContent = country;
+            document.getElementById('modalAbout').textContent = about;
+
+            const modalSpoken = document.getElementById('modalSpoken');
+            modalSpoken.innerHTML = '';
+            if (spoken.length > 0) {
+                spoken.forEach(lang => {
+                    modalSpoken.innerHTML += `<span class="language-tag">${escapeHtml(lang)}</span>`;
+                });
+            } else {
+                modalSpoken.innerHTML = '<p class="incomplete-profile">Not specified</p>';
+            }
+
+            const modalLearning = document.getElementById('modalLearning');
+            modalLearning.innerHTML = '';
+            if (learning.length > 0) {
+                learning.forEach(lang => {
+                    modalLearning.innerHTML += `<span class="language-tag">${escapeHtml(lang)}</span>`;
+                });
+            } else {
+                modalLearning.innerHTML = '<p class="incomplete-profile">Not specified</p>';
+            }
+
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            modal.classList.remove('show');
+            selectedUserId = null;
+        }
+
+        closeBtn.onclick = closeModal;
+        closeModalBtn.onclick = closeModal;
+
+        window.onclick = (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+
+        sendMessageBtn.onclick = () => {
+            console.log('📨 Send Message clicked');
+            console.log('  - selectedUserId:', selectedUserId);
+            console.log('  - currentUser:', currentUser?.uid);
+
+            if (!selectedUserId) {
+                console.error('❌ No user selected!');
+                alert('Error: No user selected. Please try again.');
+                return;
+            }
+            if (!currentUser) {
+                console.error('❌ Not logged in!');
+                alert('Error: You must be logged in.');
+                return;
+            }
+
+            // Use sessionStorage to pass recipient ID (more reliable than URL params)
+            sessionStorage.setItem('messageRecipientId', selectedUserId);
+            console.log('💾 Stored recipient ID in sessionStorage');
+            console.log('🚀 Redirecting to messages page');
+            window.location.href = '/messages.html';
+        };
+
+        sendRequestBtn.onclick = async () => {
+            if (!selectedUserId || !currentUser) return;
+            alert('Friend request feature coming soon! For now, you can connect via the messaging system.');
+            closeModal();
+        };
+
+        // Event listeners for filters
+        learningFilter.addEventListener('change', renderUsers);
+        speakingFilter.addEventListener('change', renderUsers);
+        countryFilter.addEventListener('change', renderUsers);
+
+        // UNREAD MESSAGE COUNT
+
+        async function loadUnreadMessageCount() {
+            if (!auth.currentUser) return;
+
+            console.log('📬 Setting up unread message listener...');
+
+            const q = query(
+                collection(db, 'conversations'),
+                where('participants', 'array-contains', auth.currentUser.uid)
+            );
+
+            // Listen for real-time updates
+            onSnapshot(q, (snapshot) => {
+                let totalUnread = 0;
+
+                snapshot.forEach((doc) => {
+                    const conv = doc.data();
+                    if (conv.unreadCount && conv.unreadCount[auth.currentUser.uid]) {
+                        totalUnread += conv.unreadCount[auth.currentUser.uid];
+                    }
+                });
+
+                console.log(`📬 Unread messages: ${totalUnread}`);
+
+                const messagesLink = document.getElementById('messagesLink');
+                if (messagesLink) {
+                    if (totalUnread > 0) {
+                        messagesLink.classList.add('has-unread');
+                    } else {
+                        messagesLink.classList.remove('has-unread');
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
