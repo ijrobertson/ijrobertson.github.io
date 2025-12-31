@@ -60,20 +60,29 @@
     }
 
     .profile-dropdown-content {
-      position: absolute;
-      right: 0;
-      top: 100%;
+      position: fixed;
+      right: 1rem;
+      top: 60px;
       background-color: white;
       min-width: 200px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
       border-radius: 8px;
-      z-index: 1000;
-      margin-top: 0.25rem;
+      z-index: 9999;
       opacity: 0;
       visibility: hidden;
       transform: translateY(-10px);
       transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
       transition-delay: 0s;
+    }
+
+    /* Desktop: position relative to parent */
+    @media (min-width: 992px) {
+      .profile-dropdown-content {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        margin-top: 0.25rem;
+      }
     }
 
     .profile-dropdown-content a {
