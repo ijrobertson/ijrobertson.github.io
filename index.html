@@ -32,6 +32,230 @@
 	
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* Language Exchange & Instructor Sections */
+        .home-section {
+            background-color: #f8f9fa;
+            padding: 4rem 0;
+        }
+
+        .home-section.white-bg {
+            background-color: #fff;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        /* Language Filter Buttons */
+        .language-filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .language-filters::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .language-filters::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .language-filters::-webkit-scrollbar-thumb {
+            background: #20bcba;
+            border-radius: 10px;
+        }
+
+        .language-filter-btn {
+            padding: 0.6rem 1.5rem;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .language-filter-btn:hover {
+            border-color: #20bcba;
+            color: #20bcba;
+        }
+
+        .language-filter-btn.active {
+            background: #20bcba;
+            border-color: #20bcba;
+            color: white;
+        }
+
+        /* Profile Grid */
+        .profiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .profile-card-image {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .profile-card-avatar {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+
+        .profile-card-body {
+            padding: 1.25rem;
+        }
+
+        .profile-card-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .profile-card-country {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .profile-card-price {
+            color: #20bcba;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .profile-card-languages {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .profile-language-tag {
+            background: #e8f8f7;
+            color: #20bcba;
+            padding: 0.3rem 0.7rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .profile-card-bio {
+            font-size: 0.85rem;
+            color: #555;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Find More Button */
+        .find-more-container {
+            text-align: center;
+        }
+
+        .find-more-btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: #20bcba;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .find-more-btn:hover {
+            background: #1a9d9b;
+            color: white;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(32, 188, 186, 0.3);
+        }
+
+        /* Loading State */
+        .profiles-loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .profiles-loading i {
+            font-size: 2.5rem;
+            color: #20bcba;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .home-section {
+                padding: 3rem 0;
+            }
+
+            .section-header h2 {
+                font-size: 1.8rem;
+            }
+
+            .profiles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
     
@@ -151,6 +375,68 @@
         </div> <!-- end of header-content -->
     </header> <!-- end of header -->
     <!-- end of header -->
+
+
+    <!-- Language Exchange Partners Section -->
+    <div class="home-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Practice with Language Partners</h2>
+                <p>Connect with fellow learners for free language exchange</p>
+            </div>
+
+            <!-- Language Filters -->
+            <div class="language-filters" id="studentLanguageFilters">
+                <button class="language-filter-btn active" data-language="all">All Languages</button>
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- Students Grid -->
+            <div class="profiles-grid" id="studentsGrid">
+                <div class="profiles-loading">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    <div>Loading language partners...</div>
+                </div>
+            </div>
+
+            <!-- Find More Button -->
+            <div class="find-more-container">
+                <a href="connect.html" class="find-more-btn">Find More Language Partners</a>
+            </div>
+        </div>
+    </div>
+    <!-- end of language exchange partners section -->
+
+
+    <!-- Instructors Section -->
+    <div class="home-section white-bg">
+        <div class="container">
+            <div class="section-header">
+                <h2>Learn with Professional Instructors</h2>
+                <p>Book lessons with experienced language teachers</p>
+            </div>
+
+            <!-- Language Filters -->
+            <div class="language-filters" id="instructorLanguageFilters">
+                <button class="language-filter-btn active" data-language="all">All Languages</button>
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- Instructors Grid -->
+            <div class="profiles-grid" id="instructorsGrid">
+                <div class="profiles-loading">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    <div>Loading instructors...</div>
+                </div>
+            </div>
+
+            <!-- Find More Button -->
+            <div class="find-more-container">
+                <a href="instructors.html" class="find-more-btn">Find More Instructors</a>
+            </div>
+        </div>
+    </div>
+    <!-- end of instructors section -->
 
 
     <!-- Intro -->
@@ -1184,6 +1470,286 @@
     <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
     <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
     <script src="js/scripts.js"></script> <!-- Custom scripts -->
+
+    <!-- Firebase Module Script -->
+    <script type="module">
+        import { db, collection, getDocs, query, limit } from './lib/firebaseClient.js';
+
+        let allStudents = [];
+        let allInstructors = [];
+        let studentLanguages = new Set();
+        let instructorLanguages = new Set();
+
+        // Fetch students and instructors on page load
+        async function loadProfiles() {
+            try {
+                await Promise.all([
+                    loadStudents(),
+                    loadInstructors()
+                ]);
+            } catch (error) {
+                console.error('Error loading profiles:', error);
+            }
+        }
+
+        // Load students from users collection
+        async function loadStudents() {
+            try {
+                const q = query(collection(db, 'users'), limit(8));
+                const querySnapshot = await getDocs(q);
+
+                allStudents = [];
+                querySnapshot.forEach((doc) => {
+                    const userData = { id: doc.id, ...doc.data() };
+                    if (userData.role === 'student') {
+                        allStudents.push(userData);
+
+                        // Collect languages for filters
+                        const languages = [
+                            ...(userData.languages_spoken || []),
+                            ...(userData.languages_learning || [])
+                        ];
+                        languages.forEach(lang => studentLanguages.add(lang));
+                    }
+                });
+
+                populateStudentFilters();
+                renderStudents();
+            } catch (error) {
+                console.error('Error loading students:', error);
+                document.getElementById('studentsGrid').innerHTML =
+                    '<div class="profiles-loading">Error loading language partners</div>';
+            }
+        }
+
+        // Load instructors from instructors collection
+        async function loadInstructors() {
+            try {
+                const q = query(collection(db, 'instructors'), limit(8));
+                const querySnapshot = await getDocs(q);
+
+                allInstructors = [];
+                querySnapshot.forEach((doc) => {
+                    const instructorData = { id: doc.id, ...doc.data() };
+                    allInstructors.push(instructorData);
+
+                    // Collect languages for filters
+                    const languages = instructorData.languages_teaching || [];
+                    languages.forEach(lang => instructorLanguages.add(lang));
+                });
+
+                populateInstructorFilters();
+                renderInstructors();
+            } catch (error) {
+                console.error('Error loading instructors:', error);
+                document.getElementById('instructorsGrid').innerHTML =
+                    '<div class="profiles-loading">Error loading instructors</div>';
+            }
+        }
+
+        // Populate student language filter buttons
+        function populateStudentFilters() {
+            const filtersContainer = document.getElementById('studentLanguageFilters');
+            const allButton = filtersContainer.querySelector('.language-filter-btn');
+
+            Array.from(studentLanguages).sort().forEach(language => {
+                const btn = document.createElement('button');
+                btn.className = 'language-filter-btn';
+                btn.setAttribute('data-language', language);
+                btn.textContent = language;
+                btn.addEventListener('click', () => filterStudents(language, btn));
+                filtersContainer.appendChild(btn);
+            });
+        }
+
+        // Populate instructor language filter buttons
+        function populateInstructorFilters() {
+            const filtersContainer = document.getElementById('instructorLanguageFilters');
+            const allButton = filtersContainer.querySelector('.language-filter-btn');
+
+            Array.from(instructorLanguages).sort().forEach(language => {
+                const btn = document.createElement('button');
+                btn.className = 'language-filter-btn';
+                btn.setAttribute('data-language', language);
+                btn.textContent = language;
+                btn.addEventListener('click', () => filterInstructors(language, btn));
+                filtersContainer.appendChild(btn);
+            });
+        }
+
+        // Filter students by language
+        function filterStudents(language, clickedBtn) {
+            // Update active state
+            const allBtns = document.querySelectorAll('#studentLanguageFilters .language-filter-btn');
+            allBtns.forEach(btn => btn.classList.remove('active'));
+            clickedBtn.classList.add('active');
+
+            renderStudents(language);
+        }
+
+        // Filter instructors by language
+        function filterInstructors(language, clickedBtn) {
+            // Update active state
+            const allBtns = document.querySelectorAll('#instructorLanguageFilters .language-filter-btn');
+            allBtns.forEach(btn => btn.classList.remove('active'));
+            clickedBtn.classList.add('active');
+
+            renderInstructors(language);
+        }
+
+        // Render student cards
+        function renderStudents(filterLanguage = 'all') {
+            const grid = document.getElementById('studentsGrid');
+            grid.innerHTML = '';
+
+            let filtered = allStudents;
+            if (filterLanguage !== 'all') {
+                filtered = allStudents.filter(student => {
+                    const allLangs = [
+                        ...(student.languages_spoken || []),
+                        ...(student.languages_learning || [])
+                    ];
+                    return allLangs.includes(filterLanguage);
+                });
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="profiles-loading">No language partners found</div>';
+                return;
+            }
+
+            filtered.forEach(student => {
+                const card = createStudentCard(student);
+                grid.appendChild(card);
+            });
+        }
+
+        // Render instructor cards
+        function renderInstructors(filterLanguage = 'all') {
+            const grid = document.getElementById('instructorsGrid');
+            grid.innerHTML = '';
+
+            let filtered = allInstructors;
+            if (filterLanguage !== 'all') {
+                filtered = allInstructors.filter(instructor => {
+                    const languages = instructor.languages_teaching || [];
+                    return languages.includes(filterLanguage);
+                });
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="profiles-loading">No instructors found</div>';
+                return;
+            }
+
+            filtered.forEach(instructor => {
+                const card = createInstructorCard(instructor);
+                grid.appendChild(card);
+            });
+        }
+
+        // Create student profile card
+        function createStudentCard(student) {
+            const card = document.createElement('div');
+            card.className = 'profile-card';
+            card.onclick = () => window.location.href = 'connect.html';
+
+            const avatar = student.avatar_url || 'https://via.placeholder.com/100';
+            const name = escapeHtml(student.name || 'Anonymous');
+            const country = escapeHtml(student.country || 'Not specified');
+            const bio = escapeHtml(student.about_me || '');
+            const languages = [
+                ...(student.languages_spoken || []),
+                ...(student.languages_learning || [])
+            ];
+
+            card.innerHTML = `
+                <div class="profile-card-image">
+                    <img class="profile-card-avatar" src="${avatar}" alt="${name}">
+                </div>
+                <div class="profile-card-body">
+                    <div class="profile-card-name">${name}</div>
+                    <div class="profile-card-country">
+                        <i class="fas fa-map-marker-alt"></i> ${country}
+                    </div>
+                    ${languages.length > 0 ? `
+                        <div class="profile-card-languages">
+                            ${languages.slice(0, 3).map(lang =>
+                                `<span class="profile-language-tag">${escapeHtml(lang)}</span>`
+                            ).join('')}
+                            ${languages.length > 3 ? `<span class="profile-language-tag">+${languages.length - 3}</span>` : ''}
+                        </div>
+                    ` : ''}
+                    ${bio ? `<div class="profile-card-bio">${bio}</div>` : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Create instructor profile card
+        function createInstructorCard(instructor) {
+            const card = document.createElement('div');
+            card.className = 'profile-card';
+            card.onclick = () => window.location.href = 'instructors.html';
+
+            const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
+            const name = escapeHtml(instructor.name || 'Instructor');
+            const country = escapeHtml(instructor.native_country || 'Not specified');
+            const price = instructor.price ? `${instructor.currency || '$'}${instructor.price}/hr` : '';
+            const bio = escapeHtml(instructor.about_me || '');
+            const languages = instructor.languages_teaching || [];
+
+            card.innerHTML = `
+                <div class="profile-card-image">
+                    <img class="profile-card-avatar" src="${avatar}" alt="${name}">
+                </div>
+                <div class="profile-card-body">
+                    <div class="profile-card-name">${name}</div>
+                    <div class="profile-card-country">
+                        <i class="fas fa-map-marker-alt"></i> ${country}
+                    </div>
+                    ${price ? `<div class="profile-card-price">${price}</div>` : ''}
+                    ${languages.length > 0 ? `
+                        <div class="profile-card-languages">
+                            ${languages.slice(0, 3).map(lang =>
+                                `<span class="profile-language-tag">${escapeHtml(lang)}</span>`
+                            ).join('')}
+                            ${languages.length > 3 ? `<span class="profile-language-tag">+${languages.length - 3}</span>` : ''}
+                        </div>
+                    ` : ''}
+                    ${bio ? `<div class="profile-card-bio">${bio}</div>` : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Setup "All Languages" button click handlers
+        document.querySelector('#studentLanguageFilters .language-filter-btn').addEventListener('click', function() {
+            const allBtns = document.querySelectorAll('#studentLanguageFilters .language-filter-btn');
+            allBtns.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            renderStudents('all');
+        });
+
+        document.querySelector('#instructorLanguageFilters .language-filter-btn').addEventListener('click', function() {
+            const allBtns = document.querySelectorAll('#instructorLanguageFilters .language-filter-btn');
+            allBtns.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            renderInstructors('all');
+        });
+
+        // Load profiles when page loads
+        loadProfiles();
+    </script>
 </body>
 </html>
 
