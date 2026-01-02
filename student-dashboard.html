@@ -458,17 +458,11 @@
         </select>
 
         <label for="spokenLanguage">Languages I Speak</label>
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-          <select id="spokenLanguage" style="flex: 1;"></select>
-          <button type="button" class="save-btn" id="add-spoken-btn" style="margin: 0; width: auto; padding: 0.75rem 1.5rem;">Add</button>
-        </div>
+        <select id="spokenLanguage" style="margin-bottom: 0.5rem;"></select>
         <div id="languages_spoken" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
 
         <label for="learningLanguage">Languages I'm Learning</label>
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-          <select id="learningLanguage" style="flex: 1;"></select>
-          <button type="button" class="save-btn" id="add-learning-btn" style="margin: 0; width: auto; padding: 0.75rem 1.5rem;">Add</button>
-        </div>
+        <select id="learningLanguage" style="margin-bottom: 0.5rem;"></select>
         <div id="languages_learning" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
 
         <label for="about_me">About Me</label>
@@ -625,7 +619,8 @@
     // Add language to array and render
     function addLanguage(type) {
       const selectId = type === 'spoken' ? 'spokenLanguage' : 'learningLanguage';
-      const lang = document.getElementById(selectId).value;
+      const selectEl = document.getElementById(selectId);
+      const lang = selectEl.value;
 
       if (!lang) return;
 
@@ -634,6 +629,8 @@
       if (!arr.includes(lang)) {
         arr.push(lang);
         renderLanguages(type);
+        // Reset dropdown to empty/default
+        selectEl.value = '';
       }
     }
 
@@ -746,9 +743,9 @@
       populateLanguages();
       console.log('✅ Dropdowns populated');
 
-      // Add event listeners for language buttons
-      document.getElementById('add-spoken-btn').addEventListener('click', () => addLanguage('spoken'));
-      document.getElementById('add-learning-btn').addEventListener('click', () => addLanguage('learning'));
+      // Add event listeners for language dropdowns (auto-add on selection)
+      document.getElementById('spokenLanguage').addEventListener('change', () => addLanguage('spoken'));
+      document.getElementById('learningLanguage').addEventListener('change', () => addLanguage('learning'));
 
       // Avatar edit button triggers file input
       document.getElementById('avatar-edit-btn').onclick = () => {

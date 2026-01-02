@@ -439,17 +439,11 @@
 
 
     <label for="spokenLanguage">Languages You Speak</label>
-    <div class="horizontal-btns">
-      <select id="spokenLanguage"></select>
-      <button type="button" id="add-spoken-btn">Add</button>
-    </div>
+    <select id="spokenLanguage"></select>
     <div id="languages_spoken"></div>
 
     <label for="teachingLanguage">Languages You Teach</label>
-    <div class="horizontal-btns">
-      <select id="teachingLanguage"></select>
-      <button type="button" id="add-teaching-btn">Add</button>
-    </div>
+    <select id="teachingLanguage"></select>
     <div id="languages_teaching"></div>
 
     <label for="price">Price Per Lesson</label>
@@ -600,8 +594,9 @@
       populateTimezoneSelect();
       renderWeeklyScheduleGrid();
 
-      document.getElementById('add-spoken-btn').onclick = () => addLanguage('spoken');
-      document.getElementById('add-teaching-btn').onclick = () => addLanguage('teaching');
+      // Auto-add languages when selected from dropdown
+      document.getElementById('spokenLanguage').addEventListener('change', () => addLanguage('spoken'));
+      document.getElementById('teachingLanguage').addEventListener('change', () => addLanguage('teaching'));
       document.getElementById('save-btn').onclick = saveProfile;
       document.getElementById('save-availability-btn').onclick = saveAvailability;
 
@@ -720,6 +715,8 @@
       if (!value || list.includes(value)) return;
       list.push(value);
       renderLanguages();
+      // Reset dropdown to empty/default
+      select.value = '';
     }
 
     function renderLanguages() {
