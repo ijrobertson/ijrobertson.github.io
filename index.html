@@ -384,6 +384,204 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Resources Section */
+        .resources-section {
+            background: #ffffff;
+            padding: 4rem 0;
+        }
+
+        .resources-section h2 {
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .resources-section .section-subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2.5rem;
+        }
+
+        .language-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .language-tab {
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .language-tab:hover {
+            border-color: #20bcba;
+            color: #20bcba;
+        }
+
+        .language-tab.active {
+            background: #20bcba;
+            border-color: #20bcba;
+            color: white;
+        }
+
+        .resource-type-selector {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .resource-type-selector select {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            background: white;
+            min-width: 200px;
+        }
+
+        .resource-type-selector select:focus {
+            outline: none;
+            border-color: #20bcba;
+        }
+
+        .resources-carousel {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 60px;
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .resource-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            text-decoration: none;
+        }
+
+        .resource-card-image {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+        }
+
+        .resource-card-body {
+            padding: 1.5rem;
+        }
+
+        .resource-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .resource-card-description {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #20bcba;
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .carousel-arrow:hover {
+            background: #1a9d9b;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-arrow.prev {
+            left: 0;
+        }
+
+        .carousel-arrow.next {
+            right: 0;
+        }
+
+        .carousel-arrow:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .carousel-arrow:disabled:hover {
+            background: #20bcba;
+            transform: translateY(-50%);
+        }
+
+        @media (max-width: 992px) {
+            .resources-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .resources-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .resources-carousel {
+                padding: 0 50px;
+            }
+
+            .carousel-arrow {
+                width: 35px;
+                height: 35px;
+                font-size: 1.2rem;
+            }
+        }
     </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
@@ -590,6 +788,48 @@
         </div> <!-- end of container -->
     </div> <!-- end of basic-1 -->
     <!-- end of intro -->
+
+
+    <!-- Resources Section -->
+    <div class="resources-section">
+        <div class="container">
+            <h2>Explore Our Learning Resources</h2>
+            <p class="section-subtitle">Access free language learning materials and short stories</p>
+
+            <!-- Language Tabs -->
+            <div class="language-tabs">
+                <button class="language-tab active" data-lang="Spanish">Spanish</button>
+                <button class="language-tab" data-lang="French">French</button>
+                <button class="language-tab" data-lang="Portuguese">Portuguese</button>
+                <button class="language-tab" data-lang="Italian">Italian</button>
+                <button class="language-tab" data-lang="German">German</button>
+                <button class="language-tab" data-lang="Russian">Russian</button>
+                <button class="language-tab" data-lang="Swedish">Swedish</button>
+            </div>
+
+            <!-- Resource Type Selector -->
+            <div class="resource-type-selector">
+                <select id="resourceTypeSelect">
+                    <option value="resources">Learning Resources</option>
+                    <option value="stories">Short Stories</option>
+                </select>
+            </div>
+
+            <!-- Resources Carousel -->
+            <div class="resources-carousel">
+                <button class="carousel-arrow prev" id="prevBtn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="resources-grid" id="resourcesGrid">
+                    <!-- Dynamically populated -->
+                </div>
+                <button class="carousel-arrow next" id="nextBtn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- end of resources section -->
 
 
 	<!-- Testimonials -->
@@ -1409,7 +1649,7 @@
                         </div>
                         <!-- end of counter -->
 
-                    </div> <!-- end of text-container -->      
+                    </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
             </div> <!-- end of row -->
         </div> <!-- end of container -->
@@ -1878,6 +2118,223 @@
 
         // Load profiles when page loads
         loadProfiles();
+
+        // Resources Section Data
+        const resourcesData = {
+            Spanish: {
+                resources: [
+                    { title: 'Spanish Basics', description: 'Learn fundamental Spanish vocabulary and phrases', image: 'images/WomanLearning.jpg', link: 'SpanishBasics.html' },
+                    { title: 'Airport Spanish', description: 'Essential phrases for traveling through airports', image: 'images/Airport.jpg', link: 'SpanishAirport.html' },
+                    { title: 'Hotel Spanish', description: 'Communicate effectively at hotels and accommodations', image: 'images/Hotel.jpg', link: 'SpanishHotel.html' },
+                    { title: 'Restaurant Spanish', description: 'Order food and interact with restaurant staff', image: 'images/WomanRestaurant.jpg', link: 'SpanishRestaurant.html' },
+                    { title: 'Daily Conversations', description: 'Common everyday Spanish conversations', image: 'images/Conversation.jpg', link: 'SpanishDay.html' }
+                ],
+                stories: [
+                    { title: 'The Ugly Duckling', description: 'Classic children\'s story in Spanish', image: 'images/swans.jpg', link: 'SpanishDuck.html' },
+                    { title: 'Jack and the Beanstalk', description: 'Adventure tale in Spanish', image: 'images/bean.jpg', link: 'SpanishJack.html' },
+                    { title: 'The Lion King', description: 'Popular story adapted for Spanish learners', image: 'images/gold.jpg', link: 'SpanishKing.html' },
+                    { title: 'Aladdin', description: 'Magical adventure story in Spanish', image: 'images/aladdin.jpg', link: 'SpanishAladdin.html' }
+                ]
+            },
+            French: {
+                resources: [
+                    { title: 'French Basics', description: 'Essential French vocabulary and grammar', image: 'images/WomanLearning.jpg', link: 'FrenchBasics.html' },
+                    { title: 'Airport French', description: 'Navigate French airports with confidence', image: 'images/Airport.jpg', link: 'FrenchAirport.html' },
+                    { title: 'Hotel French', description: 'Hotel-related French vocabulary', image: 'images/Hotel.jpg', link: 'FrenchHotel.html' },
+                    { title: 'Restaurant French', description: 'Dining and food-related French phrases', image: 'images/WomanRestaurant.jpg', link: 'FrenchRestaurant.html' },
+                    { title: 'Daily French', description: 'Everyday French conversations', image: 'images/Conversation.jpg', link: 'FrenchDay.html' }
+                ],
+                stories: [
+                    { title: 'The Ugly Duckling', description: 'Le vilain petit canard', image: 'images/swans.jpg', link: 'FrenchDuck.html' },
+                    { title: 'Jack and the Beanstalk', description: 'Jacques et le haricot magique', image: 'images/bean.jpg', link: 'FrenchJack.html' },
+                    { title: 'The Lion King', description: 'Le Roi Lion', image: 'images/gold.jpg', link: 'FrenchKing.html' },
+                    { title: 'Aladdin', description: 'Classic tale in French', image: 'images/aladdin.jpg', link: 'FrenchAladdin.html' }
+                ]
+            },
+            Portuguese: {
+                resources: [
+                    { title: 'Portuguese Basics', description: 'Fundamental Portuguese vocabulary', image: 'images/WomanLearning.jpg', link: 'PortugueseBasics.html' },
+                    { title: 'Airport Portuguese', description: 'Travel Portuguese for airports', image: 'images/Airport.jpg', link: 'PortugueseAirport.html' },
+                    { title: 'Hotel Portuguese', description: 'Accommodation-related Portuguese', image: 'images/Hotel.jpg', link: 'PortugueseHotel.html' },
+                    { title: 'Restaurant Portuguese', description: 'Dining in Portuguese', image: 'images/WomanRestaurant.jpg', link: 'PortugueseRestaurant.html' },
+                    { title: 'Portuguese Accents', description: 'Learn Portuguese accent marks and pronunciation', image: 'images/Conversation.jpg', link: 'PortugueseAccents.html' }
+                ],
+                stories: [
+                    { title: 'The Ugly Duckling', description: 'O patinho feio', image: 'images/swans.jpg', link: 'PortugueseDuck.html' },
+                    { title: 'Jack and the Beanstalk', description: 'João e o pé de feijão', image: 'images/bean.jpg', link: 'PortugueseJack.html' },
+                    { title: 'The Lion King', description: 'O Rei Leão', image: 'images/gold.jpg', link: 'PortugueseKing.html' },
+                    { title: 'Aladdin', description: 'Classic story in Portuguese', image: 'images/aladdin.jpg', link: 'PortugueseAladdin.html' }
+                ]
+            },
+            Italian: {
+                resources: [
+                    { title: 'Italian Basics', description: 'Essential Italian vocabulary and phrases', image: 'images/WomanLearning.jpg', link: 'ItalianBasics.html' },
+                    { title: 'Airport Italian', description: 'Italian for air travel', image: 'images/Airport.jpg', link: 'ItalianAirport.html' },
+                    { title: 'Hotel Italian', description: 'Hotel phrases in Italian', image: 'images/Hotel.jpg', link: 'ItalianHotel.html' },
+                    { title: 'Restaurant Italian', description: 'Italian dining vocabulary', image: 'images/WomanRestaurant.jpg', link: 'ItalianRestaurant.html' },
+                    { title: 'Daily Italian', description: 'Common Italian conversations', image: 'images/Conversation.jpg', link: 'ItalianDay.html' }
+                ],
+                stories: [
+                    { title: 'The Ugly Duckling', description: 'Il brutto anatroccolo', image: 'images/swans.jpg', link: 'ItalianDuck.html' },
+                    { title: 'Jack and the Beanstalk', description: 'Giacomino e il fagiolo magico', image: 'images/bean.jpg', link: 'ItalianJack.html' },
+                    { title: 'The Lion King', description: 'Il Re Leone', image: 'images/gold.jpg', link: 'ItalianKing.html' },
+                    { title: 'Aladdin', description: 'Story in Italian', image: 'images/aladdin.jpg', link: 'ItalianAladdin.html' }
+                ]
+            },
+            German: {
+                resources: [
+                    { title: 'German Basics', description: 'Fundamental German grammar and vocabulary', image: 'images/WomanLearning.jpg', link: 'GermanBasics.html' },
+                    { title: 'Airport German', description: 'German phrases for airports', image: 'images/Airport.jpg', link: 'GermanAirport.html' },
+                    { title: 'Hotel German', description: 'Hotel-related German vocabulary', image: 'images/Hotel.jpg', link: 'GermanHotel.html' },
+                    { title: 'Restaurant German', description: 'Dining vocabulary in German', image: 'images/WomanRestaurant.jpg', link: 'GermanRestaurant.html' },
+                    { title: 'Daily German', description: 'Everyday German phrases', image: 'images/Conversation.jpg', link: 'GermanDay.html' }
+                ],
+                stories: [
+                    { title: 'The Ugly Duckling', description: 'Das hässliche Entlein', image: 'images/swans.jpg', link: 'GermanDuck.html' },
+                    { title: 'Jack and the Beanstalk', description: 'Hans und die Bohnenranke', image: 'images/bean.jpg', link: 'GermanJack.html' },
+                    { title: 'The Lion King', description: 'Der König der Löwen', image: 'images/gold.jpg', link: 'GermanKing.html' },
+                    { title: 'Aladdin', description: 'German adaptation', image: 'images/aladdin.jpg', link: 'GermanAladdin.html' }
+                ]
+            },
+            Russian: {
+                resources: [
+                    { title: 'Russian Basics', description: 'Essential Russian vocabulary and Cyrillic alphabet', image: 'images/WomanLearning.jpg', link: 'RussianBasics.html' },
+                    { title: 'Airport Russian', description: 'Travel Russian for airports', image: 'images/Airport.jpg', link: 'RussianAirport.html' },
+                    { title: 'Hotel Russian', description: 'Hotel phrases in Russian', image: 'images/Hotel.jpg', link: 'RussianHotel.html' },
+                    { title: 'Restaurant Russian', description: 'Russian dining vocabulary', image: 'images/WomanRestaurant.jpg', link: 'RussianRestaurant.html' },
+                    { title: 'Daily Russian', description: 'Common Russian conversations', image: 'images/Conversation.jpg', link: 'RussianDay.html' }
+                ],
+                stories: [
+                    { title: 'The Ugly Duckling', description: 'Гадкий утёнок', image: 'images/swans.jpg', link: 'RussianDuck.html' },
+                    { title: 'Jack and the Beanstalk', description: 'Джек и бобовый стебель', image: 'images/bean.jpg', link: 'RussianJack.html' },
+                    { title: 'The Lion King', description: 'Король Лев', image: 'images/gold.jpg', link: 'RussianKing.html' },
+                    { title: 'Aladdin', description: 'Russian version', image: 'images/aladdin.jpg', link: 'RussianAladdin.html' }
+                ]
+            },
+            Swedish: {
+                resources: [
+                    { title: 'Swedish Basics', description: 'Essential Swedish vocabulary and phrases', image: 'images/WomanLearning.jpg', link: 'SwedishBasics.html' },
+                    { title: 'Airport Swedish', description: 'Swedish for air travel', image: 'images/Airport.jpg', link: 'SwedishAirport.html' },
+                    { title: 'Hotel Swedish', description: 'Hotel-related Swedish phrases', image: 'images/Hotel.jpg', link: 'SwedishHotel.html' },
+                    { title: 'Restaurant Swedish', description: 'Dining vocabulary in Swedish', image: 'images/WomanRestaurant.jpg', link: 'SwedishRestaurant.html' },
+                    { title: 'Daily Swedish', description: 'Everyday Swedish conversations', image: 'images/Conversation.jpg', link: 'SwedishDay.html' }
+                ],
+                stories: [
+                    { title: 'The Ugly Duckling', description: 'Den fula ankungen', image: 'images/swans.jpg', link: 'SwedishDuck.html' },
+                    { title: 'Jack and the Beanstalk', description: 'Jack och bönstjälken', image: 'images/bean.jpg', link: 'SwedishJack.html' },
+                    { title: 'The Lion King', description: 'Lejonkungen', image: 'images/gold.jpg', link: 'SwedishKing.html' },
+                    { title: 'Aladdin', description: 'Swedish adaptation', image: 'images/aladdin.jpg', link: 'SwedishAladdin.html' }
+                ]
+            }
+        };
+
+        // Resources carousel state
+        let currentLanguage = 'Spanish';
+        let currentResourceType = 'resources';
+        let carouselIndex = 0;
+
+        // Initialize resources section
+        function initializeResources() {
+            // Language tab event listeners
+            const languageTabs = document.querySelectorAll('.language-tab');
+            languageTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Update active state
+                    languageTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Update current language and reset carousel
+                    currentLanguage = tab.getAttribute('data-lang');
+                    carouselIndex = 0;
+                    renderResources();
+                });
+            });
+
+            // Resource type selector event listener
+            const resourceTypeSelect = document.getElementById('resourceTypeSelect');
+            resourceTypeSelect.addEventListener('change', () => {
+                currentResourceType = resourceTypeSelect.value;
+                carouselIndex = 0;
+                renderResources();
+            });
+
+            // Carousel arrow event listeners
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            prevBtn.addEventListener('click', () => {
+                const resources = getCurrentResources();
+                if (carouselIndex > 0) {
+                    carouselIndex -= 3;
+                    if (carouselIndex < 0) carouselIndex = 0;
+                    renderResources();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                const resources = getCurrentResources();
+                const maxIndex = Math.max(0, resources.length - 3);
+                if (carouselIndex < maxIndex) {
+                    carouselIndex += 3;
+                    if (carouselIndex > maxIndex) carouselIndex = maxIndex;
+                    renderResources();
+                }
+            });
+
+            // Initial render
+            renderResources();
+        }
+
+        // Get current resources based on selected language and type
+        function getCurrentResources() {
+            return resourcesData[currentLanguage]?.[currentResourceType] || [];
+        }
+
+        // Render resources in the carousel
+        function renderResources() {
+            const grid = document.getElementById('resourcesGrid');
+            const resources = getCurrentResources();
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            // Clear grid
+            grid.innerHTML = '';
+
+            // Get resources to display (3 at a time)
+            const displayResources = resources.slice(carouselIndex, carouselIndex + 3);
+
+            // Create and append resource cards
+            displayResources.forEach(resource => {
+                const card = createResourceCard(resource);
+                grid.appendChild(card);
+            });
+
+            // Update arrow button states
+            prevBtn.disabled = carouselIndex === 0;
+            nextBtn.disabled = carouselIndex >= resources.length - 3;
+        }
+
+        // Create a resource card element
+        function createResourceCard(resource) {
+            const card = document.createElement('a');
+            card.className = 'resource-card';
+            card.href = resource.link;
+
+            card.innerHTML = `
+                <div class="resource-card-image">
+                    <img src="${resource.image}" alt="${escapeHtml(resource.title)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px 10px 0 0;">
+                </div>
+                <div class="resource-card-body">
+                    <div class="resource-card-title">${escapeHtml(resource.title)}</div>
+                    <div class="resource-card-description">${escapeHtml(resource.description)}</div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Initialize resources section when page loads
+        initializeResources();
     </script>
 </body>
 </html>
