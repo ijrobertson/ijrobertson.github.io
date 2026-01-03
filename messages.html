@@ -844,26 +844,46 @@
                 );
 
                 unsubscribeMessages = onSnapshot(q, async (snapshot) => {
-                    messagesArea.innerHTML = '';
+                    // Collect all messages and prepare data fetch promises
+                    const messages = [];
+                    const senderDataPromises = new Map();
 
-                    for (const docSnap of snapshot.docs) {
+                    snapshot.docs.forEach((docSnap) => {
                         const message = { id: docSnap.id, ...docSnap.data() };
-                        const isSent = message.senderId === currentUser.uid;
+                        messages.push(message);
 
-                        // Get sender info
-                        let senderAvatar = 'https://via.placeholder.com/35';
-                        try {
-                            // Try users collection first, then instructors
-                            let senderDoc = await getDoc(doc(db, 'users', message.senderId));
-                            if (!senderDoc.exists()) {
-                                senderDoc = await getDoc(doc(db, 'instructors', message.senderId));
-                            }
-                            if (senderDoc.exists()) {
-                                senderAvatar = senderDoc.data().avatar_url || senderAvatar;
-                            }
-                        } catch (error) {
-                            console.error('Error loading sender:', error);
+                        // Queue up user data fetch if not already fetching
+                        if (!senderDataPromises.has(message.senderId)) {
+                            senderDataPromises.set(message.senderId,
+                                (async () => {
+                                    try {
+                                        let senderDoc = await getDoc(doc(db, 'users', message.senderId));
+                                        if (!senderDoc.exists()) {
+                                            senderDoc = await getDoc(doc(db, 'instructors', message.senderId));
+                                        }
+                                        return senderDoc.exists() ? senderDoc.data().avatar_url : null;
+                                    } catch (error) {
+                                        console.error('Error loading sender:', error);
+                                        return null;
+                                    }
+                                })()
+                            );
                         }
+                    });
+
+                    // Fetch all sender data in parallel
+                    const senderDataMap = new Map();
+                    for (const [senderId, promise] of senderDataPromises) {
+                        senderDataMap.set(senderId, await promise);
+                    }
+
+                    // Clear and render all messages at once
+                    messagesArea.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
+
+                    messages.forEach((message) => {
+                        const isSent = message.senderId === currentUser.uid;
+                        const senderAvatar = senderDataMap.get(message.senderId) || 'https://via.placeholder.com/35';
 
                         const messageEl = document.createElement('div');
                         messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
@@ -874,8 +894,10 @@
                                 <div class="message-time">${formatTime(message.timestamp)}</div>
                             </div>
                         `;
-                        messagesArea.appendChild(messageEl);
-                    }
+                        fragment.appendChild(messageEl);
+                    });
+
+                    messagesArea.appendChild(fragment);
 
                     // Scroll to bottom
                     messagesArea.scrollTop = messagesArea.scrollHeight;
