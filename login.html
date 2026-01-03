@@ -67,6 +67,30 @@
       margin-top: 0.5rem;
       text-align: center;
     }
+    .checkbox-container {
+      margin-top: 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .checkbox-container input[type="checkbox"] {
+      width: auto;
+      margin-top: 0.25rem;
+      cursor: pointer;
+    }
+    .checkbox-container label {
+      margin: 0;
+      font-weight: normal;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .checkbox-container a {
+      color: #20bcba;
+      text-decoration: underline;
+    }
+    .checkbox-container a:hover {
+      color: #199c9a;
+    }
     @media (max-width: 500px) {
       .card {
         padding: 1.5rem;
@@ -96,6 +120,16 @@
       </select>
     </div>
 
+    <div id="age-checkbox-container" class="checkbox-container" style="display: none;">
+      <input type="checkbox" id="age-checkbox" />
+      <label for="age-checkbox">I confirm that I am 18 years old or older</label>
+    </div>
+
+    <div id="terms-checkbox-container" class="checkbox-container" style="display: none;">
+      <input type="checkbox" id="terms-checkbox" />
+      <label for="terms-checkbox">I agree to the <a href="terms-conditions.html" target="_blank">Terms and Conditions</a> and <a href="privacy-policy.html" target="_blank">Privacy Policy</a></label>
+    </div>
+
     <button class="btn" id="submit-btn">Sign In</button>
     <div class="toggle-link" id="toggle-form">Don't have an account? Sign Up</div>
     <div class="error" id="error-message"></div>
@@ -123,6 +157,10 @@
   const formTitle = document.getElementById('form-title');
   const confirmContainer = document.getElementById('confirm-password-container');
   const roleContainer = document.getElementById('role-container');
+  const ageCheckboxContainer = document.getElementById('age-checkbox-container');
+  const termsCheckboxContainer = document.getElementById('terms-checkbox-container');
+  const ageCheckbox = document.getElementById('age-checkbox');
+  const termsCheckbox = document.getElementById('terms-checkbox');
   const errorMessage = document.getElementById('error-message');
 
   toggleFormLink.addEventListener('click', () => {
@@ -134,6 +172,13 @@
       : "Don't have an account? Sign Up";
     confirmContainer.style.display = isSignup ? 'block' : 'none';
     roleContainer.style.display = isSignup ? 'block' : 'none';
+    ageCheckboxContainer.style.display = isSignup ? 'flex' : 'none';
+    termsCheckboxContainer.style.display = isSignup ? 'flex' : 'none';
+
+    // Reset checkboxes when switching modes
+    ageCheckbox.checked = false;
+    termsCheckbox.checked = false;
+
     errorMessage.textContent = '';
   });
 
@@ -153,6 +198,18 @@
     if (isSignup) {
       if (password !== confirmPassword) {
         errorMessage.textContent = 'Passwords do not match.';
+        return;
+      }
+
+      // Check age confirmation
+      if (!ageCheckbox.checked) {
+        errorMessage.textContent = 'You must confirm that you are 18 years old or older.';
+        return;
+      }
+
+      // Check terms and conditions agreement
+      if (!termsCheckbox.checked) {
+        errorMessage.textContent = 'You must agree to the Terms and Conditions and Privacy Policy.';
         return;
       }
 
