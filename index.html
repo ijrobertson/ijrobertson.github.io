@@ -2344,8 +2344,9 @@
 
             prevBtn.addEventListener('click', () => {
                 const resources = getCurrentResources();
+                const itemsPerView = getItemsPerView();
                 if (carouselIndex > 0) {
-                    carouselIndex -= 3;
+                    carouselIndex -= itemsPerView;
                     if (carouselIndex < 0) carouselIndex = 0;
                     renderResources();
                 }
@@ -2353,9 +2354,10 @@
 
             nextBtn.addEventListener('click', () => {
                 const resources = getCurrentResources();
-                const maxIndex = Math.max(0, resources.length - 3);
+                const itemsPerView = getItemsPerView();
+                const maxIndex = Math.max(0, resources.length - itemsPerView);
                 if (carouselIndex < maxIndex) {
-                    carouselIndex += 3;
+                    carouselIndex += itemsPerView;
                     if (carouselIndex > maxIndex) carouselIndex = maxIndex;
                     renderResources();
                 }
@@ -2370,18 +2372,27 @@
             return resourcesData[currentLanguage]?.[currentResourceType] || [];
         }
 
+        // Get number of items to show based on screen size
+        function getItemsPerView() {
+            const width = window.innerWidth;
+            if (width < 576) return 1;  // Mobile: 1 item
+            if (width < 992) return 2;  // Tablet: 2 items
+            return 3;  // Desktop: 3 items
+        }
+
         // Render resources in the carousel
         function renderResources() {
             const grid = document.getElementById('resourcesGrid');
             const resources = getCurrentResources();
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
+            const itemsPerView = getItemsPerView();
 
             // Clear grid
             grid.innerHTML = '';
 
-            // Get resources to display (3 at a time)
-            const displayResources = resources.slice(carouselIndex, carouselIndex + 3);
+            // Get resources to display based on screen size
+            const displayResources = resources.slice(carouselIndex, carouselIndex + itemsPerView);
 
             // Create and append resource cards
             displayResources.forEach(resource => {
@@ -2391,7 +2402,7 @@
 
             // Update arrow button states
             prevBtn.disabled = carouselIndex === 0;
-            nextBtn.disabled = carouselIndex >= resources.length - 3;
+            nextBtn.disabled = carouselIndex >= resources.length - itemsPerView;
         }
 
         // Create a resource card element
@@ -2415,6 +2426,21 @@
 
         // Initialize resources section when page loads
         initializeResources();
+
+        // Re-render on window resize to adjust items per view
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const resources = getCurrentResources();
+                const itemsPerView = getItemsPerView();
+                const maxIndex = Math.max(0, resources.length - itemsPerView);
+                if (carouselIndex > maxIndex) {
+                    carouselIndex = maxIndex;
+                }
+                renderResources();
+            }, 250);
+        });
     </script>
 </body>
 </html>
