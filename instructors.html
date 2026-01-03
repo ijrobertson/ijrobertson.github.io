@@ -309,6 +309,16 @@
             font-weight: 600;
         }
 
+        .instructor-card-country {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
         .instructor-card-body {
             padding: 1.5rem;
             flex-grow: 1;
@@ -996,6 +1006,7 @@
             const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
             const name = escapeHtml(instructor.name || 'Unnamed Instructor');
             const aboutMe = escapeHtml(instructor.about_me || 'No bio yet');
+            const country = escapeHtml(instructor.native_country || 'Not specified');
 
             const card = document.createElement('div');
             card.className = 'instructor-card';
@@ -1005,6 +1016,9 @@
                     <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
                     <div class="instructor-card-name">${name}</div>
                     <div class="instructor-card-price">${currency}${escapeHtml(String(price))}/hour</div>
+                    <div class="instructor-card-country">
+                        <i class="fas fa-map-marker-alt"></i> ${country}
+                    </div>
                 </div>
                 <div class="instructor-card-body">
             `;
