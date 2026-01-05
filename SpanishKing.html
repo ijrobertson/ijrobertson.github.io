@@ -508,6 +508,9 @@
             let currentWordIndex = 0;
             let words = [];
             let speechRate = 1.0;
+            let highlightInterval = null;
+            let startTime = 0;
+            let estimatedDuration = 0;
 
             // Get story text and wrap words
             function initializeStory() {
@@ -533,8 +536,18 @@
                 words = document.querySelectorAll('.word');
             }
 
+            // Estimate duration based on word count and speech rate
+            function estimateSpeechDuration() {
+                // Average speaking rate: ~150 words per minute at normal speed
+                const wordsPerMinute = 150 * speechRate;
+                const minutes = words.length / wordsPerMinute;
+                return minutes * 60 * 1000; // Convert to milliseconds
+            }
+
             // Highlight current word
             function highlightWord(index) {
+                if (index >= words.length) return;
+
                 words.forEach((word, i) => {
                     word.classList.remove('highlight', 'passed');
                     if (i < index) {
@@ -549,6 +562,38 @@
                 // Update progress
                 const progress = (index / words.length) * 100;
                 progressBar.style.width = progress + '%';
+                statusDisplay.textContent = `Reading... (${index + 1}/${words.length} words)`;
+            }
+
+            // Start highlighting words based on timing
+            function startHighlighting() {
+                clearInterval(highlightInterval);
+
+                startTime = Date.now();
+                estimatedDuration = estimateSpeechDuration();
+                currentWordIndex = 0;
+
+                // Update highlighting at regular intervals
+                highlightInterval = setInterval(() => {
+                    if (!isPlaying || isPaused) {
+                        clearInterval(highlightInterval);
+                        return;
+                    }
+
+                    const elapsed = Date.now() - startTime;
+                    const progress = elapsed / estimatedDuration;
+                    const wordIndex = Math.floor(progress * words.length);
+
+                    if (wordIndex !== currentWordIndex && wordIndex < words.length) {
+                        currentWordIndex = wordIndex;
+                        highlightWord(currentWordIndex);
+                    }
+
+                    // Stop if we've reached the end
+                    if (wordIndex >= words.length) {
+                        clearInterval(highlightInterval);
+                    }
+                }, 50); // Update every 50ms for smooth highlighting
             }
 
             // Speak the story
@@ -560,6 +605,7 @@
 
                 // Cancel any ongoing speech
                 synth.cancel();
+                clearInterval(highlightInterval);
 
                 const storyText = Array.from(words).map(w => w.textContent).join(' ');
                 utterance = new SpeechSynthesisUtterance(storyText);
@@ -582,22 +628,12 @@
                 utterance.pitch = 1.0;
                 utterance.volume = 1.0;
 
-                // Track word boundaries
-                let wordCount = 0;
-                utterance.onboundary = function(event) {
-                    if (event.name === 'word') {
-                        highlightWord(wordCount);
-                        currentWordIndex = wordCount;
-                        statusDisplay.textContent = `Reading... (${wordCount + 1}/${words.length} words)`;
-                        wordCount++;
-                    }
-                };
-
                 utterance.onstart = function() {
                     isPlaying = true;
                     isPaused = false;
                     playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
                     statusDisplay.textContent = 'Reading story...';
+                    startHighlighting();
                 };
 
                 utterance.onend = function() {
@@ -606,6 +642,13 @@
                     playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                     statusDisplay.textContent = 'Finished reading';
                     progressBar.style.width = '100%';
+                    clearInterval(highlightInterval);
+
+                    // Highlight all words as passed
+                    words.forEach(word => {
+                        word.classList.remove('highlight');
+                        word.classList.add('passed');
+                    });
 
                     // Reset highlighting after a moment
                     setTimeout(() => {
@@ -614,6 +657,7 @@
                         });
                         progressBar.style.width = '0%';
                         statusDisplay.textContent = 'Ready to read';
+                        currentWordIndex = 0;
                     }, 2000);
                 };
 
@@ -622,6 +666,7 @@
                     statusDisplay.textContent = 'Error: ' + event.error;
                     playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                     isPlaying = false;
+                    clearInterval(highlightInterval);
                 };
 
                 synth.speak(utterance);
@@ -640,6 +685,7 @@
                     isPlaying = false;
                     playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                     statusDisplay.textContent = 'Paused';
+                    clearInterval(highlightInterval);
                 } else if (isPaused) {
                     // Resume
                     synth.resume();
@@ -647,6 +693,11 @@
                     isPlaying = true;
                     playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
                     statusDisplay.textContent = 'Reading...';
+
+                    // Adjust start time for pause duration
+                    const pausedDuration = Date.now() - startTime - (currentWordIndex / words.length) * estimatedDuration;
+                    startTime = Date.now() - (currentWordIndex / words.length) * estimatedDuration;
+                    startHighlighting();
                 }
             });
 
@@ -661,7 +712,11 @@
                     // If currently playing, restart with new speed
                     if (isPlaying) {
                         synth.cancel();
-                        setTimeout(() => speakStory(), 100);
+                        clearInterval(highlightInterval);
+                        setTimeout(() => {
+                            currentWordIndex = 0;
+                            speakStory();
+                        }, 100);
                     }
                 });
             });
@@ -681,6 +736,7 @@
                 if (synth) {
                     synth.cancel();
                 }
+                clearInterval(highlightInterval);
             });
         });
     </script>
