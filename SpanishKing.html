@@ -290,36 +290,29 @@
 
                         <!-- Audio Player -->
                         <div class="audio-player-container">
-                            <audio id="storyAudio" preload="metadata">
-                                <source src="Audio/spanish-king-midas.mp3" type="audio/mpeg">
-                                Your browser does not support the audio element.
-                            </audio>
-
                             <div class="audio-controls">
                                 <button class="play-pause-btn" id="playPauseBtn">
                                     <i class="fas fa-play"></i>
                                 </button>
 
-                                <div class="progress-container" id="progressContainer">
+                                <div class="progress-container">
                                     <div class="progress-bar" id="progressBar"></div>
                                 </div>
 
-                                <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+                                <div class="time-display" id="statusDisplay">Ready to read</div>
                             </div>
 
                             <div class="speed-control">
                                 <span style="color: white; font-size: 0.9rem;">Speed:</span>
-                                <button class="speed-btn" data-speed="0.75">0.75x</button>
-                                <button class="speed-btn active" data-speed="1">1x</button>
-                                <button class="speed-btn" data-speed="1.25">1.25x</button>
-                                <button class="speed-btn" data-speed="1.5">1.5x</button>
+                                <button class="speed-btn" data-speed="0.75">Slow</button>
+                                <button class="speed-btn active" data-speed="1">Normal</button>
+                                <button class="speed-btn" data-speed="1.25">Fast</button>
                             </div>
 
                             <div class="audio-instructions">
-                                <strong>📝 Setup Instructions:</strong>
-                                1. Add your Spanish audio file to the Audio folder as "spanish-king-midas.mp3"<br>
-                                2. Edit the word timings in the JavaScript at the bottom of this file<br>
-                                3. The highlighted words will follow along as the audio plays
+                                <strong>🔊 Spanish Text-to-Speech</strong>
+                                Click Play to hear the story read aloud in Spanish. Words will be highlighted as they're spoken.
+                                <br><em>Note: Voice quality depends on your browser and device.</em>
                             </div>
                         </div>
 
@@ -500,43 +493,34 @@
     <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
     <script src="js/scripts.js"></script> <!-- Custom scripts -->
 
-    <!-- Audio Player Script -->
+    <!-- Text-to-Speech Player Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const audio = document.getElementById('storyAudio');
             const playPauseBtn = document.getElementById('playPauseBtn');
-            const progressContainer = document.getElementById('progressContainer');
             const progressBar = document.getElementById('progressBar');
-            const timeDisplay = document.getElementById('timeDisplay');
+            const statusDisplay = document.getElementById('statusDisplay');
             const speedBtns = document.querySelectorAll('.speed-btn');
 
-            // Word timing data - EDIT THESE TIMES TO MATCH YOUR AUDIO
-            // Format: [startTime, endTime, wordText]
-            const wordTimings = [
-                // Example timing data - replace with actual times from your audio
-                [0.0, 0.5, "Había"],
-                [0.5, 0.8, "una"],
-                [0.8, 1.1, "vez"],
-                [1.1, 1.3, "un"],
-                [1.3, 1.6, "rey"],
-                [1.6, 2.0, "llamado"],
-                [2.0, 2.5, "Midas."],
-                // Add more word timings here...
-                // You can use a tool like Audacity to get precise word timings
-            ];
+            let synth = window.speechSynthesis;
+            let utterance = null;
+            let isPlaying = false;
+            let isPaused = false;
+            let currentWordIndex = 0;
+            let words = [];
+            let speechRate = 1.0;
 
-            // Wrap story text words in spans for highlighting
-            function wrapWordsInSpans() {
+            // Get story text and wrap words
+            function initializeStory() {
                 const storyParagraph = document.getElementById('paragraph1');
                 if (!storyParagraph) return;
 
                 const text = storyParagraph.textContent;
-                const words = text.split(/(\s+)/); // Split but keep spaces
+                const wordArray = text.split(/(\s+)/); // Split but keep spaces
 
                 let wrappedHTML = '';
                 let wordIndex = 0;
 
-                words.forEach(word => {
+                wordArray.forEach(word => {
                     if (word.trim() === '') {
                         wrappedHTML += word; // Keep spaces as-is
                     } else {
@@ -546,101 +530,157 @@
                 });
 
                 storyParagraph.innerHTML = wrappedHTML;
+                words = document.querySelectorAll('.word');
             }
 
-            // Update word highlighting based on current time
-            function updateWordHighlight() {
-                const currentTime = audio.currentTime;
-                const words = document.querySelectorAll('.word');
-
-                words.forEach((word, index) => {
+            // Highlight current word
+            function highlightWord(index) {
+                words.forEach((word, i) => {
                     word.classList.remove('highlight', 'passed');
-
-                    // Check if there's timing data for this word
-                    if (wordTimings[index]) {
-                        const [start, end] = wordTimings[index];
-
-                        if (currentTime >= start && currentTime < end) {
-                            word.classList.add('highlight');
-                        } else if (currentTime >= end) {
-                            word.classList.add('passed');
-                        }
+                    if (i < index) {
+                        word.classList.add('passed');
+                    } else if (i === index) {
+                        word.classList.add('highlight');
+                        // Scroll word into view
+                        word.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 });
+
+                // Update progress
+                const progress = (index / words.length) * 100;
+                progressBar.style.width = progress + '%';
+            }
+
+            // Speak the story
+            function speakStory() {
+                if (!synth) {
+                    alert('Text-to-speech is not supported in your browser.');
+                    return;
+                }
+
+                // Cancel any ongoing speech
+                synth.cancel();
+
+                const storyText = Array.from(words).map(w => w.textContent).join(' ');
+                utterance = new SpeechSynthesisUtterance(storyText);
+
+                // Set Spanish voice
+                const voices = synth.getVoices();
+                const spanishVoice = voices.find(voice =>
+                    voice.lang.startsWith('es') || voice.lang.includes('ES')
+                );
+
+                if (spanishVoice) {
+                    utterance.voice = spanishVoice;
+                    utterance.lang = 'es-ES';
+                } else {
+                    utterance.lang = 'es-ES';
+                    console.warn('No Spanish voice found, using default');
+                }
+
+                utterance.rate = speechRate;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                // Track word boundaries
+                let wordCount = 0;
+                utterance.onboundary = function(event) {
+                    if (event.name === 'word') {
+                        highlightWord(wordCount);
+                        currentWordIndex = wordCount;
+                        statusDisplay.textContent = `Reading... (${wordCount + 1}/${words.length} words)`;
+                        wordCount++;
+                    }
+                };
+
+                utterance.onstart = function() {
+                    isPlaying = true;
+                    isPaused = false;
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    statusDisplay.textContent = 'Reading story...';
+                };
+
+                utterance.onend = function() {
+                    isPlaying = false;
+                    isPaused = false;
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    statusDisplay.textContent = 'Finished reading';
+                    progressBar.style.width = '100%';
+
+                    // Reset highlighting after a moment
+                    setTimeout(() => {
+                        words.forEach(word => {
+                            word.classList.remove('highlight', 'passed');
+                        });
+                        progressBar.style.width = '0%';
+                        statusDisplay.textContent = 'Ready to read';
+                    }, 2000);
+                };
+
+                utterance.onerror = function(event) {
+                    console.error('Speech synthesis error:', event);
+                    statusDisplay.textContent = 'Error: ' + event.error;
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    isPlaying = false;
+                };
+
+                synth.speak(utterance);
             }
 
             // Play/Pause functionality
             playPauseBtn.addEventListener('click', function() {
-                if (audio.paused) {
-                    audio.play();
-                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                } else {
-                    audio.pause();
+                if (!isPlaying && !isPaused) {
+                    // Start fresh
+                    currentWordIndex = 0;
+                    speakStory();
+                } else if (isPlaying) {
+                    // Pause
+                    synth.pause();
+                    isPaused = true;
+                    isPlaying = false;
                     playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    statusDisplay.textContent = 'Paused';
+                } else if (isPaused) {
+                    // Resume
+                    synth.resume();
+                    isPaused = false;
+                    isPlaying = true;
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                    statusDisplay.textContent = 'Reading...';
                 }
-            });
-
-            // Update progress bar and time display
-            audio.addEventListener('timeupdate', function() {
-                const progress = (audio.currentTime / audio.duration) * 100;
-                progressBar.style.width = progress + '%';
-
-                const currentMin = Math.floor(audio.currentTime / 60);
-                const currentSec = Math.floor(audio.currentTime % 60);
-                const durationMin = Math.floor(audio.duration / 60);
-                const durationSec = Math.floor(audio.duration % 60);
-
-                timeDisplay.textContent =
-                    `${currentMin}:${currentSec.toString().padStart(2, '0')} / ` +
-                    `${durationMin}:${durationSec.toString().padStart(2, '0')}`;
-
-                // Update word highlighting
-                updateWordHighlight();
-            });
-
-            // Click progress bar to seek
-            progressContainer.addEventListener('click', function(e) {
-                const rect = progressContainer.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const width = rect.width;
-                const percentage = clickX / width;
-
-                audio.currentTime = percentage * audio.duration;
             });
 
             // Speed control
             speedBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const speed = parseFloat(this.dataset.speed);
-                    audio.playbackRate = speed;
+                    speechRate = parseFloat(this.dataset.speed);
 
                     speedBtns.forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
+
+                    // If currently playing, restart with new speed
+                    if (isPlaying) {
+                        synth.cancel();
+                        setTimeout(() => speakStory(), 100);
+                    }
                 });
             });
 
-            // Reset when audio ends
-            audio.addEventListener('ended', function() {
-                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-                const words = document.querySelectorAll('.word');
-                words.forEach(word => {
-                    word.classList.remove('highlight', 'passed');
-                });
-            });
+            // Initialize on page load
+            initializeStory();
 
-            // Initialize word wrapping
-            wrapWordsInSpans();
+            // Load voices (some browsers need this)
+            if (synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = function() {
+                    // Voices loaded
+                };
+            }
 
-            // Show helpful message if audio file is missing
-            audio.addEventListener('error', function() {
-                const instructions = document.querySelector('.audio-instructions');
-                instructions.innerHTML = `
-                    <strong>⚠️ Audio file not found</strong>
-                    Please add your Spanish audio file to: <code>Audio/spanish-king-midas.mp3</code><br>
-                    Then refresh the page to enable audio playback with word highlighting.
-                `;
-                instructions.style.background = 'rgba(255,193,7,0.3)';
-                instructions.style.borderLeft = '4px solid #ffc107';
+            // Stop speech when navigating away
+            window.addEventListener('beforeunload', function() {
+                if (synth) {
+                    synth.cancel();
+                }
             });
         });
     </script>
