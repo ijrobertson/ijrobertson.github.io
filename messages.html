@@ -569,8 +569,8 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        // VERSION: 2025-01-06-v4 - DO NOT REMOVE THIS LINE
-        console.log('🚀 Messages.html script loaded - Version 2025-01-06-v4');
+        // VERSION: 2025-01-06-v5 - DO NOT REMOVE THIS LINE
+        console.log('🚀 Messages.html script loaded - Version 2025-01-06-v5');
 
         import {
             db,
@@ -1085,45 +1085,32 @@
         function extractUserName(userData) {
             if (!userData) {
                 console.warn('⚠️ extractUserName: No userData provided');
-                return 'Unknown User';
+                return 'Anonymous User';
             }
 
             console.log('🔍 extractUserName: Available fields:', Object.keys(userData));
+            console.log('🔍 extractUserName: Full userData:', userData);
 
-            // Try standard name fields
-            if (userData.name && userData.name.trim()) {
-                console.log('✅ Using "name" field:', userData.name);
-                return userData.name.trim();
-            }
-            if (userData.full_name && userData.full_name.trim()) {
-                console.log('✅ Using "full_name" field:', userData.full_name);
-                return userData.full_name.trim();
-            }
-            if (userData.displayName && userData.displayName.trim()) {
-                console.log('✅ Using "displayName" field:', userData.displayName);
-                return userData.displayName.trim();
-            }
+            // Get the name value (try multiple fields like other pages do)
+            let name = userData.name || userData.display_name || userData.full_name || userData.displayName || '';
 
-            // Try constructing from first and last name
-            const firstName = (userData.firstName || userData.first_name || '').trim();
-            const lastName = (userData.lastName || userData.last_name || '').trim();
-            if (firstName || lastName) {
-                const fullName = `${firstName} ${lastName}`.trim();
-                console.log('✅ Constructed from firstName/lastName:', fullName);
-                return fullName;
+            name = name.trim();
+            console.log('✅ Found name value:', name);
+
+            // If name is empty or looks like an email (contains @), use a proper fallback
+            if (!name || name.includes('@')) {
+                console.warn('⚠️ Name is empty or is an email:', name);
+                // Check if this is an instructor or regular user
+                if (userData.price_per_lesson !== undefined || userData.languages_teaching) {
+                    console.log('✅ Using fallback: Unnamed Instructor');
+                    return 'Unnamed Instructor';
+                } else {
+                    console.log('✅ Using fallback: Anonymous User');
+                    return 'Anonymous User';
+                }
             }
 
-            // Check if email looks like a name (contains @ symbol means it's just an email)
-            if (userData.email && !userData.email.includes('@')) {
-                console.log('✅ Using email field (no @ detected):', userData.email);
-                return userData.email;
-            }
-
-            // Last resort: show warning and return placeholder
-            console.error('❌ No name fields found! Returning "User Profile" instead of email');
-            console.error('❌ Available fields:', Object.keys(userData));
-            console.error('❌ User data:', userData);
-            return 'User Profile';
+            return name;
         }
 
         async function startNewConversation(recipientId) {
