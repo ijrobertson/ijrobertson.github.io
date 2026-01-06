@@ -602,26 +602,48 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
+                console.log('🔐 User authenticated:', user.uid);
 
                 // Load profile picture
                 try {
                     // Try users collection first, then instructors
+                    console.log('📸 Loading profile picture...');
                     let userDoc = await getDoc(doc(db, 'users', user.uid));
+                    let collectionType = 'users';
                     if (!userDoc.exists()) {
+                        console.log('👤 Not found in users, checking instructors...');
                         userDoc = await getDoc(doc(db, 'instructors', user.uid));
+                        collectionType = 'instructors';
                     }
                     if (userDoc.exists()) {
+                        console.log('✅ Found user in', collectionType, 'collection');
                         const userData = userDoc.data();
                         if (userData.avatar_url) {
                             navProfilePic.src = userData.avatar_url;
+                            console.log('✅ Profile picture loaded');
+                        } else {
+                            console.log('⚠️ No avatar_url in user data');
                         }
+                    } else {
+                        console.error('❌ User document not found in either collection');
                     }
                 } catch (error) {
-                    console.error('Error loading profile:', error);
+                    console.error('❌ Error loading profile:', error);
                 }
 
-                profileNavWrapper.style.display = 'flex';
-                signInWrapper.style.display = 'none';
+                // Show profile nav and hide sign in button
+                console.log('👁️ Showing profile nav wrapper');
+                if (profileNavWrapper) {
+                    profileNavWrapper.style.display = 'flex';
+                    profileNavWrapper.style.visibility = 'visible';
+                    console.log('✅ Profile nav display set to flex');
+                } else {
+                    console.error('❌ profileNavWrapper element not found!');
+                }
+
+                if (signInWrapper) {
+                    signInWrapper.style.display = 'none';
+                }
 
                 // Load conversations
                 await loadConversations();
@@ -720,7 +742,7 @@
             }
         }
 
-        function renderConversations(conversations) {
+        async function renderConversations(conversations) {
             if (conversations.length === 0) {
                 conversationsList.innerHTML = `
                     <div class="empty-state">
@@ -733,9 +755,30 @@
             }
 
             conversationsList.innerHTML = '';
-            conversations.forEach(conv => {
+
+            // Fetch fresh user data for all participants
+            for (const conv of conversations) {
                 const otherUserId = conv.participants.find(id => id !== currentUser.uid);
-                const otherUser = conv.participantDetails[otherUserId] || {};
+
+                // Fetch current user data from Firestore
+                let otherUser = { name: 'Unknown User', avatar_url: '' };
+                try {
+                    let userDoc = await getDoc(doc(db, 'users', otherUserId));
+                    if (!userDoc.exists()) {
+                        userDoc = await getDoc(doc(db, 'instructors', otherUserId));
+                    }
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        otherUser = {
+                            name: extractUserName(userData),
+                            avatar_url: userData.avatar_url || ''
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                    // Fallback to cached data if fetch fails
+                    otherUser = conv.participantDetails[otherUserId] || otherUser;
+                }
 
                 const item = document.createElement('div');
                 item.className = 'conversation-item';
@@ -755,15 +798,15 @@
                     </div>
                 `;
 
-                item.onclick = (e) => openConversation(conv.id, otherUser, e);
+                item.onclick = (e) => openConversation(conv.id, otherUserId, e);
                 conversationsList.appendChild(item);
-            });
+            }
         }
 
-        function openConversation(conversationId, otherUser, event = null) {
+        async function openConversation(conversationId, otherUserId, event = null) {
             console.log('🎨 openConversation called');
             console.log('  - conversationId:', conversationId);
-            console.log('  - otherUser:', otherUser);
+            console.log('  - otherUserId:', otherUserId);
             console.log('  - chatPanel element:', chatPanel);
 
             activeConversationId = conversationId;
@@ -774,6 +817,24 @@
             });
             if (event && event.currentTarget) {
                 event.currentTarget.classList.add('active');
+            }
+
+            // Fetch fresh user data
+            let otherUser = { name: 'Unknown User', avatar_url: '' };
+            try {
+                let userDoc = await getDoc(doc(db, 'users', otherUserId));
+                if (!userDoc.exists()) {
+                    userDoc = await getDoc(doc(db, 'instructors', otherUserId));
+                }
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    otherUser = {
+                        name: extractUserName(userData),
+                        avatar_url: userData.avatar_url || ''
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
             }
 
             console.log('🖼️ Rendering chat interface...');
@@ -1043,9 +1104,8 @@
                     // Open existing conversation
                     console.log('📂 Opening existing conversation');
                     const otherUserId = existingConv.participants.find(id => id !== currentUser.uid);
-                    const otherUser = existingConv.participantDetails[otherUserId];
-                    console.log('👥 Other user:', otherUser);
-                    openConversation(existingConv.id, otherUser);
+                    console.log('👥 Other user ID:', otherUserId);
+                    openConversation(existingConv.id, otherUserId);
                 } else {
                     // Create new conversation
                     console.log('➕ Creating new conversation');
@@ -1109,12 +1169,8 @@
                     console.log('✅ Conversation created with ID:', newConv.id);
 
                     // Open the newly created conversation
-                    const recipientInfo = {
-                        name: recipientName,
-                        avatar_url: recipientData.avatar_url || ''
-                    };
-                    console.log('🎯 Opening conversation with recipient:', recipientInfo);
-                    openConversation(newConv.id, recipientInfo);
+                    console.log('🎯 Opening conversation with recipient ID:', recipientId);
+                    openConversation(newConv.id, recipientId);
                 }
             } catch (error) {
                 console.error('💥 Error in startNewConversation:', error);
