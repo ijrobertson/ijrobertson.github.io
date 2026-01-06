@@ -620,7 +620,7 @@
                     console.error('Error loading profile:', error);
                 }
 
-                profileNavWrapper.style.display = 'block';
+                profileNavWrapper.style.display = 'flex';
                 signInWrapper.style.display = 'none';
 
                 // Load conversations
@@ -989,6 +989,32 @@
             return date.toLocaleDateString();
         }
 
+        // Helper function to extract user name from various field formats
+        function extractUserName(userData) {
+            if (!userData) return 'Unknown User';
+
+            // Try standard name fields
+            if (userData.name && userData.name.trim()) {
+                return userData.name.trim();
+            }
+            if (userData.full_name && userData.full_name.trim()) {
+                return userData.full_name.trim();
+            }
+            if (userData.displayName && userData.displayName.trim()) {
+                return userData.displayName.trim();
+            }
+
+            // Try constructing from first and last name
+            const firstName = (userData.firstName || userData.first_name || '').trim();
+            const lastName = (userData.lastName || userData.last_name || '').trim();
+            if (firstName || lastName) {
+                return `${firstName} ${lastName}`.trim();
+            }
+
+            // Fallback to email or Unknown User
+            return userData.email || 'Unknown User';
+        }
+
         async function startNewConversation(recipientId) {
             console.log('📝 startNewConversation called with recipientId:', recipientId);
             console.log('👤 Current user:', currentUser?.uid);
@@ -1054,9 +1080,9 @@
                     console.log('👤 Recipient data:', recipientData);
                     console.log('👤 Current user data:', currentUserData);
 
-                    // Extract name - could be in 'name' or 'full_name' or email fallback
-                    const recipientName = recipientData.name || recipientData.full_name || recipientData.email || 'Unknown User';
-                    const currentUserName = currentUserData.name || currentUserData.full_name || currentUserData.email || 'Unknown User';
+                    // Extract name - try multiple field variations
+                    const recipientName = extractUserName(recipientData);
+                    const currentUserName = extractUserName(currentUserData);
 
                     console.log('💾 Creating conversation document...');
                     const newConv = await addDoc(collection(db, 'conversations'), {
