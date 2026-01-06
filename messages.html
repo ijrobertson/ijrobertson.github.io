@@ -569,8 +569,8 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        // VERSION: 2025-01-06-v3 - DO NOT REMOVE THIS LINE
-        console.log('🚀 Messages.html script loaded - Version 2025-01-06-v3');
+        // VERSION: 2025-01-06-v4 - DO NOT REMOVE THIS LINE
+        console.log('🚀 Messages.html script loaded - Version 2025-01-06-v4');
 
         import {
             db,
@@ -623,12 +623,18 @@
                         const userData = userDoc.data();
                         if (userData.avatar_url) {
                             navProfilePic.src = userData.avatar_url;
-                            console.log('✅ Profile picture loaded');
+                            console.log('✅ Profile picture loaded:', userData.avatar_url);
                         } else {
-                            console.log('⚠️ No avatar_url in user data');
+                            console.log('⚠️ No avatar_url in user data - using default icon');
+                            // Ensure default icon is visible with a better placeholder
+                            const userName = userData.name || userData.full_name || 'User';
+                            navProfilePic.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName) + '&background=20bcba&color=fff&size=40';
+                            console.log('✅ Set default avatar icon for:', userName);
                         }
                     } else {
                         console.error('❌ User document not found in either collection');
+                        // Set a generic default
+                        navProfilePic.src = 'https://ui-avatars.com/api/?name=User&background=20bcba&color=fff&size=40';
                     }
                 } catch (error) {
                     console.error('❌ Error loading profile:', error);
@@ -1077,16 +1083,24 @@
 
         // Helper function to extract user name from various field formats
         function extractUserName(userData) {
-            if (!userData) return 'Unknown User';
+            if (!userData) {
+                console.warn('⚠️ extractUserName: No userData provided');
+                return 'Unknown User';
+            }
+
+            console.log('🔍 extractUserName: Available fields:', Object.keys(userData));
 
             // Try standard name fields
             if (userData.name && userData.name.trim()) {
+                console.log('✅ Using "name" field:', userData.name);
                 return userData.name.trim();
             }
             if (userData.full_name && userData.full_name.trim()) {
+                console.log('✅ Using "full_name" field:', userData.full_name);
                 return userData.full_name.trim();
             }
             if (userData.displayName && userData.displayName.trim()) {
+                console.log('✅ Using "displayName" field:', userData.displayName);
                 return userData.displayName.trim();
             }
 
@@ -1094,11 +1108,22 @@
             const firstName = (userData.firstName || userData.first_name || '').trim();
             const lastName = (userData.lastName || userData.last_name || '').trim();
             if (firstName || lastName) {
-                return `${firstName} ${lastName}`.trim();
+                const fullName = `${firstName} ${lastName}`.trim();
+                console.log('✅ Constructed from firstName/lastName:', fullName);
+                return fullName;
             }
 
-            // Fallback to email or Unknown User
-            return userData.email || 'Unknown User';
+            // Check if email looks like a name (contains @ symbol means it's just an email)
+            if (userData.email && !userData.email.includes('@')) {
+                console.log('✅ Using email field (no @ detected):', userData.email);
+                return userData.email;
+            }
+
+            // Last resort: show warning and return placeholder
+            console.error('❌ No name fields found! Returning "User Profile" instead of email');
+            console.error('❌ Available fields:', Object.keys(userData));
+            console.error('❌ User data:', userData);
+            return 'User Profile';
         }
 
         async function startNewConversation(recipientId) {
