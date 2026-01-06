@@ -569,8 +569,8 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        // VERSION: 2025-01-06-v6-FINAL - DO NOT REMOVE THIS LINE
-        console.log('🚀 Messages.html script loaded - Version 2025-01-06-v6-FINAL');
+        // VERSION: 2025-01-06-v7-BOTH-COLLECTIONS - DO NOT REMOVE THIS LINE
+        console.log('🚀 Messages.html script loaded - Version 2025-01-06-v7-BOTH-COLLECTIONS');
 
         import {
             db,
@@ -767,23 +767,39 @@
                 const otherUserId = conv.participants.find(id => id !== currentUser.uid);
                 console.log('🔄 [List] Fetching user data for conversation participant:', otherUserId);
 
-                // Fetch current user data from Firestore
+                // Fetch user data from BOTH collections and prefer instructors
                 let otherUser = { name: 'Unknown User', avatar_url: '' };
                 try {
-                    let userDoc = await getDoc(doc(db, 'users', otherUserId));
-                    console.log('👤 [List] Checked users collection, exists:', userDoc.exists());
-                    if (!userDoc.exists()) {
-                        console.log('🔍 [List] Checking instructors collection...');
-                        userDoc = await getDoc(doc(db, 'instructors', otherUserId));
-                        console.log('👨‍🏫 [List] Checked instructors collection, exists:', userDoc.exists());
+                    console.log('🔍 [List] Fetching from BOTH users AND instructors collections...');
+
+                    // Fetch from both collections in parallel
+                    const [userDoc, instructorDoc] = await Promise.all([
+                        getDoc(doc(db, 'users', otherUserId)),
+                        getDoc(doc(db, 'instructors', otherUserId))
+                    ]);
+
+                    console.log('👤 [List] Users collection exists:', userDoc.exists());
+                    console.log('👨‍🏫 [List] Instructors collection exists:', instructorDoc.exists());
+
+                    // Prefer instructor data if it exists, otherwise use user data
+                    let userData = null;
+                    let source = '';
+
+                    if (instructorDoc.exists()) {
+                        userData = instructorDoc.data();
+                        source = 'instructors';
+                    } else if (userDoc.exists()) {
+                        userData = userDoc.data();
+                        source = 'users';
                     }
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
+
+                    if (userData) {
+                        console.log('📋 [List] Using data from:', source);
                         console.log('📋 [List] User data:', userData);
-                        const extractedName = extractUserName(userData);
-                        console.log('✏️ [List] Extracted name:', extractedName);
+                        console.log('📋 [List] userData.name =', userData.name);
+
                         otherUser = {
-                            name: extractedName,
+                            name: userData.name || 'Unknown User',
                             avatar_url: userData.avatar_url || ''
                         };
                         console.log('✅ [List] Final user object:', otherUser);
@@ -836,24 +852,40 @@
                 event.currentTarget.classList.add('active');
             }
 
-            // Fetch fresh user data
+            // Fetch user data from BOTH collections and prefer instructors
             console.log('🔄 Fetching fresh user data for:', otherUserId);
             let otherUser = { name: 'Unknown User', avatar_url: '' };
             try {
-                let userDoc = await getDoc(doc(db, 'users', otherUserId));
-                console.log('👤 Checked users collection, exists:', userDoc.exists());
-                if (!userDoc.exists()) {
-                    console.log('🔍 Checking instructors collection...');
-                    userDoc = await getDoc(doc(db, 'instructors', otherUserId));
-                    console.log('👨‍🏫 Checked instructors collection, exists:', userDoc.exists());
+                console.log('🔍 Fetching from BOTH users AND instructors collections...');
+
+                // Fetch from both collections in parallel
+                const [userDoc, instructorDoc] = await Promise.all([
+                    getDoc(doc(db, 'users', otherUserId)),
+                    getDoc(doc(db, 'instructors', otherUserId))
+                ]);
+
+                console.log('👤 Users collection exists:', userDoc.exists());
+                console.log('👨‍🏫 Instructors collection exists:', instructorDoc.exists());
+
+                // Prefer instructor data if it exists, otherwise use user data
+                let userData = null;
+                let source = '';
+
+                if (instructorDoc.exists()) {
+                    userData = instructorDoc.data();
+                    source = 'instructors';
+                } else if (userDoc.exists()) {
+                    userData = userDoc.data();
+                    source = 'users';
                 }
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
+
+                if (userData) {
+                    console.log('📋 Using data from:', source);
                     console.log('📋 User data retrieved:', userData);
-                    const extractedName = extractUserName(userData);
-                    console.log('✏️ Extracted name:', extractedName);
+                    console.log('📋 userData.name =', userData.name);
+
                     otherUser = {
-                        name: extractedName,
+                        name: userData.name || 'Unknown User',
                         avatar_url: userData.avatar_url || ''
                     };
                     console.log('✅ Final otherUser object:', otherUser);
@@ -1077,60 +1109,7 @@
             return date.toLocaleDateString();
         }
 
-        // Helper function to extract user name from various field formats
-        function extractUserName(userData) {
-            if (!userData) {
-                console.warn('⚠️ extractUserName: No userData provided');
-                return 'Anonymous User';
-            }
-
-            console.log('🔍 extractUserName: userData.name =', userData.name);
-            console.log('🔍 extractUserName: userData.display_name =', userData.display_name);
-            console.log('🔍 extractUserName: userData.full_name =', userData.full_name);
-            console.log('🔍 extractUserName: userData.email =', userData.email);
-            console.log('🔍 extractUserName: All fields:', Object.keys(userData));
-
-            // Get the name value (try multiple fields like other pages do)
-            let name = userData.name || userData.display_name || userData.full_name || userData.displayName || '';
-
-            if (name && typeof name === 'string') {
-                name = name.trim();
-            } else {
-                name = '';
-            }
-
-            console.log('✅ Extracted name value: "' + name + '"');
-
-            // If name is empty or looks like an email (contains @), extract from email or use fallback
-            if (!name || name.includes('@')) {
-                console.warn('⚠️ Name is empty or is an email: "' + name + '"');
-
-                // Try to extract a readable name from email
-                if (userData.email && typeof userData.email === 'string') {
-                    // Get part before @ and clean it up
-                    const emailName = userData.email.split('@')[0];
-                    // Replace dots/underscores with spaces and capitalize
-                    const cleanedName = emailName
-                        .replace(/[._]/g, ' ')
-                        .split(' ')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                        .join(' ');
-                    console.log('✅ Extracted name from email:', cleanedName);
-                    return cleanedName;
-                }
-
-                // Last resort fallback
-                if (userData.price_per_lesson !== undefined || userData.languages_teaching) {
-                    console.log('✅ Using fallback: Unnamed Instructor');
-                    return 'Unnamed Instructor';
-                } else {
-                    console.log('✅ Using fallback: Anonymous User');
-                    return 'Anonymous User';
-                }
-            }
-
-            return name;
-        }
+        // No longer needed - we fetch directly from the correct collection
 
         async function startNewConversation(recipientId) {
             console.log('📝 startNewConversation called with recipientId:', recipientId);
@@ -1166,39 +1145,52 @@
                     // Create new conversation
                     console.log('➕ Creating new conversation');
 
-                    // Try fetching recipient from users collection first, then instructors
-                    let recipientDoc = await getDoc(doc(db, 'users', recipientId));
-                    if (!recipientDoc.exists()) {
-                        console.log('👨‍🏫 Recipient not found in users, checking instructors...');
-                        recipientDoc = await getDoc(doc(db, 'instructors', recipientId));
+                    // Fetch both users from both collections in parallel
+                    const [recipientUserDoc, recipientInstructorDoc, currentUserUserDoc, currentUserInstructorDoc] = await Promise.all([
+                        getDoc(doc(db, 'users', recipientId)),
+                        getDoc(doc(db, 'instructors', recipientId)),
+                        getDoc(doc(db, 'users', currentUser.uid)),
+                        getDoc(doc(db, 'instructors', currentUser.uid))
+                    ]);
+
+                    console.log('📄 Recipient in users:', recipientUserDoc.exists());
+                    console.log('📄 Recipient in instructors:', recipientInstructorDoc.exists());
+                    console.log('📄 Current user in users:', currentUserUserDoc.exists());
+                    console.log('📄 Current user in instructors:', currentUserInstructorDoc.exists());
+
+                    // Prefer instructor data if it exists
+                    let recipientData = null;
+                    if (recipientInstructorDoc.exists()) {
+                        recipientData = recipientInstructorDoc.data();
+                        console.log('✅ Using recipient data from instructors collection');
+                    } else if (recipientUserDoc.exists()) {
+                        recipientData = recipientUserDoc.data();
+                        console.log('✅ Using recipient data from users collection');
                     }
 
-                    // Try fetching current user from users collection first, then instructors
-                    let currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
-                    if (!currentUserDoc.exists()) {
-                        console.log('👨‍🏫 Current user not found in users, checking instructors...');
-                        currentUserDoc = await getDoc(doc(db, 'instructors', currentUser.uid));
+                    let currentUserData = null;
+                    if (currentUserInstructorDoc.exists()) {
+                        currentUserData = currentUserInstructorDoc.data();
+                        console.log('✅ Using current user data from instructors collection');
+                    } else if (currentUserUserDoc.exists()) {
+                        currentUserData = currentUserUserDoc.data();
+                        console.log('✅ Using current user data from users collection');
                     }
 
-                    console.log('📄 Recipient exists:', recipientDoc.exists());
-                    console.log('📄 Current user exists:', currentUserDoc.exists());
-
-                    if (!recipientDoc.exists()) {
+                    if (!recipientData) {
                         throw new Error('Recipient user not found in either users or instructors collection. RecipientId: ' + recipientId);
                     }
-                    if (!currentUserDoc.exists()) {
+                    if (!currentUserData) {
                         throw new Error('Current user profile not found in either users or instructors collection. UserId: ' + currentUser.uid);
                     }
 
-                    const recipientData = recipientDoc.data();
-                    const currentUserData = currentUserDoc.data();
-
                     console.log('👤 Recipient data:', recipientData);
+                    console.log('👤 Recipient name:', recipientData.name);
                     console.log('👤 Current user data:', currentUserData);
+                    console.log('👤 Current user name:', currentUserData.name);
 
-                    // Extract name - try multiple field variations
-                    const recipientName = extractUserName(recipientData);
-                    const currentUserName = extractUserName(currentUserData);
+                    const recipientName = recipientData.name || 'Unknown User';
+                    const currentUserName = currentUserData.name || 'Unknown User';
 
                     console.log('💾 Creating conversation document...');
                     const newConv = await addDoc(collection(db, 'conversations'), {
