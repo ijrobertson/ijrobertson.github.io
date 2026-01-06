@@ -569,6 +569,9 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
+        // VERSION: 2025-01-06-v3 - DO NOT REMOVE THIS LINE
+        console.log('🚀 Messages.html script loaded - Version 2025-01-06-v3');
+
         import {
             db,
             auth,
@@ -634,9 +637,10 @@
                 // Show profile nav and hide sign in button
                 console.log('👁️ Showing profile nav wrapper');
                 if (profileNavWrapper) {
-                    profileNavWrapper.style.display = 'flex';
-                    profileNavWrapper.style.visibility = 'visible';
-                    console.log('✅ Profile nav display set to flex');
+                    profileNavWrapper.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
+                    console.log('✅ Profile nav display set with inline styles');
+                    console.log('📊 Profile wrapper computed styles:', window.getComputedStyle(profileNavWrapper).display);
+                    console.log('📊 Profile wrapper visibility:', window.getComputedStyle(profileNavWrapper).visibility);
                 } else {
                     console.error('❌ profileNavWrapper element not found!');
                 }
@@ -759,25 +763,36 @@
             // Fetch fresh user data for all participants
             for (const conv of conversations) {
                 const otherUserId = conv.participants.find(id => id !== currentUser.uid);
+                console.log('🔄 [List] Fetching user data for conversation participant:', otherUserId);
 
                 // Fetch current user data from Firestore
                 let otherUser = { name: 'Unknown User', avatar_url: '' };
                 try {
                     let userDoc = await getDoc(doc(db, 'users', otherUserId));
+                    console.log('👤 [List] Checked users collection, exists:', userDoc.exists());
                     if (!userDoc.exists()) {
+                        console.log('🔍 [List] Checking instructors collection...');
                         userDoc = await getDoc(doc(db, 'instructors', otherUserId));
+                        console.log('👨‍🏫 [List] Checked instructors collection, exists:', userDoc.exists());
                     }
                     if (userDoc.exists()) {
                         const userData = userDoc.data();
+                        console.log('📋 [List] User data:', userData);
+                        const extractedName = extractUserName(userData);
+                        console.log('✏️ [List] Extracted name:', extractedName);
                         otherUser = {
-                            name: extractUserName(userData),
+                            name: extractedName,
                             avatar_url: userData.avatar_url || ''
                         };
+                        console.log('✅ [List] Final user object:', otherUser);
+                    } else {
+                        console.error('❌ [List] User not found in either collection!');
                     }
                 } catch (error) {
-                    console.error('Error loading user data:', error);
+                    console.error('❌ [List] Error loading user data:', error);
                     // Fallback to cached data if fetch fails
                     otherUser = conv.participantDetails[otherUserId] || otherUser;
+                    console.log('⚠️ [List] Using cached data as fallback:', otherUser);
                 }
 
                 const item = document.createElement('div');
@@ -820,21 +835,31 @@
             }
 
             // Fetch fresh user data
+            console.log('🔄 Fetching fresh user data for:', otherUserId);
             let otherUser = { name: 'Unknown User', avatar_url: '' };
             try {
                 let userDoc = await getDoc(doc(db, 'users', otherUserId));
+                console.log('👤 Checked users collection, exists:', userDoc.exists());
                 if (!userDoc.exists()) {
+                    console.log('🔍 Checking instructors collection...');
                     userDoc = await getDoc(doc(db, 'instructors', otherUserId));
+                    console.log('👨‍🏫 Checked instructors collection, exists:', userDoc.exists());
                 }
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
+                    console.log('📋 User data retrieved:', userData);
+                    const extractedName = extractUserName(userData);
+                    console.log('✏️ Extracted name:', extractedName);
                     otherUser = {
-                        name: extractUserName(userData),
+                        name: extractedName,
                         avatar_url: userData.avatar_url || ''
                     };
+                    console.log('✅ Final otherUser object:', otherUser);
+                } else {
+                    console.error('❌ User not found in either collection!');
                 }
             } catch (error) {
-                console.error('Error loading user data:', error);
+                console.error('❌ Error loading user data:', error);
             }
 
             console.log('🖼️ Rendering chat interface...');
