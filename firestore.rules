@@ -87,5 +87,11 @@ service cloud.firestore {
                         || request.auth.uid == resource.data.studentId)
                     && request.resource.data.status == "cancelled";
     }
+
+    // Email log collection (only Cloud Functions can write)
+    match /emailLog/{logId} {
+      // No client reads or writes - this is for server-side logging only
+      allow read, write: if false;
+    }
   }
 }
