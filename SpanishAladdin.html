@@ -31,6 +31,78 @@
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
 	
+
+    <!-- Narrator Controls Styles -->
+    <style>
+        .narrator-controls {
+            background: linear-gradient(135deg, #20bcba 0%, #17a39f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .narrator-controls h4 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        .narrator-btn {
+            background: white;
+            color: #20bcba;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .narrator-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .narrator-btn:active {
+            transform: translateY(0);
+        }
+        .narrator-btn.active {
+            background: #20bcba;
+            color: white;
+        }
+        .speed-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .speed-btn {
+            background: rgba(255,255,255,0.9);
+            color: #20bcba;
+            border: 2px solid white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .speed-btn:hover {
+            background: white;
+        }
+        .speed-btn.active {
+            background: #20bcba;
+            color: white;
+            border-color: #20bcba;
+        }
+        .spanish-text.speaking {
+            background-color: #fff3cd;
+            transition: background-color 0.3s;
+        }
+        .narrator-status {
+            color: white;
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
 </head>
@@ -165,11 +237,40 @@
                 <div class="col-lg-12">
                     <div class="text-container">
                         <h3>Las Aventuras de Aladino</h3>
+                        <!-- Narrator Controls -->
+                        <div class="narrator-controls">
+                            <h4><i class="fas fa-volume-up"></i> Narrador Español (Spanish Narrator)</h4>
+                            <div>
+                                <button class="narrator-btn" id="playBtn" onclick="playNarration()">
+                                    <i class="fas fa-play"></i> Play Story
+                                </button>
+                                <button class="narrator-btn" id="pauseBtn" onclick="pauseNarration()" style="display:none;">
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button class="narrator-btn" id="stopBtn" onclick="stopNarration()">
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                            </div>
+                            <div style="margin-top: 15px; color: white;">
+                                <strong>Playback Speed:</strong>
+                            </div>
+                            <div class="speed-controls">
+                                <button class="speed-btn" onclick="setSpeed(0.5)">0.5x (Slow)</button>
+                                <button class="speed-btn" onclick="setSpeed(0.75)">0.75x</button>
+                                <button class="speed-btn active" onclick="setSpeed(1)">1x (Normal)</button>
+                                <button class="speed-btn" onclick="setSpeed(1.25)">1.25x</button>
+                                <button class="speed-btn" onclick="setSpeed(1.5)">1.5x (Fast)</button>
+                            </div>
+                            <div class="narrator-status" id="narratorStatus">
+                                Ready to play • Latin American Spanish voice
+                            </div>
+                        </div>
+
                             <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
     <h5 class="w3-center w3-padding-64"><strong><span class="w3-wide w3-xlarge"></span></h5></strong>
-    <p>Érase una vez una viuda que tenía un hijo que se llamaba Aladino. Eran muy pobres, aunque Aladino hizo lo que pudo para ganar algunos centavos, recogiendo frutas en lugares lejanos.</p>
+    <p class="spanish-text">Érase una vez una viuda que tenía un hijo que se llamaba Aladino. Eran muy pobres, aunque Aladino hizo lo que pudo para ganar algunos centavos, recogiendo frutas en lugares lejanos.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Once upon a time, a widow had a son whose name was Aladdin. They were very poor, though Aladdin did what he could to earn some pennies, by picking fruits in faraway places.</i></p>
@@ -184,7 +285,7 @@
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
     
-    <p>Un día, mientras buscaba higos silvestres en un bosquecillo lejos del pueblo, Aladino se encontró con un misterioso extraño. Este hombre bien vestido, de ojos oscuros, barba negra recortada y un espléndido zafiro en su turbante, le hizo a Aladino una pregunta inusual:</p>
+    <p class="spanish-text">Un día, mientras buscaba higos silvestres en un bosquecillo lejos del pueblo, Aladino se encontró con un misterioso extraño. Este hombre bien vestido, de ojos oscuros, barba negra recortada y un espléndido zafiro en su turbante, le hizo a Aladino una pregunta inusual:</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>One day, as he was looking for wild figs in a grove far from the town, Aladdin met a mysterious stranger. This well dressed dark-eyed man with a trim black beard and a splendid sapphire in his turban, asked Aladdin an unusual question:</i></p>
@@ -194,7 +295,7 @@
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
     
-    <p>"Ven aquí, muchacho", ordenó. "¿Cómo te gustaría ganar un centavo de plata?"</p>
+    <p class="spanish-text">"Ven aquí, muchacho", ordenó. "¿Cómo te gustaría ganar un centavo de plata?"</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Come here, boy," he ordered. "How would you like to earn a silver penny?"</i></p>
@@ -204,7 +305,7 @@
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
     
-    <p>"¡Un centavo de plata!" exclamó Aladino. "Señor, haría cualquier cosa por ese tipo de pago".</p>
+    <p class="spanish-text">"¡Un centavo de plata!" exclamó Aladino. "Señor, haría cualquier cosa por ese tipo de pago".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"A silver penny!" exclaimed Aladdin. "Sir, I'd do anything for that kind of payment."</i></p>
@@ -214,7 +315,7 @@
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
     
-    <p>"No voy a pedirte que hagas mucho. Solo entra en esta cueva. Soy demasiado grande para pasar por mí mismo. Si haces lo que te pido, tendrás tu recompensa". El extraño ayudó a Aladdin a meterse en la cueva. Delgado y ágil como era, el chico cayó fácilmente. Sus pies tocaron la piedra y con cuidado bajó unos escalones. . . y se encontró en una gran cámara. Parecía brillar, aunque débilmente iluminado por la luz parpadeante de una vieja lámpara de aceite. Cuando los ojos de Aladino se acostumbraron a la penumbra, vio una vista maravillosa: árboles goteando con joyas brillantes, ollas de oro y cofres llenos de gemas invaluables. Miles de objetos preciosos yacían esparcidos. ¡Era un tesoro escondido! Incapaz de creer lo que veía, Aladino estaba aturdido cuando escuchó un grito detrás de él.</p>
+    <p class="spanish-text">"No voy a pedirte que hagas mucho. Solo entra en esta cueva. Soy demasiado grande para pasar por mí mismo. Si haces lo que te pido, tendrás tu recompensa". El extraño ayudó a Aladdin a meterse en la cueva. Delgado y ágil como era, el chico cayó fácilmente. Sus pies tocaron la piedra y con cuidado bajó unos escalones. . . y se encontró en una gran cámara. Parecía brillar, aunque débilmente iluminado por la luz parpadeante de una vieja lámpara de aceite. Cuando los ojos de Aladino se acostumbraron a la penumbra, vio una vista maravillosa: árboles goteando con joyas brillantes, ollas de oro y cofres llenos de gemas invaluables. Miles de objetos preciosos yacían esparcidos. ¡Era un tesoro escondido! Incapaz de creer lo que veía, Aladino estaba aturdido cuando escuchó un grito detrás de él.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"I'm not going to ask you to do much. Just enter this cave. I'm much too big to squeeze through myself. If you do as I ask, you'll have your reward." The stranger helped Aladdin squeeze into the cave. Slim and agile as he was, the boy easily went down. His feet touched stone and he carefully made his way down some steps . . . and found himself in a large chamber. It seemed to sparkle, though dimly lit by the flickering light of an old oil lamp. When Aladdin's eyes became used to the gloom, he saw a wonderful sight: trees dripping with glittering jewels, pots of gold and caskets full of priceless gems. Thousands of precious objects lay scattered about. It was a treasure trove! Unable to believe his eyes, Aladdin was standing dazed when he heard a shout behind him.</i></p>
@@ -224,7 +325,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¡La lámpara! ¡Apaga la llama y tráeme la lámpara!" Sorprendido y suspicaz, porque ¿por qué el extraño, de todo ese tesoro, solo quiere una lámpara vieja?, se preguntó Aladino. Quizás era un mago. Decidió estar en guardia. Recogiendo la lámpara, volvió sobre sus pasos hasta la entrada.</p>
+    <p class="spanish-text">"¡La lámpara! ¡Apaga la llama y tráeme la lámpara!" Sorprendido y suspicaz, porque ¿por qué el extraño, de todo ese tesoro, solo quiere una lámpara vieja?, se preguntó Aladino. Quizás era un mago. Decidió estar en guardia. Recogiendo la lámpara, volvió sobre sus pasos hasta la entrada.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"The lamp! Put out the flame and bring me the lamp!" Surprised and suspicious, for why should the stranger, out of all such a treasure want only an old lamp, Aladdin wondered. Perhaps he was a wizard. He decided to be on his guard. Picking up the lamp, he retraced his steps up to the entrance.</i></p>
@@ -236,7 +337,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Dame la lámpara", instó el mago con impaciencia. "Dámelo", comenzó a gritar, estirando el brazo para agarrarlo, pero Aladino retrocedió con cautela.</p>
+    <p class="spanish-text">"Dame la lámpara", instó el mago con impaciencia. "Dámelo", comenzó a gritar, estirando el brazo para agarrarlo, pero Aladino retrocedió con cautela.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Give me the lamp," urged the wizard impatiently. "Hand it over," he began to shout, thrusting out his arm to grab it, but Aladdin cautiously drew back.</i></p>
@@ -246,7 +347,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Déjame salir primero..."</p>
+    <p class="spanish-text">"Déjame salir primero..."</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Let me out first . . ."</i></p>
@@ -256,7 +357,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Qué mal por ti", espetó el extraño, cubriendo la entrada de la cueva, sin darse cuenta de que, mientras lo hacía, un anillo se deslizó de su dedo. Un Aladino aterrorizado se quedó en la oscuridad total, preguntándose qué haría el mago a continuación. Luego se probó el anillo. Poniéndolo sin rumbo fijo en su dedo, lo giró una y otra vez. De repente, la habitación se inundó de una luz rosada y un gran genio con las manos entrelazadas apareció sobre una nube.</p>
+    <p class="spanish-text">"Qué mal por ti", espetó el extraño, cubriendo la entrada de la cueva, sin darse cuenta de que, mientras lo hacía, un anillo se deslizó de su dedo. Un Aladino aterrorizado se quedó en la oscuridad total, preguntándose qué haría el mago a continuación. Luego se probó el anillo. Poniéndolo sin rumbo fijo en su dedo, lo giró una y otra vez. De repente, la habitación se inundó de una luz rosada y un gran genio con las manos entrelazadas apareció sobre una nube.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Too bad for you," snapped the stranger, covering the cave entrance, never noticing that, as he did so, a ring slid off his finger. A terrified Aladdin was left in pitch darkness, wondering what the wizard would do next. Then he tried on the ring. Aimlessly putting it on his finger, he twisted it round and round. Suddenly, the room was flooded with a rosy light and a great genie with clasped hands appeared on a cloud.</i></p>
@@ -266,7 +367,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"A sus órdenes, señor", dijo el genio.</p>
+    <p class="spanish-text">"A sus órdenes, señor", dijo el genio.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"At your command, sire," said the genie.</i></p>
@@ -276,7 +377,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Ahora asombrado, Aladino sólo pudo tartamudear:</p>
+    <p class="spanish-text">Ahora asombrado, Aladino sólo pudo tartamudear:</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Now astounded, Aladdin could only stammer:</i></p>
@@ -286,7 +387,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¡Quiero ir a casa!" En un instante estaba de vuelta en su propia casa.</p>
+    <p class="spanish-text">"¡Quiero ir a casa!" En un instante estaba de vuelta en su propia casa.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"I want to go home!" In a flash he was back in his own home.</i></p>
@@ -296,7 +397,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¿Cómo entraste?" llamó su madre desde la estufa de la cocina, en el momento en que lo vio. Emocionado, su hijo le contó sus aventuras.</p>
+    <p class="spanish-text">"¿Cómo entraste?" llamó su madre desde la estufa de la cocina, en el momento en que lo vio. Emocionado, su hijo le contó sus aventuras.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"How did you get in?" called his mother from the kitchen stove, the minute she set eyes on him. Excitedly, her son told her of his adventures.</i></p>
@@ -306,7 +407,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¿Dónde está la moneda de plata?" preguntó su madre. Aladino colocó su mano en su frente. Porque todo lo que había traído a casa era la vieja lámpara de aceite "¡Oh, madre! Lo siento mucho. Esto es todo lo que tengo".</p>
+    <p class="spanish-text">"¿Dónde está la moneda de plata?" preguntó su madre. Aladino colocó su mano en su frente. Porque todo lo que había traído a casa era la vieja lámpara de aceite "¡Oh, madre! Lo siento mucho. Esto es todo lo que tengo".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Where's the silver coin?" his mother asked. Aladdin placed his hand on his forhead. For all he had brought home was the old oil lamp "Oh, mother! I'm so sorry. This is all I've got."</i></p>
@@ -316,7 +417,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Bueno, esperemos que funcione. Está tan sucio..." y la viuda comenzó a frotar la lámpara.</p>
+    <p class="spanish-text">"Bueno, esperemos que funcione. Está tan sucio..." y la viuda comenzó a frotar la lámpara.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Well, let's hope it works. It's so dirty . . ." and the widow began to rub the lamp.</i></p>
@@ -326,7 +427,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>De repente salió disparado otro genio, en una nube de humo.</p>
+    <p class="spanish-text">De repente salió disparado otro genio, en una nube de humo.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Suddenly out shot another genie, in a cloud of smoke.</i></p>
@@ -336,7 +437,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¡Me has liberado, después de siglos! Estaba prisionero en la lámpara, esperando ser liberado por alguien que lo frotara. Ahora, soy tu obediente sirviente. Cuéntame tus deseos". Y el genio se inclinó respetuosamente, esperando las órdenes de Aladino. El niño y su madre se quedaron boquiabiertos ante esta increíble aparición, luego el genio dijo con un dejo de impaciencia en su voz:</p>
+    <p class="spanish-text">"¡Me has liberado, después de siglos! Estaba prisionero en la lámpara, esperando ser liberado por alguien que lo frotara. Ahora, soy tu obediente sirviente. Cuéntame tus deseos". Y el genio se inclinó respetuosamente, esperando las órdenes de Aladino. El niño y su madre se quedaron boquiabiertos ante esta increíble aparición, luego el genio dijo con un dejo de impaciencia en su voz:</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"You've set me free, after centuries! I was a prisoner in the lamp, waiting to be freed by someone rubbing it. Now, I'm your obedient servant. Tell me your wishes." And the genie bowed respectfully, awaiting Aladdin's orders. The boy and his mother gaped wordlessly at this incredible apparition, then the genie said with a hint of impatience in his voice:</i></p>
@@ -346,7 +447,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Estoy aquí a tus órdenes. Dime lo que quieras. ¡Lo que quieras!" Aladino tragó saliva y luego dijo:</p>
+    <p class="spanish-text">"Estoy aquí a tus órdenes. Dime lo que quieras. ¡Lo que quieras!" Aladino tragó saliva y luego dijo:</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"I'm here at your command. Tell me what you want. Anything you like!" Aladdin gulped, then said:</i></p>
@@ -356,7 +457,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Tráenos... tráenos..." su madre, que aún no había comenzado a cocinar la cena, continuó diciendo: "... una gran comida deliciosa".</p>
+    <p class="spanish-text">"Tráenos... tráenos..." su madre, que aún no había comenzado a cocinar la cena, continuó diciendo: "... una gran comida deliciosa".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <div class="w3-panel w3-notleftbar w3-light-grey">
@@ -369,7 +470,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>A partir de ese día, la viuda y su hijo tuvieron todo lo que podían desear: comida, ropa y una buena casa, pues el genio de la lámpara les concedió todo lo que le pidieron. Aladino se convirtió en un joven alto y apuesto y su madre sintió que debería encontrar una esposa, tarde o temprano.</p>
+    <p class="spanish-text">A partir de ese día, la viuda y su hijo tuvieron todo lo que podían desear: comida, ropa y una buena casa, pues el genio de la lámpara les concedió todo lo que le pidieron. Aladino se convirtió en un joven alto y apuesto y su madre sintió que debería encontrar una esposa, tarde o temprano.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>From that day on, the widow and her son had everything they could wish for: food, clothes and a fine home, for the genie of the lamp granted them everything they asked him. Aladdin grew into a tall handsome young man and his mother felt that he ought to find himself a wife, sooner or later.</i></p>
@@ -379,7 +480,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Un día, al salir del mercado, Aladino vio por casualidad a la hija del sultán, Halima, en su trono, siendo llevada por las calles. Solo vislumbró fugazmente a la princesa, pero fue suficiente para querer casarse con ella. Aladino le dijo a su madre y ella rápidamente dijo:</p>
+    <p class="spanish-text">Un día, al salir del mercado, Aladino vio por casualidad a la hija del sultán, Halima, en su trono, siendo llevada por las calles. Solo vislumbró fugazmente a la princesa, pero fue suficiente para querer casarse con ella. Aladino le dijo a su madre y ella rápidamente dijo:</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>One day, as he left the market, Aladdin happened to see the Sultan's daughter Halima in her throne being carried through the streets. He only caught a fleeting glimpse of the princess, but it was enough for him to want to marry her. Aladdin told his mother and she quickly said:</i></p>
@@ -389,7 +490,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Le pediré al sultán la mano de su hija. Nunca podrá negarse. ¡Espera y verás!"</p>
+    <p class="spanish-text">"Le pediré al sultán la mano de su hija. Nunca podrá negarse. ¡Espera y verás!"</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"I'll ask the Sultan for his daughter's hand. He'll never be able to refuse. Wait and see!"</i></p>
@@ -399,7 +500,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Y, de hecho, el sultán fue fácilmente persuadido por un cofre lleno de grandes diamantes para admitir a la viuda en el palacio. Sin embargo, cuando supo por qué había venido, le dijo a la viuda que su hijo debía traer prueba de su poder y riquezas. Esta fue principalmente idea del chambelán, ya que él mismo estaba ansioso por casarse con la hermosa hija del sultán de ojos negros.</p>
+    <p class="spanish-text">Y, de hecho, el sultán fue fácilmente persuadido por un cofre lleno de grandes diamantes para admitir a la viuda en el palacio. Sin embargo, cuando supo por qué había venido, le dijo a la viuda que su hijo debía traer prueba de su poder y riquezas. Esta fue principalmente idea del chambelán, ya que él mismo estaba ansioso por casarse con la hermosa hija del sultán de ojos negros.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>And indeed, the Sultan was easily persuaded by a casket full of big diamonds to admit the widow to the palace. However, when he learned why she had come, he told the widow that her son must bring proof of his power and riches. This was mostly the Chamberlain's idea, for he himself was eager to marry the beautiful black-eyed Sultan's daughter.</i></p>
@@ -409,7 +510,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Si Aladino quiere casarse con Halima", dijo el sultán, "debe enviarme cuarenta cofres llenos de diamantes mañana. Y cuarenta guerreros árabes deben escoltar el tesoro".</p>
+    <p class="spanish-text">"Si Aladino quiere casarse con Halima", dijo el sultán, "debe enviarme cuarenta cofres llenos de diamantes mañana. Y cuarenta guerreros árabes deben escoltar el tesoro".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"If Aladdin wants to marry Halima,' said the Sultan, "he must send me forty caskets full of diamonds tomorrow. And forty Arab warriors must escort the treasure."</i></p>
@@ -419,7 +520,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>La madre de Aladino se fue tristemente a casa. El genio de la lámpara mágica ya había hecho maravillas, pero nada como esto. Sin embargo, Aladino, cuando escuchó la noticia, no se desanimó en absoluto. Cogió la lámpara, la frotó con más fuerza que nunca y le dijo al genio lo que necesitaba. El genio simplemente aplaudió tres veces. Aparecieron mágicamente cuarenta cofres de diamantes, con su escolta de cuarenta guerreros árabes. Cuando vio todo esto al día siguiente, el sultán se quedó desconcertado. Nunca imaginó que tal riqueza pudiera existir. Justo cuando estaba a punto de aceptar a Aladdin como el novio de su hija, el envidioso chambelán irrumpió con una pregunta.</p>
+    <p class="spanish-text">La madre de Aladino se fue tristemente a casa. El genio de la lámpara mágica ya había hecho maravillas, pero nada como esto. Sin embargo, Aladino, cuando escuchó la noticia, no se desanimó en absoluto. Cogió la lámpara, la frotó con más fuerza que nunca y le dijo al genio lo que necesitaba. El genio simplemente aplaudió tres veces. Aparecieron mágicamente cuarenta cofres de diamantes, con su escolta de cuarenta guerreros árabes. Cuando vio todo esto al día siguiente, el sultán se quedó desconcertado. Nunca imaginó que tal riqueza pudiera existir. Justo cuando estaba a punto de aceptar a Aladdin como el novio de su hija, el envidioso chambelán irrumpió con una pregunta.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Aladdin's mother went sadly home. The genie of the magic lamp had already worked wonders, but nothing like this. Aladdin however, when he heard the news, was not at all dismayed. He picked up the lamp, rubbed it harder than ever and told the genie what he required. The genie simply clapped his hands three times. Forty caskets of diamonds magically appeared, with their escort of forty Arab warriors. When he saw all thls the next day, the Sultan was taken aback. He never imagined such wealth could exist. Just as he was about to accept Aladdin as his daughter's bridegroom, the envious Chamberlain broke in with a question.</i></p>
@@ -429,7 +530,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¿Dónde vivirán?" preguntó. El sultán reflexionó por un momento, luego permitió que la codicia sacara lo mejor de él y le dijo a Aladino que construyera un gran y espléndido palacio para Halima. Aladino fue directo a su casa y, en lo que alguna vez fue un desierto, el genio le construyó un palacio. El último obstáculo había sido superado. La boda se llevó a cabo con grandes celebraciones y el sultán estaba especialmente feliz de encontrar un yerno tan rico y poderoso.</p>
+    <p class="spanish-text">"¿Dónde vivirán?" preguntó. El sultán reflexionó por un momento, luego permitió que la codicia sacara lo mejor de él y le dijo a Aladino que construyera un gran y espléndido palacio para Halima. Aladino fue directo a su casa y, en lo que alguna vez fue un desierto, el genio le construyó un palacio. El último obstáculo había sido superado. La boda se llevó a cabo con grandes celebraciones y el sultán estaba especialmente feliz de encontrar un yerno tan rico y poderoso.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Where wlll they live?" he asked. The Sultan pondered for a moment, then allowing greed to get the better of hlm, he told Aladdin to build a great, splendid palace for Halima. Aladdin went straight home and, in what was once a wilderness, the genie built him a palace. The last obstacle had been overcome. The wedding took place with great celebrations and the Sultan was especially happy at finding such a rich and powerful son-in-law.</i></p>
@@ -439,7 +540,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>La noticia de la repentina fortuna y riqueza de Aladino se extendió como un reguero de pólvora, hasta que... un día, un extraño comerciante se detuvo bajo la ventana del palacio.</p>
+    <p class="spanish-text">La noticia de la repentina fortuna y riqueza de Aladino se extendió como un reguero de pólvora, hasta que... un día, un extraño comerciante se detuvo bajo la ventana del palacio.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>News of Aladdin's sudden fortune and wealth spread like wildfire, until.... one day, a strange merchant stopped beneath the palace window.</i></p>
@@ -449,7 +550,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Lámparas viejas por nuevas", llamó a la princesa, de pie en el balcón. Ahora, Aladino siempre había guardado su secreto para sí mismo. Solo su madre lo sabía y nunca se lo había dicho a nadie. Halima, por desgracia, se había mantenido en la oscuridad. Y así, ahora, queriendo darle una sorpresa a Aladino además de hacer un buen trato, fue a buscar la vieja lámpara de aceite que había visto guardar a Aladino, y se la dio al mercader a cambio de una nueva. El comerciante rápidamente comenzó a frotarlo... y el genio estaba ahora al servicio del mago que había recuperado su lámpara mágica.</p>
+    <p class="spanish-text">"Lámparas viejas por nuevas", llamó a la princesa, de pie en el balcón. Ahora, Aladino siempre había guardado su secreto para sí mismo. Solo su madre lo sabía y nunca se lo había dicho a nadie. Halima, por desgracia, se había mantenido en la oscuridad. Y así, ahora, queriendo darle una sorpresa a Aladino además de hacer un buen trato, fue a buscar la vieja lámpara de aceite que había visto guardar a Aladino, y se la dio al mercader a cambio de una nueva. El comerciante rápidamente comenzó a frotarlo... y el genio estaba ahora al servicio del mago que había recuperado su lámpara mágica.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Old lamps for new," he called to the princess, standing on the balcony. Now, Aladdin had always kept his secret to himself. Only his mother knew it and she had never told a soul. Halima, alas, had been kept in the dark. And so, now, wanting to give Aladdin a surprise as well as make a good bargain, she fetched the old oil lamp she had seen Aladdin tuck away, and gave it to the merchant in exchange for a new one. The merchant quickly began to rub it... and the genie was now at the service of the wizard who had got his magic lamp back.</i></p>
@@ -459,7 +560,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>En un segundo, se llevó todas las posesiones de Aladino y envió mágicamente al palacio y a la princesa a una tierra desconocida. Aladino y el sultán estaban al borde de la locura. Nadie sabía lo que había sucedido. Solo Aladino sabía que tenía algo que ver con la lámpara mágica. Pero mientras lloraba por el genio perdido de la lámpara, recordó al genio del anillo del dedo del mago. Deslizando el anillo en su dedo, Aladino lo hizo girar una y otra vez.</p>
+    <p class="spanish-text">En un segundo, se llevó todas las posesiones de Aladino y envió mágicamente al palacio y a la princesa a una tierra desconocida. Aladino y el sultán estaban al borde de la locura. Nadie sabía lo que había sucedido. Solo Aladino sabía que tenía algo que ver con la lámpara mágica. Pero mientras lloraba por el genio perdido de la lámpara, recordó al genio del anillo del dedo del mago. Deslizando el anillo en su dedo, Aladino lo hizo girar una y otra vez.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>In a second he whisked away all Aladdin's possessions and magically sent the palace and the princess to an unknown land. Aladdin and the Sultan were at their wits' end. Nobody knew what had happened. Only Aladdin knew it had something to do with the magic lamp. But as he wept over the lost genie of the lamp, he remembered the genie of the ring from the wizard's finger. Slipping the ring on his finger, Aladdin twisted it round and round.</i></p>
@@ -469,7 +570,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Llévame al lugar donde el mago ha escondido a mi esposa", le ordenó al genio. En un instante, se encontró dentro de su propio palacio y, asomándose detrás de una cortina, vio al mago y la princesa, ahora su sirviente.</p>
+    <p class="spanish-text">"Llévame al lugar donde el mago ha escondido a mi esposa", le ordenó al genio. En un instante, se encontró dentro de su propio palacio y, asomándose detrás de una cortina, vio al mago y la princesa, ahora su sirviente.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Take me to the place where the wizard has hidden my wife," he ordered the genie. In a flash, he found himself inside his own palace, and peeping from behind a curtain, he saw the wizard and the princess, now his servant.</i></p>
@@ -479,7 +580,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¡Psst! ¡Psst!" siseó Aladino.</p>
+    <p class="spanish-text">"¡Psst! ¡Psst!" siseó Aladino.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Psst! Psst!" hissed Aladdin.</i></p>
@@ -489,7 +590,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¡Aladino! ¡Eres tú...!"</p>
+    <p class="spanish-text">"¡Aladino! ¡Eres tú...!"</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Aladdin! It's you...!"</i></p>
@@ -499,7 +600,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Ssh. No dejes que te escuche. Toma este polvo y ponlo en su té. Confía en mí". El polvo rápidamente hizo efecto y el mago cayó en un profundo sueño. Aladino buscó la lámpara por todas partes, pero no estaba a la vista. Pero tenía que estar ahí. ¿Cómo, si no, había movido el mago el palacio? Mientras Aladino miraba a su enemigo dormido, pensó en mirar debajo de la almohada. "¡La lámpara! Por fin", suspiró Aladino, frotándola apresuradamente.</p>
+    <p class="spanish-text">"Ssh. No dejes que te escuche. Toma este polvo y ponlo en su té. Confía en mí". El polvo rápidamente hizo efecto y el mago cayó en un profundo sueño. Aladino buscó la lámpara por todas partes, pero no estaba a la vista. Pero tenía que estar ahí. ¿Cómo, si no, había movido el mago el palacio? Mientras Aladino miraba a su enemigo dormido, pensó en mirar debajo de la almohada. "¡La lámpara! Por fin", suspiró Aladino, frotándola apresuradamente.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Ssh. Don't let him hear you. Take this powder and put it into his tea. Trust me." The powder quickly took effect and the wizard fell into a deep sleep. Aladdin hunted for the lamp high and low, but it was nowere to be seen. But it had to be there. How, otherwise, had the wizard moved the palace? As Aladdin gazed at his sleeping enemy, he thought of peering underneath the pillow. "The lamp! At last," sighed Aladdin, hastily rubbing it.</i></p>
@@ -509,7 +610,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¡Bienvenido de vuelta maestro!" exclamó el genio. "¿Por qué me dejaste al servicio de otro por tanto tiempo?"</p>
+    <p class="spanish-text">"¡Bienvenido de vuelta maestro!" exclamó el genio. "¿Por qué me dejaste al servicio de otro por tanto tiempo?"</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Welcome back, Master!" exclaimed the genie. "Why did you leave me at another's service for so long?"</i></p>
@@ -519,7 +620,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Bienvenido", respondió Aladino. "Me alegro de verte de nuevo. ¡Ciertamente te he extrañado! Es hora de sacarnos de aquí".</p>
+    <p class="spanish-text">"Bienvenido", respondió Aladino. "Me alegro de verte de nuevo. ¡Ciertamente te he extrañado! Es hora de sacarnos de aquí".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Welcome," replied Aladdin. "I'm glad to see you again. I've certainly missed you! It's time to get us out of here."</i></p>
@@ -529,7 +630,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"A tus órdenes", sonrió el genio.</p>
+    <p class="spanish-text">"A tus órdenes", sonrió el genio.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"At your command," smiled the genie.</i></p>
@@ -539,7 +640,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Primero, encadenen a este malvado mago y llévenlo lejos, donde nunca más lo encontrarán". El genio sonrió complacido, asintió con la cabeza y el mago desapareció. Halima agarró a Aladino con miedo:</p>
+    <p class="spanish-text">"Primero, encadenen a este malvado mago y llévenlo lejos, donde nunca más lo encontrarán". El genio sonrió complacido, asintió con la cabeza y el mago desapareció. Halima agarró a Aladino con miedo:</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"First, put this wicked wizard in chains and take him far away where he'll never be found again." The genie grinned with pleasure, nodded his head, and the wizard vanished. Halima clutched Aladdin in fear:</i></p>
@@ -549,7 +650,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¿Qué está pasando? ¿Quién es ese genio?"</p>
+    <p class="spanish-text">"¿Qué está pasando? ¿Quién es ese genio?"</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"What's going on? Who is that genie?"</i></p>
@@ -559,7 +660,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"No te preocupes, todo está bien", le aseguró Aladino, mientras le contaba a su esposa toda la historia de cómo había conocido al mago y encontrado la lámpara mágica que le había permitido casarse con ella. Todo volvió a la normalidad y la feliz pareja se abrazó tiernamente.</p>
+    <p class="spanish-text">"No te preocupes, todo está bien", le aseguró Aladino, mientras le contaba a su esposa toda la historia de cómo había conocido al mago y encontrado la lámpara mágica que le había permitido casarse con ella. Todo volvió a la normalidad y la feliz pareja se abrazó tiernamente.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Don't worry, everything is all right," Aladdin reassured her, as he told his wife the whole story of how he had met the wizard and found the magic lamp that had enabled him to marry her. Everything went back to normal and the happy pair hugged each other tenderly.</i></p>
@@ -569,7 +670,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"¿Podemos regresar a nuestro propio reino?" preguntó tímidamente la princesa, pensando en su padre, tan lejos. Aladino la miró con una sonrisa.</p>
+    <p class="spanish-text">"¿Podemos regresar a nuestro propio reino?" preguntó tímidamente la princesa, pensando en su padre, tan lejos. Aladino la miró con una sonrisa.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Can we return to our own kingdom?" the princess asked timidly, thinking of her father, so far away. Aladdin glanced at her with a smile.</i></p>
@@ -579,7 +680,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"La magia que te trajo aquí te llevará de regreso, pero conmigo a tu lado, para siempre".</p>
+    <p class="spanish-text">"La magia que te trajo aquí te llevará de regreso, pero conmigo a tu lado, para siempre".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"The magic that brought you here will take you back, but with me at your side, forever."</i></p>
@@ -589,7 +690,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>El sultán estaba casi enfermo de preocupación. Su hija había desaparecido junto con el palacio, y luego su yerno también había desaparecido. Nadie sabía dónde estaban, ni siquiera los sabios llamaron apresuradamente al palacio para describir lo que había sucedido. El celoso Chambelán seguía repitiendo:</p>
+    <p class="spanish-text">El sultán estaba casi enfermo de preocupación. Su hija había desaparecido junto con el palacio, y luego su yerno también había desaparecido. Nadie sabía dónde estaban, ni siquiera los sabios llamaron apresuradamente al palacio para describir lo que había sucedido. El celoso Chambelán seguía repitiendo:</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>The Sultan was almost ill with worry. His daughter had disappeared along with the palace, and then his son-in-law had vanished too. Nobody knew where they were, not even the wise men hastily called to the palace to describe what had happened. The jealous Chamberlain kept on repeating:</i></p>
@@ -599,7 +700,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Te dije que la fortuna de Aladino no podía durar".</p>
+    <p class="spanish-text">"Te dije que la fortuna de Aladino no podía durar".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"I told you Aladdin's fortune couldn't last."</i></p>
@@ -609,7 +710,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Todos habían perdido toda esperanza de volver a ver a la pareja desaparecida, cuando a lo lejos, Aladino frotó la lámpara mágica y le dijo al genio:</p>
+    <p class="spanish-text">Todos habían perdido toda esperanza de volver a ver a la pareja desaparecida, cuando a lo lejos, Aladino frotó la lámpara mágica y le dijo al genio:</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Everyone had lost all hope of ever seeing the missing pair again, when far away, Aladdin rubbed the magic lamp and said to the genie:</i></p>
@@ -619,7 +720,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Llévate a mi esposa, a mí y al palacio de regreso a nuestra propia tierra, tan rápido como puedas".</p>
+    <p class="spanish-text">"Llévate a mi esposa, a mí y al palacio de regreso a nuestra propia tierra, tan rápido como puedas".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Take my wife, myself and the palace back to our own land, as fast as you can."</i></p>
@@ -629,7 +730,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"En un instante, Señor", respondió el genio. Con un chasquido de dedos, el palacio se elevó en el aire y pasó a toda velocidad sobre el reino del sultán, por encima de las cabezas de sus asombrados súbditos. Flotó suavemente hacia la tierra y aterrizó en su sitio anterior. Aladino y Halima se apresuraron a abrazar al Sultán.</p>
+    <p class="spanish-text">"En un instante, Señor", respondió el genio. Con un chasquido de dedos, el palacio se elevó en el aire y pasó a toda velocidad sobre el reino del sultán, por encima de las cabezas de sus asombrados súbditos. Flotó suavemente hacia la tierra y aterrizó en su sitio anterior. Aladino y Halima se apresuraron a abrazar al Sultán.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"In a flash, Sire," replied the genie. At the snap of a finger, the palace rose into the air and sped over the Sultan's kingdom, above the heads of his astonished subjects. It gently floated down to earth and landed on its old site. Aladdin and Halima rushed to embrace the Sultan.</i></p>
@@ -639,7 +740,7 @@
   <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Hasta el día de hoy, en ese país lejano, todavía se pueden admirar las huellas de un antiguo palacio que la gente llama el palacio que vino de los cielos.</p>
+    <p class="spanish-text">Hasta el día de hoy, en ese país lejano, todavía se pueden admirar las huellas de un antiguo palacio que la gente llama el palacio que vino de los cielos.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>To this very day, in that distant country, you can still admire the traces of an ancient palace which folk call the palace that came from the skies.</i></p>
@@ -768,5 +869,183 @@
     <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
     <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
     <script src="js/scripts.js"></script> <!-- Custom scripts -->
+
+    <!-- Spanish Narrator Script -->
+    <script>
+        // Web Speech API setup
+        const synth = window.speechSynthesis;
+        let utterances = [];
+        let currentUtteranceIndex = 0;
+        let currentSpeed = 1;
+        let isPaused = false;
+        let isPlaying = false;
+        let spanishVoice = null;
+
+        // Get all Spanish text paragraphs
+        const spanishParagraphs = document.querySelectorAll('.spanish-text');
+
+        // Initialize voices (must wait for voices to load)
+        function initVoices() {
+            const voices = synth.getVoices();
+
+            // Prefer Latin American Spanish voices over Spain Spanish
+            // Priority order: Mexican, US Spanish, Argentine, Colombian, Chilean, then any Spanish except Spain
+            const preferredLocales = ['es-MX', 'es-US', 'es-AR', 'es-CO', 'es-CL', 'es-VE', 'es-PE'];
+
+            // Try to find preferred Latin American voice
+            for (let locale of preferredLocales) {
+                spanishVoice = voices.find(voice => voice.lang === locale);
+                if (spanishVoice) {
+                    updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
+                    return;
+                }
+            }
+
+            // Fallback: any Spanish voice that's NOT from Spain (es-ES)
+            spanishVoice = voices.find(voice => voice.lang.startsWith('es-') && voice.lang !== 'es-ES');
+
+            // Last resort: any Spanish voice (including Spain)
+            if (!spanishVoice) {
+                spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+            }
+
+            if (spanishVoice) {
+                updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
+            } else {
+                updateStatus('No Spanish voice found. Using default voice.');
+            }
+        }
+
+        // Load voices when available
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = initVoices;
+        }
+        // Also try immediately in case voices are already loaded
+        setTimeout(initVoices, 100);
+
+        function updateStatus(message) {
+            document.getElementById('narratorStatus').textContent = message;
+        }
+
+        function createUtterances() {
+            utterances = [];
+            spanishParagraphs.forEach((paragraph, index) => {
+                const utterance = new SpeechSynthesisUtterance(paragraph.textContent);
+                utterance.rate = currentSpeed;
+                utterance.lang = 'es-MX'; // Set language to Mexican Spanish
+
+                if (spanishVoice) {
+                    utterance.voice = spanishVoice;
+                }
+
+                // Highlight current paragraph being read
+                utterance.onstart = function() {
+                    // Remove previous highlights
+                    spanishParagraphs.forEach(p => p.classList.remove('speaking'));
+                    // Add highlight to current paragraph
+                    paragraph.classList.add('speaking');
+                    updateStatus(`Reading paragraph ${index + 1} of ${spanishParagraphs.length}...`);
+                };
+
+                utterance.onend = function() {
+                    paragraph.classList.remove('speaking');
+                    currentUtteranceIndex++;
+
+                    // If there are more paragraphs, speak the next one
+                    if (currentUtteranceIndex < utterances.length) {
+                        synth.speak(utterances[currentUtteranceIndex]);
+                    } else {
+                        // Story finished
+                        stopNarration();
+                        updateStatus('Story completed! Ready to play again.');
+                    }
+                };
+
+                utterances.push(utterance);
+            });
+        }
+
+        function playNarration() {
+            if (!isPlaying) {
+                // Start from beginning
+                createUtterances();
+                currentUtteranceIndex = 0;
+                isPlaying = true;
+                isPaused = false;
+
+                if (utterances.length > 0) {
+                    synth.speak(utterances[0]);
+                    document.getElementById('playBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-block';
+                }
+            } else if (isPaused) {
+                // Resume
+                synth.resume();
+                isPaused = false;
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                updateStatus('Resumed...');
+            }
+        }
+
+        function pauseNarration() {
+            if (isPlaying && !isPaused) {
+                synth.pause();
+                isPaused = true;
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                updateStatus('Paused');
+            }
+        }
+
+        function stopNarration() {
+            synth.cancel();
+            isPlaying = false;
+            isPaused = false;
+            currentUtteranceIndex = 0;
+
+            // Remove all highlights
+            spanishParagraphs.forEach(p => p.classList.remove('speaking'));
+
+            document.getElementById('playBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+
+            if (spanishVoice) {
+                updateStatus(`Ready to play • ${spanishVoice.name}`);
+            } else {
+                updateStatus('Ready to play • Latin American Spanish voice');
+            }
+        }
+
+        function setSpeed(speed) {
+            currentSpeed = speed;
+
+            // Update active button
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // If currently playing, update the speed
+            if (isPlaying) {
+                const wasPlaying = !isPaused;
+                synth.cancel();
+
+                // Recreate utterances with new speed
+                createUtterances();
+
+                if (wasPlaying && currentUtteranceIndex < utterances.length) {
+                    synth.speak(utterances[currentUtteranceIndex]);
+                }
+            }
+
+            updateStatus(`Speed set to ${speed}x`);
+        }
+
+        // Stop narration when user navigates away
+        window.addEventListener('beforeunload', function() {
+            synth.cancel();
+        });
+    </script>
 </body>
 </html>

@@ -29,7 +29,78 @@
     <link href="css/swiper.css" rel="stylesheet">
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
-	
+
+    <!-- Narrator Controls Styles -->
+    <style>
+        .narrator-controls {
+            background: linear-gradient(135deg, #20bcba 0%, #17a39f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .narrator-controls h4 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        .narrator-btn {
+            background: white;
+            color: #20bcba;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .narrator-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .narrator-btn:active {
+            transform: translateY(0);
+        }
+        .narrator-btn.active {
+            background: #20bcba;
+            color: white;
+        }
+        .speed-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .speed-btn {
+            background: rgba(255,255,255,0.9);
+            color: #20bcba;
+            border: 2px solid white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .speed-btn:hover {
+            background: white;
+        }
+        .speed-btn.active {
+            background: #20bcba;
+            color: white;
+            border-color: #20bcba;
+        }
+        .spanish-text.speaking {
+            background-color: #fff3cd;
+            transition: background-color 0.3s;
+        }
+        .narrator-status {
+            color: white;
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
 </head>
@@ -164,17 +235,45 @@
                 <div class="col-lg-12">
                     <div class="text-container">
                         <h3>La Tortuga y la Liebre</h3>
-                            <p>Un liebre se burlaba de la tortuga un día por ser tan lento.</p>
+                        <!-- Narrator Controls -->
+                        <div class="narrator-controls">
+                            <h4><i class="fas fa-volume-up"></i> Narrador Español (Spanish Narrator)</h4>
+                            <div>
+                                <button class="narrator-btn" id="playBtn" onclick="playNarration()">
+                                    <i class="fas fa-play"></i> Play Story
+                                </button>
+                                <button class="narrator-btn" id="pauseBtn" onclick="pauseNarration()" style="display:none;">
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button class="narrator-btn" id="stopBtn" onclick="stopNarration()">
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                            </div>
+                            <div style="margin-top: 15px; color: white;">
+                                <strong>Playback Speed:</strong>
+                            </div>
+                            <div class="speed-controls">
+                                <button class="speed-btn" onclick="setSpeed(0.5)">0.5x (Slow)</button>
+                                <button class="speed-btn" onclick="setSpeed(0.75)">0.75x</button>
+                                <button class="speed-btn active" onclick="setSpeed(1)">1x (Normal)</button>
+                                <button class="speed-btn" onclick="setSpeed(1.25)">1.25x</button>
+                                <button class="speed-btn" onclick="setSpeed(1.5)">1.5x (Fast)</button>
+                            </div>
+                            <div class="narrator-status" id="narratorStatus">
+                                Ready to play • Latin American Spanish voice
+                            </div>
+                        </div>
+                            <p class="spanish-text">Una liebre se burlaba de la tortuga un día por ser tan lenta.</p>
     
                         <div class="w3-panel w3-notleftbar w3-light-grey">
                             <p><i>A Hare was making fun of the Tortoise one day for being so slow.</i></p>
 
-                            <p>"¿Alguna vez llegas a alguna parte?" preguntó con una risa burlona.</p>
+                            <p class="spanish-text">"¿Alguna vez llegas a alguna parte?" preguntó con una risa burlona.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Do you ever get anywhere?" he asked with a mocking laugh.</i></p>
 
-      <p>"Sí", respondió la Tortuga, "y llego allí antes de lo que piensas. Te haré una carrera y te lo demostraré".</p>
+      <p class="spanish-text">"Sí", respondió la Tortuga, "y llego allí antes de lo que piensas. Te haré una carrera y te lo demostraré".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Yes," replied the Tortoise, "and I get there sooner than you think. I'll run you a race and prove it."</i></p>
@@ -182,7 +281,7 @@
       <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
     
-    <p>A la Liebre le divirtió mucho la idea de correr una carrera con la Tortuga, pero por el gusto de hacerlo, estuvo de acuerdo. Entonces el Zorro, que había accedido a actuar como juez, marcó la distancia y puso en marcha a los corredores.</p>
+    <p class="spanish-text">A la Liebre le divirtió mucho la idea de correr una carrera con la Tortuga, pero por el gusto de hacerlo, estuvo de acuerdo. Entonces el Zorro, que había accedido a actuar como juez, marcó la distancia y puso en marcha a los corredores.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>The Hare was much amused at the idea of running a race with the Tortoise, but for the fun of the thing he agreed. So the Fox, who had consented to act as judge, marked the distance and started the runners off.</i></p>
@@ -191,7 +290,7 @@
 &nbsp;
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>La Liebre pronto se perdió de vista, y para que la Tortuga sintiera profundamente lo ridículo que era para él intentar una carrera con una Liebre, se acostó al lado del campo para tomar una siesta hasta que la Tortuga lo alcanzara.</p>
+    <p class="spanish-text">La Liebre pronto se perdió de vista, y para que la Tortuga sintiera profundamente lo ridículo que era para él intentar una carrera con una Liebre, se acostó al lado del campo para tomar una siesta hasta que la Tortuga lo alcanzara.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>The Hare was soon far out of sight, and to make the Tortoise feel very deeply how ridiculous it was for him to try a race with a Hare, he lay down beside the course to take a nap until the Tortoise should catch up.</i></p>
@@ -199,7 +298,7 @@
 
     <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Mientras tanto, la Tortuga siguió avanzando lenta pero constantemente, y, después de un tiempo, pasó por el lugar donde dormía la Liebre. Pero la Liebre siguió durmiendo muy tranquilamente; y cuando por fin despertó, la Tortuga estaba cerca de la meta. La Liebre ahora corrió lo más rápido posible, pero no pudo alcanzar a la Tortuga a tiempo."</p>
+    <p class="spanish-text">Mientras tanto, la Tortuga siguió avanzando lenta pero constantemente, y, después de un tiempo, pasó por el lugar donde dormía la Liebre. Pero la Liebre siguió durmiendo muy tranquilamente; y cuando por fin despertó, la Tortuga estaba cerca de la meta. La Liebre ahora corrió lo más rápido posible, pero no pudo alcanzar a la Tortuga a tiempo."</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>The Tortoise meanwhile kept going slowly but steadily, and, after a time, passed the place where the Hare was sleeping. But the Hare slept on very peacefully; and when at last he did wake up, the Tortoise was near the goal. The Hare now ran his swiftest, but he could not overtake the Tortoise in time.</i></p>
@@ -209,7 +308,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Lento y constante gana la carrera.</p>
+    <p class="spanish-text">Lento y constante gana la carrera.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Slow and steady wins the race.</i></p>
@@ -339,5 +438,183 @@
     <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
     <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
     <script src="js/scripts.js"></script> <!-- Custom scripts -->
+
+    <!-- Spanish Narrator Script -->
+    <script>
+        // Web Speech API setup
+        const synth = window.speechSynthesis;
+        let utterances = [];
+        let currentUtteranceIndex = 0;
+        let currentSpeed = 1;
+        let isPaused = false;
+        let isPlaying = false;
+        let spanishVoice = null;
+
+        // Get all Spanish text paragraphs
+        const spanishParagraphs = document.querySelectorAll('.spanish-text');
+
+        // Initialize voices (must wait for voices to load)
+        function initVoices() {
+            const voices = synth.getVoices();
+
+            // Prefer Latin American Spanish voices over Spain Spanish
+            // Priority order: Mexican, US Spanish, Argentine, Colombian, Chilean, then any Spanish except Spain
+            const preferredLocales = ['es-MX', 'es-US', 'es-AR', 'es-CO', 'es-CL', 'es-VE', 'es-PE'];
+
+            // Try to find preferred Latin American voice
+            for (let locale of preferredLocales) {
+                spanishVoice = voices.find(voice => voice.lang === locale);
+                if (spanishVoice) {
+                    updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
+                    return;
+                }
+            }
+
+            // Fallback: any Spanish voice that's NOT from Spain (es-ES)
+            spanishVoice = voices.find(voice => voice.lang.startsWith('es-') && voice.lang !== 'es-ES');
+
+            // Last resort: any Spanish voice (including Spain)
+            if (!spanishVoice) {
+                spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+            }
+
+            if (spanishVoice) {
+                updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
+            } else {
+                updateStatus('No Spanish voice found. Using default voice.');
+            }
+        }
+
+        // Load voices when available
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = initVoices;
+        }
+        // Also try immediately in case voices are already loaded
+        setTimeout(initVoices, 100);
+
+        function updateStatus(message) {
+            document.getElementById('narratorStatus').textContent = message;
+        }
+
+        function createUtterances() {
+            utterances = [];
+            spanishParagraphs.forEach((paragraph, index) => {
+                const utterance = new SpeechSynthesisUtterance(paragraph.textContent);
+                utterance.rate = currentSpeed;
+                utterance.lang = 'es-MX'; // Set language to Mexican Spanish
+
+                if (spanishVoice) {
+                    utterance.voice = spanishVoice;
+                }
+
+                // Highlight current paragraph being read
+                utterance.onstart = function() {
+                    // Remove previous highlights
+                    spanishParagraphs.forEach(p => p.classList.remove('speaking'));
+                    // Add highlight to current paragraph
+                    paragraph.classList.add('speaking');
+                    updateStatus(`Reading paragraph ${index + 1} of ${spanishParagraphs.length}...`);
+                };
+
+                utterance.onend = function() {
+                    paragraph.classList.remove('speaking');
+                    currentUtteranceIndex++;
+
+                    // If there are more paragraphs, speak the next one
+                    if (currentUtteranceIndex < utterances.length) {
+                        synth.speak(utterances[currentUtteranceIndex]);
+                    } else {
+                        // Story finished
+                        stopNarration();
+                        updateStatus('Story completed! Ready to play again.');
+                    }
+                };
+
+                utterances.push(utterance);
+            });
+        }
+
+        function playNarration() {
+            if (!isPlaying) {
+                // Start from beginning
+                createUtterances();
+                currentUtteranceIndex = 0;
+                isPlaying = true;
+                isPaused = false;
+
+                if (utterances.length > 0) {
+                    synth.speak(utterances[0]);
+                    document.getElementById('playBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-block';
+                }
+            } else if (isPaused) {
+                // Resume
+                synth.resume();
+                isPaused = false;
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                updateStatus('Resumed...');
+            }
+        }
+
+        function pauseNarration() {
+            if (isPlaying && !isPaused) {
+                synth.pause();
+                isPaused = true;
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                updateStatus('Paused');
+            }
+        }
+
+        function stopNarration() {
+            synth.cancel();
+            isPlaying = false;
+            isPaused = false;
+            currentUtteranceIndex = 0;
+
+            // Remove all highlights
+            spanishParagraphs.forEach(p => p.classList.remove('speaking'));
+
+            document.getElementById('playBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+
+            if (spanishVoice) {
+                updateStatus(`Ready to play • ${spanishVoice.name}`);
+            } else {
+                updateStatus('Ready to play • Latin American Spanish voice');
+            }
+        }
+
+        function setSpeed(speed) {
+            currentSpeed = speed;
+
+            // Update active button
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // If currently playing, update the speed
+            if (isPlaying) {
+                const wasPlaying = !isPaused;
+                synth.cancel();
+
+                // Recreate utterances with new speed
+                createUtterances();
+
+                if (wasPlaying && currentUtteranceIndex < utterances.length) {
+                    synth.speak(utterances[currentUtteranceIndex]);
+                }
+            }
+
+            updateStatus(`Speed set to ${speed}x`);
+        }
+
+        // Stop narration when user navigates away
+        window.addEventListener('beforeunload', function() {
+            synth.cancel();
+        });
+    </script>
 </body>
 </html>

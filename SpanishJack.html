@@ -30,6 +30,78 @@
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
 	
+
+    <!-- Narrator Controls Styles -->
+    <style>
+        .narrator-controls {
+            background: linear-gradient(135deg, #20bcba 0%, #17a39f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .narrator-controls h4 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        .narrator-btn {
+            background: white;
+            color: #20bcba;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .narrator-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .narrator-btn:active {
+            transform: translateY(0);
+        }
+        .narrator-btn.active {
+            background: #20bcba;
+            color: white;
+        }
+        .speed-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .speed-btn {
+            background: rgba(255,255,255,0.9);
+            color: #20bcba;
+            border: 2px solid white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .speed-btn:hover {
+            background: white;
+        }
+        .speed-btn.active {
+            background: #20bcba;
+            color: white;
+            border-color: #20bcba;
+        }
+        .spanish-text.speaking {
+            background-color: #fff3cd;
+            transition: background-color 0.3s;
+        }
+        .narrator-status {
+            color: white;
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
 </head>
@@ -165,7 +237,36 @@
                 <div class="col-lg-12">
                     <div class="text-container">
                         <h3>Jack y las Habichuelas Mágicas</h3>
-                            <p>Un día, en una tierra lejana, un niño pobre llamado Jack decidió vender su vaca por algo de dinero. De camino al mercado, se encontró con un hombre extraño que pidió comprar su vaca por unas habichuelas mágicas. El curioso Jack vendió la vaca al viajero.</p>
+                        <!-- Narrator Controls -->
+                        <div class="narrator-controls">
+                            <h4><i class="fas fa-volume-up"></i> Narrador Español (Spanish Narrator)</h4>
+                            <div>
+                                <button class="narrator-btn" id="playBtn" onclick="playNarration()">
+                                    <i class="fas fa-play"></i> Play Story
+                                </button>
+                                <button class="narrator-btn" id="pauseBtn" onclick="pauseNarration()" style="display:none;">
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button class="narrator-btn" id="stopBtn" onclick="stopNarration()">
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                            </div>
+                            <div style="margin-top: 15px; color: white;">
+                                <strong>Playback Speed:</strong>
+                            </div>
+                            <div class="speed-controls">
+                                <button class="speed-btn" onclick="setSpeed(0.5)">0.5x (Slow)</button>
+                                <button class="speed-btn" onclick="setSpeed(0.75)">0.75x</button>
+                                <button class="speed-btn active" onclick="setSpeed(1)">1x (Normal)</button>
+                                <button class="speed-btn" onclick="setSpeed(1.25)">1.25x</button>
+                                <button class="speed-btn" onclick="setSpeed(1.5)">1.5x (Fast)</button>
+                            </div>
+                            <div class="narrator-status" id="narratorStatus">
+                                Ready to play • Latin American Spanish voice
+                            </div>
+                        </div>
+
+                            <p class="spanish-text">Un día, en una tierra lejana, un niño pobre llamado Jack decidió vender su vaca por algo de dinero. De camino al mercado, se encontró con un hombre extraño que pidió comprar su vaca por unas habichuelas mágicas. El curioso Jack vendió la vaca al viajero.</p>
     
                         <div class="w3-panel w3-notleftbar w3-light-grey">
                             <p><i>One day, in a faraway land, a poor boy named Jack decided to sell his cow for some money. On the way to the market, he encountered a strange man who asked to buy his cow for some magical beans. Curious Jack sold the cow to the traveler.</i></p>
@@ -177,7 +278,7 @@
 </div><img src="../images/bean.jpg" style="width:100%;max-width:500px" class="w3-margin-top w3-center">
 			    </div>
 &nbsp; &nbsp;
-      <p>Jack se preguntó qué había en la parte superior del tallo de habichuelas. Decidió subir a la cima. Después de escalar durante bastante tiempo, el tallo de habichuelas finalmente llegó a su fin. En la cima se encontró con una tierra extraña con un castillo en la distancia.</p>
+      <p class="spanish-text">Jack se preguntó qué había en la parte superior del tallo de habichuelas. Decidió subir a la cima. Después de escalar durante bastante tiempo, el tallo de habichuelas finalmente llegó a su fin. En la cima se encontró con una tierra extraña con un castillo en la distancia.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Jack wondered what was up at the top of the beanstalk. He decided to climb to the top. After climbing for quite some time, the beanstalk finally came to an end. At the top he came across a strange land with a castle in the distance.</i></p>
@@ -193,7 +294,7 @@
 </div>
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Justo cuando Jack estaba a punto de salir del castillo, el gigante se despertó y vio a Jack. Comenzó a perseguir a Jack con ira, pero Jack logró escapar. Descendió por el tallo de habichuelas lo más rápido que pudo. Después de lo que pareció una eternidad, Jack finalmente llegó al suelo. Rápidamente agarró un hacha y cortó el tallo de habichuelas. El tallo de habichuelas cayó y el gigante desapareció.</p>
+    <p class="spanish-text">Justo cuando Jack estaba a punto de salir del castillo, el gigante se despertó y vio a Jack. Comenzó a perseguir a Jack con ira, pero Jack logró escapar. Descendió por el tallo de habichuelas lo más rápido que pudo. Después de lo que pareció una eternidad, Jack finalmente llegó al suelo. Rápidamente agarró un hacha y cortó el tallo de habichuelas. El tallo de habichuelas cayó y el gigante desapareció.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Just as Jack was about to leave the castle, the giant woke up and saw Jack. He began chasing Jack in anger, but Jack managed to escape. He descended down the beanstalk as fast as he could. After what felt like an eternity, Jack finally reached the ground. He quickly grabbed an ax and chopped down the beanstalk. The beanstalk fell and the giant disappeared.</i></p>
@@ -201,7 +302,7 @@
 
     <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Jack le contó a su madre por lo que había pasado y ella estaba agradecida de que estuviera a salvo.</p>
+    <p class="spanish-text">Jack le contó a su madre por lo que había pasado y ella estaba agradecida de que estuviera a salvo.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Jack told his mother what he had been through and she was grateful that he was safe.</i></p>
@@ -211,7 +312,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Jack y su madre ya no eran pobres y apreciaban su fortuna todos los días.</p>
+    <p class="spanish-text">Jack y su madre ya no eran pobres y apreciaban su fortuna todos los días.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Jack and his mother were no longer poor and they appreciated their fortune everyday.</i></p>
@@ -341,5 +442,183 @@
     <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
     <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
     <script src="js/scripts.js"></script> <!-- Custom scripts -->
+
+    <!-- Spanish Narrator Script -->
+    <script>
+        // Web Speech API setup
+        const synth = window.speechSynthesis;
+        let utterances = [];
+        let currentUtteranceIndex = 0;
+        let currentSpeed = 1;
+        let isPaused = false;
+        let isPlaying = false;
+        let spanishVoice = null;
+
+        // Get all Spanish text paragraphs
+        const spanishParagraphs = document.querySelectorAll('.spanish-text');
+
+        // Initialize voices (must wait for voices to load)
+        function initVoices() {
+            const voices = synth.getVoices();
+
+            // Prefer Latin American Spanish voices over Spain Spanish
+            // Priority order: Mexican, US Spanish, Argentine, Colombian, Chilean, then any Spanish except Spain
+            const preferredLocales = ['es-MX', 'es-US', 'es-AR', 'es-CO', 'es-CL', 'es-VE', 'es-PE'];
+
+            // Try to find preferred Latin American voice
+            for (let locale of preferredLocales) {
+                spanishVoice = voices.find(voice => voice.lang === locale);
+                if (spanishVoice) {
+                    updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
+                    return;
+                }
+            }
+
+            // Fallback: any Spanish voice that's NOT from Spain (es-ES)
+            spanishVoice = voices.find(voice => voice.lang.startsWith('es-') && voice.lang !== 'es-ES');
+
+            // Last resort: any Spanish voice (including Spain)
+            if (!spanishVoice) {
+                spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+            }
+
+            if (spanishVoice) {
+                updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
+            } else {
+                updateStatus('No Spanish voice found. Using default voice.');
+            }
+        }
+
+        // Load voices when available
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = initVoices;
+        }
+        // Also try immediately in case voices are already loaded
+        setTimeout(initVoices, 100);
+
+        function updateStatus(message) {
+            document.getElementById('narratorStatus').textContent = message;
+        }
+
+        function createUtterances() {
+            utterances = [];
+            spanishParagraphs.forEach((paragraph, index) => {
+                const utterance = new SpeechSynthesisUtterance(paragraph.textContent);
+                utterance.rate = currentSpeed;
+                utterance.lang = 'es-MX'; // Set language to Mexican Spanish
+
+                if (spanishVoice) {
+                    utterance.voice = spanishVoice;
+                }
+
+                // Highlight current paragraph being read
+                utterance.onstart = function() {
+                    // Remove previous highlights
+                    spanishParagraphs.forEach(p => p.classList.remove('speaking'));
+                    // Add highlight to current paragraph
+                    paragraph.classList.add('speaking');
+                    updateStatus(`Reading paragraph ${index + 1} of ${spanishParagraphs.length}...`);
+                };
+
+                utterance.onend = function() {
+                    paragraph.classList.remove('speaking');
+                    currentUtteranceIndex++;
+
+                    // If there are more paragraphs, speak the next one
+                    if (currentUtteranceIndex < utterances.length) {
+                        synth.speak(utterances[currentUtteranceIndex]);
+                    } else {
+                        // Story finished
+                        stopNarration();
+                        updateStatus('Story completed! Ready to play again.');
+                    }
+                };
+
+                utterances.push(utterance);
+            });
+        }
+
+        function playNarration() {
+            if (!isPlaying) {
+                // Start from beginning
+                createUtterances();
+                currentUtteranceIndex = 0;
+                isPlaying = true;
+                isPaused = false;
+
+                if (utterances.length > 0) {
+                    synth.speak(utterances[0]);
+                    document.getElementById('playBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-block';
+                }
+            } else if (isPaused) {
+                // Resume
+                synth.resume();
+                isPaused = false;
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                updateStatus('Resumed...');
+            }
+        }
+
+        function pauseNarration() {
+            if (isPlaying && !isPaused) {
+                synth.pause();
+                isPaused = true;
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                updateStatus('Paused');
+            }
+        }
+
+        function stopNarration() {
+            synth.cancel();
+            isPlaying = false;
+            isPaused = false;
+            currentUtteranceIndex = 0;
+
+            // Remove all highlights
+            spanishParagraphs.forEach(p => p.classList.remove('speaking'));
+
+            document.getElementById('playBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+
+            if (spanishVoice) {
+                updateStatus(`Ready to play • ${spanishVoice.name}`);
+            } else {
+                updateStatus('Ready to play • Latin American Spanish voice');
+            }
+        }
+
+        function setSpeed(speed) {
+            currentSpeed = speed;
+
+            // Update active button
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // If currently playing, update the speed
+            if (isPlaying) {
+                const wasPlaying = !isPaused;
+                synth.cancel();
+
+                // Recreate utterances with new speed
+                createUtterances();
+
+                if (wasPlaying && currentUtteranceIndex < utterances.length) {
+                    synth.speak(utterances[currentUtteranceIndex]);
+                }
+            }
+
+            updateStatus(`Speed set to ${speed}x`);
+        }
+
+        // Stop narration when user navigates away
+        window.addEventListener('beforeunload', function() {
+            synth.cancel();
+        });
+    </script>
 </body>
 </html>
