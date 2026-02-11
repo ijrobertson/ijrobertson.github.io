@@ -29,6 +29,77 @@
     <link href="css/swiper.css" rel="stylesheet">
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
+
+    <!-- Narrator Controls Styles -->
+    <style>
+        .narrator-controls {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .narrator-controls h4 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        .narrator-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .narrator-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .narrator-btn:active {
+            transform: translateY(0);
+        }
+        .narrator-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .speed-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .speed-btn {
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+            border: 2px solid white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .speed-btn:hover {
+            background: white;
+        }
+        .speed-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .spanish-text.speaking {
+            background-color: #fff3cd;
+            transition: background-color 0.3s;
+        }
+        .narrator-status {
+            color: white;
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
 	
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
@@ -165,19 +236,49 @@
                 <div class="col-lg-12">
                     <div class="text-container">
                         <h3>El Rey Midas y el Toque Dorado</h3>
-                            <p>Había una vez un rey llamado Midas. Tenía un gran reino, con muchos palacios. Sin embargo, a pesar de toda su riqueza, todavía no era feliz. Decidió que quería más oro. Un día, mientras comía, apareció un mago. El rey Midas le preguntó al mago: "¡Concédeme un mago de hechizos! ¡Todo lo que toque se convertirá en oro!" El mago respondió: "Tu deseo está concedido". El rey estaba complacido.</p>
+
+                        <!-- Narrator Controls -->
+                        <div class="narrator-controls">
+                            <h4><i class="fas fa-volume-up"></i> Narrador Español (Spanish Narrator)</h4>
+                            <div>
+                                <button class="narrator-btn" id="playBtn" onclick="playNarration()">
+                                    <i class="fas fa-play"></i> Play Story
+                                </button>
+                                <button class="narrator-btn" id="pauseBtn" onclick="pauseNarration()" style="display:none;">
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button class="narrator-btn" id="stopBtn" onclick="stopNarration()">
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                            </div>
+                            <div style="margin-top: 15px; color: white;">
+                                <strong>Playback Speed:</strong>
+                            </div>
+                            <div class="speed-controls">
+                                <button class="speed-btn" onclick="setSpeed(0.5)">0.5x (Slow)</button>
+                                <button class="speed-btn" onclick="setSpeed(0.75)">0.75x</button>
+                                <button class="speed-btn active" onclick="setSpeed(1)">1x (Normal)</button>
+                                <button class="speed-btn" onclick="setSpeed(1.25)">1.25x</button>
+                                <button class="speed-btn" onclick="setSpeed(1.5)">1.5x (Fast)</button>
+                            </div>
+                            <div class="narrator-status" id="narratorStatus">
+                                Ready to play • Latin American Spanish voice
+                            </div>
+                        </div>
+
+                            <p class="spanish-text">Había una vez un rey llamado Midas. Tenía un gran reino, con muchos palacios. Sin embargo, a pesar de toda su riqueza, todavía no era feliz. Decidió que quería más oro. Un día, mientras comía, apareció un mago. El rey Midas le preguntó al mago: "¡Concédeme un mago de hechizos! ¡Todo lo que toque se convertirá en oro!" El mago respondió: "Tu deseo está concedido". El rey estaba complacido.</p>
     
                         <div class="w3-panel w3-notleftbar w3-light-grey">
                             <p><i>There once lived a king named Midas. He had a large kingdom, with many palaces. Despite all of his wealth, however, he was still not happy. He decided he wanted more gold. One day, as he was eating, a wizard appeared. King Midas asked the wizard: "Grant me a spell wizard! Whatever I touch shall turn into gold!" The wizard replied: "Your wish is granted." The king was pleased.</i></p>
 
-                            <p>Tocó su trono y se convirtió en oro. Tocó las sillas, las mesas, los jarrones y las estatuas y todo se transformó en oro. El rey Midas estaba feliz más allá de las palabras. Creía que ahora era el hombre más rico del mundo. Regresó a la mesa del comedor para comer. Cuando recogió su tenedor, también se convirtió en oro. Luego tocó su plato y éste y su comida se convirtieron en oro. El rey estaba asombrado. No podía comer ni beber nada.</p>
+                            <p class="spanish-text">Tocó su trono y se convirtió en oro. Tocó las sillas, las mesas, los jarrones y las estatuas y todo se transformó en oro. El rey Midas estaba feliz más allá de las palabras. Creía que ahora era el hombre más rico del mundo. Regresó a la mesa del comedor para comer. Cuando recogió su tenedor, también se convirtió en oro. Luego tocó su plato y éste y su comida se convirtieron en oro. El rey estaba asombrado. No podía comer ni beber nada.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>He touched his throne and it turned into gold. He touched the chairs, tables, vases, and statues and they all truned into gold. King Midas was happy beyond words. He believed he was now the richest man in the world. He returned back to the dinner table to eat. As he picked up his fork, it too turned into gold. Then he touched his plate and it and his food turned into gold. The king was astonished. He could not eat or drink anything.</i></p>
 </div><img src="../images/gold.jpg" style="width:100%;max-width:500px" class="w3-margin-top w3-center">
 			    </div>
 &nbsp; &nbsp;
-      <p>De repente, su hija entró corriendo en la habitación. Cuando la rodeó con sus brazos, ella también se convirtió en una estatua de oro. El rey Midas se sorprendió.</p>
+      <p class="spanish-text">De repente, su hija entró corriendo en la habitación. Cuando la rodeó con sus brazos, ella también se convirtió en una estatua de oro. El rey Midas se sorprendió.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Suddenly, his daughter rushed into the room. As he put his arms around her, she too turned into a statue of gold. King Midas was shocked.</i></p>
@@ -185,7 +286,7 @@
       <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
     
-    <p>"¡Oh, no!" - exclamó el rey. "No quiero más oro. ¡Quiero recuperar a mi hija!"</p>
+    <p class="spanish-text">"¡Oh, no!" - exclamó el rey. "No quiero más oro. ¡Quiero recuperar a mi hija!"</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>"Oh no!" - the king exclaimed. "I do not want any more gold. I want my daughter back!"</i></p>
@@ -193,7 +294,7 @@
 </div>
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Entonces, el mago apareció de nuevo con una botella de agua y dijo: "Rocía esta agua sobre todo lo que has convertido en oro".</p>
+    <p class="spanish-text">Entonces, el mago apareció de nuevo con una botella de agua y dijo: "Rocía esta agua sobre todo lo que has convertido en oro".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>Then, the wizard appeared again with a bottle of water and said: "Sprinkle this water over everything you have turned into gold."</i></p>
@@ -201,7 +302,7 @@
 
     <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>El rey hizo lo que le dijo y para su asombro, todo el oro que roció con agua volvió a su forma original.</p>
+    <p class="spanish-text">El rey hizo lo que le dijo y para su asombro, todo el oro que roció con agua volvió a su forma original.</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>The king did as he was told and to his amazement, all of the gold he sprinkled with water, came back to their original form.</i></p>
@@ -211,7 +312,7 @@
 <!-- About Container -->
 <div class="w3-container" id="about">
   <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>El rey aprendió una lección muy importante ese día: "La vida vale mucho más que el oro".</p>
+    <p class="spanish-text">El rey aprendió una lección muy importante ese día: "La vida vale mucho más que el oro".</p>
     
     <div class="w3-panel w3-notleftbar w3-light-grey">
       <p><i>The king learned a very important lesson that day: "Life is worth much more than gold."</i></p>
@@ -341,5 +442,183 @@
     <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
     <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
     <script src="js/scripts.js"></script> <!-- Custom scripts -->
+
+    <!-- Spanish Narrator Script -->
+    <script>
+        // Web Speech API setup
+        const synth = window.speechSynthesis;
+        let utterances = [];
+        let currentUtteranceIndex = 0;
+        let currentSpeed = 1;
+        let isPaused = false;
+        let isPlaying = false;
+        let spanishVoice = null;
+
+        // Get all Spanish text paragraphs
+        const spanishParagraphs = document.querySelectorAll('.spanish-text');
+
+        // Initialize voices (must wait for voices to load)
+        function initVoices() {
+            const voices = synth.getVoices();
+
+            // Prefer Latin American Spanish voices over Spain Spanish
+            // Priority order: Mexican, US Spanish, Argentine, Colombian, Chilean, then any Spanish except Spain
+            const preferredLocales = ['es-MX', 'es-US', 'es-AR', 'es-CO', 'es-CL', 'es-VE', 'es-PE'];
+
+            // Try to find preferred Latin American voice
+            for (let locale of preferredLocales) {
+                spanishVoice = voices.find(voice => voice.lang === locale);
+                if (spanishVoice) {
+                    updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
+                    return;
+                }
+            }
+
+            // Fallback: any Spanish voice that's NOT from Spain (es-ES)
+            spanishVoice = voices.find(voice => voice.lang.startsWith('es-') && voice.lang !== 'es-ES');
+
+            // Last resort: any Spanish voice (including Spain)
+            if (!spanishVoice) {
+                spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+            }
+
+            if (spanishVoice) {
+                updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
+            } else {
+                updateStatus('No Spanish voice found. Using default voice.');
+            }
+        }
+
+        // Load voices when available
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = initVoices;
+        }
+        // Also try immediately in case voices are already loaded
+        setTimeout(initVoices, 100);
+
+        function updateStatus(message) {
+            document.getElementById('narratorStatus').textContent = message;
+        }
+
+        function createUtterances() {
+            utterances = [];
+            spanishParagraphs.forEach((paragraph, index) => {
+                const utterance = new SpeechSynthesisUtterance(paragraph.textContent);
+                utterance.rate = currentSpeed;
+                utterance.lang = 'es-MX'; // Set language to Mexican Spanish
+
+                if (spanishVoice) {
+                    utterance.voice = spanishVoice;
+                }
+
+                // Highlight current paragraph being read
+                utterance.onstart = function() {
+                    // Remove previous highlights
+                    spanishParagraphs.forEach(p => p.classList.remove('speaking'));
+                    // Add highlight to current paragraph
+                    paragraph.classList.add('speaking');
+                    updateStatus(`Reading paragraph ${index + 1} of ${spanishParagraphs.length}...`);
+                };
+
+                utterance.onend = function() {
+                    paragraph.classList.remove('speaking');
+                    currentUtteranceIndex++;
+
+                    // If there are more paragraphs, speak the next one
+                    if (currentUtteranceIndex < utterances.length) {
+                        synth.speak(utterances[currentUtteranceIndex]);
+                    } else {
+                        // Story finished
+                        stopNarration();
+                        updateStatus('Story completed! Ready to play again.');
+                    }
+                };
+
+                utterances.push(utterance);
+            });
+        }
+
+        function playNarration() {
+            if (!isPlaying) {
+                // Start from beginning
+                createUtterances();
+                currentUtteranceIndex = 0;
+                isPlaying = true;
+                isPaused = false;
+
+                if (utterances.length > 0) {
+                    synth.speak(utterances[0]);
+                    document.getElementById('playBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-block';
+                }
+            } else if (isPaused) {
+                // Resume
+                synth.resume();
+                isPaused = false;
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                updateStatus('Resumed...');
+            }
+        }
+
+        function pauseNarration() {
+            if (isPlaying && !isPaused) {
+                synth.pause();
+                isPaused = true;
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                updateStatus('Paused');
+            }
+        }
+
+        function stopNarration() {
+            synth.cancel();
+            isPlaying = false;
+            isPaused = false;
+            currentUtteranceIndex = 0;
+
+            // Remove all highlights
+            spanishParagraphs.forEach(p => p.classList.remove('speaking'));
+
+            document.getElementById('playBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+
+            if (spanishVoice) {
+                updateStatus(`Ready to play • ${spanishVoice.name}`);
+            } else {
+                updateStatus('Ready to play • Latin American Spanish voice');
+            }
+        }
+
+        function setSpeed(speed) {
+            currentSpeed = speed;
+
+            // Update active button
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // If currently playing, update the speed
+            if (isPlaying) {
+                const wasPlaying = !isPaused;
+                synth.cancel();
+
+                // Recreate utterances with new speed
+                createUtterances();
+
+                if (wasPlaying && currentUtteranceIndex < utterances.length) {
+                    synth.speak(utterances[currentUtteranceIndex]);
+                }
+            }
+
+            updateStatus(`Speed set to ${speed}x`);
+        }
+
+        // Stop narration when user navigates away
+        window.addEventListener('beforeunload', function() {
+            synth.cancel();
+        });
+    </script>
 </body>
 </html>
