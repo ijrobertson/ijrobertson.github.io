@@ -569,8 +569,12 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        // VERSION: 2025-01-06-v7-BOTH-COLLECTIONS - DO NOT REMOVE THIS LINE
-        console.log('🚀 Messages.html script loaded - Version 2025-01-06-v7-BOTH-COLLECTIONS');
+        // VERSION: 2025-02-11-v8-EMAIL-NOTIFICATIONS - DO NOT REMOVE THIS LINE
+        console.log('🚀 Messages.html script loaded - Version 2025-02-11-v8-EMAIL-NOTIFICATIONS');
+
+        // ⚠️ SECURITY NOTE: This Resend API key is embedded in client-side code.
+        // TODO: Move to Firebase Cloud Functions for production to keep API key secure!
+        const RESEND_API_KEY = 're_iRqDD1wS_M82aSrCjQiRpcFe7Qdqx5P7S';
 
         import {
             db,
@@ -1027,6 +1031,83 @@
             }
         }
 
+        /**
+         * Send email notification via Resend API
+         */
+        async function sendEmailNotification(recipientEmail, recipientName, senderName, messagePreview) {
+            try {
+                console.log('📧 Sending email notification to:', recipientEmail);
+
+                const emailHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                            .header { background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                            .content { background: white; padding: 30px; border: 1px solid #e0e0e0; border-top: none; }
+                            .message-preview { background: #f8f9fa; padding: 15px; border-left: 4px solid #20bcba; margin: 20px 0; font-style: italic; }
+                            .button { display: inline-block; background: #20bcba; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                            .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1 style="margin: 0;">💬 New Message on Lingua Bud</h1>
+                            </div>
+                            <div class="content">
+                                <p>Hi <strong>${recipientName}</strong>,</p>
+                                <p>You have a new message from <strong>${senderName}</strong>:</p>
+                                <div class="message-preview">
+                                    "${messagePreview.length > 150 ? messagePreview.substring(0, 150) + '...' : messagePreview}"
+                                </div>
+                                <p>
+                                    <a href="https://linguabud.com/messages.html" class="button">View and Reply</a>
+                                </p>
+                                <p>Happy learning!</p>
+                                <p><strong>The Lingua Bud Team</strong></p>
+                                <div class="footer">
+                                    <p>You're receiving this email because you have an account on Lingua Bud.</p>
+                                    <p>© 2024 Lingua Bud. All rights reserved.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `;
+
+                const response = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${RESEND_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        from: 'Lingua Bud <notifications@send.linguabud.com>',
+                        to: recipientEmail,
+                        subject: `New message from ${senderName} on Lingua Bud`,
+                        html: emailHtml
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('❌ Resend API error:', errorData);
+                    throw new Error(`Email API error: ${errorData.message || response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Email sent successfully:', data);
+                return data;
+            } catch (error) {
+                console.error('❌ Error sending email notification:', error);
+                // Don't block message sending if email fails
+                return null;
+            }
+        }
+
         async function sendMessage(conversationId) {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
@@ -1041,6 +1122,19 @@
 
                 // Find other participants (everyone except current user)
                 const otherParticipants = participants.filter(id => id !== currentUser.uid);
+
+                // Get current user's name for email notification
+                let currentUserData = null;
+                const currentUserDocFromUsers = await getDoc(doc(db, 'users', currentUser.uid));
+                const currentUserDocFromInstructors = await getDoc(doc(db, 'instructors', currentUser.uid));
+
+                if (currentUserDocFromInstructors.exists()) {
+                    currentUserData = currentUserDocFromInstructors.data();
+                } else if (currentUserDocFromUsers.exists()) {
+                    currentUserData = currentUserDocFromUsers.data();
+                }
+
+                const senderName = currentUserData?.name || 'A Lingua Bud user';
 
                 // Add message to subcollection
                 await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
@@ -1063,6 +1157,36 @@
                     lastMessageTime: new Date(),
                     unreadCount: newUnreadCount
                 }, { merge: true });
+
+                // Send email notifications to all recipients (non-blocking)
+                otherParticipants.forEach(async (participantId) => {
+                    try {
+                        // Fetch recipient data from both collections
+                        const recipientDocFromUsers = await getDoc(doc(db, 'users', participantId));
+                        const recipientDocFromInstructors = await getDoc(doc(db, 'instructors', participantId));
+
+                        let recipientData = null;
+                        if (recipientDocFromInstructors.exists()) {
+                            recipientData = recipientDocFromInstructors.data();
+                        } else if (recipientDocFromUsers.exists()) {
+                            recipientData = recipientDocFromUsers.data();
+                        }
+
+                        if (recipientData && recipientData.email) {
+                            const recipientName = recipientData.name || 'Lingua Bud user';
+                            await sendEmailNotification(
+                                recipientData.email,
+                                recipientName,
+                                senderName,
+                                text
+                            );
+                        } else {
+                            console.warn('⚠️ Recipient email not found for user:', participantId);
+                        }
+                    } catch (emailError) {
+                        console.error('❌ Error sending email to participant:', participantId, emailError);
+                    }
+                });
 
                 input.value = '';
             } catch (error) {
