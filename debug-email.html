@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Email Debug - Lingua Bud</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+<h1>🔍 Email Notification Debug</h1>
+<div id="output">Loading...</div>
+
+<script type="module">
+import { db, auth, doc, getDoc, onAuthStateChanged } from './lib/firebaseClient.js';
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        document.getElementById('output').innerHTML = '<p class="error">❌ Not logged in. Please <a href="login.html">login first</a>.</p>';
+        return;
+    }
+
+    const output = document.getElementById('output');
+    output.innerHTML = '<p>Checking user data...</p>';
+
+    try {
+        // Check users collection
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+
+        let html = `<h3>Logged in as: ${user.email}</h3>`;
+
+        html += `<h4>Firebase Auth Email:</h4>`;
+        html += `<pre>${user.email}</pre>`;
+
+        html += `<h4>Users Collection Document:</h4>`;
+        if (userDoc.exists()) {
+            const data = userDoc.data();
+            html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            html += data.email ?
+                `<p class="success">✅ Email field found: ${data.email}</p>` :
+                `<p class="error">❌ No email field in users document!</p>`;
+        } else {
+            html += `<p class="error">❌ User document NOT FOUND in users collection</p>`;
+        }
+
+        html += `<h4>Instructors Collection Document:</h4>`;
+        if (instructorDoc.exists()) {
+            const data = instructorDoc.data();
+            html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            html += data.email ?
+                `<p class="success">✅ Email field found: ${data.email}</p>` :
+                `<p class="error">❌ No email field in instructors document!</p>`;
+        } else {
+            html += `<p>ℹ️ Not found in instructors collection (this is OK if you're a student)</p>`;
+        }
+
+        output.innerHTML = html;
+    } catch (error) {
+        output.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+        console.error(error);
+    }
+});
+</script>
+</body>
+</html>
