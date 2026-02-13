@@ -641,6 +641,93 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* Profile Dropdown Styles */
+        .profile-nav-wrapper {
+            margin-left: 1rem;
+        }
+
+        .profile-pic-nav {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            transition: border-color 0.3s;
+        }
+
+        .profile-pic-nav:hover {
+            border-color: #1a9d9b;
+        }
+
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem;
+            top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+
+        @media (min-width: 992px) {
+            .profile-dropdown-content {
+                position: absolute;
+                right: 0;
+                top: 100%;
+                margin-top: 0.25rem;
+            }
+        }
+
+        .profile-dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background 0.2s;
+        }
+
+        .profile-dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        .profile-dropdown:hover .profile-dropdown-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        .notification-badge.show {
+            display: flex;
+        }
     </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
@@ -720,11 +807,27 @@
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="login.html">SIGN UP/LOG IN</a>
-                </li>
             </ul>
+
+            <!-- Profile Picture Dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sign In Link (shown when not logged in) -->
+            <div id="signInWrapper">
+                <a class="btn-solid-sm page-scroll" href="login.html" style="margin-left: 1rem;">SIGN IN</a>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -1901,12 +2004,68 @@
 
     <!-- Firebase Module Script -->
     <script type="module">
-        import { db, collection, getDocs, query, limit } from './lib/firebaseClient.js';
+        import { db, auth, collection, getDocs, query, limit, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
 
         let allStudents = [];
         let allInstructors = [];
         let studentLanguages = new Set();
         let instructorLanguages = new Set();
+
+        // Check authentication status
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper = document.getElementById('signInWrapper');
+            const navProfilePic = document.getElementById('navProfilePic');
+            const logoutLink = document.getElementById('logoutLink');
+
+            if (user) {
+                // User is logged in - show profile dropdown
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper) signInWrapper.style.display = 'none';
+
+                // Try to get user data from instructors collection first, then users
+                try {
+                    const instructorRef = doc(db, 'instructors', user.uid);
+                    const instructorSnap = await getDoc(instructorRef);
+
+                    if (instructorSnap.exists()) {
+                        const instructorData = instructorSnap.data();
+                        if (instructorData.avatar_url && navProfilePic) {
+                            navProfilePic.src = instructorData.avatar_url;
+                        }
+                    } else {
+                        const userRef = doc(db, 'users', user.uid);
+                        const userSnap = await getDoc(userRef);
+
+                        if (userSnap.exists()) {
+                            const userData = userSnap.data();
+                            if (userData.avatar_url && navProfilePic) {
+                                navProfilePic.src = userData.avatar_url;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading user profile:', error);
+                }
+
+                // Setup logout
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try {
+                            await signOut(auth);
+                            window.location.href = 'index.html';
+                        } catch (error) {
+                            console.error('Error signing out:', error);
+                        }
+                    });
+                }
+            } else {
+                // User is not logged in - show sign in button
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper) signInWrapper.style.display = 'block';
+            }
+        });
 
         // Fetch students and instructors on page load
         async function loadProfiles() {
