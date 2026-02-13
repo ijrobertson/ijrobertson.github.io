@@ -2093,7 +2093,9 @@
 
     <!-- Firebase Module Script -->
     <script type="module">
+        console.log('Firebase script starting...');
         import { db, auth, collection, getDocs, query, limit, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
+        console.log('Firebase imports successful');
 
         let allStudents = [];
         let allInstructors = [];
@@ -2169,21 +2171,34 @@
 
         // Fetch students and instructors on page load
         async function loadProfiles() {
+            console.log('Starting to load profiles...');
             try {
                 await Promise.all([
                     loadStudents(),
                     loadInstructors()
                 ]);
+                console.log('Profiles loaded successfully');
             } catch (error) {
                 console.error('Error loading profiles:', error);
+                // Show error in both grids
+                const studentsGrid = document.getElementById('studentsGrid');
+                const instructorsGrid = document.getElementById('instructorsGrid');
+                if (studentsGrid) {
+                    studentsGrid.innerHTML = '<div class="profiles-loading">Error loading profiles. Please refresh the page.</div>';
+                }
+                if (instructorsGrid) {
+                    instructorsGrid.innerHTML = '<div class="profiles-loading">Error loading profiles. Please refresh the page.</div>';
+                }
             }
         }
 
         // Load students from users collection
         async function loadStudents() {
+            console.log('Loading students...');
             try {
                 const q = query(collection(db, 'users'), limit(30));
                 const querySnapshot = await getDocs(q);
+                console.log(`Found ${querySnapshot.size} total users`);
 
                 allStudents = [];
                 querySnapshot.forEach((doc) => {
@@ -2200,20 +2215,25 @@
                     }
                 });
 
+                console.log(`Found ${allStudents.length} students`);
                 populateStudentFilters();
                 renderStudents();
             } catch (error) {
                 console.error('Error loading students:', error);
-                document.getElementById('studentsGrid').innerHTML =
-                    '<div class="profiles-loading">Error loading language partners</div>';
+                const grid = document.getElementById('studentsGrid');
+                if (grid) {
+                    grid.innerHTML = '<div class="profiles-loading">Error loading language partners. Please refresh the page.</div>';
+                }
             }
         }
 
         // Load instructors from instructors collection
         async function loadInstructors() {
+            console.log('Loading instructors...');
             try {
                 const q = query(collection(db, 'instructors'), limit(30));
                 const querySnapshot = await getDocs(q);
+                console.log(`Found ${querySnapshot.size} instructors`);
 
                 allInstructors = [];
                 querySnapshot.forEach((doc) => {
@@ -2225,12 +2245,15 @@
                     languages.forEach(lang => instructorLanguages.add(lang));
                 });
 
+                console.log(`Processed ${allInstructors.length} instructors`);
                 populateInstructorFilters();
                 renderInstructors();
             } catch (error) {
                 console.error('Error loading instructors:', error);
-                document.getElementById('instructorsGrid').innerHTML =
-                    '<div class="profiles-loading">Error loading instructors</div>';
+                const grid = document.getElementById('instructorsGrid');
+                if (grid) {
+                    grid.innerHTML = '<div class="profiles-loading">Error loading instructors. Please refresh the page.</div>';
+                }
             }
         }
 
@@ -2609,6 +2632,7 @@
         });
 
         // Load profiles when page loads
+        console.log('Calling loadProfiles...');
         loadProfiles();
 
         // Handle window resize to update carousel
@@ -2764,6 +2788,7 @@
 
         // Initialize resources section
         function initializeResources() {
+            console.log('Initializing resources section...');
             // Language tab event listeners
             const languageTabs = document.querySelectorAll('.language-tab');
             languageTabs.forEach(tab => {
@@ -2813,6 +2838,7 @@
             });
 
             // Initial render
+            console.log('Rendering initial resources...');
             renderResources();
         }
 
@@ -2831,8 +2857,10 @@
 
         // Render resources in the carousel
         function renderResources() {
+            console.log('renderResources called');
             const grid = document.getElementById('resourcesGrid');
             const resources = getCurrentResources();
+            console.log(`Rendering ${resources.length} resources, showing ${getItemsPerView()} at a time`);
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
             const itemsPerView = getItemsPerView();
