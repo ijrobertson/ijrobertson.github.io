@@ -45,16 +45,29 @@ exports.sendMessageNotification = onDocumentCreated(
         return null;
       }
 
-      // Get recipient's user data and notification preferences
-      const recipientRef = admin.firestore().collection('users').doc(recipientId);
-      const recipientSnap = await recipientRef.get();
+      // Get recipient's user data from BOTH users and instructors collections
+      // Prefer instructors collection if user is in both
+      const recipientUserRef = admin.firestore().collection('users').doc(recipientId);
+      const recipientInstructorRef = admin.firestore().collection('instructors').doc(recipientId);
 
-      if (!recipientSnap.exists) {
-        console.log('Recipient user not found:', recipientId);
-        return null;
+      const [recipientUserSnap, recipientInstructorSnap] = await Promise.all([
+        recipientUserRef.get(),
+        recipientInstructorRef.get()
+      ]);
+
+      let recipient = null;
+      if (recipientInstructorSnap.exists) {
+        recipient = recipientInstructorSnap.data();
+        console.log('Found recipient in instructors collection');
+      } else if (recipientUserSnap.exists) {
+        recipient = recipientUserSnap.data();
+        console.log('Found recipient in users collection');
       }
 
-      const recipient = recipientSnap.data();
+      if (!recipient) {
+        console.log('Recipient not found in either collection:', recipientId);
+        return null;
+      }
 
       // Check if recipient has email notifications enabled (default to true)
       const emailNotificationsEnabled = recipient.emailNotifications !== false;
@@ -79,7 +92,7 @@ exports.sendMessageNotification = onDocumentCreated(
 
       // Send email via Resend
       const emailResult = await resend.emails.send({
-        from: 'Lingua Bud <notifications@linguabud.com>',
+        from: 'Lingua Bud <notifications@send.linguabud.com>',
         to: recipient.email,
         subject: `New message from ${senderName}`,
         html: `
