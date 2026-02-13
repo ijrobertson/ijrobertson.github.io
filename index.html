@@ -2216,6 +2216,16 @@
                 });
 
                 console.log(`Found ${allStudents.length} students`);
+
+                // If no students found, show message
+                if (allStudents.length === 0) {
+                    const grid = document.getElementById('studentsGrid');
+                    if (grid) {
+                        grid.innerHTML = '<div class="profiles-loading">No language partners available yet. Check back soon!</div>';
+                    }
+                    return;
+                }
+
                 populateStudentFilters();
                 renderStudents();
             } catch (error) {
@@ -2246,6 +2256,16 @@
                 });
 
                 console.log(`Processed ${allInstructors.length} instructors`);
+
+                // If no instructors found, show message
+                if (allInstructors.length === 0) {
+                    const grid = document.getElementById('instructorsGrid');
+                    if (grid) {
+                        grid.innerHTML = '<div class="profiles-loading">No instructors available yet. Check back soon!</div>';
+                    }
+                    return;
+                }
+
                 populateInstructorFilters();
                 renderInstructors();
             } catch (error) {
