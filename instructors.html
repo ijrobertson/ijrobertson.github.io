@@ -182,6 +182,28 @@
             50% { opacity: 0.6; }
         }
 
+        /* Navbar spacing adjustments - desktop only */
+        @media (min-width: 768px) {
+            .navbar-nav {
+                margin-left: 8rem !important;
+            }
+
+            .profile-nav-wrapper {
+                margin-left: auto !important;
+            }
+
+            #signInWrapper {
+                margin-left: auto !important;
+            }
+        }
+
+        /* Mobile - keep left aligned */
+        @media (max-width: 767px) {
+            .navbar-nav {
+                margin-left: 0 !important;
+            }
+        }
+
         /* Hero Section */
         .instructors-hero {
             background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
@@ -708,30 +730,25 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll active" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
+                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
 
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -744,13 +761,20 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-                        <div class="dropdown-items-divide-hr"></div>
-                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+			<div class="dropdown-items-divide-hr"></div>
+			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+
                     </div>
                 </li>
+                <!-- end of dropdown menu -->
 
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
+                </li>
+
+                <!-- Sign In Link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
 
@@ -761,19 +785,11 @@
                     <div class="notification-badge" id="notificationBadge"></div>
                     <div class="profile-dropdown-content">
                         <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
-                        <a href="messages.html" class="messages-link" id="messagesLink">
-                            <i class="fas fa-envelope"></i> Messages
-                            <span class="unread-count" id="unreadCount">0</span>
-                        </a>
+                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
                 </div>
-            </div>
-
-            <!-- Sign In Link (shown when not logged in) -->
-            <div id="signInWrapper">
-                <a class="btn-solid-sm page-scroll" href="login.html" style="margin-left: 1rem;">SIGN IN</a>
             </div>
         </div>
     </nav>
