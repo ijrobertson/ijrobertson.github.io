@@ -331,6 +331,71 @@
             overflow: hidden;
         }
 
+        /* Carousel Container */
+        .carousel-container {
+            position: relative;
+        }
+
+        /* Carousel Controls */
+        .carousel-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .carousel-btn {
+            background: #5f4dee;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(95, 77, 238, 0.2);
+            font-size: 1.2rem;
+            z-index: 10;
+        }
+
+        .carousel-btn:hover:not(:disabled) {
+            background: #4834d4;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(95, 77, 238, 0.3);
+        }
+
+        .carousel-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .carousel-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            opacity: 0.5;
+        }
+
+        .carousel-prev {
+            order: -1;
+        }
+
+        .carousel-next {
+            order: 1;
+        }
+
+        @media (max-width: 768px) {
+            .carousel-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+
         /* Find More Button */
         .find-more-container {
             text-align: center;
@@ -895,11 +960,14 @@
                 <!-- Dynamically populated -->
             </div>
 
-            <!-- Students Grid -->
-            <div class="profiles-grid" id="studentsGrid">
-                <div class="profiles-loading">
-                    <i class="fas fa-circle-notch fa-spin"></i>
-                    <div>Loading language partners...</div>
+            <!-- Students Carousel Container -->
+            <div class="carousel-container">
+                <!-- Carousel controls will be dynamically inserted here -->
+                <div class="profiles-grid" id="studentsGrid">
+                    <div class="profiles-loading">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        <div>Loading language partners...</div>
+                    </div>
                 </div>
             </div>
 
@@ -926,11 +994,14 @@
                 <!-- Dynamically populated -->
             </div>
 
-            <!-- Instructors Grid -->
-            <div class="profiles-grid" id="instructorsGrid">
-                <div class="profiles-loading">
-                    <i class="fas fa-circle-notch fa-spin"></i>
-                    <div>Loading instructors...</div>
+            <!-- Instructors Carousel Container -->
+            <div class="carousel-container">
+                <!-- Carousel controls will be dynamically inserted here -->
+                <div class="profiles-grid" id="instructorsGrid">
+                    <div class="profiles-loading">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        <div>Loading instructors...</div>
+                    </div>
                 </div>
             </div>
 
@@ -2026,6 +2097,17 @@
         let studentLanguages = new Set();
         let instructorLanguages = new Set();
 
+        // Carousel state
+        let studentCarouselIndex = 0;
+        let instructorCarouselIndex = 0;
+        const itemsPerPageDesktop = 6;
+        const itemsPerPageMobile = 3;
+
+        // Get items per page based on screen size
+        function getItemsPerPage() {
+            return window.innerWidth <= 768 ? itemsPerPageMobile : itemsPerPageDesktop;
+        }
+
         // Check authentication status
         onAuthStateChanged(auth, async (user) => {
             const profileNavWrapper = document.getElementById('profileNavWrapper');
@@ -2097,7 +2179,7 @@
         // Load students from users collection
         async function loadStudents() {
             try {
-                const q = query(collection(db, 'users'), limit(8));
+                const q = query(collection(db, 'users'), limit(30));
                 const querySnapshot = await getDocs(q);
 
                 allStudents = [];
@@ -2127,7 +2209,7 @@
         // Load instructors from instructors collection
         async function loadInstructors() {
             try {
-                const q = query(collection(db, 'instructors'), limit(8));
+                const q = query(collection(db, 'instructors'), limit(30));
                 const querySnapshot = await getDocs(q);
 
                 allInstructors = [];
@@ -2201,12 +2283,20 @@
 
         // Render student cards
         function renderStudents(filterLanguage = 'all') {
+            const container = document.getElementById('studentsGrid').parentElement;
             const grid = document.getElementById('studentsGrid');
             grid.innerHTML = '';
 
+            // Reset carousel index when filter changes
+            studentCarouselIndex = 0;
+
             let filtered = allStudents;
+
+            // Filter by avatar (only show users with profile pictures)
+            filtered = filtered.filter(student => student.avatar_url && student.avatar_url.trim() !== '');
+
             if (filterLanguage !== 'all') {
-                filtered = allStudents.filter(student => {
+                filtered = filtered.filter(student => {
                     const allLangs = [
                         ...(student.languages_spoken || []),
                         ...(student.languages_learning || [])
@@ -2217,23 +2307,69 @@
 
             if (filtered.length === 0) {
                 grid.innerHTML = '<div class="profiles-loading">No language partners found</div>';
+                // Remove carousel controls if they exist
+                const existingControls = container.querySelector('.carousel-controls');
+                if (existingControls) existingControls.remove();
                 return;
             }
 
-            filtered.forEach(student => {
+            // Update carousel controls
+            updateStudentCarousel(filtered);
+        }
+
+        // Update student carousel display
+        function updateStudentCarousel(filtered) {
+            const container = document.getElementById('studentsGrid').parentElement;
+            const grid = document.getElementById('studentsGrid');
+            const itemsPerPage = getItemsPerPage();
+
+            grid.innerHTML = '';
+
+            // Calculate pagination
+            const startIndex = studentCarouselIndex * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filtered.length);
+            const visibleStudents = filtered.slice(startIndex, endIndex);
+
+            // Render visible cards
+            visibleStudents.forEach(student => {
                 const card = createStudentCard(student);
                 grid.appendChild(card);
             });
+
+            // Add or update carousel navigation
+            updateCarouselControls(container, filtered.length, studentCarouselIndex, itemsPerPage, 'student');
+        }
+
+        // Navigate student carousel
+        function navigateStudentCarousel(direction, filtered) {
+            const itemsPerPage = getItemsPerPage();
+            const maxIndex = Math.ceil(filtered.length / itemsPerPage) - 1;
+
+            if (direction === 'prev' && studentCarouselIndex > 0) {
+                studentCarouselIndex--;
+            } else if (direction === 'next' && studentCarouselIndex < maxIndex) {
+                studentCarouselIndex++;
+            }
+
+            updateStudentCarousel(filtered);
         }
 
         // Render instructor cards
         function renderInstructors(filterLanguage = 'all') {
+            const container = document.getElementById('instructorsGrid').parentElement;
             const grid = document.getElementById('instructorsGrid');
             grid.innerHTML = '';
 
+            // Reset carousel index when filter changes
+            instructorCarouselIndex = 0;
+
             let filtered = allInstructors;
+
+            // Filter by avatar (only show instructors with profile pictures)
+            filtered = filtered.filter(instructor => instructor.avatar_url && instructor.avatar_url.trim() !== '');
+
             if (filterLanguage !== 'all') {
-                filtered = allInstructors.filter(instructor => {
+                filtered = filtered.filter(instructor => {
                     const languages = instructor.languages_teaching || [];
                     return languages.includes(filterLanguage);
                 });
@@ -2241,13 +2377,133 @@
 
             if (filtered.length === 0) {
                 grid.innerHTML = '<div class="profiles-loading">No instructors found</div>';
+                // Remove carousel controls if they exist
+                const existingControls = container.querySelector('.carousel-controls');
+                if (existingControls) existingControls.remove();
                 return;
             }
 
-            filtered.forEach(instructor => {
+            // Update carousel controls
+            updateInstructorCarousel(filtered);
+        }
+
+        // Update instructor carousel display
+        function updateInstructorCarousel(filtered) {
+            const container = document.getElementById('instructorsGrid').parentElement;
+            const grid = document.getElementById('instructorsGrid');
+            const itemsPerPage = getItemsPerPage();
+
+            grid.innerHTML = '';
+
+            // Calculate pagination
+            const startIndex = instructorCarouselIndex * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filtered.length);
+            const visibleInstructors = filtered.slice(startIndex, endIndex);
+
+            // Render visible cards
+            visibleInstructors.forEach(instructor => {
                 const card = createInstructorCard(instructor);
                 grid.appendChild(card);
             });
+
+            // Add or update carousel navigation
+            updateCarouselControls(container, filtered.length, instructorCarouselIndex, itemsPerPage, 'instructor');
+        }
+
+        // Navigate instructor carousel
+        function navigateInstructorCarousel(direction, filtered) {
+            const itemsPerPage = getItemsPerPage();
+            const maxIndex = Math.ceil(filtered.length / itemsPerPage) - 1;
+
+            if (direction === 'prev' && instructorCarouselIndex > 0) {
+                instructorCarouselIndex--;
+            } else if (direction === 'next' && instructorCarouselIndex < maxIndex) {
+                instructorCarouselIndex++;
+            }
+
+            updateInstructorCarousel(filtered);
+        }
+
+        // Update or create carousel controls
+        function updateCarouselControls(container, totalItems, currentIndex, itemsPerPage, type) {
+            // Remove existing controls
+            let controlsWrapper = container.querySelector('.carousel-controls');
+            if (controlsWrapper) {
+                controlsWrapper.remove();
+            }
+
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            // Only show controls if there are more items than can fit on one page
+            if (totalPages <= 1) {
+                return;
+            }
+
+            // Get the filtered array for navigation
+            let filtered;
+            if (type === 'student') {
+                filtered = allStudents.filter(s => s.avatar_url && s.avatar_url.trim() !== '');
+                // Apply current language filter
+                const activeBtn = document.querySelector('#studentLanguageFilters .language-filter-btn.active');
+                const filterLanguage = activeBtn ? activeBtn.getAttribute('data-language') : 'all';
+                if (filterLanguage !== 'all') {
+                    filtered = filtered.filter(student => {
+                        const allLangs = [
+                            ...(student.languages_spoken || []),
+                            ...(student.languages_learning || [])
+                        ];
+                        return allLangs.includes(filterLanguage);
+                    });
+                }
+            } else {
+                filtered = allInstructors.filter(i => i.avatar_url && i.avatar_url.trim() !== '');
+                // Apply current language filter
+                const activeBtn = document.querySelector('#instructorLanguageFilters .language-filter-btn.active');
+                const filterLanguage = activeBtn ? activeBtn.getAttribute('data-language') : 'all';
+                if (filterLanguage !== 'all') {
+                    filtered = filtered.filter(instructor => {
+                        const languages = instructor.languages_teaching || [];
+                        return languages.includes(filterLanguage);
+                    });
+                }
+            }
+
+            // Create carousel controls wrapper
+            controlsWrapper = document.createElement('div');
+            controlsWrapper.className = 'carousel-controls';
+
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'carousel-btn carousel-prev';
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.disabled = currentIndex === 0;
+            prevBtn.onclick = () => {
+                if (type === 'student') {
+                    navigateStudentCarousel('prev', filtered);
+                } else {
+                    navigateInstructorCarousel('prev', filtered);
+                }
+            };
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'carousel-btn carousel-next';
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.disabled = currentIndex >= totalPages - 1;
+            nextBtn.onclick = () => {
+                if (type === 'student') {
+                    navigateStudentCarousel('next', filtered);
+                } else {
+                    navigateInstructorCarousel('next', filtered);
+                }
+            };
+
+            controlsWrapper.appendChild(prevBtn);
+            controlsWrapper.appendChild(nextBtn);
+
+            // Insert controls before the grid
+            const grid = container.querySelector('.profiles-grid');
+            container.insertBefore(controlsWrapper, grid);
         }
 
         // Create student profile card
@@ -2351,6 +2607,22 @@
 
         // Load profiles when page loads
         loadProfiles();
+
+        // Handle window resize to update carousel
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Re-render both carousels to adjust for new screen size
+                const activeStudentBtn = document.querySelector('#studentLanguageFilters .language-filter-btn.active');
+                const studentFilterLanguage = activeStudentBtn ? activeStudentBtn.getAttribute('data-language') : 'all';
+                renderStudents(studentFilterLanguage);
+
+                const activeInstructorBtn = document.querySelector('#instructorLanguageFilters .language-filter-btn.active');
+                const instructorFilterLanguage = activeInstructorBtn ? activeInstructorBtn.getAttribute('data-language') : 'all';
+                renderInstructors(instructorFilterLanguage);
+            }, 250);
+        });
 
         // Resources Section Data
         const resourcesData = {
