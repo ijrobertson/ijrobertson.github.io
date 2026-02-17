@@ -231,6 +231,7 @@ Don't want to receive these emails? Turn off notifications in your dashboard: ht
  */
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { RtcTokenBuilder, RtcRole } = require('agora-token');
+const functions = require('firebase-functions');
 
 exports.generateAgoraToken = onCall(async (request) => {
   try {
@@ -241,16 +242,24 @@ exports.generateAgoraToken = onCall(async (request) => {
       throw new HttpsError('invalid-argument', 'Channel name is required');
     }
 
-    // Agora credentials
-    const appId = 'dfd628e44de640e3b7717f422d1dc3e7';
-    const appCertificate = process.env.AGORA_APP_CERTIFICATE;
+    // Agora credentials - support both process.env and legacy functions.config()
+    const appId = process.env.AGORA_APP_ID ||
+                  functions.config().agora?.app_id ||
+                  'dfd628e44de640e3b7717f422d1dc3e7';
+
+    const appCertificate = process.env.AGORA_APP_CERTIFICATE ||
+                          functions.config().agora?.app_certificate;
 
     if (!appCertificate) {
+      console.error('Agora App Certificate not found. Checked process.env.AGORA_APP_CERTIFICATE and functions.config().agora.app_certificate');
       throw new HttpsError(
         'failed-precondition',
-        'Agora App Certificate not configured. Please set AGORA_APP_CERTIFICATE in Firebase environment config.'
+        'Agora App Certificate not configured. Please set AGORA_APP_CERTIFICATE in environment variables.'
       );
     }
+
+    console.log('Using Agora App ID:', appId);
+    console.log('App Certificate configured:', appCertificate ? 'Yes' : 'No');
 
     // Token configuration
     const role = RtcRole.PUBLISHER; // Allow both publishing and subscribing
