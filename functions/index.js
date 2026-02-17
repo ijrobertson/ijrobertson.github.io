@@ -224,3 +224,65 @@ Don't want to receive these emails? Turn off notifications in your dashboard: ht
       return null;
     }
   });
+
+/**
+ * Generates an Agora RTC token for video calling
+ * Called from the client when a user wants to join a video call
+ */
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { RtcTokenBuilder, RtcRole } = require('agora-token');
+
+exports.generateAgoraToken = onCall(async (request) => {
+  try {
+    // Get channel name and UID from request
+    const { channelName, uid } = request.data;
+
+    if (!channelName) {
+      throw new HttpsError('invalid-argument', 'Channel name is required');
+    }
+
+    // Agora credentials
+    const appId = 'dfd628e44de640e3b7717f422d1dc3e7';
+    const appCertificate = process.env.AGORA_APP_CERTIFICATE;
+
+    if (!appCertificate) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Agora App Certificate not configured. Please set AGORA_APP_CERTIFICATE in Firebase environment config.'
+      );
+    }
+
+    // Token configuration
+    const role = RtcRole.PUBLISHER; // Allow both publishing and subscribing
+    const expirationTimeInSeconds = 3600 * 24; // 24 hours
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+
+    // Use provided UID or 0 for auto-assignment
+    const userUid = uid || 0;
+
+    // Build the token
+    const token = RtcTokenBuilder.buildTokenWithUid(
+      appId,
+      appCertificate,
+      channelName,
+      userUid,
+      role,
+      privilegeExpiredTs,
+      privilegeExpiredTs
+    );
+
+    console.log('Generated Agora token for channel:', channelName, 'UID:', userUid);
+
+    return {
+      token: token,
+      uid: userUid,
+      appId: appId,
+      expiresAt: privilegeExpiredTs
+    };
+
+  } catch (error) {
+    console.error('Error generating Agora token:', error);
+    throw new HttpsError('internal', error.message);
+  }
+});

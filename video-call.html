@@ -371,15 +371,11 @@
                     <li><strong>Camera & Microphone:</strong> Make sure to allow browser access to your camera and microphone.</li>
                     <li><strong>Leave Call:</strong> Click the leave button when you're done.</li>
                 </ul>
-                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin-top: 1rem; border-radius: 4px;">
-                    <strong>⚠️ Setup Required:</strong> If you get an error when joining, you need to disable "App Certificate" in your Agora Console:
-                    <ol style="margin: 0.5rem 0 0 1.2rem; font-size: 0.9rem;">
-                        <li>Go to <a href="https://console.agora.io" target="_blank" style="color: #20bcba;">console.agora.io</a></li>
-                        <li>Select your project → Click "Config"</li>
-                        <li>Under "Features" → Click "Disable" for App Certificate</li>
-                        <li>Save and try joining again</li>
-                    </ol>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666;">For production use, you'll need to set up a token server (see AGORA_VIDEO_SETUP.md)</p>
+                <div style="background: #d1ecf1; border-left: 4px solid #0c5460; padding: 1rem; margin-top: 1rem; border-radius: 4px;">
+                    <strong>ℹ️ Secure Token Authentication:</strong> This app uses Firebase Functions to generate secure Agora tokens.
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #0c5460;">
+                        If you get an error, make sure you've completed the setup in <strong>AGORA_TOKEN_SETUP.md</strong>
+                    </p>
                 </div>
             </div>
 
@@ -398,7 +394,7 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './lib/firebaseClient.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, functions, httpsCallable } from './lib/firebaseClient.js';
 
         // Agora Configuration
         const APP_ID = 'dfd628e44de640e3b7717f422d1dc3e7';
@@ -513,9 +509,25 @@
                     await initializeAgora();
                 }
 
-                // Join the channel (using null for token in development)
-                // For production, you'll need to generate tokens on your server
-                const uid = await client.join(APP_ID, channelName, null, currentUser.uid);
+                // Generate token from Firebase Function
+                showStatus('Generating secure token...', 'info');
+                const generateToken = httpsCallable(functions, 'generateAgoraToken');
+                const tokenResult = await generateToken({
+                    channelName: channelName,
+                    uid: currentUser.uid
+                });
+
+                if (!tokenResult.data || !tokenResult.data.token) {
+                    throw new Error('Failed to generate token from server');
+                }
+
+                const token = tokenResult.data.token;
+                const uid = tokenResult.data.uid;
+
+                showStatus('Token generated, joining channel...', 'info');
+
+                // Join the channel with the generated token
+                await client.join(APP_ID, channelName, token, uid);
 
                 // Create local tracks
                 [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
