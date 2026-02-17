@@ -92,7 +92,7 @@ exports.sendMessageNotification = onDocumentCreated(
 
       // Send email via Resend
       const emailResult = await resend.emails.send({
-        from: 'Lingua Bud <notifications@send.linguabud.com>',
+        from: 'Lingua Bud <notifications@linguabud.com>',
         to: recipient.email,
         subject: `New message from ${senderName}`,
         html: `
@@ -110,7 +110,7 @@ exports.sendMessageNotification = onDocumentCreated(
                     <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                       <!-- Header -->
                       <tr>
-                        <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #3b5998;">
+                        <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #20bcba;">
                           <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Lingua Bud</h1>
                         </td>
                       </tr>
@@ -124,7 +124,7 @@ exports.sendMessageNotification = onDocumentCreated(
                             You have received a new message on Lingua Bud:
                           </p>
 
-                          <div style="background-color: #f8f9fa; border-left: 4px solid #3b5998; padding: 20px; margin: 20px 0;">
+                          <div style="background-color: #f8f9fa; border-left: 4px solid #20bcba; padding: 20px; margin: 20px 0;">
                             <p style="margin: 0; color: #333333; font-size: 16px; line-height: 1.6; font-style: italic;">
                               "${messagePreview}"
                             </p>
@@ -132,14 +132,14 @@ exports.sendMessageNotification = onDocumentCreated(
 
                           <p style="margin: 30px 0 20px 0;">
                             <a href="https://linguabud.com/messages.html"
-                               style="display: inline-block; padding: 14px 32px; background-color: #3b5998; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
+                               style="display: inline-block; padding: 14px 32px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
                               View Message
                             </a>
                           </p>
 
                           <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.5;">
                             Don't want to receive these emails? You can turn off email notifications in your
-                            <a href="https://linguabud.com/student-dashboard.html" style="color: #3b5998; text-decoration: none;">dashboard settings</a>.
+                            <a href="https://linguabud.com/student-dashboard.html" style="color: #20bcba; text-decoration: none;">dashboard settings</a>.
                           </p>
                         </td>
                       </tr>
@@ -174,6 +174,26 @@ Don't want to receive these emails? Turn off notifications in your dashboard: ht
 
       console.log('Email sent successfully:', emailResult);
 
+      // Check if email was actually sent successfully
+      if (emailResult.error) {
+        console.error('Resend API error:', emailResult.error);
+
+        // Log error to Firestore
+        await admin.firestore().collection('emailLog').add({
+          recipientId: recipientId,
+          recipientEmail: recipient.email,
+          senderId: message.senderId,
+          conversationId: conversationId,
+          messageId: event.params.messageId,
+          error: emailResult.error.message,
+          errorCode: emailResult.error.statusCode,
+          sentAt: admin.firestore.FieldValue.serverTimestamp(),
+          status: 'failed'
+        });
+
+        return null;
+      }
+
       // Optional: Log the email send to Firestore for tracking
       await admin.firestore().collection('emailLog').add({
         recipientId: recipientId,
@@ -181,7 +201,7 @@ Don't want to receive these emails? Turn off notifications in your dashboard: ht
         senderId: message.senderId,
         conversationId: conversationId,
         messageId: event.params.messageId,
-        emailId: emailResult.id,
+        emailId: emailResult.data?.id,
         sentAt: admin.firestore.FieldValue.serverTimestamp(),
         status: 'sent'
       });

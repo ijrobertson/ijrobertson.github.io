@@ -437,6 +437,31 @@
             cursor: not-allowed;
         }
 
+        .video-call-btn {
+            padding: 0.75rem 1rem;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .video-call-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .video-call-btn i {
+            font-size: 1.1rem;
+        }
+
         .empty-state {
             flex: 1;
             display: flex;
@@ -931,6 +956,9 @@
                 <div class="message-input-area">
                     <form class="message-input-form" id="messageForm">
                         <input type="text" class="message-input" id="messageInput" placeholder="Type a message..." required>
+                        <button type="button" class="video-call-btn" id="videoCallBtn" title="Start video call with this user">
+                            <i class="fas fa-video"></i>
+                        </button>
                         <button type="submit" class="send-btn">
                             <i class="fas fa-paper-plane"></i> Send
                         </button>
@@ -948,6 +976,16 @@
             document.getElementById('messageForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 sendMessage(conversationId);
+            });
+
+            // Setup video call button
+            document.getElementById('videoCallBtn').addEventListener('click', () => {
+                // Create unique channel name based on user IDs
+                const otherUserId = conversationId.split('_').find(id => id !== currentUser.uid);
+                const channelName = [currentUser.uid, otherUserId].sort().join('-');
+
+                // Redirect to video call page with channel name
+                window.location.href = `video-call.html?channel=${channelName}`;
             });
 
             // Reset unread count for current user (non-blocking)
