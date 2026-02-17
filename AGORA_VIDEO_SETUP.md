@@ -17,10 +17,23 @@ Video calling has been integrated into Lingua Bud using Agora Web SDK. The imple
 ✅ **Integrated with Messages page** - Video call button next to send button
 ✅ **Direct calling** - Automatic channel creation based on user pairs
 
+## ⚠️ IMPORTANT: First Time Setup
+
+Before testing, you MUST disable App Certificate in your Agora Console:
+
+1. **Go to Agora Console**: https://console.agora.io
+2. **Select your project** (the one with App ID: dfd628e44de640e3b7717f422d1dc3e7)
+3. **Click "Config"** on the left sidebar
+4. **Under "Features"** → Find "Primary Certificate"
+5. **Click "Disable"** button
+6. **Confirm** the action
+
+**Why?** The code currently uses `null` for token authentication (test mode). If App Certificate is enabled, Agora requires proper token authentication, which needs a server-side implementation. For quick testing, disable it. For production, you'll set up a token server (see below).
+
 ## How It Works
 
 ### For Development (Current Setup)
-The video call page is ready to use immediately for testing:
+After disabling App Certificate, the video call page is ready to use immediately for testing:
 
 1. **Navigate to the page**: Go to `http://localhost:3000/video-call.html` (or your deployed site)
 2. **Enter a channel name**: Users who enter the same channel name will join the same video room
@@ -245,7 +258,14 @@ The video-call.html page automatically reads the channel parameter and pre-fills
 
 ## Troubleshooting
 
-### "Failed to join" error
+### "CAN_NOT_GET_GATEWAY_SERVER" or "dynamic use static key" error
+This means App Certificate is enabled in your Agora Console. **Solution:**
+1. Go to https://console.agora.io
+2. Select your project → Click "Config"
+3. Under "Features" → Click "Disable" for App Certificate
+4. Try joining the call again
+
+### "Failed to join" error (general)
 - Check browser console for specific error
 - Ensure camera/microphone permissions are granted
 - Try different browser (Chrome/Firefox work best)
