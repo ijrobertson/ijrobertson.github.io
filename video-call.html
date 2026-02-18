@@ -215,7 +215,7 @@
             aspect-ratio: unset;
         }
 
-        /* Keep the button pinned to the visible viewport corner when CSS-expanded */
+        /* Keep the expand button pinned to the visible viewport corner when CSS-expanded */
         .video-player--expanded .expand-btn {
             position: fixed;
             bottom: 10px;
@@ -223,8 +223,48 @@
             z-index: 10000;
         }
 
+        /* In-video mute overlay button (local player only) */
+        .mute-overlay-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .mute-overlay-btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+
+        .mute-overlay-btn.muted {
+            background: rgba(230, 126, 34, 0.85);
+        }
+
+        .mute-overlay-btn.muted:hover {
+            background: rgba(211, 84, 0, 0.95);
+        }
+
+        /* Pin the overlay mute button when CSS-expanded */
+        .video-player--expanded .mute-overlay-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
+        }
+
         @media (max-width: 768px) {
-            .expand-btn {
+            .expand-btn,
+            .mute-overlay-btn {
                 padding: 8px 12px;
                 font-size: 1rem;
             }
@@ -749,9 +789,19 @@
                 <button class="expand-btn" title="Expand video">
                     <i class="fas fa-expand"></i>
                 </button>
+                ${isLocal ? `
+                <button class="mute-overlay-btn" title="Mute">
+                    <i class="fas fa-microphone"></i><span class="overlay-mute-label"> Mute</span>
+                </button>` : ''}
             `;
 
             videoGrid.appendChild(playerDiv);
+
+            // Wire up the in-video mute overlay button (local player only)
+            if (isLocal) {
+                const muteOverlayBtn = playerDiv.querySelector('.mute-overlay-btn');
+                muteOverlayBtn.addEventListener('click', toggleMute);
+            }
 
             // Expand / fullscreen button
             const expandBtn = playerDiv.querySelector('.expand-btn');
@@ -833,22 +883,24 @@
             }, 5000);
         }
 
-        // Toggle mute
+        // Toggle mute — updates the controls bar button and any in-video overlay buttons
         function toggleMute() {
             if (!localAudioTrack) return;
             isMuted = !isMuted;
             localAudioTrack.setMuted(isMuted);
-            const icon = muteBtn.querySelector('i');
-            const label = muteBtn.querySelector('.btn-text');
-            if (isMuted) {
-                icon.className = 'fas fa-microphone-slash';
-                label.textContent = ' Unmute';
-                muteBtn.classList.add('muted');
-            } else {
-                icon.className = 'fas fa-microphone';
-                label.textContent = ' Mute';
-                muteBtn.classList.remove('muted');
-            }
+
+            // Controls bar button
+            muteBtn.querySelector('i').className = isMuted ? 'fas fa-microphone-slash' : 'fas fa-microphone';
+            muteBtn.querySelector('.btn-text').textContent = isMuted ? ' Unmute' : ' Mute';
+            isMuted ? muteBtn.classList.add('muted') : muteBtn.classList.remove('muted');
+
+            // In-video overlay button(s)
+            document.querySelectorAll('.mute-overlay-btn').forEach(btn => {
+                btn.querySelector('i').className = isMuted ? 'fas fa-microphone-slash' : 'fas fa-microphone';
+                btn.querySelector('.overlay-mute-label').textContent = isMuted ? ' Unmute' : ' Mute';
+                isMuted ? btn.classList.add('muted') : btn.classList.remove('muted');
+                btn.title = isMuted ? 'Unmute' : 'Mute';
+            });
         }
 
         // Event Listeners
