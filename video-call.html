@@ -580,7 +580,7 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, deleteDoc, functions, httpsCallable } from './lib/firebaseClient.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, functions, httpsCallable } from './lib/firebaseClient.js';
 
         // Agora Configuration
         const APP_ID = 'dfd628e44de640e3b7717f422d1dc3e7';
@@ -591,8 +591,8 @@
         let remoteUsers = {};
         let currentUser = null;
         let currentUserName = 'Guest';
-        let currentChannelName = null;
-        let localAgoraUid = null;
+        let dataStreamId = null;
+        const remoteUserNames = {}; // agoraUid -> display name
         let isMuted = false;
         let isCameraOff = false;
 
@@ -685,6 +685,33 @@
             client.on("user-published", handleUserPublished);
             client.on("user-unpublished", handleUserUnpublished);
             client.on("user-left", handleUserLeft);
+
+            // Receive name broadcasts from remote users
+            client.on("stream-message", (uid, data) => {
+                try {
+                    const msg = JSON.parse(new TextDecoder().decode(data));
+                    if (msg.type === 'name' && msg.name) {
+                        remoteUserNames[uid] = msg.name;
+                        // Update label immediately if the player tile already exists
+                        const label = document.querySelector(`#player-${uid} .user-label`);
+                        if (label) label.textContent = msg.name;
+                    }
+                } catch (e) { /* ignore malformed messages */ }
+            });
+
+            // When a new participant joins, re-broadcast our name so they learn it
+            client.on("user-joined", () => broadcastName());
+        }
+
+        // Broadcast our display name to everyone currently in the channel
+        async function broadcastName() {
+            if (dataStreamId === null) return;
+            try {
+                const payload = new TextEncoder().encode(
+                    JSON.stringify({ type: 'name', name: currentUserName })
+                );
+                await client.sendStreamMessage(dataStreamId, payload);
+            } catch (e) { /* non-critical */ }
         }
 
         // Join Channel
@@ -725,19 +752,6 @@
                 // Join the channel with the generated token
                 await client.join(APP_ID, channelName, token, uid);
 
-                // Store for presence tracking and cleanup
-                currentChannelName = channelName;
-                localAgoraUid = uid;
-
-                // Write presence so remote users can look up this user's name
-                try {
-                    await setDoc(doc(db, 'calls', channelName, 'participants', String(uid)), {
-                        name: currentUserName
-                    });
-                } catch (e) {
-                    console.warn('Could not write call presence:', e);
-                }
-
                 // Create local tracks
                 [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
 
@@ -747,6 +761,14 @@
 
                 // Publish local tracks
                 await client.publish([localAudioTrack, localVideoTrack]);
+
+                // Create a data stream and broadcast our name so remote users see it
+                try {
+                    dataStreamId = await client.createDataStream({ reliable: true, ordered: true });
+                    await broadcastName();
+                } catch (e) {
+                    console.warn('Could not create data stream:', e);
+                }
 
                 showStatus('Successfully joined the call!', 'success');
                 joinBtn.style.display = 'none';
@@ -781,16 +803,7 @@
                     localVideoTrack = null;
                 }
 
-                // Remove presence record from Firestore
-                if (currentChannelName && localAgoraUid) {
-                    try {
-                        await deleteDoc(doc(db, 'calls', currentChannelName, 'participants', String(localAgoraUid)));
-                    } catch (e) {
-                        console.warn('Could not remove call presence:', e);
-                    }
-                }
-                currentChannelName = null;
-                localAgoraUid = null;
+                dataStreamId = null;
 
                 // Remove all remote users
                 remoteUsers = {};
@@ -825,21 +838,9 @@
             await client.subscribe(user, mediaType);
 
             if (mediaType === "video") {
-                // Look up the remote user's display name from Firestore presence
-                let remoteUserName = null;
-                if (currentChannelName) {
-                    try {
-                        const participantDoc = await getDoc(
-                            doc(db, 'calls', currentChannelName, 'participants', String(user.uid))
-                        );
-                        if (participantDoc.exists()) {
-                            remoteUserName = participantDoc.data().name;
-                        }
-                    } catch (e) {
-                        console.warn('Could not fetch remote user name:', e);
-                    }
-                }
-                const remotePlayer = createVideoPlayer(user.uid, false, remoteUserName);
+                // Use name from cache (populated by stream-message); label updates
+                // automatically if the broadcast arrives after the player is created
+                const remotePlayer = createVideoPlayer(user.uid, false);
                 user.videoTrack.play(remotePlayer.querySelector('.video-stream'));
             }
 
@@ -875,7 +876,7 @@
                 return existingPlayer;
             }
 
-            const label = displayName || (isLocal ? 'You' : 'Guest');
+            const label = displayName || remoteUserNames[uid] || (isLocal ? currentUserName : 'Connecting...');
 
             const playerDiv = document.createElement('div');
             playerDiv.id = `player-${uid}`;
