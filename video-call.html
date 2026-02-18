@@ -161,7 +161,12 @@
             font-size: 0.9rem;
         }
 
-        .expand-btn {
+        /* Grid-level expand button — bottom-right of the video grid container */
+        #video-grid-container {
+            position: relative;
+        }
+
+        .grid-expand-btn {
             position: absolute;
             bottom: 10px;
             right: 10px;
@@ -173,54 +178,89 @@
             cursor: pointer;
             font-size: 0.85rem;
             transition: background 0.2s;
-            z-index: 10;
-            display: flex;
+            z-index: 20;
+            display: none;
             align-items: center;
+            gap: 5px;
         }
 
-        .expand-btn:hover {
+        .grid-expand-btn:hover {
             background: rgba(0,0,0,0.9);
         }
 
-        .video-player:fullscreen {
+        /* Native fullscreen: grid container fills the screen, grid tiles fill it */
+        #video-grid-container:fullscreen,
+        #video-grid-container:-webkit-full-screen,
+        #video-grid-container:-moz-full-screen {
+            background: #000;
             width: 100vw;
             height: 100vh;
-            aspect-ratio: unset;
-            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem;
+            box-sizing: border-box;
         }
 
-        .video-player:-webkit-full-screen {
-            width: 100vw;
-            height: 100vh;
-            aspect-ratio: unset;
-            border-radius: 0;
+        #video-grid-container:fullscreen #video-grid,
+        #video-grid-container:-webkit-full-screen #video-grid,
+        #video-grid-container:-moz-full-screen #video-grid {
+            flex: 1;
+            min-height: 0;
+            margin: 0;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-auto-rows: 1fr;
         }
 
-        .video-player:-moz-full-screen {
-            width: 100vw;
-            height: 100vh;
-            aspect-ratio: unset;
-            border-radius: 0;
-        }
-
-        /* CSS fallback for iOS Safari which doesn't support requestFullscreen on divs */
-        .video-player--expanded {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100svh; /* svh = small viewport height, excludes browser chrome */
-            z-index: 9999;
-            border-radius: 0;
+        #video-grid-container:fullscreen .video-player,
+        #video-grid-container:-webkit-full-screen .video-player,
+        #video-grid-container:-moz-full-screen .video-player {
             aspect-ratio: unset;
         }
 
-        /* Keep the expand button pinned to the visible viewport corner when CSS-expanded */
-        .video-player--expanded .expand-btn {
+        /* Pin the grid expand button inside native fullscreen */
+        #video-grid-container:fullscreen .grid-expand-btn,
+        #video-grid-container:-webkit-full-screen .grid-expand-btn,
+        #video-grid-container:-moz-full-screen .grid-expand-btn {
             position: fixed;
             bottom: 10px;
             right: 10px;
             z-index: 10000;
+            display: flex;
+        }
+
+        /* CSS fallback for iOS Safari */
+        #video-grid-container.grid--expanded {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100svh;
+            z-index: 9999;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem;
+            box-sizing: border-box;
+        }
+
+        #video-grid-container.grid--expanded #video-grid {
+            flex: 1;
+            min-height: 0;
+            margin: 0;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-auto-rows: 1fr;
+        }
+
+        #video-grid-container.grid--expanded .video-player {
+            aspect-ratio: unset;
+        }
+
+        #video-grid-container.grid--expanded .grid-expand-btn {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            z-index: 10000;
+            display: flex;
         }
 
         /* In-video mute overlay button (local player only) */
@@ -254,14 +294,6 @@
             background: rgba(211, 84, 0, 0.95);
         }
 
-        /* Pin the overlay mute button when CSS-expanded */
-        .video-player--expanded .mute-overlay-btn {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 10000;
-        }
-
         /* In-video camera toggle button (local player only) */
         .camera-overlay-btn {
             position: absolute;
@@ -293,20 +325,19 @@
             background: rgba(200, 35, 51, 0.95);
         }
 
-        /* Pin the camera button when CSS-expanded */
-        .video-player--expanded .camera-overlay-btn {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 10000;
-        }
-
         @media (max-width: 768px) {
-            .expand-btn,
+            .grid-expand-btn,
             .mute-overlay-btn,
             .camera-overlay-btn {
                 padding: 8px 12px;
                 font-size: 1rem;
+            }
+
+            /* On narrow screens in expanded view, stack tiles vertically */
+            #video-grid-container:fullscreen #video-grid,
+            #video-grid-container:-webkit-full-screen #video-grid,
+            #video-grid-container.grid--expanded #video-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -540,7 +571,12 @@
                 <button id="leaveBtn" class="btn-video btn-leave">Leave Call</button>
             </div>
 
-            <div id="video-grid"></div>
+            <div id="video-grid-container">
+                <div id="video-grid"></div>
+                <button id="gridExpandBtn" class="grid-expand-btn" title="Expand all videos">
+                    <i class="fas fa-expand"></i><span class="grid-expand-label"> Expand</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -565,6 +601,8 @@
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
         const leaveBtn = document.getElementById('leaveBtn');
+        const videoGridContainer = document.getElementById('video-grid-container');
+        const gridExpandBtn = document.getElementById('gridExpandBtn');
         const channelNameInput = document.getElementById('channelName');
         const videoGrid = document.getElementById('video-grid');
         const statusMessage = document.getElementById('statusMessage');
@@ -699,6 +737,7 @@
                 showStatus('Successfully joined the call!', 'success');
                 joinBtn.style.display = 'none';
                 leaveBtn.style.display = 'inline-block';
+                gridExpandBtn.style.display = 'flex';
                 channelNameInput.disabled = true;
 
             } catch (error) {
@@ -743,6 +782,10 @@
                 isMuted = false;
                 isCameraOff = false;
                 leaveBtn.style.display = 'none';
+                gridExpandBtn.style.display = 'none';
+                // Reset expand button icon in case it was left in compressed state
+                gridExpandBtn.querySelector('i').className = 'fas fa-expand';
+                gridExpandBtn.querySelector('.grid-expand-label').textContent = ' Expand';
                 channelNameInput.disabled = false;
 
             } catch (error) {
@@ -801,9 +844,6 @@
             playerDiv.innerHTML = `
                 <div class="video-stream"></div>
                 <div class="user-label">${isLocal ? 'You' : 'User ' + uid}</div>
-                <button class="expand-btn" title="Expand video">
-                    <i class="fas fa-expand"></i>
-                </button>
                 ${isLocal ? `
                 <button class="mute-overlay-btn" title="Mute">
                     <i class="fas fa-microphone"></i><span class="overlay-mute-label"> Mute</span>
@@ -820,69 +860,6 @@
                 playerDiv.querySelector('.mute-overlay-btn').addEventListener('click', toggleMute);
                 playerDiv.querySelector('.camera-overlay-btn').addEventListener('click', toggleCamera);
             }
-
-            // Expand / fullscreen button
-            const expandBtn = playerDiv.querySelector('.expand-btn');
-
-            const setExpandIcon = (expanded) => {
-                const icon = expandBtn.querySelector('i');
-                icon.className = expanded ? 'fas fa-compress' : 'fas fa-expand';
-                expandBtn.title = expanded ? 'Exit fullscreen' : 'Expand video';
-            };
-
-            expandBtn.addEventListener('click', async () => {
-                const isNativeFullscreen = !!(
-                    document.fullscreenElement ||
-                    document.webkitFullscreenElement ||
-                    document.mozFullScreenElement
-                );
-                const isCSSExpanded = playerDiv.classList.contains('video-player--expanded');
-
-                // Collapse if already expanded (either way)
-                if (isNativeFullscreen) {
-                    const exit = document.exitFullscreen ||
-                                 document.webkitExitFullscreen ||
-                                 document.mozCancelFullScreen;
-                    if (exit) exit.call(document);
-                    return;
-                }
-                if (isCSSExpanded) {
-                    playerDiv.classList.remove('video-player--expanded');
-                    setExpandIcon(false);
-                    return;
-                }
-
-                // Try native fullscreen first (works on desktop + Android Chrome)
-                const req = playerDiv.requestFullscreen ||
-                            playerDiv.webkitRequestFullscreen ||
-                            playerDiv.mozRequestFullScreen;
-                if (req) {
-                    try {
-                        await req.call(playerDiv);
-                        return; // icon updated by fullscreenchange event below
-                    } catch (e) {
-                        // Native fullscreen blocked (e.g. iOS Safari) — fall through
-                    }
-                }
-
-                // CSS fallback for iOS Safari
-                playerDiv.classList.add('video-player--expanded');
-                setExpandIcon(true);
-            });
-
-            // Sync icon with native fullscreen changes (desktop / Android)
-            const onFullscreenChange = () => {
-                const isNativeFullscreen = !!(
-                    document.fullscreenElement ||
-                    document.webkitFullscreenElement ||
-                    document.mozFullScreenElement
-                );
-                setExpandIcon(isNativeFullscreen);
-            };
-
-            document.addEventListener('fullscreenchange', onFullscreenChange);
-            document.addEventListener('webkitfullscreenchange', onFullscreenChange);
-            document.addEventListener('mozfullscreenchange', onFullscreenChange);
 
             return playerDiv;
         }
@@ -926,6 +903,65 @@
                 btn.title = isCameraOff ? 'Show Camera' : 'Hide Camera';
             });
         }
+
+        // Grid expand button — fullscreens the whole video grid container
+        const setGridExpandIcon = (expanded) => {
+            gridExpandBtn.querySelector('i').className = expanded ? 'fas fa-compress' : 'fas fa-expand';
+            gridExpandBtn.querySelector('.grid-expand-label').textContent = expanded ? ' Collapse' : ' Expand';
+            gridExpandBtn.title = expanded ? 'Exit fullscreen' : 'Expand all videos';
+        };
+
+        gridExpandBtn.addEventListener('click', async () => {
+            const isNativeFullscreen = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement
+            );
+            const isCSSExpanded = videoGridContainer.classList.contains('grid--expanded');
+
+            if (isNativeFullscreen) {
+                const exit = document.exitFullscreen ||
+                             document.webkitExitFullscreen ||
+                             document.mozCancelFullScreen;
+                if (exit) exit.call(document);
+                return;
+            }
+            if (isCSSExpanded) {
+                videoGridContainer.classList.remove('grid--expanded');
+                setGridExpandIcon(false);
+                return;
+            }
+
+            // Try native fullscreen first (desktop + Android Chrome)
+            const req = videoGridContainer.requestFullscreen ||
+                        videoGridContainer.webkitRequestFullscreen ||
+                        videoGridContainer.mozRequestFullScreen;
+            if (req) {
+                try {
+                    await req.call(videoGridContainer);
+                    return; // icon updated by fullscreenchange event below
+                } catch (e) {
+                    // Native fullscreen unavailable (iOS Safari) — fall through
+                }
+            }
+
+            // CSS fallback for iOS Safari
+            videoGridContainer.classList.add('grid--expanded');
+            setGridExpandIcon(true);
+        });
+
+        // Sync icon when native fullscreen state changes
+        const onGridFullscreenChange = () => {
+            const isNativeFullscreen = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement
+            );
+            setGridExpandIcon(isNativeFullscreen);
+        };
+        document.addEventListener('fullscreenchange', onGridFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onGridFullscreenChange);
+        document.addEventListener('mozfullscreenchange', onGridFullscreenChange);
 
         // Event Listeners
         joinBtn.addEventListener('click', joinChannel);
