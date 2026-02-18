@@ -284,6 +284,27 @@
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
         }
 
+        .btn-mute {
+            background: #6c757d;
+            color: white;
+            display: none;
+        }
+
+        .btn-mute:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn-mute.muted {
+            background: #e67e22;
+        }
+
+        .btn-mute.muted:hover {
+            background: #d35400;
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
+        }
+
         .btn-video:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -457,6 +478,7 @@
             <div class="controls">
                 <input type="text" id="channelName" placeholder="Enter channel name (e.g., spanish-practice)" value="">
                 <button id="joinBtn" class="btn-video btn-join">Join Call</button>
+                <button id="muteBtn" class="btn-video btn-mute"><i class="fas fa-microphone"></i><span class="btn-text"> Mute</span></button>
                 <button id="leaveBtn" class="btn-video btn-leave">Leave Call</button>
             </div>
 
@@ -479,10 +501,12 @@
         let localVideoTrack;
         let remoteUsers = {};
         let currentUser = null;
+        let isMuted = false;
 
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
         const leaveBtn = document.getElementById('leaveBtn');
+        const muteBtn = document.getElementById('muteBtn');
         const channelNameInput = document.getElementById('channelName');
         const videoGrid = document.getElementById('video-grid');
         const statusMessage = document.getElementById('statusMessage');
@@ -616,6 +640,7 @@
 
                 showStatus('Successfully joined the call!', 'success');
                 joinBtn.style.display = 'none';
+                muteBtn.style.display = 'inline-block';
                 leaveBtn.style.display = 'inline-block';
                 channelNameInput.disabled = true;
 
@@ -658,6 +683,11 @@
                 showStatus('Left the call', 'info');
                 joinBtn.style.display = 'inline-block';
                 joinBtn.disabled = false;
+                muteBtn.style.display = 'none';
+                muteBtn.classList.remove('muted');
+                muteBtn.querySelector('i').className = 'fas fa-microphone';
+                muteBtn.querySelector('.btn-text').textContent = ' Mute';
+                isMuted = false;
                 leaveBtn.style.display = 'none';
                 channelNameInput.disabled = false;
 
@@ -804,8 +834,27 @@
             }, 5000);
         }
 
+        // Toggle mute
+        function toggleMute() {
+            if (!localAudioTrack) return;
+            isMuted = !isMuted;
+            localAudioTrack.setMuted(isMuted);
+            const icon = muteBtn.querySelector('i');
+            const label = muteBtn.querySelector('.btn-text');
+            if (isMuted) {
+                icon.className = 'fas fa-microphone-slash';
+                label.textContent = ' Unmute';
+                muteBtn.classList.add('muted');
+            } else {
+                icon.className = 'fas fa-microphone';
+                label.textContent = ' Mute';
+                muteBtn.classList.remove('muted');
+            }
+        }
+
         // Event Listeners
         joinBtn.addEventListener('click', joinChannel);
+        muteBtn.addEventListener('click', toggleMute);
         leaveBtn.addEventListener('click', leaveChannel);
 
         // Allow Enter key to join
