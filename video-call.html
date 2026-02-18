@@ -691,16 +691,19 @@
                 try {
                     const msg = JSON.parse(new TextDecoder().decode(data));
                     if (msg.type === 'name' && msg.name) {
+                        const isFirstTime = !remoteUserNames[uid];
                         remoteUserNames[uid] = msg.name;
                         // Update label immediately if the player tile already exists
                         const label = document.querySelector(`#player-${uid} .user-label`);
                         if (label) label.textContent = msg.name;
+                        // Respond with our own name the first time we hear from this user
+                        // so they also learn our name (symmetric exchange)
+                        if (isFirstTime) {
+                            broadcastName();
+                        }
                     }
                 } catch (e) { /* ignore malformed messages */ }
             });
-
-            // When a new participant joins, re-broadcast our name so they learn it
-            client.on("user-joined", () => broadcastName());
         }
 
         // Broadcast our display name to everyone currently in the channel
@@ -766,6 +769,9 @@
                 try {
                     dataStreamId = await client.createDataStream({ reliable: true, ordered: true });
                     await broadcastName();
+                    // Retry in case any existing participants weren't ready yet
+                    setTimeout(broadcastName, 1500);
+                    setTimeout(broadcastName, 4000);
                 } catch (e) {
                     console.warn('Could not create data stream:', e);
                 }
@@ -837,9 +843,12 @@
             remoteUsers[user.uid] = user;
             await client.subscribe(user, mediaType);
 
+            // Broadcast our name now that the subscription is established —
+            // Agora stream messages can only be received by users we are subscribed to,
+            // so we must send AFTER subscribe() completes.
+            broadcastName();
+
             if (mediaType === "video") {
-                // Use name from cache (populated by stream-message); label updates
-                // automatically if the broadcast arrives after the player is created
                 const remotePlayer = createVideoPlayer(user.uid, false);
                 user.videoTrack.play(remotePlayer.querySelector('.video-stream'));
             }
