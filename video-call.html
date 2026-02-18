@@ -580,7 +580,7 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, functions, httpsCallable } from './lib/firebaseClient.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc, collection, getDocs, query, where, functions, httpsCallable } from './lib/firebaseClient.js';
 
         // Agora Configuration
         const APP_ID = 'dfd628e44de640e3b7717f422d1dc3e7';
@@ -595,6 +595,7 @@
         const remoteUserNames = {}; // agoraUid -> display name
         let isMuted = false;
         let isCameraOff = false;
+        let currentDocRef = null; // Firestore ref where we wrote our agoraUid
 
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
@@ -680,41 +681,54 @@
         // Initialize Agora Client
         async function initializeAgora() {
             client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-
-            // Event listeners
             client.on("user-published", handleUserPublished);
             client.on("user-unpublished", handleUserUnpublished);
             client.on("user-left", handleUserLeft);
-
-            // Receive name broadcasts from remote users
-            client.on("stream-message", (uid, data) => {
-                try {
-                    const msg = JSON.parse(new TextDecoder().decode(data));
-                    if (msg.type === 'name' && msg.name) {
-                        const isFirstTime = !remoteUserNames[uid];
-                        remoteUserNames[uid] = msg.name;
-                        // Update label immediately if the player tile already exists
-                        const label = document.querySelector(`#player-${uid} .user-label`);
-                        if (label) label.textContent = msg.name;
-                        // Respond with our own name the first time we hear from this user
-                        // so they also learn our name (symmetric exchange)
-                        if (isFirstTime) {
-                            broadcastName();
-                        }
-                    }
-                } catch (e) { /* ignore malformed messages */ }
-            });
         }
 
-        // Broadcast our display name to everyone currently in the channel
-        async function broadcastName() {
-            if (dataStreamId === null) return;
+        // Write our Agora UID into our Firestore profile so remote users can look us up
+        async function registerVideoPresence(agoraUid, channelName) {
+            if (!currentUser || currentUser.uid.startsWith('guest-')) return;
             try {
-                const payload = new TextEncoder().encode(
-                    JSON.stringify({ type: 'name', name: currentUserName })
-                );
-                await client.sendStreamMessage(dataStreamId, payload);
+                const userRef = doc(db, 'users', currentUser.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    currentDocRef = userRef;
+                    await updateDoc(userRef, { _agoraUid: String(agoraUid), _agoraChannel: channelName });
+                    return;
+                }
+                const instrRef = doc(db, 'instructors', currentUser.uid);
+                const instrSnap = await getDoc(instrRef);
+                if (instrSnap.exists()) {
+                    currentDocRef = instrRef;
+                    await updateDoc(instrRef, { _agoraUid: String(agoraUid), _agoraChannel: channelName });
+                }
+            } catch (e) {
+                console.warn('Could not register video presence:', e);
+            }
+        }
+
+        // Clear our Agora UID from Firestore when leaving
+        async function clearVideoPresence() {
+            if (!currentDocRef) return;
+            try {
+                await updateDoc(currentDocRef, { _agoraUid: null, _agoraChannel: null });
             } catch (e) { /* non-critical */ }
+            currentDocRef = null;
+        }
+
+        // Look up a remote participant's display name from Firestore by their Agora UID
+        async function lookupRemoteUserName(agoraUid) {
+            try {
+                const uidStr = String(agoraUid);
+                let snap = await getDocs(query(collection(db, 'users'), where('_agoraUid', '==', uidStr)));
+                if (!snap.empty) return snap.docs[0].data().name || null;
+                snap = await getDocs(query(collection(db, 'instructors'), where('_agoraUid', '==', uidStr)));
+                if (!snap.empty) return snap.docs[0].data().name || null;
+            } catch (e) {
+                console.warn('Name lookup failed:', e);
+            }
+            return null;
         }
 
         // Join Channel
@@ -752,6 +766,9 @@
 
                 showStatus('Token generated, joining channel...', 'info');
 
+                // Store our Agora UID in Firestore so remote users can look up our name
+                await registerVideoPresence(uid, channelName);
+
                 // Join the channel with the generated token
                 await client.join(APP_ID, channelName, token, uid);
 
@@ -764,17 +781,6 @@
 
                 // Publish local tracks
                 await client.publish([localAudioTrack, localVideoTrack]);
-
-                // Create a data stream and broadcast our name so remote users see it
-                try {
-                    dataStreamId = await client.createDataStream({ reliable: true, ordered: true });
-                    await broadcastName();
-                    // Retry in case any existing participants weren't ready yet
-                    setTimeout(broadcastName, 1500);
-                    setTimeout(broadcastName, 4000);
-                } catch (e) {
-                    console.warn('Could not create data stream:', e);
-                }
 
                 showStatus('Successfully joined the call!', 'success');
                 joinBtn.style.display = 'none';
@@ -811,6 +817,9 @@
 
                 dataStreamId = null;
 
+                // Clear our video presence from Firestore
+                await clearVideoPresence();
+
                 // Remove all remote users
                 remoteUsers = {};
 
@@ -843,13 +852,14 @@
             remoteUsers[user.uid] = user;
             await client.subscribe(user, mediaType);
 
-            // Broadcast our name now that the subscription is established —
-            // Agora stream messages can only be received by users we are subscribed to,
-            // so we must send AFTER subscribe() completes.
-            broadcastName();
-
             if (mediaType === "video") {
-                const remotePlayer = createVideoPlayer(user.uid, false);
+                // Look up the remote user's name from Firestore
+                let remoteName = remoteUserNames[user.uid];
+                if (!remoteName) {
+                    remoteName = await lookupRemoteUserName(user.uid) || 'Guest';
+                    remoteUserNames[user.uid] = remoteName;
+                }
+                const remotePlayer = createVideoPlayer(user.uid, false, remoteName);
                 user.videoTrack.play(remotePlayer.querySelector('.video-stream'));
             }
 
