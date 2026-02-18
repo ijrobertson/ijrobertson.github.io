@@ -580,7 +580,7 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, functions, httpsCallable } from './lib/firebaseClient.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, deleteDoc, functions, httpsCallable } from './lib/firebaseClient.js';
 
         // Agora Configuration
         const APP_ID = 'dfd628e44de640e3b7717f422d1dc3e7';
@@ -590,6 +590,9 @@
         let localVideoTrack;
         let remoteUsers = {};
         let currentUser = null;
+        let currentUserName = 'Guest';
+        let currentChannelName = null;
+        let localAgoraUid = null;
         let isMuted = false;
         let isCameraOff = false;
 
@@ -629,6 +632,9 @@
                         const userData = userDoc.data();
                         if (userData.avatar_url) {
                             navProfilePic.src = userData.avatar_url;
+                        }
+                        if (userData.name) {
+                            currentUserName = userData.name;
                         }
                     }
                 } catch (error) {
@@ -719,11 +725,24 @@
                 // Join the channel with the generated token
                 await client.join(APP_ID, channelName, token, uid);
 
+                // Store for presence tracking and cleanup
+                currentChannelName = channelName;
+                localAgoraUid = uid;
+
+                // Write presence so remote users can look up this user's name
+                try {
+                    await setDoc(doc(db, 'calls', channelName, 'participants', String(uid)), {
+                        name: currentUserName
+                    });
+                } catch (e) {
+                    console.warn('Could not write call presence:', e);
+                }
+
                 // Create local tracks
                 [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
 
-                // Display local video
-                const localPlayer = createVideoPlayer(uid, true);
+                // Display local video with the user's real name
+                const localPlayer = createVideoPlayer(uid, true, currentUserName);
                 localVideoTrack.play(localPlayer.querySelector('.video-stream'));
 
                 // Publish local tracks
@@ -762,6 +781,17 @@
                     localVideoTrack = null;
                 }
 
+                // Remove presence record from Firestore
+                if (currentChannelName && localAgoraUid) {
+                    try {
+                        await deleteDoc(doc(db, 'calls', currentChannelName, 'participants', String(localAgoraUid)));
+                    } catch (e) {
+                        console.warn('Could not remove call presence:', e);
+                    }
+                }
+                currentChannelName = null;
+                localAgoraUid = null;
+
                 // Remove all remote users
                 remoteUsers = {};
 
@@ -795,15 +825,27 @@
             await client.subscribe(user, mediaType);
 
             if (mediaType === "video") {
-                const remotePlayer = createVideoPlayer(user.uid, false);
+                // Look up the remote user's display name from Firestore presence
+                let remoteUserName = null;
+                if (currentChannelName) {
+                    try {
+                        const participantDoc = await getDoc(
+                            doc(db, 'calls', currentChannelName, 'participants', String(user.uid))
+                        );
+                        if (participantDoc.exists()) {
+                            remoteUserName = participantDoc.data().name;
+                        }
+                    } catch (e) {
+                        console.warn('Could not fetch remote user name:', e);
+                    }
+                }
+                const remotePlayer = createVideoPlayer(user.uid, false, remoteUserName);
                 user.videoTrack.play(remotePlayer.querySelector('.video-stream'));
             }
 
             if (mediaType === "audio") {
                 user.audioTrack.play();
             }
-
-            showStatus(`User ${user.uid} joined`, 'info');
         }
 
         // Handle remote user unpublished
@@ -827,18 +869,20 @@
         }
 
         // Create video player element
-        function createVideoPlayer(uid, isLocal) {
+        function createVideoPlayer(uid, isLocal, displayName) {
             const existingPlayer = document.getElementById(`player-${uid}`);
             if (existingPlayer) {
                 return existingPlayer;
             }
+
+            const label = displayName || (isLocal ? 'You' : 'Guest');
 
             const playerDiv = document.createElement('div');
             playerDiv.id = `player-${uid}`;
             playerDiv.className = 'video-player';
             playerDiv.innerHTML = `
                 <div class="video-stream"></div>
-                <div class="user-label">${isLocal ? 'You' : 'User ' + uid}</div>
+                <div class="user-label">${label}</div>
                 ${isLocal ? `
                 <button class="mute-overlay-btn" title="Mute">
                     <i class="fas fa-microphone"></i><span class="overlay-mute-label"> Mute</span>
