@@ -209,10 +209,18 @@
             top: 0;
             left: 0;
             width: 100vw;
-            height: 100vh;
+            height: 100svh; /* svh = small viewport height, excludes browser chrome */
             z-index: 9999;
             border-radius: 0;
             aspect-ratio: unset;
+        }
+
+        /* Keep the button pinned to the visible viewport corner when CSS-expanded */
+        .video-player--expanded .expand-btn {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            z-index: 10000;
         }
 
         @media (max-width: 768px) {
