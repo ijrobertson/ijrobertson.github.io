@@ -287,7 +287,6 @@
         .btn-mute {
             background: #6c757d;
             color: white;
-            display: none;
         }
 
         .btn-mute:hover {
@@ -478,7 +477,7 @@
             <div class="controls">
                 <input type="text" id="channelName" placeholder="Enter channel name (e.g., spanish-practice)" value="">
                 <button id="joinBtn" class="btn-video btn-join">Join Call</button>
-                <button id="muteBtn" class="btn-video btn-mute"><i class="fas fa-microphone"></i><span class="btn-text"> Mute</span></button>
+                <button id="muteBtn" class="btn-video btn-mute" disabled><i class="fas fa-microphone"></i><span class="btn-text"> Mute</span></button>
                 <button id="leaveBtn" class="btn-video btn-leave">Leave Call</button>
             </div>
 
@@ -640,7 +639,7 @@
 
                 showStatus('Successfully joined the call!', 'success');
                 joinBtn.style.display = 'none';
-                muteBtn.style.display = 'inline-block';
+                muteBtn.disabled = false;
                 leaveBtn.style.display = 'inline-block';
                 channelNameInput.disabled = true;
 
@@ -683,7 +682,7 @@
                 showStatus('Left the call', 'info');
                 joinBtn.style.display = 'inline-block';
                 joinBtn.disabled = false;
-                muteBtn.style.display = 'none';
+                muteBtn.disabled = true;
                 muteBtn.classList.remove('muted');
                 muteBtn.querySelector('i').className = 'fas fa-microphone';
                 muteBtn.querySelector('.btn-text').textContent = ' Mute';
