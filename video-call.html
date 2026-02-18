@@ -203,6 +203,25 @@
             border-radius: 0;
         }
 
+        /* CSS fallback for iOS Safari which doesn't support requestFullscreen on divs */
+        .video-player--expanded {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            border-radius: 0;
+            aspect-ratio: unset;
+        }
+
+        @media (max-width: 768px) {
+            .expand-btn {
+                padding: 8px 12px;
+                font-size: 1rem;
+            }
+        }
+
         .controls {
             display: flex;
             justify-content: center;
@@ -699,40 +718,61 @@
 
             // Expand / fullscreen button
             const expandBtn = playerDiv.querySelector('.expand-btn');
-            expandBtn.addEventListener('click', () => {
-                const isFullscreen = !!(
+
+            const setExpandIcon = (expanded) => {
+                const icon = expandBtn.querySelector('i');
+                icon.className = expanded ? 'fas fa-compress' : 'fas fa-expand';
+                expandBtn.title = expanded ? 'Exit fullscreen' : 'Expand video';
+            };
+
+            expandBtn.addEventListener('click', async () => {
+                const isNativeFullscreen = !!(
                     document.fullscreenElement ||
                     document.webkitFullscreenElement ||
                     document.mozFullScreenElement
                 );
-                if (!isFullscreen) {
-                    const req = playerDiv.requestFullscreen ||
-                                playerDiv.webkitRequestFullscreen ||
-                                playerDiv.mozRequestFullScreen;
-                    if (req) req.call(playerDiv);
-                } else {
+                const isCSSExpanded = playerDiv.classList.contains('video-player--expanded');
+
+                // Collapse if already expanded (either way)
+                if (isNativeFullscreen) {
                     const exit = document.exitFullscreen ||
                                  document.webkitExitFullscreen ||
                                  document.mozCancelFullScreen;
                     if (exit) exit.call(document);
+                    return;
                 }
+                if (isCSSExpanded) {
+                    playerDiv.classList.remove('video-player--expanded');
+                    setExpandIcon(false);
+                    return;
+                }
+
+                // Try native fullscreen first (works on desktop + Android Chrome)
+                const req = playerDiv.requestFullscreen ||
+                            playerDiv.webkitRequestFullscreen ||
+                            playerDiv.mozRequestFullScreen;
+                if (req) {
+                    try {
+                        await req.call(playerDiv);
+                        return; // icon updated by fullscreenchange event below
+                    } catch (e) {
+                        // Native fullscreen blocked (e.g. iOS Safari) — fall through
+                    }
+                }
+
+                // CSS fallback for iOS Safari
+                playerDiv.classList.add('video-player--expanded');
+                setExpandIcon(true);
             });
 
-            // Update icon when fullscreen state changes
+            // Sync icon with native fullscreen changes (desktop / Android)
             const onFullscreenChange = () => {
-                const isFullscreen = !!(
+                const isNativeFullscreen = !!(
                     document.fullscreenElement ||
                     document.webkitFullscreenElement ||
                     document.mozFullScreenElement
                 );
-                const icon = expandBtn.querySelector('i');
-                if (isFullscreen) {
-                    icon.className = 'fas fa-compress';
-                    expandBtn.title = 'Exit fullscreen';
-                } else {
-                    icon.className = 'fas fa-expand';
-                    expandBtn.title = 'Expand video';
-                }
+                setExpandIcon(isNativeFullscreen);
             };
 
             document.addEventListener('fullscreenchange', onFullscreenChange);
