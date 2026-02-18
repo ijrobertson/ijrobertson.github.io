@@ -262,9 +262,49 @@
             z-index: 10000;
         }
 
+        /* In-video camera toggle button (local player only) */
+        .camera-overlay-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .camera-overlay-btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+
+        .camera-overlay-btn.camera-off {
+            background: rgba(220, 53, 69, 0.85);
+        }
+
+        .camera-overlay-btn.camera-off:hover {
+            background: rgba(200, 35, 51, 0.95);
+        }
+
+        /* Pin the camera button when CSS-expanded */
+        .video-player--expanded .camera-overlay-btn {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 10000;
+        }
+
         @media (max-width: 768px) {
             .expand-btn,
-            .mute-overlay-btn {
+            .mute-overlay-btn,
+            .camera-overlay-btn {
                 padding: 8px 12px;
                 font-size: 1rem;
             }
@@ -322,26 +362,6 @@
             background: #c82333;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-        }
-
-        .btn-mute {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-mute:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
-        }
-
-        .btn-mute.muted {
-            background: #e67e22;
-        }
-
-        .btn-mute.muted:hover {
-            background: #d35400;
-            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
         }
 
         .btn-video:disabled {
@@ -517,7 +537,6 @@
             <div class="controls">
                 <input type="text" id="channelName" placeholder="Enter channel name (e.g., spanish-practice)" value="">
                 <button id="joinBtn" class="btn-video btn-join">Join Call</button>
-                <button id="muteBtn" class="btn-video btn-mute" disabled><i class="fas fa-microphone"></i><span class="btn-text"> Mute</span></button>
                 <button id="leaveBtn" class="btn-video btn-leave">Leave Call</button>
             </div>
 
@@ -541,11 +560,11 @@
         let remoteUsers = {};
         let currentUser = null;
         let isMuted = false;
+        let isCameraOff = false;
 
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
         const leaveBtn = document.getElementById('leaveBtn');
-        const muteBtn = document.getElementById('muteBtn');
         const channelNameInput = document.getElementById('channelName');
         const videoGrid = document.getElementById('video-grid');
         const statusMessage = document.getElementById('statusMessage');
@@ -679,7 +698,6 @@
 
                 showStatus('Successfully joined the call!', 'success');
                 joinBtn.style.display = 'none';
-                muteBtn.disabled = false;
                 leaveBtn.style.display = 'inline-block';
                 channelNameInput.disabled = true;
 
@@ -722,11 +740,8 @@
                 showStatus('Left the call', 'info');
                 joinBtn.style.display = 'inline-block';
                 joinBtn.disabled = false;
-                muteBtn.disabled = true;
-                muteBtn.classList.remove('muted');
-                muteBtn.querySelector('i').className = 'fas fa-microphone';
-                muteBtn.querySelector('.btn-text').textContent = ' Mute';
                 isMuted = false;
+                isCameraOff = false;
                 leaveBtn.style.display = 'none';
                 channelNameInput.disabled = false;
 
@@ -792,15 +807,18 @@
                 ${isLocal ? `
                 <button class="mute-overlay-btn" title="Mute">
                     <i class="fas fa-microphone"></i><span class="overlay-mute-label"> Mute</span>
+                </button>
+                <button class="camera-overlay-btn" title="Hide Camera">
+                    <i class="fas fa-video"></i><span class="overlay-camera-label"> Hide Camera</span>
                 </button>` : ''}
             `;
 
             videoGrid.appendChild(playerDiv);
 
-            // Wire up the in-video mute overlay button (local player only)
+            // Wire up the in-video overlay buttons (local player only)
             if (isLocal) {
-                const muteOverlayBtn = playerDiv.querySelector('.mute-overlay-btn');
-                muteOverlayBtn.addEventListener('click', toggleMute);
+                playerDiv.querySelector('.mute-overlay-btn').addEventListener('click', toggleMute);
+                playerDiv.querySelector('.camera-overlay-btn').addEventListener('click', toggleCamera);
             }
 
             // Expand / fullscreen button
@@ -883,18 +901,11 @@
             }, 5000);
         }
 
-        // Toggle mute — updates the controls bar button and any in-video overlay buttons
+        // Toggle microphone mute
         function toggleMute() {
             if (!localAudioTrack) return;
             isMuted = !isMuted;
             localAudioTrack.setMuted(isMuted);
-
-            // Controls bar button
-            muteBtn.querySelector('i').className = isMuted ? 'fas fa-microphone-slash' : 'fas fa-microphone';
-            muteBtn.querySelector('.btn-text').textContent = isMuted ? ' Unmute' : ' Mute';
-            isMuted ? muteBtn.classList.add('muted') : muteBtn.classList.remove('muted');
-
-            // In-video overlay button(s)
             document.querySelectorAll('.mute-overlay-btn').forEach(btn => {
                 btn.querySelector('i').className = isMuted ? 'fas fa-microphone-slash' : 'fas fa-microphone';
                 btn.querySelector('.overlay-mute-label').textContent = isMuted ? ' Unmute' : ' Mute';
@@ -903,9 +914,21 @@
             });
         }
 
+        // Toggle camera on/off
+        function toggleCamera() {
+            if (!localVideoTrack) return;
+            isCameraOff = !isCameraOff;
+            localVideoTrack.setMuted(isCameraOff);
+            document.querySelectorAll('.camera-overlay-btn').forEach(btn => {
+                btn.querySelector('i').className = isCameraOff ? 'fas fa-video-slash' : 'fas fa-video';
+                btn.querySelector('.overlay-camera-label').textContent = isCameraOff ? ' Show Camera' : ' Hide Camera';
+                isCameraOff ? btn.classList.add('camera-off') : btn.classList.remove('camera-off');
+                btn.title = isCameraOff ? 'Show Camera' : 'Hide Camera';
+            });
+        }
+
         // Event Listeners
         joinBtn.addEventListener('click', joinChannel);
-        muteBtn.addEventListener('click', toggleMute);
         leaveBtn.addEventListener('click', leaveChannel);
 
         // Allow Enter key to join
