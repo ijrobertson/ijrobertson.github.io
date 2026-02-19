@@ -466,6 +466,46 @@
                 width: 100%;
             }
         }
+
+        /* Whiteboard button */
+        .btn-whiteboard { background: #6f42c1; color: white; display: none; }
+        .btn-whiteboard:hover { background: #5a32a3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(111,66,193,0.4); }
+
+        /* Panel */
+        #whiteboard-panel { margin-bottom: 2rem; background: #fff; border: 1px solid #dee2e6; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+
+        /* Toolbar */
+        #whiteboard-toolbar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.625rem 1rem; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+        .wb-tool-group { display: flex; align-items: center; gap: 0.375rem; }
+        .wb-tool-group + .wb-tool-group { padding-left: 0.75rem; border-left: 1px solid #dee2e6; }
+
+        /* Icon buttons (pen, eraser, clear, close) */
+        .wb-tool-btn { width: 36px; height: 36px; border: 2px solid transparent; border-radius: 6px; background: #e9ecef; color: #495057; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s, border-color 0.15s; padding: 0; }
+        .wb-tool-btn:hover { background: #dee2e6; color: #212529; }
+        .wb-tool-btn.wb-tool-active { background: #113448; color: #fff; border-color: #113448; }
+
+        /* Color swatches */
+        .wb-color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; padding: 0; display: block; flex-shrink: 0; }
+        .wb-color-btn:hover { transform: scale(1.15); box-shadow: 0 0 0 3px rgba(0,0,0,0.15); }
+        .wb-color-btn.wb-color-active { border-color: #113448; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #113448; transform: scale(1.1); }
+
+        /* Stroke width buttons */
+        .wb-stroke-btn { width: 44px; height: 36px; border: 2px solid transparent; border-radius: 6px; background: #e9ecef; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0 6px; transition: background 0.15s, border-color 0.15s; }
+        .wb-stroke-btn:hover { background: #dee2e6; }
+        .wb-stroke-btn.wb-stroke-active { background: #e9ecef; border-color: #113448; }
+        .wb-stroke-preview { display: block; width: 100%; background: #495057; border-radius: 2px; }
+
+        /* Canvas wrapper + canvas */
+        #whiteboard-canvas-wrapper { width: 100%; background: #fff; line-height: 0; }
+        #whiteboard-canvas { width: 100%; height: auto; display: block; cursor: crosshair; touch-action: none; }
+        #whiteboard-canvas.wb-eraser-cursor { cursor: cell; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #whiteboard-toolbar { gap: 0.5rem; padding: 0.5rem; }
+            .wb-color-btn { width: 24px; height: 24px; }
+            .wb-tool-btn { width: 32px; height: 32px; }
+        }
     </style>
 </head>
 <body>
@@ -553,6 +593,9 @@
                 <input type="text" id="channelName" placeholder="Enter channel name (e.g., spanish-practice)" value="">
                 <button id="joinBtn" class="btn-video btn-join">Join Call</button>
                 <button id="leaveBtn" class="btn-video btn-leave">Leave Call</button>
+                <button id="whiteboardBtn" class="btn-video btn-whiteboard">
+                    <i class="fas fa-chalkboard"></i> Whiteboard
+                </button>
             </div>
 
             <div id="video-grid-container">
@@ -560,6 +603,38 @@
                 <button id="gridExpandBtn" class="grid-expand-btn" title="Expand all videos">
                     <i class="fas fa-expand"></i><span class="grid-expand-label"> Expand</span>
                 </button>
+            </div>
+
+            <!-- Whiteboard Panel -->
+            <div id="whiteboard-panel" style="display:none;">
+                <div id="whiteboard-toolbar">
+                    <div class="wb-tool-group">
+                        <button id="wb-pen-btn" class="wb-tool-btn wb-tool-active" title="Pen"><i class="fas fa-pencil-alt"></i></button>
+                        <button id="wb-eraser-btn" class="wb-tool-btn" title="Eraser"><i class="fas fa-eraser"></i></button>
+                    </div>
+                    <div class="wb-tool-group" id="wb-color-palette">
+                        <button class="wb-color-btn wb-color-active" data-color="#000000" style="background:#000000;" title="Black"></button>
+                        <button class="wb-color-btn" data-color="#dc3545" style="background:#dc3545;" title="Red"></button>
+                        <button class="wb-color-btn" data-color="#0d6efd" style="background:#0d6efd;" title="Blue"></button>
+                        <button class="wb-color-btn" data-color="#198754" style="background:#198754;" title="Green"></button>
+                        <button class="wb-color-btn" data-color="#ffc107" style="background:#ffc107;" title="Yellow"></button>
+                        <button class="wb-color-btn" data-color="#6f42c1" style="background:#6f42c1;" title="Purple"></button>
+                        <button class="wb-color-btn" data-color="#fd7e14" style="background:#fd7e14;" title="Orange"></button>
+                        <button class="wb-color-btn" data-color="#ffffff" style="background:#ffffff;border:1px solid #ccc;" title="White"></button>
+                    </div>
+                    <div class="wb-tool-group">
+                        <button class="wb-stroke-btn wb-stroke-active" data-width="2" title="Thin"><span class="wb-stroke-preview" style="height:2px;"></span></button>
+                        <button class="wb-stroke-btn" data-width="5" title="Medium"><span class="wb-stroke-preview" style="height:5px;"></span></button>
+                        <button class="wb-stroke-btn" data-width="12" title="Thick"><span class="wb-stroke-preview" style="height:12px;"></span></button>
+                    </div>
+                    <div class="wb-tool-group">
+                        <button id="wb-clear-btn" class="wb-tool-btn" title="Clear All"><i class="fas fa-trash-alt"></i></button>
+                        <button id="wb-close-btn" class="wb-tool-btn" title="Close Whiteboard"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div id="whiteboard-canvas-wrapper">
+                    <canvas id="whiteboard-canvas" width="1280" height="720"></canvas>
+                </div>
             </div>
 
             <div class="instructions">
@@ -596,6 +671,16 @@
         let isCameraOff = false;
         let currentDocRef = null; // Firestore ref where we wrote our agoraUid
 
+        // Whiteboard state
+        let wbTool = 'pen';
+        let wbColor = '#000000';
+        let wbStrokeWidth = 2;
+        let wbIsDrawing = false;
+        let wbLastX = 0;
+        let wbLastY = 0;
+        let wbLastSentTime = 0;
+        const WB_THROTTLE_MS = 50;  // ~20 sends/sec, well under Agora's 30/sec limit
+
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
         const leaveBtn = document.getElementById('leaveBtn');
@@ -608,6 +693,15 @@
         const profileNavWrapper = document.getElementById('profileNavWrapper');
         const signInWrapper = document.getElementById('signInWrapper');
         const logoutLink = document.getElementById('logoutLink');
+
+        const whiteboardBtn   = document.getElementById('whiteboardBtn');
+        const whiteboardPanel = document.getElementById('whiteboard-panel');
+        const wbCanvas        = document.getElementById('whiteboard-canvas');
+        const wbCtx           = wbCanvas.getContext('2d');
+        const wbPenBtn        = document.getElementById('wb-pen-btn');
+        const wbEraserBtn     = document.getElementById('wb-eraser-btn');
+        const wbClearBtn      = document.getElementById('wb-clear-btn');
+        const wbCloseBtn      = document.getElementById('wb-close-btn');
 
         // Get channel from URL parameter (if coming from messages page)
         const urlParams = new URLSearchParams(window.location.search);
@@ -683,6 +777,9 @@
             client.on("user-published", handleUserPublished);
             client.on("user-unpublished", handleUserUnpublished);
             client.on("user-left", handleUserLeft);
+            client.on('stream-message', (uid, payload) => {
+                wbHandleRemoteMessage(uid, payload);
+            });
         }
 
         // Write our Agora UID into our Firestore profile so remote users can look us up
@@ -781,6 +878,15 @@
                 // Publish local tracks
                 await client.publish([localAudioTrack, localVideoTrack]);
 
+                // Create Agora data stream for whiteboard sync
+                try {
+                    dataStreamId = await client.createDataStream({ ordered: true, reliable: true });
+                } catch (err) {
+                    console.warn('Whiteboard data stream unavailable:', err);
+                    dataStreamId = null;
+                }
+                whiteboardBtn.style.display = 'inline-block';
+
                 showStatus('Successfully joined the call!', 'success');
                 joinBtn.style.display = 'none';
                 leaveBtn.style.display = 'inline-block';
@@ -815,6 +921,23 @@
                 }
 
                 dataStreamId = null;
+
+                // Reset whiteboard
+                whiteboardPanel.style.display = 'none';
+                whiteboardBtn.style.display = 'none';
+                whiteboardBtn.classList.remove('wb-panel-open');
+                wbIsDrawing = false;
+                wbInitCanvas();
+                wbTool = 'pen';
+                wbColor = '#000000';
+                wbStrokeWidth = 2;
+                wbPenBtn.classList.add('wb-tool-active');
+                wbEraserBtn.classList.remove('wb-tool-active');
+                wbCanvas.classList.remove('wb-eraser-cursor');
+                document.querySelectorAll('.wb-color-btn').forEach(b => b.classList.remove('wb-color-active'));
+                document.querySelector('.wb-color-btn[data-color="#000000"]').classList.add('wb-color-active');
+                document.querySelectorAll('.wb-stroke-btn').forEach(b => b.classList.remove('wb-stroke-active'));
+                document.querySelector('.wb-stroke-btn[data-width="2"]').classList.add('wb-stroke-active');
 
                 // Clear our video presence from Firestore
                 await clearVideoPresence();
@@ -935,6 +1058,200 @@
                 }
             }, 5000);
         }
+
+        // ── Whiteboard ────────────────────────────────────────────────────────
+
+        function wbGetPos(e) {
+            const rect = wbCanvas.getBoundingClientRect();
+            const scaleX = wbCanvas.width / rect.width;
+            const scaleY = wbCanvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function wbDrawSegment(x1, y1, x2, y2, color, width, isErase) {
+            wbCtx.beginPath();
+            wbCtx.moveTo(x1, y1);
+            wbCtx.lineTo(x2, y2);
+            wbCtx.strokeStyle = isErase ? '#ffffff' : color;
+            wbCtx.lineWidth = width;
+            wbCtx.lineCap = 'round';
+            wbCtx.lineJoin = 'round';
+            wbCtx.stroke();
+        }
+
+        function wbSend(msgObj) {
+            if (!dataStreamId) return;
+            const now = Date.now();
+            if (now - wbLastSentTime < WB_THROTTLE_MS) return;
+            wbLastSentTime = now;
+            try {
+                const bytes = new TextEncoder().encode(JSON.stringify(msgObj));
+                client.sendStreamMessage(dataStreamId, bytes);
+            } catch (err) {
+                console.warn('WB send error:', err);
+            }
+        }
+
+        function wbHandleRemoteMessage(uid, payload) {
+            try {
+                const msg = JSON.parse(new TextDecoder().decode(payload));
+                if (msg.t === 'd' || msg.t === 'e') {
+                    wbDrawSegment(
+                        msg.x1 * wbCanvas.width,
+                        msg.y1 * wbCanvas.height,
+                        msg.x2 * wbCanvas.width,
+                        msg.y2 * wbCanvas.height,
+                        msg.c,
+                        msg.w,
+                        msg.t === 'e'
+                    );
+                } else if (msg.t === 'cl') {
+                    wbInitCanvas();
+                }
+            } catch (err) {
+                console.warn('WB receive error:', err);
+            }
+        }
+
+        function wbInitCanvas() {
+            wbCtx.fillStyle = '#ffffff';
+            wbCtx.fillRect(0, 0, wbCanvas.width, wbCanvas.height);
+        }
+
+        // Mouse events
+        wbCanvas.addEventListener('mousedown', (e) => {
+            wbIsDrawing = true;
+            const pos = wbGetPos(e);
+            wbLastX = pos.x;
+            wbLastY = pos.y;
+        });
+
+        wbCanvas.addEventListener('mousemove', (e) => {
+            if (!wbIsDrawing) return;
+            const pos = wbGetPos(e);
+            const isErase = wbTool === 'eraser';
+            const strokeW = isErase ? wbStrokeWidth * 4 : wbStrokeWidth;
+            wbDrawSegment(wbLastX, wbLastY, pos.x, pos.y, wbColor, strokeW, isErase);
+            wbSend({
+                t: isErase ? 'e' : 'd',
+                x1: parseFloat((wbLastX / wbCanvas.width).toFixed(4)),
+                y1: parseFloat((wbLastY / wbCanvas.height).toFixed(4)),
+                x2: parseFloat((pos.x / wbCanvas.width).toFixed(4)),
+                y2: parseFloat((pos.y / wbCanvas.height).toFixed(4)),
+                c: wbColor,
+                w: strokeW
+            });
+            wbLastX = pos.x;
+            wbLastY = pos.y;
+        });
+
+        wbCanvas.addEventListener('mouseup', () => { wbIsDrawing = false; });
+        wbCanvas.addEventListener('mouseleave', () => { wbIsDrawing = false; });
+
+        // Touch events
+        wbCanvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            wbIsDrawing = true;
+            const pos = wbGetPos(e);
+            wbLastX = pos.x;
+            wbLastY = pos.y;
+        }, { passive: false });
+
+        wbCanvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!wbIsDrawing) return;
+            const pos = wbGetPos(e);
+            const isErase = wbTool === 'eraser';
+            const strokeW = isErase ? wbStrokeWidth * 4 : wbStrokeWidth;
+            wbDrawSegment(wbLastX, wbLastY, pos.x, pos.y, wbColor, strokeW, isErase);
+            wbSend({
+                t: isErase ? 'e' : 'd',
+                x1: parseFloat((wbLastX / wbCanvas.width).toFixed(4)),
+                y1: parseFloat((wbLastY / wbCanvas.height).toFixed(4)),
+                x2: parseFloat((pos.x / wbCanvas.width).toFixed(4)),
+                y2: parseFloat((pos.y / wbCanvas.height).toFixed(4)),
+                c: wbColor,
+                w: strokeW
+            });
+            wbLastX = pos.x;
+            wbLastY = pos.y;
+        }, { passive: false });
+
+        wbCanvas.addEventListener('touchend', () => { wbIsDrawing = false; });
+        wbCanvas.addEventListener('touchcancel', () => { wbIsDrawing = false; });
+
+        // Toolbar — pen / eraser
+        wbPenBtn.addEventListener('click', () => {
+            wbTool = 'pen';
+            wbPenBtn.classList.add('wb-tool-active');
+            wbEraserBtn.classList.remove('wb-tool-active');
+            wbCanvas.classList.remove('wb-eraser-cursor');
+        });
+
+        wbEraserBtn.addEventListener('click', () => {
+            wbTool = 'eraser';
+            wbEraserBtn.classList.add('wb-tool-active');
+            wbPenBtn.classList.remove('wb-tool-active');
+            wbCanvas.classList.add('wb-eraser-cursor');
+        });
+
+        // Toolbar — color swatches (selecting a color auto-switches to pen)
+        document.querySelectorAll('.wb-color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                wbColor = btn.dataset.color;
+                document.querySelectorAll('.wb-color-btn').forEach(b => b.classList.remove('wb-color-active'));
+                btn.classList.add('wb-color-active');
+                wbTool = 'pen';
+                wbPenBtn.classList.add('wb-tool-active');
+                wbEraserBtn.classList.remove('wb-tool-active');
+                wbCanvas.classList.remove('wb-eraser-cursor');
+            });
+        });
+
+        // Toolbar — stroke widths
+        document.querySelectorAll('.wb-stroke-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                wbStrokeWidth = parseInt(btn.dataset.width);
+                document.querySelectorAll('.wb-stroke-btn').forEach(b => b.classList.remove('wb-stroke-active'));
+                btn.classList.add('wb-stroke-active');
+            });
+        });
+
+        // Clear button — bypasses throttle, sends directly
+        wbClearBtn.addEventListener('click', () => {
+            wbInitCanvas();
+            if (dataStreamId) {
+                try {
+                    const bytes = new TextEncoder().encode(JSON.stringify({ t: 'cl' }));
+                    client.sendStreamMessage(dataStreamId, bytes);
+                } catch (err) {
+                    console.warn('WB clear send error:', err);
+                }
+            }
+        });
+
+        // Close button
+        wbCloseBtn.addEventListener('click', () => {
+            whiteboardPanel.style.display = 'none';
+            whiteboardBtn.classList.remove('wb-panel-open');
+        });
+
+        // Whiteboard toggle button
+        whiteboardBtn.addEventListener('click', () => {
+            const isOpen = whiteboardPanel.style.display !== 'none';
+            whiteboardPanel.style.display = isOpen ? 'none' : 'block';
+            whiteboardBtn.classList.toggle('wb-panel-open', !isOpen);
+        });
+
+        // Initialize canvas white on page load
+        wbInitCanvas();
+
+        // ── End Whiteboard ────────────────────────────────────────────────────
 
         // Toggle microphone mute
         function toggleMute() {
