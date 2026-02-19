@@ -654,7 +654,7 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc, collection, getDocs, query, where, functions, httpsCallable } from './lib/firebaseClient.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc, collection, getDocs, query, where, functions, httpsCallable, onSnapshot, setDoc, deleteDoc } from './lib/firebaseClient.js';
 
         // Agora Configuration
         const APP_ID = 'dfd628e44de640e3b7717f422d1dc3e7';
@@ -679,7 +679,11 @@
         let wbLastX = 0;
         let wbLastY = 0;
         let wbLastSentTime = 0;
-        const WB_THROTTLE_MS = 50;  // ~20 sends/sec, well under Agora's 30/sec limit
+        const WB_THROTTLE_MS = 50;  // ~20 writes/sec
+        let wbMyUid = null;         // our Agora UID string, used to filter own relay docs
+        let wbRelayRef = null;      // Firestore doc ref for our outgoing strokes
+        let wbUnsubscribe = null;   // Firestore listener teardown
+        let wbJoinTime = 0;         // epoch ms when we joined — ignore older relay docs
 
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
@@ -777,9 +781,6 @@
             client.on("user-published", handleUserPublished);
             client.on("user-unpublished", handleUserUnpublished);
             client.on("user-left", handleUserLeft);
-            client.on('stream-message', (uid, payload) => {
-                wbHandleRemoteMessage(uid, payload);
-            });
         }
 
         // Write our Agora UID into our Firestore profile so remote users can look us up
@@ -878,13 +879,20 @@
                 // Publish local tracks
                 await client.publish([localAudioTrack, localVideoTrack]);
 
-                // Create Agora data stream for whiteboard sync
-                try {
-                    dataStreamId = await client.createDataStream({ ordered: true, reliable: true });
-                } catch (err) {
-                    console.warn('Whiteboard data stream unavailable:', err);
-                    dataStreamId = null;
-                }
+                // Set up Firebase Firestore relay for whiteboard sync
+                wbMyUid = String(uid);
+                wbJoinTime = Date.now();
+                wbRelayRef = doc(db, 'whiteboard', channelName, 'relay', wbMyUid);
+                const wbRelayCol = collection(db, 'whiteboard', channelName, 'relay');
+                wbUnsubscribe = onSnapshot(wbRelayCol, (snap) => {
+                    snap.docChanges().forEach(change => {
+                        if (change.type !== 'added' && change.type !== 'modified') return;
+                        if (change.doc.id === wbMyUid) return; // own stroke
+                        const data = change.doc.data();
+                        if (data.ts && data.ts < wbJoinTime) return; // stale from before we joined
+                        wbHandleRemoteAction(data);
+                    });
+                });
                 whiteboardBtn.style.display = 'inline-block';
 
                 showStatus('Successfully joined the call!', 'success');
@@ -920,9 +928,13 @@
                     localVideoTrack = null;
                 }
 
-                dataStreamId = null;
+                // Tear down whiteboard Firebase relay
+                if (wbUnsubscribe) { wbUnsubscribe(); wbUnsubscribe = null; }
+                if (wbRelayRef) { deleteDoc(wbRelayRef).catch(() => {}); wbRelayRef = null; }
+                wbMyUid = null;
+                wbJoinTime = 0;
 
-                // Reset whiteboard
+                // Reset whiteboard UI
                 whiteboardPanel.style.display = 'none';
                 whiteboardBtn.style.display = 'none';
                 whiteboardBtn.classList.remove('wb-panel-open');
@@ -1085,36 +1097,26 @@
         }
 
         function wbSend(msgObj) {
-            if (!dataStreamId) return;
+            if (!wbRelayRef) return;
             const now = Date.now();
             if (now - wbLastSentTime < WB_THROTTLE_MS) return;
             wbLastSentTime = now;
-            try {
-                const bytes = new TextEncoder().encode(JSON.stringify(msgObj));
-                client.sendStreamMessage(dataStreamId, bytes);
-            } catch (err) {
-                console.warn('WB send error:', err);
-            }
+            setDoc(wbRelayRef, { ...msgObj, ts: now }).catch(err => console.warn('WB send error:', err));
         }
 
-        function wbHandleRemoteMessage(uid, payload) {
-            try {
-                const msg = JSON.parse(new TextDecoder().decode(payload));
-                if (msg.t === 'd' || msg.t === 'e') {
-                    wbDrawSegment(
-                        msg.x1 * wbCanvas.width,
-                        msg.y1 * wbCanvas.height,
-                        msg.x2 * wbCanvas.width,
-                        msg.y2 * wbCanvas.height,
-                        msg.c,
-                        msg.w,
-                        msg.t === 'e'
-                    );
-                } else if (msg.t === 'cl') {
-                    wbInitCanvas();
-                }
-            } catch (err) {
-                console.warn('WB receive error:', err);
+        function wbHandleRemoteAction(msg) {
+            if (msg.t === 'd' || msg.t === 'e') {
+                wbDrawSegment(
+                    msg.x1 * wbCanvas.width,
+                    msg.y1 * wbCanvas.height,
+                    msg.x2 * wbCanvas.width,
+                    msg.y2 * wbCanvas.height,
+                    msg.c,
+                    msg.w,
+                    msg.t === 'e'
+                );
+            } else if (msg.t === 'cl') {
+                wbInitCanvas();
             }
         }
 
@@ -1222,16 +1224,11 @@
             });
         });
 
-        // Clear button — bypasses throttle, sends directly
+        // Clear button — bypasses throttle, writes directly
         wbClearBtn.addEventListener('click', () => {
             wbInitCanvas();
-            if (dataStreamId) {
-                try {
-                    const bytes = new TextEncoder().encode(JSON.stringify({ t: 'cl' }));
-                    client.sendStreamMessage(dataStreamId, bytes);
-                } catch (err) {
-                    console.warn('WB clear send error:', err);
-                }
+            if (wbRelayRef) {
+                setDoc(wbRelayRef, { t: 'cl', ts: Date.now() }).catch(err => console.warn('WB clear error:', err));
             }
         });
 
