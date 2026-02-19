@@ -512,7 +512,7 @@
             position: fixed;
             bottom: 50px;
             right: 10px;
-            background: rgba(111, 66, 193, 0.88);
+            background: rgba(32, 188, 186, 0.88);
             color: white;
             border: none;
             border-radius: 4px;
@@ -525,7 +525,7 @@
             align-items: center;
             gap: 5px;
         }
-        .inline-wb-btn:hover { background: rgba(90, 50, 163, 0.98); }
+        .inline-wb-btn:hover { background: rgba(26, 169, 167, 0.98); }
 
         /* Whiteboard panel inside the fullscreen/expanded container — capped height so videos keep space */
         #video-grid-container:fullscreen #whiteboard-panel,
@@ -716,6 +716,8 @@
         let wbIsDrawing = false;
         let wbLastX = 0;
         let wbLastY = 0;
+        let wbLastSentX = 0;  // position of the most recently *sent* point (not just drawn)
+        let wbLastSentY = 0;  // keeps sent segments gap-free on the remote canvas
         let wbLastSentTime = 0;
         const WB_THROTTLE_MS = 50;  // ~20 writes/sec
         let wbMyUid = null;         // our Agora UID string, used to filter own relay docs
@@ -1137,11 +1139,14 @@
             wbCtx.stroke();
         }
 
-        function wbSend(msgObj) {
+        function wbSend(msgObj, toX, toY) {
             if (!wbRelayRef) return;
             const now = Date.now();
             if (now - wbLastSentTime < WB_THROTTLE_MS) return;
             wbLastSentTime = now;
+            // Advance the sent-position cursor only when a send actually fires
+            wbLastSentX = toX;
+            wbLastSentY = toY;
             setDoc(wbRelayRef, { ...msgObj, ts: now }).catch(err => console.warn('WB send error:', err));
         }
 
@@ -1170,8 +1175,8 @@
         wbCanvas.addEventListener('mousedown', (e) => {
             wbIsDrawing = true;
             const pos = wbGetPos(e);
-            wbLastX = pos.x;
-            wbLastY = pos.y;
+            wbLastX = pos.x;     wbLastY = pos.y;
+            wbLastSentX = pos.x; wbLastSentY = pos.y;
         });
 
         wbCanvas.addEventListener('mousemove', (e) => {
@@ -1180,15 +1185,17 @@
             const isErase = wbTool === 'eraser';
             const strokeW = isErase ? wbStrokeWidth * 4 : wbStrokeWidth;
             wbDrawSegment(wbLastX, wbLastY, pos.x, pos.y, wbColor, strokeW, isErase);
+            // x1/y1 come from wbLastSentX/Y (last *sent* point) so the remote segment
+            // always bridges the full gap since the previous send — no dashes/gaps.
             wbSend({
                 t: isErase ? 'e' : 'd',
-                x1: parseFloat((wbLastX / wbCanvas.width).toFixed(4)),
-                y1: parseFloat((wbLastY / wbCanvas.height).toFixed(4)),
+                x1: parseFloat((wbLastSentX / wbCanvas.width).toFixed(4)),
+                y1: parseFloat((wbLastSentY / wbCanvas.height).toFixed(4)),
                 x2: parseFloat((pos.x / wbCanvas.width).toFixed(4)),
                 y2: parseFloat((pos.y / wbCanvas.height).toFixed(4)),
                 c: wbColor,
                 w: strokeW
-            });
+            }, pos.x, pos.y);
             wbLastX = pos.x;
             wbLastY = pos.y;
         });
@@ -1201,8 +1208,8 @@
             e.preventDefault();
             wbIsDrawing = true;
             const pos = wbGetPos(e);
-            wbLastX = pos.x;
-            wbLastY = pos.y;
+            wbLastX = pos.x;     wbLastY = pos.y;
+            wbLastSentX = pos.x; wbLastSentY = pos.y;
         }, { passive: false });
 
         wbCanvas.addEventListener('touchmove', (e) => {
@@ -1214,13 +1221,13 @@
             wbDrawSegment(wbLastX, wbLastY, pos.x, pos.y, wbColor, strokeW, isErase);
             wbSend({
                 t: isErase ? 'e' : 'd',
-                x1: parseFloat((wbLastX / wbCanvas.width).toFixed(4)),
-                y1: parseFloat((wbLastY / wbCanvas.height).toFixed(4)),
+                x1: parseFloat((wbLastSentX / wbCanvas.width).toFixed(4)),
+                y1: parseFloat((wbLastSentY / wbCanvas.height).toFixed(4)),
                 x2: parseFloat((pos.x / wbCanvas.width).toFixed(4)),
                 y2: parseFloat((pos.y / wbCanvas.height).toFixed(4)),
                 c: wbColor,
                 w: strokeW
-            });
+            }, pos.x, pos.y);
             wbLastX = pos.x;
             wbLastY = pos.y;
         }, { passive: false });
