@@ -468,8 +468,8 @@
         }
 
         /* Whiteboard button */
-        .btn-whiteboard { background: #6f42c1; color: white; display: none; }
-        .btn-whiteboard:hover { background: #5a32a3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(111,66,193,0.4); }
+        .btn-whiteboard { background: #20bcba; color: white; display: none; }
+        .btn-whiteboard:hover { background: #1aa9a7; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(32,188,186,0.4); }
 
         /* Panel (now lives inside #video-grid-container; no bottom margin needed) */
         #whiteboard-panel { margin-bottom: 0; background: #fff; border: 1px solid #dee2e6; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
@@ -671,7 +671,7 @@
                 </button>
 
                 <button id="gridExpandBtn" class="grid-expand-btn" title="Expand all videos">
-                    <i class="fas fa-expand"></i><span class="grid-expand-label"> Expand</span>
+                    <i class="fas fa-expand"></i>
                 </button>
             </div>
 
@@ -1080,10 +1080,10 @@
                 <div class="user-label">${label}</div>
                 ${isLocal ? `
                 <button class="mute-overlay-btn" title="Mute">
-                    <i class="fas fa-microphone"></i><span class="overlay-mute-label"> Mute</span>
+                    <i class="fas fa-microphone"></i>
                 </button>
                 <button class="camera-overlay-btn" title="Hide Camera">
-                    <i class="fas fa-video"></i><span class="overlay-camera-label"> Hide Camera</span>
+                    <i class="fas fa-video"></i>
                 </button>` : ''}
             `;
 
@@ -1308,7 +1308,6 @@
             localAudioTrack.setMuted(isMuted);
             document.querySelectorAll('.mute-overlay-btn').forEach(btn => {
                 btn.querySelector('i').className = isMuted ? 'fas fa-microphone-slash' : 'fas fa-microphone';
-                btn.querySelector('.overlay-mute-label').textContent = isMuted ? ' Unmute' : ' Mute';
                 isMuted ? btn.classList.add('muted') : btn.classList.remove('muted');
                 btn.title = isMuted ? 'Unmute' : 'Mute';
             });
@@ -1321,7 +1320,6 @@
             localVideoTrack.setMuted(isCameraOff);
             document.querySelectorAll('.camera-overlay-btn').forEach(btn => {
                 btn.querySelector('i').className = isCameraOff ? 'fas fa-video-slash' : 'fas fa-video';
-                btn.querySelector('.overlay-camera-label').textContent = isCameraOff ? ' Show Camera' : ' Hide Camera';
                 isCameraOff ? btn.classList.add('camera-off') : btn.classList.remove('camera-off');
                 btn.title = isCameraOff ? 'Show Camera' : 'Hide Camera';
             });
@@ -1330,7 +1328,6 @@
         // Grid expand button — fullscreens the whole video grid container
         const setGridExpandIcon = (expanded) => {
             gridExpandBtn.querySelector('i').className = expanded ? 'fas fa-compress' : 'fas fa-expand';
-            gridExpandBtn.querySelector('.grid-expand-label').textContent = expanded ? ' Collapse' : ' Expand';
             gridExpandBtn.title = expanded ? 'Exit fullscreen' : 'Expand all videos';
         };
 
