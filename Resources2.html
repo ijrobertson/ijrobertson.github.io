@@ -110,8 +110,12 @@
         }
 
         @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
             .profile-nav-wrapper { margin-left: auto !important; }
             #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) {
+            .navbar-nav { margin-left: 0 !important; }
         }
 
         /* ── Resources intro ── */
@@ -1686,15 +1690,15 @@
                 const card = document.createElement('a');
                 card.className = 'resource-card';
                 card.href = resource.link;
-                card.innerHTML = \`
+                card.innerHTML = `
                     <div class="resource-card-image">
-                        <img src="\${resource.image}" alt="\${escapeHtml(resource.title)}">
+                        <img src="${resource.image}" alt="${escapeHtml(resource.title)}">
                     </div>
                     <div class="resource-card-body">
-                        <div class="resource-card-title">\${escapeHtml(resource.title)}</div>
-                        <div class="resource-card-description">\${escapeHtml(resource.description)}</div>
+                        <div class="resource-card-title">${escapeHtml(resource.title)}</div>
+                        <div class="resource-card-description">${escapeHtml(resource.description)}</div>
                     </div>
-                \`;
+                `;
                 grid.appendChild(card);
             });
             prevBtn.disabled = carouselIndex === 0;
