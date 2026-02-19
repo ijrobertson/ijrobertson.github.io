@@ -471,8 +471,8 @@
         .btn-whiteboard { background: #6f42c1; color: white; display: none; }
         .btn-whiteboard:hover { background: #5a32a3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(111,66,193,0.4); }
 
-        /* Panel */
-        #whiteboard-panel { margin-bottom: 2rem; background: #fff; border: 1px solid #dee2e6; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        /* Panel (now lives inside #video-grid-container; no bottom margin needed) */
+        #whiteboard-panel { margin-bottom: 0; background: #fff; border: 1px solid #dee2e6; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
 
         /* Toolbar */
         #whiteboard-toolbar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.625rem 1rem; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
@@ -505,6 +505,38 @@
             #whiteboard-toolbar { gap: 0.5rem; padding: 0.5rem; }
             .wb-color-btn { width: 24px; height: 24px; }
             .wb-tool-btn { width: 32px; height: 32px; }
+        }
+
+        /* Inline whiteboard toggle button — position:fixed, shown only in fullscreen via JS */
+        .inline-wb-btn {
+            position: fixed;
+            bottom: 50px;
+            right: 10px;
+            background: rgba(111, 66, 193, 0.88);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            z-index: 10000;
+            display: none; /* JS-controlled */
+            align-items: center;
+            gap: 5px;
+        }
+        .inline-wb-btn:hover { background: rgba(90, 50, 163, 0.98); }
+
+        /* Whiteboard panel inside the fullscreen/expanded container — capped height so videos keep space */
+        #video-grid-container:fullscreen #whiteboard-panel,
+        #video-grid-container:-webkit-full-screen #whiteboard-panel,
+        #video-grid-container.grid--expanded #whiteboard-panel {
+            max-height: 42vh;
+            overflow-y: auto;
+            border-radius: 0;
+            border: none;
+            border-top: 2px solid #6f42c1;
+            box-shadow: none;
         }
     </style>
 </head>
@@ -600,41 +632,47 @@
 
             <div id="video-grid-container">
                 <div id="video-grid"></div>
+
+                <!-- Whiteboard Panel (inside container so it's visible in native fullscreen) -->
+                <div id="whiteboard-panel" style="display:none;">
+                    <div id="whiteboard-toolbar">
+                        <div class="wb-tool-group">
+                            <button id="wb-pen-btn" class="wb-tool-btn wb-tool-active" title="Pen"><i class="fas fa-pencil-alt"></i></button>
+                            <button id="wb-eraser-btn" class="wb-tool-btn" title="Eraser"><i class="fas fa-eraser"></i></button>
+                        </div>
+                        <div class="wb-tool-group" id="wb-color-palette">
+                            <button class="wb-color-btn wb-color-active" data-color="#000000" style="background:#000000;" title="Black"></button>
+                            <button class="wb-color-btn" data-color="#dc3545" style="background:#dc3545;" title="Red"></button>
+                            <button class="wb-color-btn" data-color="#0d6efd" style="background:#0d6efd;" title="Blue"></button>
+                            <button class="wb-color-btn" data-color="#198754" style="background:#198754;" title="Green"></button>
+                            <button class="wb-color-btn" data-color="#ffc107" style="background:#ffc107;" title="Yellow"></button>
+                            <button class="wb-color-btn" data-color="#6f42c1" style="background:#6f42c1;" title="Purple"></button>
+                            <button class="wb-color-btn" data-color="#fd7e14" style="background:#fd7e14;" title="Orange"></button>
+                            <button class="wb-color-btn" data-color="#ffffff" style="background:#ffffff;border:1px solid #ccc;" title="White"></button>
+                        </div>
+                        <div class="wb-tool-group">
+                            <button class="wb-stroke-btn wb-stroke-active" data-width="2" title="Thin"><span class="wb-stroke-preview" style="height:2px;"></span></button>
+                            <button class="wb-stroke-btn" data-width="5" title="Medium"><span class="wb-stroke-preview" style="height:5px;"></span></button>
+                            <button class="wb-stroke-btn" data-width="12" title="Thick"><span class="wb-stroke-preview" style="height:12px;"></span></button>
+                        </div>
+                        <div class="wb-tool-group">
+                            <button id="wb-clear-btn" class="wb-tool-btn" title="Clear All"><i class="fas fa-trash-alt"></i></button>
+                            <button id="wb-close-btn" class="wb-tool-btn" title="Close Whiteboard"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <div id="whiteboard-canvas-wrapper">
+                        <canvas id="whiteboard-canvas" width="1280" height="720"></canvas>
+                    </div>
+                </div>
+
+                <!-- Inline whiteboard toggle — fixed overlay visible only in fullscreen/expanded mode -->
+                <button id="inline-wb-btn" class="inline-wb-btn" title="Toggle Whiteboard">
+                    <i class="fas fa-chalkboard"></i><span> Whiteboard</span>
+                </button>
+
                 <button id="gridExpandBtn" class="grid-expand-btn" title="Expand all videos">
                     <i class="fas fa-expand"></i><span class="grid-expand-label"> Expand</span>
                 </button>
-            </div>
-
-            <!-- Whiteboard Panel -->
-            <div id="whiteboard-panel" style="display:none;">
-                <div id="whiteboard-toolbar">
-                    <div class="wb-tool-group">
-                        <button id="wb-pen-btn" class="wb-tool-btn wb-tool-active" title="Pen"><i class="fas fa-pencil-alt"></i></button>
-                        <button id="wb-eraser-btn" class="wb-tool-btn" title="Eraser"><i class="fas fa-eraser"></i></button>
-                    </div>
-                    <div class="wb-tool-group" id="wb-color-palette">
-                        <button class="wb-color-btn wb-color-active" data-color="#000000" style="background:#000000;" title="Black"></button>
-                        <button class="wb-color-btn" data-color="#dc3545" style="background:#dc3545;" title="Red"></button>
-                        <button class="wb-color-btn" data-color="#0d6efd" style="background:#0d6efd;" title="Blue"></button>
-                        <button class="wb-color-btn" data-color="#198754" style="background:#198754;" title="Green"></button>
-                        <button class="wb-color-btn" data-color="#ffc107" style="background:#ffc107;" title="Yellow"></button>
-                        <button class="wb-color-btn" data-color="#6f42c1" style="background:#6f42c1;" title="Purple"></button>
-                        <button class="wb-color-btn" data-color="#fd7e14" style="background:#fd7e14;" title="Orange"></button>
-                        <button class="wb-color-btn" data-color="#ffffff" style="background:#ffffff;border:1px solid #ccc;" title="White"></button>
-                    </div>
-                    <div class="wb-tool-group">
-                        <button class="wb-stroke-btn wb-stroke-active" data-width="2" title="Thin"><span class="wb-stroke-preview" style="height:2px;"></span></button>
-                        <button class="wb-stroke-btn" data-width="5" title="Medium"><span class="wb-stroke-preview" style="height:5px;"></span></button>
-                        <button class="wb-stroke-btn" data-width="12" title="Thick"><span class="wb-stroke-preview" style="height:12px;"></span></button>
-                    </div>
-                    <div class="wb-tool-group">
-                        <button id="wb-clear-btn" class="wb-tool-btn" title="Clear All"><i class="fas fa-trash-alt"></i></button>
-                        <button id="wb-close-btn" class="wb-tool-btn" title="Close Whiteboard"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-                <div id="whiteboard-canvas-wrapper">
-                    <canvas id="whiteboard-canvas" width="1280" height="720"></canvas>
-                </div>
             </div>
 
             <div class="instructions">
@@ -706,6 +744,7 @@
         const wbEraserBtn     = document.getElementById('wb-eraser-btn');
         const wbClearBtn      = document.getElementById('wb-clear-btn');
         const wbCloseBtn      = document.getElementById('wb-close-btn');
+        const inlineWbBtn     = document.getElementById('inline-wb-btn');
 
         // Get channel from URL parameter (if coming from messages page)
         const urlParams = new URLSearchParams(window.location.search);
@@ -938,6 +977,8 @@
                 whiteboardPanel.style.display = 'none';
                 whiteboardBtn.style.display = 'none';
                 whiteboardBtn.classList.remove('wb-panel-open');
+                inlineWbBtn.style.display = 'none';
+                inlineWbBtn.classList.remove('wb-panel-open');
                 wbIsDrawing = false;
                 wbInitCanvas();
                 wbTool = 'pen';
@@ -1236,13 +1277,23 @@
         wbCloseBtn.addEventListener('click', () => {
             whiteboardPanel.style.display = 'none';
             whiteboardBtn.classList.remove('wb-panel-open');
+            inlineWbBtn.classList.remove('wb-panel-open');
         });
 
-        // Whiteboard toggle button
+        // External whiteboard toggle (normal view)
         whiteboardBtn.addEventListener('click', () => {
             const isOpen = whiteboardPanel.style.display !== 'none';
             whiteboardPanel.style.display = isOpen ? 'none' : 'block';
             whiteboardBtn.classList.toggle('wb-panel-open', !isOpen);
+            inlineWbBtn.classList.toggle('wb-panel-open', !isOpen);
+        });
+
+        // Inline whiteboard toggle (fullscreen/expanded view)
+        inlineWbBtn.addEventListener('click', () => {
+            const isOpen = whiteboardPanel.style.display !== 'none';
+            whiteboardPanel.style.display = isOpen ? 'none' : 'block';
+            whiteboardBtn.classList.toggle('wb-panel-open', !isOpen);
+            inlineWbBtn.classList.toggle('wb-panel-open', !isOpen);
         });
 
         // Initialize canvas white on page load
@@ -1300,6 +1351,7 @@
             }
             if (isCSSExpanded) {
                 videoGridContainer.classList.remove('grid--expanded');
+                inlineWbBtn.style.display = 'none';
                 setGridExpandIcon(false);
                 return;
             }
@@ -1319,10 +1371,11 @@
 
             // CSS fallback for iOS Safari
             videoGridContainer.classList.add('grid--expanded');
+            inlineWbBtn.style.display = leaveBtn.style.display !== 'none' ? 'flex' : 'none';
             setGridExpandIcon(true);
         });
 
-        // Sync icon when native fullscreen state changes
+        // Sync icon + inline whiteboard button when native fullscreen state changes
         const onGridFullscreenChange = () => {
             const isNativeFullscreen = !!(
                 document.fullscreenElement ||
@@ -1330,6 +1383,8 @@
                 document.mozFullScreenElement
             );
             setGridExpandIcon(isNativeFullscreen);
+            const callActive = leaveBtn.style.display !== 'none';
+            inlineWbBtn.style.display = (isNativeFullscreen && callActive) ? 'flex' : 'none';
         };
         document.addEventListener('fullscreenchange', onGridFullscreenChange);
         document.addEventListener('webkitfullscreenchange', onGridFullscreenChange);
