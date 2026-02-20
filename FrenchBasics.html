@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Learn French with the basics. Learn how to introduce yourself, count, and much more to help you become fluent in French.">
-    <meta name="keywords" content="French basics, bases du français, how to count in French, numbers, colors, greetings, common phrases">
+    <meta name="description" content="Learn French basic words and phrases with this beginner guide. Learn how to say basic greetings in French, as well as, numbers, colors, days of the week, and more in French.">
+    <meta name="keywords" content="French basics, common French words, how to speak French, les bases du français, learn French for free">
     <meta name="author" content="Lingua Bud">
 
     <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
@@ -32,6 +32,379 @@
 	
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ─── Spanish Basics page ─────────────────────────── */
+
+        /* Hero */
+        .sb-hero {
+            background: linear-gradient(135deg, #0f3460 0%, #1a5f7a 45%, #20bcba 100%);
+            padding: 6.5rem 0 4.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .sb-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #20bcba 0%, #0f3460 50%, #20bcba 100%);
+        }
+        .sb-hero-flag {
+            font-size: 4.5rem;
+            line-height: 1;
+            margin-bottom: 0.75rem;
+            filter: drop-shadow(0 4px 14px rgba(0,0,0,0.35));
+            color: white;
+        }
+        .sb-hero h1 { color: white; font-size: 3rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .sb-hero-sub {
+            color: rgba(255,255,255,0.82);
+            font-size: 1.1rem;
+            max-width: 560px;
+            margin: 0 auto 2.2rem;
+            line-height: 1.65;
+        }
+        .sb-hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+        .sb-hero-link {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 0.45rem 1.15rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .sb-hero-link:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.55);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Language strip */
+        .sb-lang-strip {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0.7rem 0;
+            text-align: center;
+            font-size: 0.87rem;
+            color: #666;
+        }
+        .sb-lang-strip a { color: #20bcba; font-weight: 600; text-decoration: none; margin: 0 0.4rem; }
+        .sb-lang-strip a:hover { text-decoration: underline; }
+
+        /* Content area */
+        .sb-content { background: #f4f8f8; padding: 3rem 0 3rem; }
+
+        /* Section cards */
+        .sb-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 18px rgba(0,0,0,0.07);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .sb-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.4rem 2rem;
+            border-bottom: 2px solid #f0f0f0;
+            background: var(--hdr-bg, #fafafa);
+        }
+        .sb-card-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+        .sb-card-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--hdr-accent, #20bcba);
+            margin-bottom: 0.2rem;
+        }
+        .sb-card-title { font-size: 1.2rem; font-weight: 700; color: #222; margin: 0; }
+        .sb-card-body { padding: 1.75rem 2rem; }
+        .sb-card-body > p { color: #555; line-height: 1.7; margin-bottom: 1rem; }
+
+        /* Word pairs */
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+            gap: 0.6rem;
+        }
+        .word-pair {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eee;
+            transition: box-shadow 0.2s;
+        }
+        .word-pair:hover { box-shadow: 0 3px 10px rgba(32,188,186,0.18); }
+        .word-es {
+            background: #20bcba;
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.6rem 0.85rem;
+            flex: 1.1;
+            display: flex;
+            align-items: center;
+        }
+        .word-en {
+            background: #fafafa;
+            color: #555;
+            font-size: 0.88rem;
+            padding: 0.6rem 0.85rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Numbers */
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .number-chip {
+            background: #fafafa;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            text-align: center;
+            padding: 0.85rem 0.5rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .number-chip:hover { border-color: #20bcba; background: #e8fffe; }
+        .number-digit { font-size: 1.6rem; font-weight: 700; color: #20bcba; line-height: 1; }
+        .number-es { font-size: 0.88rem; font-weight: 600; color: #333; margin-top: 0.25rem; }
+        .number-en { font-size: 0.72rem; color: #999; margin-top: 0.1rem; }
+
+        /* Ordinals */
+        .ordinal-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin: 1.5rem 0 0.75rem;
+        }
+        .ordinal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+            gap: 0.5rem;
+        }
+        .ordinal-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.88rem;
+        }
+        .ordinal-num { font-weight: 700; color: #20bcba; min-width: 24px; }
+        .ordinal-word { color: #444; }
+
+        /* Verbs */
+        .verb-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+            gap: 0.75rem;
+        }
+        .verb-card {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .verb-card:hover { border-color: #20bcba; background: #e8fffe; }
+        .verb-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .verb-es { font-weight: 700; color: #20bcba; font-size: 0.93rem; }
+        .verb-en { font-size: 0.82rem; color: #777; margin-top: 0.1rem; }
+
+        /* Colors */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+            gap: 0.75rem;
+        }
+        .color-chip {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .color-chip:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.14); }
+        .color-swatch { height: 65px; }
+        .color-names { padding: 0.5rem 0.25rem 0.65rem; background: white; }
+        .color-es { font-weight: 700; font-size: 0.92rem; color: #222; }
+        .color-en { font-size: 0.78rem; color: #888; margin-top: 0.1rem; }
+
+        /* Calendar */
+        .cal-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .cal-group-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 0.65rem;
+            padding-bottom: 0.45rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .cal-sub-group { margin-top: 1.25rem; }
+        .cal-list { display: flex; flex-direction: column; gap: 0.4rem; }
+        .cal-item {
+            display: flex;
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+        .cal-es {
+            background: #20bcba;
+            color: white;
+            font-weight: 600;
+            font-size: 0.88rem;
+            padding: 0.45rem 0.85rem;
+            flex: 1.1;
+        }
+        .cal-en {
+            background: #fafafa;
+            color: #666;
+            font-size: 0.85rem;
+            padding: 0.45rem 0.85rem;
+            flex: 1;
+        }
+
+        /* Callouts */
+        .sb-note {
+            background: #fff8e1;
+            border-left: 4px solid #f1bf00;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin-top: 1.3rem;
+            font-size: 0.93rem;
+            color: #555;
+            line-height: 1.65;
+        }
+        .sb-tip {
+            background: #e8fffe;
+            border-left: 4px solid #20bcba;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin-top: 1.3rem;
+            font-size: 0.93rem;
+            color: #444;
+            line-height: 1.65;
+        }
+
+        /* Keep Exploring */
+        .sb-next-steps {
+            background: linear-gradient(135deg, #1a3a5c 0%, #1a6080 55%, #1a9d9b 100%);
+            padding: 3.5rem 0 4rem;
+        }
+        .sb-next-steps h3 { color: white; text-align: center; font-size: 1.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .ns-sub { color: rgba(255,255,255,0.72); text-align: center; margin-bottom: 2.2rem; font-size: 0.97rem; }
+        .ns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .ns-card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 14px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            display: block;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .ns-card:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-5px);
+            text-decoration: none;
+            color: white;
+        }
+        .ns-card-icon { font-size: 2rem; margin-bottom: 0.55rem; }
+        .ns-card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .ns-card-sub { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+        .sb-back-row { text-align: center; }
+
+        /* ── Profile nav (matches home page) ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem; top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        /* Navbar centering */
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sb-hero { padding: 5.5rem 0 3.5rem; }
+            .sb-hero h1 { font-size: 2.2rem; }
+            .sb-card-header { padding: 1.2rem 1.25rem; }
+            .sb-card-body { padding: 1.25rem 1.25rem; }
+            .cal-two-col { grid-template-columns: 1fr; gap: 1.25rem; }
+            .word-grid { grid-template-columns: 1fr; }
+            .color-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .sb-hero h1 { font-size: 1.8rem; }
+            .sb-hero-flag { font-size: 3rem; }
+            .number-grid { grid-template-columns: repeat(3, 1fr); }
+            .color-grid { grid-template-columns: repeat(2, 1fr); }
+            .verb-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
     
@@ -48,12 +421,9 @@
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
-
         <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
         <!-- Mobile Menu Toggle Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
@@ -62,28 +432,25 @@
         <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
 
-                <!-- Dropdown Menu -->          
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -96,9 +463,8 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
                 <!-- end of dropdown menu -->
@@ -106,11 +472,28 @@
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+
+                <!-- Sign In link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <!-- Profile dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -130,510 +513,299 @@
     <!-- end of navbar -->
 
 
-    <!-- Header -->
-    <header id="header" class="ex-header">
+    <!-- Hero -->
+    <div class="sb-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-md-12">
-                    <h1>French Basics</h1>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </header> <!-- end of ex-header -->
-    <!-- end of header -->
+            <div class="sb-hero-flag">&#127467;&#127479;</div>
+            <h1>French Basics</h1>
+            <p class="sb-hero-sub">Your first steps into the French-speaking world. Learn greetings, numbers, verbs, colors, and more &mdash; all completely free.</p>
+            <div class="sb-hero-links">
+                <a href="#greetings" class="sb-hero-link">&#128075; Greetings</a>
+                <a href="#numbers"   class="sb-hero-link">&#128290; Numbers</a>
+                <a href="#verbs"     class="sb-hero-link">&#9889; Verbs</a>
+                <a href="#colors"    class="sb-hero-link">&#127912; Colors</a>
+                <a href="#calendar"  class="sb-hero-link">&#128197; Calendar</a>
+                <a href="#next-steps" class="sb-hero-link">&#128640; Keep Exploring</a>
+            </div>
+        </div>
+    </div>
+    <!-- end of hero -->
 
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Language strip -->
+    <div class="sb-lang-strip">
+        Also available in:
+        <a href="SpanishBasics.html">Spanish</a>,
+        <a href="PortugueseBasics.html">Portuguese</a>,
+        <a href="ItalianBasics.html">Italian</a>,
+        <a href="GermanBasics.html">German</a>,
+        <a href="RussianBasics.html">Russian</a>,
+        <a href="SwedishBasics.html">Swedish</a>
+    </div>
+    <!-- end of language strip -->
+
+
+    <!-- Content -->
+    <div class="sb-content">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span><a class="green" href="FrenchFirst.html">First Conversation - Première Conversation</a>, <a class="green" href="french-accent-marks.html">French Accent Marks - Marques d'accent Français</a>, <a class="green" href="FrenchRestaurant.html">At the Restaurant - Commande au Restaurant</a>, <a class="green" href="FrenchHotel.html">Checking into the Hotel - Enregistrement à l'hôtel</a>, <a class="green" href="FrenchAirport.html">At the Airport - À l'aéroport</a>, <a class="green" href="FrenchDay.html">Typical Day - Journée Typique</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+
+            <!-- Greetings -->
+            <div class="sb-card" id="greetings">
+                <div class="sb-card-header" style="--hdr-bg:#e8fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#128075;</span>
+                    <div>
+                        <div class="sb-card-label">Section 1</div>
+                        <div class="sb-card-title">Greetings &amp; Common Phrases <span style="color:#999;font-weight:400;font-size:0.9rem;">(Phrases Courantes)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>When it comes to learning French, there are simply some words and phrases you have to know. If you want to visit our <a href="NewFrenchPage.html" style="color:#20bcba;font-weight:600;">French Hub page, click here</a>.</p>
+                    <div class="word-grid">
+                        <div class="word-pair"><div class="word-es">Salut</div><div class="word-en">Hello / Hi</div></div>
+                        <div class="word-pair"><div class="word-es">&Ccedil;a va&nbsp;?</div><div class="word-en">How goes it?</div></div>
+                        <div class="word-pair"><div class="word-es">Bonjour</div><div class="word-en">Good morning</div></div>
+                        <div class="word-pair"><div class="word-es">Bonne soir&eacute;e</div><div class="word-en">Good evening</div></div>
+                        <div class="word-pair"><div class="word-es">Bonne nuit</div><div class="word-en">Good night</div></div>
+                        <div class="word-pair"><div class="word-es">&Agrave; plus tard</div><div class="word-en">Until later</div></div>
+                        <div class="word-pair"><div class="word-es">Je m&rsquo;appelle&hellip;</div><div class="word-en">My name is&hellip;</div></div>
+                        <div class="word-pair"><div class="word-es">Oui, s&rsquo;il vous pla&icirc;t</div><div class="word-en">Yes, please</div></div>
+                        <div class="word-pair"><div class="word-es">Non merci</div><div class="word-en">No thank you</div></div>
+                        <div class="word-pair"><div class="word-es">De temps en temps</div><div class="word-en">Sometimes</div></div>
+                        <div class="word-pair"><div class="word-es">Jamais</div><div class="word-en">Never</div></div>
+                        <div class="word-pair"><div class="word-es">Tout le temps</div><div class="word-en">Always</div></div>
+                    </div>
+                </div>
+            </div>
+            <!-- end of greetings -->
+
+            <!-- Numbers -->
+            <div class="sb-card" id="numbers">
+                <div class="sb-card-header" style="--hdr-bg:#f0fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#128290;</span>
+                    <div>
+                        <div class="sb-card-label">Section 2</div>
+                        <div class="sb-card-title">Numbers <span style="color:#999;font-weight:400;font-size:0.9rem;">(Nombres)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>Learn how to count in French from 1 to 20:</p>
+                    <div class="number-grid">
+                        <div class="number-chip"><div class="number-digit">1</div><div class="number-es">Un</div><div class="number-en">One</div></div>
+                        <div class="number-chip"><div class="number-digit">2</div><div class="number-es">Deux</div><div class="number-en">Two</div></div>
+                        <div class="number-chip"><div class="number-digit">3</div><div class="number-es">Trois</div><div class="number-en">Three</div></div>
+                        <div class="number-chip"><div class="number-digit">4</div><div class="number-es">Quatre</div><div class="number-en">Four</div></div>
+                        <div class="number-chip"><div class="number-digit">5</div><div class="number-es">Cinq</div><div class="number-en">Five</div></div>
+                        <div class="number-chip"><div class="number-digit">6</div><div class="number-es">Six</div><div class="number-en">Six</div></div>
+                        <div class="number-chip"><div class="number-digit">7</div><div class="number-es">Sept</div><div class="number-en">Seven</div></div>
+                        <div class="number-chip"><div class="number-digit">8</div><div class="number-es">Huit</div><div class="number-en">Eight</div></div>
+                        <div class="number-chip"><div class="number-digit">9</div><div class="number-es">Neuf</div><div class="number-en">Nine</div></div>
+                        <div class="number-chip"><div class="number-digit">10</div><div class="number-es">Dix</div><div class="number-en">Ten</div></div>
+                        <div class="number-chip"><div class="number-digit">11</div><div class="number-es">Onze</div><div class="number-en">Eleven</div></div>
+                        <div class="number-chip"><div class="number-digit">12</div><div class="number-es">Douze</div><div class="number-en">Twelve</div></div>
+                        <div class="number-chip"><div class="number-digit">13</div><div class="number-es">Treize</div><div class="number-en">Thirteen</div></div>
+                        <div class="number-chip"><div class="number-digit">14</div><div class="number-es">Quatorze</div><div class="number-en">Fourteen</div></div>
+                        <div class="number-chip"><div class="number-digit">15</div><div class="number-es">Quinze</div><div class="number-en">Fifteen</div></div>
+                        <div class="number-chip"><div class="number-digit">16</div><div class="number-es">Seize</div><div class="number-en">Sixteen</div></div>
+                        <div class="number-chip"><div class="number-digit">17</div><div class="number-es">Dix-sept</div><div class="number-en">Seventeen</div></div>
+                        <div class="number-chip"><div class="number-digit">18</div><div class="number-es">Dix-huit</div><div class="number-en">Eighteen</div></div>
+                        <div class="number-chip"><div class="number-digit">19</div><div class="number-es">Dix-neuf</div><div class="number-en">Nineteen</div></div>
+                        <div class="number-chip"><div class="number-digit">20</div><div class="number-es">Vingt</div><div class="number-en">Twenty</div></div>
+                    </div>
+                    <div class="ordinal-section-title">Ordinal Numbers &mdash; In Order (Num&eacute;ros Ordinaux)</div>
+                    <div class="ordinal-grid">
+                        <div class="ordinal-chip"><span class="ordinal-num">1st</span><span class="ordinal-word">Premier/e</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">2nd</span><span class="ordinal-word">Deuxi&egrave;me</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">3rd</span><span class="ordinal-word">Troisi&egrave;me</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">4th</span><span class="ordinal-word">Quatri&egrave;me</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">5th</span><span class="ordinal-word">Cinqui&egrave;me</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">6th</span><span class="ordinal-word">Sixi&egrave;me</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">7th</span><span class="ordinal-word">Septi&egrave;me</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">8th</span><span class="ordinal-word">Huiti&egrave;me</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">9th</span><span class="ordinal-word">Neuvi&egrave;me</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">10th</span><span class="ordinal-word">Dixi&egrave;me</span></div>
+                    </div>
+                </div>
+            </div>
+            <!-- end of numbers -->
+
+            <!-- Verbs -->
+            <div class="sb-card" id="verbs">
+                <div class="sb-card-header" style="--hdr-bg:#e8fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#9889;</span>
+                    <div>
+                        <div class="sb-card-label">Section 3</div>
+                        <div class="sb-card-title">Common Verbs <span style="color:#999;font-weight:400;font-size:0.9rem;">(Verbes Courants)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>Verbs are the engine of every sentence. Here are 12 essential French verbs to get you started:</p>
+                    <div class="verb-grid">
+                        <div class="verb-card"><span class="verb-icon">&#128172;</span><div><div class="verb-es">Parler</div><div class="verb-en">to speak</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#127869;</span><div><div class="verb-es">Manger</div><div class="verb-en">to eat</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#129380;</span><div><div class="verb-es">Boire</div><div class="verb-en">to drink</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128296;</span><div><div class="verb-es">Faire</div><div class="verb-en">to do / to make</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128694;</span><div><div class="verb-es">Marcher</div><div class="verb-en">to walk</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128064;</span><div><div class="verb-es">Voir</div><div class="verb-en">to see / to watch</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#10024;</span><div><div class="verb-es">&Ecirc;tre</div><div class="verb-en">to be</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#9999;</span><div><div class="verb-es">&Eacute;crire</div><div class="verb-en">to write</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#129306;</span><div><div class="verb-es">Avoir</div><div class="verb-en">to have</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128717;</span><div><div class="verb-es">Acheter</div><div class="verb-en">to buy</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128564;</span><div><div class="verb-es">Dormir</div><div class="verb-en">to sleep</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128188;</span><div><div class="verb-es">Travailler</div><div class="verb-en">to work</div></div></div>
+                    </div>
+                    <div class="sb-note">
+                        <strong>&#129300; French Verb Endings &mdash; The -er Rule</strong><br>
+                        Over 90% of all French verbs end in <strong>-er</strong> (like parler, manger, marcher).<br>
+                        The other two endings are <strong>-re</strong> (e.g., <em>boire</em> &mdash; to drink) and <strong>-ir</strong> (e.g., <em>dormir</em> &mdash; to sleep).<br>
+                        Master the -er pattern first and you&rsquo;ll unlock hundreds of verbs at once!
+                    </div>
+                </div>
+            </div>
+            <!-- end of verbs -->
+
+            <!-- Colors -->
+            <div class="sb-card" id="colors">
+                <div class="sb-card-header" style="--hdr-bg:#f0fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#127912;</span>
+                    <div>
+                        <div class="sb-card-label">Section 4</div>
+                        <div class="sb-card-title">Colors <span style="color:#999;font-weight:400;font-size:0.9rem;">(Couleurs)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <div class="color-grid">
+                        <div class="color-chip"><div class="color-swatch" style="background:#c0392b;"></div><div class="color-names"><div class="color-es">Rouge</div><div class="color-en">Red</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#e67e22;"></div><div class="color-names"><div class="color-es">Orange</div><div class="color-en">Orange</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#f1c40f;"></div><div class="color-names"><div class="color-es">Jaune</div><div class="color-en">Yellow</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#27ae60;"></div><div class="color-names"><div class="color-es">Vert/e</div><div class="color-en">Green</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#2980b9;"></div><div class="color-names"><div class="color-es">Bleu/e</div><div class="color-en">Blue</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#8e44ad;"></div><div class="color-names"><div class="color-es">Violet/te</div><div class="color-en">Purple</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#2c3e50;"></div><div class="color-names"><div class="color-es">Noir/e</div><div class="color-en">Black</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#f5f5f5; border-bottom:1px solid #ddd;"></div><div class="color-names"><div class="color-es">Blanc/he</div><div class="color-en">White</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#95a5a6;"></div><div class="color-names"><div class="color-es">Gris/e</div><div class="color-en">Gray</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#7d4f34;"></div><div class="color-names"><div class="color-es">Brun/e</div><div class="color-en">Brown</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:linear-gradient(135deg,#e8f8ff,#d0f0e0);"></div><div class="color-names"><div class="color-es">Clair/e</div><div class="color-en">Light</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:linear-gradient(135deg,#2c3e50,#1a1a1a);"></div><div class="color-names"><div class="color-es">Fonc&eacute;/e</div><div class="color-en">Dark</div></div></div>
+                    </div>
+                    <div class="sb-note">
+                        <strong>&#129504; Grammar Note &mdash; Gender Agreement:</strong><br>
+                        In French, most colors agree in gender and number with the noun they describe. For example, <em>&ldquo;vert&rdquo;</em> (masculine) becomes <em>&ldquo;verte&rdquo;</em> for feminine nouns &mdash; <em>&ldquo;La voiture verte&rdquo;</em> (the green car) vs. <em>&ldquo;L&rsquo;arbre vert&rdquo;</em> (the green tree).
+                    </div>
+                </div>
+            </div>
+            <!-- end of colors -->
+
+            <!-- Calendar -->
+            <div class="sb-card" id="calendar">
+                <div class="sb-card-header" style="--hdr-bg:#f0fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#128197;</span>
+                    <div>
+                        <div class="sb-card-label">Section 5</div>
+                        <div class="sb-card-title">Days, Weeks &amp; Months <span style="color:#999;font-weight:400;font-size:0.9rem;">(Jours, Semaines et Mois)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <div class="cal-two-col">
+                        <div>
+                            <div class="cal-group-label">&#128198; Days of the Week</div>
+                            <div class="cal-list">
+                                <div class="cal-item"><div class="cal-es">Lundi</div><div class="cal-en">Monday</div></div>
+                                <div class="cal-item"><div class="cal-es">Mardi</div><div class="cal-en">Tuesday</div></div>
+                                <div class="cal-item"><div class="cal-es">Mercredi</div><div class="cal-en">Wednesday</div></div>
+                                <div class="cal-item"><div class="cal-es">Jeudi</div><div class="cal-en">Thursday</div></div>
+                                <div class="cal-item"><div class="cal-es">Vendredi</div><div class="cal-en">Friday</div></div>
+                                <div class="cal-item"><div class="cal-es">Samedi</div><div class="cal-en">Saturday</div></div>
+                                <div class="cal-item"><div class="cal-es">Dimanche</div><div class="cal-en">Sunday</div></div>
+                            </div>
+                            <div class="cal-sub-group">
+                                <div class="cal-group-label">&#9200; Time Words</div>
+                                <div class="cal-list">
+                                    <div class="cal-item"><div class="cal-es">Jour</div><div class="cal-en">Day</div></div>
+                                    <div class="cal-item"><div class="cal-es">Semaine</div><div class="cal-en">Week</div></div>
+                                    <div class="cal-item"><div class="cal-es">Mois</div><div class="cal-en">Month</div></div>
+                                    <div class="cal-item"><div class="cal-es">Ann&eacute;e</div><div class="cal-en">Year</div></div>
+                                    <div class="cal-item"><div class="cal-es">D&eacute;cennie</div><div class="cal-en">Decade</div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="cal-group-label">&#128197; Months of the Year</div>
+                            <div class="cal-list">
+                                <div class="cal-item"><div class="cal-es">Janvier</div><div class="cal-en">January</div></div>
+                                <div class="cal-item"><div class="cal-es">F&eacute;vrier</div><div class="cal-en">February</div></div>
+                                <div class="cal-item"><div class="cal-es">Mars</div><div class="cal-en">March</div></div>
+                                <div class="cal-item"><div class="cal-es">Avril</div><div class="cal-en">April</div></div>
+                                <div class="cal-item"><div class="cal-es">Mai</div><div class="cal-en">May</div></div>
+                                <div class="cal-item"><div class="cal-es">Juin</div><div class="cal-en">June</div></div>
+                                <div class="cal-item"><div class="cal-es">Juillet</div><div class="cal-en">July</div></div>
+                                <div class="cal-item"><div class="cal-es">Ao&ucirc;t</div><div class="cal-en">August</div></div>
+                                <div class="cal-item"><div class="cal-es">Septembre</div><div class="cal-en">September</div></div>
+                                <div class="cal-item"><div class="cal-es">Octobre</div><div class="cal-en">October</div></div>
+                                <div class="cal-item"><div class="cal-es">Novembre</div><div class="cal-en">November</div></div>
+                                <div class="cal-item"><div class="cal-es">D&eacute;cembre</div><div class="cal-en">December</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sb-tip">
+                        &#128161; <strong>Latin Roots:</strong> Notice how similar the French months are to English! Both languages share Latin roots &mdash; so once you learn months in one language, the other comes very naturally.
+                    </div>
+                </div>
+            </div>
+            <!-- end of calendar -->
+
+        </div>
+    </div>
+    <!-- end of content -->
 
 
-    <!-- Privacy Content -->
-    <div class="ex-basic-2">
+    <!-- Keep Exploring -->
+    <div class="sb-next-steps" id="next-steps">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3>Greetings and Common Phrases (Phrases Courantes)</h3>
-                        <p>When it comes to learning French, there are simply some words and phrases you have to know.</p>
-                        <p>If you want to learn French verb tenses, <a class="green" href="#your-link">click here</a>. </p>
-			<p>Check out this chart to learn some French Basics:</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Salut - 'Hello'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Ça va ? - 'How goes it?'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Bonjour - 'Good morning'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Bonne soirée - 'Good afternoon'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Bonne nuit - 'Good night'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">À plus tard - 'Until later'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Je m'appelle... - 'My name is...'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Oui, s'il vous plaît - 'Yes, please'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Non merci - 'No thank you'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">De temps en temps - 'Sometimes'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Jamais - 'Never'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Tout le temps - 'Always'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-                    </div> <!-- end of text-container-->
-                    
-                    <div class="text-container">
-                        <h3>Numbers (Nombres)</h3>
-                        <p>Learn how to spell and say French numbers:</p>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Un - 'One'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Deux - 'Two'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Trois - 'Three'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Quatre - 'Four'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Cinq - 'Five'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Six - 'Six'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Sept - 'Seven'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Huit - 'Eight'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Neuf - 'Nine'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dix - 'Ten'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Onze - 'Eleven'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Douze - 'Twelve'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Treize - 'Thirteen'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Quatorze - 'Fourteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Quinze - 'Fifteen'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Seize - 'Sixteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dix-sept - 'Seventeen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dix-huit - 'Eighteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dix-neuf - 'Nineteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Vingt - 'Twenty'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-		    	<p>Listing Numbers in French Numerically (Liste des Numéros en Français):</p>
-                        <ol class="li-space-lg">
-                            <li>Premier</li>
-                            <li>Deuxième</li>
-                            <li>Troisième</li>
-                            <li>Quatrième</li>
-                            <li>Cinquième</li>
-                            <li>Sixième</li>
-                            <li>Septième</li>
-                            <li>Huitième</li>
-                            <li>Neuvième</li>
-                            <li>Dixième</li>
-         
-                        </ol>
-                    </div> <!-- end of text-container -->
-
-                    <div class="text-container">
-                        <h3>Common French Verbs (Verbes Français Courants)</h3>
-			<div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Parler - 'to speak'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Manger - 'to eat'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Boire - 'to drink'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Faire - 'to do/to make'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Marcher - 'to walk'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Voir - 'to see/watch'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Être - 'to be'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Écrire - 'to write'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Avoir - 'to have'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Acheter - 'to buy'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dormir - 'to sleep'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Travailler - 'to work'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-                        <p>Notice how many of these verbs end with -er. This is the case for over 90% of all verbs in the French language. </p>
-                        <p>The other possible verb endings are: -re or -ir. Ex: 'boire' and 'dormir.</p>
-                    </div> <!-- end of text container -->
-
-                    <div class="text-container">
-                        <h3>Colors (Couleurs)</h3>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Rouge - 'Red'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Orange - 'Orange'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Jaune - 'Yellow'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Vert/e - 'Green'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Bleu/e - 'Blue'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Voilet/te - 'Purple'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Noir/e - 'Black'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Blanc/he - 'White'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Gris/e - 'Gray'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Brun - 'Brown'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Clair - 'Light'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Foncé - 'Dark'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-					    <p class="mb-5">Note that some of these colors will change their endings whether or not they are describing something femenine or masculine. For example, 'The green car' would be 'La voiture verte', however, 'The green tree' would be 'L'arbre vert'.</p>
-					
-                    </div> <!-- end of text-container -->
-	
-		                   <div class="text-container">
-                        <h3>Days, Weeks, and Months (Jours, Semaines, et Mois)</h3>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Lundi - 'Monday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Mardi - 'Tuesday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Mercredi - 'Wednesday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Jeudi - 'Thursday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Vendredi - 'Friday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Samedi - 'Saturday'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dimanche - 'Sunday'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Jour - 'Day'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Semaine - 'Week'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Mois - 'Month'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Année - 'Year'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Décennie - 'Decade'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Janvier - 'January'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Février - 'February'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Mars - 'March'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Avril - 'April'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Mai - 'May'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Juin - 'June'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Julliet - 'July'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Août - 'August'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Septembre - 'September'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Octobre - 'October'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Novembre - 'November'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Décembre - 'December'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-					    <p class="mb-5">Notice how many of the months of the year are very similar to English. This is because both French and English share many of their roots with Latin.</p>
-					
-                    </div> <!-- end of text-container -->
-                                       
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="text-container last">
-                                <h3>Sign up for Our Newsletter (Inscrivez-vous à Notre Newsletter)</h3>
-                                <p>Sign up here to receive more charts and information to help you master the French language! Our team of experts is dedicated to helping you feel confident in your new language skills.</p>
-                                <p> By visiting Lingua Bud or using the Services you agree to the use of cookies in your browser and HTML-based emails. Cookies are small text files placed on your device when you visit a website. By using any of the Services, or submitting or collecting any Personal Information via the Services, you consent and use of your <a class="green" href="#your-link">Personal Information</a>.</p>
-                            </div> <!-- end of text container -->
-                        </div> <!-- end of col-->
-                        <div class="col-md-6">
-
-                            <!-- Privacy Form -->
-                            <div class="form-container">
-                                <form id="privacyForm" data-toggle="validator" data-focus="false">
-                                    <div class="form-group">
-                                        <input type="text" class="form-control-input" id="pname" required>
-                                        <label class="label-control" for="pname">Name</label>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="email" class="form-control-input" id="pemail" required>
-                                        <label class="label-control" for="pemail">Email</label>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <select class="form-control-select" id="pselect" required>
-                                            <option class="select-option" value="" disabled selected>Select Option</option>
-                                            <option class="select-option" value="Delete data">Delete my data</option>
-                                            <option class="select-option" value="Show me data">Show me my data</option>
-                                        </select>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group checkbox">
-                                        <input type="checkbox" id="pterms" value="Agreed-to-Terms" required>I have read and agree to Lingua Bud's <a href="privacy-policy.html">Privacy Policy</a> and <a href="terms-conditions.html">Terms Conditions</a>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <button type="submit" class="form-control-submit-button">SUBMIT</button>
-                                    </div>
-                                    <div class="form-message">
-                                        <div id="pmsgSubmit" class="h3 text-center hidden"></div>
-                                    </div>
-                                </form>
-                            </div> <!-- end of form container -->
-                            <!-- end of privacy form -->
-
-                        </div> <!-- end of col--> 
-                    </div> <!-- end of row -->
-                    <a class="btn-outline-reg back" href="FrenchResources.html">BACK</a>
-                </div> <!-- end of col-->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-2 -->
-    <!-- end of privacy content -->
+            <h3>Keep Exploring Spanish &#127467;&#127479;</h3>
+            <p class="ns-sub">You've got the basics &mdash; now practice with real-world topics!</p>
+            <div class="ns-grid">
+                <a href="FrenchRestaurant.html" class="ns-card">
+                    <div class="ns-card-icon">&#127869;</div>
+                    <div class="ns-card-title">At the Restaurant</div>
+                    <div class="ns-card-sub">Order food like a local</div>
+                </a>
+                <a href="FrenchAirport.html" class="ns-card">
+                    <div class="ns-card-icon">&#9992;</div>
+                    <div class="ns-card-title">At the Airport</div>
+                    <div class="ns-card-sub">Navigate travel with ease</div>
+                </a>
+                <a href="FrenchHotel.html" class="ns-card">
+                    <div class="ns-card-icon">&#127976;</div>
+                    <div class="ns-card-title">At the Hotel</div>
+                    <div class="ns-card-sub">Check in confidently</div>
+                </a>
+                <a href="FrenchDay.html" class="ns-card">
+                    <div class="ns-card-icon">&#9728;</div>
+                    <div class="ns-card-title">Typical Day</div>
+                    <div class="ns-card-sub">Everyday conversations</div>
+                </a>
+                <a href="FrenchFirst.html" class="ns-card">
+                    <div class="ns-card-icon">&#129309;</div>
+                    <div class="ns-card-title">First Conversation</div>
+                    <div class="ns-card-sub">Break the ice in French</div>
+                </a>
+                <a href="french-accent-marks.html" class="ns-card">
+                    <div class="ns-card-icon">&#127912;</div>
+                    <div class="ns-card-title">Accent Marks</div>
+                    <div class="ns-card-sub">Master French accents</div>
+                </a>
+                <a href="FrenchDuck.html" class="ns-card">
+                    <div class="ns-card-icon">&#128214;</div>
+                    <div class="ns-card-title">French Stories</div>
+                    <div class="ns-card-sub">Learn through classic tales</div>
+                </a>
+            </div>
+            <div class="sb-back-row">
+                <a class="btn-outline-reg" href="FrenchResources.html" style="color:white;border-color:rgba(255,255,255,0.45);">&larr; Back to French Resources</a>
+            </div>
+        </div>
+    </div>
+    <!-- end of keep exploring -->
 
 
     <!-- Breadcrumbs -->
@@ -720,7 +892,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">Template by Inovatik</a></p>
+                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">Lingua Bud, All Rights Reserved</a></p>
                 </div> <!-- end of col -->
             </div> <!-- enf of row -->
         </div> <!-- end of container -->
@@ -739,5 +911,47 @@
     <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
     <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
     <script src="js/scripts.js"></script> <!-- Custom scripts -->
+
+    <!-- Firebase Auth for navbar -->
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './lib/firebaseClient.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
+
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
+                    }
+                } catch (e) { console.error('Profile load error:', e); }
+
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
