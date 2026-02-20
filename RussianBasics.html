@@ -6,16 +6,16 @@
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="Learn Russian basic words and phrases with this beginner guide. Learn how to say basic greetings in Russian, as well as, numbers, colors, days of the week, and more in Russian.">
-    <meta name="keywords" content="Russian basics, common Russian words, how to speak Russian, Общие фразы, learn Russian for free">
+    <meta name="keywords" content="Russian basics, common Russian words, how to speak Russian, learn Russian Cyrillic, learn Russian for free">
     <meta name="author" content="Lingua Bud">
 
-    <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
-	<meta property="og:site_name" content="" /> <!-- website name -->
-	<meta property="og:site" content="" /> <!-- website link -->
-	<meta property="og:title" content=""/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="" /> <!-- image link, make sure it's jpg -->
-	<meta property="og:url" content="" /> <!-- where do you want your post to link to -->
+    <!-- OG Meta Tags -->
+	<meta property="og:site_name" content="" />
+	<meta property="og:site" content="" />
+	<meta property="og:title" content=""/>
+	<meta property="og:description" content="" />
+	<meta property="og:image" content="" />
+	<meta property="og:url" content="" />
 	<meta property="og:type" content="article" />
 
     <!-- Website Title -->
@@ -29,9 +29,377 @@
     <link href="css/swiper.css" rel="stylesheet">
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
-	
+
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ─── Basics page ─────────────────────────── */
+
+        .sb-hero {
+            background: linear-gradient(135deg, #0f3460 0%, #1a5f7a 45%, #20bcba 100%);
+            padding: 6.5rem 0 4.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .sb-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #20bcba 0%, #0f3460 50%, #20bcba 100%);
+        }
+        .sb-hero-flag {
+            font-size: 4.5rem;
+            line-height: 1;
+            margin-bottom: 0.75rem;
+            filter: drop-shadow(0 4px 14px rgba(0,0,0,0.35));
+            color: white;
+        }
+        .sb-hero h1 { color: white; font-size: 3rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .sb-hero-sub {
+            color: rgba(255,255,255,0.82);
+            font-size: 1.1rem;
+            max-width: 560px;
+            margin: 0 auto 2.2rem;
+            line-height: 1.65;
+        }
+        .sb-hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+        .sb-hero-link {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 0.45rem 1.15rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .sb-hero-link:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.55);
+            color: white;
+            text-decoration: none;
+        }
+
+        .sb-lang-strip {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0.7rem 0;
+            text-align: center;
+            font-size: 0.87rem;
+            color: #666;
+        }
+        .sb-lang-strip a { color: #20bcba; font-weight: 600; text-decoration: none; margin: 0 0.4rem; }
+        .sb-lang-strip a:hover { text-decoration: underline; }
+
+        .sb-content { background: #f4f8f8; padding: 3rem 0 3rem; }
+
+        .sb-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 18px rgba(0,0,0,0.07);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .sb-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.4rem 2rem;
+            border-bottom: 2px solid #f0f0f0;
+            background: var(--hdr-bg, #fafafa);
+        }
+        .sb-card-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+        .sb-card-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--hdr-accent, #20bcba);
+            margin-bottom: 0.2rem;
+        }
+        .sb-card-title { font-size: 1.2rem; font-weight: 700; color: #222; margin: 0; }
+        .sb-card-body { padding: 1.75rem 2rem; }
+        .sb-card-body > p { color: #555; line-height: 1.7; margin-bottom: 1rem; }
+
+        /* Word pairs — slightly wider teal side for longer Cyrillic words */
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 0.6rem;
+        }
+        .word-pair {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eee;
+            transition: box-shadow 0.2s;
+        }
+        .word-pair:hover { box-shadow: 0 3px 10px rgba(32,188,186,0.18); }
+        .word-es {
+            background: #20bcba;
+            color: white;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 0.6rem 0.85rem;
+            flex: 1.3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .word-translit {
+            font-size: 0.72rem;
+            font-weight: 400;
+            opacity: 0.82;
+            margin-top: 0.15rem;
+        }
+        .word-en {
+            background: #fafafa;
+            color: #555;
+            font-size: 0.88rem;
+            padding: 0.6rem 0.85rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .number-chip {
+            background: #fafafa;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            text-align: center;
+            padding: 0.85rem 0.5rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .number-chip:hover { border-color: #20bcba; background: #e8fffe; }
+        .number-digit { font-size: 1.6rem; font-weight: 700; color: #20bcba; line-height: 1; }
+        .number-es { font-size: 0.85rem; font-weight: 600; color: #333; margin-top: 0.25rem; }
+        .number-en { font-size: 0.7rem; color: #999; margin-top: 0.1rem; }
+
+        .ordinal-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin: 1.5rem 0 0.75rem;
+        }
+        .ordinal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 0.5rem;
+        }
+        .ordinal-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.88rem;
+        }
+        .ordinal-num { font-weight: 700; color: #20bcba; min-width: 28px; flex-shrink: 0; }
+        .ordinal-word { color: #444; }
+
+        .verb-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+            gap: 0.75rem;
+        }
+        .verb-card {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .verb-card:hover { border-color: #20bcba; background: #e8fffe; }
+        .verb-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .verb-es { font-weight: 700; color: #20bcba; font-size: 0.93rem; }
+        .verb-translit { font-size: 0.72rem; color: #aaa; margin-top: 0.05rem; }
+        .verb-en { font-size: 0.82rem; color: #777; margin-top: 0.1rem; }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+            gap: 0.75rem;
+        }
+        .color-chip {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .color-chip:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.14); }
+        .color-swatch { height: 65px; }
+        .color-names { padding: 0.5rem 0.25rem 0.65rem; background: white; }
+        .color-es { font-weight: 700; font-size: 0.92rem; color: #222; }
+        .color-en { font-size: 0.78rem; color: #888; margin-top: 0.1rem; }
+
+        .cal-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .cal-group-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 0.65rem;
+            padding-bottom: 0.45rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .cal-sub-group { margin-top: 1.25rem; }
+        .cal-list { display: flex; flex-direction: column; gap: 0.4rem; }
+        .cal-item {
+            display: flex;
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+        .cal-es {
+            background: #20bcba;
+            color: white;
+            font-weight: 600;
+            font-size: 0.88rem;
+            padding: 0.45rem 0.85rem;
+            flex: 1.2;
+        }
+        .cal-en {
+            background: #fafafa;
+            color: #666;
+            font-size: 0.85rem;
+            padding: 0.45rem 0.85rem;
+            flex: 1;
+        }
+
+        .sb-note {
+            background: #fff8e1;
+            border-left: 4px solid #f1bf00;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin-top: 1.3rem;
+            font-size: 0.93rem;
+            color: #555;
+            line-height: 1.65;
+        }
+        .sb-tip {
+            background: #e8fffe;
+            border-left: 4px solid #20bcba;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin-top: 1.3rem;
+            font-size: 0.93rem;
+            color: #444;
+            line-height: 1.65;
+        }
+
+        .sb-next-steps {
+            background: linear-gradient(135deg, #1a3a5c 0%, #1a6080 55%, #1a9d9b 100%);
+            padding: 3.5rem 0 4rem;
+        }
+        .sb-next-steps h3 { color: white; text-align: center; font-size: 1.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .ns-sub { color: rgba(255,255,255,0.72); text-align: center; margin-bottom: 2.2rem; font-size: 0.97rem; }
+        .ns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .ns-card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 14px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            display: block;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .ns-card:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-5px);
+            text-decoration: none;
+            color: white;
+        }
+        .ns-card-icon { font-size: 2rem; margin-bottom: 0.55rem; }
+        .ns-card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .ns-card-sub { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+        .sb-back-row { text-align: center; }
+
+        /* ── Profile nav ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem; top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        @media (max-width: 768px) {
+            .sb-hero { padding: 5.5rem 0 3.5rem; }
+            .sb-hero h1 { font-size: 2.2rem; }
+            .sb-card-header { padding: 1.2rem 1.25rem; }
+            .sb-card-body { padding: 1.25rem 1.25rem; }
+            .cal-two-col { grid-template-columns: 1fr; gap: 1.25rem; }
+            .word-grid { grid-template-columns: 1fr; }
+            .color-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .sb-hero h1 { font-size: 1.8rem; }
+            .sb-hero-flag { font-size: 3rem; }
+            .number-grid { grid-template-columns: repeat(3, 1fr); }
+            .color-grid { grid-template-columns: repeat(2, 1fr); }
+            .verb-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
     
@@ -43,47 +411,35 @@
             <div class="bounce3"></div>
         </div>
     </div>
-    <!-- end of preloader -->
-    
+
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
 
-        <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
-        <!-- Mobile Menu Toggle Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
             <span class="navbar-toggler-awesome fas fa-times"></span>
         </button>
-        <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
-
-                <!-- Dropdown Menu -->          
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -96,21 +452,32 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
-                <!-- end of dropdown menu -->
-
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -126,514 +493,295 @@
                 </span>
             </span>
         </div>
-    </nav> <!-- end of navbar -->
-    <!-- end of navbar -->
+    </nav>
 
 
-    <!-- Header -->
-    <header id="header" class="ex-header">
+    <!-- Hero -->
+    <div class="sb-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-md-12">
-                    <h1>Russian Basics</h1>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </header> <!-- end of ex-header -->
-    <!-- end of header -->
+            <div class="sb-hero-flag">&#127479;&#127482;</div>
+            <h1>Russian Basics</h1>
+            <p class="sb-hero-sub">Your first steps into the Russian-speaking world. Learn greetings, numbers, verbs, colors, and more &mdash; all completely free.</p>
+            <div class="sb-hero-links">
+                <a href="#greetings"  class="sb-hero-link">&#128075; Greetings</a>
+                <a href="#numbers"    class="sb-hero-link">&#128290; Numbers</a>
+                <a href="#verbs"      class="sb-hero-link">&#9889; Verbs</a>
+                <a href="#colors"     class="sb-hero-link">&#127912; Colors</a>
+                <a href="#calendar"   class="sb-hero-link">&#128197; Calendar</a>
+                <a href="#next-steps" class="sb-hero-link">&#128640; Keep Exploring</a>
+            </div>
+        </div>
+    </div>
 
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Language strip -->
+    <div class="sb-lang-strip">
+        Also available in:
+        <a href="SpanishBasics.html">Spanish</a>,
+        <a href="FrenchBasics.html">French</a>,
+        <a href="PortugueseBasics.html">Portuguese</a>,
+        <a href="ItalianBasics.html">Italian</a>,
+        <a href="GermanBasics.html">German</a>,
+        <a href="SwedishBasics.html">Swedish</a>
+    </div>
+
+
+    <!-- Content -->
+    <div class="sb-content">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i>Also learn: <span><a class="green" href="RussianFirst.html">First Conversation - Первый Pазговор</a>, <a class="green" href="RussianRestaurant.html">At the Restaurant - В Pесторане</a>, <a class="green" href="RussianHotel.html">Checking into the Hotel - Заселение в Oтель</a>, <a class="green" href="RussianAirport.html">At the Airport - В Aэропорту</a>, <a class="green" href="RussianDay.html">Typical Day - Обычный День</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+
+            <!-- Greetings -->
+            <div class="sb-card" id="greetings">
+                <div class="sb-card-header" style="--hdr-bg:#e8fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#128075;</span>
+                    <div>
+                        <div class="sb-card-label">Section 1</div>
+                        <div class="sb-card-title">Greetings &amp; Common Phrases <span style="color:#999;font-weight:400;font-size:0.9rem;">(&#1054;&#1073;&#1097;&#1080;&#1077; &#1092;&#1088;&#1072;&#1079;&#1099;)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>Russian uses the <strong>Cyrillic alphabet</strong> &mdash; 33 letters, many of which look or sound like familiar Latin ones. Don&rsquo;t be put off! Each word below shows the Cyrillic spelling with a transliteration underneath to help you sound it out. Visit our <a href="RussianPage.html" style="color:#20bcba;font-weight:600;">Russian Hub page</a> for more resources.</p>
+                    <div class="word-grid">
+                        <div class="word-pair"><div class="word-es">&#1055;&#1088;&#1080;&#1074;&#1077;&#1090;<div class="word-translit">Privet</div></div><div class="word-en">Hello / Hi</div></div>
+                        <div class="word-pair"><div class="word-es">&#1050;&#1072;&#1082; &#1076;&#1077;&#1083;&#1072;?<div class="word-translit">Kak dela?</div></div><div class="word-en">How are you?</div></div>
+                        <div class="word-pair"><div class="word-es">&#1044;&#1086;&#1073;&#1088;&#1086;&#1077; &#1091;&#1090;&#1088;&#1086;<div class="word-translit">Dobroye utro</div></div><div class="word-en">Good morning</div></div>
+                        <div class="word-pair"><div class="word-es">&#1044;&#1086;&#1073;&#1088;&#1099;&#1081; &#1074;&#1077;&#1095;&#1077;&#1088;<div class="word-translit">Dobryy vecher</div></div><div class="word-en">Good evening</div></div>
+                        <div class="word-pair"><div class="word-es">&#1057;&#1087;&#1086;&#1082;&#1086;&#1081;&#1085;&#1086;&#1081; &#1085;&#1086;&#1095;&#1080;<div class="word-translit">Spokoynoy nochi</div></div><div class="word-en">Good night</div></div>
+                        <div class="word-pair"><div class="word-es">&#1044;&#1086; &#1089;&#1082;&#1086;&#1088;&#1086;&#1075;&#1086;<div class="word-translit">Do skorogo</div></div><div class="word-en">See you soon</div></div>
+                        <div class="word-pair"><div class="word-es">&#1052;&#1077;&#1085;&#1103; &#1079;&#1086;&#1074;&#1091;&#1090;&hellip;<div class="word-translit">Menya zovut&hellip;</div></div><div class="word-en">My name is&hellip;</div></div>
+                        <div class="word-pair"><div class="word-es">&#1044;&#1072;, &#1087;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072;<div class="word-translit">Da, pozhaluysta</div></div><div class="word-en">Yes, please</div></div>
+                        <div class="word-pair"><div class="word-es">&#1053;&#1077;&#1090;, &#1089;&#1087;&#1072;&#1089;&#1080;&#1073;&#1086;<div class="word-translit">Net, spasibo</div></div><div class="word-en">No, thank you</div></div>
+                        <div class="word-pair"><div class="word-es">&#1048;&#1085;&#1086;&#1075;&#1076;&#1072;<div class="word-translit">Inogda</div></div><div class="word-en">Sometimes</div></div>
+                        <div class="word-pair"><div class="word-es">&#1053;&#1080;&#1082;&#1086;&#1075;&#1076;&#1072;<div class="word-translit">Nikogda</div></div><div class="word-en">Never</div></div>
+                        <div class="word-pair"><div class="word-es">&#1042;&#1089;&#1077;&#1075;&#1076;&#1072;<div class="word-translit">Vsegda</div></div><div class="word-en">Always</div></div>
+                    </div>
+                    <div class="sb-tip">
+                        &#128161; <strong>Cyrillic Quick-Start:</strong> Several Cyrillic letters look just like Latin ones &mdash; <em>&#1040; &#1045; &#1054; &#1058;</em> &mdash; and share the same sound. Others look different but sound familiar: <em>&#1055;</em> = P, <em>&#1056;</em> = R, <em>&#1057;</em> = S, <em>&#1059;</em> = U. Learn just these first and you can already read many Russian words!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Numbers -->
+            <div class="sb-card" id="numbers">
+                <div class="sb-card-header" style="--hdr-bg:#f0fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#128290;</span>
+                    <div>
+                        <div class="sb-card-label">Section 2</div>
+                        <div class="sb-card-title">Numbers <span style="color:#999;font-weight:400;font-size:0.9rem;">(&#1063;&#1080;&#1089;&#1083;&#1072;)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>Learn how to count in Russian from 1 to 20:</p>
+                    <div class="number-grid">
+                        <div class="number-chip"><div class="number-digit">1</div><div class="number-es">&#1054;&#1076;&#1080;&#1085;</div><div class="number-en">One</div></div>
+                        <div class="number-chip"><div class="number-digit">2</div><div class="number-es">&#1044;&#1074;&#1072;</div><div class="number-en">Two</div></div>
+                        <div class="number-chip"><div class="number-digit">3</div><div class="number-es">&#1058;&#1088;&#1080;</div><div class="number-en">Three</div></div>
+                        <div class="number-chip"><div class="number-digit">4</div><div class="number-es">&#1063;&#1077;&#1090;&#1099;&#1088;&#1077;</div><div class="number-en">Four</div></div>
+                        <div class="number-chip"><div class="number-digit">5</div><div class="number-es">&#1055;&#1103;&#1090;&#1100;</div><div class="number-en">Five</div></div>
+                        <div class="number-chip"><div class="number-digit">6</div><div class="number-es">&#1064;&#1077;&#1089;&#1090;&#1100;</div><div class="number-en">Six</div></div>
+                        <div class="number-chip"><div class="number-digit">7</div><div class="number-es">&#1057;&#1077;&#1084;&#1100;</div><div class="number-en">Seven</div></div>
+                        <div class="number-chip"><div class="number-digit">8</div><div class="number-es">&#1042;&#1086;&#1089;&#1077;&#1084;&#1100;</div><div class="number-en">Eight</div></div>
+                        <div class="number-chip"><div class="number-digit">9</div><div class="number-es">&#1044;&#1077;&#1074;&#1103;&#1090;&#1100;</div><div class="number-en">Nine</div></div>
+                        <div class="number-chip"><div class="number-digit">10</div><div class="number-es">&#1044;&#1077;&#1089;&#1103;&#1090;&#1100;</div><div class="number-en">Ten</div></div>
+                        <div class="number-chip"><div class="number-digit">11</div><div class="number-es">&#1054;&#1076;&#1080;&#1085;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Eleven</div></div>
+                        <div class="number-chip"><div class="number-digit">12</div><div class="number-es">&#1044;&#1074;&#1077;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Twelve</div></div>
+                        <div class="number-chip"><div class="number-digit">13</div><div class="number-es">&#1058;&#1088;&#1080;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Thirteen</div></div>
+                        <div class="number-chip"><div class="number-digit">14</div><div class="number-es">&#1063;&#1077;&#1090;&#1099;&#1088;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Fourteen</div></div>
+                        <div class="number-chip"><div class="number-digit">15</div><div class="number-es">&#1055;&#1103;&#1090;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Fifteen</div></div>
+                        <div class="number-chip"><div class="number-digit">16</div><div class="number-es">&#1064;&#1077;&#1089;&#1090;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Sixteen</div></div>
+                        <div class="number-chip"><div class="number-digit">17</div><div class="number-es">&#1057;&#1077;&#1084;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Seventeen</div></div>
+                        <div class="number-chip"><div class="number-digit">18</div><div class="number-es">&#1042;&#1086;&#1089;&#1077;&#1084;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Eighteen</div></div>
+                        <div class="number-chip"><div class="number-digit">19</div><div class="number-es">&#1044;&#1077;&#1074;&#1103;&#1090;&#1085;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Nineteen</div></div>
+                        <div class="number-chip"><div class="number-digit">20</div><div class="number-es">&#1044;&#1074;&#1072;&#1076;&#1094;&#1072;&#1090;&#1100;</div><div class="number-en">Twenty</div></div>
+                    </div>
+                    <div class="ordinal-section-title">Ordinal Numbers &mdash; In Order (&#1055;&#1086;&#1088;&#1103;&#1076;&#1082;&#1086;&#1074;&#1099;&#1077; &#1095;&#1080;&#1089;&#1083;&#1080;&#1090;&#1077;&#1083;&#1100;&#1085;&#1099;&#1077;)</div>
+                    <div class="ordinal-grid">
+                        <div class="ordinal-chip"><span class="ordinal-num">1st</span><span class="ordinal-word">&#1055;&#1077;&#1088;&#1074;&#1099;&#1081;/&#1072;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">2nd</span><span class="ordinal-word">&#1042;&#1090;&#1086;&#1088;&#1086;&#1081;/&#1072;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">3rd</span><span class="ordinal-word">&#1058;&#1088;&#1077;&#1090;&#1080;&#1081;/&#1100;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">4th</span><span class="ordinal-word">&#1063;&#1077;&#1090;&#1074;&#1105;&#1088;&#1090;&#1099;&#1081;/&#1072;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">5th</span><span class="ordinal-word">&#1055;&#1103;&#1090;&#1099;&#1081;/&#1072;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">6th</span><span class="ordinal-word">&#1064;&#1077;&#1089;&#1090;&#1086;&#1081;/&#1072;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">7th</span><span class="ordinal-word">&#1057;&#1077;&#1076;&#1100;&#1084;&#1086;&#1081;/&#1072;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">8th</span><span class="ordinal-word">&#1042;&#1086;&#1089;&#1100;&#1084;&#1086;&#1081;/&#1072;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">9th</span><span class="ordinal-word">&#1044;&#1077;&#1074;&#1103;&#1090;&#1099;&#1081;/&#1072;&#1103;</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">10th</span><span class="ordinal-word">&#1044;&#1077;&#1089;&#1103;&#1090;&#1099;&#1081;/&#1072;&#1103;</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verbs -->
+            <div class="sb-card" id="verbs">
+                <div class="sb-card-header" style="--hdr-bg:#e8fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#9889;</span>
+                    <div>
+                        <div class="sb-card-label">Section 3</div>
+                        <div class="sb-card-title">Common Verbs <span style="color:#999;font-weight:400;font-size:0.9rem;">(&#1043;&#1083;&#1072;&#1075;&#1086;&#1083;&#1099;)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>Verbs are the engine of every sentence. Here are 12 essential Russian verbs to get you started:</p>
+                    <div class="verb-grid">
+                        <div class="verb-card"><span class="verb-icon">&#128172;</span><div><div class="verb-es">&#1043;&#1086;&#1074;&#1086;&#1088;&#1080;&#1090;&#1100;</div><div class="verb-translit">Govorit'</div><div class="verb-en">to speak</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#127869;</span><div><div class="verb-es">&#1045;&#1089;&#1090;&#1100;</div><div class="verb-translit">Yest'</div><div class="verb-en">to eat</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#129380;</span><div><div class="verb-es">&#1055;&#1080;&#1090;&#1100;</div><div class="verb-translit">Pit'</div><div class="verb-en">to drink</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128296;</span><div><div class="verb-es">&#1044;&#1077;&#1083;&#1072;&#1090;&#1100;</div><div class="verb-translit">Delat'</div><div class="verb-en">to do / to make</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128694;</span><div><div class="verb-es">&#1048;&#1076;&#1090;&#1080; / &#1061;&#1086;&#1076;&#1080;&#1090;&#1100;</div><div class="verb-translit">Idti / Khodit'</div><div class="verb-en">to go / to walk</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128064;</span><div><div class="verb-es">&#1042;&#1080;&#1076;&#1077;&#1090;&#1100;</div><div class="verb-translit">Videt'</div><div class="verb-en">to see</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#10024;</span><div><div class="verb-es">&#1041;&#1099;&#1090;&#1100;</div><div class="verb-translit">Byt'</div><div class="verb-en">to be</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#9999;</span><div><div class="verb-es">&#1055;&#1080;&#1089;&#1072;&#1090;&#1100;</div><div class="verb-translit">Pisat'</div><div class="verb-en">to write</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#129306;</span><div><div class="verb-es">&#1048;&#1084;&#1077;&#1090;&#1100;</div><div class="verb-translit">Imet'</div><div class="verb-en">to have</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128717;</span><div><div class="verb-es">&#1055;&#1086;&#1082;&#1091;&#1087;&#1072;&#1090;&#1100;</div><div class="verb-translit">Pokupat'</div><div class="verb-en">to buy</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128564;</span><div><div class="verb-es">&#1057;&#1087;&#1072;&#1090;&#1100;</div><div class="verb-translit">Spat'</div><div class="verb-en">to sleep</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128188;</span><div><div class="verb-es">&#1056;&#1072;&#1073;&#1086;&#1090;&#1072;&#1090;&#1100;</div><div class="verb-translit">Rabotat'</div><div class="verb-en">to work</div></div></div>
+                    </div>
+                    <div class="sb-note">
+                        <strong>&#129300; Russian Verb Aspect &mdash; A Unique Concept</strong><br>
+                        Russian verbs come in pairs called <strong>aspects</strong>. The <em>imperfective</em> describes ongoing or repeated actions; the <em>perfective</em> describes a completed action. For example: <em>&#1095;&#1080;&#1090;&#1072;&#1090;&#1100;</em> (to read, ongoing) vs <em>&#1087;&#1088;&#1086;&#1095;&#1080;&#1090;&#1072;&#1090;&#1100;</em> (to read, completed).<br>
+                        This concept has no direct equivalent in English, but mastering it unlocks precise, natural-sounding Russian.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colors -->
+            <div class="sb-card" id="colors">
+                <div class="sb-card-header" style="--hdr-bg:#f0fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#127912;</span>
+                    <div>
+                        <div class="sb-card-label">Section 4</div>
+                        <div class="sb-card-title">Colors <span style="color:#999;font-weight:400;font-size:0.9rem;">(&#1062;&#1074;&#1077;&#1090;&#1072;)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <div class="color-grid">
+                        <div class="color-chip"><div class="color-swatch" style="background:#c0392b;"></div><div class="color-names"><div class="color-es">&#1050;&#1088;&#1072;&#1089;&#1085;&#1099;&#1081;</div><div class="color-en">Red</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#e67e22;"></div><div class="color-names"><div class="color-es">&#1054;&#1088;&#1072;&#1085;&#1078;&#1077;&#1074;&#1099;&#1081;</div><div class="color-en">Orange</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#f1c40f;"></div><div class="color-names"><div class="color-es">&#1046;&#1105;&#1083;&#1090;&#1099;&#1081;</div><div class="color-en">Yellow</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#27ae60;"></div><div class="color-names"><div class="color-es">&#1047;&#1077;&#1083;&#1105;&#1085;&#1099;&#1081;</div><div class="color-en">Green</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#1a3a8f;"></div><div class="color-names"><div class="color-es">&#1057;&#1080;&#1085;&#1080;&#1081;</div><div class="color-en">Blue (dark)</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#5da8e0;"></div><div class="color-names"><div class="color-es">&#1043;&#1086;&#1083;&#1091;&#1073;&#1086;&#1081;</div><div class="color-en">Blue (light)</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#8e44ad;"></div><div class="color-names"><div class="color-es">&#1060;&#1080;&#1086;&#1083;&#1077;&#1090;&#1086;&#1074;&#1099;&#1081;</div><div class="color-en">Purple</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#2c3e50;"></div><div class="color-names"><div class="color-es">&#1063;&#1105;&#1088;&#1085;&#1099;&#1081;</div><div class="color-en">Black</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#f5f5f5; border-bottom:1px solid #ddd;"></div><div class="color-names"><div class="color-es">&#1041;&#1077;&#1083;&#1099;&#1081;</div><div class="color-en">White</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#95a5a6;"></div><div class="color-names"><div class="color-es">&#1057;&#1077;&#1088;&#1099;&#1081;</div><div class="color-en">Gray</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#7d4f34;"></div><div class="color-names"><div class="color-es">&#1050;&#1086;&#1088;&#1080;&#1095;&#1085;&#1077;&#1074;&#1099;&#1081;</div><div class="color-en">Brown</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:linear-gradient(135deg,#2c3e50,#1a1a1a);"></div><div class="color-names"><div class="color-es">&#1058;&#1105;&#1084;&#1085;&#1099;&#1081;</div><div class="color-en">Dark</div></div></div>
+                    </div>
+                    <div class="sb-note">
+                        <strong>&#128161; Two Blues in Russian!</strong><br>
+                        Russian has <em>two separate words</em> for blue: <strong>&#1057;&#1080;&#1085;&#1080;&#1081;</strong> (<em>Siniy</em>) for dark or navy blue, and <strong>&#1043;&#1086;&#1083;&#1091;&#1073;&#1086;&#1081;</strong> (<em>Goluboy</em>) for light or sky blue. Native speakers treat these as completely distinct colors, not shades of the same one &mdash; a fascinating window into how language shapes perception!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar -->
+            <div class="sb-card" id="calendar">
+                <div class="sb-card-header" style="--hdr-bg:#f0fffe; --hdr-accent:#20bcba;">
+                    <span class="sb-card-icon">&#128197;</span>
+                    <div>
+                        <div class="sb-card-label">Section 5</div>
+                        <div class="sb-card-title">Days, Weeks &amp; Months <span style="color:#999;font-weight:400;font-size:0.9rem;">(&#1044;&#1085;&#1080;, &#1053;&#1077;&#1076;&#1077;&#1083;&#1080; &#1080; &#1052;&#1077;&#1089;&#1103;&#1094;&#1099;)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <div class="cal-two-col">
+                        <div>
+                            <div class="cal-group-label">&#128198; Days of the Week</div>
+                            <div class="cal-list">
+                                <div class="cal-item"><div class="cal-es">&#1055;&#1086;&#1085;&#1077;&#1076;&#1077;&#1083;&#1100;&#1085;&#1080;&#1082;</div><div class="cal-en">Monday</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1042;&#1090;&#1086;&#1088;&#1085;&#1080;&#1082;</div><div class="cal-en">Tuesday</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1057;&#1088;&#1077;&#1076;&#1072;</div><div class="cal-en">Wednesday</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1063;&#1077;&#1090;&#1074;&#1077;&#1088;&#1075;</div><div class="cal-en">Thursday</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1055;&#1103;&#1090;&#1085;&#1080;&#1094;&#1072;</div><div class="cal-en">Friday</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1057;&#1091;&#1073;&#1073;&#1086;&#1090;&#1072;</div><div class="cal-en">Saturday</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1042;&#1086;&#1089;&#1082;&#1088;&#1077;&#1089;&#1077;&#1085;&#1100;&#1077;</div><div class="cal-en">Sunday</div></div>
+                            </div>
+                            <div class="cal-sub-group">
+                                <div class="cal-group-label">&#9200; Time Words</div>
+                                <div class="cal-list">
+                                    <div class="cal-item"><div class="cal-es">&#1044;&#1077;&#1085;&#1100;</div><div class="cal-en">Day</div></div>
+                                    <div class="cal-item"><div class="cal-es">&#1053;&#1077;&#1076;&#1077;&#1083;&#1103;</div><div class="cal-en">Week</div></div>
+                                    <div class="cal-item"><div class="cal-es">&#1052;&#1077;&#1089;&#1103;&#1094;</div><div class="cal-en">Month</div></div>
+                                    <div class="cal-item"><div class="cal-es">&#1043;&#1086;&#1076;</div><div class="cal-en">Year</div></div>
+                                    <div class="cal-item"><div class="cal-es">&#1044;&#1077;&#1089;&#1103;&#1090;&#1080;&#1083;&#1077;&#1090;&#1080;&#1077;</div><div class="cal-en">Decade</div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="cal-group-label">&#128197; Months of the Year</div>
+                            <div class="cal-list">
+                                <div class="cal-item"><div class="cal-es">&#1071;&#1085;&#1074;&#1072;&#1088;&#1100;</div><div class="cal-en">January</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1060;&#1077;&#1074;&#1088;&#1072;&#1083;&#1100;</div><div class="cal-en">February</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1052;&#1072;&#1088;&#1090;</div><div class="cal-en">March</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1040;&#1087;&#1088;&#1077;&#1083;&#1100;</div><div class="cal-en">April</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1052;&#1072;&#1081;</div><div class="cal-en">May</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1048;&#1102;&#1085;&#1100;</div><div class="cal-en">June</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1048;&#1102;&#1083;&#1100;</div><div class="cal-en">July</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1040;&#1074;&#1075;&#1091;&#1089;&#1090;</div><div class="cal-en">August</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1057;&#1077;&#1085;&#1090;&#1103;&#1073;&#1088;&#1100;</div><div class="cal-en">September</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1054;&#1082;&#1090;&#1103;&#1073;&#1088;&#1100;</div><div class="cal-en">October</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1053;&#1086;&#1103;&#1073;&#1088;&#1100;</div><div class="cal-en">November</div></div>
+                                <div class="cal-item"><div class="cal-es">&#1044;&#1077;&#1082;&#1072;&#1073;&#1088;&#1100;</div><div class="cal-en">December</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sb-tip">
+                        &#128161; <strong>Days with Hidden Meanings:</strong> Russian weekdays carry fascinating roots. &#1055;&#1086;&#1085;&#1077;&#1076;&#1077;&#1083;&#1100;&#1085;&#1080;&#1082; (Monday) means &ldquo;after Sunday,&rdquo; &#1042;&#1090;&#1086;&#1088;&#1085;&#1080;&#1082; (Tuesday) means &ldquo;second,&rdquo; &#1057;&#1088;&#1077;&#1076;&#1072; (Wednesday) means &ldquo;middle,&rdquo; &#1063;&#1077;&#1090;&#1074;&#1077;&#1088;&#1075; (Thursday) means &ldquo;fourth,&rdquo; and &#1055;&#1103;&#1090;&#1085;&#1080;&#1094;&#1072; (Friday) means &ldquo;fifth.&rdquo; &#1042;&#1086;&#1089;&#1082;&#1088;&#1077;&#1089;&#1077;&#1085;&#1100;&#1077; (Sunday) means &ldquo;resurrection&rdquo; &mdash; a nod to the Christian tradition.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
 
-    <!-- Privacy Content -->
-    <div class="ex-basic-2">
+    <!-- Keep Exploring -->
+    <div class="sb-next-steps" id="next-steps">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3>Greetings and Common Phrases (Общие фразы)</h3>
-                        <p>When it comes to learning Russian, there are simply some words and phrases you have to know.</p>
-                        <p>If you want to learn the Russian Alphabet, <a class="green" href="russian-alphabet.html">click here</a>. </p>
-			<p>Check out this chart to learn some Russian Basics:</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Привет - 'Hello'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Как вы? - 'How are you?'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Доброе утро - 'Good morning'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Добрый день - 'Good afternoon'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Спокойной ночи - 'Good night'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">До свидания - 'Good bye'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Меня зовут... - 'My name is...'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Да, пожалуйста - 'Yes, please'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Нет, спасибо - 'No thank you'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Иногда - 'Sometimes'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Никогда - 'Never'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Всегда - 'Always'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-                    </div> <!-- end of text-container-->
-                    
-                    <div class="text-container">
-                        <h3>Numbers (Числа)</h3>
-                        <p>Learn how to spell and say Russian numbers:</p>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Один - 'One'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">два - 'Two'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">три - 'Three'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">четыре - 'Four'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">пять - 'Five'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">шесть - 'Six'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">семь - 'Seven'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">восемь - 'Eight'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">девять - 'Nine'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">десять - 'Ten'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">одиннадцать - 'Eleven'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">двенадцать - 'Twelve'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">тринадцать - 'Thirteen'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">четырнадцать - 'Fourteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">пятнадцать - 'Fifteen'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">шестнадцать - 'Sixteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">семнадцать - 'Seventeen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">восемнадцать - 'Eighteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">девятнадцать - 'Nineteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">двадцать - 'Twenty'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-		    	<p>Listing Numbers in Russian Numerically (Список номеров на русском языке в цифрах):</p>
-                        <ol class="li-space-lg">
-                            <li>первый</li>
-                            <li>второй</li>
-                            <li>третий</li>
-                            <li>четвертый</li>
-                            <li>пятый</li>
-                            <li>шестой</li>
-                            <li>седьмой</li>
-                            <li>восьмой</li>
-                            <li>девятый</li>
-                            <li>десятый</li>
-         
-                        </ol>
-                    </div> <!-- end of text-container -->
-
-                    <div class="text-container">
-                        <h3>Common Russian Verbs (Распространенные русские глаголы)</h3>
-			<div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Говорить - 'to speak'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">быть - 'to be'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">знать - 'to know'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">жить - 'to live'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">любитъ - 'to love/to like'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">работать - 'to work'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">думать - 'to think'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">ждать - 'to wait'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">мочь - 'can/to be able to'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">понимать - 'to understand'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">делать - 'to do'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">хотеть - 'to want'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-                        <p>The Cyrillic alphabet has 33 letters; 10 vowels, 21 consonants, and 2 that have no sound. </p>
-                        <p>Letters can be written in capitals, lowercase, and Cyrillic cursive. </p>
-                    </div> <!-- end of text container -->
-
-                    <div class="text-container">
-                        <h3>Colors (Цвета)</h3>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Красный - 'Red'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">оранжевый - 'Orange'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">желтый - 'Yellow'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">зеленый - 'Green'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Синий - 'Blue'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">фиолетовый - 'Purple'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Черный - 'Black'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">белый - 'White'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">серый - 'Gray'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Коричневый - 'Brown'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Светло - 'Light'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Темно - 'Dark'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-					    <p class="mb-5">The Russian language has more expressions for shades of blue than most other languages. It splits the descriptions into light shades (голубой) and dark shades (синий). </p>
-					
-                    </div> <!-- end of text-container -->
-                                       
-		                   <div class="text-container">
-                        <h3>Days, Weeks, and Months (Дни, недели, и месяцы)</h3>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">понедельник - 'Monday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">вторник - 'Tuesday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">среда - 'Wednesday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Четверг - 'Thursday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Пятница - 'Friday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Суббота - 'Saturday'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">воскресенье - 'Sunday'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Дни - 'Day'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">недели - 'Week'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">месяцы - 'Month'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Год - 'Year'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Десятилетие - 'Decade'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">январь - 'January'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">февраль - 'February'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">март - 'March'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">апрель - 'April'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">май - 'May'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">июнь - 'June'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">июль - 'July'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Август - 'August'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Сентябрь - 'September'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Октябрь - 'October'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Ноябрь - 'November'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Декабрь - 'December'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-					    <p class="mb-5">Notice how many of the months of the year sound very similar to English. This is because both Russian and English share many of their same roots with Latin.</p>
-					
-                    </div> <!-- end of text-container -->
-	
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="text-container last">
-                                <h3>Sign up for Our Newsletter (Подпишитесь на наши новости)</h3>
-                                <p>Sign up here to receive more charts and information to help you master the Russian language! Our team of experts is dedicated to helping you feel confident in your new language skills.</p>
-                                <p> By visiting Lingua Bud or using the Services you agree to the use of cookies in your browser and HTML-based emails. Cookies are small text files placed on your device when you visit a website. By using any of the Services, or submitting or collecting any Personal Information via the Services, you consent and use of your <a class="green" href="#your-link">Personal Information</a>.</p>
-                            </div> <!-- end of text container -->
-                        </div> <!-- end of col-->
-                        <div class="col-md-6">
-
-                            <!-- Privacy Form -->
-                            <div class="form-container">
-                                <form id="privacyForm" data-toggle="validator" data-focus="false">
-                                    <div class="form-group">
-                                        <input type="text" class="form-control-input" id="pname" required>
-                                        <label class="label-control" for="pname">Name</label>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="email" class="form-control-input" id="pemail" required>
-                                        <label class="label-control" for="pemail">Email</label>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <select class="form-control-select" id="pselect" required>
-                                            <option class="select-option" value="" disabled selected>Select Option</option>
-                                            <option class="select-option" value="Delete data">Delete my data</option>
-                                            <option class="select-option" value="Show me data">Show me my data</option>
-                                        </select>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group checkbox">
-                                        <input type="checkbox" id="pterms" value="Agreed-to-Terms" required>I have read and agree to Lingua Bud's <a href="privacy-policy.html">Privacy Policy</a> and <a href="terms-conditions.html">Terms Conditions</a>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <button type="submit" class="form-control-submit-button">SUBMIT</button>
-                                    </div>
-                                    <div class="form-message">
-                                        <div id="pmsgSubmit" class="h3 text-center hidden"></div>
-                                    </div>
-                                </form>
-                            </div> <!-- end of form container -->
-                            <!-- end of privacy form -->
-
-                        </div> <!-- end of col--> 
-                    </div> <!-- end of row -->
-                    <a class="btn-outline-reg back" href="RussianResources.html">BACK</a>
-                </div> <!-- end of col-->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-2 -->
-    <!-- end of privacy content -->
+            <h3>Keep Exploring Russian &#127479;&#127482;</h3>
+            <p class="ns-sub">You've got the basics &mdash; now practice with real-world topics!</p>
+            <div class="ns-grid">
+                <a href="RussianRestaurant.html" class="ns-card">
+                    <div class="ns-card-icon">&#127869;</div>
+                    <div class="ns-card-title">At the Restaurant</div>
+                    <div class="ns-card-sub">Order food like a local</div>
+                </a>
+                <a href="RussianAirport.html" class="ns-card">
+                    <div class="ns-card-icon">&#9992;</div>
+                    <div class="ns-card-title">At the Airport</div>
+                    <div class="ns-card-sub">Navigate travel with ease</div>
+                </a>
+                <a href="RussianHotel.html" class="ns-card">
+                    <div class="ns-card-icon">&#127976;</div>
+                    <div class="ns-card-title">At the Hotel</div>
+                    <div class="ns-card-sub">Check in confidently</div>
+                </a>
+                <a href="RussianDay.html" class="ns-card">
+                    <div class="ns-card-icon">&#9728;</div>
+                    <div class="ns-card-title">Typical Day</div>
+                    <div class="ns-card-sub">Everyday conversations</div>
+                </a>
+                <a href="RussianFirst.html" class="ns-card">
+                    <div class="ns-card-icon">&#129309;</div>
+                    <div class="ns-card-title">First Conversation</div>
+                    <div class="ns-card-sub">Break the ice in Russian</div>
+                </a>
+                <a href="RussianTortoise.html" class="ns-card">
+                    <div class="ns-card-icon">&#128034;</div>
+                    <div class="ns-card-title">Tortoise &amp; Hare</div>
+                    <div class="ns-card-sub">A classic tale in Russian</div>
+                </a>
+                <a href="RussianDuck.html" class="ns-card">
+                    <div class="ns-card-icon">&#128214;</div>
+                    <div class="ns-card-title">Russian Stories</div>
+                    <div class="ns-card-sub">Learn through classic tales</div>
+                </a>
+            </div>
+            <div class="sb-back-row">
+                <a class="btn-outline-reg" href="RussianResources.html" style="color:white;border-color:rgba(255,255,255,0.45);">&larr; Back to Russian Resources</a>
+            </div>
+        </div>
+    </div>
 
 
     <!-- Breadcrumbs -->
@@ -643,14 +791,13 @@
                 <div class="col-lg-12">
                     <div class="breadcrumbs">
                         <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span></span>Translate this page to: <a class="green" href="SpanishBasics.html">Spanish</a>, <a class="green" href="FrenchBasics.html">French</a>, <a class="green" href="PortugueseBasics.html">Portuguese</a>, <a class="green" href="ItalianBasics.html">Italian</a>, <a class="green" href="GermanBasics.html">German</a>, <a class="green" href="SwedishBasics.html">Swedish</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    
+
     <!-- Footer -->
     <div class="footer">
         <div class="container">
@@ -659,60 +806,41 @@
                     <div class="text-container about">
                         <h4>Few Words About Lingua Bud</h4>
                         <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Links</h4>
                         <ul class="list-unstyled li-space-lg white">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="#your-link">startupguide.com</a></li>
+                            <li><a class="white" href="terms-conditions.html">Terms &amp; Conditions</a></li>
+                            <li><a class="white" href="privacy-policy.html">Privacy Policy</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Tools</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li class="media">
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="#your-link">startupguide.com</a></li>
+                            <li><a class="white" href="terms-conditions.html">Terms &amp; Conditions</a></li>
+                            <li class="media"><a class="white" href="privacy-policy.html">Privacy Policy</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Partners</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="#your-link">startupguide.com</a></li>
+                            <li><a class="white" href="terms-conditions.html">Terms &amp; Conditions</a></li>
+                            <li><a class="white" href="privacy-policy.html">Privacy Policy</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of footer -->  
-    <!-- end of footer -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <!-- Copyright -->
@@ -720,24 +848,65 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">Lingua Bud</a></p>
-                </div> <!-- end of col -->
-            </div> <!-- enf of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of copyright --> 
-    <!-- end of copyright -->
+                    <p class="p-small">Copyright &copy; 2023 <a href="https://inovatik.com">Lingua Bud, All Rights Reserved</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    
+
     <!-- Scripts -->
-    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
-    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
-    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
-    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
-    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
-    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
-    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
-    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
-    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <!-- Firebase Auth for navbar -->
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './lib/firebaseClient.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
+
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
+                    }
+                } catch (e) { console.error('Profile load error:', e); }
+
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
