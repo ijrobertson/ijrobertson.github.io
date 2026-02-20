@@ -32,6 +32,334 @@
 	
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ─── Spanish Basics page ─────────────────────────── */
+
+        /* Hero */
+        .sb-hero {
+            background: linear-gradient(135deg, #c60b1e 0%, #9b0015 45%, #1a0008 100%);
+            padding: 6.5rem 0 4.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .sb-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #c60b1e 0%, #f1bf00 50%, #c60b1e 100%);
+        }
+        .sb-hero-flag {
+            font-size: 4.5rem;
+            line-height: 1;
+            margin-bottom: 0.75rem;
+            filter: drop-shadow(0 4px 14px rgba(0,0,0,0.35));
+        }
+        .sb-hero h1 { color: white; font-size: 3rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .sb-hero-sub {
+            color: rgba(255,255,255,0.82);
+            font-size: 1.1rem;
+            max-width: 560px;
+            margin: 0 auto 2.2rem;
+            line-height: 1.65;
+        }
+        .sb-hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+        .sb-hero-link {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 0.45rem 1.15rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .sb-hero-link:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.55);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Language strip */
+        .sb-lang-strip {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0.7rem 0;
+            text-align: center;
+            font-size: 0.87rem;
+            color: #666;
+        }
+        .sb-lang-strip a { color: #c60b1e; font-weight: 600; text-decoration: none; margin: 0 0.4rem; }
+        .sb-lang-strip a:hover { text-decoration: underline; }
+
+        /* Content area */
+        .sb-content { background: #f4f5f7; padding: 3rem 0 3rem; }
+
+        /* Section cards */
+        .sb-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 18px rgba(0,0,0,0.07);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        .sb-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.4rem 2rem;
+            border-bottom: 2px solid #f0f0f0;
+            background: var(--hdr-bg, #fafafa);
+        }
+        .sb-card-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+        .sb-card-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--hdr-accent, #c60b1e);
+            margin-bottom: 0.2rem;
+        }
+        .sb-card-title { font-size: 1.2rem; font-weight: 700; color: #222; margin: 0; }
+        .sb-card-body { padding: 1.75rem 2rem; }
+        .sb-card-body > p { color: #555; line-height: 1.7; margin-bottom: 1rem; }
+
+        /* Word pairs */
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+            gap: 0.6rem;
+        }
+        .word-pair {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eee;
+            transition: box-shadow 0.2s;
+        }
+        .word-pair:hover { box-shadow: 0 3px 10px rgba(198,11,30,0.18); }
+        .word-es {
+            background: #c60b1e;
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.6rem 0.85rem;
+            flex: 1.1;
+            display: flex;
+            align-items: center;
+        }
+        .word-en {
+            background: #fafafa;
+            color: #555;
+            font-size: 0.88rem;
+            padding: 0.6rem 0.85rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Numbers */
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .number-chip {
+            background: #fafafa;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            text-align: center;
+            padding: 0.85rem 0.5rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .number-chip:hover { border-color: #c60b1e; background: #fff9f9; }
+        .number-digit { font-size: 1.6rem; font-weight: 700; color: #c60b1e; line-height: 1; }
+        .number-es { font-size: 0.88rem; font-weight: 600; color: #333; margin-top: 0.25rem; }
+        .number-en { font-size: 0.72rem; color: #999; margin-top: 0.1rem; }
+
+        /* Ordinals */
+        .ordinal-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin: 1.5rem 0 0.75rem;
+        }
+        .ordinal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+            gap: 0.5rem;
+        }
+        .ordinal-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.88rem;
+        }
+        .ordinal-num { font-weight: 700; color: #c60b1e; min-width: 24px; }
+        .ordinal-word { color: #444; }
+
+        /* Verbs */
+        .verb-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+            gap: 0.75rem;
+        }
+        .verb-card {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .verb-card:hover { border-color: #c60b1e; background: #fff9f9; }
+        .verb-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .verb-es { font-weight: 700; color: #c60b1e; font-size: 0.93rem; }
+        .verb-en { font-size: 0.82rem; color: #777; margin-top: 0.1rem; }
+
+        /* Colors */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+            gap: 0.75rem;
+        }
+        .color-chip {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .color-chip:hover { transform: translateY(-4px); box-shadow: 0 6px 16px rgba(0,0,0,0.14); }
+        .color-swatch { height: 65px; }
+        .color-names { padding: 0.5rem 0.25rem 0.65rem; background: white; }
+        .color-es { font-weight: 700; font-size: 0.92rem; color: #222; }
+        .color-en { font-size: 0.78rem; color: #888; margin-top: 0.1rem; }
+
+        /* Calendar */
+        .cal-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .cal-group-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 0.65rem;
+            padding-bottom: 0.45rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .cal-sub-group { margin-top: 1.25rem; }
+        .cal-list { display: flex; flex-direction: column; gap: 0.4rem; }
+        .cal-item {
+            display: flex;
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+        .cal-es {
+            background: #c60b1e;
+            color: white;
+            font-weight: 600;
+            font-size: 0.88rem;
+            padding: 0.45rem 0.85rem;
+            flex: 1.1;
+        }
+        .cal-en {
+            background: #fafafa;
+            color: #666;
+            font-size: 0.85rem;
+            padding: 0.45rem 0.85rem;
+            flex: 1;
+        }
+
+        /* Callouts */
+        .sb-note {
+            background: #fff8e1;
+            border-left: 4px solid #f1bf00;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin-top: 1.3rem;
+            font-size: 0.93rem;
+            color: #555;
+            line-height: 1.65;
+        }
+        .sb-tip {
+            background: #e8fffe;
+            border-left: 4px solid #20bcba;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin-top: 1.3rem;
+            font-size: 0.93rem;
+            color: #444;
+            line-height: 1.65;
+        }
+
+        /* Keep Exploring */
+        .sb-next-steps {
+            background: linear-gradient(135deg, #1a0008 0%, #3d0012 50%, #c60b1e 100%);
+            padding: 3.5rem 0 4rem;
+        }
+        .sb-next-steps h3 { color: white; text-align: center; font-size: 1.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .ns-sub { color: rgba(255,255,255,0.72); text-align: center; margin-bottom: 2.2rem; font-size: 0.97rem; }
+        .ns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .ns-card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 14px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            display: block;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .ns-card:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-5px);
+            text-decoration: none;
+            color: white;
+        }
+        .ns-card-icon { font-size: 2rem; margin-bottom: 0.55rem; }
+        .ns-card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .ns-card-sub { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+        .sb-back-row { text-align: center; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sb-hero { padding: 5.5rem 0 3.5rem; }
+            .sb-hero h1 { font-size: 2.2rem; }
+            .sb-card-header { padding: 1.2rem 1.25rem; }
+            .sb-card-body { padding: 1.25rem 1.25rem; }
+            .cal-two-col { grid-template-columns: 1fr; gap: 1.25rem; }
+            .word-grid { grid-template-columns: 1fr; }
+            .color-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .sb-hero h1 { font-size: 1.8rem; }
+            .sb-hero-flag { font-size: 3rem; }
+            .number-grid { grid-template-columns: repeat(3, 1fr); }
+            .color-grid { grid-template-columns: repeat(2, 1fr); }
+            .verb-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
     
@@ -130,510 +458,294 @@
     <!-- end of navbar -->
 
 
-    <!-- Header -->
-    <header id="header" class="ex-header">
+    <!-- Hero -->
+    <div class="sb-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-md-12">
-                    <h1>Spanish Basics</h1>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </header> <!-- end of ex-header -->
-    <!-- end of header -->
+            <div class="sb-hero-flag">&#127466;&#127480;</div>
+            <h1>Spanish Basics</h1>
+            <p class="sb-hero-sub">Your first steps into the Spanish-speaking world. Learn greetings, numbers, verbs, colors, and more &mdash; all completely free.</p>
+            <div class="sb-hero-links">
+                <a href="#greetings" class="sb-hero-link">&#128075; Greetings</a>
+                <a href="#numbers"   class="sb-hero-link">&#128290; Numbers</a>
+                <a href="#verbs"     class="sb-hero-link">&#9889; Verbs</a>
+                <a href="#colors"    class="sb-hero-link">&#127912; Colors</a>
+                <a href="#calendar"  class="sb-hero-link">&#128197; Calendar</a>
+                <a href="#next-steps" class="sb-hero-link">&#128640; Keep Exploring</a>
+            </div>
+        </div>
+    </div>
+    <!-- end of hero -->
 
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Language strip -->
+    <div class="sb-lang-strip">
+        Also available in:
+        <a href="FrenchBasics.html">French</a>,
+        <a href="PortugueseBasics.html">Portuguese</a>,
+        <a href="ItalianBasics.html">Italian</a>,
+        <a href="GermanBasics.html">German</a>,
+        <a href="RussianBasics.html">Russian</a>,
+        <a href="SwedishBasics.html">Swedish</a>
+    </div>
+    <!-- end of language strip -->
+
+
+    <!-- Content -->
+    <div class="sb-content">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span><a class="green" href="#your-link">Spanish Verb Tenses - Verbos en Español</a>, <a class="green" href="SpanishRestaurant.html">At the Restaurant - En el Restaurante</a>, <a class="green" href="SpanishHotel.html">Checking into the Hotel - Registrarse en el Hotel</a>, <a class="green" href="SpanishAirport.html">At the Airport - En el Aeropuerto</a>, <a class="green" href="SpanishDay.html">Typical Day - Día Típico</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+
+            <!-- Greetings -->
+            <div class="sb-card" id="greetings">
+                <div class="sb-card-header" style="--hdr-bg:#fff9f9; --hdr-accent:#c60b1e;">
+                    <span class="sb-card-icon">&#128075;</span>
+                    <div>
+                        <div class="sb-card-label">Section 1</div>
+                        <div class="sb-card-title">Greetings &amp; Common Phrases <span style="color:#999;font-weight:400;font-size:0.9rem;">(Frases Com&uacute;nes)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>When it comes to learning Spanish, there are simply some words and phrases you have to know. If you want to visit our <a href="NewSpanishPage.html" style="color:#c60b1e;font-weight:600;">Spanish Hub page, click here</a>.</p>
+                    <div class="word-grid">
+                        <div class="word-pair"><div class="word-es">Hola</div><div class="word-en">Hello</div></div>
+                        <div class="word-pair"><div class="word-es">&iquest;C&oacute;mo est&aacute;s?</div><div class="word-en">How are you?</div></div>
+                        <div class="word-pair"><div class="word-es">Buenos d&iacute;as</div><div class="word-en">Good morning</div></div>
+                        <div class="word-pair"><div class="word-es">Buenas tardes</div><div class="word-en">Good afternoon</div></div>
+                        <div class="word-pair"><div class="word-es">Buenas noches</div><div class="word-en">Good night</div></div>
+                        <div class="word-pair"><div class="word-es">Hasta luego</div><div class="word-en">Until later</div></div>
+                        <div class="word-pair"><div class="word-es">Me llamo&hellip;</div><div class="word-en">My name is&hellip;</div></div>
+                        <div class="word-pair"><div class="word-es">S&iacute;, por favor</div><div class="word-en">Yes, please</div></div>
+                        <div class="word-pair"><div class="word-es">No gracias</div><div class="word-en">No thank you</div></div>
+                        <div class="word-pair"><div class="word-es">A veces</div><div class="word-en">Sometimes</div></div>
+                        <div class="word-pair"><div class="word-es">Nunca</div><div class="word-en">Never</div></div>
+                        <div class="word-pair"><div class="word-es">Siempre</div><div class="word-en">Always</div></div>
+                    </div>
+                </div>
+            </div>
+            <!-- end of greetings -->
+
+            <!-- Numbers -->
+            <div class="sb-card" id="numbers">
+                <div class="sb-card-header" style="--hdr-bg:#fffbf0; --hdr-accent:#c60b1e;">
+                    <span class="sb-card-icon">&#128290;</span>
+                    <div>
+                        <div class="sb-card-label">Section 2</div>
+                        <div class="sb-card-title">Numbers <span style="color:#999;font-weight:400;font-size:0.9rem;">(N&uacute;meros)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>Learn how to count in Spanish from 1 to 20:</p>
+                    <div class="number-grid">
+                        <div class="number-chip"><div class="number-digit">1</div><div class="number-es">Uno</div><div class="number-en">One</div></div>
+                        <div class="number-chip"><div class="number-digit">2</div><div class="number-es">Dos</div><div class="number-en">Two</div></div>
+                        <div class="number-chip"><div class="number-digit">3</div><div class="number-es">Tres</div><div class="number-en">Three</div></div>
+                        <div class="number-chip"><div class="number-digit">4</div><div class="number-es">Cuatro</div><div class="number-en">Four</div></div>
+                        <div class="number-chip"><div class="number-digit">5</div><div class="number-es">Cinco</div><div class="number-en">Five</div></div>
+                        <div class="number-chip"><div class="number-digit">6</div><div class="number-es">Seis</div><div class="number-en">Six</div></div>
+                        <div class="number-chip"><div class="number-digit">7</div><div class="number-es">Siete</div><div class="number-en">Seven</div></div>
+                        <div class="number-chip"><div class="number-digit">8</div><div class="number-es">Ocho</div><div class="number-en">Eight</div></div>
+                        <div class="number-chip"><div class="number-digit">9</div><div class="number-es">Nueve</div><div class="number-en">Nine</div></div>
+                        <div class="number-chip"><div class="number-digit">10</div><div class="number-es">Diez</div><div class="number-en">Ten</div></div>
+                        <div class="number-chip"><div class="number-digit">11</div><div class="number-es">Once</div><div class="number-en">Eleven</div></div>
+                        <div class="number-chip"><div class="number-digit">12</div><div class="number-es">Doce</div><div class="number-en">Twelve</div></div>
+                        <div class="number-chip"><div class="number-digit">13</div><div class="number-es">Trece</div><div class="number-en">Thirteen</div></div>
+                        <div class="number-chip"><div class="number-digit">14</div><div class="number-es">Catorce</div><div class="number-en">Fourteen</div></div>
+                        <div class="number-chip"><div class="number-digit">15</div><div class="number-es">Quince</div><div class="number-en">Fifteen</div></div>
+                        <div class="number-chip"><div class="number-digit">16</div><div class="number-es">Diecis&eacute;is</div><div class="number-en">Sixteen</div></div>
+                        <div class="number-chip"><div class="number-digit">17</div><div class="number-es">Diecisiete</div><div class="number-en">Seventeen</div></div>
+                        <div class="number-chip"><div class="number-digit">18</div><div class="number-es">Dieciocho</div><div class="number-en">Eighteen</div></div>
+                        <div class="number-chip"><div class="number-digit">19</div><div class="number-es">Diecinueve</div><div class="number-en">Nineteen</div></div>
+                        <div class="number-chip"><div class="number-digit">20</div><div class="number-es">Veinte</div><div class="number-en">Twenty</div></div>
+                    </div>
+                    <div class="ordinal-section-title">Ordinal Numbers &mdash; In Order (Num&eacute;rales en Orden)</div>
+                    <div class="ordinal-grid">
+                        <div class="ordinal-chip"><span class="ordinal-num">1st</span><span class="ordinal-word">Primero/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">2nd</span><span class="ordinal-word">Segundo/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">3rd</span><span class="ordinal-word">Tercero/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">4th</span><span class="ordinal-word">Cuarto/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">5th</span><span class="ordinal-word">Quinto/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">6th</span><span class="ordinal-word">Sexto/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">7th</span><span class="ordinal-word">S&eacute;ptimo/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">8th</span><span class="ordinal-word">Octavo/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">9th</span><span class="ordinal-word">Noveno/a</span></div>
+                        <div class="ordinal-chip"><span class="ordinal-num">10th</span><span class="ordinal-word">D&eacute;cimo/a</span></div>
+                    </div>
+                </div>
+            </div>
+            <!-- end of numbers -->
+
+            <!-- Verbs -->
+            <div class="sb-card" id="verbs">
+                <div class="sb-card-header" style="--hdr-bg:#fff9f9; --hdr-accent:#c60b1e;">
+                    <span class="sb-card-icon">&#9889;</span>
+                    <div>
+                        <div class="sb-card-label">Section 3</div>
+                        <div class="sb-card-title">Common Verbs <span style="color:#999;font-weight:400;font-size:0.9rem;">(Verbos Com&uacute;nes)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <p>Verbs are the engine of every sentence. Here are 12 essential Spanish verbs to get you started:</p>
+                    <div class="verb-grid">
+                        <div class="verb-card"><span class="verb-icon">&#128172;</span><div><div class="verb-es">Hablar</div><div class="verb-en">to speak</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#127869;</span><div><div class="verb-es">Comer</div><div class="verb-en">to eat</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#129380;</span><div><div class="verb-es">Beber</div><div class="verb-en">to drink</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128296;</span><div><div class="verb-es">Hacer</div><div class="verb-en">to do / to make</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128694;</span><div><div class="verb-es">Caminar</div><div class="verb-en">to walk</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128064;</span><div><div class="verb-es">Ver</div><div class="verb-en">to see / to watch</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#10024;</span><div><div class="verb-es">Ser</div><div class="verb-en">to be (permanent)</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128205;</span><div><div class="verb-es">Estar</div><div class="verb-en">to be (temporary)</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#129306;</span><div><div class="verb-es">Tener</div><div class="verb-en">to have</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128717;</span><div><div class="verb-es">Comprar</div><div class="verb-en">to buy</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128564;</span><div><div class="verb-es">Dormir</div><div class="verb-en">to sleep</div></div></div>
+                        <div class="verb-card"><span class="verb-icon">&#128188;</span><div><div class="verb-es">Trabajar</div><div class="verb-en">to work</div></div></div>
+                    </div>
+                    <div class="sb-note">
+                        <strong>&#129300; Ser vs. Estar &mdash; What's the Difference?</strong><br>
+                        Both mean &ldquo;to be&rdquo; in English, but they work very differently in Spanish.<br>
+                        <strong>Ser</strong> describes permanent or essential qualities: <em>&ldquo;Yo soy alto.&rdquo;</em> (I am tall.)<br>
+                        <strong>Estar</strong> describes temporary states or conditions: <em>&ldquo;Yo estoy cansado.&rdquo;</em> (I am tired.)
+                    </div>
+                </div>
+            </div>
+            <!-- end of verbs -->
+
+            <!-- Colors -->
+            <div class="sb-card" id="colors">
+                <div class="sb-card-header" style="--hdr-bg:#f9f9ff; --hdr-accent:#c60b1e;">
+                    <span class="sb-card-icon">&#127912;</span>
+                    <div>
+                        <div class="sb-card-label">Section 4</div>
+                        <div class="sb-card-title">Colors <span style="color:#999;font-weight:400;font-size:0.9rem;">(Colores)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <div class="color-grid">
+                        <div class="color-chip"><div class="color-swatch" style="background:#c0392b;"></div><div class="color-names"><div class="color-es">Rojo</div><div class="color-en">Red</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#e67e22;"></div><div class="color-names"><div class="color-es">Naranja</div><div class="color-en">Orange</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#f1c40f;"></div><div class="color-names"><div class="color-es">Amarillo</div><div class="color-en">Yellow</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#27ae60;"></div><div class="color-names"><div class="color-es">Verde</div><div class="color-en">Green</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#2980b9;"></div><div class="color-names"><div class="color-es">Azul</div><div class="color-en">Blue</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#8e44ad;"></div><div class="color-names"><div class="color-es">Morado</div><div class="color-en">Purple</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#2c3e50;"></div><div class="color-names"><div class="color-es">Negro</div><div class="color-en">Black</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#f5f5f5; border-bottom:1px solid #ddd;"></div><div class="color-names"><div class="color-es">Blanco</div><div class="color-en">White</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#95a5a6;"></div><div class="color-names"><div class="color-es">Gris</div><div class="color-en">Gray</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:#7d4f34;"></div><div class="color-names"><div class="color-es">Marr&oacute;n</div><div class="color-en">Brown</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:linear-gradient(135deg,#e8f8ff,#d0f0e0);"></div><div class="color-names"><div class="color-es">Claro</div><div class="color-en">Light</div></div></div>
+                        <div class="color-chip"><div class="color-swatch" style="background:linear-gradient(135deg,#2c3e50,#1a1a1a);"></div><div class="color-names"><div class="color-es">Oscuro</div><div class="color-en">Dark</div></div></div>
+                    </div>
+                    <div class="sb-note">
+                        <strong>&#129504; Grammar Note &mdash; Gender Agreement:</strong><br>
+                        In Spanish, colors must agree in gender with the noun they describe. For example, <em>&ldquo;blanco&rdquo;</em> (masculine) becomes <em>&ldquo;blanca&rdquo;</em> when describing a feminine noun &mdash; like <em>&ldquo;la casa blanca&rdquo;</em> (the white house).
+                    </div>
+                </div>
+            </div>
+            <!-- end of colors -->
+
+            <!-- Calendar -->
+            <div class="sb-card" id="calendar">
+                <div class="sb-card-header" style="--hdr-bg:#f9fff9; --hdr-accent:#c60b1e;">
+                    <span class="sb-card-icon">&#128197;</span>
+                    <div>
+                        <div class="sb-card-label">Section 5</div>
+                        <div class="sb-card-title">Days, Weeks &amp; Months <span style="color:#999;font-weight:400;font-size:0.9rem;">(D&iacute;as, Semanas y Meses)</span></div>
+                    </div>
+                </div>
+                <div class="sb-card-body">
+                    <div class="cal-two-col">
+                        <div>
+                            <div class="cal-group-label">&#128198; Days of the Week</div>
+                            <div class="cal-list">
+                                <div class="cal-item"><div class="cal-es">Lunes</div><div class="cal-en">Monday</div></div>
+                                <div class="cal-item"><div class="cal-es">Martes</div><div class="cal-en">Tuesday</div></div>
+                                <div class="cal-item"><div class="cal-es">Mi&eacute;rcoles</div><div class="cal-en">Wednesday</div></div>
+                                <div class="cal-item"><div class="cal-es">Jueves</div><div class="cal-en">Thursday</div></div>
+                                <div class="cal-item"><div class="cal-es">Viernes</div><div class="cal-en">Friday</div></div>
+                                <div class="cal-item"><div class="cal-es">S&aacute;bado</div><div class="cal-en">Saturday</div></div>
+                                <div class="cal-item"><div class="cal-es">Domingo</div><div class="cal-en">Sunday</div></div>
+                            </div>
+                            <div class="cal-sub-group">
+                                <div class="cal-group-label">&#9200; Time Words</div>
+                                <div class="cal-list">
+                                    <div class="cal-item"><div class="cal-es">D&iacute;a</div><div class="cal-en">Day</div></div>
+                                    <div class="cal-item"><div class="cal-es">Semana</div><div class="cal-en">Week</div></div>
+                                    <div class="cal-item"><div class="cal-es">Mes</div><div class="cal-en">Month</div></div>
+                                    <div class="cal-item"><div class="cal-es">A&ntilde;o</div><div class="cal-en">Year</div></div>
+                                    <div class="cal-item"><div class="cal-es">D&eacute;cada</div><div class="cal-en">Decade</div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="cal-group-label">&#128197; Months of the Year</div>
+                            <div class="cal-list">
+                                <div class="cal-item"><div class="cal-es">Enero</div><div class="cal-en">January</div></div>
+                                <div class="cal-item"><div class="cal-es">Febrero</div><div class="cal-en">February</div></div>
+                                <div class="cal-item"><div class="cal-es">Marzo</div><div class="cal-en">March</div></div>
+                                <div class="cal-item"><div class="cal-es">Abril</div><div class="cal-en">April</div></div>
+                                <div class="cal-item"><div class="cal-es">Mayo</div><div class="cal-en">May</div></div>
+                                <div class="cal-item"><div class="cal-es">Junio</div><div class="cal-en">June</div></div>
+                                <div class="cal-item"><div class="cal-es">Julio</div><div class="cal-en">July</div></div>
+                                <div class="cal-item"><div class="cal-es">Agosto</div><div class="cal-en">August</div></div>
+                                <div class="cal-item"><div class="cal-es">Septiembre</div><div class="cal-en">September</div></div>
+                                <div class="cal-item"><div class="cal-es">Octubre</div><div class="cal-en">October</div></div>
+                                <div class="cal-item"><div class="cal-es">Noviembre</div><div class="cal-en">November</div></div>
+                                <div class="cal-item"><div class="cal-es">Diciembre</div><div class="cal-en">December</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sb-tip">
+                        &#128161; <strong>Latin Roots:</strong> Notice how similar the Spanish months are to English! Both languages share Latin roots &mdash; so once you learn months in one language, the other comes naturally.
+                    </div>
+                </div>
+            </div>
+            <!-- end of calendar -->
+
+        </div>
+    </div>
+    <!-- end of content -->
 
 
-    <!-- Privacy Content -->
-    <div class="ex-basic-2">
+    <!-- Keep Exploring -->
+    <div class="sb-next-steps" id="next-steps">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3>Greetings and Common Phrases (Frases Comúnes)</h3>
-                        <p>When it comes to learning Spanish, there are simply some words and phrases you have to know.</p>
-                        <p>If you want to visit our Spanish Page, <a class="green" href="NewSpanishPage.html">click here</a>. </p>
-			<p>Check out this chart to learn some Spanish Basics:</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Hola - 'Hello'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">¿Cómo está/s? - 'How are you?'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Buenos días - 'Good morning'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Buenas tardes - 'Good afternoon'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Buenas noches - 'Good night'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Hasta luego - 'Until later'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Me llamo... - 'My name is...'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Sí, por favor - 'Yes, please'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">No gracias - 'No thank you'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">A veces - 'Sometimes'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Nunca - 'Never'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Siempre - 'Always'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-                    </div> <!-- end of text-container-->
-                    
-                    <div class="text-container">
-                        <h3>Numbers (Números)</h3>
-                        <p>Learn how to spell and say Spanish numbers:</p>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Uno - 'One'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dos - 'Two'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Tres - 'Three'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Cuatro - 'Four'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Cinco - 'Five'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Seis - 'Six'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Siete - 'Seven'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Ocho - 'Eight'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Nueve - 'Nine'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Diez - 'Ten'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Once - 'Eleven'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Doce - 'Twelve'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Trece - 'Thirteen'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Catorce - 'Fourteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Quince - 'Fifteen'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dieciséis - 'Sixteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Diecisiete - 'Seventeen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dieciocho - 'Eighteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Diecinueve - 'Nineteen'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Viente - 'Twenty'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-		    	<p>Listing Numbers in Spanish Numerically (Números en Listado en Español):</p>
-                        <ol class="li-space-lg">
-                            <li>Primero/a</li>
-                            <li>Segundo/a</li>
-                            <li>Tercero/a</li>
-                            <li>Cuarto/a</li>
-                            <li>Qunito/a</li>
-                            <li>Sexto/a</li>
-                            <li>Séptimo/a</li>
-                            <li>Octavo/a</li>
-                            <li>Noveno/a</li>
-                            <li>Décimo/a</li>
-         
-                        </ol>
-                    </div> <!-- end of text-container -->
-
-                    <div class="text-container">
-                        <h3>Common Spanish Verbs (Verbos Comúnes en Español)</h3>
-			<div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Hablar - 'to speak'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Comer - 'to eat'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Beber - 'to drink'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Hacer - 'to do/to make'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Caminar - 'to walk'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Ver - 'to see/watch'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Ser - 'to be'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Estar - 'to be'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Tener - 'to have'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Comprar - 'to buy'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Dormir - 'to sleep'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Trabajar - 'to work'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-                        <p>Notice how both 'Ser' and 'Estar' mean 'to be', however, they are used in different contexts. Typically speaking, Ser is used to describe things which are permanent and Estar is used to describe temporary things. </p>
-                        <p>Examples: 'Yo soy alto.' / 'Yo estoy muy cansado.' - Being tall is a permanent feature, while being sleepy is typically not permament.</p>
-                    </div> <!-- end of text container -->
-
-                    <div class="text-container">
-                        <h3>Colors (Colores)</h3>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Rojo - 'Red'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Naranja - 'Orange'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Amarillo - 'Yellow'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Verde - 'Green'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Azul - 'Blue'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Morado - 'Purple'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Negro - 'Black'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Blanco - 'White'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Gris - 'Gray'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Marrón - 'Brown'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Claro - 'Light'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Oscuro - 'Dark'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-					    <p class="mb-5">Note that while some of these colors end in either -a or -o, if they are describing a subject which is masculine or feminine, they may change their endings. For example, the Spanish word for 'white' is Blanco, but if you are talking about a house, it would be: 'La casa blanca'.</p>
-					
-                    </div> <!-- end of text-container -->
-	
-	                   <div class="text-container">
-                        <h3>Days, Weeks, and Months (Días, Semanas, y Meses)</h3>
-			    <div class="row">
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Lunes - 'Monday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Martes - 'Tuesday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Miércoles - 'Wednesday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Jueves - 'Thursday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Viernes - 'Friday'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Sábado - 'Saturday'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Domingo - 'Sunday'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Día - 'Day'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Semana - 'Week'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Mes - 'Month'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Año - 'Year'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Década - 'Decade'</div>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-
-                            <div class="col-md-6">
-                                <ul class="list-unstyled li-space-lg indent">
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Enero - 'January'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Febrero - 'Ferbuary'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Marzo - 'March'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Abril - 'April'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Mayo - 'May'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Junio - 'June'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Julio - 'July'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Agosto - 'August'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Septiembre - 'September'</div>
-                                    </li>
-                                    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Octubre - 'October'</div>
-                                    </li>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Noviembre - 'November'</div>
-				    <li class="media">
-                                        <i class="fas fa-square"></i>
-                                        <div class="media-body">Diciembre - 'December'</div>
-                                    </li>
-                                    </li>
-                                </ul>
-                            </div> <!-- end of col -->
-                        </div> <!-- end of row -->
-					    <p class="mb-5">Notice how many of the months of the year are very similar to English. This is because both Spanish and English share many of their roots with Latin.</p>
-					
-                    </div> <!-- end of text-container -->
-                                       
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="text-container last">
-                                <h3>Sign up for Our Newsletter (Suscríbete a Nuestro Periódico Electrónico)</h3>
-                                <p>Sign up here to receive more charts and information to help you master the Spanish language! Our team of experts is dedicated to helping you feel confident in your new language skills.</p>
-                                <p> By visiting Lingua Bud or using the Services you agree to the use of cookies in your browser and HTML-based emails. Cookies are small text files placed on your device when you visit a website. By using any of the Services, or submitting or collecting any Personal Information via the Services, you consent and use of your <a class="green" href="#your-link">Personal Information</a></p>
-                            </div> <!-- end of text container -->
-                        </div> <!-- end of col-->
-                        <div class="col-md-6">
-
-                            <!-- Privacy Form -->
-                            <div class="form-container">
-                                <form id="privacyForm" data-toggle="validator" data-focus="false">
-                                    <div class="form-group">
-                                        <input type="text" class="form-control-input" id="pname" required>
-                                        <label class="label-control" for="pname">Name</label>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="email" class="form-control-input" id="pemail" required>
-                                        <label class="label-control" for="pemail">Email</label>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <select class="form-control-select" id="pselect" required>
-                                            <option class="select-option" value="" disabled selected>Select Option</option>
-                                            <option class="select-option" value="Delete data">Delete my data</option>
-                                            <option class="select-option" value="Show me data">Show me my data</option>
-                                        </select>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group checkbox">
-                                        <input type="checkbox" id="pterms" value="Agreed-to-Terms" required>I have read and agree to Lingua Bud's <a href="privacy-policy.html">Privacy Policy</a> and <a href="terms-conditions.html">Terms Conditions</a>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <button type="submit" class="form-control-submit-button">SUBMIT</button>
-                                    </div>
-                                    <div class="form-message">
-                                        <div id="pmsgSubmit" class="h3 text-center hidden"></div>
-                                    </div>
-                                </form>
-                            </div> <!-- end of form container -->
-                            <!-- end of privacy form -->
-
-                        </div> <!-- end of col--> 
-                    </div> <!-- end of row -->
-                    <a class="btn-outline-reg back" href="SpanishResources.html">BACK</a>
-                </div> <!-- end of col-->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-2 -->
-    <!-- end of privacy content -->
+            <h3>Keep Exploring Spanish &#127466;&#127480;</h3>
+            <p class="ns-sub">You've got the basics &mdash; now practice with real-world topics!</p>
+            <div class="ns-grid">
+                <a href="SpanishRestaurant.html" class="ns-card">
+                    <div class="ns-card-icon">&#127869;</div>
+                    <div class="ns-card-title">At the Restaurant</div>
+                    <div class="ns-card-sub">Order food like a local</div>
+                </a>
+                <a href="SpanishAirport.html" class="ns-card">
+                    <div class="ns-card-icon">&#9992;</div>
+                    <div class="ns-card-title">At the Airport</div>
+                    <div class="ns-card-sub">Navigate travel with ease</div>
+                </a>
+                <a href="SpanishHotel.html" class="ns-card">
+                    <div class="ns-card-icon">&#127976;</div>
+                    <div class="ns-card-title">At the Hotel</div>
+                    <div class="ns-card-sub">Check in confidently</div>
+                </a>
+                <a href="SpanishDay.html" class="ns-card">
+                    <div class="ns-card-icon">&#9728;</div>
+                    <div class="ns-card-title">Typical Day</div>
+                    <div class="ns-card-sub">Everyday conversations</div>
+                </a>
+                <a href="SpanishFirst.html" class="ns-card">
+                    <div class="ns-card-icon">&#129309;</div>
+                    <div class="ns-card-title">First Conversation</div>
+                    <div class="ns-card-sub">Break the ice in Spanish</div>
+                </a>
+                <a href="LosTresCerditosNew.html" class="ns-card">
+                    <div class="ns-card-icon">&#128214;</div>
+                    <div class="ns-card-title">Spanish Stories</div>
+                    <div class="ns-card-sub">Learn through classic tales</div>
+                </a>
+            </div>
+            <div class="sb-back-row">
+                <a class="btn-outline-reg" href="SpanishResources.html" style="color:white;border-color:rgba(255,255,255,0.45);">&larr; Back to Spanish Resources</a>
+            </div>
+        </div>
+    </div>
+    <!-- end of keep exploring -->
 
 
     <!-- Breadcrumbs -->
