@@ -437,26 +437,38 @@
             color: white;
         }
 
-        .resource-type-selector {
-            text-align: center;
+        .resource-type-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
-        .resource-type-selector select {
-            padding: 0.75rem 1.5rem;
+        .resource-type-tab {
+            padding: 0.75rem 1.75rem;
             border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            border-radius: 25px;
             font-size: 1rem;
             font-weight: 600;
-            color: #333;
+            color: #555;
             cursor: pointer;
             background: white;
-            min-width: 200px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .resource-type-selector select:focus {
-            outline: none;
+        .resource-type-tab:hover {
             border-color: #20bcba;
+            color: #20bcba;
+        }
+
+        .resource-type-tab.active {
+            background: #20bcba;
+            border-color: #20bcba;
+            color: white;
         }
 
         .resources-carousel {
@@ -985,11 +997,13 @@
             </div>
 
             <!-- Resource Type Selector -->
-            <div class="resource-type-selector">
-                <select id="resourceTypeSelect">
-                    <option value="resources">Learning Resources</option>
-                    <option value="stories">Short Stories</option>
-                </select>
+            <div class="resource-type-tabs">
+                <button class="resource-type-tab active" data-type="resources">
+                    <i class="fas fa-book"></i> Learning Resources
+                </button>
+                <button class="resource-type-tab" data-type="stories">
+                    <i class="fas fa-book-open"></i> Short Stories
+                </button>
             </div>
 
             <!-- Resources Carousel -->
@@ -2504,12 +2518,15 @@
                 });
             });
 
-            // Resource type selector event listener
-            const resourceTypeSelect = document.getElementById('resourceTypeSelect');
-            resourceTypeSelect.addEventListener('change', () => {
-                currentResourceType = resourceTypeSelect.value;
-                carouselIndex = 0;
-                renderResources();
+            // Resource type toggle event listeners
+            document.querySelectorAll('.resource-type-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.resource-type-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentResourceType = tab.getAttribute('data-type');
+                    carouselIndex = 0;
+                    renderResources();
+                });
             });
 
             // Carousel arrow event listeners
