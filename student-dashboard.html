@@ -434,6 +434,112 @@
     .toggle-switch input:checked + .toggle-slider:before {
       transform: translateX(24px);
     }
+
+    /* ── New-user setup modal ─────────────────────────────── */
+    #setupModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.78);
+      z-index: 10000;
+      overflow-y: auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .setup-inner {
+      background: white;
+      max-width: 620px;
+      margin: 0 auto;
+      border-radius: 14px;
+      padding: 2rem 2.5rem 2.5rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .setup-inner h2 {
+      color: var(--navy);
+      margin-bottom: 0.3rem;
+      font-size: 1.6rem;
+    }
+    .setup-subtitle {
+      color: #666;
+      margin-bottom: 1.75rem;
+      font-size: 0.95rem;
+    }
+    .setup-req { color: #dc3545; margin-left: 2px; }
+    .setup-field {
+      margin-bottom: 1.25rem;
+    }
+    .setup-field label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      margin-top: 0;
+    }
+    .setup-field input,
+    .setup-field select,
+    .setup-field textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d3d3d3;
+      border-radius: 6px;
+      font-size: 1rem;
+      resize: vertical;
+    }
+    .setup-field textarea { min-height: 90px; }
+    .setup-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      min-height: 28px;
+    }
+    .setup-avatar-row {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+    }
+    .setup-avatar-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--primary);
+      background: #f0f0f0;
+      flex-shrink: 0;
+    }
+    .setup-choose-photo {
+      color: var(--primary);
+      text-decoration: underline;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .setup-error {
+      color: #dc3545;
+      font-size: 0.9rem;
+      margin-top: 0.75rem;
+      font-weight: 600;
+      min-height: 1.2em;
+    }
+    .setup-progress {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      min-height: 1.2em;
+    }
+    .setup-submit-btn {
+      width: 100%;
+      margin-top: 1.5rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 6px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .setup-submit-btn:hover { background: #199c9a; }
+    .setup-submit-btn:disabled { opacity: 0.65; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -509,9 +615,78 @@
           </div>
         </div>
       </div>
+
+      <span class="nav-item social-icons">
+        <span class="fa-stack">
+          <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
+            <span class="hexagon"></span>
+            <i class="fab fa-facebook-f fa-stack-1x"></i>
+          </a>
+        </span>
+        <span class="fa-stack">
+          <a href="https://www.instagram.com/lingua_bud/" target="_blank">
+            <span class="hexagon"></span>
+            <i class="fab fa-instagram fa-stack-1x"></i>
+          </a>
+        </span>
+      </span>
     </div>
   </nav>
   <!-- end of navbar -->
+
+  <!-- ── New-user setup modal (cannot be dismissed) ──────── -->
+  <div id="setupModal">
+    <div class="setup-inner">
+      <h2>Welcome to Lingua Bud!</h2>
+      <p class="setup-subtitle">Complete your profile to connect with language partners. All fields are required.</p>
+
+      <div class="setup-field">
+        <label for="setup-name">Full Name <span class="setup-req">*</span></label>
+        <input id="setup-name" type="text" placeholder="Your full name" />
+      </div>
+
+      <div class="setup-field">
+        <label for="setup-country">Native Country <span class="setup-req">*</span></label>
+        <select id="setup-country"><option value="">Select your country...</option></select>
+      </div>
+
+      <div class="setup-field">
+        <label for="setup-spoken-sel">Languages I Speak <span class="setup-req">*</span></label>
+        <select id="setup-spoken-sel"><option value="">Select a language to add...</option></select>
+        <div class="setup-tags" id="setup-spoken-tags"></div>
+      </div>
+
+      <div class="setup-field">
+        <label for="setup-learning-sel">Languages I'm Learning <span class="setup-req">*</span></label>
+        <select id="setup-learning-sel"><option value="">Select a language to add...</option></select>
+        <div class="setup-tags" id="setup-learning-tags"></div>
+      </div>
+
+      <div class="setup-field">
+        <label for="setup-about">About Me <span class="setup-req">*</span></label>
+        <textarea id="setup-about" placeholder="Tell us about yourself, your language goals, interests..."></textarea>
+      </div>
+
+      <div class="setup-field">
+        <label>Profile Picture <span class="setup-req">*</span></label>
+        <div class="setup-avatar-row">
+          <img id="setup-avatar-preview" class="setup-avatar-img"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+            alt="Preview" />
+          <div>
+            <label for="setup-avatar-input" class="setup-choose-photo">Choose photo</label>
+            <input type="file" id="setup-avatar-input" accept="image/*" style="display:none;" />
+            <div style="font-size:0.8rem;color:#666;margin-top:4px;">JPG, PNG or GIF. Max 5 MB.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-error" id="setup-error"></div>
+      <div class="setup-progress" id="setup-progress"></div>
+      <button class="setup-submit-btn" id="setup-submit">Complete Profile &amp; Get Started</button>
+    </div>
+  </div>
+  <!-- ── end setup modal ──────────────────────────────────── -->
 
   <div class="page">
     <div class="profile-card">
@@ -875,9 +1050,19 @@
           console.log('👤 User ID:', user.uid);
           console.log('📧 User email:', user.email);
 
+          // Show profile nav, hide sign-in link
+          const profileNavWrapper = document.getElementById('profileNavWrapper');
+          const signInWrapper = document.getElementById('signInWrapper');
+          if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+          if (signInWrapper) signInWrapper.style.display = 'none';
+
           try {
             await loadProfile();
             console.log('✅ Profile loaded successfully');
+            // Show setup modal for new users who have no profile yet
+            if (isNewUser) {
+              showSetupModal();
+            }
           } catch (error) {
             console.error('❌ Error in loadProfile:', error);
           }
@@ -986,7 +1171,157 @@
       });
     }
 
-    // BOOKING MANAGEMENT FUNCTIONS
+    // ── SETUP MODAL (new users) ─────────────────────────────
+
+    let setupSpokenLangs = [];
+    let setupLearningLangs = [];
+    let setupAvatarFile = null;
+
+    function showSetupModal() {
+      document.getElementById('setupModal').style.display = 'block';
+
+      // Populate country dropdown
+      const countryEl = document.getElementById('setup-country');
+      countries.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        countryEl.appendChild(o);
+      });
+
+      // Populate language dropdowns
+      const spokenSel = document.getElementById('setup-spoken-sel');
+      const learningSel = document.getElementById('setup-learning-sel');
+      languages.forEach(lang => {
+        const o1 = document.createElement('option');
+        o1.value = lang; o1.textContent = lang;
+        spokenSel.appendChild(o1);
+        const o2 = o1.cloneNode(true);
+        learningSel.appendChild(o2);
+      });
+
+      spokenSel.addEventListener('change', () => {
+        const val = spokenSel.value;
+        if (val && !setupSpokenLangs.includes(val)) {
+          setupSpokenLangs.push(val);
+          renderSetupTags('spoken');
+        }
+        spokenSel.value = '';
+      });
+
+      learningSel.addEventListener('change', () => {
+        const val = learningSel.value;
+        if (val && !setupLearningLangs.includes(val)) {
+          setupLearningLangs.push(val);
+          renderSetupTags('learning');
+        }
+        learningSel.value = '';
+      });
+
+      // Avatar preview on file select
+      document.getElementById('setup-avatar-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setupAvatarFile = file;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById('setup-avatar-preview').src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById('setup-submit').addEventListener('click', submitSetupModal);
+    }
+
+    function renderSetupTags(type) {
+      const arr = type === 'spoken' ? setupSpokenLangs : setupLearningLangs;
+      const container = document.getElementById(type === 'spoken' ? 'setup-spoken-tags' : 'setup-learning-tags');
+      container.innerHTML = '';
+      arr.forEach(lang => {
+        const tag = document.createElement('div');
+        tag.className = 'tag';
+        tag.innerHTML = `<span>${escapeHtml(lang)}</span><span class="remove-tag" style="cursor:pointer;font-weight:bold;padding:0 0.3rem;background:rgba(255,255,255,0.3);border-radius:50%;line-height:1;">×</span>`;
+        tag.querySelector('.remove-tag').addEventListener('click', () => {
+          if (type === 'spoken') {
+            setupSpokenLangs = setupSpokenLangs.filter(l => l !== lang);
+          } else {
+            setupLearningLangs = setupLearningLangs.filter(l => l !== lang);
+          }
+          renderSetupTags(type);
+        });
+        container.appendChild(tag);
+      });
+    }
+
+    async function submitSetupModal() {
+      const errorEl = document.getElementById('setup-error');
+      const progressEl = document.getElementById('setup-progress');
+      const submitBtn = document.getElementById('setup-submit');
+      errorEl.textContent = '';
+      progressEl.textContent = '';
+
+      const name = document.getElementById('setup-name').value.trim();
+      const country = document.getElementById('setup-country').value;
+      const about = document.getElementById('setup-about').value.trim();
+
+      if (!name) { errorEl.textContent = 'Please enter your full name.'; return; }
+      if (!country) { errorEl.textContent = 'Please select your native country.'; return; }
+      if (setupSpokenLangs.length === 0) { errorEl.textContent = 'Please add at least one language you speak.'; return; }
+      if (setupLearningLangs.length === 0) { errorEl.textContent = 'Please add at least one language you\'re learning.'; return; }
+      if (!about) { errorEl.textContent = 'Please write something in About Me.'; return; }
+      if (!setupAvatarFile) { errorEl.textContent = 'Please upload a profile picture.'; return; }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
+
+      try {
+        progressEl.textContent = 'Uploading profile picture...';
+        const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+        await uploadBytes(avatarRef, setupAvatarFile);
+        const avatarUrl = await getDownloadURL(avatarRef);
+
+        progressEl.textContent = 'Saving profile...';
+        const profileData = {
+          name,
+          native_country: country,
+          country,
+          about_me: about,
+          languages_spoken: setupSpokenLangs,
+          languages_learning: setupLearningLangs,
+          avatar_url: avatarUrl,
+          role: 'student',
+          email: currentUser.email,
+          emailNotifications: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        await setDoc(doc(db, 'users', currentUser.uid), profileData, { merge: true });
+
+        // Sync into main form
+        document.getElementById('name').value = name;
+        document.getElementById('about_me').value = about;
+        document.getElementById('native_country').value = country;
+        spokenLanguages = [...setupSpokenLangs];
+        learningLanguages = [...setupLearningLangs];
+        renderLanguages('spoken');
+        renderLanguages('learning');
+        document.getElementById('avatarPreview').src = avatarUrl;
+        document.getElementById('navProfilePic').src = avatarUrl;
+        localStorage.setItem('student_avatar', avatarUrl);
+
+        isNewUser = false;
+        document.getElementById('setupModal').style.display = 'none';
+
+      } catch (err) {
+        console.error('Setup error:', err);
+        errorEl.textContent = 'Error saving profile: ' + err.message;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Complete Profile & Get Started';
+        progressEl.textContent = '';
+      }
+    }
+
+    // ── BOOKING MANAGEMENT FUNCTIONS ────────────────────────
 
     async function loadStudentBookings() {
       console.log('📅 Loading student bookings...');
