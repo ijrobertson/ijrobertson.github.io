@@ -26,14 +26,16 @@
         /* ══════════════════════════════════════════════════════════ */
 
         /* ── Global overflow fix (prevents horizontal scroll on mobile) ── */
-        html, body { overflow-x: hidden; max-width: 100%; }
+        /* NOTE: overflow-x hidden must NOT be on html — it clips position:fixed elements
+           (navbar, back-to-top button) and can break scroll event detection in jQuery */
+        body { overflow-x: hidden; }
         * { box-sizing: border-box; }
 
         /* ── Hero ── */
         .sp-hero {
             background:
-                linear-gradient(135deg, rgba(15,52,96,0.60) 0%, rgba(26,95,122,0.45) 50%, rgba(15,52,96,0.60) 100%),
-                url('images/spanishcliff.jpg') center center / cover no-repeat;
+                linear-gradient(to right, rgba(17,52,72,0.1) 0%, rgba(17,52,72,0.7) 70%, rgba(17,52,72,0.85) 100%),
+                url('images/brazil.jpg') left center / cover no-repeat;
             min-height: 650px;
             display: flex;
             align-items: center;
@@ -42,6 +44,14 @@
             padding: 9rem 1.5rem 5.5rem;
             position: relative;
             overflow: hidden;
+        }
+        @media (max-width: 991px) {
+            .sp-hero {
+                background:
+                    linear-gradient(to bottom, rgba(17,52,72,0.3) 0%, rgba(17,52,72,0.7) 100%),
+                    url('images/brazil.jpg') left center / cover no-repeat !important;
+                background-size: cover !important;
+            }
         }
         .sp-hero::after {
             content: '';
@@ -159,27 +169,14 @@
             display: none; align-items: center; justify-content: center; border: 2px solid #fff;
         }
         .notification-badge.show { display: flex; }
-        /* ── Navbar: center links on desktop using absolute positioning ── */
+        /* ── Navbar: spacing to visually center links on desktop ── */
         @media (min-width: 768px) {
-            .navbar-collapse { position: relative; }
-            .navbar-custom .navbar-nav {
-                position: absolute !important;
-                left: 50% !important;
-                top: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                margin: 0 !important;
-                white-space: nowrap;
-            }
+            .navbar-nav { margin-left: 8rem !important; }
             .profile-nav-wrapper { margin-left: auto !important; }
             #signInWrapper { margin-left: auto !important; }
         }
         @media (max-width: 767px) {
-            .navbar-custom .navbar-nav {
-                position: static !important;
-                transform: none !important;
-                margin-left: 0 !important;
-                white-space: normal;
-            }
+            .navbar-nav { margin-left: 0 !important; }
         }
 
         /* ── Community / Profile Cards ── */
@@ -270,9 +267,11 @@
             border: 1px solid rgba(255,255,255,.15);
             border-radius: 16px;
             padding: 2.25rem 1.25rem;
+            min-width: 0; /* prevents grid blowout */
+            overflow: hidden;
         }
         .stat-number { font-size: 2.8rem; font-weight: 800; color: #20bcba; line-height: 1; margin-bottom: .5rem; }
-        .stat-label { font-size: .95rem; color: rgba(255,255,255,.8); line-height: 1.45; }
+        .stat-label { font-size: .95rem; color: rgba(255,255,255,.8); line-height: 1.45; word-break: break-word; }
 
         /* ── Services ── */
         .services-grid {
@@ -355,13 +354,17 @@
             .sp-section { padding: 3rem 0; }
             .sp-section-header h2 { font-size: 1.85rem; }
             .culture-grid { grid-template-columns: repeat(2, 1fr); }
-            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+            .stat-number { font-size: 2.2rem; }
         }
         @media (max-width: 480px) {
             .sp-hero h1 { font-size: 2rem; }
             .sp-hero-btns { flex-direction: column; align-items: center; }
             .culture-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
             .sp-cta-btns { flex-direction: column; align-items: center; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: .75rem; }
+            .stat-number { font-size: 2rem; }
+            .stat-card { padding: 1.5rem .75rem; }
         }
     </style>
 </head>
@@ -1099,6 +1102,9 @@
             card.className = 'profile-card';
 
             const langs = (i.languages_teaching || []).map(l => `<span class="profile-language-tag">${l}</span>`).join('');
+            const countryHtml = i.country
+                ? `<div class="profile-card-country"><i class="fas fa-globe-americas"></i> ${i.country}</div>`
+                : '';
             const priceHtml = i.price
                 ? `<div class="profile-card-price"><i class="fas fa-tag"></i> ${i.currency || '$'}${i.price}/hr</div>`
                 : '';
@@ -1112,7 +1118,7 @@
                 </div>
                 <div class="profile-card-body">
                     <div class="profile-card-name">${i.name || 'Spanish Instructor'}</div>
-                    <div class="profile-card-country"><i class="fas fa-globe-americas"></i> ${i.country || 'Worldwide'}</div>
+                    ${countryHtml}
                     ${priceHtml}
                     <div class="profile-card-languages">${langs}</div>
                     <div class="profile-card-bio">${i.about_me || 'Experienced Spanish instructor ready to help you reach fluency!'}</div>
