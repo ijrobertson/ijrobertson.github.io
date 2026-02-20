@@ -25,10 +25,14 @@
         /*  SPANISH PAGE — CUSTOM STYLES                             */
         /* ══════════════════════════════════════════════════════════ */
 
+        /* ── Global overflow fix (prevents horizontal scroll on mobile) ── */
+        html, body { overflow-x: hidden; max-width: 100%; }
+        * { box-sizing: border-box; }
+
         /* ── Hero ── */
         .sp-hero {
             background:
-                linear-gradient(135deg, rgba(15,52,96,0.88) 0%, rgba(26,95,122,0.78) 50%, rgba(15,52,96,0.88) 100%),
+                linear-gradient(135deg, rgba(15,52,96,0.60) 0%, rgba(26,95,122,0.45) 50%, rgba(15,52,96,0.60) 100%),
                 url('images/spanishcliff.jpg') center center / cover no-repeat;
             min-height: 650px;
             display: flex;
@@ -46,7 +50,8 @@
             height: 5px;
             background: linear-gradient(90deg, #20bcba 0%, #0f3460 50%, #20bcba 100%);
         }
-        .sp-hero-flags { font-size: 3.5rem; line-height: 1; margin-bottom: 1rem; }
+        .sp-hero-flag-row { margin-bottom: 1.25rem; }
+        .sp-hero-flag-img { height: 54px; width: auto; border-radius: 5px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
         .sp-hero h1 {
             color: #fff;
             font-size: 3.6rem;
@@ -154,17 +159,33 @@
             display: none; align-items: center; justify-content: center; border: 2px solid #fff;
         }
         .notification-badge.show { display: flex; }
+        /* ── Navbar: center links on desktop using absolute positioning ── */
         @media (min-width: 768px) {
-            .navbar-nav { margin-left: 3rem; }
+            .navbar-collapse { position: relative; }
+            .navbar-custom .navbar-nav {
+                position: absolute !important;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                margin: 0 !important;
+                white-space: nowrap;
+            }
             .profile-nav-wrapper { margin-left: auto !important; }
             #signInWrapper { margin-left: auto !important; }
         }
-        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+        @media (max-width: 767px) {
+            .navbar-custom .navbar-nav {
+                position: static !important;
+                transform: none !important;
+                margin-left: 0 !important;
+                white-space: normal;
+            }
+        }
 
         /* ── Community / Profile Cards ── */
         .profiles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -216,7 +237,14 @@
             min-height: 155px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .culture-flag { font-size: 3.8rem; line-height: 1; margin-bottom: .65rem; }
+        .culture-badge {
+            width: 66px; height: 66px; border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            border: 3px solid rgba(255,255,255,0.55);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.05rem; font-weight: 800; color: #fff;
+            letter-spacing: 1px; margin-bottom: .65rem;
+        }
         .culture-country { font-size: 1.25rem; font-weight: 700; color: #fff; text-shadow: 1px 2px 6px rgba(0,0,0,.3); }
         .culture-card-body { background: #fff; padding: 1.3rem 1.4rem 1.6rem; }
         .culture-highlight { display: flex; align-items: flex-start; gap: .6rem; margin-bottom: .65rem; font-size: .87rem; color: #444; }
@@ -224,11 +252,11 @@
         .culture-fun-fact { margin-top: .85rem; padding-top: .75rem; border-top: 1px solid #f0f0f0; font-size: .78rem; color: #888; font-style: italic; line-height: 1.55; }
 
         /* Culture Backgrounds */
-        .bg-spain    { background: linear-gradient(135deg, #c60b1e 0%, #f1bf00 100%); }
-        .bg-mexico   { background: linear-gradient(135deg, #006847 0%, #ce1126 100%); }
-        .bg-argentina{ background: linear-gradient(135deg, #4a8cc7 0%, #2874a6 100%); }
-        .bg-colombia { background: linear-gradient(135deg, #003893 0%, #1c6ea4 100%); }
-        .bg-peru     { background: linear-gradient(135deg, #c41230 0%, #a5000d 100%); }
+        .bg-spain       { background: linear-gradient(135deg, #e8394a 0%, #f9c926 100%); }
+        .bg-mexico      { background: linear-gradient(135deg, #00b87a 0%, #e84040 100%); }
+        .bg-argentina   { background: linear-gradient(135deg, #7bbfe8 0%, #3a8fd4 100%); }
+        .bg-colombia    { background: linear-gradient(135deg, #5079f5 0%, #1a5fcf 100%); }
+        .bg-puerto-rico { background: linear-gradient(135deg, #e84040 0%, #1a3a8a 100%); }
 
         /* ── Stats ── */
         .stats-row {
@@ -437,7 +465,9 @@
     <!-- ══ HERO ══════════════════════════════════════════════════ -->
     <header id="header" class="sp-hero">
         <div class="container">
-            <div class="sp-hero-flags">🇪🇸 🇲🇽 🇦🇷</div>
+            <div class="sp-hero-flag-row">
+            <img src="images/SpanishFlag.png" alt="Spanish flag" class="sp-hero-flag-img">
+        </div>
             <h1>¡Aprende Español!</h1>
             <p class="sp-hero-sub">
                 Join over 500&nbsp;million Spanish speakers worldwide. Find language exchange partners,
@@ -449,12 +479,12 @@
                 <a class="sp-btn-outline" href="#spanish-instructors">FIND AN INSTRUCTOR</a>
             </div>
             <div class="sp-hero-pills">
-                <span class="sp-hero-pill">🇪🇸 Spain</span>
-                <span class="sp-hero-pill">🇲🇽 Mexico</span>
-                <span class="sp-hero-pill">🇦🇷 Argentina</span>
-                <span class="sp-hero-pill">🇨🇴 Colombia</span>
-                <span class="sp-hero-pill">🇵🇪 Peru</span>
-                <span class="sp-hero-pill">🇨🇱 Chile</span>
+                <span class="sp-hero-pill">Spain</span>
+                <span class="sp-hero-pill">Mexico</span>
+                <span class="sp-hero-pill">Argentina</span>
+                <span class="sp-hero-pill">Colombia</span>
+                <span class="sp-hero-pill">Puerto Rico</span>
+                <span class="sp-hero-pill">Chile</span>
                 <span class="sp-hero-pill">+ 15 More Countries</span>
             </div>
         </div>
@@ -524,7 +554,7 @@
                 <!-- Spain -->
                 <div class="culture-card">
                     <div class="culture-card-top bg-spain">
-                        <div class="culture-flag">🇪🇸</div>
+                        <div class="culture-badge">ES</div>
                         <div class="culture-country">Spain</div>
                     </div>
                     <div class="culture-card-body">
@@ -547,7 +577,7 @@
                 <!-- Mexico -->
                 <div class="culture-card">
                     <div class="culture-card-top bg-mexico">
-                        <div class="culture-flag">🇲🇽</div>
+                        <div class="culture-badge">MX</div>
                         <div class="culture-country">Mexico</div>
                     </div>
                     <div class="culture-card-body">
@@ -570,7 +600,7 @@
                 <!-- Argentina -->
                 <div class="culture-card">
                     <div class="culture-card-top bg-argentina">
-                        <div class="culture-flag">🇦🇷</div>
+                        <div class="culture-badge">AR</div>
                         <div class="culture-country">Argentina</div>
                     </div>
                     <div class="culture-card-body">
@@ -593,7 +623,7 @@
                 <!-- Colombia -->
                 <div class="culture-card">
                     <div class="culture-card-top bg-colombia">
-                        <div class="culture-flag">🇨🇴</div>
+                        <div class="culture-badge">CO</div>
                         <div class="culture-country">Colombia</div>
                     </div>
                     <div class="culture-card-body">
@@ -613,26 +643,26 @@
                     </div>
                 </div>
 
-                <!-- Peru -->
+                <!-- Puerto Rico -->
                 <div class="culture-card">
-                    <div class="culture-card-top bg-peru">
-                        <div class="culture-flag">🇵🇪</div>
-                        <div class="culture-country">Peru</div>
+                    <div class="culture-card-top bg-puerto-rico">
+                        <div class="culture-badge">PR</div>
+                        <div class="culture-country">Puerto Rico</div>
                     </div>
                     <div class="culture-card-body">
                         <div class="culture-highlight">
-                            <i class="fas fa-mountain"></i>
-                            <span>Machu Picchu — the legendary Inca citadel above the clouds</span>
+                            <i class="fas fa-music"></i>
+                            <span>Salsa, reggaetón, and bomba — Puerto Rico has shaped Latin music worldwide</span>
                         </div>
                         <div class="culture-highlight">
-                            <i class="fas fa-utensils"></i>
-                            <span>Lima ranks among the world's top culinary destinations</span>
+                            <i class="fas fa-umbrella-beach"></i>
+                            <span>Stunning beaches, El Yunque rainforest, and vibrant Old San Juan</span>
                         </div>
                         <div class="culture-highlight">
-                            <i class="fas fa-star"></i>
-                            <span>Ancient Inca heritage woven into vibrant modern identity</span>
+                            <i class="fas fa-frog"></i>
+                            <span>The iconic coquí frog — a beloved symbol of Puerto Rican identity</span>
                         </div>
-                        <div class="culture-fun-fact">🎯 Fun fact: Peru is one of the most biodiverse nations on Earth — Amazon, Andes, and Pacific coast all in one!</div>
+                        <div class="culture-fun-fact">Fun fact: Puerto Rican Spanish has its own unique Caribbean flair — "ll" is pronounced like an English "j"!</div>
                     </div>
                 </div>
 
@@ -737,8 +767,8 @@
 
                 <div class="tip-card">
                     <div class="tip-card-q">What sound does "ll" make?</div>
-                    <div class="tip-card-a">In most of Latin America, "ll" sounds like the English "y." In parts of Spain and Argentina it's closer to "zh" (like the 's' in measure). Both are correct!</div>
-                    <span class="tip-example">Llave → "yah-veh"</span>
+                    <div class="tip-card-a">It varies by region! In most of Latin America it sounds like the English "y." In parts of Spain and Argentina it's closer to "zh" (like the 's' in <em>measure</em>). In Puerto Rico and many Caribbean countries, "ll" is pronounced like an English "j." All are perfectly correct!</div>
+                    <span class="tip-example">Llave → "yah-veh" / "zhah-veh" / "jah-veh"</span>
                 </div>
 
                 <div class="tip-card">
@@ -776,7 +806,7 @@
             <div class="row">
                 <div class="col-lg-12">
                     <h2>What Our Users Say</h2>
-                    <p class="p-heading">Real stories from learners who found their path to Spanish fluency through Lingua Bud.</p>
+                    <p class="p-heading">Learners around the world have found Lingua Bud helpful for picking up a new language.</p>
                 </div>
             </div>
             <div class="row">
@@ -789,8 +819,8 @@
                                     <div class="card">
                                         <img class="card-image" src="images/testimonial-1.jpg" alt="Jude Thorn">
                                         <div class="card-body">
-                                            <div class="testimonial-text">My experience with Lingua Bud has been fantastic! I paired with a Spanish speaker from Colombia and we practice every week. My Spanish has improved so much!</div>
-                                            <div class="testimonial-author">Jude Thorn — Language Enthusiast</div>
+                                            <div class="testimonial-text">My experience with Lingua Bud has been fantastic! I actually feel like I can become fluent in Italian! Finding a native speaker to practice with has made all the difference.</div>
+                                            <div class="testimonial-author">Jude Thorn — Learning Italian</div>
                                         </div>
                                     </div>
                                 </div>
@@ -799,8 +829,8 @@
                                     <div class="card">
                                         <img class="card-image" src="images/testimonial-2.jpg" alt="Marsha Singer">
                                         <div class="card-body">
-                                            <div class="testimonial-text">Of all the language learning platforms I've tried, Lingua Bud has been the most engaging. Finding a Spanish bud changed everything for my learning journey.</div>
-                                            <div class="testimonial-author">Marsha Singer — Marketer</div>
+                                            <div class="testimonial-text">Of all the language learning platforms I've tried, Lingua Bud has been the most engaging. The French resources and community are second to none.</div>
+                                            <div class="testimonial-author">Marsha Singer — Learning French</div>
                                         </div>
                                     </div>
                                 </div>
@@ -809,8 +839,8 @@
                                     <div class="card">
                                         <img class="card-image" src="images/testimonial-3.jpg" alt="Roy Smith">
                                         <div class="card-body">
-                                            <div class="testimonial-text">Lingua Bud's Spanish resources are extensive and so helpful. The pronunciation guides and grammar sheets saved me from so many early mistakes!</div>
-                                            <div class="testimonial-author">Roy Smith — Developer</div>
+                                            <div class="testimonial-text">Lingua Bud's resources are extensive and so helpful. The pronunciation guides and grammar sheets saved me from so many early mistakes learning German!</div>
+                                            <div class="testimonial-author">Roy Smith — Learning German</div>
                                         </div>
                                     </div>
                                 </div>
@@ -819,8 +849,8 @@
                                     <div class="card">
                                         <img class="card-image" src="images/testimonial-4.jpg" alt="Ronald Spice">
                                         <div class="card-body">
-                                            <div class="testimonial-text">At the beginning I doubted I could learn Spanish, but my Lingua Bud instructor from Spain made it fun and totally approachable. I feel confident now!</div>
-                                            <div class="testimonial-author">Ronald Spice — Restaurant Owner</div>
+                                            <div class="testimonial-text">At the beginning I doubted I could learn Portuguese, but my Lingua Bud language partner made it fun and totally approachable. I feel so confident now!</div>
+                                            <div class="testimonial-author">Ronald Spice — Learning Portuguese</div>
                                         </div>
                                     </div>
                                 </div>
@@ -829,7 +859,7 @@
                                     <div class="card">
                                         <img class="card-image" src="images/testimonial-5.jpg" alt="Lindsay Rune">
                                         <div class="card-body">
-                                            <div class="testimonial-text">I recommend Lingua Bud to anyone who wants to learn Spanish. The community is warm, welcoming, and truly dedicated to helping each other grow.</div>
+                                            <div class="testimonial-text">I recommend Lingua Bud to anyone who wants to learn a new language. The community is warm, welcoming, and truly dedicated to helping each other grow.</div>
                                             <div class="testimonial-author">Lindsay Rune — Project Manager</div>
                                         </div>
                                     </div>
@@ -839,8 +869,8 @@
                                     <div class="card">
                                         <img class="card-image" src="images/testimonial-6.jpg" alt="George Wrigley">
                                         <div class="card-body">
-                                            <div class="testimonial-text">I never thought learning a language could be this much fun. Lingua Bud's Spanish community is the real deal — join today and see for yourself!</div>
-                                            <div class="testimonial-author">George Wrigley — Consultant</div>
+                                            <div class="testimonial-text">I never thought learning a language could be this much fun. Lingua Bud is the real deal — whatever language you're learning, you'll find your people here!</div>
+                                            <div class="testimonial-author">George Wrigley — Language Learner</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1069,7 +1099,9 @@
             card.className = 'profile-card';
 
             const langs = (i.languages_teaching || []).map(l => `<span class="profile-language-tag">${l}</span>`).join('');
-            const price = i.price ? `${i.currency || '$'}${i.price}/hr` : 'Contact for rates';
+            const priceHtml = i.price
+                ? `<div class="profile-card-price"><i class="fas fa-tag"></i> ${i.currency || '$'}${i.price}/hr</div>`
+                : '';
 
             card.innerHTML = `
                 <div class="profile-card-image">
@@ -1081,7 +1113,7 @@
                 <div class="profile-card-body">
                     <div class="profile-card-name">${i.name || 'Spanish Instructor'}</div>
                     <div class="profile-card-country"><i class="fas fa-globe-americas"></i> ${i.country || 'Worldwide'}</div>
-                    <div class="profile-card-price"><i class="fas fa-tag"></i> ${price}</div>
+                    ${priceHtml}
                     <div class="profile-card-languages">${langs}</div>
                     <div class="profile-card-bio">${i.about_me || 'Experienced Spanish instructor ready to help you reach fluency!'}</div>
                 </div>`;
