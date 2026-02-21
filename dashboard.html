@@ -37,7 +37,6 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      margin-left: 1rem;
     }
 
     .profile-pic-nav {
@@ -177,18 +176,17 @@
       display: inline-block;
     }
 
-    /* Navbar spacing adjustments - desktop only */
+    /* Navbar spacing - center nav links, right-align icons */
     @media (min-width: 768px) {
       .navbar-nav {
-        margin-left: 8rem !important;
+        margin: 0 auto !important;
       }
 
-      .profile-nav-wrapper {
-        margin-left: auto !important;
-      }
-
-      #signInWrapper {
-        margin-left: auto !important;
+      .navbar-right-group {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex-shrink: 0;
       }
     }
 
@@ -196,6 +194,10 @@
     @media (max-width: 767px) {
       .navbar-nav {
         margin-left: 0 !important;
+      }
+
+      .navbar-right-group {
+        padding: 0.5rem 0;
       }
     }
 
@@ -425,25 +427,44 @@
         <li class="nav-item">
           <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
         </li>
-
-        <!-- Sign In Link (shown when not logged in) -->
-        <li class="nav-item" id="signInWrapper">
-          <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
-        </li>
       </ul>
 
-      <!-- Profile Picture Dropdown (shown when logged in) -->
-      <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
-        <div class="profile-dropdown">
-          <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
-          <div class="notification-badge" id="notificationBadge"></div>
-          <div class="profile-dropdown-content">
-            <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
-            <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
-            <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
-            <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      <!-- Right-side navbar group: sign-in, profile pic, social icons -->
+      <div class="navbar-right-group">
+
+        <!-- Sign In Link (shown when not logged in) -->
+        <a class="nav-link" href="login.html" id="signInWrapper">SIGN IN/SIGN UP</a>
+
+        <!-- Profile Picture Dropdown (shown when logged in) -->
+        <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+          <div class="profile-dropdown">
+            <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+            <div class="notification-badge" id="notificationBadge"></div>
+            <div class="profile-dropdown-content">
+              <a href="dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+              <a href="messages.html" class="messages-link" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+              <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+              <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
           </div>
         </div>
+
+        <!-- Social Icons -->
+        <span class="nav-item social-icons">
+          <span class="fa-stack">
+            <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
+              <span class="hexagon"></span>
+              <i class="fab fa-facebook-f fa-stack-1x"></i>
+            </a>
+          </span>
+          <span class="fa-stack">
+            <a href="https://www.instagram.com/lingua_bud/" target="_blank">
+              <span class="hexagon"></span>
+              <i class="fab fa-instagram fa-stack-1x"></i>
+            </a>
+          </span>
+        </span>
+
       </div>
     </div>
   </nav>
@@ -695,6 +716,13 @@
       onAuthStateChanged(auth, async (user) => {
         if (user) {
           currentUser = user;
+
+          // Show profile pic in navbar, hide sign-in link
+          const profileNavWrapper = document.getElementById('profileNavWrapper');
+          const signInWrapper = document.getElementById('signInWrapper');
+          if (profileNavWrapper) profileNavWrapper.style.display = 'flex';
+          if (signInWrapper) signInWrapper.style.display = 'none';
+
           await loadProfile();
           await loadAvailability();
 
