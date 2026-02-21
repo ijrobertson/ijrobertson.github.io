@@ -642,6 +642,87 @@
             .wb-color-btn { width: 22px; height: 22px; }
             .wb-stroke-btn { width: 38px; height: 32px; }
         }
+
+        /* ── Prompt Panel ── */
+        #wb-prompt-panel { border-top: 1px solid #dee2e6; background: #fafafa; }
+
+        #wb-prompt-category-bar {
+            display: flex;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            overflow-x: auto;
+            background: #f1f3f5;
+            border-bottom: 1px solid #dee2e6;
+            -webkit-overflow-scrolling: touch;
+        }
+        #wb-prompt-category-bar::-webkit-scrollbar { height: 3px; }
+        #wb-prompt-category-bar::-webkit-scrollbar-thumb { background: #20bcba; border-radius: 2px; }
+
+        .wb-prompt-cat-btn {
+            padding: 0.28rem 0.85rem;
+            border: 1.5px solid #dee2e6;
+            border-radius: 20px;
+            background: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+            font-family: "Open Sans", sans-serif;
+            flex-shrink: 0;
+        }
+        .wb-prompt-cat-btn:hover { border-color: #20bcba; color: #20bcba; }
+        .wb-prompt-cat-active { background: #20bcba !important; color: #fff !important; border-color: #20bcba !important; }
+
+        #wb-prompt-display { padding: 0.75rem 1rem; min-height: 78px; }
+        #wb-prompt-placeholder { color: #aaa; font-size: 0.87rem; font-style: italic; text-align: center; padding: 0.5rem 0; }
+
+        #wb-prompt-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #20bcba;
+            margin-bottom: 0.4rem;
+        }
+        #wb-prompt-text { font-size: 0.92rem; color: #333; line-height: 1.55; }
+
+        #wb-prompt-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.45rem 1rem 0.6rem;
+            border-top: 1px solid #e9ecef;
+            background: #fff;
+            gap: 0.75rem;
+        }
+        #wb-new-prompt-btn {
+            background: #20bcba;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 0.4rem 1.1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: "Montserrat", sans-serif;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            white-space: nowrap;
+        }
+        #wb-new-prompt-btn:hover { background: #1aa9a7; }
+        #wb-prompt-by { font-size: 0.78rem; color: #aaa; font-style: italic; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        @media (max-width: 768px) {
+            #wb-prompt-display { min-height: 64px; }
+            #wb-prompt-text { font-size: 0.87rem; }
+            #wb-prompt-category-bar { padding: 0.4rem 0.625rem; gap: 0.3rem; }
+            .wb-prompt-cat-btn { padding: 0.22rem 0.65rem; font-size: 0.75rem; }
+            #wb-prompt-footer { padding: 0.4rem 0.625rem 0.5rem; }
+            #wb-new-prompt-btn { padding: 0.38rem 0.9rem; font-size: 0.82rem; }
+        }
     </style>
 </head>
 <body>
@@ -776,10 +857,37 @@
                         </div>
                         <div class="wb-tool-group">
                             <button id="wb-text-btn" class="wb-tool-btn" title="Text Board"><i class="fas fa-keyboard"></i></button>
+                            <button id="wb-prompt-btn" class="wb-tool-btn" title="Random Prompts"><i class="fas fa-dice"></i></button>
                         </div>
                         <div class="wb-tool-group">
                             <button id="wb-clear-btn" class="wb-tool-btn" title="Clear All"><i class="fas fa-trash-alt"></i></button>
                             <button id="wb-close-btn" class="wb-tool-btn" title="Close Whiteboard"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Prompt Panel — hidden until the dice button is toggled -->
+                    <div id="wb-prompt-panel" style="display:none;">
+                        <div id="wb-prompt-category-bar">
+                            <button class="wb-prompt-cat-btn wb-prompt-cat-active" data-cat="all">All</button>
+                            <button class="wb-prompt-cat-btn" data-cat="speaking">⏱️ Speaking</button>
+                            <button class="wb-prompt-cat-btn" data-cat="vocab">📚 Vocab</button>
+                            <button class="wb-prompt-cat-btn" data-cat="stories">📖 Stories</button>
+                            <button class="wb-prompt-cat-btn" data-cat="roleplay">🎭 Role Play</button>
+                            <button class="wb-prompt-cat-btn" data-cat="grammar">✏️ Grammar</button>
+                            <button class="wb-prompt-cat-btn" data-cat="culture">🌍 Culture</button>
+                            <button class="wb-prompt-cat-btn" data-cat="pronunciation">🎤 Pronunciation</button>
+                            <button class="wb-prompt-cat-btn" data-cat="games">🎮 Games</button>
+                        </div>
+                        <div id="wb-prompt-display">
+                            <div id="wb-prompt-placeholder">Click <strong>New Prompt</strong> below to get a random language exercise for your session!</div>
+                            <div id="wb-prompt-content" style="display:none;">
+                                <div id="wb-prompt-title"></div>
+                                <div id="wb-prompt-text"></div>
+                            </div>
+                        </div>
+                        <div id="wb-prompt-footer">
+                            <button id="wb-new-prompt-btn"><i class="fas fa-dice"></i> New Prompt</button>
+                            <span id="wb-prompt-by"></span>
                         </div>
                     </div>
 
@@ -861,6 +969,80 @@
         let wbTextboardCol = null;  // Firestore collection ref for text messages
         let wbTextUnsubscribe = null; // text board listener teardown
 
+        // Prompt state
+        let wbPromptRelayRef = null;
+        let wbCurrentPromptCat = 'all';
+
+        // Prompt library
+        const WB_PROMPTS = [
+            // Speaking
+            { cat:'speaking', icon:'⏱️', title:'60-Second Food Description', text:'Describe your favorite meal in 60 seconds — what does it look, smell, and taste like? Your partner takes notes on any errors to review together after.' },
+            { cat:'speaking', icon:'⏱️', title:'Memorable Travel Story', text:'Talk about the most memorable trip or travel experience you have ever had. Use as many descriptive words as possible — your partner will ask three follow-up questions.' },
+            { cat:'speaking', icon:'⏱️', title:'Ideal Day', text:'Describe your perfect day from the moment you wake up to when you go to sleep. Your partner will ask at least three follow-up questions to keep the conversation going.' },
+            { cat:'speaking', icon:'⏱️', title:'90-Second Debate', text:'Pick a side: "Social media is more harmful than helpful." You have 90 seconds to make your argument — then swap sides and try to argue the opposite!' },
+            { cat:'speaking', icon:'⏱️', title:'Speed Adjectives', text:'Name 10 adjectives that describe your own personality in 30 seconds. Your partner writes them down and then gives you honest feedback — do they agree?' },
+            { cat:'speaking', icon:'⏱️', title:'Explain Your Job Simply', text:'Explain what your job (or studies) involves to someone who knows nothing about it. Use simple, everyday language — absolutely no jargon or technical terms!' },
+            { cat:'speaking', icon:'⏱️', title:'Future Plans', text:'Describe where you see yourself in 5 years. Talk about your career, lifestyle, travel hopes, and personal goals — try to use future tense forms naturally throughout.' },
+            { cat:'speaking', icon:'⏱️', title:'Childhood Hobby', text:'Tell your partner about a hobby or activity you loved as a child. Why did you love it? Do you still do it? Your partner asks at least two follow-up questions.' },
+            // Vocabulary
+            { cat:'vocab', icon:'📚', title:'Word Association', text:'Take turns — one person says a word, the other immediately says the first word that comes to mind. Keep going for 2 minutes without repeating or hesitating!' },
+            { cat:'vocab', icon:'📚', title:'Category Sprint', text:'Name as many foods as you can in 45 seconds. Then switch — your partner tries to beat your score! Try again with: animals, furniture, emotions, or clothing.' },
+            { cat:'vocab', icon:'📚', title:'Synonym Challenge', text:'Your partner picks any common word. Give 3 different synonyms for it without repeating. Then swap — who can find more? Check a dictionary together if needed.' },
+            { cat:'vocab', icon:'📚', title:'Opposites Game', text:'Take turns saying a word. Your partner must immediately say the exact opposite. No hesitating — if they pause for more than 3 seconds, they lose a point!' },
+            { cat:'vocab', icon:'📚', title:'Word in Context', text:'Your partner gives you any vocabulary word. Use it in a natural, meaningful sentence within 10 seconds. Swap after 5 rounds — who used the words most naturally?' },
+            { cat:'vocab', icon:'📚', title:'Around the Room', text:'Look around wherever you are. Name 10 objects you can see, then describe what each one is used for — in a complete sentence for each one.' },
+            { cat:'vocab', icon:'📚', title:'Taboo!', text:'Think of a word and describe it to your partner WITHOUT saying the word itself or any obvious related words. Your partner guesses! Take turns — 5 words each.' },
+            { cat:'vocab', icon:'📚', title:'Collocations Challenge', text:'Your partner says a noun (e.g. "time," "money," "decision"). You must give 3 natural verbs or adjectives that go with it. Focus on natural word combinations!' },
+            // Storytelling
+            { cat:'stories', icon:'📖', title:'Three-Word Story', text:'Build a story together — take turns adding one sentence at a time. The story must include: a dog, a bus, and a mysterious letter. See where it goes!' },
+            { cat:'stories', icon:'📖', title:'Finish the Story', text:'"It was the strangest morning of my life. I woke up and found a key on my pillow that I had never seen before…" Take turns adding sentences to continue the story!' },
+            { cat:'stories', icon:'📖', title:'Twisted Fairy Tale', text:'Retell a classic fairy tale — but completely change the ending! Take turns adding sentences. Use as much past tense as you can and make it as dramatic as possible.' },
+            { cat:'stories', icon:'📖', title:'Headline News', text:'Invent the most outrageous but detailed news headline you can, then tell the full story behind it. Your partner plays the journalist and asks probing questions.' },
+            { cat:'stories', icon:'📖', title:'First Memory', text:'Share your earliest childhood memory in as much detail as possible. Use sensory language — what did you see, hear, smell, and feel? Your partner asks follow-up questions.' },
+            { cat:'stories', icon:'📖', title:'Alternative Life', text:'Tell the story of what your life might look like if you had made one major decision differently. Your partner asks questions to keep the story moving forward.' },
+            { cat:'stories', icon:'📖', title:'Story Dice', text:'Each person says 5 random nouns or adjectives. Together, you must build a coherent story using ALL 10 words — take turns sentence by sentence. No skipping words!' },
+            // Role Play
+            { cat:'roleplay', icon:'🎭', title:'At the Restaurant', text:'One person is the server, one is the customer. Order a meal, ask for recommendations — then the kitchen is out of your first choice. Handle it naturally and politely!' },
+            { cat:'roleplay', icon:'🎭', title:'Lost Tourist', text:'One person is a tourist who is lost and speaks the local language poorly. The other is a friendly local. Help the tourist find a famous landmark using clear directions.' },
+            { cat:'roleplay', icon:'🎭', title:'Job Interview', text:'One person interviews the other for a dream job of your choice. Use formal language, polite expressions, and full sentences. Swap roles after 5 minutes.' },
+            { cat:'roleplay', icon:'🎭', title:"Doctor's Visit", text:'One person is a patient with a strange or funny set of symptoms. The other is the doctor — diagnose and recommend treatment using appropriate medical vocabulary.' },
+            { cat:'roleplay', icon:'🎭', title:'Hotel Check-In', text:'One person calls to book a hotel. The other is the receptionist — but there is a complication (wrong room type, overbooked, or a billing issue). Resolve it politely.' },
+            { cat:'roleplay', icon:'🎭', title:'Meeting a New Neighbor', text:'You have just moved in and meet your neighbor for the first time. Introduce yourself, ask about the neighborhood, and make small talk. Keep it warm and natural.' },
+            { cat:'roleplay', icon:'🎭', title:'At the Airport', text:'One person has missed their flight and needs help at the service desk. The other is the airline employee. Rebook the ticket, discuss compensation, and stay calm!' },
+            // Grammar
+            { cat:'grammar', icon:'✏️', title:'Tense Switching', text:'Tell a 2-minute story about your day — but every other sentence must switch tenses (past → present → past). Your partner corrects any mistakes as you go.' },
+            { cat:'grammar', icon:'✏️', title:'No Filler Words', text:'Have a 2-minute conversation on any topic — but you are NOT allowed to say "um," "uh," "like," or "you know." Your partner calls it out every single time!' },
+            { cat:'grammar', icon:'✏️', title:'No Yes or No', text:'Your partner asks you 10 questions in a row. Answer each one in a full sentence WITHOUT using "yes" or "no." Then swap — who keeps it up longest?' },
+            { cat:'grammar', icon:'✏️', title:'Conditional Challenge', text:'Take turns making "If… then…" sentences. Try to use all three forms: present conditional (If I go…), past conditional (If I went…), and perfect conditional (If I had gone…).' },
+            { cat:'grammar', icon:'✏️', title:'Connector Challenge', text:'Have a conversation on any topic — but every sentence you say must BEGIN with a different connector: however, therefore, meanwhile, although, despite, furthermore…' },
+            { cat:'grammar', icon:'✏️', title:'Passive Voice Drill', text:'Describe everything that happened to you this morning using ONLY passive voice sentences ("I was woken up by…"). Your partner corrects anything that sounds unnatural.' },
+            { cat:'grammar', icon:'✏️', title:'Question Master', text:'Have a full 3-minute conversation using ONLY questions — no statements allowed! Every single thing you say must be a question. It is harder than it sounds!' },
+            // Culture
+            { cat:'culture', icon:'🌍', title:'Holiday Traditions', text:'Each person shares their favorite holiday or festival from their own culture. What do people eat, wear, and do? What is the history behind it? Compare traditions!' },
+            { cat:'culture', icon:'🌍', title:'Food Tour', text:'Name three dishes from your country that your partner absolutely must try. Describe each one in detail — ingredients, when people eat it, and why it matters to you.' },
+            { cat:'culture', icon:'🌍', title:'Proverb Exchange', text:'Share a famous saying or proverb from your culture and explain what it means in practice. Does your partner\'s language have a similar one? Compare and discuss.' },
+            { cat:'culture', icon:'🌍', title:'Music Recommendation', text:'Recommend a song in the target language. Explain the theme, why you like it, and what the lyrics mean. If you feel bold — sing or hum part of it!' },
+            { cat:'culture', icon:'🌍', title:'Dream Destination', text:'Describe a place in your partner\'s country you would most love to visit. Why that place? What would you do there? Your partner gives you insider tips and local advice.' },
+            { cat:'culture', icon:'🌍', title:'Daily Life Swap', text:'Compare a typical weekday in your life with what you imagine your partner\'s typical weekday looks like. Ask each other questions — you might be very surprised!' },
+            { cat:'culture', icon:'🌍', title:'Untranslatable Words', text:'Think of a word or concept from your language that is very hard to translate into another language. Explain it to your partner. Do they have something similar?' },
+            // Pronunciation
+            { cat:'pronunciation', icon:'🎤', title:'Read Aloud', text:'Each person finds a paragraph from any website or article in the target language and reads it aloud. Give each other honest, constructive feedback on pronunciation.' },
+            { cat:'pronunciation', icon:'🎤', title:'Minimal Pairs', text:'Your partner says a word. You repeat it back. They then change just ONE sound — can you hear the difference? Practice with words that sound almost identical.' },
+            { cat:'pronunciation', icon:'🎤', title:'Dictation Challenge', text:'One person slowly reads 3–4 sentences from any text; the other types or writes exactly what they hear. Compare results and discuss the gaps or mishearings.' },
+            { cat:'pronunciation', icon:'🎤', title:'Shadowing Practice', text:'Find a short video or audio clip in the target language (30–60 seconds). Both of you listen, then each tries to repeat what the speaker said as closely as possible.' },
+            { cat:'pronunciation', icon:'🎤', title:'Intonation Shift', text:'Say the sentence "I never said she stole the money" — stress a DIFFERENT word each time. Notice how the meaning shifts! Discuss how intonation works in each language.' },
+            { cat:'pronunciation', icon:'🎤', title:'Accent Analysis', text:'Speak 5 natural sentences. Your partner describes your accent — which region or influence do they hear? Discuss what sounds are trickiest for each of you to produce.' },
+            { cat:'pronunciation', icon:'🎤', title:'Slow to Fast', text:'Pick a tongue twister or complex sentence in the target language. Say it slowly three times, then gradually speed up. Your partner scores you 1–10 on clarity!' },
+            // Games
+            { cat:'games', icon:'🎮', title:'20 Questions', text:'One person thinks of a famous person, animal, or object. The other asks up to 20 yes/no questions to guess it. Take turns — play two rounds each. All questions must be in full sentences!' },
+            { cat:'games', icon:'🎮', title:'Two Truths and a Lie', text:'Each person says three statements about themselves — two true, one a lie. Your partner must guess which one is false. Try to make all three sound equally believable!' },
+            { cat:'games', icon:'🎮', title:'Word Chain', text:'One person says any word. The next must say a word that BEGINS with the last letter of the previous word. No repeating! Hesitate for more than 5 seconds — you lose a point.' },
+            { cat:'games', icon:'🎮', title:'Hot Seat', text:'One person sits in the "hot seat" and must answer any question their partner asks — truthfully, in full sentences. Swap after 10 questions. Great for practicing question forms!' },
+            { cat:'games', icon:'🎮', title:'Pictionary Twist', text:'Use the whiteboard! One person draws something — no letters or numbers. The other must describe what they see in the target language and then guess what it is.' },
+            { cat:'games', icon:'🎮', title:'Celebrity Guess', text:'Think of a famous person. Describe their appearance, personality, and career WITHOUT saying their name. Your partner asks yes/no questions to guess who it is. Swap after 3 rounds.' },
+            { cat:'games', icon:'🎮', title:'Alphabet Story', text:'Together, build a story where each sentence starts with the next letter of the alphabet — A, B, C… all the way to Z. Take turns, one sentence each. Full sentences only!' },
+        ];
+
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
         const leaveBtn = document.getElementById('leaveBtn');
@@ -890,6 +1072,16 @@
         const wbTextMessages  = document.getElementById('wb-textboard-messages');
         const wbTextInput     = document.getElementById('wb-textboard-input');
         const wbTextSendBtn   = document.getElementById('wb-textboard-send-btn');
+
+        // Prompt panel elements
+        const wbPromptBtn         = document.getElementById('wb-prompt-btn');
+        const wbPromptPanel       = document.getElementById('wb-prompt-panel');
+        const wbNewPromptBtn      = document.getElementById('wb-new-prompt-btn');
+        const wbPromptPlaceholder = document.getElementById('wb-prompt-placeholder');
+        const wbPromptContent     = document.getElementById('wb-prompt-content');
+        const wbPromptTitle       = document.getElementById('wb-prompt-title');
+        const wbPromptText        = document.getElementById('wb-prompt-text');
+        const wbPromptBy          = document.getElementById('wb-prompt-by');
 
         // Get channel from URL parameter (if coming from messages page)
         const urlParams = new URLSearchParams(window.location.search);
@@ -1067,13 +1259,16 @@
                 wbMyUid = String(uid);
                 wbJoinTime = Date.now();
                 wbRelayRef = doc(db, 'whiteboard', channelName, 'relay', wbMyUid);
+                wbPromptRelayRef = doc(db, 'whiteboard', channelName, 'relay', '__prompt__');
                 const wbRelayCol = collection(db, 'whiteboard', channelName, 'relay');
                 wbUnsubscribe = onSnapshot(wbRelayCol, (snap) => {
                     snap.docChanges().forEach(change => {
                         if (change.type !== 'added' && change.type !== 'modified') return;
                         if (change.doc.id === wbMyUid) return; // own stroke
                         const data = change.doc.data();
-                        if (data.ts && data.ts < wbJoinTime) return; // stale from before we joined
+                        // Prompts persist for the session — show regardless of join time
+                        if (data.t === 'prompt') { wbHandleRemoteAction(data); return; }
+                        if (data.ts && data.ts < wbJoinTime) return; // stale drawing stroke
                         wbHandleRemoteAction(data);
                     });
                 });
@@ -1139,6 +1334,17 @@
                 wbTextBtn.classList.remove('wb-tool-active');
                 wbTextMessages.innerHTML = '';
                 wbTextInput.value = '';
+
+                // Tear down prompt panel
+                wbPromptRelayRef = null;
+                wbPromptPanel.style.display = 'none';
+                wbPromptBtn.classList.remove('wb-tool-active');
+                wbPromptContent.style.display = 'none';
+                wbPromptPlaceholder.style.display = 'block';
+                wbPromptBy.textContent = '';
+                wbCurrentPromptCat = 'all';
+                document.querySelectorAll('.wb-prompt-cat-btn').forEach(b => b.classList.remove('wb-prompt-cat-active'));
+                document.querySelector('.wb-prompt-cat-btn[data-cat="all"]').classList.add('wb-prompt-cat-active');
 
                 // Reset whiteboard UI
                 whiteboardPanel.style.display = 'none';
@@ -1328,6 +1534,8 @@
                 );
             } else if (msg.t === 'cl') {
                 wbInitCanvas();
+            } else if (msg.t === 'prompt') {
+                wbShowPrompt({ icon: msg.icon, title: msg.title, text: msg.text }, msg.generatedBy, true);
             }
         }
 
@@ -1526,6 +1734,61 @@
         });
 
         // ── End Text Board ────────────────────────────────────────────────────
+
+        // ── Prompt Panel ──────────────────────────────────────────────────────
+
+        function wbShowPrompt(prompt, generatedBy, fromRemote) {
+            wbPromptPlaceholder.style.display = 'none';
+            wbPromptContent.style.display = 'block';
+            wbPromptTitle.textContent = (prompt.icon ? prompt.icon + ' ' : '') + prompt.title;
+            wbPromptText.textContent = prompt.text;
+            wbPromptBy.textContent = generatedBy ? 'Generated by ' + generatedBy : '';
+            // Open the panel automatically for remote participants
+            if (fromRemote && wbPromptPanel.style.display === 'none') {
+                wbPromptPanel.style.display = 'block';
+                wbPromptBtn.classList.add('wb-tool-active');
+            }
+        }
+
+        function wbGeneratePrompt() {
+            const pool = wbCurrentPromptCat === 'all'
+                ? WB_PROMPTS
+                : WB_PROMPTS.filter(p => p.cat === wbCurrentPromptCat);
+            if (!pool.length) return;
+            const prompt = pool[Math.floor(Math.random() * pool.length)];
+            wbShowPrompt(prompt, currentUserName, false);
+            if (wbPromptRelayRef) {
+                setDoc(wbPromptRelayRef, {
+                    t: 'prompt',
+                    icon: prompt.icon,
+                    title: prompt.title,
+                    text: prompt.text,
+                    generatedBy: currentUserName,
+                    ts: Date.now()
+                }).catch(e => console.warn('Prompt sync error:', e));
+            }
+        }
+
+        // Toggle prompt panel
+        wbPromptBtn.addEventListener('click', () => {
+            const isOpen = wbPromptPanel.style.display !== 'none';
+            wbPromptPanel.style.display = isOpen ? 'none' : 'block';
+            wbPromptBtn.classList.toggle('wb-tool-active', !isOpen);
+        });
+
+        // Generate new prompt button
+        wbNewPromptBtn.addEventListener('click', wbGeneratePrompt);
+
+        // Category filter tabs
+        document.querySelectorAll('.wb-prompt-cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                wbCurrentPromptCat = btn.dataset.cat;
+                document.querySelectorAll('.wb-prompt-cat-btn').forEach(b => b.classList.remove('wb-prompt-cat-active'));
+                btn.classList.add('wb-prompt-cat-active');
+            });
+        });
+
+        // ── End Prompt Panel ──────────────────────────────────────────────────
 
         // ── End Whiteboard ────────────────────────────────────────────────────
 
