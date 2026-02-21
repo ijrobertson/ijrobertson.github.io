@@ -763,6 +763,138 @@
             }
         }
 
+        /* ── Founder Bio ── */
+        .founder-section {
+            background: #f9fffe;
+            padding: 5rem 0;
+        }
+        .founder-label {
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #20bcba;
+            margin-bottom: 2.5rem;
+        }
+        .founder-inner {
+            display: flex;
+            gap: 4rem;
+            align-items: flex-start;
+        }
+        .founder-photo-col {
+            flex: 0 0 320px;
+        }
+        .founder-photo-wrap {
+            position: relative;
+        }
+        .founder-photo-wrap::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            right: 12px;
+            bottom: 12px;
+            border: 3px solid #20bcba;
+            border-radius: 18px;
+            z-index: 0;
+        }
+        .founder-photo {
+            width: 100%;
+            border-radius: 16px;
+            object-fit: cover;
+            display: block;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.13);
+        }
+        .founder-name-card {
+            position: absolute;
+            bottom: -1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+            text-align: center;
+            white-space: nowrap;
+            z-index: 2;
+        }
+        .founder-name {
+            display: block;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #222;
+        }
+        .founder-title {
+            display: block;
+            font-size: 0.8rem;
+            color: #20bcba;
+            font-weight: 600;
+            margin-top: 0.1rem;
+        }
+        .founder-bio-col {
+            flex: 1;
+            padding-top: 0.5rem;
+        }
+        .founder-heading {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 1.5rem;
+            line-height: 1.25;
+        }
+        .founder-bio {
+            font-size: 1rem;
+            color: #444;
+            line-height: 1.8;
+            margin-bottom: 1.1rem;
+        }
+        .founder-bio-closing {
+            font-style: italic;
+            color: #333;
+            border-left: 3px solid #20bcba;
+            padding-left: 1rem;
+            margin-top: 1.5rem;
+        }
+        .founder-social {
+            margin-top: 2rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .founder-social .fa-stack {
+            width: 2.6rem;
+            height: 2.6rem;
+            line-height: 2.6rem;
+        }
+        .founder-social .hexagon {
+            display: block;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #20bcba;
+            clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+            transition: background 0.2s;
+        }
+        .founder-social .fa-stack:hover .hexagon { background: #1a9d9b; }
+        .founder-social .fa-stack-1x {
+            color: white;
+            font-size: 0.9rem;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        @media (max-width: 900px) {
+            .founder-inner { flex-direction: column; gap: 2.5rem; align-items: center; }
+            .founder-photo-col { flex: 0 0 auto; width: 260px; }
+            .founder-bio-col { padding-top: 2rem; }
+            .founder-heading { font-size: 1.6rem; }
+        }
+        @media (max-width: 576px) {
+            .founder-photo-col { width: 100%; max-width: 300px; }
+            .founder-section { padding: 3.5rem 0; }
+        }
+
         /* ── Fun Fact of the Day ── */
         .fun-fact-banner {
             background: linear-gradient(90deg, #20bcba 0%, #1a9d9b 40%, #16c79a 100%);
@@ -1841,119 +1973,56 @@
 
 
 
-    <!-- Team -->
-    <div class="basic-2">
+    <!-- Founder Bio -->
+    <div class="founder-section">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h2>Our Team Of Consultants</h2>
-                    <p class="p-heading">We're only as strong and as knowledgeable as our team. So here are the men and women which help customers meet goals and learn languages</p>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-            <div class="row">
-                <div class="col-lg-12">
-
-                    <!-- Team Member -->
-                    <div class="team-member">
-                        <div class="image-wrapper">
-                            <img class="img-fluid" src="images/me.jpg" alt="alternative">
-                        </div> <!-- end of image-wrapper -->
-                        <p class="p-large">Ian Jack</p>
-                        <p class="job-title">Founder/CEO</p>
-                        <span class="social-icons">
-                            <span class="fa-stack">
-                                <a href="#your-link">
-                                    <span class="hexagon"></span>
-                                    <i class="fab fa-facebook-f fa-stack-1x"></i>
-                                </a>
-                            </span>
-                            <span class="fa-stack">
-                                <a href="#your-link">
-                                    <span class="hexagon"></span>
-                                    <i class="fab fa-twitter fa-stack-1x"></i>
-                                </a>
-                            </span>
+            <div class="founder-label">Meet the Founder</div>
+            <div class="founder-inner">
+                <div class="founder-photo-col">
+                    <div class="founder-photo-wrap">
+                        <img src="images/me.jpg" alt="Ian Jack — Founder of Lingua Bud" class="founder-photo">
+                        <div class="founder-name-card">
+                            <span class="founder-name">Ian Jack</span>
+                            <span class="founder-title">Founder &amp; CEO, Lingua Bud</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="founder-bio-col">
+                    <h2 class="founder-heading">Born Curious. Built for Connection.</h2>
+                    <p class="founder-bio">
+                        I grew up between two worlds — the vibrant, sun-soaked streets of Puerto Rico and various corners of the United States. That constant movement gave me something I wouldn't trade for anything: a deep, genuine love for different cultures, languages, and the people who carry them. Hearing a new language for the first time, learning what makes a culture tick, tasting food that tells a whole story — that curiosity never left me.
+                    </p>
+                    <p class="founder-bio">
+                        Years of travel only deepened it. I've wandered through dozens of countries, chased experiences off the beaten path, and stumbled through conversations in languages I barely knew. There's nothing quite like the moment a local's face lights up when you try to speak their language — even badly. That feeling? Completely addictive.
+                    </p>
+                    <p class="founder-bio">
+                        In 2016, I had the opportunity of a lifetime: volunteering at the Summer Olympics in Rio de Janeiro. Two months immersed in Brazilian life — the music, the warmth, the beaches, the <em>saudade</em>. I fell completely in love with Brazilian Portuguese. But when I actually sat down to learn it, I hit a wall. The resources were scattered, lifeless, and totally disconnected from the real, living culture I'd just experienced firsthand.
+                    </p>
+                    <p class="founder-bio">
+                        That frustration sparked an idea. What if there was a place where learners could connect with real native speakers, explore the culture alongside the language, and actually enjoy the process? Not a classroom — a <strong>community</strong>.
+                    </p>
+                    <p class="founder-bio founder-bio-closing">
+                        That's how Lingua Bud was born. Built for the curious, the adventurous, and anyone who's ever felt that spark of wonder hearing a new language for the first time. The world is big, beautiful, and full of people worth talking to. Let's get you fluent enough to meet them.
+                    </p>
+                    <div class="founder-social">
+                        <span class="fa-stack">
+                            <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
+                                <span class="hexagon"></span>
+                                <i class="fab fa-facebook-f fa-stack-1x"></i>
+                            </a>
                         </span>
-                    </div> <!-- end of team-member -->
-                    <!-- end of team member -->
-
-                    <!-- Team Member -->
-                    <div class="team-member">
-                        <div class="image-wrapper">
-                            <img class="img-fluid" src="images/team-2.png" alt="alternative">
-                        </div> <!-- end of image wrapper -->
-                        <p class="p-large">Veronique Smith</p>
-                        <p class="job-title">Business Developer</p>
-                        <span class="social-icons">
-                            <span class="fa-stack">
-                                <a href="#your-link">
-                                    <span class="hexagon"></span>
-                                    <i class="fab fa-facebook-f fa-stack-1x"></i>
-                                </a>
-                            </span>
-                            <span class="fa-stack">
-                                <a href="#your-link">
-                                    <span class="hexagon"></span>
-                                    <i class="fab fa-twitter fa-stack-1x"></i>
-                                </a>
-                            </span>
+                        <span class="fa-stack">
+                            <a href="https://www.instagram.com/lingua_bud/" target="_blank">
+                                <span class="hexagon"></span>
+                                <i class="fab fa-instagram fa-stack-1x"></i>
+                            </a>
                         </span>
-                    </div> <!-- end of team-member -->
-                    <!-- end of team member -->
-
-                    <!-- Team Member -->
-                    <div class="team-member">
-                        <div class="image-wrapper">
-                            <img class="img-fluid" src="images/team-3.png" alt="alternative">
-                        </div> <!-- end of image wrapper -->
-                        <p class="p-large">Chris Zimerman</p>
-                        <p class="job-title">Online Marketer</p>
-                        <span class="social-icons">
-                            <span class="fa-stack">
-                                <a href="#your-link">
-                                    <span class="hexagon"></span>
-                                    <i class="fab fa-facebook-f fa-stack-1x"></i>
-                                </a>
-                            </span>
-                            <span class="fa-stack">
-                                <a href="#your-link">
-                                    <span class="hexagon"></span>
-                                    <i class="fab fa-twitter fa-stack-1x"></i>
-                                </a>
-                            </span>
-                        </span>
-                    </div> <!-- end of team-member -->
-                    <!-- end of team member -->
-
-                    <!-- Team Member -->
-                    <div class="team-member">
-                        <div class="image-wrapper">
-                            <img class="img-fluid" src="images/team-4.png" alt="alternative">
-                        </div> <!-- end of image wrapper -->
-                        <p class="p-large">Mary Villalonga</p>
-                        <p class="job-title">Community Manager</p>
-                        <span class="social-icons">
-                            <span class="fa-stack">
-                                <a href="#your-link">
-                                    <span class="hexagon"></span>
-                                    <i class="fab fa-facebook-f fa-stack-1x"></i>
-                                </a>
-                            </span>
-                            <span class="fa-stack">
-                                <a href="#your-link">
-                                    <span class="hexagon"></span>
-                                    <i class="fab fa-twitter fa-stack-1x"></i>
-                                </a>
-                            </span>
-                        </span>
-                    </div> <!-- end of team-member -->
-                    <!-- end of team member -->
-
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of basic-2 -->
-    <!-- end of team -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end of founder bio -->
 
 
     <!-- About -->
