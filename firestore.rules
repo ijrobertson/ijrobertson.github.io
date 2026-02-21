@@ -99,5 +99,10 @@ service cloud.firestore {
     match /whiteboard/{channelId}/relay/{docId} {
       allow read, write: if request.auth != null;
     }
+
+    // Whiteboard text board — shared phrase messages during a call
+    match /whiteboard/{channelId}/textboard/{messageId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
