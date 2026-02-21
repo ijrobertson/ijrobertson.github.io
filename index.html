@@ -762,6 +762,131 @@
                 margin-left: 0 !important;
             }
         }
+
+        /* ── Fun Fact of the Day ── */
+        .fun-fact-banner {
+            background: linear-gradient(90deg, #20bcba 0%, #1a9d9b 40%, #16c79a 100%);
+            padding: 1.1rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .fun-fact-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -5%;
+            width: 25%;
+            height: 200%;
+            background: rgba(255,255,255,0.07);
+            transform: rotate(15deg);
+        }
+        .fun-fact-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .fun-fact-icon { font-size: 1.6rem; animation: factPulse 2.5s infinite; }
+        @keyframes factPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .fun-fact-label {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 2px;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .fun-fact-text {
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            max-width: 680px;
+            line-height: 1.45;
+        }
+        @media (max-width: 767px) {
+            .fun-fact-inner {
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 0 1.25rem;
+                text-align: center;
+            }
+            .fun-fact-text { font-size: 0.88rem; max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
+            .fun-fact-label { white-space: normal; }
+            .fun-fact-banner { padding: 1rem 0; }
+        }
+
+        /* ── Language of the Month ── */
+        .language-of-month { padding: 4rem 0; background: #f7fffe; }
+        .lotm-inner {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
+            border-radius: 24px;
+            padding: 3rem 3.5rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .lotm-inner::after {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -8%;
+            width: 55%;
+            height: 170%;
+            background: rgba(32,188,186,0.08);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .lotm-badge {
+            position: absolute;
+            top: 1.4rem;
+            left: 1.8rem;
+            background: #20bcba;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            padding: 0.35rem 1rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        .lotm-flag { font-size: 6rem; flex-shrink: 0; line-height: 1; margin-top: 1.5rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
+        .lotm-content { flex: 1; padding-top: 1.5rem; }
+        .lotm-month-label { color: #20bcba; font-weight: 700; font-size: 0.82rem; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.4rem; }
+        .lotm-language { font-size: 2.6rem; font-weight: 700; color: white; margin-bottom: 0.5rem; line-height: 1.1; }
+        .lotm-phrase { font-size: 1.35rem; font-style: italic; color: #20bcba; margin-bottom: 0.35rem; }
+        .lotm-translation { font-size: 0.92rem; color: rgba(255,255,255,0.65); margin-bottom: 1.3rem; }
+        .lotm-desc { font-size: 0.98rem; color: rgba(255,255,255,0.82); line-height: 1.7; margin-bottom: 1.8rem; max-width: 560px; }
+        .lotm-btn {
+            display: inline-block;
+            background: #20bcba;
+            color: white;
+            padding: 0.8rem 2.2rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.2s;
+            position: relative;
+            z-index: 1;
+        }
+        .lotm-btn:hover { background: #1a9d9b; transform: translateY(-3px); color: white; text-decoration: none; }
+        @media (max-width: 768px) {
+            .lotm-inner { flex-direction: column; text-align: center; padding: 2.5rem 1.5rem; gap: 1.5rem; }
+            .lotm-flag { font-size: 4rem; margin-top: 2rem; }
+            .lotm-language { font-size: 2rem; }
+            .lotm-desc { max-width: 100%; }
+        }
     </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
@@ -979,6 +1104,19 @@
     <!-- end of intro -->
 
 
+    <!-- Fun Fact of the Day -->
+    <div class="fun-fact-banner">
+        <div class="container">
+            <div class="fun-fact-inner">
+                <span class="fun-fact-icon" id="funFactIcon">💡</span>
+                <span class="fun-fact-label">Fun Fact of the Day</span>
+                <span class="fun-fact-text" id="funFactText">Loading your daily language fact…</span>
+            </div>
+        </div>
+    </div>
+    <!-- end of fun fact banner -->
+
+
     <!-- Resources Section -->
     <div class="resources-section">
         <div class="container">
@@ -1021,6 +1159,26 @@
         </div>
     </div>
     <!-- end of resources section -->
+
+
+    <!-- Language of the Month -->
+    <div class="language-of-month">
+        <div class="container">
+            <div class="lotm-inner">
+                <span class="lotm-badge">🏆 Language of the Month</span>
+                <div class="lotm-flag" id="lotmFlag">🇪🇸</div>
+                <div class="lotm-content">
+                    <div class="lotm-month-label" id="lotmMonthLabel">February</div>
+                    <div class="lotm-language" id="lotmLanguage">Spanish</div>
+                    <div class="lotm-phrase" id="lotmPhrase">"Je t'aime"</div>
+                    <div class="lotm-translation" id="lotmTranslation">— "I love you"</div>
+                    <p class="lotm-desc" id="lotmDesc">Loading…</p>
+                    <a class="lotm-btn" id="lotmBtn" href="SpanishBasics.html">Start Learning Spanish →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end of language of the month -->
 
 
 	<!-- Testimonials -->
@@ -2632,6 +2790,185 @@
                 renderResources();
             }, 250);
         });
+    </script>
+
+    <!-- Fun Fact of the Day + Language of the Month JS -->
+    <script>
+    (function () {
+        /* ── Fun Fact of the Day ──────────────────────────────── */
+        var facts = [
+            { icon: '🇪🇸', text: 'Spanish is spoken by over 480 million native speakers, making it the world\'s second most-spoken native language.' },
+            { icon: '🇫🇷', text: 'French is an official language of 29 countries — more than any other language except English.' },
+            { icon: '🇵🇹', text: 'Portuguese is spoken on every single continent, making it one of the most geographically widespread languages on Earth.' },
+            { icon: '🇮🇹', text: 'Italian is the closest living language to Latin, the ancient language of the Roman Empire.' },
+            { icon: '🇩🇪', text: 'German has the world\'s longest officially recognized word: Rindfleischetikettierungsüberwachungsaufgabenübertragungsgesetz.' },
+            { icon: '🇷🇺', text: 'Russian is written in Cyrillic — an alphabet created in the 9th century by Saints Cyril and Methodius.' },
+            { icon: '🇸🇪', text: 'Swedish has a unique "sj" sound that doesn\'t exist in any other European language.' },
+            { icon: '🌍', text: 'Learning a second language physically increases the density of grey matter in your brain.' },
+            { icon: '🇪🇸', text: 'Spanish is the official language of 21 countries across Europe, the Americas, and Africa.' },
+            { icon: '🇫🇷', text: 'French was the diplomatic language of the world for over 400 years, from the 17th to the early 20th century.' },
+            { icon: '🇧🇷', text: 'Brazil is the world\'s 5th largest country, and Portuguese is its only official language.' },
+            { icon: '🇮🇹', text: 'Italy has more UNESCO World Heritage Sites than any other country — 58 in total.' },
+            { icon: '🇩🇪', text: 'German is the most widely spoken native language in the European Union.' },
+            { icon: '🇷🇺', text: 'Russian is one of the six official languages of the United Nations.' },
+            { icon: '🇸🇪', text: 'Sweden has one of the highest English proficiency rates in the world among non-native speakers.' },
+            { icon: '💡', text: 'The word "language" comes from the Latin word "lingua," meaning tongue.' },
+            { icon: '🌐', text: 'There are approximately 7,000 languages spoken in the world today.' },
+            { icon: '🧠', text: 'Bilingual people can switch between tasks more efficiently than monolinguals — it\'s like a workout for your brain.' },
+            { icon: '🇪🇸', text: 'The Real Academia Española, the official institution for the Spanish language, was founded in 1713.' },
+            { icon: '🇫🇷', text: 'The French Academy (Académie française) has been guarding the French language since 1635.' },
+            { icon: '🇵🇹', text: 'The Portuguese word "saudade" describes a melancholy longing for something absent — it has no direct English translation.' },
+            { icon: '🇮🇹', text: 'Opera was invented in Italy around 1600 — the entire art form was built around the beauty of Italian vocals.' },
+            { icon: '🇩🇪', text: 'German nouns are always capitalized — a grammar rule shared with no other major European language.' },
+            { icon: '🇷🇺', text: 'Russia spans 11 time zones, making it the world\'s largest country by land area.' },
+            { icon: '🇸🇪', text: 'The concept of "lagom" — meaning "just the right amount" — is central to Swedish culture and language.' },
+            { icon: '💬', text: 'Speaking a second language can delay the onset of dementia by an average of 4–5 years.' },
+            { icon: '🌍', text: 'Mandarin Chinese has the most native speakers of any language, followed by Spanish and English.' },
+            { icon: '🇪🇸', text: 'Spanglish — a blend of Spanish and English — is spoken by millions of people in the United States.' },
+            { icon: '🇫🇷', text: 'Around 45% of modern English words have French origins, a legacy of the Norman Conquest in 1066.' },
+            { icon: '🇵🇹', text: 'Portuguese explorers in the 15th century spread their language across Africa, Asia, and the Americas.' },
+            { icon: '🇮🇹', text: 'Italian has 21 letters in its alphabet — it doesn\'t use J, K, W, X, or Y in native words.' },
+            { icon: '🇩🇪', text: 'Around 130 million people speak German as their first or second language worldwide.' },
+            { icon: '🇷🇺', text: 'There are 33 letters in the Russian Cyrillic alphabet.' },
+            { icon: '🇸🇪', text: 'Swedish, Norwegian, and Danish are mutually intelligible — speakers of one can often understand the others.' },
+            { icon: '🌟', text: 'Children who grow up bilingual are better at multitasking and have stronger empathy skills.' },
+            { icon: '🇪🇸', text: 'Over 50 million people in the United States speak Spanish at home.' },
+            { icon: '🇫🇷', text: 'French is one of the fastest-growing languages in the world, especially across Africa.' },
+            { icon: '🇵🇹', text: 'Portuguese and Spanish share about 89% of their vocabulary — if you know one, the other comes fast.' },
+            { icon: '🇮🇹', text: 'The Italian alphabet has only 21 letters — it borrowed J, K, W, X, and Y from other languages.' },
+            { icon: '🇩🇪', text: 'German compound words can be almost unlimited in length — new ones are invented every day.' },
+            { icon: '🇷🇺', text: 'The word "vodka" comes from the Russian word "voda," meaning water.' },
+            { icon: '🇸🇪', text: 'ABBA, the world-famous pop group, chose to sing in English to reach a wider audience — but Swedish is their mother tongue.' },
+            { icon: '💡', text: 'The best time to learn a language is between ages 0–7, but adults can reach fluency too with consistent practice.' },
+            { icon: '🌐', text: 'Sign languages are complete, complex languages — ASL is not based on English.' },
+            { icon: '🧠', text: 'Reading in your target language — even children\'s books — is one of the most powerful fluency techniques.' },
+            { icon: '🎵', text: 'Listening to music in your target language dramatically improves vocabulary retention.' },
+            { icon: '✈️', text: 'Knowing even 50 words of a local language can transform your travel experience entirely.' }
+        ];
+
+        var now = new Date();
+        var start = new Date(now.getFullYear(), 0, 0);
+        var dayOfYear = Math.floor((now - start) / 86400000);
+        var fact = facts[dayOfYear % facts.length];
+
+        var iconEl = document.getElementById('funFactIcon');
+        var textEl = document.getElementById('funFactText');
+        if (iconEl) iconEl.textContent = fact.icon;
+        if (textEl) textEl.textContent = fact.text;
+
+        /* ── Language of the Month ────────────────────────────── */
+        var months = [
+            {
+                language: 'Spanish', flag: '🇪🇸',
+                phrase: '"¡Feliz Año Nuevo!"',
+                translation: '— "Happy New Year!"',
+                desc: 'Start the new year by learning Spanish — the world\'s second most-spoken native language. Spoken in 21 countries across three continents, Spanish opens doors to incredible cultures, cuisine, and connections.',
+                link: 'SpanishBasics.html'
+            },
+            {
+                language: 'French', flag: '🇫🇷',
+                phrase: '"Je t\'aime"',
+                translation: '— "I love you"',
+                desc: 'February is the month of love — and what better language than French? Spoken in 29 countries and renowned as the language of romance, diplomacy, and haute cuisine, French is endlessly beautiful.',
+                link: 'FrenchBasics.html'
+            },
+            {
+                language: 'Italian', flag: '🇮🇹',
+                phrase: '"La dolce vita"',
+                translation: '— "The sweet life"',
+                desc: 'As spring arrives, embrace the Italian way of life. Italian is the language of art, opera, and world-class food. From Venice to Sicily, learning Italian turns every trip into an adventure.',
+                link: 'ItalianBasics.html'
+            },
+            {
+                language: 'Portuguese', flag: '🇧🇷',
+                phrase: '"Saudade"',
+                translation: '— A beautiful longing for something cherished',
+                desc: 'Portuguese is spoken by over 250 million people across the globe — from Brazil to Portugal to Mozambique. With its musical rhythm and rich literary tradition, it\'s one of the most expressive languages on Earth.',
+                link: 'PortugueseBasics.html'
+            },
+            {
+                language: 'German', flag: '🇩🇪',
+                phrase: '"Fernweh"',
+                translation: '— "A longing for distant places"',
+                desc: 'German is the most widely spoken native language in the EU. Known for its precision and creativity — especially in compound words — German is a fascinating language that opens doors to business, philosophy, and culture.',
+                link: 'GermanBasics.html'
+            },
+            {
+                language: 'Swedish', flag: '🇸🇪',
+                phrase: '"Lagom"',
+                translation: '— "Just the right amount — perfectly balanced"',
+                desc: 'Sweden consistently ranks among the world\'s happiest countries. The Swedish concept of "lagom" — balance and moderation — is central to their way of life. Start your Swedish journey this summer!',
+                link: 'SwedishBasics.html'
+            },
+            {
+                language: 'Russian', flag: '🇷🇺',
+                phrase: '"Белые ночи"',
+                translation: '— "White Nights" — the magical midnight sun of summer',
+                desc: 'Russian is the most widely spoken Slavic language and unlocks a breathtaking world of literature, music, and history. The Cyrillic alphabet looks challenging, but you can master the basics faster than you think!',
+                link: 'RussianBasics.html'
+            },
+            {
+                language: 'Spanish', flag: '🇪🇸',
+                phrase: '"Buen viaje"',
+                translation: '— "Have a wonderful trip!"',
+                desc: 'August is peak travel season — and Spanish is the ultimate travel companion. Spoken across 21 countries on three continents, knowing Spanish transforms every adventure into a deeper cultural experience.',
+                link: 'SpanishBasics.html'
+            },
+            {
+                language: 'French', flag: '🇫🇷',
+                phrase: '"La rentrée"',
+                translation: '— "Back to school — a beloved fresh start"',
+                desc: 'September is "la rentrée" in France — the joyful return to school and routines. What better time to pick up French? Whether you\'re a student or a lifelong learner, French will enrich your mind all year long.',
+                link: 'FrenchBasics.html'
+            },
+            {
+                language: 'Italian', flag: '🇮🇹',
+                phrase: '"In bocca al lupo!"',
+                translation: '— "In the mouth of the wolf!" (the Italian way to say Good luck!)',
+                desc: 'October is harvest season in Italy — a time of wine, truffles, and golden landscapes. This month, explore Italian and discover why it\'s considered one of the most beautiful languages ever spoken.',
+                link: 'ItalianBasics.html'
+            },
+            {
+                language: 'German', flag: '🇩🇪',
+                phrase: '"Gemütlichkeit"',
+                translation: '— "A warm, cozy sense of togetherness"',
+                desc: 'As November nights grow longer, embrace the German art of Gemütlichkeit — the feeling of warmth, good company, and comfort. Curl up with a hot drink and start your German adventure!',
+                link: 'GermanBasics.html'
+            },
+            {
+                language: 'Portuguese', flag: '🇧🇷',
+                phrase: '"Feliz Natal!"',
+                translation: '— "Merry Christmas!"',
+                desc: 'Celebrate December with the festive warmth of Brazil and Portugal! Portuguese is the 6th most spoken language in the world, and its melodic, joyful sound makes it the perfect holiday language to learn.',
+                link: 'PortugueseBasics.html'
+            }
+        ];
+
+        var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        var m = new Date().getMonth();
+        var data = months[m];
+
+        var els = {
+            flag:   document.getElementById('lotmFlag'),
+            month:  document.getElementById('lotmMonthLabel'),
+            lang:   document.getElementById('lotmLanguage'),
+            phrase: document.getElementById('lotmPhrase'),
+            trans:  document.getElementById('lotmTranslation'),
+            desc:   document.getElementById('lotmDesc'),
+            btn:    document.getElementById('lotmBtn')
+        };
+
+        if (els.flag)   els.flag.textContent   = data.flag;
+        if (els.month)  els.month.textContent   = monthNames[m];
+        if (els.lang)   els.lang.textContent    = data.language;
+        if (els.phrase) els.phrase.textContent  = data.phrase;
+        if (els.trans)  els.trans.textContent   = data.translation;
+        if (els.desc)   els.desc.textContent    = data.desc;
+        if (els.btn) {
+            els.btn.href        = data.link;
+            els.btn.textContent = 'Start Learning ' + data.language + ' \u2192';
+        }
+    })();
     </script>
 </body>
 </html>
