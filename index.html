@@ -90,22 +90,52 @@
             transform: translateX(-50%);
             text-align: center;
             z-index: 10;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            white-space: nowrap;
         }
 
         .hero-button-container .btn-solid-lg {
             background: #20bcba;
-            color: white;
-            padding: 0.875rem 2rem;
-            border-radius: 0.25rem;
+            color: #fff;
+            padding: .875rem 2rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: .95rem;
+            letter-spacing: .4px;
             text-decoration: none;
             display: inline-block;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all .2s;
+            box-shadow: 0 4px 14px rgba(0,0,0,.25);
         }
 
         .hero-button-container .btn-solid-lg:hover {
             background: #1a9d9b;
-            color: white;
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        .hero-button-container .btn-outline-lg {
+            background: transparent;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,.6);
+            padding: .875rem 2rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: .95rem;
+            letter-spacing: .4px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all .2s;
+        }
+
+        .hero-button-container .btn-outline-lg:hover {
+            background: rgba(255,255,255,.15);
+            border-color: #fff;
+            color: #fff;
             text-decoration: none;
         }
 
@@ -141,11 +171,13 @@
 
             .hero-button-container {
                 bottom: 5rem;
+                gap: .75rem;
             }
 
-            .hero-button-container .btn-solid-lg {
-                padding: 0.875rem 1.5rem;
-                font-size: 0.95rem;
+            .hero-button-container .btn-solid-lg,
+            .hero-button-container .btn-outline-lg {
+                padding: .875rem 1.5rem;
+                font-size: .9rem;
             }
         }
 
@@ -160,6 +192,12 @@
 
             .hero-description {
                 font-size: 1rem !important;
+            }
+
+            .hero-button-container {
+                flex-direction: column;
+                align-items: center;
+                bottom: 4rem;
             }
         }
 
@@ -1019,6 +1057,54 @@
             .lotm-language { font-size: 2rem; }
             .lotm-desc { max-width: 100%; }
         }
+
+        /* Home CTA (sign-up) Section */
+        .home-cta {
+            background: linear-gradient(135deg, #0f3460 0%, #1a5f7a 100%);
+            padding: 5rem 0;
+            text-align: center;
+        }
+        .home-cta h2 {
+            color: #fff;
+            font-size: 2.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .home-cta p {
+            color: rgba(255,255,255,.8);
+            font-size: 1.05rem;
+            max-width: 520px;
+            margin: 0 auto 2.25rem;
+            line-height: 1.65;
+        }
+        .home-cta-btns {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .home-cta-btn-primary {
+            background: #20bcba;
+            color: #fff;
+            padding: .875rem 2rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: .95rem;
+            letter-spacing: .4px;
+            text-decoration: none;
+            transition: all .2s;
+            box-shadow: 0 4px 14px rgba(0,0,0,.25);
+        }
+        .home-cta-btn-primary:hover {
+            background: #1a9d9b;
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+        @media (max-width: 480px) {
+            .home-cta h2 { font-size: 1.85rem; }
+            .home-cta-btns { flex-direction: column; align-items: center; }
+        }
     </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
@@ -1144,6 +1230,7 @@
             </div>
             <div class="hero-button-container">
                 <a class="btn-solid-lg page-scroll" href="connect.html">FIND A BUD</a>
+                <a class="btn-outline-lg page-scroll" href="instructors.html">FIND AN INSTRUCTOR</a>
             </div>
         </div>
     </header> <!-- end of header -->
@@ -1885,91 +1972,17 @@
     <!-- end of testimonials -->
 
 
-    <!-- Call Me -->
-    <div id="callMe" class="form-1">
+    <!-- Sign Up CTA -->
+    <div id="callMe" class="home-cta">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-6">
-                    <div class="text-container">
-                        <div class="section-title">SIGN UP/LOG IN</div>
-                        <h2 class="white">Sign Up Today and Start Learning a New Language for FREE!</h2>
-                        <p class="white">You are just a few steps away from learning a new language. Just make an account and start your language journey today.</p>
-                        <ul class="list-unstyled li-space-lg white">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">It's completely free</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Connect with thousands of people</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Use our wide range of resources</div>
-                            </li>
-				
-				<br>
-				<br>
-				<p><a class="green page-scroll" href="Resources2.html">Already a member? Sign in here!</a> </p>
-                        </ul>
-                    </div>
-                </div> <!-- end of col -->
-                <div class="col-lg-6">
-                   
-                    <!-- Call Me Form -->
-                    <form id="callMeForm" data-toggle="validator" data-focus="false">
-                        <div class="form-group">
-                            <input type="text" class="form-control-input" id="lname" name="lname" required>
-                            <label class="label-control" for="lname">Username</label>
-                            <div class="help-block with-errors"></div>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control-input" id="lphone" name="lphone" required>
-                            <label class="label-control" for="lphone">Password</label>
-                            <div class="help-block with-errors"></div>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control-input" id="lphone" name="lphone" required>
-                            <label class="label-control" for="lphone">Re-Enter Password</label>
-                            <div class="help-block with-errors"></div>
-                        </div>
-                        <div class="form-group">
-                            <input type="email" class="form-control-input" id="lemail" name="lemail" required>
-                            <label class="label-control" for="lemail">Email</label>
-                            <div class="help-block with-errors"></div>
-                        </div>
-                        <div class="form-group">
-                            <select class="form-control-select" id="lselect" required>
-                                <option class="select-option" value="" disabled selected>I Want to Learn...</option>
-                                <option class="select-option" value="Off The Ground">English</option>
-                                <option class="select-option" value="Off The Ground">Spanish</option>
-                                <option class="select-option" value="Accelerated Growth">French</option>
-                                <option class="select-option" value="Market Domination">Portuguese</option>
-                                <option class="select-option" value="Market Domination">Italian</option>
-                                <option class="select-option" value="Market Domination">German</option>
-                                <option class="select-option" value="Market Domination">Russian</option>
-                                <option class="select-option" value="Off The Ground">Swedish</option>
-                            </select>
-                            <div class="help-block with-errors"></div>
-                        </div>
-                        <div class="form-group checkbox white">
-                            <input type="checkbox" id="lterms" value="Agreed-to-Terms" name="lterms" required>I agree with Lingua Bud's stated <a class="white" href="privacy-policy.html">Privacy Policy</a> and <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            <div class="help-block with-errors"></div>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="form-control-submit-button">SUBMIT</button>
-                        </div>
-                        <div class="form-message">
-                            <div id="lmsgSubmit" class="h3 text-center hidden"></div>
-                        </div>
-                    </form>
-                    <!-- end of call me form -->
-                    
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of form-1 -->
-    <!-- end of call me -->
+            <h2>Ready to Start Your Language Journey?</h2>
+            <p>Join thousands of learners building real connections through language. Create your free Lingua Bud account and find your language bud today.</p>
+            <div class="home-cta-btns">
+                <a href="login.html" class="home-cta-btn-primary">CREATE FREE ACCOUNT</a>
+            </div>
+        </div>
+    </div>
+    <!-- end of sign up cta -->
 
 
 
