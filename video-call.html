@@ -557,6 +557,78 @@
             border-top: 2px solid #6f42c1;
             box-shadow: none;
         }
+
+        /* ── Text Board ── */
+        #wb-textboard {
+            border-top: 1px solid #dee2e6;
+            background: #fafafa;
+        }
+        #wb-textboard-messages {
+            height: 130px;
+            overflow-y: auto;
+            padding: 0.6rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        #wb-textboard-messages:empty::before {
+            content: 'No messages yet — type a word or phrase below and press Send.';
+            color: #aaa;
+            font-size: 0.82rem;
+            font-style: italic;
+        }
+        .wb-textboard-msg {
+            font-size: 0.87rem;
+            color: #333;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+        .wb-textboard-msg-sender {
+            font-weight: 700;
+            color: #113448;
+            margin-right: 0.35rem;
+        }
+        .wb-textboard-msg-own .wb-textboard-msg-sender {
+            color: #20bcba;
+        }
+        #wb-textboard-input-row {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem 0.6rem;
+            border-top: 1px solid #e9ecef;
+            background: #fff;
+        }
+        #wb-textboard-input {
+            flex: 1;
+            padding: 0.4rem 0.85rem;
+            border: 1.5px solid #dee2e6;
+            border-radius: 20px;
+            font-size: 0.88rem;
+            font-family: "Open Sans", sans-serif;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        #wb-textboard-input:focus { border-color: #20bcba; }
+        #wb-textboard-send-btn {
+            background: #20bcba;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 0.4rem 1.1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: "Montserrat", sans-serif;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        #wb-textboard-send-btn:hover { background: #1aa9a7; }
+        @media (max-width: 768px) {
+            #wb-textboard-messages { height: 100px; }
+        }
     </style>
 </head>
 <body>
@@ -690,10 +762,23 @@
                             <button class="wb-stroke-btn" data-width="12" title="Thick"><span class="wb-stroke-preview" style="height:12px;"></span></button>
                         </div>
                         <div class="wb-tool-group">
+                            <button id="wb-text-btn" class="wb-tool-btn" title="Text Board"><i class="fas fa-keyboard"></i></button>
+                        </div>
+                        <div class="wb-tool-group">
                             <button id="wb-clear-btn" class="wb-tool-btn" title="Clear All"><i class="fas fa-trash-alt"></i></button>
                             <button id="wb-close-btn" class="wb-tool-btn" title="Close Whiteboard"><i class="fas fa-times"></i></button>
                         </div>
                     </div>
+
+                    <!-- Text Board — hidden until the keyboard button is toggled -->
+                    <div id="wb-textboard" style="display:none;">
+                        <div id="wb-textboard-messages"></div>
+                        <div id="wb-textboard-input-row">
+                            <input type="text" id="wb-textboard-input" placeholder="Type a word or phrase to share…" maxlength="200" autocomplete="off">
+                            <button id="wb-textboard-send-btn"><i class="fas fa-paper-plane"></i> Send</button>
+                        </div>
+                    </div>
+
                     <div id="whiteboard-canvas-wrapper">
                         <canvas id="whiteboard-canvas" width="1280" height="720"></canvas>
                     </div>
@@ -726,7 +811,7 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc, collection, getDocs, query, where, functions, httpsCallable, onSnapshot, setDoc, deleteDoc } from './lib/firebaseClient.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc, collection, getDocs, addDoc, query, where, functions, httpsCallable, onSnapshot, setDoc, deleteDoc } from './lib/firebaseClient.js';
 
         // Agora Configuration
         const APP_ID = 'dfd628e44de640e3b7717f422d1dc3e7';
@@ -759,6 +844,10 @@
         let wbUnsubscribe = null;   // Firestore listener teardown
         let wbJoinTime = 0;         // epoch ms when we joined — ignore older relay docs
 
+        // Text board state
+        let wbTextboardCol = null;  // Firestore collection ref for text messages
+        let wbTextUnsubscribe = null; // text board listener teardown
+
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
         const leaveBtn = document.getElementById('leaveBtn');
@@ -781,6 +870,13 @@
         const wbClearBtn      = document.getElementById('wb-clear-btn');
         const wbCloseBtn      = document.getElementById('wb-close-btn');
         const inlineWbBtn     = document.getElementById('inline-wb-btn');
+
+        // Text board elements
+        const wbTextBtn       = document.getElementById('wb-text-btn');
+        const wbTextboard     = document.getElementById('wb-textboard');
+        const wbTextMessages  = document.getElementById('wb-textboard-messages');
+        const wbTextInput     = document.getElementById('wb-textboard-input');
+        const wbTextSendBtn   = document.getElementById('wb-textboard-send-btn');
 
         // Get channel from URL parameter (if coming from messages page)
         const urlParams = new URLSearchParams(window.location.search);
@@ -968,6 +1064,18 @@
                         wbHandleRemoteAction(data);
                     });
                 });
+
+                // Set up text board Firestore listener
+                wbTextboardCol = collection(db, 'whiteboard', channelName, 'textboard');
+                wbTextUnsubscribe = onSnapshot(wbTextboardCol, (snap) => {
+                    snap.docChanges().forEach(change => {
+                        if (change.type !== 'added') return;
+                        const data = change.doc.data();
+                        if (data.ts && data.ts < wbJoinTime) return;
+                        wbRenderTextMessage(data);
+                    });
+                });
+
                 whiteboardBtn.style.display = 'inline-block';
 
                 showStatus('Successfully joined the call!', 'success');
@@ -1008,6 +1116,14 @@
                 if (wbRelayRef) { deleteDoc(wbRelayRef).catch(() => {}); wbRelayRef = null; }
                 wbMyUid = null;
                 wbJoinTime = 0;
+
+                // Tear down text board
+                if (wbTextUnsubscribe) { wbTextUnsubscribe(); wbTextUnsubscribe = null; }
+                wbTextboardCol = null;
+                wbTextboard.style.display = 'none';
+                wbTextBtn.classList.remove('wb-tool-active');
+                wbTextMessages.innerHTML = '';
+                wbTextInput.value = '';
 
                 // Reset whiteboard UI
                 whiteboardPanel.style.display = 'none';
@@ -1339,6 +1455,59 @@
 
         // Initialize canvas white on page load
         wbInitCanvas();
+
+        // ── Text Board ────────────────────────────────────────────────────────
+
+        function wbEscapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function wbRenderTextMessage(data) {
+            const isOwn = (data.sender === currentUserName);
+            const row = document.createElement('div');
+            row.className = 'wb-textboard-msg' + (isOwn ? ' wb-textboard-msg-own' : '');
+            row.innerHTML = `<span class="wb-textboard-msg-sender">${wbEscapeHtml(data.sender || 'Guest')}:</span>${wbEscapeHtml(data.text || '')}`;
+            wbTextMessages.appendChild(row);
+            wbTextMessages.scrollTop = wbTextMessages.scrollHeight;
+        }
+
+        async function wbSendText() {
+            if (!wbTextboardCol) return;
+            const text = wbTextInput.value.trim();
+            if (!text) return;
+            wbTextInput.value = '';
+            try {
+                await addDoc(wbTextboardCol, {
+                    text,
+                    sender: currentUserName,
+                    ts: Date.now()
+                });
+            } catch (e) {
+                console.warn('Text board send error:', e);
+            }
+        }
+
+        // Toggle text board panel
+        wbTextBtn.addEventListener('click', () => {
+            const isOpen = wbTextboard.style.display !== 'none';
+            wbTextboard.style.display = isOpen ? 'none' : 'block';
+            wbTextBtn.classList.toggle('wb-tool-active', !isOpen);
+            if (!isOpen) wbTextInput.focus();
+        });
+
+        // Send on button click
+        wbTextSendBtn.addEventListener('click', wbSendText);
+
+        // Send on Enter key
+        wbTextInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') wbSendText();
+        });
+
+        // ── End Text Board ────────────────────────────────────────────────────
 
         // ── End Whiteboard ────────────────────────────────────────────────────
 
