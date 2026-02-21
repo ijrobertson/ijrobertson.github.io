@@ -1259,7 +1259,7 @@
                 wbMyUid = String(uid);
                 wbJoinTime = Date.now();
                 wbRelayRef = doc(db, 'whiteboard', channelName, 'relay', wbMyUid);
-                wbPromptRelayRef = doc(db, 'whiteboard', channelName, 'relay', '__prompt__');
+                wbPromptRelayRef = doc(db, 'whiteboard', channelName, 'relay', 'current-prompt');
                 const wbRelayCol = collection(db, 'whiteboard', channelName, 'relay');
                 wbUnsubscribe = onSnapshot(wbRelayCol, (snap) => {
                     snap.docChanges().forEach(change => {
