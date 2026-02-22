@@ -2414,6 +2414,11 @@
             renderInstructors(language);
         }
 
+        // Returns the max number of cards to show based on screen width
+        function getDisplayLimit() {
+            return window.innerWidth < 768 ? 3 : 6;
+        }
+
         // Render student cards
         function renderStudents(filterLanguage = 'all') {
             const grid = document.getElementById('studentsGrid');
@@ -2435,7 +2440,7 @@
                 return;
             }
 
-            filtered.forEach(student => {
+            filtered.slice(0, getDisplayLimit()).forEach(student => {
                 const card = createStudentCard(student);
                 grid.appendChild(card);
             });
@@ -2459,7 +2464,7 @@
                 return;
             }
 
-            filtered.forEach(instructor => {
+            filtered.slice(0, getDisplayLimit()).forEach(instructor => {
                 const card = createInstructorCard(instructor);
                 grid.appendChild(card);
             });
