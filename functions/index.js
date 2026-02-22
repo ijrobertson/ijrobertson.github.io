@@ -295,3 +295,45 @@ exports.generateAgoraToken = onCall(async (request) => {
     throw new HttpsError('internal', error.message);
   }
 });
+
+/**
+ * Handles contact form submissions from the home page
+ * Sends an email via Resend to the site owner
+ */
+exports.sendContactEmail = onCall(async (request) => {
+  const { name, email, message } = request.data;
+
+  if (!name || !email || !message) {
+    throw new HttpsError('invalid-argument', 'Name, email, and message are required');
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY || 're_6mzE6Wfj_CPfu3sGxts7o1vRvMVeP4iqY');
+
+  const result = await resend.emails.send({
+    from: 'Lingua Bud <notifications@linguabud.com>',
+    to: 'ianjack1643@gmail.com',
+    subject: `Contact Form: Message from ${name}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #20bcba; color: white; padding: 20px 30px; border-radius: 4px 4px 0 0;">
+          <h2 style="margin: 0;">New Contact Form Submission</h2>
+        </div>
+        <div style="background: white; padding: 30px; border: 1px solid #e9ecef; border-top: none; border-radius: 0 0 4px 4px;">
+          <p><strong>From:</strong> ${name}</p>
+          <p><strong>Reply to:</strong> <a href="mailto:${email}">${email}</a></p>
+          <p><strong>Message:</strong></p>
+          <div style="background: #f8f9fa; border-left: 4px solid #20bcba; padding: 15px; white-space: pre-wrap;">${message}</div>
+          <p style="color: #999; font-size: 12px; margin-top: 20px;">Sent via Lingua Bud contact form</p>
+        </div>
+      </div>
+    `,
+    text: `New Contact Form Submission\n\nFrom: ${name}\nReply to: ${email}\n\nMessage:\n${message}`
+  });
+
+  if (result.error) {
+    console.error('Resend error:', result.error);
+    throw new HttpsError('internal', 'Failed to send email');
+  }
+
+  return { success: true };
+});

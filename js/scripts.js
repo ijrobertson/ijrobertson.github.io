@@ -241,25 +241,15 @@
     });
 
     function csubmitForm() {
-        // initiate variables with form content
-		var name = $("#cname").val();
-		var email = $("#cemail").val();
+        var name = $("#cname").val();
+        var email = $("#cemail").val();
         var message = $("#cmessage").val();
-        var terms = $("#cterms").val();
-        $.ajax({
-            type: "POST",
-            url: "php/contactform-process.php",
-            data: "name=" + name + "&email=" + email + "&message=" + message + "&terms=" + terms, 
-            success: function(text) {
-                if (text == "success") {
-                    cformSuccess();
-                } else {
-                    cformError();
-                    csubmitMSG(false, text);
-                }
-            }
-        });
-	}
+        var submitBtn = $("#contactForm .form-control-submit-button");
+        submitBtn.prop('disabled', true).text('Sending\u2026');
+        document.dispatchEvent(new CustomEvent('linguabud:sendContact', {
+            detail: { name: name, email: email, message: message }
+        }));
+    }
 
     function cformSuccess() {
         $("#contactForm")[0].reset();
