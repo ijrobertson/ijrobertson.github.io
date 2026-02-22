@@ -2513,7 +2513,10 @@
             const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
             const name = escapeHtml(instructor.name || 'Instructor');
             const country = escapeHtml(instructor.native_country || 'Not specified');
-            const price = instructor.price ? `${instructor.currency || '$'}${instructor.price}/hr` : '';
+            const _csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
+            const _cCode = (instructor.currency || 'USD').trim();
+            const _cSym = _csMap[_cCode] || '';
+            const price = instructor.price_per_lesson ? `${_cCode} ${_cSym}${instructor.price_per_lesson}/hour` : '';
             const bio = escapeHtml(instructor.about_me || '');
             const languages = instructor.languages_teaching || [];
 

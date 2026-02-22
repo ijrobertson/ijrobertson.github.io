@@ -1033,7 +1033,10 @@
             const spoken = instructor.languages_spoken || [];
             const teaching = instructor.languages_teaching || [];
             const price = instructor.price_per_lesson || '';
-            const currency = escapeHtml(instructor.currency || '$');
+            const _csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
+            const _cCode = (instructor.currency || 'USD').trim();
+            const _cSym = _csMap[_cCode] || '';
+            const priceDisplay = price ? `${escapeHtml(_cCode)} ${_cSym}${escapeHtml(String(price))}/hour` : '';
             const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
             const name = escapeHtml(instructor.name || 'Unnamed Instructor');
             const aboutMe = escapeHtml(instructor.about_me || 'No bio yet');
@@ -1046,7 +1049,7 @@
                 <div class="instructor-card-header">
                     <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
                     <div class="instructor-card-name">${name}</div>
-                    <div class="instructor-card-price">${currency}${escapeHtml(String(price))}/hour</div>
+                    ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
                     <div class="instructor-card-country">
                         <i class="fas fa-map-marker-alt"></i> ${country}
                     </div>
@@ -1423,7 +1426,9 @@
             const avatar = instructor.avatar_url || 'https://via.placeholder.com/130';
             const name = escapeHtml(instructor.name || 'Unnamed Instructor');
             const price = instructor.price_per_lesson || '';
-            const currency = escapeHtml(instructor.currency || '$');
+            const _csMap2 = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
+            const _cCode2 = (instructor.currency || 'USD').trim();
+            const _cSym2 = _csMap2[_cCode2] || '';
             const spoken = instructor.languages_spoken || [];
             const teaching = instructor.languages_teaching || [];
             const country = escapeHtml(instructor.native_country || 'Not specified');
@@ -1431,7 +1436,7 @@
 
             document.getElementById('profileModalAvatar').src = avatar;
             document.getElementById('profileModalName').textContent = name;
-            document.getElementById('profileModalPrice').textContent = `${currency}${price}/hour`;
+            document.getElementById('profileModalPrice').textContent = price ? `${_cCode2} ${_cSym2}${price}/hour` : '';
 
             // Languages spoken
             const spokenContainer = document.getElementById('profileModalSpoken');

@@ -1080,8 +1080,11 @@
             const countryHtml = i.native_country
                 ? `<div class="profile-card-country"><i class="fas fa-globe-americas"></i> ${i.native_country}</div>`
                 : '';
+            const _csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
+            const _cCode = (i.currency || 'USD').trim();
+            const _cSym = _csMap[_cCode] || '';
             const priceHtml = i.price_per_lesson
-                ? `<div class="profile-card-price"><i class="fas fa-tag"></i> ${i.currency || '$'}${i.price_per_lesson}/hr</div>`
+                ? `<div class="profile-card-price"><i class="fas fa-tag"></i> ${_cCode} ${_cSym}${i.price_per_lesson}/hour</div>`
                 : '';
             card.innerHTML = `
                 <div class="profile-card-image">
