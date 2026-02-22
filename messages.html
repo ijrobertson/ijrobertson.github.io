@@ -618,7 +618,7 @@
                     <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
                     <div class="notification-badge" id="notificationBadge"></div>
                     <div class="profile-dropdown-content">
-                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="student-dashboard.html" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
                         <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -711,6 +711,10 @@
         const signInWrapper = document.getElementById('signInWrapper');
         const logoutLink = document.getElementById('logoutLink');
 
+        // Immediately restore cached avatar so photo shows before Firestore loads
+        const _cachedAvatar = localStorage.getItem('nav_avatar') || localStorage.getItem('instructor_avatar');
+        if (_cachedAvatar && navProfilePic) navProfilePic.src = _cachedAvatar;
+
         let currentUser = null;
         let activeConversationId = null;
         let unsubscribeMessages = null;
@@ -721,33 +725,26 @@
                 currentUser = user;
                 console.log('🔐 User authenticated:', user.uid);
 
-                // Load profile picture
+                // Load profile picture — check both collections in parallel; prefer instructors
                 try {
-                    // Try users collection first, then instructors
-                    console.log('📸 Loading profile picture...');
-                    let userDoc = await getDoc(doc(db, 'users', user.uid));
-                    let collectionType = 'users';
-                    if (!userDoc.exists()) {
-                        console.log('👤 Not found in users, checking instructors...');
-                        userDoc = await getDoc(doc(db, 'instructors', user.uid));
-                        collectionType = 'instructors';
+                    const [usersSnap, instructorsSnap] = await Promise.all([
+                        getDoc(doc(db, 'users', user.uid)),
+                        getDoc(doc(db, 'instructors', user.uid))
+                    ]);
+                    const isInstructor = instructorsSnap.exists();
+                    const userData = isInstructor ? instructorsSnap.data()
+                                   : usersSnap.exists() ? usersSnap.data() : null;
+                    if (userData && userData.avatar_url) {
+                        navProfilePic.src = userData.avatar_url;
+                        localStorage.setItem('nav_avatar', userData.avatar_url);
                     }
-                    if (userDoc.exists()) {
-                        console.log('✅ Found user in', collectionType, 'collection');
-                        const userData = userDoc.data();
-                        console.log('📋 Logged-in user full data:', userData);
-                        if (userData.avatar_url) {
-                            navProfilePic.src = userData.avatar_url;
-                            console.log('✅ Profile picture loaded:', userData.avatar_url);
-                        } else {
-                            console.log('⚠️ No avatar_url - keeping default SVG icon');
-                            // Don't change the src - keep the default SVG from HTML
-                        }
-                    } else {
-                        console.error('❌ User document not found in either collection');
+                    // Point "My Profile" to the right dashboard
+                    const myProfileLink = document.getElementById('myProfileLink');
+                    if (myProfileLink) {
+                        myProfileLink.href = isInstructor ? 'dashboard.html' : 'student-dashboard.html';
                     }
                 } catch (error) {
-                    console.error('❌ Error loading profile:', error);
+                    console.error('Error loading profile:', error);
                 }
 
                 // Show profile nav and hide sign in button

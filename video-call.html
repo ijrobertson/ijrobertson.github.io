@@ -787,7 +787,7 @@
                 <div class="profile-dropdown">
                     <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
                     <div class="profile-dropdown-content">
-                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="student-dashboard.html" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
                         <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -947,7 +947,8 @@
         const remoteUserNames = {}; // agoraUid -> display name
         let isMuted = false;
         let isCameraOff = false;
-        let currentDocRef = null; // Firestore ref where we wrote our agoraUid
+        let currentPresenceRef = null; // Firestore ref for our video_calls presence doc
+        let currentChannelName = '';   // Active channel name, used by name lookup
 
         // Whiteboard state
         let wbTool = 'pen';
@@ -1056,6 +1057,10 @@
         const signInWrapper = document.getElementById('signInWrapper');
         const logoutLink = document.getElementById('logoutLink');
 
+        // Immediately restore cached avatar so photo appears before Firestore loads
+        const _cachedAvatar = localStorage.getItem('nav_avatar') || localStorage.getItem('instructor_avatar');
+        if (_cachedAvatar && navProfilePic) navProfilePic.src = _cachedAvatar;
+
         const whiteboardBtn   = document.getElementById('whiteboardBtn');
         const whiteboardPanel = document.getElementById('whiteboard-panel');
         const wbCanvas        = document.getElementById('whiteboard-canvas');
@@ -1096,20 +1101,28 @@
             if (user) {
                 currentUser = user;
 
-                // Load profile picture
+                // Load profile picture and name — check both collections in parallel; prefer instructors
                 try {
-                    let userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (!userDoc.exists()) {
-                        userDoc = await getDoc(doc(db, 'instructors', user.uid));
-                    }
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
+                    const [usersSnap, instructorsSnap] = await Promise.all([
+                        getDoc(doc(db, 'users', user.uid)),
+                        getDoc(doc(db, 'instructors', user.uid))
+                    ]);
+                    const isInstructor = instructorsSnap.exists();
+                    const userData = isInstructor ? instructorsSnap.data()
+                                   : usersSnap.exists() ? usersSnap.data() : null;
+                    if (userData) {
                         if (userData.avatar_url) {
                             navProfilePic.src = userData.avatar_url;
+                            localStorage.setItem('nav_avatar', userData.avatar_url);
                         }
                         if (userData.name) {
                             currentUserName = userData.name;
                         }
+                    }
+                    // Point "My Profile" to the right dashboard
+                    const myProfileLink = document.getElementById('myProfileLink');
+                    if (myProfileLink) {
+                        myProfileLink.href = isInstructor ? 'dashboard.html' : 'student-dashboard.html';
                     }
                 } catch (error) {
                     console.error('Error loading profile:', error);
@@ -1159,45 +1172,36 @@
             client.on("user-left", handleUserLeft);
         }
 
-        // Write our Agora UID into our Firestore profile so remote users can look us up
+        // Write our presence to a dedicated per-channel collection so remote users can look us up
         async function registerVideoPresence(agoraUid, channelName) {
             if (!currentUser || currentUser.uid.startsWith('guest-')) return;
             try {
-                const userRef = doc(db, 'users', currentUser.uid);
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    currentDocRef = userRef;
-                    await updateDoc(userRef, { _agoraUid: String(agoraUid), _agoraChannel: channelName });
-                    return;
-                }
-                const instrRef = doc(db, 'instructors', currentUser.uid);
-                const instrSnap = await getDoc(instrRef);
-                if (instrSnap.exists()) {
-                    currentDocRef = instrRef;
-                    await updateDoc(instrRef, { _agoraUid: String(agoraUid), _agoraChannel: channelName });
-                }
+                currentPresenceRef = doc(db, 'video_calls', channelName, 'presence', String(agoraUid));
+                await setDoc(currentPresenceRef, {
+                    name: currentUserName,
+                    userId: currentUser.uid,
+                    joinedAt: Date.now()
+                });
             } catch (e) {
                 console.warn('Could not register video presence:', e);
             }
         }
 
-        // Clear our Agora UID from Firestore when leaving
+        // Remove our presence doc when leaving
         async function clearVideoPresence() {
-            if (!currentDocRef) return;
+            if (!currentPresenceRef) return;
             try {
-                await updateDoc(currentDocRef, { _agoraUid: null, _agoraChannel: null });
+                await deleteDoc(currentPresenceRef);
             } catch (e) { /* non-critical */ }
-            currentDocRef = null;
+            currentPresenceRef = null;
         }
 
-        // Look up a remote participant's display name from Firestore by their Agora UID
+        // Look up a remote participant's display name — direct doc get, no query needed
         async function lookupRemoteUserName(agoraUid) {
             try {
-                const uidStr = String(agoraUid);
-                let snap = await getDocs(query(collection(db, 'users'), where('_agoraUid', '==', uidStr)));
-                if (!snap.empty) return snap.docs[0].data().name || null;
-                snap = await getDocs(query(collection(db, 'instructors'), where('_agoraUid', '==', uidStr)));
-                if (!snap.empty) return snap.docs[0].data().name || null;
+                if (!currentChannelName) return null;
+                const snap = await getDoc(doc(db, 'video_calls', currentChannelName, 'presence', String(agoraUid)));
+                if (snap.exists()) return snap.data().name || null;
             } catch (e) {
                 console.warn('Name lookup failed:', e);
             }
@@ -1239,24 +1243,25 @@
 
                 showStatus('Token generated, joining channel...', 'info');
 
-                // Store our Agora UID in Firestore so remote users can look up our name
-                await registerVideoPresence(uid, channelName);
+                // Join the channel with the generated token; capture actual Agora UID
+                const actualUid = await client.join(APP_ID, channelName, token, uid);
 
-                // Join the channel with the generated token
-                await client.join(APP_ID, channelName, token, uid);
+                // Register our presence using the actual UID Agora assigned
+                currentChannelName = channelName;
+                await registerVideoPresence(actualUid, channelName);
 
                 // Create local tracks
                 [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
 
                 // Display local video with the user's real name
-                const localPlayer = createVideoPlayer(uid, true, currentUserName);
+                const localPlayer = createVideoPlayer(actualUid, true, currentUserName);
                 localVideoTrack.play(localPlayer.querySelector('.video-stream'));
 
                 // Publish local tracks
                 await client.publish([localAudioTrack, localVideoTrack]);
 
                 // Set up Firebase Firestore relay for whiteboard sync
-                wbMyUid = String(uid);
+                wbMyUid = String(actualUid);
                 wbJoinTime = Date.now();
                 wbRelayRef = doc(db, 'whiteboard', channelName, 'relay', wbMyUid);
                 wbPromptRelayRef = doc(db, 'whiteboard', channelName, 'relay', 'current-prompt');

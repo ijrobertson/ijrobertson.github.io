@@ -104,5 +104,11 @@ service cloud.firestore {
     match /whiteboard/{channelId}/textboard/{messageId} {
       allow read, write: if request.auth != null;
     }
+
+    // Video call presence — each participant writes their Agora UID → name mapping
+    // so remote participants can look up display names without a collection query
+    match /video_calls/{channelName}/presence/{agoraUid} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
