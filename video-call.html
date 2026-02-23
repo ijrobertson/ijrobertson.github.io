@@ -446,6 +446,19 @@
             border: 1px solid #f5c6cb;
         }
 
+        .call-timer {
+            text-align: center;
+            padding: 0.5rem 1rem;
+            background: #113448;
+            color: #20bcba;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: none;
+            letter-spacing: 0.05em;
+        }
+
         .instructions {
             background: #f8f9fa;
             border-left: 4px solid #20bcba;
@@ -821,6 +834,10 @@
 
             <div id="statusMessage" class="status-message"></div>
 
+            <div id="callTimer" class="call-timer">
+                <i class="fas fa-clock"></i> Call Duration: <span id="callDuration">00:00</span>
+            </div>
+
             <div class="controls">
                 <input type="text" id="channelName" placeholder="Enter channel name (e.g., spanish-practice)" value="">
                 <button id="joinBtn" class="btn-video btn-join">Join Call</button>
@@ -949,6 +966,8 @@
         let isCameraOff = false;
         let currentPresenceRef = null; // Firestore ref for our video_calls presence doc
         let currentChannelName = '';   // Active channel name, used by name lookup
+        let callStartTime = null;      // epoch ms when the call started
+        let callTimerInterval = null;  // setInterval handle for the duration display
 
         // Whiteboard state
         let wbTool = 'pen';
@@ -1043,6 +1062,19 @@
             { cat:'games', icon:'🎮', title:'Celebrity Guess', text:'Think of a famous person. Describe their appearance, personality, and career WITHOUT saying their name. Your partner asks yes/no questions to guess who it is. Swap after 3 rounds.' },
             { cat:'games', icon:'🎮', title:'Alphabet Story', text:'Together, build a story where each sentence starts with the next letter of the alphabet — A, B, C… all the way to Z. Take turns, one sentence each. Full sentences only!' },
         ];
+
+        // Format elapsed seconds as HH:MM:SS or MM:SS
+        function updateCallTimer() {
+            if (!callStartTime) return;
+            const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+            const hours   = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('callDuration').textContent = hours > 0
+                ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+                : `${pad(minutes)}:${pad(seconds)}`;
+        }
 
         // DOM Elements
         const joinBtn = document.getElementById('joinBtn');
@@ -1294,6 +1326,14 @@
                 whiteboardBtn.style.display = 'inline-block';
 
                 showStatus('Successfully joined the call!', 'success');
+
+                // Start call duration timer
+                callStartTime = Date.now();
+                const callTimerEl = document.getElementById('callTimer');
+                callTimerEl.style.display = 'block';
+                updateCallTimer();
+                callTimerInterval = setInterval(updateCallTimer, 1000);
+
                 joinBtn.style.display = 'none';
                 leaveBtn.style.display = 'inline-block';
                 gridExpandBtn.style.display = 'flex';
@@ -1383,6 +1423,13 @@
                 videoGrid.innerHTML = '';
 
                 showStatus('Left the call', 'info');
+
+                // Stop call duration timer
+                if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
+                callStartTime = null;
+                document.getElementById('callTimer').style.display = 'none';
+                document.getElementById('callDuration').textContent = '00:00';
+
                 joinBtn.style.display = 'inline-block';
                 joinBtn.disabled = false;
                 isMuted = false;
