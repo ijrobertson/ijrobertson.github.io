@@ -89,6 +89,26 @@
         .res-footer-social:hover { background: #20bcba; color: #fff; }
         @media (max-width: 768px) { .res-hero h1 { font-size: 2.1rem; } .lesson-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; } }
         @media (max-width: 480px) { .res-hero h1 { font-size: 1.75rem; } .res-hero { padding: 6.5rem 0 3.5rem; } .lesson-grid { grid-template-columns: 1fr; } }
+        /* Profile Dropdown */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 2px solid #20bcba; transition: border-color 0.3s; }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content { position: fixed; right: 1rem; top: 60px; background-color: white; min-width: 200px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 8px; z-index: 9999; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease; }
+        @media (min-width: 992px) { .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; } }
+        .profile-dropdown-content a { color: #333; padding: 12px 16px; text-decoration: none; display: block; transition: background 0.2s; }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content { opacity: 1; visibility: visible; transform: translateY(0); }
+        .notification-badge { position: absolute; top: -2px; right: -2px; background-color: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; font-weight: bold; display: none; align-items: center; justify-content: center; border: 2px solid white; }
+        .notification-badge.show { display: flex; }
+        @media (min-width: 768px) { .navbar-nav { margin-left: 8rem !important; } .profile-nav-wrapper { margin-left: auto !important; } #signInWrapper { margin-left: auto !important; } }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+        .res-hero h1 { color: #fff; }
+        .lesson-card-img { width: 100%; height: 175px; object-fit: cover; display: block; }
+        .lesson-card-header { display: flex; align-items: center; gap: .65rem; margin-bottom: .85rem; }
+        .lesson-icon-sm { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+        .lesson-card-title { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: .15rem; }
+        .lesson-card-native { font-size: .78rem; font-style: italic; color: #888; }
     </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
@@ -102,12 +122,11 @@
             <span class="navbar-toggler-awesome fas fa-times"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item"><a class="nav-link page-scroll" href="index.html#header">HOME</a></li>
-                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#intro">ABOUT</a></li>
-                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#services">SERVICES</a></li>
+                <li class="nav-item"><a class="nav-link page-scroll" href="connect.html">CONNECT</a></li>
+                <li class="nav-item"><a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a></li>
                 <li class="nav-item"><a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a></li>
-                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a></li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -129,8 +148,20 @@
                     </div>
                 </li>
                 <li class="nav-item"><a class="nav-link page-scroll" href="index.html#contact">CONTACT</a></li>
-                <li class="nav-item"><a class="btn-solid-xlg nav-link page-scroll" href="login.html">SIGN UP/LOG IN</a></li>
+                <li class="nav-item" id="signInWrapper"><a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a></li>
             </ul>
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
             <span class="nav-item social-icons">
                 <span class="fa-stack"><a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank"><span class="hexagon"></span><i class="fab fa-facebook-f fa-stack-1x"></i></a></span>
                 <span class="fa-stack"><a href="https://www.instagram.com/lingua_bud/" target="_blank"><span class="hexagon"></span><i class="fab fa-instagram fa-stack-1x"></i></a></span>
@@ -138,7 +169,7 @@
         </div>
     </nav>
 
-    <header class="res-hero" style="background: linear-gradient(135deg, #005a28 0%, #006b3c 50%, #d62828 100%);">
+    <header class="res-hero" style="background: #153e52;">
         <div class="container">
             <img src="images/BrazilFlag.png" alt="Portuguese flag" class="res-hero-flag">
             <h1>Portuguese Resources</h1>
@@ -163,84 +194,105 @@
             <div class="lesson-grid">
 
                 <div class="lesson-card">
-                    <div class="lesson-card-top lc-basics">
-                        <span class="lesson-icon">📖</span>
-                        <div class="lesson-card-title">Portuguese Basics</div>
-                        <div class="lesson-card-native">Básicos do Português</div>
-                    </div>
+                    <img src="images/WomanLearning.jpg" alt="Portuguese Basics" class="lesson-card-img">
                     <div class="lesson-card-body">
+                        <div class="lesson-card-header">
+                            <span class="lesson-icon-sm">📖</span>
+                            <div>
+                                <div class="lesson-card-title">Portuguese Basics</div>
+                                <div class="lesson-card-native">Básicos do Português</div>
+                            </div>
+                        </div>
                         <div class="lesson-card-desc">Start with essential vocabulary, numbers, and greetings in both European and Brazilian Portuguese.</div>
                         <a href="PortugueseBasics.html" class="lesson-card-btn">START LEARNING →</a>
                     </div>
                 </div>
 
                 <div class="lesson-card">
-                    <div class="lesson-card-top lc-convo">
-                        <span class="lesson-icon">💬</span>
-                        <div class="lesson-card-title">First Conversation</div>
-                        <div class="lesson-card-native">Primeira Conversação</div>
-                    </div>
+                    <img src="images/Conversation.jpg" alt="First Conversation" class="lesson-card-img">
                     <div class="lesson-card-body">
+                        <div class="lesson-card-header">
+                            <span class="lesson-icon-sm">💬</span>
+                            <div>
+                                <div class="lesson-card-title">First Conversation</div>
+                                <div class="lesson-card-native">Primeira Conversação</div>
+                            </div>
+                        </div>
                         <div class="lesson-card-desc">Break the ice in Portuguese — learn how to introduce yourself and keep a conversation going naturally.</div>
                         <a href="PortugueseFirst.html" class="lesson-card-btn">START LEARNING →</a>
                     </div>
                 </div>
 
                 <div class="lesson-card">
-                    <div class="lesson-card-top lc-accents">
-                        <span class="lesson-icon">Ã</span>
-                        <div class="lesson-card-title">Accent Marks</div>
-                        <div class="lesson-card-native">Acentos do Português</div>
-                    </div>
+                    <img src="images/PortugueseWords.jpg" alt="Accent Marks" class="lesson-card-img">
                     <div class="lesson-card-body">
+                        <div class="lesson-card-header">
+                            <span class="lesson-icon-sm">Ã</span>
+                            <div>
+                                <div class="lesson-card-title">Accent Marks</div>
+                                <div class="lesson-card-native">Acentos do Português</div>
+                            </div>
+                        </div>
                         <div class="lesson-card-desc">Master ã, ê, ç and the beautiful nasal sounds that make Portuguese uniquely melodic.</div>
                         <a href="PortugueseAccents.html" class="lesson-card-btn">START LEARNING →</a>
                     </div>
                 </div>
 
                 <div class="lesson-card">
-                    <div class="lesson-card-top lc-restaurant">
-                        <span class="lesson-icon">🍽️</span>
-                        <div class="lesson-card-title">At the Restaurant</div>
-                        <div class="lesson-card-native">No Restaurante</div>
-                    </div>
+                    <img src="images/WomanRestaurant.jpg" alt="At the Restaurant" class="lesson-card-img">
                     <div class="lesson-card-body">
+                        <div class="lesson-card-header">
+                            <span class="lesson-icon-sm">🍽️</span>
+                            <div>
+                                <div class="lesson-card-title">At the Restaurant</div>
+                                <div class="lesson-card-native">No Restaurante</div>
+                            </div>
+                        </div>
                         <div class="lesson-card-desc">Order food in Portugal or Brazil with ease — menus, preferences, and table manners all covered.</div>
                         <a href="PortugueseRestaurant.html" class="lesson-card-btn">START LEARNING →</a>
                     </div>
                 </div>
 
                 <div class="lesson-card">
-                    <div class="lesson-card-top lc-hotel">
-                        <span class="lesson-icon">🏨</span>
-                        <div class="lesson-card-title">At the Hotel</div>
-                        <div class="lesson-card-native">No Hotel</div>
-                    </div>
+                    <img src="images/Hotel.jpg" alt="At the Hotel" class="lesson-card-img">
                     <div class="lesson-card-body">
+                        <div class="lesson-card-header">
+                            <span class="lesson-icon-sm">🏨</span>
+                            <div>
+                                <div class="lesson-card-title">At the Hotel</div>
+                                <div class="lesson-card-native">No Hotel</div>
+                            </div>
+                        </div>
                         <div class="lesson-card-desc">Check in, request room service, and handle any hotel interaction in Portuguese with confidence.</div>
                         <a href="PortugueseHotel.html" class="lesson-card-btn">START LEARNING →</a>
                     </div>
                 </div>
 
                 <div class="lesson-card">
-                    <div class="lesson-card-top lc-airport">
-                        <span class="lesson-icon">✈️</span>
-                        <div class="lesson-card-title">At the Airport</div>
-                        <div class="lesson-card-native">No Aeroporto</div>
-                    </div>
+                    <img src="images/Airport.jpg" alt="At the Airport" class="lesson-card-img">
                     <div class="lesson-card-body">
+                        <div class="lesson-card-header">
+                            <span class="lesson-icon-sm">✈️</span>
+                            <div>
+                                <div class="lesson-card-title">At the Airport</div>
+                                <div class="lesson-card-native">No Aeroporto</div>
+                            </div>
+                        </div>
                         <div class="lesson-card-desc">Everything you need for a smooth journey through Portuguese-speaking airports and beyond.</div>
                         <a href="PortugueseAirport.html" class="lesson-card-btn">START LEARNING →</a>
                     </div>
                 </div>
 
                 <div class="lesson-card">
-                    <div class="lesson-card-top lc-day">
-                        <span class="lesson-icon">🌅</span>
-                        <div class="lesson-card-title">Typical Day</div>
-                        <div class="lesson-card-native">Dia Típico</div>
-                    </div>
+                    <img src="images/Work.jpg" alt="Typical Day" class="lesson-card-img">
                     <div class="lesson-card-body">
+                        <div class="lesson-card-header">
+                            <span class="lesson-icon-sm">🌅</span>
+                            <div>
+                                <div class="lesson-card-title">Typical Day</div>
+                                <div class="lesson-card-native">Dia Típico</div>
+                            </div>
+                        </div>
                         <div class="lesson-card-desc">Describe your daily routine with confidence using essential Portuguese verbs and time phrases.</div>
                         <a href="PortugueseDay.html" class="lesson-card-btn">START LEARNING →</a>
                     </div>
@@ -372,5 +424,43 @@
     <script src="js/isotope.pkgd.min.js"></script>
     <script src="js/validator.min.js"></script>
     <script src="js/scripts.js"></script>
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper = document.getElementById('signInWrapper');
+            const navProfilePic = document.getElementById('navProfilePic');
+            const logoutLink = document.getElementById('logoutLink');
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper) signInWrapper.style.display = 'none';
+                try {
+                    const instructorRef = doc(db, 'instructors', user.uid);
+                    const instructorSnap = await getDoc(instructorRef);
+                    if (instructorSnap.exists()) {
+                        const data = instructorSnap.data();
+                        if (data.avatar_url && navProfilePic) navProfilePic.src = data.avatar_url;
+                    } else {
+                        const userRef = doc(db, 'users', user.uid);
+                        const userSnap = await getDoc(userRef);
+                        if (userSnap.exists()) {
+                            const data = userSnap.data();
+                            if (data.avatar_url && navProfilePic) navProfilePic.src = data.avatar_url;
+                        }
+                    }
+                } catch (error) { console.error('Error loading user profile:', error); }
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (error) { console.error('Error signing out:', error); }
+                    });
+                }
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper) signInWrapper.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
