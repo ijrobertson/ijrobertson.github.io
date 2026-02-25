@@ -540,6 +540,96 @@
     }
     .setup-submit-btn:hover { background: #199c9a; }
     .setup-submit-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    /* ── Danger Zone ─────────────────────────── */
+    .danger-card {
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1.5px solid #fde8e8;
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .danger-header {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.5rem;
+    }
+    .danger-header i { color: #c0392b; font-size: 1rem; }
+    .danger-header h3 { font-size: 1rem; font-weight: 700; color: #c0392b; margin: 0; }
+    .danger-card > p { font-size: 0.875rem; color: #64748b; line-height: 1.65; margin: 0 0 1.5rem; }
+    .btn-delete-account {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #fff;
+      color: #c0392b;
+      border: 1.5px solid #c0392b;
+      border-radius: 7px;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-delete-account:hover { background: #c0392b; color: #fff; }
+
+    /* ── Delete Confirmation Modal ───────────── */
+    .del-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .del-backdrop.active { display: flex; }
+    .del-modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem 2rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      animation: delSlideUp 0.22s ease;
+    }
+    @keyframes delSlideUp {
+      from { transform: translateY(18px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .del-icon {
+      width: 64px;
+      height: 64px;
+      background: #fde8e8;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      font-size: 1.5rem;
+      color: #c0392b;
+    }
+    .del-modal h3 { font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0 0 0.6rem; }
+    .del-modal p  { font-size: 0.875rem; color: #64748b; line-height: 1.65; margin: 0 0 1.75rem; }
+    .del-btns { display: flex; gap: 0.75rem; }
+    .del-btn-cancel {
+      flex: 1; padding: 0.72rem; border-radius: 7px;
+      border: 1.5px solid #d0d5dd; background: #fff;
+      font-weight: 600; font-size: 0.875rem; color: #334155; cursor: pointer; transition: all 0.2s;
+    }
+    .del-btn-cancel:hover { background: #f1f5f9; }
+    .del-btn-confirm {
+      flex: 1; padding: 0.72rem; border-radius: 7px;
+      border: none; background: #c0392b; color: #fff;
+      font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;
+    }
+    .del-btn-confirm:hover { background: #a93226; }
+    .del-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+    .del-error { font-size: 0.8rem; color: #c0392b; margin-top: 1rem; display: none; }
   </style>
 </head>
 <body>
@@ -754,6 +844,36 @@
         <p style="text-align: center; color: #999;">Loading...</p>
       </div>
     </div>
+
+    <!-- Danger Zone -->
+    <div class="danger-card">
+      <div class="danger-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Danger Zone</h3>
+      </div>
+      <p>Permanently delete your Lingua Bud account and all associated data. This action is irreversible and cannot be undone.</p>
+      <button class="btn-delete-account" id="open-delete-modal">
+        <i class="fas fa-trash-alt"></i> Delete My Account
+      </button>
+    </div>
+  </div>
+
+  <!-- Delete Account Modal -->
+  <div class="del-backdrop" id="del-backdrop">
+    <div class="del-modal">
+      <div class="del-icon">
+        <i class="fas fa-trash-alt"></i>
+      </div>
+      <h3>Delete your account?</h3>
+      <p>This will permanently remove your Lingua Bud profile and all your data from our platform. <strong>This cannot be undone.</strong></p>
+      <div class="del-btns">
+        <button class="del-btn-cancel" id="del-cancel">Keep My Account</button>
+        <button class="del-btn-confirm" id="del-confirm">
+          <span id="del-btn-text">Yes, Delete Account</span>
+        </button>
+      </div>
+      <div class="del-error" id="del-error"></div>
+    </div>
   </div>
 
   <!-- Scripts -->
@@ -775,9 +895,11 @@
       storage,
       signOut,
       onAuthStateChanged,
+      deleteUser,
       doc,
       getDoc,
       setDoc,
+      deleteDoc,
       collection,
       getDocs,
       query,
@@ -1485,6 +1607,48 @@
         }
       });
     }
+
+    // ── Account Deletion ──────────────────────────────────────────
+    const delBackdrop = document.getElementById('del-backdrop');
+    const delCancel   = document.getElementById('del-cancel');
+    const delConfirm  = document.getElementById('del-confirm');
+    const delBtnText  = document.getElementById('del-btn-text');
+    const delError    = document.getElementById('del-error');
+
+    document.getElementById('open-delete-modal').addEventListener('click', () => {
+      delError.style.display = 'none';
+      delConfirm.disabled = false;
+      delBtnText.textContent = 'Yes, Delete Account';
+      delBackdrop.classList.add('active');
+    });
+
+    delCancel.addEventListener('click', () => delBackdrop.classList.remove('active'));
+
+    delBackdrop.addEventListener('click', (e) => {
+      if (e.target === delBackdrop) delBackdrop.classList.remove('active');
+    });
+
+    delConfirm.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      delConfirm.disabled = true;
+      delBtnText.textContent = 'Deleting…';
+      delError.style.display = 'none';
+
+      try {
+        await deleteDoc(doc(db, 'users', user.uid));
+        await deleteUser(user);
+        window.location.href = 'index.html';
+      } catch (err) {
+        delConfirm.disabled = false;
+        delBtnText.textContent = 'Yes, Delete Account';
+        delError.textContent = err.code === 'auth/requires-recent-login'
+          ? 'For security, please sign out and sign back in before deleting your account.'
+          : 'Something went wrong. Please try again.';
+        delError.style.display = 'block';
+      }
+    });
 
   </script>
 </body>
