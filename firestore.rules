@@ -76,7 +76,8 @@ service cloud.firestore {
       // Any authenticated user can read bookings (needed to check instructor availability)
       allow read: if request.auth != null;
 
-      // Students can create bookings
+      // Students can create bookings (including Stripe payment fields:
+      // paymentIntentId, paymentStatus, amount, currency)
       allow create: if request.auth != null
                     && request.auth.uid == request.resource.data.studentId
                     && request.resource.data.status == "confirmed";

@@ -623,6 +623,14 @@
     </div>
     <div id="status" class="status-message"></div>
 
+    <!-- PAYMENT SETUP SECTION -->
+    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
+      <i class="fas fa-credit-card"></i> Payment Setup
+    </h3>
+    <div id="stripe-status-section">
+      <p style="color: #666; font-size: 0.9rem;">Loading payment status...</p>
+    </div>
+
     <!-- Danger Zone -->
     <div class="danger-card">
       <div class="danger-header">
@@ -671,6 +679,7 @@
       auth,
       db,
       storage,
+      functions,
       signOut,
       onAuthStateChanged,
       deleteUser,
@@ -685,7 +694,8 @@
       ref,
       uploadBytes,
       getDownloadURL,
-      onSnapshot
+      onSnapshot,
+      httpsCallable
     } from './lib/firebaseClient.js';
 
     // Language/country/currency data
@@ -847,6 +857,10 @@
 
           await loadProfile();
           await loadAvailability();
+
+          // Check Stripe payment setup status
+          const urlParams = new URLSearchParams(window.location.search);
+          await checkStripePaymentStatus(urlParams.get('stripe') === 'success');
 
           // Load unread message count
           try {
@@ -1207,6 +1221,142 @@
           }
         }
       });
+    }
+
+    // ── Stripe Payment Setup ─────────────────────────────────────
+
+    async function checkStripePaymentStatus(forceCheck = false) {
+      try {
+        const instructorSnap = await getDoc(doc(db, 'instructors', currentUser.uid));
+
+        if (!instructorSnap.exists() || !instructorSnap.data().stripeAccountId) {
+          renderStripeSection('not-connected');
+          return;
+        }
+
+        const data = instructorSnap.data();
+
+        // On return from Stripe onboarding, or if not yet marked complete, verify with Stripe
+        if (forceCheck || data.stripeOnboardingComplete !== true) {
+          try {
+            const getDashboard = httpsCallable(functions, 'getStripeConnectDashboard');
+            const result = await getDashboard();
+            const { chargesEnabled } = result.data;
+
+            if (chargesEnabled) {
+              await setDoc(doc(db, 'instructors', currentUser.uid),
+                { stripeOnboardingComplete: true }, { merge: true });
+              renderStripeSection('connected');
+            } else {
+              renderStripeSection('incomplete');
+            }
+          } catch (err) {
+            console.error('Stripe status check error:', err);
+            renderStripeSection(data.stripeOnboardingComplete ? 'connected' : 'incomplete');
+          }
+          return;
+        }
+
+        renderStripeSection('connected');
+      } catch (error) {
+        console.error('Error checking Stripe status:', error);
+        renderStripeSection('not-connected');
+      }
+    }
+
+    function renderStripeSection(state) {
+      const section = document.getElementById('stripe-status-section');
+
+      if (state === 'not-connected') {
+        section.innerHTML = `
+          <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+            Connect your Stripe account to receive payments from students.
+            Lingua Bud retains a 10% platform fee per lesson.
+          </p>
+          <button id="connect-stripe-btn" type="button">
+            <i class="fas fa-link"></i> Connect with Stripe
+          </button>
+        `;
+        document.getElementById('connect-stripe-btn').onclick = connectStripe;
+
+      } else if (state === 'incomplete') {
+        section.innerHTML = `
+          <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;margin-bottom:1rem;">
+            <i class="fas fa-exclamation-circle" style="color:#f59e0b;font-size:1.25rem;flex-shrink:0;"></i>
+            <div>
+              <strong>Setup Incomplete</strong>
+              <p style="margin:0;font-size:0.875rem;color:#666;">Complete your Stripe account to start receiving payments.</p>
+            </div>
+          </div>
+          <button id="complete-stripe-btn" type="button">
+            <i class="fas fa-external-link-alt"></i> Complete Stripe Setup
+          </button>
+        `;
+        document.getElementById('complete-stripe-btn').onclick = continueStripeOnboarding;
+
+      } else if (state === 'connected') {
+        section.innerHTML = `
+          <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;background:#d1fae5;border:1px solid #10b981;border-radius:8px;margin-bottom:1rem;">
+            <i class="fas fa-check-circle" style="color:#10b981;font-size:1.5rem;flex-shrink:0;"></i>
+            <div>
+              <strong style="color:#065f46;">Stripe Connected</strong>
+              <p style="margin:0;font-size:0.875rem;color:#666;">You are ready to receive lesson payments from students.</p>
+            </div>
+          </div>
+          <button id="view-stripe-btn" type="button">
+            <i class="fas fa-external-link-alt"></i> View Stripe Dashboard
+          </button>
+        `;
+        document.getElementById('view-stripe-btn').onclick = openStripeDashboard;
+      }
+    }
+
+    async function connectStripe() {
+      const btn = document.getElementById('connect-stripe-btn');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...'; }
+      try {
+        const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
+        const result = await createAccount();
+        window.location.href = result.data.url;
+      } catch (error) {
+        console.error('Error connecting Stripe:', error);
+        setStatus('Error connecting Stripe: ' + error.message, true);
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-link"></i> Connect with Stripe'; }
+      }
+    }
+
+    async function continueStripeOnboarding() {
+      const btn = document.getElementById('complete-stripe-btn');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...'; }
+      try {
+        // createStripeConnectAccount handles existing accounts — returns a fresh onboarding link
+        const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
+        const result = await createAccount();
+        window.location.href = result.data.url;
+      } catch (error) {
+        console.error('Error resuming Stripe onboarding:', error);
+        setStatus('Error: ' + error.message, true);
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-external-link-alt"></i> Complete Stripe Setup'; }
+      }
+    }
+
+    async function openStripeDashboard() {
+      const btn = document.getElementById('view-stripe-btn');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...'; }
+      try {
+        const getDashboard = httpsCallable(functions, 'getStripeConnectDashboard');
+        const result = await getDashboard();
+        if (result.data.loginUrl) {
+          window.open(result.data.loginUrl, '_blank');
+        } else {
+          setStatus('Dashboard link unavailable. Please try again later.', true);
+        }
+      } catch (error) {
+        console.error('Error opening Stripe dashboard:', error);
+        setStatus('Error: ' + error.message, true);
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-external-link-alt"></i> View Stripe Dashboard'; }
+      }
     }
 
     // ── Account Deletion ──────────────────────────────────────────

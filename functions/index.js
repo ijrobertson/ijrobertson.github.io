@@ -1,6 +1,7 @@
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { Resend } = require('resend');
+const Stripe = require('stripe');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -301,6 +302,7 @@ exports.generateAgoraToken = onCall(async (request) => {
  * Sends an email via Resend to the site owner
  */
 exports.sendContactEmail = onCall(async (request) => {
+
   const { name, email, message } = request.data;
 
   if (!name || !email || !message) {
@@ -336,4 +338,149 @@ exports.sendContactEmail = onCall(async (request) => {
   }
 
   return { success: true };
+});
+
+// ── Stripe Connect Integration ─────────────────────────────────────────────
+
+const PLATFORM_FEE_PERCENT = 0.10; // 10% platform fee — easy to adjust
+
+function getStripe() {
+  return Stripe(process.env.STRIPE_SECRET_KEY);
+}
+
+/**
+ * Creates (or retrieves) a Stripe Express Connect account for an instructor
+ * and returns an onboarding URL.
+ */
+exports.createStripeConnectAccount = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const uid = request.auth.uid;
+  const stripe = getStripe();
+
+  const instructorRef = admin.firestore().collection('instructors').doc(uid);
+  const instructorSnap = await instructorRef.get();
+
+  let stripeAccountId;
+
+  if (instructorSnap.exists && instructorSnap.data().stripeAccountId) {
+    // Reuse existing account — create a fresh onboarding link
+    stripeAccountId = instructorSnap.data().stripeAccountId;
+  } else {
+    // Create a new Express account
+    const account = await stripe.accounts.create({
+      type: 'express',
+      metadata: { firebaseUid: uid }
+    });
+    stripeAccountId = account.id;
+    await instructorRef.set({ stripeAccountId }, { merge: true });
+  }
+
+  // Generate an account onboarding link
+  const accountLink = await stripe.accountLinks.create({
+    account: stripeAccountId,
+    refresh_url: 'https://linguabud.com/dashboard.html?stripe=refresh',
+    return_url: 'https://linguabud.com/dashboard.html?stripe=success',
+    type: 'account_onboarding'
+  });
+
+  return { url: accountLink.url };
+});
+
+/**
+ * Returns the Stripe Express dashboard login link for a connected instructor.
+ * Also returns chargesEnabled so the dashboard can update onboarding status.
+ */
+exports.getStripeConnectDashboard = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const uid = request.auth.uid;
+  const stripe = getStripe();
+
+  const instructorSnap = await admin.firestore().collection('instructors').doc(uid).get();
+
+  if (!instructorSnap.exists || !instructorSnap.data().stripeAccountId) {
+    throw new HttpsError('not-found', 'No Stripe account found. Please connect first.');
+  }
+
+  const stripeAccountId = instructorSnap.data().stripeAccountId;
+  const account = await stripe.accounts.retrieve(stripeAccountId);
+
+  let loginUrl = null;
+  if (account.charges_enabled) {
+    const loginLink = await stripe.accounts.createLoginLink(stripeAccountId);
+    loginUrl = loginLink.url;
+  }
+
+  return {
+    loginUrl,
+    chargesEnabled: account.charges_enabled,
+    stripeAccountId
+  };
+});
+
+/**
+ * Creates a Stripe PaymentIntent for a student booking a lesson.
+ * Directs funds to the instructor's Connect account; platform keeps 10%.
+ */
+exports.createPaymentIntent = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const { instructorId } = request.data;
+
+  if (!instructorId) {
+    throw new HttpsError('invalid-argument', 'instructorId is required');
+  }
+
+  const stripe = getStripe();
+
+  const instructorSnap = await admin.firestore().collection('instructors').doc(instructorId).get();
+
+  if (!instructorSnap.exists) {
+    throw new HttpsError('not-found', 'Instructor not found');
+  }
+
+  const instructor = instructorSnap.data();
+  const { price_per_lesson, currency, stripeAccountId } = instructor;
+
+  if (!stripeAccountId) {
+    throw new HttpsError('failed-precondition', 'Instructor has not connected Stripe');
+  }
+
+  if (!price_per_lesson || price_per_lesson <= 0) {
+    throw new HttpsError('failed-precondition', 'Instructor has not set a lesson price');
+  }
+
+  // Verify instructor can accept charges
+  const account = await stripe.accounts.retrieve(stripeAccountId);
+  if (!account.charges_enabled) {
+    throw new HttpsError('failed-precondition', 'Instructor payment setup is incomplete');
+  }
+
+  const amount = Math.round(price_per_lesson * 100); // convert to cents
+  const normalizedCurrency = (currency || 'USD').toLowerCase();
+  const platformFee = Math.round(amount * PLATFORM_FEE_PERCENT);
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount,
+    currency: normalizedCurrency,
+    application_fee_amount: platformFee,
+    transfer_data: {
+      destination: stripeAccountId
+    },
+    automatic_payment_methods: { enabled: true }
+  });
+
+  return {
+    clientSecret: paymentIntent.client_secret,
+    amount,
+    currency: normalizedCurrency,
+    platformFee
+  };
 });

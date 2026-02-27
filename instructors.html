@@ -21,6 +21,9 @@
     <!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
 
+    <!-- Stripe.js (loaded globally for best fraud prevention) -->
+    <script src="https://js.stripe.com/v3/"></script>
+
     <style>
         body {
             padding-top: 4.5rem;
@@ -716,6 +719,55 @@
             color: #999;
             font-size: 0.85rem;
         }
+
+        /* Payment step styles */
+        .payment-summary-box {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-summary-box .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.35rem 0;
+            font-size: 0.95rem;
+            color: #444;
+        }
+
+        .payment-summary-box .summary-row.total {
+            border-top: 1px solid #ccc;
+            margin-top: 0.5rem;
+            padding-top: 0.75rem;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #20bcba;
+        }
+
+        #payment-error-msg {
+            display: none;
+            background: #f8d7da;
+            color: #dc3545;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .stripe-pending-badge {
+            display: inline-block;
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -868,7 +920,11 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        import { db, auth, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, addDoc, query, where, orderBy, onSnapshot } from './lib/firebaseClient.js';
+        import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, addDoc, query, where, orderBy, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
+
+        // Stripe publishable key (safe to expose — server-side key stays in Cloud Functions)
+        // TODO: Replace with your actual test publishable key from Stripe Dashboard
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY_HERE';
 
         const instructorGrid = document.getElementById('instructorGrid');
         const languageFilter = document.getElementById('languageFilter');
@@ -886,6 +942,11 @@
         let currentWeekStart = null;
         let instructorAvailability = null;
         let existingBookings = [];
+
+        // Payment step variables
+        let selectedSlot = null;
+        let stripeInstance = null;
+        let stripeElements = null;
 
         // Check authentication and load profile picture (optional for this page)
         onAuthStateChanged(auth, async (user) => {
@@ -1088,12 +1149,16 @@
                 `;
             }
 
+            const stripeReady = instructor.stripeOnboardingComplete === true;
             cardHTML += `
                 </div>
-                <div class="instructor-card-footer">
+                <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
                     <button class="view-profile-btn" data-instructor-id="${instructor.id}">
                         <i class="fas fa-user"></i> View Profile
                     </button>
+                    ${!stripeReady ? `<div class="stripe-pending-badge" style="text-align:center;margin-top:0.5rem;">
+                        <i class="fas fa-clock"></i> Payment setup pending
+                    </div>` : ''}
                 </div>
             `;
 
@@ -1303,46 +1368,80 @@
         }
 
         async function confirmBooking(slot) {
-            const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            selectedSlot = slot;
 
-            const message = `Confirm booking:\n\n` +
-                `Instructor: ${currentInstructorName}\n` +
-                `Date: ${slot.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}\n` +
-                `Time: ${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}\n` +
-                `Duration: 60 minutes\n\n` +
-                `This booking will be confirmed immediately.`;
+            // Switch booking modal to payment step
+            document.getElementById('booking-calendar').style.display = 'none';
+            document.getElementById('booking-loading').style.display = 'none';
+            document.getElementById('no-availability').style.display = 'none';
+            document.getElementById('payment-step').style.display = 'block';
 
-            if (!confirm(message)) return;
+            // Show footer payment buttons
+            document.getElementById('close-booking-btn').style.display = 'none';
+            document.getElementById('back-to-calendar-btn').style.display = 'inline-block';
+            document.getElementById('pay-book-btn').style.display = 'inline-block';
+            document.getElementById('pay-book-btn').disabled = true;
+            document.getElementById('pay-book-btn').innerHTML = '<i class="fas fa-lock"></i> Pay & Book';
+
+            // Populate booking summary
+            document.getElementById('pay-instructor-name').textContent = currentInstructorName;
+            document.getElementById('pay-datetime').textContent =
+                slot.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
+                ' at ' + formatTime(slot.startTime) + ' – ' + formatTime(slot.endTime);
+
+            // Reset payment element area
+            document.getElementById('payment-element-loading').style.display = 'block';
+            document.getElementById('payment-element-wrapper').style.display = 'none';
+            document.getElementById('payment-element').innerHTML = '';
+            document.getElementById('payment-error-msg').style.display = 'none';
+            document.getElementById('pay-price').textContent = 'Loading...';
 
             try {
-                const instructorDoc = await getDoc(doc(db, 'instructors', currentInstructorId));
-                const instructorData = instructorDoc.exists() ? instructorDoc.data() : {};
+                // Fetch price from instructor doc
+                const instructorSnap = await getDoc(doc(db, 'instructors', currentInstructorId));
+                const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
+                const price = instructorData.price_per_lesson || 0;
+                const currency = instructorData.currency || 'USD';
+                const _csMap = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
+                const sym = _csMap[currency] || '';
+                document.getElementById('pay-price').textContent = `${currency} ${sym}${price}`;
 
-                const bookingData = {
-                    instructorId: currentInstructorId,
-                    studentId: auth.currentUser.uid,
-                    dateTime: slot.startTime,
-                    durationMinutes: 60,
-                    status: 'confirmed',
-                    instructorTimezone: instructorAvailability.timezone,
-                    studentTimezone: studentTZ,
-                    bookedAt: new Date(),
-                    instructorName: instructorData.name || currentInstructorName,
-                    studentName: auth.currentUser.email
-                };
+                // Call Cloud Function to create PaymentIntent
+                const createPI = httpsCallable(functions, 'createPaymentIntent');
+                const piResult = await createPI({ instructorId: currentInstructorId });
+                const { clientSecret } = piResult.data;
 
-                await addDoc(collection(db, 'bookings'), bookingData);
+                // Initialize Stripe Elements
+                stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
+                stripeElements = stripeInstance.elements({ clientSecret });
+                const paymentElement = stripeElements.create('payment');
+                paymentElement.mount('#payment-element');
 
-                alert('Lesson booked successfully! You can view your bookings in your dashboard.');
-                $('#bookingModal').modal('hide');
+                document.getElementById('payment-element-loading').style.display = 'none';
+                document.getElementById('payment-element-wrapper').style.display = 'block';
+                document.getElementById('pay-book-btn').disabled = false;
 
             } catch (error) {
-                console.error('Error booking lesson:', error);
-                alert('Error booking lesson. Please try again.');
+                console.error('Payment init error:', error);
+                document.getElementById('payment-element-loading').style.display = 'none';
+                const errEl = document.getElementById('payment-error-msg');
+                errEl.textContent = error.message || 'Failed to initialize payment. Please try again.';
+                errEl.style.display = 'block';
             }
         }
 
-        // Week navigation
+        function backToCalendar() {
+            document.getElementById('payment-step').style.display = 'none';
+            document.getElementById('booking-calendar').style.display = 'block';
+            document.getElementById('close-booking-btn').style.display = 'inline-block';
+            document.getElementById('back-to-calendar-btn').style.display = 'none';
+            document.getElementById('pay-book-btn').style.display = 'none';
+            selectedSlot = null;
+            stripeElements = null;
+            stripeInstance = null;
+        }
+
+        // Week navigation + payment button wiring
         document.addEventListener('DOMContentLoaded', () => {
             const prevBtn = document.getElementById('prev-week');
             const nextBtn = document.getElementById('next-week');
@@ -1360,6 +1459,93 @@
                     renderWeekCalendar();
                 });
             }
+
+            // Back to calendar button
+            const backBtn = document.getElementById('back-to-calendar-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', backToCalendar);
+            }
+
+            // Pay & Book button
+            const payBookBtn = document.getElementById('pay-book-btn');
+            if (payBookBtn) {
+                payBookBtn.addEventListener('click', async () => {
+                    if (!stripeElements || !stripeInstance || !selectedSlot) return;
+
+                    payBookBtn.disabled = true;
+                    payBookBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                    document.getElementById('payment-error-msg').style.display = 'none';
+
+                    try {
+                        const { error, paymentIntent } = await stripeInstance.confirmPayment({
+                            elements: stripeElements,
+                            confirmParams: {
+                                return_url: window.location.origin + '/instructors.html'
+                            },
+                            redirect: 'if_required'
+                        });
+
+                        if (error) {
+                            const errEl = document.getElementById('payment-error-msg');
+                            errEl.textContent = error.message;
+                            errEl.style.display = 'block';
+                            payBookBtn.disabled = false;
+                            payBookBtn.innerHTML = '<i class="fas fa-lock"></i> Pay & Book';
+                            return;
+                        }
+
+                        if (paymentIntent && paymentIntent.status === 'succeeded') {
+                            const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                            const instructorSnap = await getDoc(doc(db, 'instructors', currentInstructorId));
+                            const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
+
+                            await addDoc(collection(db, 'bookings'), {
+                                instructorId: currentInstructorId,
+                                studentId: auth.currentUser.uid,
+                                dateTime: selectedSlot.startTime,
+                                durationMinutes: 60,
+                                status: 'confirmed',
+                                instructorTimezone: instructorAvailability.timezone,
+                                studentTimezone: studentTZ,
+                                bookedAt: new Date(),
+                                instructorName: instructorData.name || currentInstructorName,
+                                studentName: auth.currentUser.email,
+                                paymentIntentId: paymentIntent.id,
+                                paymentStatus: 'paid',
+                                amount: paymentIntent.amount,
+                                currency: paymentIntent.currency
+                            });
+
+                            $('#bookingModal').modal('hide');
+                            // Reset payment step state
+                            selectedSlot = null;
+                            stripeElements = null;
+                            stripeInstance = null;
+                            alert('Payment successful! Your lesson has been booked.');
+                        }
+
+                    } catch (err) {
+                        console.error('Payment error:', err);
+                        const errEl = document.getElementById('payment-error-msg');
+                        errEl.textContent = err.message || 'Payment failed. Please try again.';
+                        errEl.style.display = 'block';
+                        payBookBtn.disabled = false;
+                        payBookBtn.innerHTML = '<i class="fas fa-lock"></i> Pay & Book';
+                    }
+                });
+            }
+
+            // Reset payment step when booking modal is closed via Bootstrap
+            $('#bookingModal').on('hidden.bs.modal', () => {
+                document.getElementById('payment-step').style.display = 'none';
+                document.getElementById('close-booking-btn').style.display = 'inline-block';
+                document.getElementById('back-to-calendar-btn').style.display = 'none';
+                document.getElementById('pay-book-btn').style.display = 'none';
+                document.getElementById('payment-element').innerHTML = '';
+                selectedSlot = null;
+                stripeElements = null;
+                stripeInstance = null;
+            });
         });
 
         // UNREAD MESSAGE COUNT
@@ -1468,6 +1654,18 @@
 
             document.getElementById('profileModalCountry').textContent = country;
             document.getElementById('profileModalAbout').textContent = aboutMe;
+
+            // Guard book button based on Stripe setup status
+            const profileBookBtn = document.getElementById('profileBookBtn');
+            if (instructor.stripeOnboardingComplete === true) {
+                profileBookBtn.disabled = false;
+                profileBookBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Lesson';
+                profileBookBtn.title = '';
+            } else {
+                profileBookBtn.disabled = true;
+                profileBookBtn.innerHTML = '<i class="fas fa-clock"></i> Payment Setup Pending';
+                profileBookBtn.title = 'This instructor has not yet connected their payment account';
+            }
 
             // Show modal
             modal.classList.add('show');
@@ -1619,9 +1817,57 @@
                         <p>This instructor hasn't set their availability yet.</p>
                         <p style="font-size: 0.9rem;">Please check back later or contact them directly.</p>
                     </div>
+
+                    <!-- Payment Step (shown after time slot selected) -->
+                    <div id="payment-step" style="display: none;">
+                        <h6 style="color: #333; margin-bottom: 1rem; font-weight: 700;">
+                            <i class="fas fa-receipt" style="color: #20bcba;"></i> Booking Summary
+                        </h6>
+                        <div class="payment-summary-box">
+                            <div class="summary-row">
+                                <span>Instructor</span>
+                                <span id="pay-instructor-name"></span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Date &amp; Time</span>
+                                <span id="pay-datetime"></span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Duration</span>
+                                <span>60 minutes</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total</span>
+                                <span id="pay-price"></span>
+                            </div>
+                        </div>
+
+                        <hr style="margin: 1rem 0;">
+
+                        <h6 style="color: #333; margin-bottom: 1rem; font-weight: 700;">
+                            <i class="fas fa-lock" style="color: #20bcba;"></i> Payment Details
+                        </h6>
+
+                        <div id="payment-element-loading" style="text-align: center; padding: 2rem;">
+                            <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: #20bcba;"></i>
+                            <p style="color: #666; margin-top: 0.75rem;">Preparing secure payment...</p>
+                        </div>
+
+                        <div id="payment-element-wrapper" style="display: none;">
+                            <div id="payment-element"></div>
+                        </div>
+
+                        <div id="payment-error-msg"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" id="close-booking-btn" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-outline-secondary" id="back-to-calendar-btn" style="display: none;">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button type="button" class="btn btn-success" id="pay-book-btn" style="display: none;" disabled>
+                        <i class="fas fa-lock"></i> Pay &amp; Book
+                    </button>
                 </div>
             </div>
         </div>
