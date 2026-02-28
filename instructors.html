@@ -837,7 +837,8 @@
                     <div class="notification-badge" id="notificationBadge"></div>
                     <div class="profile-dropdown-content">
                         <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
-                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="activity.html"><i class="fas fa-bell"></i> Activity</a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
@@ -1516,12 +1517,12 @@
                                 currency: paymentIntent.currency
                             });
 
-                            $('#bookingModal').modal('hide');
                             // Reset payment step state
                             selectedSlot = null;
                             stripeElements = null;
                             stripeInstance = null;
-                            alert('Payment successful! Your lesson has been booked.');
+                            // Redirect to Activity page to see the upcoming lesson
+                            window.location.href = 'activity.html';
                         }
 
                     } catch (err) {

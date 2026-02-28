@@ -683,7 +683,8 @@
                     <div class="notification-badge" id="notificationBadge"></div>
                     <div class="profile-dropdown-content">
                         <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
-                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="messages.html" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="activity.html"><i class="fas fa-bell"></i> Activity</a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
@@ -803,7 +804,7 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        import { db, auth, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, query, where, onSnapshot } from './lib/firebaseClient.js';
+        import { db, auth, collection, getDocs, addDoc, onAuthStateChanged, signOut, doc, getDoc, query, where, onSnapshot, serverTimestamp } from './lib/firebaseClient.js';
 
         const userGrid = document.getElementById('userGrid');
         const learningFilter = document.getElementById('learningFilter');
@@ -1154,8 +1155,68 @@
 
         sendRequestBtn.onclick = async () => {
             if (!selectedUserId || !currentUser) return;
-            alert('Friend request feature coming soon! For now, you can connect via the messaging system.');
-            closeModal();
+
+            // Disable button to prevent double-send
+            sendRequestBtn.disabled = true;
+            sendRequestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+            try {
+                // Check if a pending request already exists in either direction
+                const [existingOut, existingIn] = await Promise.all([
+                    getDocs(query(
+                        collection(db, 'friendRequests'),
+                        where('fromId', '==', currentUser.uid),
+                        where('toId', '==', selectedUserId),
+                        where('status', '==', 'pending')
+                    )),
+                    getDocs(query(
+                        collection(db, 'friendRequests'),
+                        where('fromId', '==', selectedUserId),
+                        where('toId', '==', currentUser.uid),
+                        where('status', '==', 'pending')
+                    ))
+                ]);
+
+                if (!existingOut.empty || !existingIn.empty) {
+                    sendRequestBtn.disabled = false;
+                    sendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Send Friend Request';
+                    alert('A partner request is already pending with this user.');
+                    return;
+                }
+
+                // Fetch current user's profile for display info
+                let fromName = currentUser.displayName || currentUser.email;
+                let fromAvatar = '';
+                try {
+                    const myDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                    if (myDoc.exists()) {
+                        fromName = myDoc.data().name || fromName;
+                        fromAvatar = myDoc.data().avatar_url || '';
+                    }
+                } catch (e) {}
+
+                await addDoc(collection(db, 'friendRequests'), {
+                    fromId: currentUser.uid,
+                    toId: selectedUserId,
+                    fromName: fromName,
+                    fromAvatar: fromAvatar,
+                    status: 'pending',
+                    createdAt: serverTimestamp()
+                });
+
+                sendRequestBtn.innerHTML = '<i class="fas fa-check"></i> Request Sent!';
+                setTimeout(() => {
+                    closeModal();
+                    sendRequestBtn.disabled = false;
+                    sendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Send Friend Request';
+                }, 1500);
+
+            } catch (e) {
+                console.error('Error sending friend request:', e);
+                sendRequestBtn.disabled = false;
+                sendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Send Friend Request';
+                alert('Failed to send request. Please try again.');
+            }
         };
 
         // Event listeners for filters

@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="View your upcoming lessons and partner requests on Lingua Bud.">
+    <meta name="author" content="Lingua Bud">
+    <title>Activity - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        body {
+            padding-top: 4.5rem;
+            background-color: #f8f9fa;
+        }
+
+        .navbar-custom {
+            background-color: #113448 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* ===== NAVBAR PROFILE DROPDOWN ===== */
+        .profile-nav-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: 1rem;
+        }
+
+        .profile-pic-nav {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .profile-pic-nav:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem;
+            top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+
+        @media (min-width: 992px) {
+            .profile-dropdown-content {
+                position: absolute;
+                right: 0;
+                top: 100%;
+                margin-top: 0.25rem;
+            }
+        }
+
+        .profile-dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background 0.2s;
+        }
+
+        .profile-dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        .profile-dropdown-content a.active-nav-link {
+            background-color: #e8f8f7;
+            color: #20bcba;
+            font-weight: 600;
+        }
+
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content:hover,
+        .profile-dropdown-content.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            border: 2px solid white;
+            animation: badgePulse 2s infinite;
+        }
+
+        .notification-badge.show {
+            display: flex;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .unread-count {
+            display: none;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .unread-count.show {
+            display: inline-block;
+        }
+
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+
+        @media (max-width: 767px) {
+            .navbar-nav { margin-left: 0 !important; }
+        }
+
+        /* ===== PAGE HERO ===== */
+        .activity-hero {
+            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            color: white;
+            padding: 3rem 0 2.5rem;
+        }
+
+        .activity-hero h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .activity-hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            color: white;
+            margin: 0;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .activity-container {
+            max-width: 1100px;
+            margin: 2.5rem auto;
+            padding: 0 1rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #20bcba, #1a9d9b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+        }
+
+        .section-badge {
+            background: #dc3545;
+            color: white;
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        hr.section-divider {
+            border: none;
+            border-top: 2px solid #e9ecef;
+            margin: 3rem 0;
+        }
+
+        /* ===== LESSON CARDS ===== */
+        .lessons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .lesson-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .lesson-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .lesson-card-header {
+            background: linear-gradient(135deg, #113448 0%, #1a5276 100%);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .lesson-instructor-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255,255,255,0.3);
+            flex-shrink: 0;
+            background: #2c6e8a;
+        }
+
+        .lesson-instructor-info h4 {
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem;
+            line-height: 1.3;
+        }
+
+        .lesson-instructor-info span {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85rem;
+        }
+
+        .lesson-card-body {
+            padding: 1.25rem 1.5rem 0.75rem;
+        }
+
+        .lesson-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .status-upcoming { background: #e8f4fd; color: #1565c0; }
+        .status-live { background: #e8f7ee; color: #1a8732; }
+        .status-completed { background: #f5f5f5; color: #888; }
+
+        .lesson-detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.92rem;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .lesson-detail-row i {
+            color: #20bcba;
+            width: 16px;
+            text-align: center;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .lesson-card-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-join {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.4rem;
+            background: linear-gradient(135deg, #20bcba, #1a9d9b);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            text-decoration: none;
+        }
+
+        .btn-join:hover:not(:disabled) {
+            opacity: 0.9;
+            transform: scale(1.02);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-join:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-join.live {
+            background: linear-gradient(135deg, #28a745, #1e8432);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+        }
+
+        .btn-join.completed-btn {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: default;
+        }
+
+        /* ===== REQUEST CARDS ===== */
+        .requests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .request-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 1.75rem 1.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .request-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+
+        .request-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e8f8f7;
+            margin-bottom: 0.85rem;
+        }
+
+        .request-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .request-langs {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 1.25rem;
+            line-height: 1.4;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .btn-accept {
+            flex: 1;
+            padding: 0.6rem;
+            background: #20bcba;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-accept:hover { background: #1a9d9b; }
+
+        .btn-decline {
+            flex: 1;
+            padding: 0.6rem;
+            background: white;
+            color: #dc3545;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-decline:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* ===== EMPTY / LOADING STATES ===== */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #aaa;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #ddd;
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+            color: #999;
+        }
+
+        .empty-state a {
+            color: #20bcba;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .empty-state a:hover { text-decoration: underline; }
+
+        .loading-state {
+            text-align: center;
+            padding: 2.5rem;
+            color: #aaa;
+        }
+
+        .loading-state i {
+            font-size: 2rem;
+            color: #20bcba;
+            display: block;
+            margin-bottom: 0.75rem;
+        }
+
+        @media (max-width: 600px) {
+            .lessons-grid,
+            .requests-grid { grid-template-columns: 1fr; }
+            .activity-hero h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+                aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+                </li>
+
+                <!-- Languages Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown"
+                       role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewFrenchPage.html"><span class="item-text">FRENCH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewPortuguesePage.html"><span class="item-text">PORTUGUESE</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewItalianPage.html"><span class="item-text">ITALIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
+                </li>
+
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
+                </li>
+            </ul>
+
+            <!-- Profile Picture Dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                         alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="activity.html" class="active-nav-link"><i class="fas fa-bell"></i> Activity</a>
+                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            <span class="nav-item social-icons">
+                <span class="fa-stack">
+                    <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-facebook-f fa-stack-1x"></i>
+                    </a>
+                </span>
+                <span class="fa-stack">
+                    <a href="https://www.instagram.com/lingua_bud/" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-instagram fa-stack-1x"></i>
+                    </a>
+                </span>
+            </span>
+        </div>
+    </nav>
+    <!-- end of navbar -->
+
+    <!-- Hero Section -->
+    <div class="activity-hero">
+        <div class="container">
+            <h1><i class="fas fa-bell"></i> Activity</h1>
+            <p>Your upcoming lessons and partner requests</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="activity-container">
+
+        <!-- ===== UPCOMING LESSONS ===== -->
+        <div class="section-header">
+            <div class="section-icon"><i class="fas fa-graduation-cap"></i></div>
+            <h2>Upcoming Lessons</h2>
+        </div>
+        <div id="lessonsContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading your lessons...</div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== PARTNER REQUESTS ===== -->
+        <div class="section-header">
+            <div class="section-icon"><i class="fas fa-user-friends"></i></div>
+            <h2>Partner Requests</h2>
+            <span class="section-badge" id="requestsBadge" style="display: none;"></span>
+        </div>
+        <div id="requestsContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading requests...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <script type="module">
+        import {
+            auth, db,
+            onAuthStateChanged, signOut,
+            collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp, onSnapshot
+        } from './lib/firebaseClient.js';
+
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+
+        let currentUser = null;
+        let joinTimerInterval = null;
+
+        // ===== AUTH =====
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+
+            document.getElementById('profileNavWrapper').style.display = 'block';
+            document.getElementById('signInWrapper').style.display = 'none';
+
+            await loadNavAvatar(user);
+            await routeProfileLink(user.uid);
+
+            // Load page data
+            await Promise.all([loadLessons(), loadRequests()]);
+
+            // Start countdown timer (updates join buttons)
+            updateJoinButtons();
+            joinTimerInterval = setInterval(updateJoinButtons, 30000);
+
+            // Live unread message count
+            loadUnreadCount();
+        });
+
+        async function loadNavAvatar(user) {
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                if (instructorDoc.exists() && instructorDoc.data().avatar_url) {
+                    document.getElementById('navProfilePic').src = instructorDoc.data().avatar_url;
+                    return;
+                }
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists() && userDoc.data().avatar_url) {
+                    document.getElementById('navProfilePic').src = userDoc.data().avatar_url;
+                }
+            } catch (e) { console.error('Avatar load error:', e); }
+        }
+
+        async function routeProfileLink(uid) {
+            try {
+                const snap = await getDoc(doc(db, 'instructors', uid));
+                if (snap.exists()) {
+                    document.getElementById('myProfileLink').href = 'dashboard.html';
+                }
+            } catch (e) {}
+        }
+
+        // ===== LESSONS =====
+        async function loadLessons() {
+            const container = document.getElementById('lessonsContainer');
+            try {
+                // Fetch bookings where current user is student or instructor
+                const [studentSnap, instructorSnap] = await Promise.all([
+                    getDocs(query(
+                        collection(db, 'bookings'),
+                        where('studentId', '==', currentUser.uid),
+                        where('status', '==', 'confirmed')
+                    )),
+                    getDocs(query(
+                        collection(db, 'bookings'),
+                        where('instructorId', '==', currentUser.uid),
+                        where('status', '==', 'confirmed')
+                    ))
+                ]);
+
+                const bookings = [];
+                studentSnap.forEach(d => bookings.push({ id: d.id, ...d.data(), myRole: 'student' }));
+                instructorSnap.forEach(d => bookings.push({ id: d.id, ...d.data(), myRole: 'instructor' }));
+
+                // Sort ascending by lesson time
+                bookings.sort((a, b) => {
+                    const ta = a.dateTime?.toDate ? a.dateTime.toDate() : new Date(a.dateTime);
+                    const tb = b.dateTime?.toDate ? b.dateTime.toDate() : new Date(b.dateTime);
+                    return ta - tb;
+                });
+
+                // Fetch instructor avatars in bulk
+                const instructorIds = [...new Set(bookings.map(b => b.instructorId).filter(Boolean))];
+                const avatarMap = {};
+                await Promise.all(instructorIds.map(async (id) => {
+                    try {
+                        const snap = await getDoc(doc(db, 'instructors', id));
+                        if (snap.exists()) avatarMap[id] = snap.data().avatar_url || null;
+                    } catch (e) {}
+                }));
+
+                bookings.forEach(b => { b.instructorAvatar = avatarMap[b.instructorId] || null; });
+
+                if (bookings.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-alt"></i>
+                            <p>No booked lessons yet.</p>
+                            <p><a href="instructors.html">Browse instructors</a> to book your first lesson!</p>
+                        </div>`;
+                    return;
+                }
+
+                const grid = document.createElement('div');
+                grid.className = 'lessons-grid';
+                bookings.forEach(booking => grid.appendChild(createLessonCard(booking)));
+
+                container.innerHTML = '';
+                container.appendChild(grid);
+
+            } catch (e) {
+                console.error('Error loading lessons:', e);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Could not load lessons. Please refresh the page.</p>
+                    </div>`;
+            }
+        }
+
+        function getLessonTime(booking) {
+            return booking.dateTime?.toDate ? booking.dateTime.toDate() : new Date(booking.dateTime);
+        }
+
+        function getLessonStatus(lessonTime) {
+            const now = new Date();
+            const earlyJoin = new Date(lessonTime.getTime() - 5 * 60 * 1000);   // 5 min early
+            const lessonEnd = new Date(lessonTime.getTime() + 60 * 60 * 1000);  // +60 min
+            if (now >= earlyJoin && now < lessonEnd) return 'live';
+            if (now >= lessonEnd) return 'completed';
+            return 'upcoming';
+        }
+
+        function formatLessonTime(lessonTime) {
+            return lessonTime.toLocaleString(undefined, {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatAmount(amount, currency) {
+            if (!amount) return '';
+            return new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: currency || 'USD'
+            }).format(amount / 100);
+        }
+
+        function createLessonCard(booking) {
+            const lessonTime = getLessonTime(booking);
+            const status = getLessonStatus(lessonTime);
+            const channelName = `lesson-${booking.id}`;
+            const avatar = booking.instructorAvatar || DEFAULT_AVATAR;
+            const otherName = booking.myRole === 'student'
+                ? (booking.instructorName || 'Instructor')
+                : (booking.studentName || 'Student');
+            const roleLabel = booking.myRole === 'student' ? 'Lesson with' : 'Teaching';
+            const amountStr = booking.myRole === 'student' ? formatAmount(booking.amount, booking.currency) : '';
+
+            let statusHtml, btnClass, btnHtml, btnDisabled;
+
+            if (status === 'live') {
+                statusHtml = '<span class="lesson-status-badge status-live"><i class="fas fa-circle" style="font-size:0.6rem; vertical-align:middle;"></i> Live Now</span>';
+                btnClass = 'btn-join live';
+                btnHtml = '<i class="fas fa-video"></i> Join Now';
+                btnDisabled = false;
+            } else if (status === 'completed') {
+                statusHtml = '<span class="lesson-status-badge status-completed"><i class="fas fa-check-circle"></i> Completed</span>';
+                btnClass = 'btn-join completed-btn';
+                btnHtml = '<i class="fas fa-check"></i> Completed';
+                btnDisabled = true;
+            } else {
+                statusHtml = '<span class="lesson-status-badge status-upcoming"><i class="fas fa-clock"></i> Upcoming</span>';
+                btnClass = 'btn-join';
+                btnHtml = '<i class="fas fa-hourglass-half"></i> Not started yet';
+                btnDisabled = true;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'lesson-card';
+            card.dataset.bookingId = booking.id;
+            card.dataset.lessonTime = lessonTime.toISOString();
+            card.dataset.myRole = booking.myRole;
+
+            card.innerHTML = `
+                <div class="lesson-card-header">
+                    <img class="lesson-instructor-avatar"
+                         src="${escapeAttr(avatar)}"
+                         onerror="this.src='${DEFAULT_AVATAR}'"
+                         alt="${escapeAttr(otherName)}">
+                    <div class="lesson-instructor-info">
+                        <h4>${escapeHtml(roleLabel)} ${escapeHtml(otherName)}</h4>
+                        <span>60-minute lesson</span>
+                    </div>
+                </div>
+                <div class="lesson-card-body">
+                    <div class="lesson-status-wrapper">${statusHtml}</div>
+                    <div class="lesson-detail-row">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>${escapeHtml(formatLessonTime(lessonTime))}</span>
+                    </div>
+                    <div class="lesson-detail-row">
+                        <i class="fas fa-clock"></i>
+                        <span>Duration: 60 minutes</span>
+                    </div>
+                    ${amountStr ? `<div class="lesson-detail-row"><i class="fas fa-receipt"></i><span>Paid: ${escapeHtml(amountStr)}</span></div>` : ''}
+                </div>
+                <div class="lesson-card-footer">
+                    <button class="${btnClass}"
+                            ${btnDisabled ? 'disabled' : ''}
+                            data-join-btn="${escapeAttr(booking.id)}"
+                            onclick="joinLesson('${escapeAttr(channelName)}', ${btnDisabled})">
+                        ${btnHtml}
+                    </button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        window.joinLesson = (channelName, disabled) => {
+            if (disabled) return;
+            window.location.href = `video-call.html?channel=${encodeURIComponent(channelName)}`;
+        };
+
+        function updateJoinButtons() {
+            document.querySelectorAll('[data-join-btn]').forEach(btn => {
+                const bookingId = btn.dataset.joinBtn;
+                const card = document.querySelector(`[data-booking-id="${bookingId}"]`);
+                if (!card) return;
+
+                const lessonTime = new Date(card.dataset.lessonTime);
+                const channelName = `lesson-${bookingId}`;
+                const status = getLessonStatus(lessonTime);
+                const statusWrapper = card.querySelector('.lesson-status-wrapper');
+
+                if (status === 'live') {
+                    btn.className = 'btn-join live';
+                    btn.disabled = false;
+                    btn.onclick = () => joinLesson(channelName, false);
+                    btn.innerHTML = '<i class="fas fa-video"></i> Join Now';
+                    if (statusWrapper) statusWrapper.innerHTML = '<span class="lesson-status-badge status-live"><i class="fas fa-circle" style="font-size:0.6rem; vertical-align:middle;"></i> Live Now</span>';
+
+                } else if (status === 'completed') {
+                    btn.className = 'btn-join completed-btn';
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Completed';
+                    if (statusWrapper) statusWrapper.innerHTML = '<span class="lesson-status-badge status-completed"><i class="fas fa-check-circle"></i> Completed</span>';
+
+                } else {
+                    btn.className = 'btn-join';
+                    btn.disabled = true;
+
+                    const now = new Date();
+                    const earlyJoin = new Date(lessonTime.getTime() - 5 * 60 * 1000);
+                    const diff = earlyJoin - now;
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+                    let countdown;
+                    if (days > 1) countdown = `in ${days} days`;
+                    else if (days === 1) countdown = `tomorrow`;
+                    else if (hours > 0) countdown = `in ${hours}h ${mins}m`;
+                    else countdown = `in ${mins}m`;
+
+                    btn.innerHTML = `<i class="fas fa-hourglass-half"></i> Starts ${countdown}`;
+                }
+            });
+        }
+
+        // ===== PARTNER REQUESTS =====
+        async function loadRequests() {
+            const container = document.getElementById('requestsContainer');
+            try {
+                const snap = await getDocs(query(
+                    collection(db, 'friendRequests'),
+                    where('toId', '==', currentUser.uid),
+                    where('status', '==', 'pending')
+                ));
+
+                const requests = [];
+                snap.forEach(d => requests.push({ id: d.id, ...d.data() }));
+
+                updateRequestsBadge(requests.length);
+
+                if (requests.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-friends"></i>
+                            <p>No pending partner requests.</p>
+                            <p><a href="connect.html">Find language partners</a> to start connecting!</p>
+                        </div>`;
+                    return;
+                }
+
+                // Fetch sender profiles
+                const enriched = await Promise.all(requests.map(async (req) => {
+                    try {
+                        const userSnap = await getDoc(doc(db, 'users', req.fromId));
+                        if (userSnap.exists()) return { ...req, profile: userSnap.data() };
+                    } catch (e) {}
+                    return req;
+                }));
+
+                const grid = document.createElement('div');
+                grid.className = 'requests-grid';
+                grid.id = 'requestsGrid';
+                enriched.forEach(req => grid.appendChild(createRequestCard(req)));
+
+                container.innerHTML = '';
+                container.appendChild(grid);
+
+            } catch (e) {
+                console.error('Error loading requests:', e);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Could not load requests. Please refresh the page.</p>
+                    </div>`;
+            }
+        }
+
+        function createRequestCard(req) {
+            const profile = req.profile || {};
+            const name = escapeHtml(req.fromName || profile.name || 'Language Partner');
+            const avatar = escapeAttr(req.fromAvatar || profile.avatar_url || DEFAULT_AVATAR);
+            const spoken = (profile.languages_spoken || []).slice(0, 3);
+            const learning = (profile.languages_learning || []).slice(0, 2);
+            const allLangs = [...new Set([...spoken, ...learning])];
+
+            const card = document.createElement('div');
+            card.className = 'request-card';
+            card.id = `request-${req.id}`;
+
+            card.innerHTML = `
+                <img class="request-avatar"
+                     src="${avatar}"
+                     onerror="this.src='${DEFAULT_AVATAR}'"
+                     alt="${name}">
+                <div class="request-name">${name}</div>
+                ${allLangs.length > 0
+                    ? `<div class="request-langs"><i class="fas fa-language"></i> ${escapeHtml(allLangs.join(', '))}</div>`
+                    : ''}
+                <div class="request-actions">
+                    <button class="btn-accept" onclick="acceptRequest('${req.id}')">
+                        <i class="fas fa-check"></i> Accept
+                    </button>
+                    <button class="btn-decline" onclick="declineRequest('${req.id}')">
+                        <i class="fas fa-times"></i> Decline
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        window.acceptRequest = async (reqId) => {
+            try {
+                await updateDoc(doc(db, 'friendRequests', reqId), {
+                    status: 'accepted',
+                    respondedAt: serverTimestamp()
+                });
+                animateRemoveCard(reqId);
+            } catch (e) {
+                console.error('Error accepting request:', e);
+            }
+        };
+
+        window.declineRequest = async (reqId) => {
+            try {
+                await updateDoc(doc(db, 'friendRequests', reqId), {
+                    status: 'declined',
+                    respondedAt: serverTimestamp()
+                });
+                animateRemoveCard(reqId);
+            } catch (e) {
+                console.error('Error declining request:', e);
+            }
+        };
+
+        function animateRemoveCard(reqId) {
+            const card = document.getElementById(`request-${reqId}`);
+            if (!card) return;
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.85)';
+            card.style.transition = 'all 0.3s ease';
+            setTimeout(() => {
+                card.remove();
+                const grid = document.getElementById('requestsGrid');
+                const remaining = grid ? grid.children.length : 0;
+                updateRequestsBadge(remaining);
+                if (remaining === 0) {
+                    document.getElementById('requestsContainer').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-user-friends"></i>
+                            <p>No pending partner requests.</p>
+                            <p><a href="connect.html">Find language partners</a> to start connecting!</p>
+                        </div>`;
+                }
+            }, 300);
+        }
+
+        function updateRequestsBadge(count) {
+            const badge = document.getElementById('requestsBadge');
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // ===== UNREAD MESSAGES COUNT =====
+        function loadUnreadCount() {
+            const q = query(collection(db, 'conversations'), where('participants', 'array-contains', currentUser.uid));
+            onSnapshot(q, (snap) => {
+                let total = 0;
+                snap.forEach(d => {
+                    const conv = d.data();
+                    if (conv.unreadCount?.[currentUser.uid]) total += conv.unreadCount[currentUser.uid];
+                });
+
+                const unreadEl = document.getElementById('unreadCount');
+                const badge = document.getElementById('notificationBadge');
+
+                if (total > 0) {
+                    if (unreadEl) { unreadEl.textContent = total > 99 ? '99+' : total; unreadEl.classList.add('show'); }
+                    if (badge) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                } else {
+                    unreadEl?.classList.remove('show');
+                    badge?.classList.remove('show');
+                }
+            });
+        }
+
+        // ===== LOGOUT =====
+        document.getElementById('logoutLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (joinTimerInterval) clearInterval(joinTimerInterval);
+            await signOut(auth);
+            window.location.href = 'index.html';
+        });
+
+        // ===== MOBILE DROPDOWN =====
+        const profileDropdown = document.querySelector('.profile-dropdown');
+        const profileDropdownContent = document.querySelector('.profile-dropdown-content');
+        const navProfilePic = document.getElementById('navProfilePic');
+
+        if (navProfilePic && profileDropdownContent) {
+            navProfilePic.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdownContent.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target)) {
+                    profileDropdownContent.classList.remove('show');
+                }
+            });
+            profileDropdownContent.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => profileDropdownContent.classList.remove('show'));
+            });
+        }
+
+        // ===== HELPERS =====
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return String(text || '').replace(/'/g, '%27').replace(/"/g, '&quot;');
+        }
+    </script>
+
+</body>
+</html>

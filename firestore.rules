@@ -89,6 +89,23 @@ service cloud.firestore {
                     && request.resource.data.status == "cancelled";
     }
 
+    // Friend / Partner Requests
+    match /friendRequests/{requestId} {
+      // Authenticated users can send a request (must be the sender)
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.fromId;
+
+      // Sender and recipient can read the request
+      allow read: if request.auth != null
+                  && (request.auth.uid == resource.data.fromId
+                      || request.auth.uid == resource.data.toId);
+
+      // Only the recipient can respond (accept / decline)
+      allow update: if request.auth != null
+                    && request.auth.uid == resource.data.toId
+                    && request.resource.data.status in ['accepted', 'declined'];
+    }
+
     // Email log collection (only Cloud Functions can write)
     match /emailLog/{logId} {
       // No client reads or writes - this is for server-side logging only
