@@ -806,6 +806,9 @@
     <script type="module">
         import { db, auth, collection, getDocs, addDoc, onAuthStateChanged, signOut, doc, getDoc, query, where, onSnapshot, serverTimestamp } from './lib/firebaseClient.js';
 
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+        window.DEFAULT_AVATAR = DEFAULT_AVATAR;
+
         const userGrid = document.getElementById('userGrid');
         const learningFilter = document.getElementById('learningFilter');
         const speakingFilter = document.getElementById('speakingFilter');
@@ -1012,7 +1015,7 @@
         function createUserCard(user) {
             const spoken = user.languages_spoken || [];
             const learning = user.languages_learning || [];
-            const avatar = user.avatar_url || user.avatar || 'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E';
+            const avatar = user.avatar_url || user.avatar || DEFAULT_AVATAR;
             const name = escapeHtml(user.name || user.display_name || 'Anonymous User');
             const country = escapeHtml(user.country || 'Not specified');
             const bio = escapeHtml(user.about_me || '');
@@ -1023,7 +1026,7 @@
 
             let cardHTML = `
                 <div class="user-card-header">
-                    <img class="user-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E'">
+                    <img class="user-card-avatar" src="${avatar}" alt="${name}" onerror="this.src=window.DEFAULT_AVATAR">
                     <div class="user-card-name">${name}</div>
                     <div class="user-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>
                 </div>
@@ -1081,7 +1084,7 @@
             selectedUserId = user.id;
             console.log('✅ selectedUserId set to:', selectedUserId);
 
-            const avatar = user.avatar_url || user.avatar || 'data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E';
+            const avatar = user.avatar_url || user.avatar || DEFAULT_AVATAR;
             const name = escapeHtml(user.name || user.display_name || 'Anonymous User');
             const spoken = user.languages_spoken || [];
             const learning = user.languages_learning || [];
