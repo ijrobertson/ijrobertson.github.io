@@ -1164,7 +1164,9 @@
             sendRequestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
 
             try {
-                // Check if a pending request already exists (query only by sender to avoid composite index)
+                // Check if the current user already sent a pending request to this person.
+                // We only query by fromId == currentUser.uid because the security rule
+                // only allows reading documents where the authenticated user is the sender.
                 const existingOut = await getDocs(query(
                     collection(db, 'friendRequests'),
                     where('fromId', '==', currentUser.uid)
@@ -1172,18 +1174,11 @@
                 const alreadySent = existingOut.docs.some(d =>
                     d.data().toId === selectedUserId && d.data().status === 'pending'
                 );
-                const existingIn = await getDocs(query(
-                    collection(db, 'friendRequests'),
-                    where('fromId', '==', selectedUserId)
-                ));
-                const alreadyReceived = existingIn.docs.some(d =>
-                    d.data().toId === currentUser.uid && d.data().status === 'pending'
-                );
 
-                if (alreadySent || alreadyReceived) {
+                if (alreadySent) {
                     sendRequestBtn.disabled = false;
                     sendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Send Friend Request';
-                    alert('A partner request is already pending with this user.');
+                    alert('You already sent a partner request to this user.');
                     return;
                 }
 
