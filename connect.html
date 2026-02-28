@@ -1183,14 +1183,22 @@
                     return;
                 }
 
-                // Fetch current user's profile for display info
+                // Fetch current user's profile — check instructors first, then students
                 let fromName = currentUser.displayName || currentUser.email;
                 let fromAvatar = '';
                 try {
-                    const myDoc = await getDoc(doc(db, 'users', currentUser.uid));
-                    if (myDoc.exists()) {
-                        fromName = myDoc.data().name || fromName;
-                        fromAvatar = myDoc.data().avatar_url || '';
+                    const instructorDoc = await getDoc(doc(db, 'instructors', currentUser.uid));
+                    if (instructorDoc.exists()) {
+                        const d = instructorDoc.data();
+                        fromName = d.name || fromName;
+                        fromAvatar = d.avatar_url || '';
+                    } else {
+                        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                        if (userDoc.exists()) {
+                            const d = userDoc.data();
+                            fromName = d.name || fromName;
+                            fromAvatar = d.avatar_url || '';
+                        }
                     }
                 } catch (e) {}
 

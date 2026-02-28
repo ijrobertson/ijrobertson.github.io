@@ -430,6 +430,24 @@
             margin-bottom: 0.3rem;
         }
 
+        .request-role-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .request-role-badge.instructor { background: #e8f8f7; color: #1a9d9b; }
+        .request-role-badge.learner { background: #e8f4fd; color: #1565c0; }
+
+        .request-country {
+            font-size: 0.82rem;
+            color: #999;
+            margin-bottom: 0.4rem;
+        }
+
         .request-langs {
             font-size: 0.85rem;
             color: #888;
@@ -995,11 +1013,17 @@
                     return;
                 }
 
-                // Fetch sender profiles
+                // Fetch sender profiles — check instructors first, then students
                 const enriched = await Promise.all(requests.map(async (req) => {
                     try {
+                        const instructorSnap = await getDoc(doc(db, 'instructors', req.fromId));
+                        if (instructorSnap.exists()) {
+                            return { ...req, profile: instructorSnap.data(), senderRole: 'instructor' };
+                        }
                         const userSnap = await getDoc(doc(db, 'users', req.fromId));
-                        if (userSnap.exists()) return { ...req, profile: userSnap.data() };
+                        if (userSnap.exists()) {
+                            return { ...req, profile: userSnap.data(), senderRole: 'student' };
+                        }
                     } catch (e) {}
                     return req;
                 }));
@@ -1024,11 +1048,35 @@
 
         function createRequestCard(req) {
             const profile = req.profile || {};
-            const name = escapeHtml(req.fromName || profile.name || 'Language Partner');
-            const avatar = escapeAttr(req.fromAvatar || profile.avatar_url || DEFAULT_AVATAR);
-            const spoken = (profile.languages_spoken || []).slice(0, 3);
-            const learning = (profile.languages_learning || []).slice(0, 2);
-            const allLangs = [...new Set([...spoken, ...learning])];
+            const isInstructor = req.senderRole === 'instructor';
+
+            // Prefer fresh profile data; fall back to what was stored on the request doc
+            const name = escapeHtml(profile.name || req.fromName || 'Language Partner');
+            const avatar = escapeAttr(profile.avatar_url || req.fromAvatar || DEFAULT_AVATAR);
+            const country = profile.country ? escapeHtml(profile.country) : '';
+
+            // Build language line appropriate to role
+            let langLine = '';
+            if (isInstructor) {
+                const teaching = (profile.languages_teaching || profile.languages || []).slice(0, 3);
+                const spoken = (profile.languages_spoken || []).slice(0, 2);
+                if (teaching.length > 0) {
+                    langLine = `<i class="fas fa-chalkboard-teacher"></i> Teaches: ${escapeHtml(teaching.join(', '))}`;
+                } else if (spoken.length > 0) {
+                    langLine = `<i class="fas fa-language"></i> ${escapeHtml(spoken.join(', '))}`;
+                }
+            } else {
+                const spoken = (profile.languages_spoken || []).slice(0, 2);
+                const learning = (profile.languages_learning || []).slice(0, 2);
+                const parts = [];
+                if (spoken.length > 0) parts.push(`Speaks: ${spoken.join(', ')}`);
+                if (learning.length > 0) parts.push(`Learning: ${learning.join(', ')}`);
+                if (parts.length > 0) langLine = `<i class="fas fa-language"></i> ${escapeHtml(parts.join(' · '))}`;
+            }
+
+            const roleBadge = isInstructor
+                ? `<span class="request-role-badge instructor"><i class="fas fa-chalkboard-teacher"></i> Instructor</span>`
+                : `<span class="request-role-badge learner"><i class="fas fa-user-graduate"></i> Language Learner</span>`;
 
             const card = document.createElement('div');
             card.className = 'request-card';
@@ -1040,9 +1088,9 @@
                      onerror="this.src='${DEFAULT_AVATAR}'"
                      alt="${name}">
                 <div class="request-name">${name}</div>
-                ${allLangs.length > 0
-                    ? `<div class="request-langs"><i class="fas fa-language"></i> ${escapeHtml(allLangs.join(', '))}</div>`
-                    : ''}
+                ${roleBadge}
+                ${country ? `<div class="request-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>` : ''}
+                ${langLine ? `<div class="request-langs">${langLine}</div>` : ''}
                 <div class="request-actions">
                     <button class="btn-accept" onclick="acceptRequest('${req.id}')">
                         <i class="fas fa-check"></i> Accept
