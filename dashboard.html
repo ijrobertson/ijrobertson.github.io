@@ -533,6 +533,7 @@
             <div class="profile-dropdown-content">
               <a href="dashboard.html"><i class="fas fa-user"></i> My Profile</a>
               <a href="messages.html" class="messages-link" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+              <a href="activity.html"><i class="fas fa-bell"></i> Activity <span class="unread-count" id="activityCount"></span></a>
               <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
               <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
@@ -865,6 +866,7 @@
           // Load unread message count
           try {
             await loadUnreadMessageCount();
+            loadPendingRequests();
           } catch (error) {
             console.error('Error loading unread messages:', error);
           }
@@ -1173,6 +1175,23 @@
 
     // UNREAD MESSAGE COUNT
 
+    // NOTIFICATION COUNTS (messages + friend requests combined)
+    let _unreadMsgCount = 0;
+    let _pendingReqCount = 0;
+
+    function _updateProfileBadge() {
+      const total = _unreadMsgCount + _pendingReqCount;
+      const badge = document.getElementById('notificationBadge');
+      if (badge) {
+        if (total > 0) {
+          badge.textContent = total > 9 ? '9+' : total;
+          badge.classList.add('show');
+        } else {
+          badge.classList.remove('show');
+        }
+      }
+    }
+
     async function loadUnreadMessageCount() {
       if (!auth.currentUser) return;
 
@@ -1182,21 +1201,19 @@
       );
 
       onSnapshot(q, (snapshot) => {
-        let totalUnread = 0;
-
+        _unreadMsgCount = 0;
         snapshot.forEach((doc) => {
           const conv = doc.data();
           if (conv.unreadCount && conv.unreadCount[auth.currentUser.uid]) {
-            totalUnread += conv.unreadCount[auth.currentUser.uid];
+            _unreadMsgCount += conv.unreadCount[auth.currentUser.uid];
           }
         });
 
         const messagesLink = document.getElementById('messagesLink');
-        const unreadCount = document.getElementById('unreadCount');
-        const notificationBadge = document.getElementById('notificationBadge');
+        const unreadCount  = document.getElementById('unreadCount');
 
         if (messagesLink) {
-          if (totalUnread > 0) {
+          if (_unreadMsgCount > 0) {
             messagesLink.classList.add('has-unread');
           } else {
             messagesLink.classList.remove('has-unread');
@@ -1204,23 +1221,37 @@
         }
 
         if (unreadCount) {
-          if (totalUnread > 0) {
-            unreadCount.textContent = totalUnread > 99 ? '99+' : totalUnread;
+          if (_unreadMsgCount > 0) {
+            unreadCount.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount;
             unreadCount.classList.add('show');
           } else {
             unreadCount.classList.remove('show');
           }
         }
 
-        if (notificationBadge) {
-          if (totalUnread > 0) {
-            notificationBadge.textContent = totalUnread > 9 ? '9+' : totalUnread;
-            notificationBadge.classList.add('show');
-          } else {
-            notificationBadge.classList.remove('show');
-          }
-        }
+        _updateProfileBadge();
       });
+    }
+
+    function loadPendingRequests() {
+      if (!auth.currentUser) return;
+
+      onSnapshot(
+        query(collection(db, 'friendRequests'), where('toId', '==', auth.currentUser.uid)),
+        (snapshot) => {
+          _pendingReqCount = snapshot.docs.filter(d => d.data().status === 'pending').length;
+          const el = document.getElementById('activityCount');
+          if (el) {
+            if (_pendingReqCount > 0) {
+              el.textContent = _pendingReqCount;
+              el.classList.add('show');
+            } else {
+              el.classList.remove('show');
+            }
+          }
+          _updateProfileBadge();
+        }
+      );
     }
 
     // ── Stripe Payment Setup ─────────────────────────────────────
