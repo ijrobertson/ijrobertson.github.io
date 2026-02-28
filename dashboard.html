@@ -1175,12 +1175,13 @@
 
     // UNREAD MESSAGE COUNT
 
-    // NOTIFICATION COUNTS (messages + friend requests combined)
+    // NOTIFICATION COUNTS (messages + friend requests + new bookings)
     let _unreadMsgCount = 0;
     let _pendingReqCount = 0;
+    let _newBookingCount = 0;
 
     function _updateProfileBadge() {
-      const total = _unreadMsgCount + _pendingReqCount;
+      const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
       const badge = document.getElementById('notificationBadge');
       if (badge) {
         if (total > 0) {
@@ -1235,20 +1236,32 @@
 
     function loadPendingRequests() {
       if (!auth.currentUser) return;
+      const uid = auth.currentUser.uid;
+
+      function _updateActivityBadge() {
+        const total = _pendingReqCount + _newBookingCount;
+        const el = document.getElementById('activityCount');
+        if (el) {
+          if (total > 0) { el.textContent = total; el.classList.add('show'); }
+          else { el.classList.remove('show'); }
+        }
+      }
 
       onSnapshot(
-        query(collection(db, 'friendRequests'), where('toId', '==', auth.currentUser.uid)),
+        query(collection(db, 'friendRequests'), where('toId', '==', uid)),
         (snapshot) => {
           _pendingReqCount = snapshot.docs.filter(d => d.data().status === 'pending').length;
-          const el = document.getElementById('activityCount');
-          if (el) {
-            if (_pendingReqCount > 0) {
-              el.textContent = _pendingReqCount;
-              el.classList.add('show');
-            } else {
-              el.classList.remove('show');
-            }
-          }
+          _updateActivityBadge();
+          _updateProfileBadge();
+        }
+      );
+
+      // New unseen bookings (for instructors)
+      onSnapshot(
+        query(collection(db, 'bookings'), where('instructorId', '==', uid)),
+        (snapshot) => {
+          _newBookingCount = snapshot.docs.filter(d => d.data().instructorSeen === false).length;
+          _updateActivityBadge();
           _updateProfileBadge();
         }
       );

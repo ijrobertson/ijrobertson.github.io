@@ -1171,6 +1171,9 @@
                 }
 
                 showStatus(`Logged in as ${user.email}`, 'success');
+
+                // Live notification badges
+                loadVCNotifications(user.uid);
             } else {
                 showStatus('You are not logged in. You can still use video calls, but your name will be "Guest".', 'info');
                 currentUser = { email: 'Guest', uid: 'guest-' + Date.now() };
@@ -1931,6 +1934,59 @@
         document.addEventListener('fullscreenchange', onGridFullscreenChange);
         document.addEventListener('webkitfullscreenchange', onGridFullscreenChange);
         document.addEventListener('mozfullscreenchange', onGridFullscreenChange);
+
+        function loadVCNotifications(uid) {
+            let _msgCount = 0;
+            let _reqCount = 0;
+            let _bookingCount = 0;
+
+            function _updateBadges() {
+                const profileTotal = _msgCount + _reqCount + _bookingCount;
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    if (profileTotal > 0) {
+                        badge.textContent = profileTotal > 9 ? '9+' : profileTotal;
+                        badge.classList.add('show');
+                    } else {
+                        badge.classList.remove('show');
+                    }
+                }
+                const actEl = document.getElementById('activityCount');
+                if (actEl) {
+                    const actTotal = _reqCount + _bookingCount;
+                    if (actTotal > 0) { actEl.textContent = actTotal; actEl.classList.add('show'); }
+                    else { actEl.classList.remove('show'); }
+                }
+                const msgEl = document.getElementById('unreadCount');
+                if (msgEl) {
+                    if (_msgCount > 0) { msgEl.textContent = _msgCount > 99 ? '99+' : _msgCount; msgEl.classList.add('show'); }
+                    else { msgEl.classList.remove('show'); }
+                }
+            }
+
+            onSnapshot(
+                query(collection(db, 'conversations'), where('participants', 'array-contains', uid)),
+                (snap) => {
+                    _msgCount = 0;
+                    snap.forEach(d => { const c = d.data(); if (c.unreadCount?.[uid]) _msgCount += c.unreadCount[uid]; });
+                    _updateBadges();
+                }
+            );
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+                (snap) => {
+                    _reqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                    _updateBadges();
+                }
+            );
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', uid)),
+                (snap) => {
+                    _bookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                    _updateBadges();
+                }
+            );
+        }
 
         // Event Listeners
         joinBtn.addEventListener('click', joinChannel);

@@ -1515,7 +1515,8 @@
                                 paymentIntentId: paymentIntent.id,
                                 paymentStatus: 'paid',
                                 amount: paymentIntent.amount,
-                                currency: paymentIntent.currency
+                                currency: paymentIntent.currency,
+                                instructorSeen: false
                             });
 
                             // Reset payment step state
@@ -1550,13 +1551,14 @@
             });
         });
 
-        // NOTIFICATION COUNTS (messages + friend requests combined)
+        // NOTIFICATION COUNTS (messages + friend requests + new bookings)
 
         let _unreadMsgCount = 0;
         let _pendingReqCount = 0;
+        let _newBookingCount = 0;
 
         function _updateProfileBadge() {
-            const total = _unreadMsgCount + _pendingReqCount;
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
             const badge = document.getElementById('notificationBadge');
             if (badge) {
                 if (total > 0) {
@@ -1611,27 +1613,35 @@
 
         function loadPendingRequests() {
             if (!auth.currentUser) return;
+            const uid = auth.currentUser.uid;
 
-            const q = query(
-                collection(db, 'friendRequests'),
-                where('toId', '==', auth.currentUser.uid)
+            function _updateActivityBadge() {
+                const total = _pendingReqCount + _newBookingCount;
+                const el = document.getElementById('activityCount');
+                if (el) {
+                    if (total > 0) { el.textContent = total; el.classList.add('show'); }
+                    else { el.classList.remove('show'); }
+                }
+            }
+
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+                (snapshot) => {
+                    _pendingReqCount = snapshot.docs.filter(d => d.data().status === 'pending').length;
+                    _updateActivityBadge();
+                    _updateProfileBadge();
+                }
             );
 
-            onSnapshot(q, (snapshot) => {
-                _pendingReqCount = snapshot.docs.filter(d => d.data().status === 'pending').length;
-
-                const activityCount = document.getElementById('activityCount');
-                if (activityCount) {
-                    if (_pendingReqCount > 0) {
-                        activityCount.textContent = _pendingReqCount;
-                        activityCount.classList.add('show');
-                    } else {
-                        activityCount.classList.remove('show');
-                    }
+            // New unseen bookings (for instructors)
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', uid)),
+                (snapshot) => {
+                    _newBookingCount = snapshot.docs.filter(d => d.data().instructorSeen === false).length;
+                    _updateActivityBadge();
+                    _updateProfileBadge();
                 }
-
-                _updateProfileBadge();
-            });
+            );
         }
 
         // PROFILE MODAL FUNCTIONS

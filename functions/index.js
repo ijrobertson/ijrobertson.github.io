@@ -227,6 +227,175 @@ Don't want to receive these emails? Turn off notifications in your dashboard: ht
   });
 
 /**
+ * Sends an email to the instructor when a student books and pays for a lesson
+ */
+exports.sendBookingNotification = onDocumentCreated(
+  'bookings/{bookingId}',
+  async (event) => {
+    try {
+      const booking = event.data.data();
+      const { instructorId, studentId, dateTime, amount, currency } = booking;
+
+      if (!instructorId) return null;
+
+      const resend = new Resend(process.env.RESEND_API_KEY);
+
+      // Get instructor's profile and email
+      const instructorSnap = await admin.firestore().collection('instructors').doc(instructorId).get();
+      if (!instructorSnap.exists || !instructorSnap.data().email) {
+        console.log('Instructor not found or has no email:', instructorId);
+        return null;
+      }
+      const instructor = instructorSnap.data();
+
+      // Get student's real name
+      let studentName = booking.studentName || 'A student';
+      if (studentId) {
+        const studentSnap = await admin.firestore().collection('users').doc(studentId).get();
+        if (studentSnap.exists && studentSnap.data().name) {
+          studentName = studentSnap.data().name;
+        }
+      }
+
+      // Format lesson date and time (UTC)
+      const lessonDate = dateTime?.toDate ? dateTime.toDate() : new Date(dateTime);
+      const formattedDate = lessonDate.toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        timeZone: 'UTC'
+      });
+      const formattedTime = lessonDate.toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
+      });
+
+      // Format payment amount
+      const amountStr = amount ? `$${(amount / 100).toFixed(2)} ${(currency || 'USD').toUpperCase()}` : '';
+
+      const emailResult = await resend.emails.send({
+        from: 'Lingua Bud <notifications@linguabud.com>',
+        to: instructor.email,
+        subject: `New lesson booked: ${studentName} on ${formattedDate}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>New Lesson Booking</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+              <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td align="center" style="padding: 40px 0;">
+                    <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                      <!-- Header -->
+                      <tr>
+                        <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #20bcba;">
+                          <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Lingua Bud</h1>
+                        </td>
+                      </tr>
+
+                      <!-- Content -->
+                      <tr>
+                        <td style="padding: 40px;">
+                          <h2 style="margin: 0 0 10px 0; color: #333333; font-size: 24px;">New Lesson Booked!</h2>
+                          <p style="margin: 0 0 24px 0; color: #666666; font-size: 16px; line-height: 1.5;">
+                            Hi ${instructor.name || 'Instructor'},<br><br>
+                            Great news — <strong>${studentName}</strong> has booked a lesson with you and payment has been confirmed.
+                          </p>
+
+                          <!-- Lesson Details Card -->
+                          <div style="background-color: #f8f9fa; border-radius: 8px; padding: 24px; margin: 0 0 28px 0; border-left: 4px solid #20bcba;">
+                            <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                              <strong>Student:</strong> ${studentName}
+                            </p>
+                            <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                              <strong>Date:</strong> ${formattedDate}
+                            </p>
+                            <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                              <strong>Time:</strong> ${formattedTime} UTC
+                            </p>
+                            ${amountStr ? `<p style="margin: 0; color: #333333; font-size: 16px;">
+                              <strong>Payment:</strong> ${amountStr} (confirmed)
+                            </p>` : ''}
+                          </div>
+
+                          <p style="margin: 0 0 24px 0; color: #666666; font-size: 16px; line-height: 1.5;">
+                            View this lesson in your Activity page and join the video call when it's time to start.
+                          </p>
+
+                          <p style="margin: 0 0 30px 0; text-align: center;">
+                            <a href="https://linguabud.com/activity.html"
+                               style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
+                              View Upcoming Lesson
+                            </a>
+                          </p>
+
+                          <p style="margin: 0; color: #999999; font-size: 14px; line-height: 1.5;">
+                            Questions? Contact us at <a href="mailto:office@linguabud.com" style="color: #20bcba; text-decoration: none;">office@linguabud.com</a>
+                          </p>
+                        </td>
+                      </tr>
+
+                      <!-- Footer -->
+                      <tr>
+                        <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
+                          <p style="margin: 0; color: #999999; font-size: 12px; line-height: 1.5; text-align: center;">
+                            © 2026 Lingua Bud. Connect with language partners worldwide.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
+        `,
+        text: `
+New Lesson Booked!
+
+Hi ${instructor.name || 'Instructor'},
+
+${studentName} has booked a lesson with you and payment has been confirmed.
+
+Student: ${studentName}
+Date: ${formattedDate}
+Time: ${formattedTime} UTC
+${amountStr ? `Payment: ${amountStr} (confirmed)` : ''}
+
+View your upcoming lesson: https://linguabud.com/activity.html
+
+© 2026 Lingua Bud
+        `.trim()
+      });
+
+      if (emailResult.error) {
+        console.error('Resend API error:', emailResult.error);
+        return null;
+      }
+
+      await admin.firestore().collection('emailLog').add({
+        type: 'bookingNotification',
+        instructorId,
+        studentId,
+        bookingId: event.params.bookingId,
+        instructorEmail: instructor.email,
+        emailId: emailResult.data?.id,
+        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'sent'
+      });
+
+      console.log('Booking notification sent to instructor:', instructor.email);
+      return emailResult;
+
+    } catch (error) {
+      console.error('Error sending booking notification:', error);
+      return null;
+    }
+  }
+);
+
+/**
  * Generates an Agora RTC token for video calling
  * Called from the client when a user wants to join a video call
  */

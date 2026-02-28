@@ -768,7 +768,13 @@
 
                 const bookings = [];
                 studentSnap.forEach(d => bookings.push({ id: d.id, ...d.data(), myRole: 'student' }));
-                instructorSnap.forEach(d => bookings.push({ id: d.id, ...d.data(), myRole: 'instructor' }));
+                instructorSnap.forEach(d => {
+                    bookings.push({ id: d.id, ...d.data(), myRole: 'instructor' });
+                    // Mark unseen bookings as seen when instructor opens Activity page
+                    if (d.data().instructorSeen === false) {
+                        updateDoc(doc(db, 'bookings', d.id), { instructorSeen: true }).catch(() => {});
+                    }
+                });
 
                 // Sort ascending by lesson time
                 bookings.sort((a, b) => {
@@ -1159,12 +1165,13 @@
             }
         }
 
-        // ===== NOTIFICATION COUNTS (messages + friend requests combined) =====
+        // ===== NOTIFICATION COUNTS (messages + friend requests + new bookings) =====
         let _unreadMsgCount = 0;
         let _pendingReqCount = 0;
+        let _newBookingCount = 0;
 
         function _updateProfileBadge() {
-            const total = _unreadMsgCount + _pendingReqCount;
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
             const badge = document.getElementById('notificationBadge');
             if (badge) {
                 if (total > 0) {
@@ -1196,23 +1203,39 @@
             });
         }
 
-        function loadPendingRequestsCount() {
-            const q = query(collection(db, 'friendRequests'), where('toId', '==', currentUser.uid));
-            onSnapshot(q, (snap) => {
-                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
-
-                const activityCount = document.getElementById('activityCount');
-                if (activityCount) {
-                    if (_pendingReqCount > 0) {
-                        activityCount.textContent = _pendingReqCount;
-                        activityCount.classList.add('show');
-                    } else {
-                        activityCount.classList.remove('show');
-                    }
+        function _updateActivityBadge() {
+            const total = _pendingReqCount + _newBookingCount;
+            const el = document.getElementById('activityCount');
+            if (el) {
+                if (total > 0) {
+                    el.textContent = total;
+                    el.classList.add('show');
+                } else {
+                    el.classList.remove('show');
                 }
+            }
+        }
 
-                _updateProfileBadge();
-            });
+        function loadPendingRequestsCount() {
+            // Friend requests
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', currentUser.uid)),
+                (snap) => {
+                    _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                    _updateActivityBadge();
+                    _updateProfileBadge();
+                }
+            );
+
+            // New unseen bookings (only relevant when user is an instructor)
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', currentUser.uid)),
+                (snap) => {
+                    _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                    _updateActivityBadge();
+                    _updateProfileBadge();
+                }
+            );
         }
 
         // ===== LOGOUT =====

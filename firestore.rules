@@ -82,11 +82,17 @@ service cloud.firestore {
                     && request.auth.uid == request.resource.data.studentId
                     && request.resource.data.status == "confirmed";
 
-      // Either party can cancel
-      allow update: if request.auth != null
-                    && (request.auth.uid == resource.data.instructorId
+      // Either party can cancel; instructor can mark booking as seen
+      allow update: if request.auth != null && (
+                      // Cancel: student or instructor
+                      ((request.auth.uid == resource.data.instructorId
                         || request.auth.uid == resource.data.studentId)
-                    && request.resource.data.status == "cancelled";
+                       && request.resource.data.status == 'cancelled')
+                      ||
+                      // Mark seen: only instructor, only the instructorSeen field
+                      (request.auth.uid == resource.data.instructorId
+                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['instructorSeen']))
+                    );
     }
 
     // Friend / Partner Requests
