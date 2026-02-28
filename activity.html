@@ -594,7 +594,7 @@
                     <div class="profile-dropdown-content">
                         <a href="student-dashboard.html" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
                         <a href="messages.html" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
-                        <a href="activity.html" class="active-nav-link"><i class="fas fa-bell"></i> Activity</a>
+                        <a href="activity.html" class="active-nav-link"><i class="fas fa-bell"></i> Activity <span class="unread-count" id="activityCount"></span></a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
@@ -702,8 +702,9 @@
             updateJoinButtons();
             joinTimerInterval = setInterval(updateJoinButtons, 30000);
 
-            // Live unread message count
+            // Live unread message count and pending friend requests
             loadUnreadCount();
+            loadPendingRequestsCount();
         });
 
         async function loadNavAvatar(user) {
@@ -1110,26 +1111,59 @@
             }
         }
 
-        // ===== UNREAD MESSAGES COUNT =====
+        // ===== NOTIFICATION COUNTS (messages + friend requests combined) =====
+        let _unreadMsgCount = 0;
+        let _pendingReqCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) {
+                    badge.textContent = total > 9 ? '9+' : total;
+                    badge.classList.add('show');
+                } else {
+                    badge.classList.remove('show');
+                }
+            }
+        }
+
         function loadUnreadCount() {
             const q = query(collection(db, 'conversations'), where('participants', 'array-contains', currentUser.uid));
             onSnapshot(q, (snap) => {
-                let total = 0;
+                _unreadMsgCount = 0;
                 snap.forEach(d => {
                     const conv = d.data();
-                    if (conv.unreadCount?.[currentUser.uid]) total += conv.unreadCount[currentUser.uid];
+                    if (conv.unreadCount?.[currentUser.uid]) _unreadMsgCount += conv.unreadCount[currentUser.uid];
                 });
 
                 const unreadEl = document.getElementById('unreadCount');
-                const badge = document.getElementById('notificationBadge');
-
-                if (total > 0) {
-                    if (unreadEl) { unreadEl.textContent = total > 99 ? '99+' : total; unreadEl.classList.add('show'); }
-                    if (badge) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                if (_unreadMsgCount > 0) {
+                    if (unreadEl) { unreadEl.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; unreadEl.classList.add('show'); }
                 } else {
                     unreadEl?.classList.remove('show');
-                    badge?.classList.remove('show');
                 }
+
+                _updateProfileBadge();
+            });
+        }
+
+        function loadPendingRequestsCount() {
+            const q = query(collection(db, 'friendRequests'), where('toId', '==', currentUser.uid));
+            onSnapshot(q, (snap) => {
+                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+
+                const activityCount = document.getElementById('activityCount');
+                if (activityCount) {
+                    if (_pendingReqCount > 0) {
+                        activityCount.textContent = _pendingReqCount;
+                        activityCount.classList.add('show');
+                    } else {
+                        activityCount.classList.remove('show');
+                    }
+                }
+
+                _updateProfileBadge();
             });
         }
 
