@@ -333,7 +333,7 @@ exports.sendBookingNotification = onDocumentCreated(
                           </p>
 
                           <p style="margin: 0; color: #999999; font-size: 14px; line-height: 1.5;">
-                            Questions? Contact us at <a href="mailto:office@linguabud.com" style="color: #20bcba; text-decoration: none;">office@linguabud.com</a>
+                            Questions? Contact us at <a href="mailto:support@linguabud.com" style="color: #20bcba; text-decoration: none;">support@linguabud.com</a>
                           </p>
                         </td>
                       </tr>
@@ -480,11 +480,12 @@ exports.sendContactEmail = onCall(async (request) => {
     throw new HttpsError('invalid-argument', 'Name, email, and message are required');
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY || 're_6mzE6Wfj_CPfu3sGxts7o1vRvMVeP4iqY');
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   const result = await resend.emails.send({
     from: 'Lingua Bud <notifications@linguabud.com>',
-    to: 'ianjack1643@gmail.com',
+    to: 'support@linguabud.com',
+    reply_to: email,
     subject: `Contact Form: Message from ${name}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
