@@ -414,6 +414,64 @@
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
         }
 
+        .btn-pip {
+            background: #6f42c1;
+            color: white;
+            display: none;
+        }
+
+        .btn-pip:hover {
+            background: #5a32a3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
+        }
+
+        /* Navigation warning banner shown during active call */
+        #call-nav-warning {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            border: 2px solid #20bcba;
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            z-index: 100000;
+            text-align: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            max-width: 480px;
+            width: 90%;
+            display: none;
+        }
+
+        #call-nav-warning p {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        #call-nav-warning .warning-btns {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        #call-nav-warning .warning-btns button {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+
+        #call-nav-warning .warning-btns button:hover {
+            opacity: 0.85;
+        }
+
         .btn-video:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -827,6 +885,17 @@
         </div>
     </nav>
 
+    <!-- Warning banner shown when navigating away during an active call -->
+    <div id="call-nav-warning">
+        <p><strong>You're still in a video call!</strong><br>
+        Navigating here will disconnect you. Use <strong>Pop Out</strong> to keep watching while you browse in another tab, or open the link in a new tab.</p>
+        <div class="warning-btns">
+            <button id="warn-stay" style="background:#20bcba;color:white;">Stay in Call</button>
+            <button id="warn-newtab" style="background:#6f42c1;color:white;">Open in New Tab</button>
+            <button id="warn-leave" style="background:#dc3545;color:white;">Leave &amp; Go</button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="video-container">
             <div class="video-header">
@@ -846,6 +915,9 @@
                 <button id="leaveBtn" class="btn-video btn-leave">Leave Call</button>
                 <button id="whiteboardBtn" class="btn-video btn-whiteboard">
                     <i class="fas fa-chalkboard"></i> Whiteboard
+                </button>
+                <button id="pipBtn" class="btn-video btn-pip">
+                    <i class="fas fa-external-link-alt"></i> Pop Out
                 </button>
             </div>
 
@@ -1095,6 +1167,7 @@
         const _cachedAvatar = localStorage.getItem('nav_avatar') || localStorage.getItem('instructor_avatar');
         if (_cachedAvatar && navProfilePic) navProfilePic.src = _cachedAvatar;
 
+        const pipBtn          = document.getElementById('pipBtn');
         const whiteboardBtn   = document.getElementById('whiteboardBtn');
         const whiteboardPanel = document.getElementById('whiteboard-panel');
         const wbCanvas        = document.getElementById('whiteboard-canvas');
@@ -1342,6 +1415,7 @@
                 joinBtn.style.display = 'none';
                 leaveBtn.style.display = 'inline-block';
                 gridExpandBtn.style.display = 'flex';
+                pipBtn.style.display = 'inline-block';
                 channelNameInput.disabled = true;
 
             } catch (error) {
@@ -1440,6 +1514,8 @@
                 isMuted = false;
                 isCameraOff = false;
                 leaveBtn.style.display = 'none';
+                pipBtn.style.display = 'none';
+                document.getElementById('call-nav-warning').style.display = 'none';
                 gridExpandBtn.style.display = 'none';
                 // Reset expand button icon in case it was left in compressed state
                 gridExpandBtn.querySelector('i').className = 'fas fa-expand';
@@ -1999,11 +2075,119 @@
             }
         });
 
-        // Handle page unload
-        window.addEventListener('beforeunload', () => {
+        // Handle page unload — warn user they will disconnect
+        window.addEventListener('beforeunload', (e) => {
             if (client && client.connectionState === 'CONNECTED') {
                 leaveChannel();
+                e.preventDefault();
+                return (e.returnValue = 'You are still in a video call. Are you sure you want to leave?');
             }
+        });
+
+        // Picture-in-Picture
+        let _pendingNavHref = null;
+
+        pipBtn.addEventListener('click', enterPiP);
+
+        async function enterPiP() {
+            // Try Document Picture-in-Picture first (Chrome 116+)
+            // Creates a floating mini-window that stays visible while browsing other tabs
+            if ('documentPictureInPicture' in window) {
+                try {
+                    const pipW = await window.documentPictureInPicture.requestWindow({
+                        width: 480,
+                        height: 270
+                    });
+                    // Copy page styles into the PiP window
+                    [...document.styleSheets].forEach(sheet => {
+                        try {
+                            const cssText = [...sheet.cssRules].map(r => r.cssText).join('');
+                            const style = pipW.document.createElement('style');
+                            style.textContent = cssText;
+                            pipW.document.head.appendChild(style);
+                        } catch (e) { /* cross-origin stylesheet, skip */ }
+                    });
+                    pipW.document.body.style.cssText = 'margin:0;padding:0;background:#000;display:flex;align-items:center;justify-content:center;width:100%;height:100vh;overflow:hidden;';
+
+                    const videoGridEl = document.getElementById('video-grid');
+                    videoGridEl.style.cssText = 'width:100%;height:100%;margin:0;grid-auto-rows:1fr;';
+                    pipW.document.body.appendChild(videoGridEl);
+
+                    // When PiP window closes, move the video grid back
+                    pipW.addEventListener('pagehide', () => {
+                        const container = document.getElementById('video-grid-container');
+                        if (container) {
+                            videoGridEl.style.cssText = '';
+                            const whiteboardPanelEl = document.getElementById('whiteboard-panel');
+                            container.insertBefore(videoGridEl, whiteboardPanelEl);
+                        }
+                    });
+                    return;
+                } catch (err) {
+                    console.log('Document PiP failed, trying video element PiP:', err);
+                }
+            }
+
+            // Fallback: Video Element PiP (Chrome 69+, Safari 13.1+, Firefox 71+)
+            // Shows a floating system-level mini-player — works even across browser tabs
+            if (document.pictureInPictureEnabled) {
+                const videoEl = document.querySelector('#video-grid .video-stream video');
+                if (videoEl) {
+                    try {
+                        await videoEl.requestPictureInPicture();
+                        return;
+                    } catch (err) {
+                        console.log('Video element PiP failed:', err);
+                    }
+                } else {
+                    showStatus('No video stream found yet. Wait for a participant to join, then try again.', 'error');
+                    return;
+                }
+            }
+
+            showStatus('Picture-in-Picture is not supported in your browser. Try Chrome or Safari.', 'error');
+        }
+
+        // Navigation warning: intercept navbar and profile dropdown link clicks during a call
+        const callNavWarning = document.getElementById('call-nav-warning');
+
+        function _interceptNavLink(link) {
+            if (link.target === '_blank') return;
+            link.addEventListener('click', e => {
+                if (client && client.connectionState === 'CONNECTED') {
+                    e.preventDefault();
+                    _pendingNavHref = link.href;
+                    callNavWarning.style.display = 'block';
+                }
+            });
+        }
+
+        document.querySelectorAll('.navbar-nav a[href], .navbar-brand[href]').forEach(_interceptNavLink);
+        document.querySelectorAll('.profile-dropdown-content a[href]').forEach(link => {
+            if (link.id === 'logoutLink') return;
+            _interceptNavLink(link);
+        });
+
+        document.getElementById('warn-stay').addEventListener('click', () => {
+            callNavWarning.style.display = 'none';
+            _pendingNavHref = null;
+        });
+
+        document.getElementById('warn-newtab').addEventListener('click', () => {
+            if (_pendingNavHref) window.open(_pendingNavHref, '_blank');
+            callNavWarning.style.display = 'none';
+            _pendingNavHref = null;
+        });
+
+        document.getElementById('warn-leave').addEventListener('click', () => {
+            const href = _pendingNavHref;
+            callNavWarning.style.display = 'none';
+            _pendingNavHref = null;
+            leaveChannel().then(() => {
+                if (href) window.location.href = href;
+            }).catch(() => {
+                if (href) window.location.href = href;
+            });
         });
     </script>
 
