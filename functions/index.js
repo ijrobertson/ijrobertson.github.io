@@ -257,14 +257,16 @@ exports.sendBookingNotification = onDocumentCreated(
         }
       }
 
-      // Format lesson date and time (UTC)
+      // Format lesson date and time in the instructor's timezone (stored at booking time)
       const lessonDate = dateTime?.toDate ? dateTime.toDate() : new Date(dateTime);
+      const tz = booking.instructorTimezone || 'UTC';
       const formattedDate = lessonDate.toLocaleDateString('en-US', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        timeZone: 'UTC'
+        timeZone: tz
       });
       const formattedTime = lessonDate.toLocaleTimeString('en-US', {
-        hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+        timeZone: tz
       });
 
       // Format payment amount
@@ -312,7 +314,7 @@ exports.sendBookingNotification = onDocumentCreated(
                               <strong>Date:</strong> ${formattedDate}
                             </p>
                             <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
-                              <strong>Time:</strong> ${formattedTime} UTC
+                              <strong>Time:</strong> ${formattedTime}
                             </p>
                             ${amountStr ? `<p style="margin: 0; color: #333333; font-size: 16px;">
                               <strong>Payment:</strong> ${amountStr} (confirmed)
@@ -360,7 +362,7 @@ ${studentName} has booked a lesson with you and payment has been confirmed.
 
 Student: ${studentName}
 Date: ${formattedDate}
-Time: ${formattedTime} UTC
+Time: ${formattedTime}
 ${amountStr ? `Payment: ${amountStr} (confirmed)` : ''}
 
 View your upcoming lesson: https://linguabud.com/activity.html
