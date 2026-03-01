@@ -415,15 +415,64 @@
         }
 
         .btn-pip {
-            background: #6f42c1;
+            background: #113448;
             color: white;
             display: none;
         }
 
         .btn-pip:hover {
-            background: #5a32a3;
+            background: #0a1f2e;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
+            box-shadow: 0 4px 12px rgba(17, 52, 72, 0.5);
+        }
+
+        /* In-page floating mini-player (mobile / unsupported browsers) */
+        #pip-overlay {
+            position: fixed;
+            bottom: 80px;
+            right: 16px;
+            width: 260px;
+            background: #000;
+            border-radius: 12px;
+            z-index: 100001;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #pip-overlay-header {
+            background: #113448;
+            color: white;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+        }
+
+        #pip-overlay-header button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+            line-height: 1;
+            padding: 0 2px;
+        }
+
+        #pip-overlay #video-grid {
+            width: 100%;
+            height: 146px;
+            margin: 0;
+            grid-template-columns: 1fr;
+            grid-auto-rows: 1fr;
+        }
+
+        #pip-overlay .video-player {
+            aspect-ratio: unset;
         }
 
         /* Navigation warning banner shown during active call */
@@ -891,7 +940,7 @@
         Navigating here will disconnect you. Use <strong>Pop Out</strong> to keep watching while you browse in another tab, or open the link in a new tab.</p>
         <div class="warning-btns">
             <button id="warn-stay" style="background:#20bcba;color:white;">Stay in Call</button>
-            <button id="warn-newtab" style="background:#6f42c1;color:white;">Open in New Tab</button>
+            <button id="warn-newtab" style="background:#113448;color:white;">Open in New Tab</button>
             <button id="warn-leave" style="background:#dc3545;color:white;">Leave &amp; Go</button>
         </div>
     </div>
@@ -1516,6 +1565,7 @@
                 leaveBtn.style.display = 'none';
                 pipBtn.style.display = 'none';
                 document.getElementById('call-nav-warning').style.display = 'none';
+                _closePipOverlay();
                 gridExpandBtn.style.display = 'none';
                 // Reset expand button icon in case it was left in compressed state
                 gridExpandBtn.querySelector('i').className = 'fas fa-expand';
@@ -2090,46 +2140,48 @@
         pipBtn.addEventListener('click', enterPiP);
 
         async function enterPiP() {
-            // Try Document Picture-in-Picture first (Chrome 116+)
-            // Creates a floating mini-window that stays visible while browsing other tabs
+            // Already showing in-page mini-player — close it first (toggle)
+            const existingOverlay = document.getElementById('pip-overlay');
+            if (existingOverlay) {
+                _closePipOverlay();
+                return;
+            }
+
+            // 1. Document Picture-in-Picture (Chrome 116+ desktop)
+            // Moves the whole video grid into a floating OS-level mini-window
             if ('documentPictureInPicture' in window) {
                 try {
                     const pipW = await window.documentPictureInPicture.requestWindow({
                         width: 480,
                         height: 270
                     });
-                    // Copy page styles into the PiP window
                     [...document.styleSheets].forEach(sheet => {
                         try {
                             const cssText = [...sheet.cssRules].map(r => r.cssText).join('');
                             const style = pipW.document.createElement('style');
                             style.textContent = cssText;
                             pipW.document.head.appendChild(style);
-                        } catch (e) { /* cross-origin stylesheet, skip */ }
+                        } catch (e) { /* cross-origin stylesheet */ }
                     });
                     pipW.document.body.style.cssText = 'margin:0;padding:0;background:#000;display:flex;align-items:center;justify-content:center;width:100%;height:100vh;overflow:hidden;';
-
                     const videoGridEl = document.getElementById('video-grid');
                     videoGridEl.style.cssText = 'width:100%;height:100%;margin:0;grid-auto-rows:1fr;';
                     pipW.document.body.appendChild(videoGridEl);
-
-                    // When PiP window closes, move the video grid back
                     pipW.addEventListener('pagehide', () => {
                         const container = document.getElementById('video-grid-container');
                         if (container) {
                             videoGridEl.style.cssText = '';
-                            const whiteboardPanelEl = document.getElementById('whiteboard-panel');
-                            container.insertBefore(videoGridEl, whiteboardPanelEl);
+                            container.insertBefore(videoGridEl, document.getElementById('whiteboard-panel'));
                         }
                     });
                     return;
                 } catch (err) {
-                    console.log('Document PiP failed, trying video element PiP:', err);
+                    console.log('Document PiP failed, trying next method:', err);
                 }
             }
 
-            // Fallback: Video Element PiP (Chrome 69+, Safari 13.1+, Firefox 71+)
-            // Shows a floating system-level mini-player — works even across browser tabs
+            // 2. Video Element PiP (Safari 13.1+, Chrome 69+ on desktop)
+            // Shows remote stream in a system-level floating player — works across tabs
             if (document.pictureInPictureEnabled) {
                 const videoEl = document.querySelector('#video-grid .video-stream video');
                 if (videoEl) {
@@ -2137,15 +2189,71 @@
                         await videoEl.requestPictureInPicture();
                         return;
                     } catch (err) {
-                        console.log('Video element PiP failed:', err);
+                        console.log('Video element PiP failed, falling back to overlay:', err);
                     }
-                } else {
-                    showStatus('No video stream found yet. Wait for a participant to join, then try again.', 'error');
-                    return;
                 }
             }
 
-            showStatus('Picture-in-Picture is not supported in your browser. Try Chrome or Safari.', 'error');
+            // 3. In-page draggable floating mini-player (mobile / unsupported browsers)
+            // Works on all browsers — creates a fixed overlay within the page
+            _showPipOverlay();
+        }
+
+        function _showPipOverlay() {
+            const videoGridEl = document.getElementById('video-grid');
+            const overlay = document.createElement('div');
+            overlay.id = 'pip-overlay';
+
+            const header = document.createElement('div');
+            header.id = 'pip-overlay-header';
+            header.innerHTML = '<span><i class="fas fa-video" style="margin-right:5px;color:#20bcba;"></i>Video Call</span><button id="pip-close-btn" title="Restore">&#x26F6;</button>';
+
+            overlay.appendChild(header);
+            overlay.appendChild(videoGridEl);
+            document.body.appendChild(overlay);
+
+            document.getElementById('pip-close-btn').addEventListener('click', _closePipOverlay);
+
+            // Drag support — mouse
+            let isDragging = false, dragStartX, dragStartY, overlayStartX, overlayStartY;
+
+            function _dragStart(clientX, clientY) {
+                isDragging = true;
+                dragStartX = clientX;
+                dragStartY = clientY;
+                const rect = overlay.getBoundingClientRect();
+                overlayStartX = rect.left;
+                overlayStartY = rect.top;
+                overlay.style.right = 'auto';
+                overlay.style.bottom = 'auto';
+                overlay.style.left = rect.left + 'px';
+                overlay.style.top = rect.top + 'px';
+            }
+
+            function _dragMove(clientX, clientY) {
+                if (!isDragging) return;
+                overlay.style.left = (overlayStartX + clientX - dragStartX) + 'px';
+                overlay.style.top  = (overlayStartY + clientY - dragStartY) + 'px';
+            }
+
+            header.addEventListener('mousedown',  e => _dragStart(e.clientX, e.clientY));
+            document.addEventListener('mousemove', e => { if (isDragging) _dragMove(e.clientX, e.clientY); });
+            document.addEventListener('mouseup',   () => { isDragging = false; });
+
+            header.addEventListener('touchstart', e => { e.preventDefault(); _dragStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+            document.addEventListener('touchmove', e => { if (isDragging) { e.preventDefault(); _dragMove(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
+            document.addEventListener('touchend',  () => { isDragging = false; });
+        }
+
+        function _closePipOverlay() {
+            const overlay = document.getElementById('pip-overlay');
+            if (!overlay) return;
+            const videoGridEl = document.getElementById('video-grid');
+            const container = document.getElementById('video-grid-container');
+            if (container && videoGridEl) {
+                container.insertBefore(videoGridEl, document.getElementById('whiteboard-panel'));
+            }
+            overlay.remove();
         }
 
         // Navigation warning: intercept navbar and profile dropdown link clicks during a call
