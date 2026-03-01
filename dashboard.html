@@ -744,6 +744,7 @@
     let spokenLanguages = [];
     let teachingLanguages = [];
     let currentUser = null;
+    let avatarSet = false; // true once a photo is uploaded or already exists
 
     // Availability data
     let weeklyScheduleData = {
@@ -838,6 +839,7 @@
 
           document.getElementById('avatarPreview').src = downloadURL;
           localStorage.setItem('instructor_avatar', downloadURL);
+          avatarSet = true;
           setStatus("Photo uploaded!", false);
         } catch (err) {
           console.error(err);
@@ -953,23 +955,75 @@
         return;
       }
 
+      // ── Required field validation ──────────────────────────────
+      const name = (document.getElementById('name').value || "").trim();
+      const about_me = (document.getElementById('about_me').value || "").trim();
+
+      if (!name) {
+        setStatus('Please enter your full name.', true);
+        document.getElementById('name').focus();
+        return;
+      }
+      if (teachingLanguages.length === 0) {
+        setStatus('Please add at least one language you teach.', true);
+        return;
+      }
+      if (!about_me) {
+        setStatus('Please write a short bio in the About Me section.', true);
+        document.getElementById('about_me').focus();
+        return;
+      }
+      if (!avatarSet) {
+        setStatus('Please upload a profile picture before saving.', true);
+        return;
+      }
+
       const profile = {
-        name: (document.getElementById('name').value || "").trim(),
+        name,
         languages_spoken: spokenLanguages,
         languages_teaching: teachingLanguages,
         price_per_lesson: parseFloat(document.getElementById('price').value) || null,
         currency: document.getElementById('currency').value,
-        about_me: (document.getElementById('about_me').value || "").trim(),
+        about_me,
         native_country: document.getElementById('country').value,
         email: currentUser.email,
         updatedAt: new Date().toISOString()
       };
 
       try {
-        await setDoc(doc(db, 'instructors', currentUser.uid), profile, { merge: true });
+        setStatus("Saving profile...", false);
+
+        // Save profile and availability together so the instructor
+        // doesn't need to click "Save Availability" separately
+        const saves = [
+          setDoc(doc(db, 'instructors', currentUser.uid), profile, { merge: true })
+        ];
+
+        // Only save availability if a timezone has been selected
+        const timezone = document.getElementById('timezone').value;
+        if (timezone) {
+          const weekDays = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+          const weeklySchedule = {};
+          weekDays.forEach(day => {
+            const slots = [];
+            document.querySelectorAll(`#slots-${day} .time-slot`).forEach(slotEl => {
+              const start = slotEl.querySelector('.slot-start').value;
+              const end   = slotEl.querySelector('.slot-end').value;
+              if (start && end && start < end) slots.push({ start, end });
+            });
+            weeklySchedule[day] = slots;
+          });
+
+          saves.push(
+            setDoc(doc(db, 'instructor_availability', currentUser.uid),
+              { timezone, weeklySchedule, updatedAt: new Date().toISOString() },
+              { merge: true })
+          );
+        }
+
+        await Promise.all(saves);
         setStatus("Profile saved successfully!", false);
 
-        // Redirect to instructors page after saving
         setTimeout(() => {
           window.location.href = 'instructors.html';
         }, 1000);
@@ -1010,6 +1064,7 @@
             document.getElementById('avatarPreview').src = data.avatar_url;
             document.getElementById('navProfilePic').src = data.avatar_url;
             localStorage.setItem('instructor_avatar', data.avatar_url);
+            avatarSet = true;
           }
         }
         setStatus("");
