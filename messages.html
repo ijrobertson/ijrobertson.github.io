@@ -1050,8 +1050,8 @@
                 const otherUserId = conversationId.split('_').find(id => id !== currentUser.uid);
                 const channelName = [currentUser.uid, otherUserId].sort().join('-');
 
-                // Redirect to video call page with channel name
-                window.location.href = `video-call.html?channel=${channelName}`;
+                // Open video call page in a new tab so the messages tab stays open
+                window.open(`video-call.html?channel=${channelName}`, '_blank');
             });
 
             // Reset unread count for current user (non-blocking)
