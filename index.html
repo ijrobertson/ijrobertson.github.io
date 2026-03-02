@@ -308,7 +308,7 @@
         .profile-card-image {
             position: relative;
             width: 100%;
-            height: 200px;
+            height: 240px;
             overflow: hidden;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
@@ -316,8 +316,7 @@
         .profile-card-avatar {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            object-position: top center;
+            object-fit: contain;
             display: block;
         }
 
@@ -2289,8 +2288,11 @@
                 </div>
             </div>
             <div class="profile-modal-actions">
-                <button class="btn-profile-modal" onclick="window.location.href='instructors.html'">
-                    <i class="fas fa-search"></i> View All Instructors
+                <button class="btn-profile-modal" id="modalMessageBtn">
+                    <i class="fas fa-envelope"></i> Send Message
+                </button>
+                <button class="btn-profile-modal" id="modalBookBtn">
+                    <i class="fas fa-calendar-check"></i> Book Lesson
                 </button>
                 <button class="btn-profile-modal secondary" id="modalCloseActionBtn">Close</button>
             </div>
@@ -2642,7 +2644,10 @@
         }
 
         // ── Instructor profile modal ──────────────────────────────────────
+        let currentModalInstructor = null;
+
         function openInstructorModal(instructor) {
+            currentModalInstructor = instructor;
             const _csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
             const _cCode = (instructor.currency || 'USD').trim();
             const _cSym = _csMap[_cCode] || '';
@@ -2674,11 +2679,22 @@
             });
             if (!teachingContainer.children.length) teachingContainer.innerHTML = '<p style="color:#999;font-style:italic;">Not specified</p>';
 
+            // Book button: disabled if Stripe not set up
+            const bookBtn = document.getElementById('modalBookBtn');
+            if (instructor.stripeOnboardingComplete === true) {
+                bookBtn.disabled = false;
+                bookBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Lesson';
+            } else {
+                bookBtn.disabled = true;
+                bookBtn.innerHTML = '<i class="fas fa-clock"></i> Payment Setup Pending';
+            }
+
             document.getElementById('instructorProfileModal').classList.add('show');
         }
 
         function closeInstructorModal() {
             document.getElementById('instructorProfileModal').classList.remove('show');
+            currentModalInstructor = null;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -2686,6 +2702,18 @@
             document.getElementById('modalCloseActionBtn').addEventListener('click', closeInstructorModal);
             document.getElementById('instructorProfileModal').addEventListener('click', (e) => {
                 if (e.target === document.getElementById('instructorProfileModal')) closeInstructorModal();
+            });
+            document.getElementById('modalMessageBtn').addEventListener('click', () => {
+                if (currentModalInstructor) {
+                    sessionStorage.setItem('messageRecipientId', currentModalInstructor.id);
+                    window.location.href = 'messages.html';
+                }
+            });
+            document.getElementById('modalBookBtn').addEventListener('click', () => {
+                if (currentModalInstructor) {
+                    sessionStorage.setItem('pendingBookInstructorId', currentModalInstructor.id);
+                    window.location.href = 'instructors.html';
+                }
             });
         });
 

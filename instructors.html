@@ -1042,6 +1042,16 @@
                 });
                 populateLanguageOptions(allInstructors);
                 renderInstructors();
+
+                // Auto-open booking modal if arriving from home page "Book Lesson"
+                const pendingBookId = sessionStorage.getItem('pendingBookInstructorId');
+                if (pendingBookId) {
+                    sessionStorage.removeItem('pendingBookInstructorId');
+                    const target = allInstructors.find(i => i.id === pendingBookId);
+                    if (target) {
+                        setTimeout(() => openBookingModal(target.id, target.name), 400);
+                    }
+                }
             } catch (error) {
                 console.error('Error fetching instructors:', error);
                 instructorGrid.innerHTML = '<div class="loading">Error loading instructors. Please try again later.</div>';
