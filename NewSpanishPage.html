@@ -1203,7 +1203,7 @@
                            <video class="card-video-el" src="${i.intro_video_url}" muted loop playsinline preload="metadata"></video>
                            <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
                            <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
-                           <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-mute"></i></button>
+                           <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
                        </div>`
                     : `<div class="profile-card-image">
                            <img class="profile-card-avatar"
@@ -1251,7 +1251,7 @@
                 muteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     videoEl.muted = !videoEl.muted;
-                    muteBtn.querySelector('i').className = videoEl.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+                    muteBtn.querySelector('i').className = videoEl.muted ? 'fas fa-volume-off' : 'fas fa-volume-up';
                 });
             }
             return card;
@@ -1275,7 +1275,7 @@
                             <button id="videoModalClose" style="background:none;border:none;color:white;font-size:1.6rem;cursor:pointer;line-height:1;">&times;</button>
                         </div>
                         <video id="videoModalPlayer" controls muted playsinline style="width:100%;border-radius:10px;background:#000;max-height:70vh;"></video>
-                        <p style="color:rgba(255,255,255,0.6);font-size:0.78rem;margin-top:0.4rem;"><i class="fas fa-volume-mute"></i> Muted by default — click the speaker to enable audio.</p>
+                        <p style="color:rgba(255,255,255,0.6);font-size:0.78rem;margin-top:0.4rem;"><i class="fas fa-volume-off"></i> Muted by default — click the speaker to enable audio.</p>
                     </div>`;
                 document.body.appendChild(modal);
                 document.getElementById('videoModalClose').addEventListener('click', closeVideoModal);
