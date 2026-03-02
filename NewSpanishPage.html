@@ -254,6 +254,28 @@
         .card-video-container.is-playing:hover .card-play-btn { opacity: 1; pointer-events: all; }
         .card-video-container.is-playing .card-hover-overlay,
         .card-video-container.is-playing:hover .card-hover-overlay { opacity: 0 !important; }
+        .card-mute-btn {
+            position: absolute;
+            bottom: 0.6rem;
+            right: 0.6rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.55);
+            border: 1.5px solid rgba(255,255,255,0.6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.75rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, background 0.2s;
+            z-index: 5;
+        }
+        .card-video-container.is-playing .card-mute-btn { opacity: 1; pointer-events: all; }
+        .card-mute-btn:hover { background: rgba(32,188,186,0.9); }
         .profile-card-body { padding: 1.25rem; }
         .profile-card-name { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: .25rem; }
         .profile-card-country { font-size: .87rem; color: #777; margin-bottom: .6rem; display: flex; align-items: center; gap: .3rem; }
@@ -1181,6 +1203,7 @@
                            <video class="card-video-el" src="${i.intro_video_url}" muted loop playsinline preload="metadata"></video>
                            <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
                            <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+                           <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-mute"></i></button>
                        </div>`
                     : `<div class="profile-card-image">
                            <img class="profile-card-avatar"
@@ -1223,6 +1246,12 @@
                         playBtn.querySelector('i').style.marginLeft = '3px';
                         vidWrap.classList.remove('is-playing');
                     }
+                });
+                const muteBtn = card.querySelector('.card-mute-btn');
+                muteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    videoEl.muted = !videoEl.muted;
+                    muteBtn.querySelector('i').className = videoEl.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
                 });
             }
             return card;
