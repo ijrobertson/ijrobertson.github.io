@@ -2302,6 +2302,10 @@
                 allInstructors = [];
                 querySnapshot.forEach((doc) => {
                     const instructorData = { id: doc.id, ...doc.data() };
+
+                    // Only show approved instructors or legacy profiles without a status field
+                    if (instructorData.status && instructorData.status !== 'approved') return;
+
                     allInstructors.push(instructorData);
 
                     // Collect languages for filters
