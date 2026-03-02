@@ -1180,7 +1180,10 @@
 
             card.innerHTML = cardHTML;
 
-            // Add event listener for view profile button
+            // Clicking anywhere on the card opens the profile modal
+            card.addEventListener('click', () => openProfileModal(instructor));
+
+            // View Profile button does the same (stopPropagation not needed since card handles it too)
             const viewProfileBtn = card.querySelector('.view-profile-btn');
             viewProfileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
