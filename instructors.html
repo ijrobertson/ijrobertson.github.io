@@ -768,6 +768,55 @@
             font-weight: 600;
             margin-top: 0.5rem;
         }
+
+        .instructor-card-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-top: 0.3rem;
+            font-size: 0.85rem;
+        }
+
+        .rating-count {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .review-item {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 0.75rem 0;
+        }
+
+        .review-item:last-child { border-bottom: none; }
+
+        .review-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.3rem;
+        }
+
+        .review-author {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #333;
+        }
+
+        .review-stars { display: flex; align-items: center; gap: 1px; }
+
+        .review-date {
+            font-size: 0.78rem;
+            color: #999;
+            margin-left: auto;
+        }
+
+        .review-text {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #555;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -921,7 +970,7 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, addDoc, query, where, orderBy, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
+        import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
 
         // Stripe publishable key (safe to expose — server-side key stays in Cloud Functions)
         // TODO: Replace with your actual test publishable key from Stripe Dashboard
@@ -1076,6 +1125,19 @@
             });
         }
 
+        function renderStarsHtml(rating) {
+            const r = rating || 0;
+            const full = Math.floor(r);
+            const half = r - full >= 0.5;
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= full) html += '<i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i>';
+                else if (i === full + 1 && half) html += '<i class="fas fa-star-half-alt" style="color:#f5a623;font-size:0.85em;"></i>';
+                else html += '<i class="far fa-star" style="color:#ddd;font-size:0.85em;"></i>';
+            }
+            return html;
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
@@ -1130,6 +1192,10 @@
                     <div class="instructor-card-country">
                         <i class="fas fa-map-marker-alt"></i> ${country}
                     </div>
+                    ${instructor.reviewCount ? `<div class="instructor-card-rating">
+                        ${renderStarsHtml(instructor.averageRating)}
+                        <span class="rating-count">${instructor.averageRating.toFixed(1)} (${instructor.reviewCount})</span>
+                    </div>` : ''}
                 </div>
                 <div class="instructor-card-body">
             `;
@@ -1685,6 +1751,16 @@
             document.getElementById('profileModalName').textContent = name;
             document.getElementById('profileModalPrice').textContent = price ? `${_cCode2} ${_cSym2}${price}/hour` : '';
 
+            // Rating summary
+            const ratingEl = document.getElementById('profileModalRating');
+            if (instructor.reviewCount) {
+                ratingEl.innerHTML = `${renderStarsHtml(instructor.averageRating)}
+                    <span style="margin-left:0.4rem;color:#666;font-size:0.9rem;">${instructor.averageRating.toFixed(1)} &bull; ${instructor.reviewCount} review${instructor.reviewCount !== 1 ? 's' : ''}</span>`;
+                ratingEl.style.display = 'flex';
+            } else {
+                ratingEl.style.display = 'none';
+            }
+
             // Languages spoken
             const spokenContainer = document.getElementById('profileModalSpoken');
             spokenContainer.innerHTML = '';
@@ -1728,8 +1804,49 @@
                 profileBookBtn.title = 'This instructor has not yet connected their payment account';
             }
 
+            // Load reviews asynchronously
+            loadAndDisplayReviews(instructor.id);
+
             // Show modal
             modal.classList.add('show');
+        }
+
+        async function loadAndDisplayReviews(instructorId) {
+            const container = document.getElementById('profileModalReviewsList');
+            container.innerHTML = '<p style="color:#999;font-style:italic;font-size:0.9rem;">Loading reviews…</p>';
+            try {
+                const q = query(
+                    collection(db, 'reviews'),
+                    where('instructorId', '==', instructorId),
+                    orderBy('createdAt', 'desc'),
+                    limit(10)
+                );
+                const snap = await getDocs(q);
+                if (snap.empty) {
+                    container.innerHTML = '<p style="color:#999;font-style:italic;font-size:0.9rem;">No reviews yet. Be the first!</p>';
+                    return;
+                }
+                container.innerHTML = '';
+                snap.docs.forEach(d => {
+                    const rv = d.data();
+                    const date = rv.createdAt?.toDate ? rv.createdAt.toDate() : new Date(rv.createdAt);
+                    const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                    const el = document.createElement('div');
+                    el.className = 'review-item';
+                    el.innerHTML = `
+                        <div class="review-header">
+                            <span class="review-author">${escapeHtml(rv.studentName || 'Student')}</span>
+                            <span class="review-stars">${renderStarsHtml(rv.rating)}</span>
+                            <span class="review-date">${dateStr}</span>
+                        </div>
+                        ${rv.review ? `<p class="review-text">${escapeHtml(rv.review)}</p>` : ''}
+                    `;
+                    container.appendChild(el);
+                });
+            } catch (e) {
+                console.error('Error loading reviews:', e);
+                container.innerHTML = '<p style="color:#999;font-style:italic;font-size:0.9rem;">Could not load reviews.</p>';
+            }
         }
 
         function closeProfileModal() {
@@ -1799,6 +1916,7 @@
                 <img id="profileModalAvatar" class="profile-modal-avatar" src="" alt="Instructor Avatar">
                 <h2 id="profileModalName" class="profile-modal-name">Instructor Name</h2>
                 <div id="profileModalPrice" class="profile-modal-price">$0/hour</div>
+                <div id="profileModalRating" style="display:none;align-items:center;justify-content:center;gap:0.2rem;margin-top:0.4rem;"></div>
             </div>
             <div class="profile-modal-body">
                 <div class="profile-info-section">
@@ -1816,6 +1934,10 @@
                 <div class="profile-info-section">
                     <h4><i class="fas fa-user"></i> About</h4>
                     <p id="profileModalAbout">No bio yet</p>
+                </div>
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-star"></i> Reviews</h4>
+                    <div id="profileModalReviewsList"></div>
                 </div>
             </div>
             <div class="profile-modal-actions">

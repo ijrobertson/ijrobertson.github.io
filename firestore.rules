@@ -149,5 +149,18 @@ service cloud.firestore {
     match /video_calls/{channelName}/presence/{agoraUid} {
       allow read, write: if request.auth != null;
     }
+
+    // Instructor reviews — submitted by students after a lesson
+    match /reviews/{reviewId} {
+      // Anyone can read reviews (they are public on instructor profiles)
+      allow read: if true;
+
+      // Only authenticated users can create a review, and only as themselves
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.studentId;
+
+      // Reviews cannot be edited or deleted
+      allow update, delete: if false;
+    }
   }
 }
