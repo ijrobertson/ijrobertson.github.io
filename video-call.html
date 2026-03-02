@@ -368,16 +368,57 @@
             margin-bottom: 2rem;
         }
 
+        .channel-input-group {
+            display: flex;
+            align-items: stretch;
+            max-width: 340px;
+            position: relative;
+        }
+
         .controls input {
             padding: 0.5rem;
             border: 2px solid #ddd;
-            border-radius: 6px;
+            border-radius: 6px 0 0 6px;
+            border-right: none;
             font-size: 1rem;
-            max-width: 300px;
+            flex: 1;
+            min-width: 0;
         }
 
         .controls input:focus {
             outline: none;
+            border-color: #20bcba;
+        }
+
+        .copy-room-btn {
+            padding: 0 0.75rem;
+            background: white;
+            border: 2px solid #ddd;
+            border-left: none;
+            border-radius: 0 6px 6px 0;
+            cursor: pointer;
+            color: #555;
+            font-size: 1rem;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            gap: 0.4rem;
+        }
+
+        .copy-room-btn:hover {
+            background: #e8f8f7;
+            color: #20bcba;
+            border-color: #20bcba;
+        }
+
+        .copy-room-btn.copied {
+            background: #d1e7dd;
+            color: #198754;
+            border-color: #198754;
+        }
+
+        .controls input:focus + .copy-room-btn {
             border-color: #20bcba;
         }
 
@@ -959,7 +1000,12 @@
             </div>
 
             <div class="controls">
-                <input type="text" id="channelName" placeholder="Enter channel name (e.g., spanish-practice)" value="">
+                <div class="channel-input-group">
+                    <input type="text" id="channelName" placeholder="Enter channel name (e.g., spanish-practice)" value="">
+                    <button id="copyRoomBtn" class="copy-room-btn" title="Copy room code">
+                        <i class="fas fa-clipboard"></i>
+                    </button>
+                </div>
                 <button id="joinBtn" class="btn-video btn-join">Join Call</button>
                 <button id="leaveBtn" class="btn-video btn-leave">Leave Call</button>
                 <button id="whiteboardBtn" class="btn-video btn-whiteboard">
@@ -1211,6 +1257,27 @@
         const profileNavWrapper = document.getElementById('profileNavWrapper');
         const signInWrapper = document.getElementById('signInWrapper');
         const logoutLink = document.getElementById('logoutLink');
+
+        // ── Copy room code button ─────────────────────────────────────────
+        document.getElementById('copyRoomBtn').addEventListener('click', () => {
+            const code = document.getElementById('channelName').value.trim();
+            if (!code) {
+                showStatus('Enter a room code first, then copy it.', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.getElementById('copyRoomBtn');
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                showStatus('Room code copied to clipboard!', 'info');
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i class="fas fa-clipboard"></i>';
+                }, 2500);
+            }).catch(() => {
+                showStatus('Could not copy — please copy the room code manually.', 'error');
+            });
+        });
 
         // Immediately restore cached avatar so photo appears before Firestore loads
         const _cachedAvatar = localStorage.getItem('nav_avatar') || localStorage.getItem('instructor_avatar');
