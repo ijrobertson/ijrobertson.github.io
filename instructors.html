@@ -786,6 +786,46 @@
             display: block;
         }
 
+        .card-play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 52px;
+            height: 52px;
+            background: rgba(20, 20, 20, 0.55);
+            border: 3px solid rgba(255,255,255,0.85);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s, background 0.2s;
+            z-index: 4;
+            color: white;
+            font-size: 1.1rem;
+            backdrop-filter: blur(2px);
+            pointer-events: all;
+        }
+        .card-play-btn i { margin-left: 3px; }
+        .card-play-btn:hover {
+            background: rgba(32, 188, 186, 0.9);
+            border-color: white;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .card-video-container.is-playing .card-play-btn {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .card-video-container.is-playing:hover .card-play-btn {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .card-video-container.is-playing .card-hover-overlay,
+        .card-video-container.is-playing:hover .card-hover-overlay {
+            opacity: 0 !important;
+        }
+
         /* ── Video badge & hover overlay ── */
         .instructor-card-header { position: relative; }
 
@@ -1036,16 +1076,6 @@
         // TODO: Replace with your actual test publishable key from Stripe Dashboard
         const STRIPE_PUBLISHABLE_KEY = 'pk_test_51ReiozR5K3FFiwajzKtaXzCvx6BSBd52dRml2Z2kirtYBGyXOfONEZUFciFSOYi65xs99HvhgckNhG1i40hRicGJ001aPvyoDs';
 
-        // Play card videos only when they scroll into view
-        const _cardVideoObserver = ('IntersectionObserver' in window)
-            ? new IntersectionObserver((entries) => {
-                entries.forEach(e => {
-                    if (e.isIntersecting) e.target.play().catch(() => {});
-                    else { e.target.pause(); e.target.currentTime = 0; }
-                });
-              }, { threshold: 0.2 })
-            : null;
-
         const instructorGrid = document.getElementById('instructorGrid');
         const languageFilter = document.getElementById('languageFilter');
         const priceFilter = document.getElementById('priceFilter');
@@ -1259,6 +1289,7 @@
                 ? `<div class="card-video-container">
                        <video class="card-video-el" src="${escapeHtml(instructor.intro_video_url)}" muted loop playsinline preload="metadata"></video>
                        <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+                       <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
                    </div>
                    <div class="instructor-card-header" style="padding-top:1rem;">
                        <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
@@ -1346,9 +1377,29 @@
                 window.open(`instructor-profile.html?id=${instructor.id}`, '_blank');
             });
 
-            // Observe video for auto-play when visible
-            if (hasVideo && _cardVideoObserver) {
-                _cardVideoObserver.observe(card.querySelector('.card-video-el'));
+            if (hasVideo) {
+                const videoEl  = card.querySelector('.card-video-el');
+                const playBtn  = card.querySelector('.card-play-btn');
+                const vidWrap  = card.querySelector('.card-video-container');
+                videoEl.addEventListener('loadedmetadata', () => {
+                    if (videoEl.videoHeight > videoEl.videoWidth) {
+                        videoEl.style.objectFit = 'cover';
+                    }
+                });
+                playBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (videoEl.paused) {
+                        videoEl.play().catch(() => {});
+                        playBtn.querySelector('i').className = 'fas fa-pause';
+                        playBtn.querySelector('i').style.marginLeft = '0';
+                        vidWrap.classList.add('is-playing');
+                    } else {
+                        videoEl.pause();
+                        playBtn.querySelector('i').className = 'fas fa-play';
+                        playBtn.querySelector('i').style.marginLeft = '3px';
+                        vidWrap.classList.remove('is-playing');
+                    }
+                });
             }
 
             return card;

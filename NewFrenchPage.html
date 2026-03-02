@@ -230,6 +230,28 @@
         .profile-card-avatar { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
         .card-video-container { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #111; flex-shrink: 0; }
         .card-video-el { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .card-play-btn {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 52px; height: 52px;
+            background: rgba(20, 20, 20, 0.55);
+            border: 3px solid rgba(255,255,255,0.85);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s, background 0.2s;
+            z-index: 4; color: white; font-size: 1.1rem;
+            backdrop-filter: blur(2px); pointer-events: all;
+        }
+        .card-play-btn i { margin-left: 3px; }
+        .card-play-btn:hover {
+            background: rgba(32, 188, 186, 0.9); border-color: white;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .card-video-container.is-playing .card-play-btn { opacity: 0; pointer-events: none; }
+        .card-video-container.is-playing:hover .card-play-btn { opacity: 1; pointer-events: all; }
+        .card-video-container.is-playing .card-hover-overlay,
+        .card-video-container.is-playing:hover .card-hover-overlay { opacity: 0 !important; }
         .profile-card-body { padding: 1.25rem; }
         .profile-card-name { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: .25rem; }
         .profile-card-country { font-size: .87rem; color: #777; margin-bottom: .6rem; display: flex; align-items: center; gap: .3rem; }
@@ -1007,16 +1029,6 @@
         } from './lib/firebaseClient.js';
 
         /* ── Default avatar SVG ─────────────────────────────── */
-        // Play card videos only when they scroll into view
-        const _cardVideoObserver = ('IntersectionObserver' in window)
-            ? new IntersectionObserver((entries) => {
-                entries.forEach(e => {
-                    if (e.isIntersecting) e.target.play().catch(() => {});
-                    else { e.target.pause(); e.target.currentTime = 0; }
-                });
-              }, { threshold: 0.2 })
-            : null;
-
         const AVT = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e8f8f7'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2320bcba'/%3E%3Cellipse cx='50' cy='85' rx='28' ry='22' fill='%2320bcba'/%3E%3C/svg%3E";
 
         /* ── Auth State ─────────────────────────────────────── */
@@ -1166,6 +1178,7 @@
                     ? `<div class="card-video-container">
                            <video class="card-video-el" src="${i.intro_video_url}" muted loop playsinline preload="metadata"></video>
                            <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
+                           <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
                        </div>`
                     : `<div class="profile-card-image">
                            <img class="profile-card-avatar"
@@ -1186,9 +1199,29 @@
             card.addEventListener('click', () => {
                 window.open(`instructor-profile.html?id=${i.id}`, '_blank');
             });
-            // Observe video for auto-play when visible
-            if (hasVideo && _cardVideoObserver) {
-                _cardVideoObserver.observe(card.querySelector('.card-video-el'));
+            if (hasVideo) {
+                const videoEl = card.querySelector('.card-video-el');
+                const playBtn = card.querySelector('.card-play-btn');
+                const vidWrap = card.querySelector('.card-video-container');
+                videoEl.addEventListener('loadedmetadata', () => {
+                    if (videoEl.videoHeight > videoEl.videoWidth) {
+                        videoEl.style.objectFit = 'cover';
+                    }
+                });
+                playBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (videoEl.paused) {
+                        videoEl.play().catch(() => {});
+                        playBtn.querySelector('i').className = 'fas fa-pause';
+                        playBtn.querySelector('i').style.marginLeft = '0';
+                        vidWrap.classList.add('is-playing');
+                    } else {
+                        videoEl.pause();
+                        playBtn.querySelector('i').className = 'fas fa-play';
+                        playBtn.querySelector('i').style.marginLeft = '3px';
+                        vidWrap.classList.remove('is-playing');
+                    }
+                });
             }
             return card;
         }
