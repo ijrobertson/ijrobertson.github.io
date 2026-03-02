@@ -53,8 +53,8 @@
             background: linear-gradient(135deg, #113448 0%, #1a5f7a 100%);
             color: white; padding: 2rem 0 1.5rem;
         }
-        .admin-header h1 { font-size: 1.8rem; font-weight: 700; margin: 0; }
-        .admin-header p { opacity: 0.8; margin: 0.25rem 0 0; font-size: 0.95rem; }
+        .admin-header h1 { font-size: 1.8rem; font-weight: 700; margin: 0; color: white; }
+        .admin-header p { color: white; margin: 0.25rem 0 0; font-size: 0.95rem; }
         .admin-badge {
             background: #20bcba; color: white; font-size: 0.7rem;
             padding: 2px 8px; border-radius: 12px; font-weight: 700;
@@ -386,6 +386,7 @@
                     <div class="admin-tab active" data-tab="applications">
                         Applications <span class="tab-badge warning" id="appsBadge" style="display:none;">0</span>
                     </div>
+                    <div class="admin-tab" data-tab="instructors">Active Instructors</div>
                     <div class="admin-tab" data-tab="flagged">
                         Flagged Users <span class="tab-badge" id="flagBadge" style="display:none;">0</span>
                     </div>
@@ -429,6 +430,35 @@
                                 </thead>
                                 <tbody id="applicationsBody">
                                     <tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Active Instructors Tab ─────────────────────────── -->
+                <div class="tab-pane" id="tab-instructors">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-chalkboard-teacher" style="color:#20bcba;margin-right:8px;"></i>Active Instructors</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;" onclick="loadActiveInstructors()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Instructor</th>
+                                        <th>Languages</th>
+                                        <th>Rate</th>
+                                        <th>Joined</th>
+                                        <th>Details</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activeInstructorsBody">
+                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -798,11 +828,12 @@
                 document.getElementById('tab-' + name).classList.add('active');
                 if (!tabsLoaded[name]) {
                     tabsLoaded[name] = true;
-                    if (name === 'flagged')   loadFlagged();
-                    if (name === 'users')     loadUsers();
-                    if (name === 'bookings')  loadBookings();
-                    if (name === 'messages')  loadMessages();
-                    if (name === 'overview')  loadOverview();
+                    if (name === 'instructors') loadActiveInstructors();
+                    if (name === 'flagged')     loadFlagged();
+                    if (name === 'users')       loadUsers();
+                    if (name === 'bookings')    loadBookings();
+                    if (name === 'messages')    loadMessages();
+                    if (name === 'overview')    loadOverview();
                 }
             });
         });
@@ -862,41 +893,42 @@
         }
         window.loadStats = loadStats;
 
-        // ── Applications ─────────────────────────────────────────────────
+        // ── Helper: render display name ───────────────────────────────────
+        function displayName(i) {
+            return i.name || i.email || i.id;
+        }
+
+        // ── Applications (pending / declined only) ────────────────────────
         async function loadApplications() {
             const tbody = document.getElementById('applicationsBody');
             tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
             try {
                 const snap = await getDocs(collection(db, 'instructors'));
                 const all  = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                // Sort: pending first, then approved, then declined
-                all.sort((a, b) => {
-                    const order = { pending: 0, approved: 1, declined: 2 };
-                    return (order[a.status] ?? 0) - (order[b.status] ?? 0);
-                });
+                // Only pending and declined; sort pending first
+                const apps = all
+                    .filter(i => i.status === 'pending' || i.status === 'declined')
+                    .sort((a, b) => (a.status === 'pending' ? -1 : 1));
 
-                if (all.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-inbox"></i>No instructor profiles yet.</div></td></tr>';
+                if (apps.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-inbox"></i>No pending or declined applications.</div></td></tr>';
                     return;
                 }
 
-                tbody.innerHTML = all.map(i => {
-                    const status   = i.status || 'approved';
-                    const badgeCls = status === 'approved' ? 'badge-approved' : status === 'declined' ? 'badge-declined' : 'badge-pending';
+                tbody.innerHTML = apps.map(i => {
+                    const status   = i.status;
+                    const badgeCls = status === 'declined' ? 'badge-declined' : 'badge-pending';
                     const langs    = (i.languages_teaching || []).join(', ') || '—';
                     const price    = i.price_per_lesson ? `${i.price_per_lesson} ${i.currency || 'USD'}` : '—';
-                    const joined   = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : 'Legacy';
+                    const joined   = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : '—';
                     const avatar   = i.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
                     const actions  = status === 'pending'
-                        ? `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(i.name || '')}')">Approve</button>
-                           <button class="btn-decline ml-1" onclick="doDecline('${i.id}','${escHtml(i.name || '')}')">Decline</button>`
-                        : status === 'approved'
-                        ? `<button class="btn-decline" onclick="doDecline('${i.id}','${escHtml(i.name || '')}')">Revoke</button>`
-                        : `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(i.name || '')}')">Re-approve</button>`;
-                    // Encode data for the detail modal
+                        ? `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(displayName(i))}')">Approve</button>
+                           <button class="btn-decline ml-1" onclick="doDecline('${i.id}','${escHtml(displayName(i))}')">Decline</button>`
+                        : `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(displayName(i))}')">Re-approve</button>`;
                     const dataJson = escHtml(JSON.stringify(i));
                     return `<tr>
-                        <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(i.name || 'Unknown')}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
+                        <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(displayName(i))}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
                         <td>${escHtml(langs)}</td>
                         <td>${escHtml(price)}</td>
                         <td>${escHtml(joined)}</td>
@@ -910,6 +942,43 @@
             }
         }
         window.loadApplications = loadApplications;
+
+        // ── Active Instructors (approved / legacy) ────────────────────────
+        async function loadActiveInstructors() {
+            const tbody = document.getElementById('activeInstructorsBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, 'instructors'));
+                const active = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(i => !i.status || i.status === 'approved')
+                    .sort((a, b) => (a.name || a.email || '').localeCompare(b.name || b.email || ''));
+
+                if (active.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i>No active instructors yet.</div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = active.map(i => {
+                    const langs  = (i.languages_teaching || []).join(', ') || '—';
+                    const price  = i.price_per_lesson ? `${i.price_per_lesson} ${i.currency || 'USD'}` : '—';
+                    const joined = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : 'Legacy';
+                    const avatar = i.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+                    const dataJson = escHtml(JSON.stringify(i));
+                    return `<tr>
+                        <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(displayName(i))}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
+                        <td>${escHtml(langs)}</td>
+                        <td>${escHtml(price)}</td>
+                        <td>${escHtml(joined)}</td>
+                        <td><button class="btn-detail-view" onclick="openAppDetail(this)" data-instructor="${dataJson}">View Details</button></td>
+                        <td><button class="btn-decline" onclick="doDecline('${i.id}','${escHtml(displayName(i))}')">Revoke</button></td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadActiveInstructors = loadActiveInstructors;
 
         // ── Application Detail Modal ──────────────────────────────────────
         window.openAppDetail = function(btn) {
@@ -945,8 +1014,8 @@
             // Wire approve/decline buttons
             const approveBtn = document.getElementById('adApproveBtn');
             const declineBtn = document.getElementById('adDeclineBtn');
-            approveBtn.onclick = () => { closeAppDetail(); doApprove(i.id, i.name || ''); };
-            declineBtn.onclick = () => { closeAppDetail(); doDecline(i.id, i.name || ''); };
+            approveBtn.onclick = () => { closeAppDetail(); doApprove(i.id, displayName(i)); };
+            declineBtn.onclick = () => { closeAppDetail(); doDecline(i.id, displayName(i)); };
 
             // Show/hide action buttons based on status
             approveBtn.style.display = (status === 'approved') ? 'none' : 'inline-block';
@@ -1024,7 +1093,7 @@
                     const flaggedAt = u.flaggedAt?.toDate ? u.flaggedAt.toDate().toLocaleDateString() : '—';
                     const type      = u.userCollection === 'instructors' ? 'Instructor' : 'Student';
                     return `<tr>
-                        <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(u.name || 'Unknown')}</td>
+                        <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(u.name || u.email || u.id)}</td>
                         <td>${type}</td>
                         <td>${escHtml(u.email || '—')}</td>
                         <td>${escHtml(flaggedAt)}</td>
@@ -1079,7 +1148,7 @@
                 const joined   = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
                 const flagIcon = u.flagged ? '🚩 ' : '';
                 return `<tr>
-                    <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${flagIcon}${escHtml(u.name || 'Unknown')}</td>
+                    <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${flagIcon}${escHtml(u.name || u.email || u.id)}</td>
                     <td>${escHtml(u.email || '—')}</td>
                     <td>${escHtml(learning)}</td>
                     <td>${escHtml(joined)}</td>
@@ -1265,7 +1334,7 @@
                     signupsTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:1.5rem;">No signup timestamps recorded yet.</td></tr>';
                 } else {
                     signupsTbody.innerHTML = recent.map(u => `<tr>
-                        <td>${escHtml(u.name || 'Unknown')}</td>
+                        <td>${escHtml(u.name || u.email || u.id)}</td>
                         <td>${escHtml(u.email || '—')}</td>
                         <td>${escHtml((u.languages_learning || []).join(', ') || '—')}</td>
                         <td>${new Date(u.createdAt).toLocaleDateString()}</td>
