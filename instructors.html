@@ -769,6 +769,23 @@
             margin-top: 0.5rem;
         }
 
+        /* ── Card video panel ── */
+        .card-video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #111;
+            flex-shrink: 0;
+        }
+
+        .card-video-el {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
         /* ── Video badge & hover overlay ── */
         .instructor-card-header { position: relative; }
 
@@ -1019,6 +1036,16 @@
         // TODO: Replace with your actual test publishable key from Stripe Dashboard
         const STRIPE_PUBLISHABLE_KEY = 'pk_test_51ReiozR5K3FFiwajzKtaXzCvx6BSBd52dRml2Z2kirtYBGyXOfONEZUFciFSOYi65xs99HvhgckNhG1i40hRicGJ001aPvyoDs';
 
+        // Play card videos only when they scroll into view
+        const _cardVideoObserver = ('IntersectionObserver' in window)
+            ? new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) e.target.play().catch(() => {});
+                    else { e.target.pause(); e.target.currentTime = 0; }
+                });
+              }, { threshold: 0.2 })
+            : null;
+
         const instructorGrid = document.getElementById('instructorGrid');
         const languageFilter = document.getElementById('languageFilter');
         const priceFilter = document.getElementById('priceFilter');
@@ -1228,23 +1255,38 @@
             const card = document.createElement('div');
             card.className = 'instructor-card';
 
-            let cardHTML = `
-                <div class="instructor-card-header">
-                    <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
-                    <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
-                    ${hasVideo ? `<button class="card-video-badge" title="Watch intro video"><i class="fas fa-play"></i> Intro</button>` : ''}
-                    <div class="instructor-card-name">${name}</div>
-                    ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
-                    <div class="instructor-card-country">
-                        <i class="fas fa-map-marker-alt"></i> ${country}
-                    </div>
-                    ${instructor.reviewCount ? `<div class="instructor-card-rating">
-                        ${renderStarsHtml(instructor.averageRating)}
-                        <span class="rating-count">${instructor.averageRating.toFixed(1)} (${instructor.reviewCount})</span>
-                    </div>` : ''}
-                </div>
-                <div class="instructor-card-body">
-            `;
+            let cardHTML = hasVideo
+                ? `<div class="card-video-container">
+                       <video class="card-video-el" src="${escapeHtml(instructor.intro_video_url)}" muted loop playsinline preload="metadata"></video>
+                       <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+                   </div>
+                   <div class="instructor-card-header" style="padding-top:1rem;">
+                       <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
+                       <div class="instructor-card-name">${name}</div>
+                       ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
+                       <div class="instructor-card-country">
+                           <i class="fas fa-map-marker-alt"></i> ${country}
+                       </div>
+                       ${instructor.reviewCount ? `<div class="instructor-card-rating">
+                           ${renderStarsHtml(instructor.averageRating)}
+                           <span class="rating-count">${instructor.averageRating.toFixed(1)} (${instructor.reviewCount})</span>
+                       </div>` : ''}
+                   </div>
+                   <div class="instructor-card-body">`
+                : `<div class="instructor-card-header">
+                       <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+                       <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
+                       <div class="instructor-card-name">${name}</div>
+                       ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
+                       <div class="instructor-card-country">
+                           <i class="fas fa-map-marker-alt"></i> ${country}
+                       </div>
+                       ${instructor.reviewCount ? `<div class="instructor-card-rating">
+                           ${renderStarsHtml(instructor.averageRating)}
+                           <span class="rating-count">${instructor.averageRating.toFixed(1)} (${instructor.reviewCount})</span>
+                       </div>` : ''}
+                   </div>
+                   <div class="instructor-card-body">`;
 
             if (teaching.length > 0) {
                 cardHTML += `
@@ -1304,12 +1346,9 @@
                 window.open(`instructor-profile.html?id=${instructor.id}`, '_blank');
             });
 
-            // Video badge — play video modal, don't navigate
-            if (hasVideo) {
-                card.querySelector('.card-video-badge').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openVideoModal(instructor.intro_video_url, instructor.name);
-                });
+            // Observe video for auto-play when visible
+            if (hasVideo && _cardVideoObserver) {
+                _cardVideoObserver.observe(card.querySelector('.card-video-el'));
             }
 
             return card;

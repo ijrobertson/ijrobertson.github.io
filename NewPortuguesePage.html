@@ -228,6 +228,8 @@
         }
         .profile-card:hover .card-hover-overlay { opacity: 1; }
         .profile-card-avatar { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+        .card-video-container { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #111; flex-shrink: 0; }
+        .card-video-el { width: 100%; height: 100%; object-fit: contain; display: block; }
         .profile-card-body { padding: 1.25rem; }
         .profile-card-name { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: .25rem; }
         .profile-card-country { font-size: .87rem; color: #777; margin-bottom: .6rem; display: flex; align-items: center; gap: .3rem; }
@@ -1004,6 +1006,16 @@
         } from './lib/firebaseClient.js';
 
         /* ── Default avatar SVG ─────────────────────────────── */
+        // Play card videos only when they scroll into view
+        const _cardVideoObserver = ('IntersectionObserver' in window)
+            ? new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) e.target.play().catch(() => {});
+                    else { e.target.pause(); e.target.currentTime = 0; }
+                });
+              }, { threshold: 0.2 })
+            : null;
+
         const AVT = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e8f8f7'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2320bcba'/%3E%3Cellipse cx='50' cy='85' rx='28' ry='22' fill='%2320bcba'/%3E%3C/svg%3E";
 
         /* ── Auth State ─────────────────────────────────────── */
@@ -1149,14 +1161,19 @@
 
             const hasVideo = !!i.intro_video_url;
             card.innerHTML = `
-                <div class="profile-card-image">
-                    <img class="profile-card-avatar"
-                         src="${i.avatar_url || AVT}"
-                         alt="${i.name || 'Instructor'}"
-                         onerror="this.src='${AVT}'">
-                    <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
-                    ${hasVideo ? `<button class="card-video-badge" title="Watch intro video"><i class="fas fa-play"></i> Intro</button>` : ''}
-                </div>
+                ${hasVideo
+                    ? `<div class="card-video-container">
+                           <video class="card-video-el" src="${i.intro_video_url}" muted loop playsinline preload="metadata"></video>
+                           <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
+                       </div>`
+                    : `<div class="profile-card-image">
+                           <img class="profile-card-avatar"
+                                src="${i.avatar_url || AVT}"
+                                alt="${i.name || 'Instructor'}"
+                                onerror="this.src='${AVT}'">
+                           <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
+                       </div>`
+                }
                 <div class="profile-card-body">
                     <div class="profile-card-name">${i.name || 'Portuguese Instructor'}</div>
                     ${countryHtml}
@@ -1168,12 +1185,9 @@
             card.addEventListener('click', () => {
                 window.open(`instructor-profile.html?id=${i.id}`, '_blank');
             });
-            // Video badge → play modal
-            if (hasVideo) {
-                card.querySelector('.card-video-badge').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openVideoModal(i.intro_video_url, i.name);
-                });
+            // Observe video for auto-play when visible
+            if (hasVideo && _cardVideoObserver) {
+                _cardVideoObserver.observe(card.querySelector('.card-video-el'));
             }
             return card;
         }
