@@ -550,6 +550,46 @@
                 border-radius: 20px;
             }
         }
+
+        .video-call-request-card {
+            background: linear-gradient(135deg, #e8f9f9, #d0f2f1);
+            border: 1px solid #20bcba;
+            border-radius: 12px;
+            padding: 0.9rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.4rem;
+            min-width: 200px;
+        }
+
+        .sent .video-call-request-card {
+            background: linear-gradient(135deg, #d0f2f1, #b8eded);
+        }
+
+        .video-call-request-icon {
+            font-size: 1.4rem;
+            color: #20bcba;
+        }
+
+        .join-call-btn {
+            display: inline-block;
+            padding: 0.35rem 1rem;
+            background: #20bcba;
+            color: white !important;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: background 0.2s;
+            margin-top: 0.2rem;
+        }
+
+        .join-call-btn:hover {
+            background: #1a9d9b;
+            text-decoration: none;
+            color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -717,6 +757,7 @@
         if (_cachedAvatar && navProfilePic) navProfilePic.src = _cachedAvatar;
 
         let currentUser = null;
+        let currentUserName = '';
         let activeConversationId = null;
         let unsubscribeMessages = null;
 
@@ -735,9 +776,14 @@
                     const isInstructor = instructorsSnap.exists();
                     const userData = isInstructor ? instructorsSnap.data()
                                    : usersSnap.exists() ? usersSnap.data() : null;
-                    if (userData && userData.avatar_url) {
-                        navProfilePic.src = userData.avatar_url;
-                        localStorage.setItem('nav_avatar', userData.avatar_url);
+                    if (userData) {
+                        currentUserName = userData.name || user.displayName || 'Someone';
+                        if (userData.avatar_url) {
+                            navProfilePic.src = userData.avatar_url;
+                            localStorage.setItem('nav_avatar', userData.avatar_url);
+                        }
+                    } else {
+                        currentUserName = user.displayName || 'Someone';
                     }
                     // Point "My Profile" to the right dashboard
                     const myProfileLink = document.getElementById('myProfileLink');
@@ -1045,10 +1091,41 @@
             });
 
             // Setup video call button
-            document.getElementById('videoCallBtn').addEventListener('click', () => {
+            document.getElementById('videoCallBtn').addEventListener('click', async () => {
                 // Create unique channel name based on user IDs
                 const otherUserId = conversationId.split('_').find(id => id !== currentUser.uid);
                 const channelName = [currentUser.uid, otherUserId].sort().join('-');
+
+                // Send a video call request message so the other user is notified
+                try {
+                    const convDoc = await getDoc(doc(db, 'conversations', conversationId));
+                    const convData = convDoc.data();
+                    const participants = convData.participants || [];
+                    const otherParticipants = participants.filter(id => id !== currentUser.uid);
+                    const callText = `${currentUserName} wants to start a video call!`;
+
+                    await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
+                        senderId: currentUser.uid,
+                        text: callText,
+                        type: 'video_call_request',
+                        channelName: channelName,
+                        timestamp: new Date(),
+                        read: false
+                    });
+
+                    const newUnreadCount = convData.unreadCount || {};
+                    otherParticipants.forEach(participantId => {
+                        newUnreadCount[participantId] = (newUnreadCount[participantId] || 0) + 1;
+                    });
+
+                    await setDoc(doc(db, 'conversations', conversationId), {
+                        lastMessage: callText,
+                        lastMessageTime: new Date(),
+                        unreadCount: newUnreadCount
+                    }, { merge: true });
+                } catch (error) {
+                    console.error('Error sending video call request:', error);
+                }
 
                 // Open video call page in a new tab so the messages tab stays open
                 window.open(`video-call.html?channel=${channelName}`, '_blank');
@@ -1133,13 +1210,27 @@
 
                         const messageEl = document.createElement('div');
                         messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
-                        messageEl.innerHTML = `
-                            <img class="message-avatar" src="${senderAvatar}" alt="Avatar">
-                            <div class="message-content">
-                                <p class="message-text">${escapeHtml(message.text)}</p>
-                                <div class="message-time">${formatTime(message.timestamp)}</div>
-                            </div>
-                        `;
+
+                        if (message.type === 'video_call_request') {
+                            const safeChannel = escapeHtml(message.channelName || '');
+                            messageEl.innerHTML = `
+                                <img class="message-avatar" src="${senderAvatar}" alt="Avatar">
+                                <div class="message-content video-call-request-card">
+                                    <div class="video-call-request-icon"><i class="fas fa-video"></i></div>
+                                    <p class="message-text" style="margin:0;">${escapeHtml(message.text)}</p>
+                                    <a href="video-call.html?channel=${safeChannel}" target="_blank" class="join-call-btn">Join Now</a>
+                                    <div class="message-time">${formatTime(message.timestamp)}</div>
+                                </div>
+                            `;
+                        } else {
+                            messageEl.innerHTML = `
+                                <img class="message-avatar" src="${senderAvatar}" alt="Avatar">
+                                <div class="message-content">
+                                    <p class="message-text">${escapeHtml(message.text)}</p>
+                                    <div class="message-time">${formatTime(message.timestamp)}</div>
+                                </div>
+                            `;
+                        }
                         fragment.appendChild(messageEl);
                     });
 
