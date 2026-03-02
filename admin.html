@@ -282,7 +282,12 @@
         <i class="fas fa-lock fa-3x" style="color:#dc3545;"></i>
         <h3 style="margin-top:1rem;color:#113448;">Access Denied</h3>
         <p style="color:#666;">You do not have admin access to this page.</p>
-        <a href="index.html" class="btn-solid-reg" style="display:inline-block;margin-top:1rem;">Back to Home</a>
+        <p id="accessDeniedEmail" style="color:#999;font-size:0.85rem;margin-top:0.5rem;"></p>
+        <p id="accessDeniedError" style="color:#dc3545;font-size:0.8rem;margin-top:0.25rem;display:none;"></p>
+        <div style="margin-top:1.25rem;display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+            <a href="index.html" class="btn-solid-reg">Back to Home</a>
+            <button id="accessDeniedSignOut" class="btn-outline-reg" style="cursor:pointer;">Sign Out &amp; Try Again</button>
+        </div>
     </div>
 
     <!-- Admin Content (shown only after auth check passes) -->
@@ -615,10 +620,28 @@
             }
 
             // Check admin document
-            const adminSnap = await getDoc(doc(db, 'admins', user.uid));
-            if (!adminSnap.exists()) {
+            let isAdmin = false;
+            try {
+                const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+                isAdmin = adminSnap.exists();
+            } catch (err) {
+                console.error('Admin check error:', err.code, err.message);
+                // Show the error detail on the page
+                const errEl = document.getElementById('accessDeniedError');
+                if (errEl) { errEl.textContent = `Error: ${err.code || err.message}`; errEl.style.display = 'block'; }
+            }
+
+            if (!isAdmin) {
                 loadingScreen.style.display = 'none';
                 accessDenied.style.display  = 'block';
+                // Show which account is logged in
+                const emailEl = document.getElementById('accessDeniedEmail');
+                if (emailEl) emailEl.textContent = `Logged in as: ${user.email} (UID: ${user.uid})`;
+                // Sign out button
+                document.getElementById('accessDeniedSignOut').addEventListener('click', async () => {
+                    await signOut(auth);
+                    window.location.href = 'login.html';
+                });
                 return;
             }
 
