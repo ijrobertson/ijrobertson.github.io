@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Admin Dashboard - Lingua Bud</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        body { background: #f0f2f5; padding-top: 4.5rem; }
+
+        /* Navbar */
+        .navbar-custom { background-color: #113448 !important; }
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px; border-radius: 50%;
+            cursor: pointer; object-fit: cover;
+            border: 2px solid #20bcba; transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed; right: 1rem; top: 60px;
+            background: white; min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 8px;
+            z-index: 9999; opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px; text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content { opacity: 1; visibility: visible; transform: translateY(0); }
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* Page header */
+        .admin-header {
+            background: linear-gradient(135deg, #113448 0%, #1a5f7a 100%);
+            color: white; padding: 2rem 0 1.5rem;
+        }
+        .admin-header h1 { font-size: 1.8rem; font-weight: 700; margin: 0; }
+        .admin-header p { opacity: 0.8; margin: 0.25rem 0 0; font-size: 0.95rem; }
+        .admin-badge {
+            background: #20bcba; color: white; font-size: 0.7rem;
+            padding: 2px 8px; border-radius: 12px; font-weight: 700;
+            vertical-align: middle; margin-left: 8px;
+        }
+
+        /* Stats row */
+        .stats-row { background: white; border-bottom: 1px solid #dee2e6; padding: 1.25rem 0; }
+        .stat-card {
+            text-align: center; padding: 0.5rem 1rem;
+            border-right: 1px solid #dee2e6;
+        }
+        .stat-card:last-child { border-right: none; }
+        .stat-number { font-size: 1.8rem; font-weight: 700; color: #113448; line-height: 1; }
+        .stat-label { font-size: 0.78rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+        .stat-number.teal { color: #20bcba; }
+        .stat-number.warning { color: #e6a817; }
+        .stat-number.danger { color: #dc3545; }
+
+        /* Tabs */
+        .admin-tabs-wrapper { background: white; border-bottom: 2px solid #dee2e6; }
+        .admin-tabs { display: flex; overflow-x: auto; padding: 0 1rem; }
+        .admin-tab {
+            padding: 1rem 1.25rem; cursor: pointer; font-weight: 600;
+            font-size: 0.875rem; color: #666; border-bottom: 3px solid transparent;
+            white-space: nowrap; transition: all 0.2s; user-select: none;
+        }
+        .admin-tab:hover { color: #20bcba; }
+        .admin-tab.active { color: #20bcba; border-bottom-color: #20bcba; }
+        .tab-badge {
+            display: inline-block; background: #dc3545; color: white;
+            border-radius: 10px; font-size: 0.7rem; font-weight: 700;
+            padding: 1px 6px; margin-left: 6px; min-width: 18px; text-align: center;
+        }
+        .tab-badge.warning { background: #e6a817; }
+        .tab-badge.info { background: #17a2b8; }
+
+        /* Content area */
+        .admin-content { padding: 1.5rem 0; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* Cards */
+        .admin-card {
+            background: white; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden;
+        }
+        .admin-card-header {
+            padding: 1rem 1.25rem; border-bottom: 1px solid #f0f0f0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .admin-card-header h5 { font-weight: 700; color: #113448; margin: 0; font-size: 1rem; }
+        .admin-card-body { padding: 1.25rem; }
+
+        /* Tables */
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .admin-table th {
+            background: #f8f9fa; padding: 10px 14px;
+            font-weight: 600; color: #555; text-transform: uppercase;
+            font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;
+            text-align: left;
+        }
+        .admin-table td {
+            padding: 12px 14px; border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle; color: #333;
+        }
+        .admin-table tr:last-child td { border-bottom: none; }
+        .admin-table tr:hover td { background: #f9fffe; }
+
+        /* User avatar in table */
+        .table-avatar {
+            width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
+            border: 2px solid #e9ecef;
+        }
+
+        /* Badges */
+        .status-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: 600;
+        }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-approved { background: #d1e7dd; color: #0a3622; }
+        .badge-declined { background: #f8d7da; color: #842029; }
+        .badge-confirmed { background: #d1e7dd; color: #0a3622; }
+        .badge-cancelled { background: #f8d7da; color: #842029; }
+        .badge-flagged { background: #f8d7da; color: #842029; }
+
+        /* Action buttons */
+        .btn-approve {
+            background: #20bcba; color: white; border: none;
+            padding: 5px 14px; border-radius: 5px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-approve:hover { background: #1a9d9b; }
+        .btn-decline {
+            background: white; color: #dc3545; border: 1px solid #dc3545;
+            padding: 5px 14px; border-radius: 5px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-decline:hover { background: #dc3545; color: white; }
+        .btn-delete {
+            background: #dc3545; color: white; border: none;
+            padding: 5px 14px; border-radius: 5px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-delete:hover { background: #c82333; }
+        .btn-unflag {
+            background: white; color: #6c757d; border: 1px solid #6c757d;
+            padding: 5px 14px; border-radius: 5px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-unflag:hover { background: #6c757d; color: white; }
+        .btn-flag {
+            background: white; color: #e6a817; border: 1px solid #e6a817;
+            padding: 5px 10px; border-radius: 5px; font-size: 0.8rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-flag:hover { background: #e6a817; color: white; }
+        .btn-sm-icon {
+            background: none; border: none; cursor: pointer;
+            padding: 4px 8px; border-radius: 4px; transition: background 0.2s;
+        }
+        .btn-sm-icon:hover { background: #f0f0f0; }
+
+        /* Search */
+        .search-input {
+            border: 2px solid #e0e0e0; border-radius: 8px; padding: 8px 14px;
+            font-size: 0.9rem; outline: none; width: 280px; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: #20bcba; }
+
+        /* Message preview */
+        .msg-preview { color: #666; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .msg-row.unread td { font-weight: 600; background: #f0fffe; }
+        .msg-full { display: none; background: #f8f9fa; padding: 12px 14px; font-size: 0.85rem; color: #333; border-top: 1px solid #e9ecef; white-space: pre-wrap; }
+        .msg-full.open { display: block; }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 3rem 1rem; color: #999; }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+
+        /* Loading spinner */
+        .loading-row td { text-align: center; padding: 2rem; color: #aaa; }
+
+        /* Overview charts area */
+        .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+        .mini-stat { background: white; border-radius: 10px; padding: 1.25rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); display: flex; align-items: center; gap: 1.25rem; }
+        .mini-stat-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+        .icon-teal { background: #e8f8f7; color: #20bcba; }
+        .icon-blue { background: #e3f0ff; color: #3b82f6; }
+        .icon-yellow { background: #fef9e7; color: #e6a817; }
+        .icon-red { background: #fde8e8; color: #dc3545; }
+        .icon-purple { background: #f3e8ff; color: #8b5cf6; }
+        .icon-green { background: #e8f8ef; color: #10b981; }
+        .mini-stat-val { font-size: 1.6rem; font-weight: 700; color: #113448; line-height: 1; }
+        .mini-stat-lbl { font-size: 0.8rem; color: #888; margin-top: 3px; }
+
+        /* Confirm modal */
+        .confirm-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); z-index: 10000;
+            align-items: center; justify-content: center;
+        }
+        .confirm-overlay.show { display: flex; }
+        .confirm-box {
+            background: white; border-radius: 12px; padding: 2rem;
+            max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .confirm-box h5 { font-weight: 700; color: #113448; margin-bottom: 0.75rem; }
+        .confirm-box p { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
+        .confirm-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+        .confirm-cancel {
+            background: white; border: 1px solid #dee2e6; color: #555;
+            padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;
+        }
+        .confirm-ok {
+            background: #dc3545; color: white; border: none;
+            padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;
+        }
+        .confirm-ok.teal { background: #20bcba; }
+
+        /* Access denied screen */
+        #accessDenied {
+            display: none; text-align: center; padding: 5rem 1rem;
+        }
+        #adminContent { display: none; }
+        #loadingScreen { text-align: center; padding: 5rem 1rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsAdmin" aria-controls="navbarsAdmin" aria-expanded="false">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarsAdmin">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="index.html">HOME</a></li>
+                <li class="nav-item"><a class="nav-link" href="instructors.html">INSTRUCTORS</a></li>
+                <li class="nav-item"><a class="nav-link" href="connect.html">CONNECT</a></li>
+            </ul>
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="dashboard.html"><i class="fas fa-chalkboard-teacher"></i> Instructor Dashboard</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loading / Access Denied screens -->
+    <div id="loadingScreen">
+        <i class="fas fa-spinner fa-spin fa-2x" style="color:#20bcba;"></i>
+        <p style="color:#888;margin-top:1rem;">Verifying access…</p>
+    </div>
+
+    <div id="accessDenied">
+        <i class="fas fa-lock fa-3x" style="color:#dc3545;"></i>
+        <h3 style="margin-top:1rem;color:#113448;">Access Denied</h3>
+        <p style="color:#666;">You do not have admin access to this page.</p>
+        <a href="index.html" class="btn-solid-reg" style="display:inline-block;margin-top:1rem;">Back to Home</a>
+    </div>
+
+    <!-- Admin Content (shown only after auth check passes) -->
+    <div id="adminContent">
+
+        <!-- Page Header -->
+        <div class="admin-header">
+            <div class="container-fluid px-4">
+                <h1>Admin Dashboard <span class="admin-badge">ADMIN</span></h1>
+                <p id="adminWelcome">Lingua Bud platform management</p>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="container-fluid px-4">
+                <div class="row text-center">
+                    <div class="col stat-card">
+                        <div class="stat-number" id="statStudents">—</div>
+                        <div class="stat-label">Students</div>
+                    </div>
+                    <div class="col stat-card">
+                        <div class="stat-number teal" id="statInstructors">—</div>
+                        <div class="stat-label">Instructors</div>
+                    </div>
+                    <div class="col stat-card">
+                        <div class="stat-number warning" id="statPending">—</div>
+                        <div class="stat-label">Pending Apps</div>
+                    </div>
+                    <div class="col stat-card">
+                        <div class="stat-number" id="statBookings">—</div>
+                        <div class="stat-label">Total Bookings</div>
+                    </div>
+                    <div class="col stat-card">
+                        <div class="stat-number teal" id="statRevenue">—</div>
+                        <div class="stat-label">Revenue (30d)</div>
+                    </div>
+                    <div class="col stat-card">
+                        <div class="stat-number danger" id="statFlagged">—</div>
+                        <div class="stat-label">Flagged Users</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="admin-tabs-wrapper">
+            <div class="container-fluid px-4">
+                <div class="admin-tabs">
+                    <div class="admin-tab active" data-tab="applications">
+                        Applications <span class="tab-badge warning" id="appsBadge" style="display:none;">0</span>
+                    </div>
+                    <div class="admin-tab" data-tab="flagged">
+                        Flagged Users <span class="tab-badge" id="flagBadge" style="display:none;">0</span>
+                    </div>
+                    <div class="admin-tab" data-tab="users">All Users</div>
+                    <div class="admin-tab" data-tab="bookings">Bookings</div>
+                    <div class="admin-tab" data-tab="messages">
+                        Messages <span class="tab-badge info" id="msgBadge" style="display:none;">0</span>
+                    </div>
+                    <div class="admin-tab" data-tab="overview">Overview</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="admin-content">
+            <div class="container-fluid px-4">
+
+                <!-- ── Applications Tab ────────────────────────────────── -->
+                <div class="tab-pane active" id="tab-applications">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-chalkboard-teacher" style="color:#20bcba;margin-right:8px;"></i>Instructor Applications</h5>
+                            <div>
+                                <button class="btn-approve" style="font-size:0.8rem;" onclick="loadApplications()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Instructor</th>
+                                        <th>Languages</th>
+                                        <th>Rate</th>
+                                        <th>Applied</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applicationsBody">
+                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Flagged Users Tab ───────────────────────────────── -->
+                <div class="tab-pane" id="tab-flagged">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-flag" style="color:#dc3545;margin-right:8px;"></i>Flagged Users</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;" onclick="loadFlagged()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Type</th>
+                                        <th>Email</th>
+                                        <th>Flagged</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="flaggedBody">
+                                    <tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── All Users Tab ──────────────────────────────────── -->
+                <div class="tab-pane" id="tab-users">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-users" style="color:#20bcba;margin-right:8px;"></i>All Students</h5>
+                            <input type="text" class="search-input" id="userSearch" placeholder="Search by name or email…" oninput="filterUsers()">
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Email</th>
+                                        <th>Learning</th>
+                                        <th>Joined</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersBody">
+                                    <tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Bookings Tab ───────────────────────────────────── -->
+                <div class="tab-pane" id="tab-bookings">
+                    <div class="row mb-3">
+                        <div class="col-md-3 mb-3">
+                            <div class="admin-card" style="padding:1.25rem;text-align:center;">
+                                <div class="stat-number" id="bkTotal">—</div>
+                                <div class="stat-label">Total Bookings</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="admin-card" style="padding:1.25rem;text-align:center;">
+                                <div class="stat-number teal" id="bkConfirmed">—</div>
+                                <div class="stat-label">Confirmed</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="admin-card" style="padding:1.25rem;text-align:center;">
+                                <div class="stat-number danger" id="bkCancelled">—</div>
+                                <div class="stat-label">Cancelled</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="admin-card" style="padding:1.25rem;text-align:center;">
+                                <div class="stat-number teal" id="bkRevenue">—</div>
+                                <div class="stat-label">Revenue (all time)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-calendar-check" style="color:#20bcba;margin-right:8px;"></i>Recent Bookings</h5>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Instructor</th>
+                                        <th>Date &amp; Time</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bookingsBody">
+                                    <tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Messages Tab ───────────────────────────────────── -->
+                <div class="tab-pane" id="tab-messages">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-envelope" style="color:#20bcba;margin-right:8px;"></i>Contact Form Messages</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;" onclick="loadMessages()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>From</th>
+                                        <th>Email</th>
+                                        <th>Preview</th>
+                                        <th>Received</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="messagesBody">
+                                    <tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Overview Tab ───────────────────────────────────── -->
+                <div class="tab-pane" id="tab-overview">
+                    <div class="overview-grid" id="overviewGrid">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-users"></i></div>
+                            <div><div class="mini-stat-val" id="ov-students">—</div><div class="mini-stat-lbl">Total Students</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-chalkboard-teacher"></i></div>
+                            <div><div class="mini-stat-val" id="ov-instructors">—</div><div class="mini-stat-lbl">Active Instructors</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-yellow"><i class="fas fa-hourglass-half"></i></div>
+                            <div><div class="mini-stat-val" id="ov-pending">—</div><div class="mini-stat-lbl">Pending Applications</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-green"><i class="fas fa-calendar-check"></i></div>
+                            <div><div class="mini-stat-val" id="ov-bookings">—</div><div class="mini-stat-lbl">Total Bookings</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-purple"><i class="fas fa-dollar-sign"></i></div>
+                            <div><div class="mini-stat-val" id="ov-revenue">—</div><div class="mini-stat-lbl">All-time Revenue</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-red"><i class="fas fa-flag"></i></div>
+                            <div><div class="mini-stat-val" id="ov-flagged">—</div><div class="mini-stat-lbl">Flagged Accounts</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Signups -->
+                    <div class="admin-card mt-4">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-user-plus" style="color:#20bcba;margin-right:8px;"></i>Recent Student Signups</h5>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr><th>Name</th><th>Email</th><th>Languages Learning</th><th>Joined</th></tr>
+                                </thead>
+                                <tbody id="recentSignupsBody">
+                                    <tr class="loading-row"><td colspan="4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end container -->
+        </div><!-- end admin-content -->
+    </div><!-- end adminContent -->
+
+    <!-- Confirm Delete Modal -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <h5 id="confirmTitle">Confirm Action</h5>
+            <p id="confirmMessage">Are you sure?</p>
+            <div class="confirm-actions">
+                <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+                <button class="confirm-ok" id="confirmOkBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <script type="module">
+        import {
+            auth, db, functions,
+            onAuthStateChanged, signOut,
+            doc, getDoc, getDocs, collection, query, where, orderBy, limit,
+            httpsCallable
+        } from './lib/firebaseClient.js';
+
+        // ── Admin Functions ──────────────────────────────────────────────
+        const approveInstructor  = httpsCallable(functions, 'adminApproveInstructor');
+        const declineInstructor  = httpsCallable(functions, 'adminDeclineInstructor');
+        const deleteUser         = httpsCallable(functions, 'adminDeleteUser');
+        const flagUser           = httpsCallable(functions, 'adminFlagUser');
+        const markMsgRead        = httpsCallable(functions, 'adminMarkMessageRead');
+
+        // Cache
+        let allUsersCache = [];
+        let tabsLoaded = {};
+
+        // ── Auth Check ───────────────────────────────────────────────────
+        onAuthStateChanged(auth, async (user) => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const adminContent  = document.getElementById('adminContent');
+            const accessDenied  = document.getElementById('accessDenied');
+
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Check admin document
+            const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+            if (!adminSnap.exists()) {
+                loadingScreen.style.display = 'none';
+                accessDenied.style.display  = 'block';
+                return;
+            }
+
+            // Show dashboard
+            loadingScreen.style.display = 'none';
+            adminContent.style.display  = 'block';
+
+            // Profile pic in navbar
+            document.getElementById('profileNavWrapper').style.display = 'block';
+            document.getElementById('adminWelcome').textContent = `Welcome back, ${user.displayName || user.email}`;
+            try {
+                const iSnap = await getDoc(doc(db, 'instructors', user.uid));
+                const uSnap = await getDoc(doc(db, 'users', user.uid));
+                const pic = (iSnap.exists() && iSnap.data().avatar_url) || (uSnap.exists() && uSnap.data().avatar_url);
+                if (pic) document.getElementById('navProfilePic').src = pic;
+            } catch (_) {}
+
+            document.getElementById('logoutLink').addEventListener('click', async (e) => {
+                e.preventDefault();
+                await signOut(auth);
+                window.location.href = 'index.html';
+            });
+
+            // Load stats & default tab
+            await loadStats();
+            await loadApplications();
+            tabsLoaded['applications'] = true;
+        });
+
+        // ── Tab Switching ────────────────────────────────────────────────
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.addEventListener('click', async () => {
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                const name = tab.dataset.tab;
+                document.getElementById('tab-' + name).classList.add('active');
+                if (!tabsLoaded[name]) {
+                    tabsLoaded[name] = true;
+                    if (name === 'flagged')   loadFlagged();
+                    if (name === 'users')     loadUsers();
+                    if (name === 'bookings')  loadBookings();
+                    if (name === 'messages')  loadMessages();
+                    if (name === 'overview')  loadOverview();
+                }
+            });
+        });
+
+        // ── Stats ────────────────────────────────────────────────────────
+        async function loadStats() {
+            try {
+                const [usersSnap, instrSnap, bookingsSnap] = await Promise.all([
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'instructors')),
+                    getDocs(collection(db, 'bookings'))
+                ]);
+
+                const students    = usersSnap.size;
+                const instructors = instrSnap.docs.filter(d => {
+                    const s = d.data().status;
+                    return !s || s === 'approved';
+                }).length;
+                const pending     = instrSnap.docs.filter(d => d.data().status === 'pending').length;
+                const bookings    = bookingsSnap.size;
+                const flaggedCount = [
+                    ...usersSnap.docs.filter(d => d.data().flagged),
+                    ...instrSnap.docs.filter(d => d.data().flagged)
+                ].length;
+
+                // Revenue last 30 days
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                let revenue = 0;
+                bookingsSnap.forEach(d => {
+                    const b = d.data();
+                    if (b.status === 'confirmed' && b.paymentStatus === 'paid' && b.amount) {
+                        const dt = b.dateTime?.toDate ? b.dateTime.toDate() : new Date(b.dateTime);
+                        if (dt >= thirtyDaysAgo) revenue += b.amount;
+                    }
+                });
+
+                document.getElementById('statStudents').textContent    = students;
+                document.getElementById('statInstructors').textContent = instructors;
+                document.getElementById('statPending').textContent     = pending;
+                document.getElementById('statBookings').textContent    = bookings;
+                document.getElementById('statRevenue').textContent     = revenue > 0 ? '$' + (revenue / 100).toFixed(0) : '$0';
+                document.getElementById('statFlagged').textContent     = flaggedCount;
+
+                // Update badges
+                if (pending > 0) {
+                    const el = document.getElementById('appsBadge');
+                    el.textContent = pending; el.style.display = 'inline-block';
+                }
+                if (flaggedCount > 0) {
+                    const el = document.getElementById('flagBadge');
+                    el.textContent = flaggedCount; el.style.display = 'inline-block';
+                }
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
+        window.loadStats = loadStats;
+
+        // ── Applications ─────────────────────────────────────────────────
+        async function loadApplications() {
+            const tbody = document.getElementById('applicationsBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, 'instructors'));
+                const all  = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                // Sort: pending first, then approved, then declined
+                all.sort((a, b) => {
+                    const order = { pending: 0, approved: 1, declined: 2 };
+                    return (order[a.status] ?? 0) - (order[b.status] ?? 0);
+                });
+
+                if (all.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i>No instructor profiles yet.</div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = all.map(i => {
+                    const status   = i.status || 'approved';
+                    const badgeCls = status === 'approved' ? 'badge-approved' : status === 'declined' ? 'badge-declined' : 'badge-pending';
+                    const langs    = (i.languages_teaching || []).join(', ') || '—';
+                    const price    = i.price_per_lesson ? `$${i.price_per_lesson} ${i.currency || 'USD'}` : '—';
+                    const joined   = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : 'Legacy';
+                    const avatar   = i.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+                    const actions  = status === 'pending'
+                        ? `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(i.name || '')}')">Approve</button>
+                           <button class="btn-decline ml-1" onclick="doDecline('${i.id}','${escHtml(i.name || '')}')">Decline</button>`
+                        : status === 'approved'
+                        ? `<button class="btn-decline" onclick="doDecline('${i.id}','${escHtml(i.name || '')}')">Revoke</button>`
+                        : `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(i.name || '')}')">Re-approve</button>`;
+                    return `<tr>
+                        <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(i.name || 'Unknown')}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
+                        <td>${escHtml(langs)}</td>
+                        <td>${escHtml(price)}</td>
+                        <td>${escHtml(joined)}</td>
+                        <td><span class="status-badge ${badgeCls}">${status}</span></td>
+                        <td>${actions}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:red;padding:1rem;">Error loading applications: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadApplications = loadApplications;
+
+        window.doApprove = function(id, name) {
+            showConfirm(
+                'Approve Instructor',
+                `Approve <strong>${escHtml(name)}</strong> as an instructor? They will receive a confirmation email and their profile will go live.`,
+                async () => {
+                    await approveInstructor({ instructorId: id });
+                    await loadApplications();
+                    await loadStats();
+                    tabsLoaded['overview'] = false;
+                },
+                true
+            );
+        };
+        window.doDecline = function(id, name) {
+            showConfirm(
+                'Decline Application',
+                `Decline <strong>${escHtml(name)}</strong>'s instructor application? They will receive a notification email.`,
+                async () => {
+                    await declineInstructor({ instructorId: id });
+                    await loadApplications();
+                    await loadStats();
+                    tabsLoaded['overview'] = false;
+                }
+            );
+        };
+
+        // ── Flagged Users ────────────────────────────────────────────────
+        async function loadFlagged() {
+            const tbody = document.getElementById('flaggedBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const [usersSnap, instrSnap] = await Promise.all([
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'instructors'))
+                ]);
+                const flaggedUsers = usersSnap.docs
+                    .filter(d => d.data().flagged)
+                    .map(d => ({ id: d.id, userCollection: 'users', ...d.data() }));
+                const flaggedInstr = instrSnap.docs
+                    .filter(d => d.data().flagged)
+                    .map(d => ({ id: d.id, userCollection: 'instructors', ...d.data() }));
+                const all = [...flaggedUsers, ...flaggedInstr];
+
+                if (all.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-check-circle" style="color:#20bcba;"></i>No flagged users.</div></td></tr>';
+                    return;
+                }
+                tbody.innerHTML = all.map(u => {
+                    const avatar    = u.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+                    const flaggedAt = u.flaggedAt?.toDate ? u.flaggedAt.toDate().toLocaleDateString() : '—';
+                    const type      = u.userCollection === 'instructors' ? 'Instructor' : 'Student';
+                    return `<tr>
+                        <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(u.name || 'Unknown')}</td>
+                        <td>${type}</td>
+                        <td>${escHtml(u.email || '—')}</td>
+                        <td>${escHtml(flaggedAt)}</td>
+                        <td>
+                            <button class="btn-unflag mr-1" onclick="doUnflag('${u.id}','${u.userCollection}','${escHtml(u.name || '')}')">Unflag</button>
+                            <button class="btn-delete" onclick="doDelete('${u.id}','${escHtml(u.name || '')}')">Delete Account</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadFlagged = loadFlagged;
+
+        window.doUnflag = function(id, col, name) {
+            showConfirm('Clear Flag', `Remove the flag from <strong>${escHtml(name)}</strong>?`,
+                async () => { await flagUser({ userId: id, userCollection: col, flagged: false }); await loadFlagged(); await loadStats(); },
+                true
+            );
+        };
+        window.doDelete = function(id, name) {
+            showConfirm('Delete Account',
+                `Permanently delete <strong>${escHtml(name)}</strong>'s account? This cannot be undone.`,
+                async () => { await deleteUser({ userId: id }); await loadFlagged(); await loadUsers(); await loadStats(); tabsLoaded['users'] = false; }
+            );
+        };
+
+        // ── All Users ────────────────────────────────────────────────────
+        async function loadUsers() {
+            const tbody = document.getElementById('usersBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, 'users'));
+                allUsersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderUsersTable(allUsersCache);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadUsers = loadUsers;
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('usersBody');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-users"></i>No students found.</div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = users.map(u => {
+                const avatar   = u.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+                const learning = (u.languages_learning || []).join(', ') || '—';
+                const joined   = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
+                const flagIcon = u.flagged ? '🚩 ' : '';
+                return `<tr>
+                    <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${flagIcon}${escHtml(u.name || 'Unknown')}</td>
+                    <td>${escHtml(u.email || '—')}</td>
+                    <td>${escHtml(learning)}</td>
+                    <td>${escHtml(joined)}</td>
+                    <td>
+                        <button class="btn-flag mr-1" title="Flag user" onclick="doFlagUser('${u.id}','users','${escHtml(u.name || '')}',${!u.flagged})">
+                            ${u.flagged ? 'Unflag' : 'Flag'}
+                        </button>
+                        <button class="btn-delete" onclick="doDelete('${u.id}','${escHtml(u.name || '')}')">Delete</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        window.filterUsers = function() {
+            const q = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = allUsersCache.filter(u =>
+                (u.name || '').toLowerCase().includes(q) ||
+                (u.email || '').toLowerCase().includes(q)
+            );
+            renderUsersTable(filtered);
+        };
+
+        window.doFlagUser = function(id, col, name, shouldFlag) {
+            const action = shouldFlag ? 'Flag' : 'Unflag';
+            showConfirm(`${action} User`, `${action} <strong>${escHtml(name)}</strong>?`,
+                async () => { await flagUser({ userId: id, userCollection: col, flagged: shouldFlag }); tabsLoaded['users'] = false; await loadUsers(); await loadStats(); },
+                !shouldFlag
+            );
+        };
+
+        // ── Bookings ──────────────────────────────────────────────────────
+        async function loadBookings() {
+            const tbody = document.getElementById('bookingsBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, 'bookings'));
+                const bookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                bookings.sort((a, b) => {
+                    const dtA = a.dateTime?.toDate ? a.dateTime.toDate() : new Date(a.dateTime || 0);
+                    const dtB = b.dateTime?.toDate ? b.dateTime.toDate() : new Date(b.dateTime || 0);
+                    return dtB - dtA;
+                });
+
+                let total = bookings.length, confirmed = 0, cancelled = 0, revenue = 0;
+                bookings.forEach(b => {
+                    if (b.status === 'confirmed') confirmed++;
+                    if (b.status === 'cancelled') cancelled++;
+                    if (b.status === 'confirmed' && b.paymentStatus === 'paid' && b.amount) revenue += b.amount;
+                });
+                document.getElementById('bkTotal').textContent     = total;
+                document.getElementById('bkConfirmed').textContent = confirmed;
+                document.getElementById('bkCancelled').textContent = cancelled;
+                document.getElementById('bkRevenue').textContent   = revenue > 0 ? '$' + (revenue / 100).toFixed(2) : '$0.00';
+
+                if (bookings.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-calendar"></i>No bookings yet.</div></td></tr>';
+                    return;
+                }
+                tbody.innerHTML = bookings.slice(0, 50).map(b => {
+                    const dt = b.dateTime?.toDate ? b.dateTime.toDate() : new Date(b.dateTime || 0);
+                    const dateStr = isNaN(dt) ? '—' : dt.toLocaleString();
+                    const amount  = b.amount ? '$' + (b.amount / 100).toFixed(2) : '—';
+                    const status  = b.status || '—';
+                    const badgeCls = status === 'confirmed' ? 'badge-confirmed' : status === 'cancelled' ? 'badge-cancelled' : '';
+                    return `<tr>
+                        <td>${escHtml(b.studentName || b.studentId || '—')}</td>
+                        <td>${escHtml(b.instructorName || b.instructorId || '—')}</td>
+                        <td>${escHtml(dateStr)}</td>
+                        <td>${escHtml(amount)}</td>
+                        <td><span class="status-badge ${badgeCls}">${escHtml(status)}</span></td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadBookings = loadBookings;
+
+        // ── Messages ──────────────────────────────────────────────────────
+        async function loadMessages() {
+            const tbody = document.getElementById('messagesBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, 'contactMessages'));
+                const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                msgs.sort((a, b) => {
+                    const tA = a.receivedAt?.toDate ? a.receivedAt.toDate() : new Date(0);
+                    const tB = b.receivedAt?.toDate ? b.receivedAt.toDate() : new Date(0);
+                    return tB - tA;
+                });
+
+                const unread = msgs.filter(m => !m.read).length;
+                if (unread > 0) {
+                    const el = document.getElementById('msgBadge');
+                    el.textContent = unread; el.style.display = 'inline-block';
+                }
+
+                if (msgs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-inbox"></i>No messages yet.</div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = msgs.map(m => {
+                    const dt    = m.receivedAt?.toDate ? m.receivedAt.toDate().toLocaleString() : '—';
+                    const rowCls = m.read ? '' : 'msg-row unread';
+                    const preview = (m.message || '').substring(0, 80).replace(/\n/g, ' ');
+                    return `<tr class="${rowCls}" id="msg-row-${m.id}">
+                        <td>${escHtml(m.name || '—')}</td>
+                        <td><a href="mailto:${escHtml(m.email || '')}">${escHtml(m.email || '—')}</a></td>
+                        <td class="msg-preview">${escHtml(preview)}${m.message && m.message.length > 80 ? '…' : ''}</td>
+                        <td>${escHtml(dt)}</td>
+                        <td>
+                            <button class="btn-sm-icon" title="Expand" onclick="toggleMsg('${m.id}','${escHtml((m.message||'').replace(/'/g,"\\'"))}')">
+                                <i class="fas fa-expand-alt"></i>
+                            </button>
+                            ${!m.read ? `<button class="btn-approve ml-1" style="font-size:0.75rem;" onclick="doMarkRead('${m.id}')">Mark Read</button>` : '<span style="color:#aaa;font-size:0.8rem;">Read</span>'}
+                        </td>
+                    </tr>
+                    <tr id="msg-full-${m.id}"><td colspan="5" class="msg-full" id="msg-text-${m.id}"></td></tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadMessages = loadMessages;
+
+        window.toggleMsg = function(id, text) {
+            const el  = document.getElementById('msg-text-' + id);
+            const row = document.getElementById('msg-full-' + id);
+            if (!el) return;
+            if (row.querySelector('.msg-full').classList.contains('open')) {
+                row.querySelector('.msg-full').classList.remove('open');
+            } else {
+                el.textContent = text;
+                el.classList.add('open');
+            }
+        };
+        window.doMarkRead = async function(id) {
+            try {
+                await markMsgRead({ messageId: id });
+                const row = document.getElementById('msg-row-' + id);
+                if (row) row.classList.remove('unread');
+                tabsLoaded['messages'] = false;
+                await loadMessages();
+            } catch (e) { console.error(e); }
+        };
+
+        // ── Overview ──────────────────────────────────────────────────────
+        async function loadOverview() {
+            try {
+                const [usersSnap, instrSnap, bookingsSnap] = await Promise.all([
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'instructors')),
+                    getDocs(collection(db, 'bookings'))
+                ]);
+                const approved = instrSnap.docs.filter(d => { const s = d.data().status; return !s || s === 'approved'; }).length;
+                const pending  = instrSnap.docs.filter(d => d.data().status === 'pending').length;
+                const flagged  = [
+                    ...usersSnap.docs.filter(d => d.data().flagged),
+                    ...instrSnap.docs.filter(d => d.data().flagged)
+                ].length;
+                let revenue = 0;
+                bookingsSnap.forEach(d => {
+                    const b = d.data();
+                    if (b.status === 'confirmed' && b.paymentStatus === 'paid' && b.amount) revenue += b.amount;
+                });
+
+                document.getElementById('ov-students').textContent    = usersSnap.size;
+                document.getElementById('ov-instructors').textContent = approved;
+                document.getElementById('ov-pending').textContent     = pending;
+                document.getElementById('ov-bookings').textContent    = bookingsSnap.size;
+                document.getElementById('ov-revenue').textContent     = '$' + (revenue / 100).toFixed(2);
+                document.getElementById('ov-flagged').textContent     = flagged;
+
+                // Recent signups
+                const recent = usersSnap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(u => u.createdAt)
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                    .slice(0, 10);
+                const signupsTbody = document.getElementById('recentSignupsBody');
+                if (recent.length === 0) {
+                    signupsTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:1.5rem;">No signup timestamps recorded yet.</td></tr>';
+                } else {
+                    signupsTbody.innerHTML = recent.map(u => `<tr>
+                        <td>${escHtml(u.name || 'Unknown')}</td>
+                        <td>${escHtml(u.email || '—')}</td>
+                        <td>${escHtml((u.languages_learning || []).join(', ') || '—')}</td>
+                        <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                    </tr>`).join('');
+                }
+            } catch (err) { console.error('Overview error:', err); }
+        }
+        window.loadOverview = loadOverview;
+
+        // ── Confirm modal ─────────────────────────────────────────────────
+        let _confirmCallback = null;
+        function showConfirm(title, message, cb, isPositive = false) {
+            document.getElementById('confirmTitle').textContent   = title;
+            document.getElementById('confirmMessage').innerHTML   = message;
+            const btn = document.getElementById('confirmOkBtn');
+            btn.textContent = isPositive ? 'Confirm' : 'Delete / Decline';
+            btn.className   = isPositive ? 'confirm-ok teal' : 'confirm-ok';
+            _confirmCallback = cb;
+            document.getElementById('confirmOverlay').classList.add('show');
+        }
+        window.closeConfirm = function() {
+            document.getElementById('confirmOverlay').classList.remove('show');
+            _confirmCallback = null;
+        };
+        document.getElementById('confirmOkBtn').addEventListener('click', async () => {
+            if (_confirmCallback) {
+                const btn = document.getElementById('confirmOkBtn');
+                btn.disabled = true;
+                btn.textContent = 'Working…';
+                try { await _confirmCallback(); } catch (e) { alert('Error: ' + e.message); }
+                btn.disabled = false;
+                closeConfirm();
+            }
+        });
+        document.getElementById('confirmOverlay').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeConfirm();
+        });
+
+        // ── Helpers ───────────────────────────────────────────────────────
+        function escHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        window.escHtml = escHtml;
+    </script>
+</body>
+</html>

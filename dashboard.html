@@ -1014,6 +1014,13 @@
       try {
         setStatus("Saving profile...", false);
 
+        // If this is a brand-new instructor profile, mark it as pending review
+        const existingSnap = await getDoc(doc(db, 'instructors', currentUser.uid));
+        if (!existingSnap.exists()) {
+          profile.status = 'pending';
+          profile.createdAt = new Date().toISOString();
+        }
+
         // Save profile and availability together so the instructor
         // doesn't need to click "Save Availability" separately
         const saves = [

@@ -1034,7 +1034,11 @@
                 const querySnapshot = await getDocs(collection(db, 'instructors'));
                 allInstructors = [];
                 querySnapshot.forEach((doc) => {
-                    allInstructors.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data();
+                    // Only show approved instructors or legacy profiles without a status field
+                    if (!data.status || data.status === 'approved') {
+                        allInstructors.push({ id: doc.id, ...data });
+                    }
                 });
                 populateLanguageOptions(allInstructors);
                 renderInstructors();

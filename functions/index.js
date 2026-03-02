@@ -509,6 +509,180 @@ exports.sendContactEmail = onCall(async (request) => {
     throw new HttpsError('internal', 'Failed to send email');
   }
 
+  // Log to Firestore so the admin dashboard can display contact messages
+  try {
+    await admin.firestore().collection('contactMessages').add({
+      name,
+      email,
+      message,
+      receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+      read: false
+    });
+  } catch (logErr) {
+    console.error('Failed to log contact message to Firestore:', logErr);
+  }
+
+  return { success: true };
+});
+
+// ── Admin Functions ────────────────────────────────────────────────────────
+
+/**
+ * Helper: verify the calling user is an admin
+ */
+async function assertAdmin(request) {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+  const snap = await admin.firestore().collection('admins').doc(request.auth.uid).get();
+  if (!snap.exists) throw new HttpsError('permission-denied', 'Admin access required');
+}
+
+/**
+ * Approve a pending instructor application
+ */
+exports.adminApproveInstructor = onCall(async (request) => {
+  await assertAdmin(request);
+  const { instructorId } = request.data;
+  if (!instructorId) throw new HttpsError('invalid-argument', 'instructorId required');
+
+  await admin.firestore().collection('instructors').doc(instructorId).update({
+    status: 'approved',
+    approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+    approvedBy: request.auth.uid
+  });
+
+  // Notify instructor by email
+  try {
+    const snap = await admin.firestore().collection('instructors').doc(instructorId).get();
+    if (snap.exists && snap.data().email) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      await resend.emails.send({
+        from: 'Lingua Bud <notifications@linguabud.com>',
+        to: snap.data().email,
+        subject: 'Your Lingua Bud instructor application has been approved!',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+            <div style="background:#20bcba;color:white;padding:24px 32px;border-radius:4px 4px 0 0;">
+              <h2 style="margin:0;">Welcome to Lingua Bud!</h2>
+            </div>
+            <div style="background:white;padding:32px;border:1px solid #e9ecef;border-top:none;border-radius:0 0 4px 4px;">
+              <p>Hi ${snap.data().name || 'Instructor'},</p>
+              <p>Great news — your instructor application has been <strong>approved</strong>! Your profile is now live and students can book lessons with you.</p>
+              <p style="margin-top:24px;">
+                <a href="https://linguabud.com/dashboard.html"
+                   style="background:#20bcba;color:white;padding:12px 28px;border-radius:4px;text-decoration:none;font-weight:bold;">
+                  Go to Your Dashboard
+                </a>
+              </p>
+              <p style="color:#999;font-size:13px;margin-top:24px;">Questions? Email us at <a href="mailto:support@linguabud.com" style="color:#20bcba;">support@linguabud.com</a></p>
+            </div>
+          </div>
+        `,
+        text: `Hi ${snap.data().name || 'Instructor'},\n\nYour Lingua Bud instructor application has been approved! Your profile is now live.\n\nDashboard: https://linguabud.com/dashboard.html\n\nQuestions? Email support@linguabud.com`
+      });
+    }
+  } catch (e) {
+    console.error('Failed to send approval email:', e);
+  }
+
+  return { success: true };
+});
+
+/**
+ * Decline a pending instructor application
+ */
+exports.adminDeclineInstructor = onCall(async (request) => {
+  await assertAdmin(request);
+  const { instructorId } = request.data;
+  if (!instructorId) throw new HttpsError('invalid-argument', 'instructorId required');
+
+  await admin.firestore().collection('instructors').doc(instructorId).update({
+    status: 'declined',
+    declinedAt: admin.firestore.FieldValue.serverTimestamp(),
+    declinedBy: request.auth.uid
+  });
+
+  // Notify instructor by email
+  try {
+    const snap = await admin.firestore().collection('instructors').doc(instructorId).get();
+    if (snap.exists && snap.data().email) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      await resend.emails.send({
+        from: 'Lingua Bud <notifications@linguabud.com>',
+        to: snap.data().email,
+        subject: 'Update on your Lingua Bud instructor application',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+            <div style="background:#113448;color:white;padding:24px 32px;border-radius:4px 4px 0 0;">
+              <h2 style="margin:0;">Lingua Bud</h2>
+            </div>
+            <div style="background:white;padding:32px;border:1px solid #e9ecef;border-top:none;border-radius:0 0 4px 4px;">
+              <p>Hi ${snap.data().name || 'there'},</p>
+              <p>Thank you for applying to become an instructor on Lingua Bud. After reviewing your application, we are unable to approve your profile at this time.</p>
+              <p>If you have questions or would like feedback, please reach out at <a href="mailto:support@linguabud.com" style="color:#20bcba;">support@linguabud.com</a>.</p>
+              <p style="color:#999;font-size:13px;margin-top:24px;">The Lingua Bud Team</p>
+            </div>
+          </div>
+        `,
+        text: `Hi ${snap.data().name || 'there'},\n\nThank you for applying to become a Lingua Bud instructor. After review we are unable to approve your profile at this time.\n\nQuestions? Email support@linguabud.com`
+      });
+    }
+  } catch (e) {
+    console.error('Failed to send decline email:', e);
+  }
+
+  return { success: true };
+});
+
+/**
+ * Permanently delete a user account (Auth + Firestore)
+ */
+exports.adminDeleteUser = onCall(async (request) => {
+  await assertAdmin(request);
+  const { userId } = request.data;
+  if (!userId) throw new HttpsError('invalid-argument', 'userId required');
+
+  // Delete from Firebase Auth
+  try {
+    await admin.auth().deleteUser(userId);
+  } catch (e) {
+    if (e.code !== 'auth/user-not-found') throw e;
+  }
+
+  // Delete Firestore profile documents
+  const batch = admin.firestore().batch();
+  batch.delete(admin.firestore().collection('users').doc(userId));
+  batch.delete(admin.firestore().collection('instructors').doc(userId));
+  batch.delete(admin.firestore().collection('instructor_availability').doc(userId));
+  await batch.commit();
+
+  return { success: true };
+});
+
+/**
+ * Set or clear the flagged status on a user or instructor
+ */
+exports.adminFlagUser = onCall(async (request) => {
+  await assertAdmin(request);
+  const { userId, userCollection, flagged } = request.data;
+  if (!userId || !userCollection) throw new HttpsError('invalid-argument', 'userId and userCollection required');
+
+  const update = flagged
+    ? { flagged: true, flaggedAt: admin.firestore.FieldValue.serverTimestamp() }
+    : { flagged: false, flaggedAt: null };
+
+  await admin.firestore().collection(userCollection).doc(userId).update(update);
+  return { success: true };
+});
+
+/**
+ * Mark a contact message as read
+ */
+exports.adminMarkMessageRead = onCall(async (request) => {
+  await assertAdmin(request);
+  const { messageId } = request.data;
+  if (!messageId) throw new HttpsError('invalid-argument', 'messageId required');
+
+  await admin.firestore().collection('contactMessages').doc(messageId).update({ read: true });
   return { success: true };
 });
 

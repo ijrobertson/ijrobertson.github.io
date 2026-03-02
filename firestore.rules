@@ -118,6 +118,21 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Admins collection — only an admin can verify their own status
+    // New admins must be added via Firebase Console or Admin SDK
+    match /admins/{adminId} {
+      allow read: if request.auth != null && request.auth.uid == adminId;
+      allow write: if false;
+    }
+
+    // Contact messages logged from the contact form Cloud Function
+    // Admin-read only; no client writes
+    match /contactMessages/{messageId} {
+      allow read: if request.auth != null
+                  && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if false;
+    }
+
     // Whiteboard relay — ephemeral per-session drawing sync via onSnapshot
     // One document per participant per channel; deleted on leave
     match /whiteboard/{channelId}/relay/{docId} {
