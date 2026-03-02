@@ -308,7 +308,7 @@
         .profile-card-image {
             position: relative;
             width: 100%;
-            height: 280px;
+            height: 200px;
             overflow: hidden;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
@@ -317,7 +317,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center;
+            object-position: top center;
             display: block;
         }
 
@@ -372,6 +372,96 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        /* Instructor Profile Modal */
+        .profile-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            overflow-y: auto;
+            animation: fadeInModal 0.3s;
+        }
+        @keyframes fadeInModal {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .profile-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .profile-modal-content {
+            background-color: white;
+            border-radius: 16px;
+            max-width: 650px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUpModal 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes slideUpModal {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .profile-modal-header {
+            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            color: white;
+            padding: 2.5rem 2rem 2rem;
+            border-radius: 16px 16px 0 0;
+            text-align: center;
+            position: relative;
+        }
+        .profile-modal-close {
+            position: absolute; right: 1.5rem; top: 1rem;
+            font-size: 2rem; font-weight: bold; color: white;
+            cursor: pointer; line-height: 1; transition: transform 0.2s;
+            background: rgba(255,255,255,0.2);
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: none;
+        }
+        .profile-modal-close:hover { transform: rotate(90deg); background: rgba(255,255,255,0.3); }
+        .profile-modal-avatar {
+            width: 130px; height: 130px; border-radius: 50%;
+            object-fit: cover; object-position: top center;
+            border: 5px solid white; margin-bottom: 1rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .profile-modal-name { margin: 0; font-size: 2rem; font-weight: 700; color: white; }
+        .profile-modal-price { margin-top: 0.5rem; font-size: 1.3rem; color: rgba(255,255,255,0.95); }
+        .profile-modal-body { padding: 2rem; }
+        .profile-info-section { margin-bottom: 2rem; }
+        .profile-info-section:last-child { margin-bottom: 0; }
+        .profile-info-section h4 { color: #20bcba; margin-bottom: 0.75rem; font-size: 1.1rem; font-weight: 700; }
+        .profile-info-section p { margin: 0; color: #555; line-height: 1.7; }
+        .language-tag {
+            display: inline-block; padding: 0.3rem 0.75rem;
+            background: #e8f8f7; color: #20bcba;
+            border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+            margin: 0.2rem;
+        }
+        .profile-modal-actions {
+            display: flex; gap: 1rem; padding: 0 2rem 2rem;
+        }
+        .btn-profile-modal {
+            flex: 1; padding: 1rem 2rem;
+            background-color: #20bcba; color: white;
+            border: none; border-radius: 8px; cursor: pointer;
+            font-size: 1rem; font-weight: 600; transition: background 0.2s;
+        }
+        .btn-profile-modal:hover { background-color: #1a9d9b; }
+        .btn-profile-modal.secondary { background-color: #6c757d; }
+        .btn-profile-modal.secondary:hover { background-color: #5a6268; }
+        @media (max-width: 768px) {
+            .profile-modal-content { margin: 1rem; }
+            .profile-modal-actions { flex-direction: column; }
         }
 
         /* Find More Button */
@@ -2171,6 +2261,42 @@
     <!-- end of copyright -->
     
     	
+    <!-- Instructor Profile Modal -->
+    <div id="instructorProfileModal" class="profile-modal">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <button class="profile-modal-close" id="modalCloseBtn">&times;</button>
+                <img id="modalAvatar" class="profile-modal-avatar" src="" alt="Instructor Avatar">
+                <h2 id="modalName" class="profile-modal-name">Instructor Name</h2>
+                <div id="modalPrice" class="profile-modal-price"></div>
+            </div>
+            <div class="profile-modal-body">
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-chalkboard-teacher"></i> Teaches</h4>
+                    <div id="modalTeaching"></div>
+                </div>
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-comments"></i> Speaks</h4>
+                    <div id="modalSpoken"></div>
+                </div>
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-map-marker-alt"></i> Country</h4>
+                    <p id="modalCountry">Not specified</p>
+                </div>
+                <div class="profile-info-section">
+                    <h4><i class="fas fa-user"></i> About</h4>
+                    <p id="modalAbout">No bio yet</p>
+                </div>
+            </div>
+            <div class="profile-modal-actions">
+                <button class="btn-profile-modal" onclick="window.location.href='instructors.html'">
+                    <i class="fas fa-search"></i> View All Instructors
+                </button>
+                <button class="btn-profile-modal secondary" id="modalCloseActionBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
     <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
@@ -2471,7 +2597,7 @@
         function createInstructorCard(instructor) {
             const card = document.createElement('div');
             card.className = 'profile-card';
-            card.onclick = () => window.location.href = 'instructors.html';
+            card.onclick = () => openInstructorModal(instructor);
 
             const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
             const name = escapeHtml(instructor.name || 'Instructor');
@@ -2514,6 +2640,54 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // ── Instructor profile modal ──────────────────────────────────────
+        function openInstructorModal(instructor) {
+            const _csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
+            const _cCode = (instructor.currency || 'USD').trim();
+            const _cSym = _csMap[_cCode] || '';
+            const price = instructor.price_per_lesson;
+
+            document.getElementById('modalAvatar').src = instructor.avatar_url || 'https://via.placeholder.com/130';
+            document.getElementById('modalName').textContent = instructor.name || 'Instructor';
+            document.getElementById('modalPrice').textContent = price ? `${_cCode} ${_cSym}${price}/hour` : '';
+            document.getElementById('modalCountry').textContent = instructor.native_country || 'Not specified';
+            document.getElementById('modalAbout').textContent = instructor.about_me || 'No bio yet';
+
+            const spokenContainer = document.getElementById('modalSpoken');
+            spokenContainer.innerHTML = '';
+            (instructor.languages_spoken || []).forEach(lang => {
+                const tag = document.createElement('span');
+                tag.className = 'language-tag';
+                tag.textContent = lang;
+                spokenContainer.appendChild(tag);
+            });
+            if (!spokenContainer.children.length) spokenContainer.innerHTML = '<p style="color:#999;font-style:italic;">Not specified</p>';
+
+            const teachingContainer = document.getElementById('modalTeaching');
+            teachingContainer.innerHTML = '';
+            (instructor.languages_teaching || []).forEach(lang => {
+                const tag = document.createElement('span');
+                tag.className = 'language-tag';
+                tag.textContent = lang;
+                teachingContainer.appendChild(tag);
+            });
+            if (!teachingContainer.children.length) teachingContainer.innerHTML = '<p style="color:#999;font-style:italic;">Not specified</p>';
+
+            document.getElementById('instructorProfileModal').classList.add('show');
+        }
+
+        function closeInstructorModal() {
+            document.getElementById('instructorProfileModal').classList.remove('show');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('modalCloseBtn').addEventListener('click', closeInstructorModal);
+            document.getElementById('modalCloseActionBtn').addEventListener('click', closeInstructorModal);
+            document.getElementById('instructorProfileModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('instructorProfileModal')) closeInstructorModal();
+            });
+        });
 
         // Setup "All Languages" button click handlers
         document.querySelector('#studentLanguageFilters .language-filter-btn').addEventListener('click', function() {
