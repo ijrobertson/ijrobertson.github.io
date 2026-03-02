@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Apply to become a language instructor on Lingua Bud.">
+    <title>Instructor Application - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* Navbar */
+        .navbar-custom { background-color: #113448 !important; }
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px; border-radius: 50%;
+            cursor: pointer; object-fit: cover;
+            border: 2px solid #20bcba; transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed; right: 1rem; top: 60px;
+            background-color: white; min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 8px;
+            z-index: 9999; opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px; text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content { opacity: 1; visibility: visible; transform: translateY(0); }
+        .notification-badge {
+            position: absolute; top: -2px; right: -2px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            display: none; align-items: center; justify-content: center; border: 2px solid white;
+        }
+        .notification-badge.show { display: flex; }
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* Page layout */
+        body { background: #f5f5f5; padding-top: 4.5rem; }
+        .apply-wrapper {
+            max-width: 760px; margin: 2rem auto; padding: 0 1rem 3rem;
+        }
+        .apply-card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            padding: 2rem 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 576px) { .apply-card { padding: 1.25rem 1rem; } }
+
+        .section-title {
+            font-size: 1.1rem; font-weight: 700; color: #113448;
+            border-bottom: 2px solid #e8f8f7; padding-bottom: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .section-title i { color: #20bcba; margin-right: 8px; }
+
+        label {
+            display: block; margin-bottom: 0.35rem;
+            font-weight: 600; font-size: 0.9rem; color: #333;
+        }
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%; padding: 0.6rem 0.75rem;
+            border: 1.5px solid #ddd; border-radius: 6px;
+            font-size: 0.95rem; margin-bottom: 1rem;
+            transition: border-color 0.2s; font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: #20bcba;
+        }
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* Avatar upload */
+        .avatar-upload-area {
+            display: flex; align-items: center; gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .avatar-preview {
+            width: 110px; height: 110px; border-radius: 50%;
+            object-fit: cover; border: 3px solid #20bcba;
+            background: #f0f0f0; flex-shrink: 0;
+        }
+        .avatar-upload-btn {
+            background: #20bcba; color: white; border: none;
+            padding: 0.5rem 1.1rem; border-radius: 6px; cursor: pointer;
+            font-size: 0.9rem; font-weight: 600; transition: background 0.2s;
+        }
+        .avatar-upload-btn:hover { background: #1a9d9b; }
+        #avatarInput { display: none; }
+
+        /* Tags */
+        .tag-container {
+            border: 1.5px solid #ddd; border-radius: 6px;
+            padding: 0.5rem; min-height: 44px;
+            display: flex; flex-wrap: wrap; gap: 0.4rem;
+            cursor: text; margin-bottom: 0.5rem;
+            transition: border-color 0.2s;
+        }
+        .tag-container:focus-within { border-color: #20bcba; }
+        .tag {
+            background: #20bcba; color: white;
+            border-radius: 14px; padding: 3px 10px;
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.85rem; white-space: nowrap;
+        }
+        .tag .remove-tag { cursor: pointer; font-weight: 700; opacity: 0.75; }
+        .tag .remove-tag:hover { opacity: 1; }
+
+        /* Language select row */
+        .lang-select-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: flex-start; }
+        .lang-select-row select { margin-bottom: 0; flex: 1; }
+        .lang-add-btn {
+            background: #20bcba; color: white; border: none;
+            padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer;
+            font-size: 0.9rem; font-weight: 600; white-space: nowrap;
+            transition: background 0.2s; flex-shrink: 0;
+        }
+        .lang-add-btn:hover { background: #1a9d9b; }
+
+        /* Rate row */
+        .rate-row { display: flex; gap: 0.75rem; }
+        .rate-row .rate-input { flex: 1; }
+        .rate-row .currency-select { width: 130px; }
+
+        /* Video upload */
+        .video-upload-area {
+            border: 2px dashed #ddd; border-radius: 8px;
+            padding: 1.5rem; text-align: center;
+            cursor: pointer; transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 0.75rem;
+        }
+        .video-upload-area:hover, .video-upload-area.drag-over {
+            border-color: #20bcba; background: #f0fdfc;
+        }
+        .video-upload-area i { font-size: 2rem; color: #20bcba; }
+        .video-upload-area p { margin: 0.5rem 0 0; color: #666; font-size: 0.9rem; }
+        .video-upload-area small { color: #999; }
+        #videoInput { display: none; }
+
+        .progress-bar-wrapper {
+            display: none; background: #e9ecef; border-radius: 6px;
+            height: 8px; overflow: hidden; margin-bottom: 0.5rem;
+        }
+        .progress-bar-fill {
+            height: 100%; background: #20bcba; width: 0%;
+            transition: width 0.2s; border-radius: 6px;
+        }
+        .video-status { font-size: 0.85rem; color: #555; margin-bottom: 1rem; }
+        .video-status.success { color: #198754; }
+        .video-status.error { color: #dc3545; }
+
+        /* Submit btn */
+        .submit-btn {
+            background: #20bcba; color: white; border: none;
+            padding: 0.75rem 2rem; border-radius: 8px; font-size: 1rem;
+            font-weight: 700; cursor: pointer; transition: background 0.2s;
+            width: 100%;
+        }
+        .submit-btn:hover:not(:disabled) { background: #1a9d9b; }
+        .submit-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+        /* State cards */
+        .state-card {
+            display: none; text-align: center; padding: 3rem 2rem;
+        }
+        .state-card.active { display: block; }
+        .state-card i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+        .state-card h3 { color: #113448; font-weight: 700; margin-bottom: 0.75rem; }
+        .state-card p { color: #555; max-width: 480px; margin: 0 auto 1.5rem; }
+
+        .page-header {
+            text-align: center; padding: 1.5rem 0 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .page-header h2 { color: #113448; font-weight: 700; }
+        .page-header p { color: #666; }
+
+        .resubmit-btn {
+            background: #20bcba; color: white; border: none;
+            padding: 0.65rem 1.5rem; border-radius: 8px; font-size: 0.95rem;
+            font-weight: 700; cursor: pointer; transition: background 0.2s;
+        }
+        .resubmit-btn:hover { background: #1a9d9b; }
+
+        .spinner-wrapper { display: none; }
+    </style>
+</head>
+<body data-spy="scroll" data-target=".fixed-top">
+
+    <!-- Preloader -->
+    <div class="spinner-wrapper">
+        <div class="spinner">
+            <div class="bounce1"></div>
+            <div class="bounce2"></div>
+            <div class="bounce3"></div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsApply" aria-controls="navbarsApply" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarsApply">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="index.html">HOME</a></li>
+                <li class="nav-item"><a class="nav-link" href="connect.html">CONNECT</a></li>
+                <li class="nav-item"><a class="nav-link" href="instructors.html">INSTRUCTORS</a></li>
+                <li class="nav-item"><a class="nav-link" href="Resources2.html">RESOURCES</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.html#contact">CONTACT</a></li>
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link" href="login.html">SIGN IN/SIGN UP</a>
+                </li>
+            </ul>
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+            <span class="nav-item social-icons">
+                <span class="fa-stack">
+                    <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-facebook-f fa-stack-1x"></i>
+                    </a>
+                </span>
+                <span class="fa-stack">
+                    <a href="https://www.instagram.com/lingua_bud/" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-instagram fa-stack-1x"></i>
+                    </a>
+                </span>
+            </span>
+        </div>
+    </nav>
+    <!-- end of navbar -->
+
+    <!-- Main content -->
+    <div class="apply-wrapper" id="mainWrapper">
+
+        <!-- Loading state (initial, before auth resolves) -->
+        <div id="stateLoading" style="text-align:center;padding:5rem 1rem;">
+            <i class="fas fa-spinner fa-spin fa-2x" style="color:#20bcba;"></i>
+            <p style="color:#888;margin-top:1rem;">Loading…</p>
+        </div>
+
+        <!-- Pending state -->
+        <div id="statePending" class="apply-card state-card">
+            <i class="fas fa-clock" style="color:#e6a817;"></i>
+            <h3>Application Under Review</h3>
+            <p>Thank you for applying! Your application is currently being reviewed by our team. You will receive an email notification within <strong>3–5 business days</strong>.</p>
+            <a href="index.html" class="btn-solid-reg">Back to Home</a>
+        </div>
+
+        <!-- Declined state -->
+        <div id="stateDeclined" class="apply-card state-card">
+            <i class="fas fa-times-circle" style="color:#dc3545;"></i>
+            <h3>Application Not Approved</h3>
+            <p>Unfortunately your application was not approved at this time. You may update your information and resubmit.</p>
+            <button class="resubmit-btn" id="resubmitBtn">Resubmit Application</button>
+        </div>
+
+        <!-- Success state (shown after submit) -->
+        <div id="stateSuccess" class="apply-card state-card">
+            <i class="fas fa-check-circle" style="color:#20bcba;"></i>
+            <h3>Application Submitted!</h3>
+            <p>Your application to become an instructor has been successfully sent. Your application will be reviewed and you will be notified within <strong>3–5 business days</strong>.</p>
+            <a href="index.html" class="btn-solid-reg">Back to Home</a>
+        </div>
+
+        <!-- Application form -->
+        <div id="stateForm" style="display:none;">
+
+            <div class="page-header">
+                <h2>Instructor Application</h2>
+                <p>Complete all required fields and upload your intro video to apply.</p>
+            </div>
+
+            <!-- Section 1: Personal Info -->
+            <div class="apply-card">
+                <div class="section-title"><i class="fas fa-user"></i>Personal Information</div>
+
+                <label for="applyName">Full Name <span style="color:#dc3545;">*</span></label>
+                <input type="text" id="applyName" placeholder="Your full name" required>
+
+                <label for="applyCountry">Country <span style="color:#dc3545;">*</span></label>
+                <select id="applyCountry">
+                    <option value="">Select your country…</option>
+                </select>
+
+                <label for="applyTimezone">Time Zone</label>
+                <select id="applyTimezone">
+                    <option value="">Select your timezone…</option>
+                </select>
+
+                <label>Profile Picture <span style="color:#dc3545;">*</span></label>
+                <div class="avatar-upload-area">
+                    <img id="avatarPreview" class="avatar-preview"
+                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Avatar">
+                    <div>
+                        <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
+                            <i class="fas fa-camera"></i> Upload Photo
+                        </button>
+                        <input type="file" id="avatarInput" accept="image/*">
+                        <div id="avatarStatus" style="font-size:0.85rem;margin-top:0.4rem;color:#555;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Teaching Details -->
+            <div class="apply-card">
+                <div class="section-title"><i class="fas fa-language"></i>Teaching Details</div>
+
+                <label>Languages Spoken</label>
+                <div class="lang-select-row">
+                    <select id="spokenLangSelect"><option value="">Select a language…</option></select>
+                    <button type="button" class="lang-add-btn" onclick="addLang('spoken')">Add</button>
+                </div>
+                <div class="tag-container" id="spokenTags"></div>
+
+                <label>Languages You Teach <span style="color:#dc3545;">*</span></label>
+                <div class="lang-select-row">
+                    <select id="teachingLangSelect"><option value="">Select a language…</option></select>
+                    <button type="button" class="lang-add-btn" onclick="addLang('teaching')">Add</button>
+                </div>
+                <div class="tag-container" id="teachingTags" style="margin-bottom:1rem;"></div>
+
+                <label>Hourly Rate</label>
+                <div class="rate-row">
+                    <input type="number" id="applyRate" class="rate-input" placeholder="e.g. 25" min="1" step="1">
+                    <select id="applyCurrency" class="currency-select">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                        <option value="CAD">CAD</option>
+                        <option value="AUD">AUD</option>
+                    </select>
+                </div>
+
+                <label for="applyExperience">Teaching Experience <span style="color:#dc3545;">*</span></label>
+                <textarea id="applyExperience" placeholder="Describe your teaching background, years of experience, types of students you have taught, etc." rows="4" required></textarea>
+
+                <label for="applyCertifications">Certifications <span style="color:#666;font-weight:400;">(optional)</span></label>
+                <textarea id="applyCertifications" placeholder="List any relevant teaching certificates, degrees, or language qualifications." rows="3"></textarea>
+            </div>
+
+            <!-- Section 3: Teaching Style & Intro Video -->
+            <div class="apply-card">
+                <div class="section-title"><i class="fas fa-video"></i>Teaching Style &amp; Intro Video</div>
+
+                <label for="applyTeachingStyle">Teaching Style <span style="color:#dc3545;">*</span></label>
+                <textarea id="applyTeachingStyle" placeholder="Describe your teaching approach, methodology, and what students can expect from lessons with you." rows="4" required></textarea>
+
+                <label>Intro Video <span style="color:#dc3545;">*</span> <small style="font-weight:400;color:#888;">(MP4, MOV, or WebM, max 200 MB)</small></label>
+                <div class="video-upload-area" id="videoDropZone" onclick="document.getElementById('videoInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Click to upload or drag &amp; drop your intro video</p>
+                    <small>1–3 minutes recommended</small>
+                </div>
+                <input type="file" id="videoInput" accept="video/mp4,video/quicktime,video/webm">
+                <div class="progress-bar-wrapper" id="videoProgressWrapper">
+                    <div class="progress-bar-fill" id="videoProgressBar"></div>
+                </div>
+                <div class="video-status" id="videoStatus"></div>
+            </div>
+
+            <div class="apply-card" style="padding:1.25rem 2.5rem;">
+                <div id="formError" style="color:#dc3545;font-size:0.9rem;margin-bottom:0.75rem;display:none;"></div>
+                <button type="button" class="submit-btn" id="submitBtn" disabled onclick="submitApplication()">
+                    Submit Application
+                </button>
+            </div>
+
+        </div>
+        <!-- end stateForm -->
+
+    </div>
+    <!-- end apply-wrapper -->
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <script type="module">
+        import {
+            auth, db, storage,
+            onAuthStateChanged, signOut,
+            doc, getDoc, setDoc,
+            ref, uploadBytes, uploadBytesResumable, getDownloadURL
+        } from './lib/firebaseClient.js';
+
+        // ── Data ─────────────────────────────────────────────────────────
+        const languages = [
+            "Afrikaans","Akan","Albanian","Amharic","Arabic","Armenian","Assamese","Aymara","Azerbaijani",
+            "Bambara","Bangla","Basque","Belarusian","Bhojpuri","Bosnian","Bulgarian","Burmese",
+            "Cantonese","Catalan","Cebuano","Central Kurdish","Chinese (Simplified)","Chinese (Traditional)","Corsican","Croatian","Czech",
+            "Danish","Divehi","Dogri","Dutch",
+            "English","Esperanto","Estonian","Ewe",
+            "Filipino","Finnish","French",
+            "Galician","Ganda","Georgian","German","Goan Konkani","Greek","Greenlandic","Guarani","Gujarati",
+            "Haitian Creole","Hausa","Hawaiian","Hebrew","Hindi","Hmong","Hungarian",
+            "Icelandic","Igbo","Iloko","Indonesian","Irish","Italian",
+            "Japanese","Javanese",
+            "Kannada","Kazakh","Khmer","Kinyarwanda","Klingon","Korean","Krio","Kurdish","Kyrgyz",
+            "Lao","Latin","Latvian","Lingala","Lithuanian","Luxembourgish",
+            "Macedonian","Maithili","Malagasy","Malay","Malayalam","Maltese","Manipuri (Meitei Mayek)","Māori","Marathi","Mizo","Mongolian",
+            "Nahuatl","Nepali","Northern Sotho","Norwegian","Nyanja",
+            "Odia","Oromo",
+            "Papiamento","Pashto","Persian","Polish","Portuguese","Punjabi",
+            "Quechua",
+            "Romanian","Romansh","Russian",
+            "Samoan","Sanskrit","Scottish Gaelic","Serbian","Shona","Silbo Gomero","Sindhi","Sinhala","Slovak","Slovenian","Somali","Southern Sotho","Spanish","Sundanese","Swahili","Swedish",
+            "Tagalog","Tajik","Tamil","Tatar","Telugu","Thai","Tigrinya","Tok Pisin","Tsonga","Turkish","Turkmen","Twi",
+            "Ukrainian","Urdu","Uyghur","Uzbek",
+            "Vietnamese",
+            "Welsh","Western Frisian","Wu Chinese",
+            "Xhosa",
+            "Yiddish","Yoruba","Yue Chinese",
+            "Zulu"
+        ];
+        const countries = [
+            "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
+            "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia",
+            "Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada",
+            "Cape Verde","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Brazzaville)","Congo (Kinshasa)","Costa Rica",
+            "Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","East Timor","Ecuador",
+            "Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France",
+            "Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau",
+            "Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland",
+            "Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait",
+            "Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg",
+            "Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico",
+            "Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru",
+            "Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman",
+            "Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal",
+            "Puerto Rico","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent","Samoa","San Marino",
+            "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia",
+            "South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria",
+            "São Tomé and Príncipe","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey",
+            "Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
+            "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+        ];
+        const commonTimezones = [
+            'America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
+            'America/Toronto','America/Mexico_City','America/Sao_Paulo','America/Buenos_Aires',
+            'Europe/London','Europe/Paris','Europe/Berlin','Europe/Madrid','Europe/Rome',
+            'Asia/Tokyo','Asia/Shanghai','Asia/Seoul','Asia/Singapore','Asia/Dubai',
+            'Australia/Sydney','Australia/Melbourne','Pacific/Auckland'
+        ];
+
+        // ── State ─────────────────────────────────────────────────────────
+        let currentUser = null;
+        let spokenLangs = [];
+        let teachingLangs = [];
+        let uploadedAvatarUrl = null;
+        let uploadedVideoUrl = null;
+
+        // ── Init selects ──────────────────────────────────────────────────
+        function populateSelect(id, items) {
+            const el = document.getElementById(id);
+            items.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v; opt.textContent = v;
+                el.appendChild(opt);
+            });
+        }
+
+        function populateTimezone() {
+            const sel = document.getElementById('applyTimezone');
+            const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const allZones = detected && !commonTimezones.includes(detected)
+                ? [detected, ...commonTimezones]
+                : commonTimezones;
+            allZones.forEach(tz => {
+                const opt = document.createElement('option');
+                opt.value = tz; opt.textContent = tz;
+                sel.appendChild(opt);
+            });
+            if (detected) sel.value = detected;
+        }
+
+        // ── Language tags ─────────────────────────────────────────────────
+        window.addLang = function(type) {
+            const selId = type === 'spoken' ? 'spokenLangSelect' : 'teachingLangSelect';
+            const tagsId = type === 'spoken' ? 'spokenTags' : 'teachingTags';
+            const arr = type === 'spoken' ? spokenLangs : teachingLangs;
+            const sel = document.getElementById(selId);
+            const val = sel.value;
+            if (!val || arr.includes(val)) { sel.value = ''; return; }
+            arr.push(val);
+            sel.value = '';
+            renderTags(tagsId, arr, type);
+            checkSubmitReady();
+        };
+
+        function renderTags(containerId, arr, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = arr.map((lang, i) =>
+                `<span class="tag">${escHtml(lang)} <span class="remove-tag" onclick="removeLang('${type}',${i})">×</span></span>`
+            ).join('');
+        }
+
+        window.removeLang = function(type, idx) {
+            const arr = type === 'spoken' ? spokenLangs : teachingLangs;
+            arr.splice(idx, 1);
+            renderTags(type === 'spoken' ? 'spokenTags' : 'teachingTags', arr, type);
+            checkSubmitReady();
+        };
+
+        function escHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ── Avatar upload ─────────────────────────────────────────────────
+        document.getElementById('avatarInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !currentUser) return;
+            const statusEl = document.getElementById('avatarStatus');
+            statusEl.textContent = 'Uploading…';
+            try {
+                const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+                await uploadBytes(avatarRef, file);
+                uploadedAvatarUrl = await getDownloadURL(avatarRef);
+                const preview = document.getElementById('avatarPreview');
+                preview.src = uploadedAvatarUrl;
+                statusEl.textContent = 'Photo uploaded ✓';
+                statusEl.style.color = '#198754';
+            } catch (err) {
+                statusEl.textContent = 'Upload failed: ' + err.message;
+                statusEl.style.color = '#dc3545';
+            }
+            checkSubmitReady();
+        });
+
+        // ── Video upload ──────────────────────────────────────────────────
+        const videoDropZone = document.getElementById('videoDropZone');
+        const videoInput = document.getElementById('videoInput');
+
+        videoDropZone.addEventListener('dragover', (e) => { e.preventDefault(); videoDropZone.classList.add('drag-over'); });
+        videoDropZone.addEventListener('dragleave', () => videoDropZone.classList.remove('drag-over'));
+        videoDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            videoDropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files[0]) uploadVideo(e.dataTransfer.files[0]);
+        });
+        videoInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) uploadVideo(e.target.files[0]);
+        });
+
+        function uploadVideo(file) {
+            if (!currentUser) return;
+            const allowed = ['video/mp4', 'video/quicktime', 'video/webm'];
+            if (!allowed.includes(file.type)) {
+                setVideoStatus('Invalid file type. Please upload MP4, MOV, or WebM.', 'error');
+                return;
+            }
+            if (file.size > 200 * 1024 * 1024) {
+                setVideoStatus('File exceeds 200 MB limit.', 'error');
+                return;
+            }
+            const progressWrapper = document.getElementById('videoProgressWrapper');
+            const progressBar = document.getElementById('videoProgressBar');
+            progressWrapper.style.display = 'block';
+            progressBar.style.width = '0%';
+            setVideoStatus('Uploading…', '');
+            uploadedVideoUrl = null;
+            checkSubmitReady();
+
+            const videoRef = ref(storage, `instructor_videos/${currentUser.uid}`);
+            const task = uploadBytesResumable(videoRef, file);
+
+            task.on('state_changed',
+                (snapshot) => {
+                    const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                    progressBar.style.width = pct + '%';
+                    setVideoStatus(`Uploading… ${pct}%`, '');
+                },
+                (err) => {
+                    setVideoStatus('Upload failed: ' + err.message, 'error');
+                    progressWrapper.style.display = 'none';
+                    checkSubmitReady();
+                },
+                async () => {
+                    uploadedVideoUrl = await getDownloadURL(task.snapshot.ref);
+                    setVideoStatus('Video uploaded ✓ — ' + file.name, 'success');
+                    checkSubmitReady();
+                }
+            );
+        }
+
+        function setVideoStatus(msg, type) {
+            const el = document.getElementById('videoStatus');
+            el.textContent = msg;
+            el.className = 'video-status' + (type ? ' ' + type : '');
+        }
+
+        // ── Submit readiness ──────────────────────────────────────────────
+        function checkSubmitReady() {
+            const name = (document.getElementById('applyName').value || '').trim();
+            const experience = (document.getElementById('applyExperience').value || '').trim();
+            const style = (document.getElementById('applyTeachingStyle').value || '').trim();
+            const ready = name && uploadedAvatarUrl && teachingLangs.length > 0 && experience && style && uploadedVideoUrl;
+            document.getElementById('submitBtn').disabled = !ready;
+        }
+
+        // Listen on form fields for readiness
+        ['applyName','applyExperience','applyTeachingStyle'].forEach(id => {
+            document.getElementById(id).addEventListener('input', checkSubmitReady);
+        });
+
+        // ── Submit ────────────────────────────────────────────────────────
+        window.submitApplication = async function() {
+            const errEl = document.getElementById('formError');
+            errEl.style.display = 'none';
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting…';
+
+            try {
+                const data = {
+                    name: document.getElementById('applyName').value.trim(),
+                    email: currentUser.email,
+                    native_country: document.getElementById('applyCountry').value,
+                    timezone: document.getElementById('applyTimezone').value,
+                    languages_spoken: [...spokenLangs],
+                    languages_teaching: [...teachingLangs],
+                    price_per_lesson: parseFloat(document.getElementById('applyRate').value) || null,
+                    currency: document.getElementById('applyCurrency').value,
+                    teaching_experience: document.getElementById('applyExperience').value.trim(),
+                    certifications: document.getElementById('applyCertifications').value.trim(),
+                    teaching_style: document.getElementById('applyTeachingStyle').value.trim(),
+                    avatar_url: uploadedAvatarUrl,
+                    intro_video_url: uploadedVideoUrl,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                };
+                await setDoc(doc(db, 'instructors', currentUser.uid), data, { merge: true });
+                showState('success');
+            } catch (err) {
+                errEl.textContent = 'Error submitting application: ' + err.message;
+                errEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Submit Application';
+            }
+        };
+
+        // ── Show state ────────────────────────────────────────────────────
+        function showState(state) {
+            document.getElementById('stateLoading').style.display = 'none';
+            document.getElementById('statePending').style.display = 'none';
+            document.getElementById('stateDeclined').style.display = 'none';
+            document.getElementById('stateSuccess').style.display = 'none';
+            document.getElementById('stateForm').style.display = 'none';
+
+            if (state === 'loading') document.getElementById('stateLoading').style.display = 'block';
+            else if (state === 'pending') document.getElementById('statePending').style.display = 'block';
+            else if (state === 'declined') document.getElementById('stateDeclined').style.display = 'block';
+            else if (state === 'success') document.getElementById('stateSuccess').style.display = 'block';
+            else if (state === 'form') document.getElementById('stateForm').style.display = 'block';
+        }
+
+        // ── Resubmit ──────────────────────────────────────────────────────
+        document.getElementById('resubmitBtn').addEventListener('click', () => {
+            // Reset form state
+            document.getElementById('applyName').value = '';
+            document.getElementById('applyCountry').value = '';
+            document.getElementById('applyExperience').value = '';
+            document.getElementById('applyCertifications').value = '';
+            document.getElementById('applyTeachingStyle').value = '';
+            document.getElementById('applyRate').value = '';
+            spokenLangs = [];
+            teachingLangs = [];
+            renderTags('spokenTags', spokenLangs, 'spoken');
+            renderTags('teachingTags', teachingLangs, 'teaching');
+            uploadedAvatarUrl = null;
+            uploadedVideoUrl = null;
+            document.getElementById('avatarPreview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+            document.getElementById('avatarStatus').textContent = '';
+            document.getElementById('videoStatus').textContent = '';
+            document.getElementById('videoProgressWrapper').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'Submit Application';
+            document.getElementById('formError').style.display = 'none';
+            showState('form');
+        });
+
+        // ── Auth state machine ────────────────────────────────────────────
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+
+            // Update navbar
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper = document.getElementById('signInWrapper');
+            const navProfilePic = document.getElementById('navProfilePic');
+            if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+            if (signInWrapper) signInWrapper.style.display = 'none';
+
+            // Logout
+            document.getElementById('logoutLink').addEventListener('click', async (e) => {
+                e.preventDefault();
+                await signOut(auth);
+                window.location.href = 'index.html';
+            });
+
+            // Load nav avatar
+            try {
+                const userSnap = await getDoc(doc(db, 'users', user.uid));
+                if (userSnap.exists() && userSnap.data().avatar_url) {
+                    navProfilePic.src = userSnap.data().avatar_url;
+                }
+            } catch (_) {}
+
+            // Check instructor doc
+            try {
+                const instrSnap = await getDoc(doc(db, 'instructors', user.uid));
+                if (!instrSnap.exists()) {
+                    // No profile yet — show form
+                    populateSelect('spokenLangSelect', languages);
+                    populateSelect('teachingLangSelect', languages);
+                    populateSelect('applyCountry', countries);
+                    populateTimezone();
+                    showState('form');
+                    return;
+                }
+                const status = instrSnap.data().status;
+                if (!status || status === 'approved') {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+                if (status === 'pending') {
+                    showState('pending');
+                    return;
+                }
+                if (status === 'declined') {
+                    showState('declined');
+                    return;
+                }
+                // Fallback
+                populateSelect('spokenLangSelect', languages);
+                populateSelect('teachingLangSelect', languages);
+                populateSelect('applyCountry', countries);
+                populateTimezone();
+                showState('form');
+            } catch (err) {
+                console.error('Error checking instructor status:', err);
+                showState('form');
+            }
+        });
+    </script>
+</body>
+</html>

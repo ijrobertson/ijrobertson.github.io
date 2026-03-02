@@ -873,6 +873,19 @@
         if (user) {
           currentUser = user;
 
+          // Redirect pending/declined/no-profile instructors to the application page
+          const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+          if (!instructorSnap.exists()) {
+            window.location.href = 'instructor-apply.html';
+            return;
+          }
+          const instrStatus = instructorSnap.data().status;
+          if (instrStatus === 'pending' || instrStatus === 'declined') {
+            window.location.href = 'instructor-apply.html';
+            return;
+          }
+          // status === 'approved' OR undefined (legacy) → stay on dashboard
+
           // Show profile pic in navbar, hide sign-in link
           const profileNavWrapper = document.getElementById('profileNavWrapper');
           const signInWrapper = document.getElementById('signInWrapper');

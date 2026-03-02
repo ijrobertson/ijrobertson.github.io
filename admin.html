@@ -242,6 +242,52 @@
         }
         #adminContent { display: none; }
         #loadingScreen { text-align: center; padding: 5rem 1rem; }
+
+        /* Application detail modal */
+        .app-detail-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55); z-index: 10001;
+            align-items: flex-start; justify-content: center;
+            padding: 2rem 1rem; overflow-y: auto;
+        }
+        .app-detail-overlay.show { display: flex; }
+        .app-detail-box {
+            background: white; border-radius: 14px;
+            width: 100%; max-width: 680px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin: auto;
+        }
+        .app-detail-header {
+            padding: 1.5rem 1.75rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex; align-items: center; gap: 1.25rem;
+        }
+        .app-detail-avatar {
+            width: 72px; height: 72px; border-radius: 50%;
+            object-fit: cover; border: 3px solid #20bcba; flex-shrink: 0;
+        }
+        .app-detail-header-info h4 { font-weight: 700; color: #113448; margin: 0 0 4px; }
+        .app-detail-header-info p { margin: 0; color: #888; font-size: 0.9rem; }
+        .app-detail-body { padding: 1.5rem 1.75rem; }
+        .app-detail-field { margin-bottom: 1.1rem; }
+        .app-detail-field label {
+            display: block; font-weight: 700; font-size: 0.8rem;
+            color: #888; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .app-detail-field p { margin: 0; color: #333; font-size: 0.92rem; white-space: pre-wrap; }
+        .app-detail-video { width: 100%; border-radius: 8px; margin-top: 0.4rem; max-height: 340px; }
+        .app-detail-footer {
+            padding: 1rem 1.75rem 1.5rem;
+            border-top: 1px solid #f0f0f0;
+            display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap;
+        }
+        .btn-detail-view {
+            background: #f0f0f0; color: #333; border: none;
+            padding: 5px 12px; border-radius: 5px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-detail-view:hover { background: #e0e0e0; }
     </style>
 </head>
 <body>
@@ -377,11 +423,12 @@
                                         <th>Rate</th>
                                         <th>Applied</th>
                                         <th>Status</th>
+                                        <th>Details</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="applicationsBody">
-                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                    <tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -572,6 +619,76 @@
         </div><!-- end admin-content -->
     </div><!-- end adminContent -->
 
+    <!-- Application Detail Modal -->
+    <div class="app-detail-overlay" id="appDetailModal">
+        <div class="app-detail-box">
+            <div class="app-detail-header">
+                <img id="adAvatar" class="app-detail-avatar"
+                     src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Avatar">
+                <div class="app-detail-header-info">
+                    <h4 id="adName">—</h4>
+                    <p id="adEmail" style="margin-bottom:4px;">—</p>
+                    <span id="adStatusBadge" class="status-badge">—</span>
+                </div>
+            </div>
+            <div class="app-detail-body">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="app-detail-field">
+                            <label>Country</label>
+                            <p id="adCountry">—</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="app-detail-field">
+                            <label>Timezone</label>
+                            <p id="adTimezone">—</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="app-detail-field">
+                            <label>Languages Spoken</label>
+                            <p id="adSpoken">—</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="app-detail-field">
+                            <label>Languages Teaching</label>
+                            <p id="adTeaching">—</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="app-detail-field">
+                    <label>Hourly Rate</label>
+                    <p id="adRate">—</p>
+                </div>
+                <div class="app-detail-field">
+                    <label>Teaching Experience</label>
+                    <p id="adExperience">—</p>
+                </div>
+                <div class="app-detail-field" id="adCertsField">
+                    <label>Certifications</label>
+                    <p id="adCerts">—</p>
+                </div>
+                <div class="app-detail-field">
+                    <label>Teaching Style</label>
+                    <p id="adStyle">—</p>
+                </div>
+                <div class="app-detail-field" id="adVideoField" style="display:none;">
+                    <label>Intro Video</label>
+                    <video id="adVideo" class="app-detail-video" controls></video>
+                </div>
+            </div>
+            <div class="app-detail-footer">
+                <button class="confirm-cancel" onclick="closeAppDetail()">Close</button>
+                <button class="btn-decline" id="adDeclineBtn" onclick="">Decline</button>
+                <button class="btn-approve" id="adApproveBtn" onclick="">Approve</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirm Delete Modal -->
     <div class="confirm-overlay" id="confirmOverlay">
         <div class="confirm-box">
@@ -748,7 +865,7 @@
         // ── Applications ─────────────────────────────────────────────────
         async function loadApplications() {
             const tbody = document.getElementById('applicationsBody');
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
             try {
                 const snap = await getDocs(collection(db, 'instructors'));
                 const all  = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -759,7 +876,7 @@
                 });
 
                 if (all.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i>No instructor profiles yet.</div></td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-inbox"></i>No instructor profiles yet.</div></td></tr>';
                     return;
                 }
 
@@ -767,7 +884,7 @@
                     const status   = i.status || 'approved';
                     const badgeCls = status === 'approved' ? 'badge-approved' : status === 'declined' ? 'badge-declined' : 'badge-pending';
                     const langs    = (i.languages_teaching || []).join(', ') || '—';
-                    const price    = i.price_per_lesson ? `$${i.price_per_lesson} ${i.currency || 'USD'}` : '—';
+                    const price    = i.price_per_lesson ? `${i.price_per_lesson} ${i.currency || 'USD'}` : '—';
                     const joined   = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : 'Legacy';
                     const avatar   = i.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
                     const actions  = status === 'pending'
@@ -776,20 +893,84 @@
                         : status === 'approved'
                         ? `<button class="btn-decline" onclick="doDecline('${i.id}','${escHtml(i.name || '')}')">Revoke</button>`
                         : `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(i.name || '')}')">Re-approve</button>`;
+                    // Encode data for the detail modal
+                    const dataJson = escHtml(JSON.stringify(i));
                     return `<tr>
                         <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(i.name || 'Unknown')}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
                         <td>${escHtml(langs)}</td>
                         <td>${escHtml(price)}</td>
                         <td>${escHtml(joined)}</td>
                         <td><span class="status-badge ${badgeCls}">${status}</span></td>
+                        <td><button class="btn-detail-view" onclick="openAppDetail(this)" data-instructor="${dataJson}">View Details</button></td>
                         <td>${actions}</td>
                     </tr>`;
                 }).join('');
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="6" style="color:red;padding:1rem;">Error loading applications: ${escHtml(err.message)}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="color:red;padding:1rem;">Error loading applications: ${escHtml(err.message)}</td></tr>`;
             }
         }
         window.loadApplications = loadApplications;
+
+        // ── Application Detail Modal ──────────────────────────────────────
+        window.openAppDetail = function(btn) {
+            const i = JSON.parse(btn.getAttribute('data-instructor').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"'));
+            const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+            const status   = i.status || 'approved';
+            const badgeCls = status === 'approved' ? 'badge-approved' : status === 'declined' ? 'badge-declined' : 'badge-pending';
+
+            document.getElementById('adAvatar').src = i.avatar_url || defaultAvatar;
+            document.getElementById('adName').textContent = i.name || '—';
+            document.getElementById('adEmail').textContent = i.email || '—';
+            document.getElementById('adStatusBadge').textContent = status;
+            document.getElementById('adStatusBadge').className = 'status-badge ' + badgeCls;
+            document.getElementById('adCountry').textContent = i.native_country || '—';
+            document.getElementById('adTimezone').textContent = i.timezone || '—';
+            document.getElementById('adSpoken').textContent = (i.languages_spoken || []).join(', ') || '—';
+            document.getElementById('adTeaching').textContent = (i.languages_teaching || []).join(', ') || '—';
+            document.getElementById('adRate').textContent = i.price_per_lesson ? `${i.price_per_lesson} ${i.currency || 'USD'}` : '—';
+            document.getElementById('adExperience').textContent = i.teaching_experience || '—';
+            document.getElementById('adCerts').textContent = i.certifications || '—';
+            document.getElementById('adStyle').textContent = i.teaching_style || '—';
+
+            const videoEl = document.getElementById('adVideo');
+            const videoField = document.getElementById('adVideoField');
+            if (i.intro_video_url) {
+                videoEl.src = i.intro_video_url;
+                videoField.style.display = 'block';
+            } else {
+                videoEl.src = '';
+                videoField.style.display = 'none';
+            }
+
+            // Wire approve/decline buttons
+            const approveBtn = document.getElementById('adApproveBtn');
+            const declineBtn = document.getElementById('adDeclineBtn');
+            approveBtn.onclick = () => { closeAppDetail(); doApprove(i.id, i.name || ''); };
+            declineBtn.onclick = () => { closeAppDetail(); doDecline(i.id, i.name || ''); };
+
+            // Show/hide action buttons based on status
+            approveBtn.style.display = (status === 'approved') ? 'none' : 'inline-block';
+            declineBtn.style.display = (status === 'declined') ? 'none' : 'inline-block';
+            if (status === 'approved') declineBtn.textContent = 'Revoke';
+            else declineBtn.textContent = 'Decline';
+            if (status === 'declined') approveBtn.textContent = 'Re-approve';
+            else approveBtn.textContent = 'Approve';
+
+            document.getElementById('appDetailModal').classList.add('show');
+        };
+
+        window.closeAppDetail = function() {
+            const modal = document.getElementById('appDetailModal');
+            modal.classList.remove('show');
+            // Pause video when closing
+            const videoEl = document.getElementById('adVideo');
+            videoEl.pause();
+        };
+
+        // Close modal on overlay click
+        document.getElementById('appDetailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeAppDetail();
+        });
 
         window.doApprove = function(id, name) {
             showConfirm(
