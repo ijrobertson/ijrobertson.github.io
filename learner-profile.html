@@ -241,6 +241,18 @@
         .btn-exchange.partners {
             background: #6c757d; cursor: default;
         }
+        .btn-message {
+            width: 100%; padding: 0.75rem;
+            background: #e8f8f7; color: #20bcba;
+            border: 2px solid #20bcba; border-radius: 8px;
+            font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-message:hover { background: #d0f0ef; }
+        .btn-message:disabled {
+            background: #f0f0f0; color: #aaa;
+            border-color: #ddd; cursor: default;
+        }
 
         .compat-card {
             background: white; border-radius: 12px;
@@ -454,6 +466,11 @@
                 <p id="heroCountry" class="hero-country"></p>
                 <div id="heroLangs" class="hero-langs"></div>
                 <p id="heroSince" class="hero-since"></p>
+                <div id="notAcceptingHeroBadge" style="display:none; margin-top:0.75rem;">
+                  <span style="background:rgba(255,243,205,0.9); color:#856404; border-radius:20px; padding:0.35rem 0.9rem; font-size:0.85rem; font-weight:600;">
+                    <i class="fas fa-user-slash" style="margin-right:0.4rem;"></i>Not accepting new connections
+                  </span>
+                </div>
             </div>
         </div>
 
@@ -499,6 +516,9 @@
                     <p id="exchangeSubtext">Connect to practice languages together</p>
                     <button class="btn-exchange" id="exchangeBtn">
                         <i class="fas fa-user-plus"></i> Send Exchange Request
+                    </button>
+                    <button class="btn-message" id="messageBtn" style="margin-top:0.6rem;">
+                        <i class="fas fa-comment"></i> Send a Message
                     </button>
                 </div>
 
@@ -647,6 +667,10 @@
                     'Member since ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
             }
 
+            if (data.acceptingRequests === false) {
+                document.getElementById('notAcceptingHeroBadge').style.display = 'block';
+            }
+
             // Languages card
             const speaksTags = document.getElementById('speaksTags');
             if (spoken.length > 0) {
@@ -707,7 +731,7 @@
                 const card = document.getElementById('exchangeCard');
                 card.innerHTML = `
                     <h4>Start a Language Exchange</h4>
-                    <p>Sign in to connect with learners</p>
+                    <p>Sign in to send exchange requests and messages.</p>
                     <a href="login.html" style="display:block;width:100%;padding:0.85rem;background:#20bcba;color:white;border-radius:8px;font-weight:700;font-size:1rem;text-align:center;text-decoration:none;">Sign In to Connect</a>
                 `;
                 return;
@@ -765,6 +789,19 @@
             const btn = document.getElementById('exchangeBtn');
             if (!btn || !currentUser || currentUser.uid === profileUid) return;
 
+            const msgBtn = document.getElementById('messageBtn');
+            function enableMsgBtn() {
+                if (!msgBtn) return;
+                msgBtn.disabled = false;
+                msgBtn.innerHTML = '<i class="fas fa-comment"></i> Send a Message';
+                msgBtn.onclick = () => { window.location.href = 'messages.html?with=' + profileUid; };
+            }
+            function disableMsgBtn() {
+                if (!msgBtn) return;
+                msgBtn.disabled = true;
+                msgBtn.innerHTML = '<i class="fas fa-comment"></i> Not Accepting Messages';
+            }
+
             // Check if already sent
             try {
                 const sentQ = await getDocs(query(
@@ -791,12 +828,18 @@
                     btn.textContent = 'Already Partners';
                     btn.className = 'btn-exchange partners';
                     btn.disabled = true;
+                    enableMsgBtn();
                     return;
                 }
                 if (alreadySent) {
                     btn.innerHTML = '<i class="fas fa-check"></i> Request Sent';
                     btn.disabled = true;
                     btn.style.background = '#28a745';
+                    if (profileData && profileData.acceptingRequests === false) {
+                        disableMsgBtn();
+                    } else {
+                        enableMsgBtn();
+                    }
                     return;
                 }
             } catch (e) {
@@ -811,8 +854,11 @@
                 document.getElementById('exchangeCard').querySelector('h4').textContent = 'Not Accepting New Connections';
                 document.getElementById('exchangeSubtext').textContent =
                     `${profileData.name || 'This user'} is not currently accepting exchange requests or messages from new users.`;
+                disableMsgBtn();
                 return;
             }
+
+            enableMsgBtn();
 
             btn.addEventListener('click', async () => {
                 btn.disabled = true;
