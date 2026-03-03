@@ -803,6 +803,17 @@
                 console.error('Error checking friend requests:', e);
             }
 
+            // Not accepting requests from new users
+            if (profileData && profileData.acceptingRequests === false) {
+                btn.textContent = 'Not Accepting Requests';
+                btn.className = 'btn-exchange partners';
+                btn.disabled = true;
+                document.getElementById('exchangeCard').querySelector('h4').textContent = 'Not Accepting New Connections';
+                document.getElementById('exchangeSubtext').textContent =
+                    `${profileData.name || 'This user'} is not currently accepting exchange requests or messages from new users.`;
+                return;
+            }
+
             btn.addEventListener('click', async () => {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';

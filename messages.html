@@ -1001,6 +1001,18 @@
             }
         }
 
+        async function checkMessagingBlocked(otherUserId) {
+            const [uDoc, sentSnap, receivedSnap] = await Promise.all([
+                getDoc(doc(db, 'users', otherUserId)),
+                getDocs(query(collection(db, 'friendRequests'),
+                    where('fromId', '==', currentUser.uid), where('toId', '==', otherUserId), where('status', '==', 'accepted'))),
+                getDocs(query(collection(db, 'friendRequests'),
+                    where('toId', '==', currentUser.uid), where('fromId', '==', otherUserId), where('status', '==', 'accepted')))
+            ]);
+            if (!uDoc.exists() || uDoc.data().acceptingRequests !== false) return false;
+            return sentSnap.empty && receivedSnap.empty; // true = blocked (not friends)
+        }
+
         async function openConversation(conversationId, otherUserId, event = null) {
             console.log('🎨 openConversation called');
             console.log('  - conversationId:', conversationId);
@@ -1071,6 +1083,10 @@
                     </div>
                 </div>
                 <div class="messages-area" id="messagesArea"></div>
+                <div id="notAcceptingNotice" style="display:none; margin: 0 1rem 0.75rem; padding: 0.75rem 1rem; background: #fff3cd; color: #856404; border-radius: 8px; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                    This user is not currently accepting messages from new connections.
+                </div>
                 <div class="message-input-area">
                     <form class="message-input-form" id="messageForm">
                         <input type="text" class="message-input" id="messageInput" placeholder="Type a message..." required>
@@ -1086,6 +1102,18 @@
 
             console.log('✅ Chat interface rendered');
             console.log('📝 Message input element:', document.getElementById('messageInput'));
+
+            // Check if the other user is blocking new messages
+            try {
+                const blocked = await checkMessagingBlocked(otherUserId);
+                if (blocked) {
+                    document.getElementById('notAcceptingNotice').style.display = 'block';
+                    document.getElementById('messageInput').disabled = true;
+                    document.querySelector('#messageForm .send-btn').disabled = true;
+                }
+            } catch (e) {
+                console.error('Error checking messaging blocked status:', e);
+            }
 
             // Load messages
             loadMessages(conversationId);
@@ -1408,6 +1436,20 @@
                     }
                     if (!currentUserData) {
                         throw new Error('Current user profile not found in either users or instructors collection. UserId: ' + currentUser.uid);
+                    }
+
+                    // Check if recipient is blocking new messages
+                    const blocked = await checkMessagingBlocked(recipientId);
+                    if (blocked) {
+                        chatPanel.innerHTML = `
+                            <div style="padding: 2rem; text-align: center;">
+                                <p style="color: #856404; background: #fff3cd; padding: 1rem; border-radius: 8px; display: inline-block;">
+                                    <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                                    This user is not currently accepting messages from new connections.
+                                </p>
+                            </div>
+                        `;
+                        return;
                     }
 
                     console.log('👤 Recipient data:', recipientData);

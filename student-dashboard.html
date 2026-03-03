@@ -835,6 +835,16 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <label for="acceptingRequests" style="margin: 0; flex: 1; cursor: pointer;">
+            <i class="fas fa-user-check" style="margin-right: 0.5rem; color: #20bcba;"></i>
+            Accepting language exchange requests &amp; messages from new users
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="acceptingRequests" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
 
         <button class="save-btn" id="save-profile">Save Profile</button>
         <div class="status" id="status-msg"></div>
@@ -1166,6 +1176,7 @@
           // Email notifications (default to true if not set)
           const emailNotifications = profile.emailNotifications !== false;
           document.getElementById('emailNotifications').checked = emailNotifications;
+          document.getElementById('acceptingRequests').checked = profile.acceptingRequests !== false;
 
           // Load interests
           selectedInterests = profile.interests || [];
@@ -1315,6 +1326,7 @@
         languages_learning: learningLanguages,
         interests: selectedInterests,
         emailNotifications: document.getElementById('emailNotifications').checked,
+        acceptingRequests: document.getElementById('acceptingRequests').checked,
         role: 'student',
         email: currentUser.email,
         updatedAt: new Date().toISOString()
