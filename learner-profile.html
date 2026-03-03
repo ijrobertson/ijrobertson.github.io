@@ -116,14 +116,30 @@
             font-size: 1rem; margin-bottom: 0.75rem;
         }
         .hero-langs {
-            display: flex; flex-wrap: wrap; gap: 0.4rem;
-            justify-content: center; margin-bottom: 0.75rem;
+            display: flex; flex-direction: column; gap: 0.5rem;
+            align-items: center; margin-bottom: 0.75rem;
         }
-        .hero-lang-badge {
-            background: rgba(32,188,186,0.25);
-            color: white; border-radius: 20px;
-            padding: 0.25rem 0.75rem; font-size: 0.85rem;
-            border: 1px solid rgba(32,188,186,0.5);
+        .hero-lang-group {
+            display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+        }
+        .hero-lang-label {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: rgba(255,255,255,0.55);
+            margin-right: 0.1rem;
+        }
+        /* Speaks badge — solid teal */
+        .hero-lang-badge-speaks {
+            background: #20bcba; color: white;
+            border-radius: 20px; padding: 0.25rem 0.75rem;
+            font-size: 0.83rem; font-weight: 600;
+            border: 1px solid #20bcba;
+        }
+        /* Learning badge — outlined, white */
+        .hero-lang-badge-learning {
+            background: transparent; color: white;
+            border-radius: 20px; padding: 0.25rem 0.75rem;
+            font-size: 0.83rem; font-weight: 600;
+            border: 1.5px dashed rgba(255,255,255,0.6);
         }
         .hero-since {
             color: rgba(255,255,255,0.55);
@@ -192,9 +208,9 @@
             display: flex; flex-wrap: wrap; gap: 0.4rem;
         }
         .interest-tag {
-            background: #e8f0ff; color: #4158b0;
+            background: #e8f8f7; color: #20bcba;
             border-radius: 20px; padding: 0.35rem 0.85rem;
-            font-size: 0.83rem;
+            font-size: 0.83rem; font-weight: 600;
         }
 
         /* ── Sidebar cards ──────────────────────────────────────── */
@@ -596,16 +612,34 @@
             // Language summary badges
             const heroLangs = document.getElementById('heroLangs');
             if (spoken.length > 0) {
-                const speaksLabel = document.createElement('span');
-                speaksLabel.className = 'hero-lang-badge';
-                speaksLabel.textContent = 'Speaks ' + spoken.join(', ');
-                heroLangs.appendChild(speaksLabel);
+                const group = document.createElement('div');
+                group.className = 'hero-lang-group';
+                const lbl = document.createElement('span');
+                lbl.className = 'hero-lang-label';
+                lbl.textContent = 'Speaks';
+                group.appendChild(lbl);
+                spoken.forEach(lang => {
+                    const badge = document.createElement('span');
+                    badge.className = 'hero-lang-badge-speaks';
+                    badge.textContent = lang;
+                    group.appendChild(badge);
+                });
+                heroLangs.appendChild(group);
             }
             if (learning.length > 0) {
-                const learnsLabel = document.createElement('span');
-                learnsLabel.className = 'hero-lang-badge';
-                learnsLabel.textContent = 'Learning ' + learning.join(', ');
-                heroLangs.appendChild(learnsLabel);
+                const group = document.createElement('div');
+                group.className = 'hero-lang-group';
+                const lbl = document.createElement('span');
+                lbl.className = 'hero-lang-label';
+                lbl.textContent = 'Learning';
+                group.appendChild(lbl);
+                learning.forEach(lang => {
+                    const badge = document.createElement('span');
+                    badge.className = 'hero-lang-badge-learning';
+                    badge.textContent = lang;
+                    group.appendChild(badge);
+                });
+                heroLangs.appendChild(group);
             }
 
             // Member since
@@ -883,11 +917,16 @@
                 document.getElementById('profileNavWrapper').style.display = 'block';
                 document.getElementById('signInWrapper').style.display = 'none';
 
-                // Load nav avatar
+                // Load nav avatar — check instructors first, then students
                 try {
-                    const uDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (uDoc.exists() && uDoc.data().avatar_url) {
-                        document.getElementById('navProfilePic').src = uDoc.data().avatar_url;
+                    const iDoc = await getDoc(doc(db, 'instructors', user.uid));
+                    if (iDoc.exists() && iDoc.data().avatar_url) {
+                        document.getElementById('navProfilePic').src = iDoc.data().avatar_url;
+                    } else {
+                        const uDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (uDoc.exists() && uDoc.data().avatar_url) {
+                            document.getElementById('navProfilePic').src = uDoc.data().avatar_url;
+                        }
                     }
                 } catch (_) {}
             }
