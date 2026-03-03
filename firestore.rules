@@ -162,5 +162,17 @@ service cloud.firestore {
       // Reviews cannot be edited or deleted
       allow update, delete: if false;
     }
+
+    // User reports — submitted when a user reports another user's profile
+    match /userReports/{reportId} {
+      // Any logged-in user can submit a report (cannot report themselves)
+      allow create: if request.auth != null
+                   && request.resource.data.reporterId == request.auth.uid
+                   && request.resource.data.reporterId != request.resource.data.reportedUserId;
+      // Only admins can read or delete reports
+      allow read, delete: if request.auth != null
+                         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow update: if false;
+    }
   }
 }

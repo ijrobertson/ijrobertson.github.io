@@ -395,6 +395,9 @@
                     <div class="admin-tab" data-tab="messages">
                         Messages <span class="tab-badge info" id="msgBadge" style="display:none;">0</span>
                     </div>
+                    <div class="admin-tab" data-tab="reports">
+                        User Reports <span class="tab-badge" id="reportsBadge" style="display:none;">0</span>
+                    </div>
                     <div class="admin-tab" data-tab="overview">Overview</div>
                 </div>
             </div>
@@ -598,6 +601,35 @@
                     </div>
                 </div>
 
+                <!-- ── User Reports Tab ───────────────────────────────── -->
+                <div class="tab-pane" id="tab-reports">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-flag" style="color:#dc3545;margin-right:8px;"></i>User Reports</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;" onclick="loadReports()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Reporter</th>
+                                        <th>Reported User</th>
+                                        <th>Reason</th>
+                                        <th>Details</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsBody">
+                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── Overview Tab ───────────────────────────────────── -->
                 <div class="tab-pane" id="tab-overview">
                     <div class="overview-grid" id="overviewGrid">
@@ -740,7 +772,7 @@
         import {
             auth, db, functions,
             onAuthStateChanged, signOut,
-            doc, getDoc, getDocs, collection, query, where, orderBy, limit,
+            doc, getDoc, getDocs, deleteDoc, collection, query, where, orderBy, limit,
             httpsCallable
         } from './lib/firebaseClient.js';
 
@@ -833,6 +865,7 @@
                     if (name === 'users')       loadUsers();
                     if (name === 'bookings')    loadBookings();
                     if (name === 'messages')    loadMessages();
+                    if (name === 'reports')     loadReports();
                     if (name === 'overview')    loadOverview();
                 }
             });
@@ -892,6 +925,95 @@
             }
         }
         window.loadStats = loadStats;
+
+        // ── User Reports ─────────────────────────────────────────────────
+        async function loadReports() {
+            const tbody = document.getElementById('reportsBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, 'userReports'));
+                const reports = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => {
+                        const ta = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+                        const tb = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+                        return tb - ta;
+                    });
+
+                // Update badge
+                const badge = document.getElementById('reportsBadge');
+                if (reports.length > 0) {
+                    badge.textContent = reports.length;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                if (reports.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-flag"></i>No reports yet.</div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = reports.map(r => {
+                    const date = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString() : '—';
+                    const details = escHtml(r.details || '—');
+                    return `<tr>
+                        <td><small style="color:#999;">${escHtml(r.reporterId || '—')}</small></td>
+                        <td>
+                            <strong>${escHtml(r.reportedUserName || '—')}</strong><br>
+                            <small style="color:#999;">${escHtml(r.reportedUserId || '—')}</small>
+                        </td>
+                        <td><span class="status-badge badge-pending">${escHtml(r.reason || '—')}</span></td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${details}</td>
+                        <td>${date}</td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn-unflag" style="margin-right:4px;" onclick="dismissReport('${r.id}')">Dismiss</button>
+                            <button class="btn-flag" style="margin-right:4px;" onclick="flagReportedUser('${escHtml(r.reportedUserId || '')}','${escHtml(r.reportedUserName || '')}')">Flag User</button>
+                            <button class="btn-delete" onclick="deleteReportedUser('${escHtml(r.reportedUserId || '')}','${escHtml(r.reportedUserName || '')}')">Delete User</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:red;padding:1rem;">Error loading reports: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadReports = loadReports;
+
+        window.dismissReport = function(reportId) {
+            showConfirm('Dismiss Report', 'Remove this report without action?', async () => {
+                try {
+                    await deleteDoc(doc(db, 'userReports', reportId));
+                    await loadReports();
+                } catch (e) {
+                    alert('Error dismissing report: ' + e.message);
+                }
+            });
+        };
+
+        window.flagReportedUser = function(uid, name) {
+            showConfirm('Flag User', `Flag <strong>${escHtml(name || uid)}</strong> as suspicious?`, async () => {
+                try {
+                    await flagUser({ userId: uid, userCollection: 'users', flagged: true });
+                    alert('User flagged successfully.');
+                    await loadStats();
+                } catch (e) {
+                    alert('Error flagging user: ' + e.message);
+                }
+            }, true);
+        };
+
+        window.deleteReportedUser = function(uid, name) {
+            showConfirm('Delete User', `Permanently delete account for <strong>${escHtml(name || uid)}</strong>? This cannot be undone.`, async () => {
+                try {
+                    await deleteUser({ userId: uid });
+                    await loadReports();
+                    await loadStats();
+                    alert('User deleted successfully.');
+                } catch (e) {
+                    alert('Error deleting user: ' + e.message);
+                }
+            });
+        };
 
         // ── Helper: render display name ───────────────────────────────────
         function displayName(i) {

@@ -753,44 +753,6 @@
         </div>
     </div>
 
-    <!-- User Detail Modal -->
-    <div id="userModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="close">&times;</span>
-                <img id="modalAvatar" class="modal-avatar" src="" alt="User Avatar">
-                <h2 id="modalName" class="modal-name">User Name</h2>
-            </div>
-            <div class="modal-body">
-                <div class="info-section">
-                    <h4><i class="fas fa-comments"></i> Languages I Speak</h4>
-                    <div id="modalSpoken" class="language-tags"></div>
-                </div>
-                <div class="info-section">
-                    <h4><i class="fas fa-graduation-cap"></i> Languages I'm Learning</h4>
-                    <div id="modalLearning" class="language-tags"></div>
-                </div>
-                <div class="info-section">
-                    <h4><i class="fas fa-map-marker-alt"></i> Country</h4>
-                    <p id="modalCountry">Not specified</p>
-                </div>
-                <div class="info-section">
-                    <h4><i class="fas fa-user"></i> About Me</h4>
-                    <p id="modalAbout">No bio yet</p>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-primary-modal" id="sendMessageBtn">
-                    <i class="fas fa-envelope"></i> Send Message
-                </button>
-                <button class="btn-primary-modal" id="sendRequestBtn">
-                    <i class="fas fa-user-plus"></i> Send Friend Request
-                </button>
-                <button class="btn-secondary-modal" id="closeModalBtn">Close</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Scripts -->
     <script src="js/jquery.min.js"></script>
     <script src="js/popper.min.js"></script>
@@ -813,11 +775,6 @@
         const learningFilter = document.getElementById('learningFilter');
         const speakingFilter = document.getElementById('speakingFilter');
         const countryFilter = document.getElementById('countryFilter');
-        const modal = document.getElementById('userModal');
-        const closeBtn = document.querySelector('.close');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-        const sendRequestBtn = document.getElementById('sendRequestBtn');
-        const sendMessageBtn = document.getElementById('sendMessageBtn');
         const navProfilePic = document.getElementById('navProfilePic');
         const profileNavWrapper = document.getElementById('profileNavWrapper');
         const signInWrapper = document.getElementById('signInWrapper');
@@ -825,7 +782,6 @@
 
         let allUsers = [];
         let currentUser = null;
-        let selectedUserId = null;
 
         // Check authentication and load profile picture
         onAuthStateChanged(auth, async (user) => {
@@ -1023,7 +979,7 @@
 
             const card = document.createElement('div');
             card.className = 'user-card';
-            card.onclick = () => openUserModal(user);
+            card.onclick = () => { window.location.href = `learner-profile.html?uid=${user.id}`; };
 
             let cardHTML = `
                 <div class="user-card-header">
@@ -1079,152 +1035,6 @@
             card.innerHTML = cardHTML;
             return card;
         }
-
-        function openUserModal(user) {
-            console.log('👤 Opening modal for user:', user.id, user.name);
-            selectedUserId = user.id;
-            console.log('✅ selectedUserId set to:', selectedUserId);
-
-            const avatar = user.avatar_url || user.avatar || DEFAULT_AVATAR;
-            const name = escapeHtml(user.name || user.display_name || 'Anonymous User');
-            const spoken = user.languages_spoken || [];
-            const learning = user.languages_learning || [];
-            const country = escapeHtml(user.country || 'Not specified');
-            const about = escapeHtml(user.about_me || user.bio || 'No bio yet');
-
-            document.getElementById('modalAvatar').src = avatar;
-            document.getElementById('modalName').textContent = name;
-            document.getElementById('modalCountry').textContent = country;
-            document.getElementById('modalAbout').textContent = about;
-
-            const modalSpoken = document.getElementById('modalSpoken');
-            modalSpoken.innerHTML = '';
-            if (spoken.length > 0) {
-                spoken.forEach(lang => {
-                    modalSpoken.innerHTML += `<span class="language-tag">${escapeHtml(lang)}</span>`;
-                });
-            } else {
-                modalSpoken.innerHTML = '<p class="incomplete-profile">Not specified</p>';
-            }
-
-            const modalLearning = document.getElementById('modalLearning');
-            modalLearning.innerHTML = '';
-            if (learning.length > 0) {
-                learning.forEach(lang => {
-                    modalLearning.innerHTML += `<span class="language-tag">${escapeHtml(lang)}</span>`;
-                });
-            } else {
-                modalLearning.innerHTML = '<p class="incomplete-profile">Not specified</p>';
-            }
-
-            modal.classList.add('show');
-        }
-
-        function closeModal() {
-            modal.classList.remove('show');
-            selectedUserId = null;
-        }
-
-        closeBtn.onclick = closeModal;
-        closeModalBtn.onclick = closeModal;
-
-        window.onclick = (event) => {
-            if (event.target === modal) {
-                closeModal();
-            }
-        };
-
-        sendMessageBtn.onclick = () => {
-            console.log('📨 Send Message clicked');
-            console.log('  - selectedUserId:', selectedUserId);
-            console.log('  - currentUser:', currentUser?.uid);
-
-            if (!selectedUserId) {
-                console.error('❌ No user selected!');
-                alert('Error: No user selected. Please try again.');
-                return;
-            }
-            if (!currentUser) {
-                console.error('❌ Not logged in!');
-                alert('Error: You must be logged in.');
-                return;
-            }
-
-            // Use sessionStorage to pass recipient ID (more reliable than URL params)
-            sessionStorage.setItem('messageRecipientId', selectedUserId);
-            console.log('💾 Stored recipient ID in sessionStorage');
-            console.log('🚀 Redirecting to messages page');
-            window.location.href = '/messages.html';
-        };
-
-        sendRequestBtn.onclick = async () => {
-            if (!selectedUserId || !currentUser) return;
-
-            // Disable button to prevent double-send
-            sendRequestBtn.disabled = true;
-            sendRequestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-
-            try {
-                // Check if the current user already sent a pending request to this person.
-                // We only query by fromId == currentUser.uid because the security rule
-                // only allows reading documents where the authenticated user is the sender.
-                const existingOut = await getDocs(query(
-                    collection(db, 'friendRequests'),
-                    where('fromId', '==', currentUser.uid)
-                ));
-                const alreadySent = existingOut.docs.some(d =>
-                    d.data().toId === selectedUserId && d.data().status === 'pending'
-                );
-
-                if (alreadySent) {
-                    sendRequestBtn.disabled = false;
-                    sendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Send Friend Request';
-                    alert('You already sent a partner request to this user.');
-                    return;
-                }
-
-                // Fetch current user's profile — check instructors first, then students
-                let fromName = currentUser.displayName || currentUser.email;
-                let fromAvatar = '';
-                try {
-                    const instructorDoc = await getDoc(doc(db, 'instructors', currentUser.uid));
-                    if (instructorDoc.exists()) {
-                        const d = instructorDoc.data();
-                        fromName = d.name || fromName;
-                        fromAvatar = d.avatar_url || '';
-                    } else {
-                        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-                        if (userDoc.exists()) {
-                            const d = userDoc.data();
-                            fromName = d.name || fromName;
-                            fromAvatar = d.avatar_url || '';
-                        }
-                    }
-                } catch (e) {}
-
-                await addDoc(collection(db, 'friendRequests'), {
-                    fromId: currentUser.uid,
-                    toId: selectedUserId,
-                    fromName: fromName,
-                    fromAvatar: fromAvatar,
-                    status: 'pending',
-                    createdAt: serverTimestamp()
-                });
-
-                sendRequestBtn.innerHTML = '<i class="fas fa-check"></i> Request Sent!';
-                setTimeout(() => {
-                    closeModal();
-                    sendRequestBtn.disabled = false;
-                    sendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Send Friend Request';
-                }, 1500);
-
-            } catch (e) {
-                console.error('Error sending friend request:', e);
-                sendRequestBtn.disabled = false;
-                sendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Send Friend Request';
-                alert('Failed to send request. Please try again.');
-            }
-        };
 
         // Event listeners for filters
         learningFilter.addEventListener('change', renderUsers);

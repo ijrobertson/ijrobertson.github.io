@@ -541,6 +541,16 @@
     .setup-submit-btn:hover { background: #199c9a; }
     .setup-submit-btn:disabled { opacity: 0.65; cursor: not-allowed; }
 
+    /* ── Interests Grid ──────────────────────────────────── */
+    .interests-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.25rem; }
+    .interest-pill {
+      background: #f0f2f5; color: #555; border: 1.5px solid #ddd;
+      padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.82rem;
+      cursor: pointer; transition: all 0.15s; user-select: none;
+    }
+    .interest-pill.selected { background: #113448; color: white; border-color: #113448; }
+    .interest-pill:hover:not(.selected) { border-color: #20bcba; color: #20bcba; }
+
     /* ── Danger Zone ─────────────────────────── */
     .danger-card {
       background: #fff;
@@ -759,6 +769,12 @@
       </div>
 
       <div class="setup-field">
+        <label>Interests <span style="font-weight:400;color:#888;">(optional)</span></label>
+        <p style="font-size:0.82rem;color:#777;margin-bottom:0.6rem;">Pick any that apply — helps find compatible exchange partners</p>
+        <div class="interests-grid" id="setup-interests-grid"><!-- rendered by JS --></div>
+      </div>
+
+      <div class="setup-field">
         <label>Profile Picture <span class="setup-req">*</span></label>
         <div class="setup-avatar-row">
           <img id="setup-avatar-preview" class="setup-avatar-img"
@@ -803,6 +819,9 @@
 
         <label for="about_me">About Me</label>
         <textarea id="about_me" placeholder="Tell us a bit about yourself"></textarea>
+
+        <label>My Interests <span style="font-size:0.8rem;font-weight:400;color:#888;">(optional)</span></label>
+        <div class="interests-grid" id="interests-grid" style="margin-bottom:1rem;"></div>
 
         <div class="section-title" style="margin-top: 1.5rem; font-size: 1.1rem;">Notification Settings</div>
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
@@ -967,6 +986,38 @@
     // Default avatar placeholder (inline SVG)
     const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
 
+    const INTERESTS = [
+      "Music", "Travel", "Sports", "Gaming", "Cooking", "Movies", "Books", "Art",
+      "Photography", "Hiking", "Fitness", "Technology", "Fashion", "Dancing", "Yoga",
+      "Podcasts", "Nature", "History", "Science", "Culture", "Writing", "Volunteering",
+      "Business", "Food & Drink", "Anime & Manga"
+    ];
+
+    let selectedInterests = [];
+    let setupSelectedInterests = [];
+
+    function renderInterestsGrid(gridId, selectedArr) {
+      const grid = document.getElementById(gridId);
+      if (!grid) return;
+      grid.innerHTML = '';
+      INTERESTS.forEach(interest => {
+        const pill = document.createElement('span');
+        pill.className = 'interest-pill' + (selectedArr.includes(interest) ? ' selected' : '');
+        pill.textContent = interest;
+        pill.addEventListener('click', () => {
+          const idx = selectedArr.indexOf(interest);
+          if (idx === -1) {
+            selectedArr.push(interest);
+            pill.classList.add('selected');
+          } else {
+            selectedArr.splice(idx, 1);
+            pill.classList.remove('selected');
+          }
+        });
+        grid.appendChild(pill);
+      });
+    }
+
     let currentUser = null;
     let spokenLanguages = [];
     let learningLanguages = [];
@@ -1115,6 +1166,10 @@
           const emailNotifications = profile.emailNotifications !== false;
           document.getElementById('emailNotifications').checked = emailNotifications;
 
+          // Load interests
+          selectedInterests = profile.interests || [];
+          renderInterestsGrid('interests-grid', selectedInterests);
+
           // Not a new user if profile exists
           isNewUser = false;
         } else {
@@ -1147,6 +1202,10 @@
       populateCountries();
       populateLanguages();
       console.log('✅ Dropdowns populated');
+
+      // Render interests grids (setup modal + main profile)
+      renderInterestsGrid('setup-interests-grid', setupSelectedInterests);
+      renderInterestsGrid('interests-grid', selectedInterests);
 
       // Add event listeners for language dropdowns (auto-add on selection)
       document.getElementById('spokenLanguage').addEventListener('change', () => addLanguage('spoken'));
@@ -1253,6 +1312,7 @@
         about_me: document.getElementById('about_me').value.trim(),
         languages_spoken: spokenLanguages,
         languages_learning: learningLanguages,
+        interests: selectedInterests,
         emailNotifications: document.getElementById('emailNotifications').checked,
         role: 'student',
         email: currentUser.email,
@@ -1432,6 +1492,7 @@
           about_me: about,
           languages_spoken: setupSpokenLangs,
           languages_learning: setupLearningLangs,
+          interests: setupSelectedInterests,
           avatar_url: avatarUrl,
           role: 'student',
           email: currentUser.email,
@@ -1448,8 +1509,10 @@
         document.getElementById('native_country').value = country;
         spokenLanguages = [...setupSpokenLangs];
         learningLanguages = [...setupLearningLangs];
+        selectedInterests = [...setupSelectedInterests];
         renderLanguages('spoken');
         renderLanguages('learning');
+        renderInterestsGrid('interests-grid', selectedInterests);
         document.getElementById('avatarPreview').src = avatarUrl;
         document.getElementById('navProfilePic').src = avatarUrl;
         localStorage.setItem('student_avatar', avatarUrl);

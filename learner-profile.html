@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="View learner profile on Lingua Bud.">
+    <meta name="author" content="Lingua Bud">
+    <title>Learner Profile - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        body {
+            padding-top: 4.5rem;
+            background-color: #f8f9fa;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        /* ── Navbar ────────────────────────────────────────────── */
+        .navbar-custom {
+            background-color: #113448 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .profile-nav-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: 1rem;
+        }
+        .profile-pic-nav {
+            width: 40px; height: 40px;
+            border-radius: 50%; object-fit: cover;
+            border: 2px solid #20bcba; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .profile-pic-nav:hover { transform: scale(1.1); }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed; right: 1rem; top: 60px;
+            background-color: white; min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px; z-index: 9999;
+            opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content {
+                position: absolute; right: 0; top: 100%; margin-top: 0.25rem;
+            }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px; text-decoration: none;
+            display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .profile-dropdown-content.show {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .notification-badge {
+            position: absolute; top: -2px; right: -2px;
+            background-color: #dc3545; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            display: none; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: bold; border: 2px solid white;
+        }
+        .notification-badge.show { display: flex; }
+        .unread-count {
+            display: none; background-color: #dc3545; color: white;
+            border-radius: 10px; padding: 2px 6px; font-size: 11px;
+            font-weight: bold; margin-left: 8px; min-width: 18px; text-align: center;
+        }
+        .unread-count.show { display: inline-block; }
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) {
+            .navbar-nav { margin-left: 0 !important; }
+        }
+
+        /* ── Hero ──────────────────────────────────────────────── */
+        .profile-hero {
+            background: linear-gradient(135deg, #113448 0%, #1a5f7a 100%);
+            padding: 3rem 0 2.5rem;
+            text-align: center;
+        }
+        .hero-avatar {
+            width: 140px; height: 140px;
+            border-radius: 50%; object-fit: cover;
+            border: 5px solid white;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+            margin: 0 auto 1.25rem;
+            display: block;
+        }
+        .hero-name {
+            font-size: 1.8rem; font-weight: 700;
+            color: white; margin: 0 0 0.4rem;
+        }
+        .hero-country {
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem; margin-bottom: 0.75rem;
+        }
+        .hero-langs {
+            display: flex; flex-wrap: wrap; gap: 0.4rem;
+            justify-content: center; margin-bottom: 0.75rem;
+        }
+        .hero-lang-badge {
+            background: rgba(32,188,186,0.25);
+            color: white; border-radius: 20px;
+            padding: 0.25rem 0.75rem; font-size: 0.85rem;
+            border: 1px solid rgba(32,188,186,0.5);
+        }
+        .hero-since {
+            color: rgba(255,255,255,0.55);
+            font-size: 0.82rem;
+        }
+
+        /* ── Main layout ────────────────────────────────────────── */
+        .profile-layout {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: flex;
+            gap: 1.75rem;
+            align-items: flex-start;
+        }
+        .profile-main { flex: 2; min-width: 0; }
+        .profile-sidebar {
+            flex: 1; min-width: 300px;
+            display: flex; flex-direction: column; gap: 1.25rem;
+        }
+        @media (max-width: 767px) {
+            .profile-layout { flex-direction: column; }
+            .profile-sidebar { min-width: 0; }
+        }
+
+        /* ── Cards ──────────────────────────────────────────────── */
+        .info-card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            padding: 1.5rem; margin-bottom: 1.25rem;
+        }
+        .info-card h4 {
+            font-size: 1rem; font-weight: 700;
+            color: #113448; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .info-card h4 i { color: #20bcba; }
+
+        /* Language sections inside card */
+        .lang-section-title {
+            font-size: 0.75rem; font-weight: 700;
+            color: #888; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 0.5rem;
+        }
+        .lang-tags {
+            display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem;
+        }
+        .lang-tag {
+            background: #e8f8f7; color: #20bcba;
+            padding: 0.35rem 0.85rem; border-radius: 20px;
+            font-size: 0.85rem; font-weight: 600;
+        }
+        .lang-none {
+            color: #aaa; font-style: italic; font-size: 0.9rem;
+        }
+
+        /* About / Bio */
+        .bio-text {
+            color: #444; line-height: 1.7; font-size: 0.95rem;
+            margin: 0;
+        }
+        .bio-none { color: #aaa; font-style: italic; font-size: 0.9rem; }
+
+        /* Interest pills */
+        .interest-tags {
+            display: flex; flex-wrap: wrap; gap: 0.4rem;
+        }
+        .interest-tag {
+            background: #e8f0ff; color: #4158b0;
+            border-radius: 20px; padding: 0.35rem 0.85rem;
+            font-size: 0.83rem;
+        }
+
+        /* ── Sidebar cards ──────────────────────────────────────── */
+        .exchange-card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            border-top: 4px solid #20bcba;
+            padding: 1.5rem;
+        }
+        .exchange-card h4 {
+            font-size: 1.05rem; font-weight: 700;
+            color: #113448; margin-bottom: 0.4rem;
+        }
+        .exchange-card p {
+            color: #666; font-size: 0.9rem; margin-bottom: 1.25rem;
+        }
+        .btn-exchange {
+            width: 100%; padding: 0.85rem;
+            background: #20bcba; color: white;
+            border: none; border-radius: 8px;
+            font-weight: 700; font-size: 1rem;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-exchange:hover { background: #1a9d9b; }
+        .btn-exchange:disabled {
+            background: #28a745; cursor: default;
+        }
+        .btn-exchange.partners {
+            background: #6c757d; cursor: default;
+        }
+
+        .compat-card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            padding: 1.25rem;
+        }
+        .compat-card h5 {
+            font-size: 0.95rem; font-weight: 700;
+            color: #113448; margin-bottom: 0.75rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .compat-card h5 i { color: #20bcba; }
+        .compat-line {
+            font-size: 0.85rem; color: #555;
+            background: #f0fffe;
+            border-left: 3px solid #20bcba;
+            padding: 0.4rem 0.6rem; border-radius: 0 4px 4px 0;
+            margin-bottom: 0.5rem;
+        }
+        .compat-none {
+            font-size: 0.85rem; color: #777; font-style: italic;
+        }
+
+        .report-card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 1rem 1.25rem;
+            text-align: center;
+        }
+        .report-card p {
+            font-size: 0.82rem; color: #aaa; margin-bottom: 0.4rem;
+        }
+        .report-link {
+            font-size: 0.82rem; color: #ccc;
+            cursor: pointer; text-decoration: none;
+            transition: color 0.2s;
+        }
+        .report-link:hover { color: #dc3545; }
+
+        /* ── Report Modal ───────────────────────────────────────── */
+        .report-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); z-index: 5000;
+            align-items: flex-end; justify-content: center;
+        }
+        .report-backdrop.show { display: flex; }
+        .report-modal {
+            background: white; border-radius: 16px 16px 0 0;
+            width: 100%; max-width: 500px;
+            padding: 1.75rem 1.5rem 2rem;
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(60px); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+        }
+        .report-modal h4 {
+            font-size: 1.1rem; font-weight: 700;
+            color: #113448; margin-bottom: 1rem;
+        }
+        .report-radio-group { margin-bottom: 1rem; }
+        .report-radio-group label {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.5rem 0; cursor: pointer;
+            font-size: 0.9rem; color: #333;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .report-radio-group label:last-child { border-bottom: none; }
+        .report-textarea {
+            width: 100%; border: 2px solid #e0e0e0;
+            border-radius: 8px; padding: 0.6rem 0.8rem;
+            font-size: 0.88rem; resize: vertical;
+            min-height: 80px; outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+        .report-textarea:focus { border-color: #20bcba; }
+        .report-actions {
+            display: flex; gap: 0.75rem; margin-top: 1rem;
+        }
+        .btn-report-cancel {
+            flex: 1; padding: 0.75rem;
+            background: white; color: #555;
+            border: 1.5px solid #ddd; border-radius: 8px;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-report-cancel:hover { background: #f8f9fa; }
+        .btn-report-submit {
+            flex: 1; padding: 0.75rem;
+            background: #dc3545; color: white;
+            border: none; border-radius: 8px;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        .btn-report-submit:hover { background: #c82333; }
+        .btn-report-submit:disabled { background: #aaa; cursor: default; }
+        .report-success {
+            text-align: center; padding: 1rem 0;
+            color: #28a745; font-size: 0.95rem; font-weight: 600;
+        }
+
+        /* ── Loading / Error states ─────────────────────────────── */
+        .loading-state {
+            text-align: center; padding: 5rem 1rem; color: #aaa;
+        }
+        .loading-state i {
+            font-size: 2.5rem; color: #20bcba; margin-bottom: 1rem; display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+                </li>
+
+                <!-- Dropdown Menu -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewFrenchPage.html"><span class="item-text">FRENCH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewPortuguesePage.html"><span class="item-text">PORTUGUESE</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewItalianPage.html"><span class="item-text">ITALIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+                    </div>
+                </li>
+                <!-- end of dropdown menu -->
+
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
+                </li>
+
+                <!-- Sign In Link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
+                </li>
+            </ul>
+
+            <!-- Profile Picture Dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="student-dashboard.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="activity.html"><i class="fas fa-bell"></i> Activity <span class="unread-count" id="activityCount"></span></a>
+                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            <span class="nav-item social-icons">
+                <span class="fa-stack">
+                    <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-facebook-f fa-stack-1x"></i>
+                    </a>
+                </span>
+                <span class="fa-stack">
+                    <a href="https://www.instagram.com/lingua_bud/" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-instagram fa-stack-1x"></i>
+                    </a>
+                </span>
+            </span>
+        </div>
+    </nav>
+    <!-- end of navbar -->
+
+    <!-- Profile content (hidden until data loads) -->
+    <div id="profileContent" style="display:none;">
+
+        <!-- Hero -->
+        <div class="profile-hero">
+            <div class="container">
+                <img id="heroAvatar" class="hero-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Avatar">
+                <h1 id="heroName" class="hero-name"></h1>
+                <p id="heroCountry" class="hero-country"></p>
+                <div id="heroLangs" class="hero-langs"></div>
+                <p id="heroSince" class="hero-since"></p>
+            </div>
+        </div>
+
+        <!-- Two-column layout -->
+        <div class="profile-layout">
+
+            <!-- Left column -->
+            <div class="profile-main">
+
+                <!-- Languages card -->
+                <div class="info-card">
+                    <h4><i class="fas fa-comments"></i> Languages</h4>
+                    <div id="speaksSection">
+                        <div class="lang-section-title">SPEAKS</div>
+                        <div id="speaksTags" class="lang-tags"></div>
+                    </div>
+                    <div id="learningSection">
+                        <div class="lang-section-title">LEARNING</div>
+                        <div id="learningTags" class="lang-tags"></div>
+                    </div>
+                </div>
+
+                <!-- About Me card -->
+                <div class="info-card">
+                    <h4><i class="fas fa-user"></i> About Me</h4>
+                    <p id="bioText" class="bio-text"></p>
+                </div>
+
+                <!-- Interests card -->
+                <div class="info-card">
+                    <h4><i class="fas fa-puzzle-piece"></i> Interests &amp; Hobbies</h4>
+                    <div id="interestTags" class="interest-tags"></div>
+                </div>
+
+            </div><!-- end profile-main -->
+
+            <!-- Right sidebar -->
+            <div class="profile-sidebar">
+
+                <!-- Exchange Request card -->
+                <div class="exchange-card" id="exchangeCard">
+                    <h4>Start a Language Exchange</h4>
+                    <p id="exchangeSubtext">Connect to practice languages together</p>
+                    <button class="btn-exchange" id="exchangeBtn">
+                        <i class="fas fa-user-plus"></i> Send Exchange Request
+                    </button>
+                </div>
+
+                <!-- Compatibility card -->
+                <div class="compat-card" id="compatCard" style="display:none;">
+                    <h5><i class="fas fa-handshake"></i> Language Compatibility</h5>
+                    <div id="compatLines"></div>
+                </div>
+
+                <!-- Report card -->
+                <div class="report-card" id="reportCard" style="display:none;">
+                    <p>Something wrong with this profile?</p>
+                    <a class="report-link" id="openReportBtn">
+                        <i class="fas fa-flag"></i> Report this profile
+                    </a>
+                </div>
+
+            </div><!-- end profile-sidebar -->
+
+        </div><!-- end profile-layout -->
+
+    </div><!-- end profileContent -->
+
+    <!-- Loading state -->
+    <div id="loadingState" class="loading-state">
+        <i class="fas fa-circle-notch fa-spin"></i>
+        <div>Loading profile…</div>
+    </div>
+
+    <!-- Report Modal -->
+    <div class="report-backdrop" id="reportBackdrop">
+        <div class="report-modal">
+            <h4><i class="fas fa-flag" style="color:#dc3545;margin-right:0.5rem;"></i>Report Profile</h4>
+            <div class="report-radio-group" id="reportRadios">
+                <label><input type="radio" name="reportReason" value="Inappropriate content"> Inappropriate content</label>
+                <label><input type="radio" name="reportReason" value="Spam or fake profile"> Spam or fake profile</label>
+                <label><input type="radio" name="reportReason" value="Harassment or bullying"> Harassment or bullying</label>
+                <label><input type="radio" name="reportReason" value="Impersonation"> Impersonation</label>
+                <label><input type="radio" name="reportReason" value="Other"> Other</label>
+            </div>
+            <textarea class="report-textarea" id="reportDetails" placeholder="Additional details (optional)"></textarea>
+            <div class="report-actions">
+                <button class="btn-report-cancel" id="cancelReportBtn">Cancel</button>
+                <button class="btn-report-submit" id="submitReportBtn">Submit Report</button>
+            </div>
+            <div class="report-success" id="reportSuccess" style="display:none;">
+                <i class="fas fa-check-circle"></i> Report submitted. Our team will review it.
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <script type="module">
+        import {
+            auth, db,
+            onAuthStateChanged, signOut,
+            doc, getDoc, getDocs, addDoc,
+            collection, query, where, serverTimestamp
+        } from './lib/firebaseClient.js';
+
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+
+        // ── Read uid from URL ─────────────────────────────────────
+        const params = new URLSearchParams(window.location.search);
+        const profileUid = params.get('uid');
+
+        if (!profileUid) {
+            window.location.href = 'connect.html';
+        }
+
+        let currentUser = null;
+        let profileData = null;
+
+        function escHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // ── Render the profile page ───────────────────────────────
+        function renderProfile(data) {
+            const name    = data.name || 'Anonymous User';
+            const country = data.country || data.native_country || '';
+            const spoken  = data.languages_spoken  || [];
+            const learning = data.languages_learning || [];
+            const bio     = data.about_me || '';
+            const avatar  = data.avatar_url || DEFAULT_AVATAR;
+            const interests = data.interests || [];
+
+            // Update page title
+            document.title = `${name} – Lingua Bud`;
+
+            // Hero
+            document.getElementById('heroAvatar').src = avatar;
+            document.getElementById('heroName').textContent = name;
+
+            if (country) {
+                document.getElementById('heroCountry').innerHTML = `<i class="fas fa-globe"></i> ${escHtml(country)}`;
+            }
+
+            // Language summary badges
+            const heroLangs = document.getElementById('heroLangs');
+            if (spoken.length > 0) {
+                const speaksLabel = document.createElement('span');
+                speaksLabel.className = 'hero-lang-badge';
+                speaksLabel.textContent = 'Speaks ' + spoken.join(', ');
+                heroLangs.appendChild(speaksLabel);
+            }
+            if (learning.length > 0) {
+                const learnsLabel = document.createElement('span');
+                learnsLabel.className = 'hero-lang-badge';
+                learnsLabel.textContent = 'Learning ' + learning.join(', ');
+                heroLangs.appendChild(learnsLabel);
+            }
+
+            // Member since
+            if (data.createdAt) {
+                const d = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                document.getElementById('heroSince').textContent =
+                    'Member since ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            }
+
+            // Languages card
+            const speaksTags = document.getElementById('speaksTags');
+            if (spoken.length > 0) {
+                spoken.forEach(l => {
+                    const t = document.createElement('span');
+                    t.className = 'lang-tag'; t.textContent = l;
+                    speaksTags.appendChild(t);
+                });
+            } else {
+                speaksTags.innerHTML = '<span class="lang-none">Not specified</span>';
+            }
+
+            const learningTags = document.getElementById('learningTags');
+            if (learning.length > 0) {
+                learning.forEach(l => {
+                    const t = document.createElement('span');
+                    t.className = 'lang-tag'; t.textContent = l;
+                    learningTags.appendChild(t);
+                });
+            } else {
+                learningTags.innerHTML = '<span class="lang-none">Not specified</span>';
+            }
+
+            // Bio
+            const bioEl = document.getElementById('bioText');
+            if (bio) {
+                bioEl.textContent = bio;
+            } else {
+                bioEl.className = 'bio-none';
+                bioEl.textContent = "This learner hasn't written a bio yet.";
+            }
+
+            // Interests
+            const interestEl = document.getElementById('interestTags');
+            if (interests.length > 0) {
+                interests.forEach(i => {
+                    const pill = document.createElement('span');
+                    pill.className = 'interest-tag'; pill.textContent = i;
+                    interestEl.appendChild(pill);
+                });
+            } else {
+                interestEl.innerHTML = '<span class="lang-none">No interests listed yet.</span>';
+            }
+
+            // Show page
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('profileContent').style.display = 'block';
+        }
+
+        // ── Setup exchange / compat / report cards ─────────────────
+        function setupSidebarCards(data) {
+            const name = data.name || 'this learner';
+            document.getElementById('exchangeSubtext').textContent =
+                `Connect with ${name} to practice languages together`;
+
+            if (!currentUser) {
+                // Not logged in — show sign-in prompt
+                const card = document.getElementById('exchangeCard');
+                card.innerHTML = `
+                    <h4>Start a Language Exchange</h4>
+                    <p>Sign in to connect with learners</p>
+                    <a href="login.html" style="display:block;width:100%;padding:0.85rem;background:#20bcba;color:white;border-radius:8px;font-weight:700;font-size:1rem;text-align:center;text-decoration:none;">Sign In to Connect</a>
+                `;
+                return;
+            }
+
+            // Own profile — hide exchange card
+            if (currentUser.uid === profileUid) {
+                document.getElementById('exchangeCard').style.display = 'none';
+                return;
+            }
+
+            // Show report card
+            document.getElementById('reportCard').style.display = 'block';
+
+            // Compatibility card
+            const mySpoken   = data._mySpoken   || [];
+            const myLearning = data._myLearning || [];
+            const theirSpoken   = data.languages_spoken   || [];
+            const theirLearning = data.languages_learning || [];
+
+            const compatLines = document.getElementById('compatLines');
+            let hasOverlap = false;
+
+            // I speak what they're learning
+            mySpoken.forEach(lang => {
+                if (theirLearning.includes(lang)) {
+                    hasOverlap = true;
+                    const d = document.createElement('div');
+                    d.className = 'compat-line';
+                    d.textContent = `You speak ${lang} which ${name} is learning`;
+                    compatLines.appendChild(d);
+                }
+            });
+
+            // They speak what I'm learning
+            theirSpoken.forEach(lang => {
+                if (myLearning.includes(lang)) {
+                    hasOverlap = true;
+                    const d = document.createElement('div');
+                    d.className = 'compat-line';
+                    d.textContent = `You're learning ${lang} which ${name} speaks`;
+                    compatLines.appendChild(d);
+                }
+            });
+
+            if (!hasOverlap) {
+                compatLines.innerHTML = '<span class="compat-none">Your language goals don\'t overlap, but you can still exchange!</span>';
+            }
+
+            document.getElementById('compatCard').style.display = 'block';
+        }
+
+        // ── Exchange request button ────────────────────────────────
+        async function setupExchangeBtn() {
+            const btn = document.getElementById('exchangeBtn');
+            if (!btn || !currentUser || currentUser.uid === profileUid) return;
+
+            // Check if already sent
+            try {
+                const sentQ = await getDocs(query(
+                    collection(db, 'friendRequests'),
+                    where('fromId', '==', currentUser.uid)
+                ));
+                const alreadySent = sentQ.docs.some(d =>
+                    d.data().toId === profileUid && d.data().status === 'pending'
+                );
+                const accepted = sentQ.docs.some(d =>
+                    d.data().toId === profileUid && d.data().status === 'accepted'
+                );
+
+                // Also check incoming accepted
+                const inQ = await getDocs(query(
+                    collection(db, 'friendRequests'),
+                    where('toId', '==', currentUser.uid)
+                ));
+                const inAccepted = inQ.docs.some(d =>
+                    d.data().fromId === profileUid && d.data().status === 'accepted'
+                );
+
+                if (accepted || inAccepted) {
+                    btn.textContent = 'Already Partners';
+                    btn.className = 'btn-exchange partners';
+                    btn.disabled = true;
+                    return;
+                }
+                if (alreadySent) {
+                    btn.innerHTML = '<i class="fas fa-check"></i> Request Sent';
+                    btn.disabled = true;
+                    btn.style.background = '#28a745';
+                    return;
+                }
+            } catch (e) {
+                console.error('Error checking friend requests:', e);
+            }
+
+            btn.addEventListener('click', async () => {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+
+                try {
+                    let fromName = currentUser.displayName || currentUser.email;
+                    let fromAvatar = '';
+                    try {
+                        const uDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                        if (uDoc.exists()) {
+                            fromName = uDoc.data().name || fromName;
+                            fromAvatar = uDoc.data().avatar_url || '';
+                        }
+                    } catch (_) {}
+
+                    await addDoc(collection(db, 'friendRequests'), {
+                        fromId: currentUser.uid,
+                        toId: profileUid,
+                        fromName,
+                        fromAvatar,
+                        status: 'pending',
+                        createdAt: serverTimestamp()
+                    });
+
+                    btn.innerHTML = '<i class="fas fa-check"></i> Request Sent ✓';
+                    btn.style.background = '#28a745';
+                } catch (e) {
+                    console.error('Error sending request:', e);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Send Exchange Request';
+                    alert('Failed to send request. Please try again.');
+                }
+            });
+        }
+
+        // ── Report modal ──────────────────────────────────────────
+        function setupReportModal() {
+            const backdrop    = document.getElementById('reportBackdrop');
+            const openBtn     = document.getElementById('openReportBtn');
+            const cancelBtn   = document.getElementById('cancelReportBtn');
+            const submitBtn   = document.getElementById('submitReportBtn');
+            const successEl   = document.getElementById('reportSuccess');
+
+            if (openBtn) {
+                openBtn.addEventListener('click', () => {
+                    backdrop.classList.add('show');
+                    successEl.style.display = 'none';
+                    submitBtn.style.display = '';
+                    document.querySelectorAll('input[name="reportReason"]').forEach(r => r.checked = false);
+                    document.getElementById('reportDetails').value = '';
+                });
+            }
+
+            cancelBtn.addEventListener('click', () => backdrop.classList.remove('show'));
+            backdrop.addEventListener('click', (e) => {
+                if (e.target === backdrop) backdrop.classList.remove('show');
+            });
+
+            submitBtn.addEventListener('click', async () => {
+                const reason = document.querySelector('input[name="reportReason"]:checked');
+                if (!reason) {
+                    alert('Please select a reason for your report.');
+                    return;
+                }
+                if (!currentUser) {
+                    alert('You must be signed in to submit a report.');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting…';
+
+                try {
+                    await addDoc(collection(db, 'userReports'), {
+                        reporterId: currentUser.uid,
+                        reportedUserId: profileUid,
+                        reportedUserName: profileData?.name || '',
+                        reason: reason.value,
+                        details: document.getElementById('reportDetails').value.trim(),
+                        createdAt: serverTimestamp()
+                    });
+
+                    document.getElementById('reportRadios').style.display = 'none';
+                    document.querySelector('.report-textarea').style.display = 'none';
+                    document.querySelector('.report-actions').style.display = 'none';
+                    successEl.style.display = 'block';
+
+                    setTimeout(() => {
+                        backdrop.classList.remove('show');
+                        document.getElementById('reportRadios').style.display = '';
+                        document.querySelector('.report-textarea').style.display = '';
+                        document.querySelector('.report-actions').style.display = '';
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Submit Report';
+                    }, 2000);
+                } catch (e) {
+                    console.error('Error submitting report:', e);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Report';
+                    alert('Failed to submit report. Please try again.');
+                }
+            });
+        }
+
+        // ── Auth & load ───────────────────────────────────────────
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+
+            if (user) {
+                document.getElementById('profileNavWrapper').style.display = 'block';
+                document.getElementById('signInWrapper').style.display = 'none';
+
+                // Load nav avatar
+                try {
+                    const uDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (uDoc.exists() && uDoc.data().avatar_url) {
+                        document.getElementById('navProfilePic').src = uDoc.data().avatar_url;
+                    }
+                } catch (_) {}
+            }
+
+            // Load profile
+            try {
+                const profileSnap = await getDoc(doc(db, 'users', profileUid));
+                if (!profileSnap.exists()) {
+                    window.location.href = 'connect.html';
+                    return;
+                }
+
+                profileData = { id: profileSnap.id, ...profileSnap.data() };
+
+                // If logged in (and not own profile), attach own language data for compat
+                if (user && user.uid !== profileUid) {
+                    try {
+                        const myDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (myDoc.exists()) {
+                            profileData._mySpoken   = myDoc.data().languages_spoken   || [];
+                            profileData._myLearning = myDoc.data().languages_learning || [];
+                        }
+                    } catch (_) {}
+                }
+
+                renderProfile(profileData);
+                setupSidebarCards(profileData);
+
+                if (user && user.uid !== profileUid) {
+                    await setupExchangeBtn();
+                }
+
+                setupReportModal();
+
+            } catch (e) {
+                console.error('Error loading profile:', e);
+                window.location.href = 'connect.html';
+            }
+        });
+
+        // ── Logout ────────────────────────────────────────────────
+        const logoutLink = document.getElementById('logoutLink');
+        if (logoutLink) {
+            logoutLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await signOut(auth);
+                window.location.href = 'index.html';
+            });
+        }
+
+        // ── Navbar mobile dropdown ────────────────────────────────
+        const navProfilePic = document.getElementById('navProfilePic');
+        const profileDropdown = document.querySelector('.profile-dropdown');
+        const profileDropdownContent = document.querySelector('.profile-dropdown-content');
+
+        if (navProfilePic && profileDropdownContent) {
+            navProfilePic.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdownContent.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target)) {
+                    profileDropdownContent.classList.remove('show');
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
