@@ -265,6 +265,20 @@
             border-color: #20bcba;
         }
 
+        .filter-group input[type="text"] {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .filter-group input[type="text"]:focus {
+            outline: none;
+            border-color: #20bcba;
+        }
+
         /* User Grid */
         .user-grid-container {
             max-width: 1400px;
@@ -731,6 +745,12 @@
     <!-- Filters Section -->
     <div class="container">
         <div class="filters-section">
+            <div class="filter-row" style="margin-bottom: 1rem;">
+                <div class="filter-group" style="grid-column: 1 / -1;">
+                    <label for="nameSearch"><i class="fas fa-search"></i> Search by Name</label>
+                    <input type="text" id="nameSearch" placeholder="Search partners by name...">
+                </div>
+            </div>
             <div class="filter-row">
                 <div class="filter-group">
                     <label for="learningFilter"><i class="fas fa-graduation-cap"></i> I want to learn</label>
@@ -786,6 +806,7 @@
         const learningFilter = document.getElementById('learningFilter');
         const speakingFilter = document.getElementById('speakingFilter');
         const countryFilter = document.getElementById('countryFilter');
+        const nameSearch = document.getElementById('nameSearch');
         const navProfilePic = document.getElementById('navProfilePic');
         const profileNavWrapper = document.getElementById('profileNavWrapper');
         const signInWrapper = document.getElementById('signInWrapper');
@@ -958,6 +979,7 @@
 
             userGrid.innerHTML = '';
 
+            const searchTerm = nameSearch.value.trim().toLowerCase();
             const filtered = allUsers.filter(user => {
                 const learning = user.languages_learning || [];
                 const speaking = user.languages_spoken || [];
@@ -965,8 +987,9 @@
                 const matchesLearning = selectedLearning ? learning.includes(selectedLearning) : true;
                 const matchesSpeaking = selectedSpeaking ? speaking.includes(selectedSpeaking) : true;
                 const matchesCountry = selectedCountry ? user.country === selectedCountry : true;
+                const matchesName = searchTerm ? (user.name || '').toLowerCase().includes(searchTerm) : true;
 
-                return matchesLearning && matchesSpeaking && matchesCountry;
+                return matchesLearning && matchesSpeaking && matchesCountry && matchesName;
             });
 
             if (filtered.length === 0) {
@@ -1056,6 +1079,7 @@
         learningFilter.addEventListener('change', renderUsers);
         speakingFilter.addEventListener('change', renderUsers);
         countryFilter.addEventListener('change', renderUsers);
+        nameSearch.addEventListener('input', renderUsers);
 
         // NOTIFICATION COUNTS (messages + friend requests + new bookings)
 

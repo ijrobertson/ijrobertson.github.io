@@ -272,6 +272,20 @@
             border-color: #20bcba;
         }
 
+        .filter-group input[type="text"] {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .filter-group input[type="text"]:focus {
+            outline: none;
+            border-color: #20bcba;
+        }
+
         /* Instructor Grid */
         .instructor-grid-container {
             max-width: 1400px;
@@ -1049,6 +1063,12 @@
     <!-- Filters Section -->
     <div class="container">
         <div class="filters-section">
+            <div class="filter-row" style="margin-bottom: 1rem;">
+                <div class="filter-group" style="grid-column: 1 / -1;">
+                    <label for="nameSearch"><i class="fas fa-search"></i> Search by Name</label>
+                    <input type="text" id="nameSearch" placeholder="Search instructors by name...">
+                </div>
+            </div>
             <div class="filter-row">
                 <div class="filter-group">
                     <label for="languageFilter"><i class="fas fa-graduation-cap"></i> Teaching Language</label>
@@ -1105,6 +1125,7 @@
         const instructorGrid = document.getElementById('instructorGrid');
         const languageFilter = document.getElementById('languageFilter');
         const priceFilter = document.getElementById('priceFilter');
+        const nameSearch = document.getElementById('nameSearch');
         const navProfilePic = document.getElementById('navProfilePic');
         const profileNavWrapper = document.getElementById('profileNavWrapper');
         const signInWrapper = document.getElementById('signInWrapper');
@@ -1275,12 +1296,14 @@
             const maxPrice = parseFloat(priceFilter.value);
             instructorGrid.innerHTML = '';
 
+            const searchTerm = nameSearch.value.trim().toLowerCase();
             const filtered = allInstructors.filter(instructor => {
                 const teaches = instructor.languages_teaching || [];
                 const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
                 const price = parseFloat(instructor.price_per_lesson) || 0;
                 const matchesPrice = maxPrice ? price <= maxPrice : true;
-                return matchesLang && matchesPrice;
+                const matchesName = searchTerm ? (instructor.name || '').toLowerCase().includes(searchTerm) : true;
+                return matchesLang && matchesPrice && matchesName;
             });
 
             if (filtered.length === 0) {
@@ -1476,6 +1499,7 @@
         // Event listeners for filters
         languageFilter.addEventListener('change', renderInstructors);
         priceFilter.addEventListener('change', renderInstructors);
+        nameSearch.addEventListener('input', renderInstructors);
 
         // Fetch instructors when page loads
         fetchInstructors();
