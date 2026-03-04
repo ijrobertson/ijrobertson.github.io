@@ -379,6 +379,32 @@
         .profile-dropdown-content.show {
             opacity: 1; visibility: visible; transform: translateY(0);
         }
+        /* Notification badge */
+        .notification-badge {
+            display: none; position: absolute; top: -4px; right: -4px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center; z-index: 10000;
+            animation: badgePulse 2s infinite;
+        }
+        .notification-badge.show { display: flex; }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count {
+            display: none; background-color: #dc3545; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center;
+            margin-left: 4px;
+        }
+        .unread-count.show { display: inline-flex; }
         /* Navbar centering */
         @media (min-width: 768px) {
             .navbar-nav { margin-left: 8rem !important; }
@@ -485,9 +511,10 @@
                     <img id="navProfilePic" class="profile-pic-nav"
                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
                         alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
                     <div class="profile-dropdown-content">
                         <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
-                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
                         <a href="activity.html"><i class="fas fa-bell"></i> Activity <span class="unread-count" id="activityCount"></span></a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
@@ -916,7 +943,7 @@
 
     <!-- Firebase Auth for navbar -->
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './lib/firebaseClient.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
 
         onAuthStateChanged(auth, async (user) => {
             const profileNavWrapper = document.getElementById('profileNavWrapper');
@@ -949,11 +976,64 @@
                         catch (e) { console.error('Sign-out error:', e); }
                     });
                 }
+
+                loadUnreadMessageCount(user.uid);
+                loadPendingRequests(user.uid);
             } else {
                 if (profileNavWrapper) profileNavWrapper.style.display = 'none';
                 if (signInWrapper)     signInWrapper.style.display     = 'block';
             }
         });
+
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+            const msgEl = document.getElementById('unreadCount');
+            if (msgEl) {
+                if (_unreadMsgCount > 0) { msgEl.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; msgEl.classList.add('show'); }
+                else { msgEl.classList.remove('show'); }
+            }
+            const actEl = document.getElementById('activityCount');
+            if (actEl) {
+                const actTotal = _pendingReqCount + _newBookingCount;
+                if (actTotal > 0) { actEl.textContent = actTotal; actEl.classList.add('show'); }
+                else { actEl.classList.remove('show'); }
+            }
+            const ml = document.getElementById('messagesLink');
+            if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+        }
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(
+                query(collection(db, 'conversations'), where('participants', 'array-contains', uid)),
+                (snap) => {
+                    let count = 0;
+                    snap.forEach(d => { const c = d.data(); if (c.unreadCount?.[uid]) count += c.unreadCount[uid]; });
+                    _unreadMsgCount = count;
+                    _updateProfileBadge();
+                }
+            );
+        }
+        function loadPendingRequests(uid) {
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+                (snap) => {
+                    _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                    _updateProfileBadge();
+                }
+            );
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', uid)),
+                (snap) => {
+                    _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                    _updateProfileBadge();
+                }
+            );
+        }
     </script>
 </body>
 </html>
