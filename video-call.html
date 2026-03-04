@@ -2505,6 +2505,45 @@
         document.getElementById('ratingSkipBtn').addEventListener('click', () => {
             document.getElementById('ratingPopup').style.display = 'none';
         });
+    
+        // ── Notification counts ──────────────────────────────────────────────────
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+        }
+
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(query(collection(db, 'conversations'), where('participants', 'array-contains', uid)), (snap) => {
+                _unreadMsgCount = 0;
+                snap.forEach(d => { const c = d.data(); if (c.unreadCount && c.unreadCount[uid]) _unreadMsgCount += c.unreadCount[uid]; });
+                const ml = document.getElementById('messagesLink'), uc = document.getElementById('unreadCount');
+                if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+                if (uc) { if (_unreadMsgCount > 0) { uc.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; uc.classList.add('show'); } else uc.classList.remove('show'); }
+                _updateProfileBadge();
+            });
+        }
+
+        function loadPendingRequests(uid) {
+            function _updateActivityBadge() {
+                const total = _pendingReqCount + _newBookingCount;
+                const el = document.getElementById('activityCount');
+                if (el) { if (total > 0) { el.textContent = total; el.classList.add('show'); } else el.classList.remove('show'); }
+            }
+            onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
+                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
+                _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+        }
     </script>
 
     <!-- Post-Call Rating Popup -->

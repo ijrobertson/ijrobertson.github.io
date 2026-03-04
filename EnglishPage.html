@@ -167,6 +167,11 @@
             display: none; align-items: center; justify-content: center; border: 2px solid #fff;
         }
         .notification-badge.show { display: flex; }
+        @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .profile-dropdown-content a.messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count { display: none; background-color: #dc3545; color: white; border-radius: 10px; padding: 2px 6px; font-size: 11px; font-weight: bold; margin-left: 8px; min-width: 18px; text-align: center; }
+        .unread-count.show { display: inline-block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         @media (min-width: 768px) {
             .navbar-nav { margin-left: 8rem !important; }
             .profile-nav-wrapper { margin-left: auto !important; }
@@ -437,7 +442,7 @@
                     <div class="notification-badge" id="notificationBadge"></div>
                     <div class="profile-dropdown-content">
                         <a href="learner-profile.html"><i class="fas fa-user"></i>&nbsp; My Profile</a>
-                        <a href="messages.html"><i class="fas fa-envelope"></i>&nbsp; Messages</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i>&nbsp; Messages <span class="unread-count" id="unreadCount"></span></a>
                         <a href="activity.html"><i class="fas fa-bell"></i>&nbsp; Activity <span class="unread-count" id="activityCount"></span></a>
                         <a href="connect.html"><i class="fas fa-users"></i>&nbsp; Find Partners</a>
                         <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
@@ -965,6 +970,7 @@
         import {
             db, auth, collection, getDocs, query, limit,
             onAuthStateChanged, signOut, doc, getDoc
+            where, onSnapshot
         } from './lib/firebaseClient.js';
 
         const AVT = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e8f8f7'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2320bcba'/%3E%3Cellipse cx='50' cy='85' rx='28' ry='22' fill='%2320bcba'/%3E%3C/svg%3E";
@@ -998,6 +1004,9 @@
                         catch (e) { console.error('Logout error:', e); }
                     });
                 }
+            loadUnreadMessageCount(user.uid);
+            loadPendingRequests(user.uid);
+
             } else {
                 if (profileNavWrapper) profileNavWrapper.style.display = 'none';
                 if (signInWrapper)     signInWrapper.style.display     = 'block';
@@ -1110,6 +1119,45 @@
 
         loadEnglishPartners();
         loadEnglishInstructors();
+    
+        // ── Notification counts ──────────────────────────────────────────────────
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+        }
+
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(query(collection(db, 'conversations'), where('participants', 'array-contains', uid)), (snap) => {
+                _unreadMsgCount = 0;
+                snap.forEach(d => { const c = d.data(); if (c.unreadCount && c.unreadCount[uid]) _unreadMsgCount += c.unreadCount[uid]; });
+                const ml = document.getElementById('messagesLink'), uc = document.getElementById('unreadCount');
+                if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+                if (uc) { if (_unreadMsgCount > 0) { uc.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; uc.classList.add('show'); } else uc.classList.remove('show'); }
+                _updateProfileBadge();
+            });
+        }
+
+        function loadPendingRequests(uid) {
+            function _updateActivityBadge() {
+                const total = _pendingReqCount + _newBookingCount;
+                const el = document.getElementById('activityCount');
+                if (el) { if (total > 0) { el.textContent = total; el.classList.add('show'); } else el.classList.remove('show'); }
+            }
+            onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
+                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
+                _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+        }
     </script>
 
 </body>

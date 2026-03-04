@@ -66,7 +66,7 @@
             position: absolute; top: -2px; right: -2px;
             background-color: #dc3545; color: white; border-radius: 50%;
             width: 18px; height: 18px; font-size: 11px; font-weight: bold;
-            display: none; align-items: center; justify-content: center; border: 2px solid white;
+            display: none; align-items: center; justify-content: center; border: 2px solid white; animation: badgePulse 2s infinite;
         }
         .notification-badge.show { display: flex; }
 
@@ -164,7 +164,7 @@
                     <div class="notification-badge" id="notificationBadge"></div>
                     <div class="profile-dropdown-content">
                         <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
-                        <a href="messages.html"><i class="fas fa-envelope"></i> Messages</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
                         <a href="activity.html"><i class="fas fa-bell"></i> Activity</a>
                         <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
                         <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
@@ -504,7 +504,7 @@
 
     <!-- Firebase Auth: show profile pic when logged in -->
     <script type="module">
-        import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
+        import { auth, db, onAuthStateChanged, signOut, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
 
         onAuthStateChanged(auth, async (user) => {
             const profileNavWrapper = document.getElementById('profileNavWrapper');
@@ -533,11 +533,53 @@
                         window.location.href = 'index.html';
                     });
                 }
+            loadUnreadMessageCount(user.uid);
+            loadPendingRequests(user.uid);
+
             } else {
                 if (profileNavWrapper) profileNavWrapper.style.display = 'none';
                 if (signInWrapper) signInWrapper.style.display = 'block';
             }
         });
+    
+        // ── Notification counts ──────────────────────────────────────────────────
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+        }
+
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(query(collection(db, 'conversations'), where('participants', 'array-contains', uid)), (snap) => {
+                _unreadMsgCount = 0;
+                snap.forEach(d => { const c = d.data(); if (c.unreadCount && c.unreadCount[uid]) _unreadMsgCount += c.unreadCount[uid]; });
+                const ml = document.getElementById('messagesLink'), uc = document.getElementById('unreadCount');
+                if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+                if (uc) { if (_unreadMsgCount > 0) { uc.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; uc.classList.add('show'); } else uc.classList.remove('show'); }
+                _updateProfileBadge();
+            });
+        }
+
+        function loadPendingRequests(uid) {
+            function _updateActivityBadge() {
+                const total = _pendingReqCount + _newBookingCount;
+                const el = document.getElementById('activityCount');
+                if (el) { if (total > 0) { el.textContent = total; el.classList.add('show'); } else el.classList.remove('show'); }
+            }
+            onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
+                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
+                _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+        }
     </script>
 </body>
 </html>

@@ -39,7 +39,7 @@
         .profile-pic-nav { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #20bcba; cursor: pointer; transition: transform 0.2s; }
         .profile-pic-nav:hover { transform: scale(1.1); }
         .profile-dropdown { position: relative; display: inline-block; }
-        .notification-badge { position: absolute; top: -2px; right: -2px; background-color: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; display: none; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border: 2px solid white; }
+        .notification-badge { position: absolute; top: -2px; right: -2px; background-color: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; display: none; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border: 2px solid white; animation: badgePulse 2s infinite; }
         .notification-badge.show { display: flex; }
         .profile-dropdown-content { display: none; position: absolute; right: 0; background: white; min-width: 200px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-radius: 8px; z-index: 1000; padding: 0.5rem 0; top: calc(100% + 0.5rem); }
         .profile-dropdown:hover .profile-dropdown-content { display: block; }
@@ -533,7 +533,7 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable } from './lib/firebaseClient.js';
+        import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
 
         // ── Booking state ───────────────────────────────────────────────────
         const STRIPE_PUBLISHABLE_KEY = 'pk_test_51ReiozR5K3FFiwajzKtaXzCvx6BSBd52dRml2Z2kirtYBGyXOfONEZUFciFSOYi65xs99HvhgckNhG1i40hRicGJ001aPvyoDs';
@@ -1100,6 +1100,45 @@
                 console.error('Error loading reviews:', e);
                 listEl.innerHTML = '<p style="color:#999;font-style:italic;font-size:0.9rem;">Could not load reviews.</p>';
             }
+        }
+    
+        // ── Notification counts ──────────────────────────────────────────────────
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+        }
+
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(query(collection(db, 'conversations'), where('participants', 'array-contains', uid)), (snap) => {
+                _unreadMsgCount = 0;
+                snap.forEach(d => { const c = d.data(); if (c.unreadCount && c.unreadCount[uid]) _unreadMsgCount += c.unreadCount[uid]; });
+                const ml = document.getElementById('messagesLink'), uc = document.getElementById('unreadCount');
+                if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+                if (uc) { if (_unreadMsgCount > 0) { uc.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; uc.classList.add('show'); } else uc.classList.remove('show'); }
+                _updateProfileBadge();
+            });
+        }
+
+        function loadPendingRequests(uid) {
+            function _updateActivityBadge() {
+                const total = _pendingReqCount + _newBookingCount;
+                const el = document.getElementById('activityCount');
+                if (el) { if (total > 0) { el.textContent = total; el.classList.add('show'); } else el.classList.remove('show'); }
+            }
+            onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
+                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
+                _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
         }
     </script>
 
