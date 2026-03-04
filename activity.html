@@ -780,7 +780,13 @@
                 ]);
 
                 const bookings = [];
-                studentSnap.forEach(d => bookings.push({ id: d.id, ...d.data(), myRole: 'student' }));
+                studentSnap.forEach(d => {
+                    bookings.push({ id: d.id, ...d.data(), myRole: 'student' });
+                    // Mark unseen bookings as seen when student opens Activity page
+                    if (d.data().studentSeen === false) {
+                        updateDoc(doc(db, 'bookings', d.id), { studentSeen: true }).catch(() => {});
+                    }
+                });
                 instructorSnap.forEach(d => {
                     bookings.push({ id: d.id, ...d.data(), myRole: 'instructor' });
                     // Mark unseen bookings as seen when instructor opens Activity page

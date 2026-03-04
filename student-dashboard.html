@@ -1738,11 +1738,11 @@
         }
       );
 
-      // New unseen bookings (for instructors)
+      // New unseen bookings as student
       onSnapshot(
-        query(collection(db, 'bookings'), where('instructorId', '==', uid)),
+        query(collection(db, 'bookings'), where('studentId', '==', uid)),
         (snapshot) => {
-          _newBookingCount = snapshot.docs.filter(d => d.data().instructorSeen === false).length;
+          _newBookingCount = snapshot.docs.filter(d => d.data().studentSeen === false).length;
           _updateActivityBadge();
           _updateProfileBadge();
         }
