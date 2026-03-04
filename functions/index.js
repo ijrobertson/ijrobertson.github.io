@@ -248,12 +248,14 @@ exports.sendBookingNotification = onDocumentCreated(
       }
       const instructor = instructorSnap.data();
 
-      // Get student's real name
+      // Get student's real name and email
       let studentName = booking.studentName || 'A student';
+      let studentEmail = null;
       if (studentId) {
         const studentSnap = await admin.firestore().collection('users').doc(studentId).get();
-        if (studentSnap.exists && studentSnap.data().name) {
-          studentName = studentSnap.data().name;
+        if (studentSnap.exists) {
+          if (studentSnap.data().name) studentName = studentSnap.data().name;
+          studentEmail = studentSnap.data().email || null;
         }
       }
 
@@ -388,6 +390,127 @@ View your upcoming lesson: https://linguabud.com/activity.html
       });
 
       console.log('Booking notification sent to instructor:', instructor.email);
+
+      // Send confirmation email to student
+      if (studentEmail) {
+        const studentEmailResult = await resend.emails.send({
+          from: 'Lingua Bud <notifications@linguabud.com>',
+          to: studentEmail,
+          subject: `Lesson confirmed with ${instructor.name || 'your instructor'} on ${formattedDate}`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Lesson Booking Confirmed</title>
+              </head>
+              <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td align="center" style="padding: 40px 0;">
+                      <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <!-- Header -->
+                        <tr>
+                          <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #20bcba;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Lingua Bud</h1>
+                          </td>
+                        </tr>
+
+                        <!-- Content -->
+                        <tr>
+                          <td style="padding: 40px;">
+                            <h2 style="margin: 0 0 10px 0; color: #333333; font-size: 24px;">Your Lesson is Confirmed!</h2>
+                            <p style="margin: 0 0 24px 0; color: #666666; font-size: 16px; line-height: 1.5;">
+                              Hi ${studentName},<br><br>
+                              Your lesson with <strong>${instructor.name || 'your instructor'}</strong> has been confirmed and your payment has been processed. We look forward to seeing you learn!
+                            </p>
+
+                            <!-- Lesson Details Card -->
+                            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 24px; margin: 0 0 28px 0; border-left: 4px solid #20bcba;">
+                              <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                <strong>Instructor:</strong> ${instructor.name || 'Your Instructor'}
+                              </p>
+                              <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                <strong>Date:</strong> ${formattedDate}
+                              </p>
+                              <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                <strong>Time:</strong> ${formattedTime}
+                              </p>
+                              ${amountStr ? `<p style="margin: 0; color: #333333; font-size: 16px;">
+                                <strong>Amount Paid:</strong> ${amountStr}
+                              </p>` : ''}
+                            </div>
+
+                            <p style="margin: 0 0 24px 0; color: #666666; font-size: 16px; line-height: 1.5;">
+                              You can view your upcoming lesson and join the video call when it's time on your Activity page.
+                            </p>
+
+                            <p style="margin: 0 0 30px 0; text-align: center;">
+                              <a href="https://linguabud.com/activity.html"
+                                 style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
+                                View My Booking
+                              </a>
+                            </p>
+
+                            <p style="margin: 0; color: #999999; font-size: 14px; line-height: 1.5;">
+                              Questions? Contact us at <a href="mailto:support@linguabud.com" style="color: #20bcba; text-decoration: none;">support@linguabud.com</a>
+                            </p>
+                          </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                          <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
+                            <p style="margin: 0; color: #999999; font-size: 12px; line-height: 1.5; text-align: center;">
+                              © 2026 Lingua Bud. Connect with language partners worldwide.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </body>
+            </html>
+          `,
+          text: `
+Your Lesson is Confirmed!
+
+Hi ${studentName},
+
+Your lesson with ${instructor.name || 'your instructor'} has been confirmed and your payment has been processed.
+
+Instructor: ${instructor.name || 'Your Instructor'}
+Date: ${formattedDate}
+Time: ${formattedTime}
+${amountStr ? `Amount Paid: ${amountStr}` : ''}
+
+View your booking: https://linguabud.com/activity.html
+
+Questions? Email support@linguabud.com
+
+© 2026 Lingua Bud
+          `.trim()
+        });
+
+        if (studentEmailResult.error) {
+          console.error('Resend API error (student confirmation):', studentEmailResult.error);
+        } else {
+          await admin.firestore().collection('emailLog').add({
+            type: 'bookingConfirmationStudent',
+            instructorId,
+            studentId,
+            bookingId: event.params.bookingId,
+            studentEmail,
+            emailId: studentEmailResult.data?.id,
+            sentAt: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'sent'
+          });
+          console.log('Booking confirmation sent to student:', studentEmail);
+        }
+      }
+
       return emailResult;
 
     } catch (error) {
