@@ -1,89 +1,174 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Learn Russian by reading free short stories. Read the three little pigs in Russian to improve your grammar and vocabulary.">
-    <meta name="keywords" content="the three little pigs in Russian, short stories in Russian, how to speak Russian, Три маленьких поросенка, learn Russian for free">
+    <meta name="description" content="Learn Russian by reading the Three Little Pigs in Russian. Free bilingual short story with text-to-speech narration for language learners.">
+    <meta name="keywords" content="Три маленьких поросенка, three little pigs in Russian, learn Russian, Russian short stories, bilingual Russian">
     <meta name="author" content="Lingua Bud">
+    <title>Три маленьких поросенка — Learn Russian | Lingua Bud</title>
 
-    <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
-	<meta property="og:site_name" content="" /> <!-- website name -->
-	<meta property="og:site" content="" /> <!-- website link -->
-	<meta property="og:title" content=""/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="" /> <!-- image link, make sure it's jpg -->
-	<meta property="og:url" content="" /> <!-- where do you want your post to link to -->
-	<meta property="og:type" content="article" />
-
-    <!-- Website Title -->
-    <title>Три маленьких поросенка - Lingua Bud</title>
-    
-    <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/fontawesome-all.css" rel="stylesheet">
     <link href="css/swiper.css" rel="stylesheet">
-	<link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
-	
-	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ── Hero ── */
+        .story-hero {
+            background: linear-gradient(135deg, #153e52 0%, #0a2236 100%);
+            padding: 100px 0 60px;
+            text-align: center;
+            color: #fff;
+        }
+        .story-hero h1 { font-size: 2.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .story-hero .hero-subtitle { font-size: 1.15rem; opacity: 0.85; margin-bottom: 1.4rem; }
+        .hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
+        .hero-badge {
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px; padding: 0.3rem 0.9rem; font-size: 0.85rem; color: #fff;
+        }
+
+        /* ── Language strip ── */
+        .lang-strip {
+            background: #f8f9fa; border-bottom: 1px solid #e9ecef;
+            padding: 0.6rem 0; text-align: center; font-size: 0.85rem; color: #666;
+        }
+        .lang-strip a { color: #153e52; font-weight: 600; margin: 0 0.4rem; text-decoration: none; }
+        .lang-strip a:hover { color: #0a2236; text-decoration: underline; }
+
+        /* ── Narrator card ── */
+        .narrator-card {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+            border: 1px solid #b8daff; border-radius: 12px;
+            padding: 1.2rem 1.5rem; margin: 2rem 0 1rem;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 1rem;
+        }
+        .narrator-card .narrator-icon { font-size: 2rem; }
+        .narrator-card .narrator-info { flex: 1; min-width: 160px; }
+        .narrator-card .narrator-info strong { display: block; color: #0a2236; font-size: 1rem; }
+        .narrator-card .narrator-info span { font-size: 0.82rem; color: #555; }
+        .narrator-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn-narrate {
+            background: #153e52; color: #fff; border: none; border-radius: 8px;
+            padding: 0.5rem 1.1rem; cursor: pointer; font-size: 0.9rem;
+            display: inline-flex; align-items: center; gap: 0.4rem; transition: background 0.2s;
+        }
+        .btn-narrate:hover { background: #0a2236; }
+        .btn-narrate.playing { background: #c0392b; }
+        .btn-narrate-stop {
+            background: transparent; color: #153e52; border: 2px solid #153e52;
+            border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer;
+            font-size: 0.9rem; transition: all 0.2s;
+        }
+        .btn-narrate-stop:hover { background: #153e52; color: #fff; }
+        #narratorStatus { font-size: 0.8rem; color: #666; margin-top: 0.3rem; }
+
+        /* ── Story cards ── */
+        .story-section { padding: 2.5rem 0 0; }
+        .story-card {
+            background: #fff; border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07); margin-bottom: 1.8rem; overflow: hidden;
+        }
+        .story-card-header {
+            background: linear-gradient(135deg, #153e52 0%, #0a2236 100%);
+            color: #fff; padding: 0.7rem 1.3rem;
+            display: flex; align-items: center; gap: 0.7rem;
+        }
+        .story-card-num {
+            background: rgba(255,255,255,0.2); border-radius: 50%;
+            width: 32px; height: 32px; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+        }
+        .story-card-title { font-size: 1rem; font-weight: 600; }
+        .story-card-body { padding: 1.3rem 1.5rem; }
+        .para-block { margin-bottom: 1.2rem; }
+        .story-russian { font-size: 1.05rem; color: #1a1a2e; line-height: 1.75; margin-bottom: 0.4rem; }
+        .russian-text { font-family: 'Open Sans', sans-serif; }
+        .para-english {
+            font-size: 0.92rem; color: #555; font-style: italic;
+            background: #f8f9fa; border-left: 3px solid #153e52;
+            padding: 0.5rem 0.8rem; border-radius: 0 6px 6px 0; margin-top: 0.2rem;
+        }
+        .para-divider { border: none; border-top: 1px solid #eee; margin: 1rem 0; }
+        .story-img { width: 100%; max-width: 480px; border-radius: 10px; margin: 0.8rem auto 0; display: block; }
+
+        /* ── Vocabulary tooltip ── */
+        .tooltip-word {
+            border-bottom: 2px dotted #153e52; cursor: help;
+            position: relative; display: inline-block;
+        }
+        .tooltip-def {
+            visibility: hidden; opacity: 0;
+            background: #0a2236; color: #fff; font-size: 0.8rem; font-style: normal;
+            padding: 0.35rem 0.65rem; border-radius: 6px; white-space: nowrap;
+            position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+            transition: opacity 0.2s; z-index: 10; pointer-events: none;
+        }
+        .tooltip-word:hover .tooltip-def { visibility: visible; opacity: 1; }
+
+        /* ── Related stories ── */
+        .related-section { background: #f4f7f9; padding: 3rem 0; margin-top: 2rem; }
+        .related-section h3 { text-align: center; color: #0a2236; margin-bottom: 1.5rem; font-size: 1.4rem; }
+        .related-grid { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+        .related-card {
+            background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1rem 1.2rem; text-align: center; text-decoration: none; color: #1a1a2e;
+            min-width: 140px; flex: 1 1 140px; max-width: 180px; transition: transform 0.18s, box-shadow 0.18s;
+        }
+        .related-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.13); text-decoration: none; color: #153e52; }
+        .related-card .related-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+        .related-card .related-title { font-size: 0.88rem; font-weight: 600; }
+
+        /* ── Footer ── */
+        .story-footer { background: #0a2236; color: #ccc; padding: 2.5rem 0 1rem; margin-top: 0; }
+        .story-footer h5 { color: #fff; font-size: 1rem; margin-bottom: 0.8rem; }
+        .story-footer a { color: #aac8d8; text-decoration: none; font-size: 0.88rem; display: block; margin-bottom: 0.3rem; }
+        .story-footer a:hover { color: #fff; }
+        .story-footer .copyright { border-top: 1px solid #1e3a4f; margin-top: 1.5rem; padding-top: 1rem; text-align: center; font-size: 0.8rem; color: #778899; }
+
+        @media (max-width: 576px) {
+            .story-hero h1 { font-size: 1.9rem; }
+            .narrator-card { flex-direction: column; }
+        }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
-    
+
     <!-- Preloader -->
-	<div class="spinner-wrapper">
+    <div class="spinner-wrapper">
         <div class="spinner">
             <div class="bounce1"></div>
             <div class="bounce2"></div>
             <div class="bounce3"></div>
         </div>
     </div>
-    <!-- end of preloader -->
-    
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
-
-        <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
-        <!-- Mobile Menu Toggle Button -->
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+            aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
             <span class="navbar-toggler-awesome fas fa-times"></span>
         </button>
-        <!-- end of mobile menu toggle button -->
-
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
-
-                <!-- Dropdown Menu -->          
+                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#header">HOME</a></li>
+                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#intro">ABOUT</a></li>
+                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#services">SERVICES</a></li>
+                <li class="nav-item"><a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a></li>
+                <li class="nav-item"><a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a></li>
+                <li class="nav-item"><a class="nav-link page-scroll" href="connect.html">CONNECT</a></li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button"
+                        aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -96,19 +181,12 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
-                <!-- end of dropdown menu -->
-
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
-                </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+                <li class="nav-item" id="nav-auth-item">
+                    <a class="btn-solid-xlg nav-link" href="login.html" id="nav-auth-link">SIGN UP/LOG IN</a>
                 </li>
             </ul>
             <span class="nav-item social-icons">
@@ -126,444 +204,473 @@
                 </span>
             </span>
         </div>
-    </nav> <!-- end of navbar -->
-    <!-- end of navbar -->
+    </nav>
 
-
-    <!-- Header -->
-    <header id="header" class="ex-header">
+    <!-- Hero -->
+    <div class="story-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1>Три маленьких поросенка</h1>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </header> <!-- end of ex-header -->
-    <!-- end of header -->
+            <h1>Три маленьких поросенка</h1>
+            <p class="hero-subtitle">The Three Little Pigs in Russian</p>
+            <div class="hero-badges">
+                <span class="hero-badge">🇷🇺 Russian</span>
+                <span class="hero-badge">📚 Short Story</span>
+                <span class="hero-badge">🎙️ TTS Narration</span>
+                <span class="hero-badge">🌍 Bilingual</span>
+            </div>
+        </div>
+    </div>
 
+    <!-- Language strip -->
+    <div class="lang-strip">
+        <strong>Also read in:</strong>
+        <a href="LosTresCerditosNew.html">🇪🇸 Spanish</a>
+        <a href="LesTroisPetitCochons.html">🇫🇷 French</a>
+        <a href="OsTresPorquinhos.html">🇧🇷 Portuguese</a>
+        <a href="Porcellini.html">🇮🇹 Italian</a>
+        <a href="GermanPigs.html">🇩🇪 German</a>
+        <a href="SwedishPigs.html">🇸🇪 Swedish</a>
+    </div>
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Main content -->
+    <div class="container story-section">
+        <div class="row justify-content-center">
+            <div class="col-lg-9 col-xl-8">
+
+                <!-- Narrator card -->
+                <div class="narrator-card">
+                    <div class="narrator-icon">🎙️</div>
+                    <div class="narrator-info">
+                        <strong>Русский Рассказчик — Russian Narrator</strong>
+                        <span>Press play to hear the story read aloud in Russian</span>
+                        <div id="narratorStatus">Ready</div>
+                    </div>
+                    <div class="narrator-controls">
+                        <button class="btn-narrate" id="btnPlay" onclick="toggleNarration()">
+                            <i class="fas fa-play"></i> Play Story
+                        </button>
+                        <button class="btn-narrate-stop" onclick="stopNarration()">
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Часть 1 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">1</div>
+                        <div class="story-card-title">Семья поросят</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Жила-была мама-свинка, у которой было три поросенка. Она очень любила их, но не хватало еды, чтобы накормить их, поэтому она отправила их в огромный мир искать счастья.</p>
+                            <p class="para-english">Once upon a time there was a mama pig who had three little pigs. She loved them very much but there was not enough food to feed them, so she sent them out into the vast world to seek their fortunes.</p>
+                        </div>
+                        <img src="images/3realpigs.jpg" alt="Three little pigs" class="story-img">
+                    </div>
+                </div>
+
+                <!-- Часть 2 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">2</div>
+                        <div class="story-card-title">Дом из соломы</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Первый поросенок решил отправиться на юг. Он встретил на дороге фермера, который нес вязанку соломы. Поросенок вежливо спросил: «Не могли бы вы дать мне эту солому, чтобы я мог построить дом?»</p>
+                            <p class="para-english">The first little pig decided to go South. He met a farmer on the road who was carrying a bundle of straw. The little pig asked politely: "Could you please give me that straw, so that I can build a house?"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Поскольку поросенок сказал «пожалуйста», фермер дал ему солому, и поросенок построил из нее красивый дом. В доме стены из соломы, пол из соломы, а внутри... удобная кровать из соломы.</p>
+                            <p class="para-english">Because the little pig said "please", the farmer gave him the straw and the little pig used it to build a beautiful house. The house had walls made of straw, a floor made of straw, and inside... a comfortable bed made of straw.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Часть 3 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">3</div>
+                        <div class="story-card-title">Волк у соломенного дома</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Построив дом, поросенок решил лечь и вздремнуть в своей постели из соломы, но к дому подошел большой злой волк. Он почувствовал запах свиньи в доме, и у него <span class="tooltip-word">потекли слюнки<span class="tooltip-def">потекли слюнки = his mouth watered (lit. "the saliva flowed")</span></span>. «Ммммм... бутерброды с беконом!»</p>
+                            <p class="para-english">After building the house, the little pig decided to lay down and take a nap in his bed made of straw but, the big bad wolf arrived at the house. He smelled the pig inside the house, and his mouth started to water. "Mmmmm... bacon sandwiches!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Так волк постучал в дверь дома из соломы и сказал: «Поросенок! Поросенок! Впусти меня! Впусти меня!»</p>
+                            <p class="para-english">So the wolf knocked at the door of the house made of straw and said: "Little pig! Little pig! Let me in! Let me in!"</p>
+                        </div>
+                        <img src="images/wolf.jpg" alt="The big bad wolf" class="story-img">
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Но когда поросенок увидел в замочную скважину большие лапы волка, он ответил: «Нет! Нет! Нет! Волосы на моем подбородке!»</p>
+                            <p class="para-english">But as the little pig saw the wolf's big paws through the keyhole, he replied: "No! No! No! By the hairs of my chin!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Тогда волк оскалил зубы и сказал: «Тогда я буду пыхтеть и пыхтеть, и ваш дом рухнет!»</p>
+                            <p class="para-english">Then wolf showed his teeth and said: "Then I'll huff and I'll puff and your house will fall down!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Так что он пыхтел, пыхтел, и дом рухнул. Поросенок побежал обратно в дом своей матери.</p>
+                            <p class="para-english">So he huffed and he puffed and the house fell down. The little pig ran back to his mother's house.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Часть 4 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">4</div>
+                        <div class="story-card-title">Дом из дерева</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Второй поросенок решил отправиться на север. Когда он шел, он нашел на дороге крестьянина, который нес вязанку дров. Поросенок вежливо спросил: «Извините, можно мне из этих дров построить дом?»</p>
+                            <p class="para-english">The second little pig decided to go North. As he walked, he found a farmer on the road who was carrying a bundle of wood. The little pig asked politely: "Excuse me, could I have that wood to build a house?"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Поскольку поросенок сказал «извините», фермер дал ему дрова, и поросенок построил из них красивый дом. В доме были деревянные стены, деревянный пол, а внутри... прочный деревянный стол.</p>
+                            <p class="para-english">Because the little pig had said "excuse me", the farmer gave him the wood, and the little pig used it to build a beautiful house. The house had wood walls, a wood floor, and inside... a strong wood table.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Часть 5 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">5</div>
+                        <div class="story-card-title">Волк у деревянного дома</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Когда маленький поросенок только что закончил строить свой дом и расставлял цветы на своем прочном деревянном столе, в дом пришел большой злой волк. Он почувствовал запах свиньи в доме, и его желудок заурчал. «Ммммм... жареная свинина!»</p>
+                            <p class="para-english">When the little pig had just finished building his house and was arranging flowers on his strong wood table, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and his stomach started to rumble. "Mmmmm... roast pork!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Так волк постучал в дверь дома из дерева и сказал: «Поросенок! Поросенок! Впусти меня! Впусти меня!»</p>
+                            <p class="para-english">So the wolf knocked at the door of the house made of wood and said: "Little pig! Little pig! Let me in! Let me in!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Но когда поросенок увидел в замочную скважину длинный нос волка, он ответил: «Нет! Нет! Нет!»</p>
+                            <p class="para-english">But as the little pig had seen the wolf's long nose through the keyhole, he replied: "No! No! No! By the hair of my chin!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Тогда волк оскалил зубы и сказал: «Тогда я буду дуть и дуть, и твой дом рухнет!»</p>
+                            <p class="para-english">Then the wolf showed his teeth and said: "Then I'll blow and I'll blow and your house will fall down!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Он дунул, дунул, и дом рухнул. Поросенок побежал домой к своей маме, которая была недовольна!</p>
+                            <p class="para-english">So he blew and he blew and the house fell down. The little pig ran back home to his mother — who was not happy!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Часть 6 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">6</div>
+                        <div class="story-card-title">Дом из кирпичей</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Третий поросенок решил отправиться на Запад. Когда он шел по дороге, он встретил фермера, несущего груз кирпичей. Поэтому он вежливо спросил человека: «Здравствуйте, сэр, можно мне несколько кирпичей, чтобы построить дом?»</p>
+                            <p class="para-english">The third little pig decided to go West. As he walked along the road he met a farmer carrying a load of bricks. So he asked the man politely: "Hello sir, may I have some of those bricks to build a house?"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Фермеру нравилось, когда его называли «сэр», поэтому он дал поросенку несколько кирпичей, и поросенок построил из них красивый дом. В доме были кирпичные стены, кирпичный пол, а внутри... большой кирпичный камин.</p>
+                            <p class="para-english">The farmer liked being called "sir" so he gave the little pig some bricks, and the little pig used them to build a beautiful house. The house had brick walls, a brick floor, and inside... a large brick fireplace.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Часть 7 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">7</div>
+                        <div class="story-card-title">Волк у кирпичного дома</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Когда маленький поросенок только что закончил строить свой дом и варил большую кастрюлю супа в своем кирпичном камине, в дом пришел большой злой волк. Он почувствовал запах свиньи в доме и облизал губы. «Ммммм… свиные отбивные с соусом барбекю и зеленой фасолью!»</p>
+                            <p class="para-english">When the little pig had just finished building his house and was cooking a big pot of soup in his brick fireplace, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and he licked his lips. "Mmmmm… pork chops with barbeque sauce and green beans!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Так волк постучал в дверь кирпичного дома и сказал: «Поросенок! Поросенок! Впусти меня! Впусти меня!»</p>
+                            <p class="para-english">So the wolf knocked at the door of the brick house and said: "Little pig! Little pig! Let me in! Let me in!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Но когда поросенок увидел в замочную скважину большие уши волка, он ответил: «Нет! Нет! Нет!»</p>
+                            <p class="para-english">But as the little pig had seen the wolf's big ears through the keyhole, he replied: "No! No! No! By the hair of my chin!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Тогда волк оскалил зубы и сказал: «Тогда я буду дуть и дуть, и твой дом рухнет!»</p>
+                            <p class="para-english">Then the wolf showed his teeth and said: "Then I'll blow and I'll blow and your house will fall down!"</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Так что он дул и дул, снова и снова. Но он не мог заставить дом рухнуть. Наконец он так запыхался, что больше не мог дуть.</p>
+                            <p class="para-english">So he blew and he blew, again and again. But he could not make the house fall down. At last he was so out of breath that he couldn't blow any more.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Часть 8 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">8</div>
+                        <div class="story-card-title">Поражение волка</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Маленькая свинья просто помешивала свою большую кастрюлю с супом и смеялась.</p>
+                            <p class="para-english">The little pig just stirred his big pot of soup, and laughed.</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Но волку так хотелось свиных отбивных... он не хотел сдаваться! Он прокрался вокруг задней части дома и забрался на крышу. «Теперь я точно достану эту свинью!»</p>
+                            <p class="para-english">But the wolf had such a craving to eat pork chops... he didn't want to give up! He snuck around the back of the house and climbed onto the roof. "Now I'll get that pig, for certain!"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Часть 9 -->
+                <div class="story-card">
+                    <div class="story-card-header">
+                        <div class="story-card-num">9</div>
+                        <div class="story-card-title">Конец</div>
+                    </div>
+                    <div class="story-card-body">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Волк соскользнул в большую кирпичную трубу и приземлился... БУХ! Дном вперед в большую кастрюлю с супом маленькой свиньи... которая теперь была очень горячей! Волк взвыл и выпрыгнул из котла, потом выбежал из дома и помчался по дороге, держась за обгоревший зад.</p>
+                            <p class="para-english">The wolf let himself slide down the great brick chimney and landed... PLOP! Bottom-first into the little pig's big pot of soup... which was now very hot! The wolf howled and jumped out of the pot, then ran out of the house and hurtled down the road, clutching his burnt bottom.</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Маленький поросенок позвонил своей матери и двум своим братьям на свой кирпичный мобильный телефон и пригласил их на вкусный ужин из супа из волчьего дна.</p>
+                            <p class="para-english">The little pig called his mother and his two brothers on his brick mobile phone, and invited them to share a delicious dinner of wolf-bottom soup.</p>
+                        </div>
+                        <hr class="para-divider">
+                        <div class="para-block">
+                            <p class="story-russian russian-text">Суп из волчьего дна был так вкусен, что вскоре все в радиусе ста километров захотели поймать волка и заставить его посидеть в своем супе. Бедному волку пришлось бежать далеко в дремучий темный лес, где он мог жить в тишине и покое.</p>
+                            <p class="para-english">The wolf-bottom soup was so tasty that soon everybody within one hundred kilometres wanted to catch the wolf and make him sit in their soup. The poor wolf had to run far away to the deep dark forest where he could live in peace and quiet.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end col -->
+        </div><!-- end row -->
+    </div><!-- end container -->
+
+    <!-- Related stories -->
+    <div class="related-section">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Other stories in Russian: <a class="green" href="RussianTortoise.html">The Tortoise and the Hare</a>, <a class="green" href="RussianAladdin.html">The Adventures of Aladdin</a>, <a class="green" href="RussianDuck.html">The Ugly Duckling</a>, <a class="green" href="RussianKing.html">King Midas</a>, <a class="green" href="RussianJack.html">Jack and the Beanstalk</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
-
-
-    <!-- Terms Content -->
-    <div class="ex-basic-2">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3>Три маленьких поросенка</h3>
-                            <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <h5 class="w3-center w3-padding-64"><strong><span class="w3-wide w3-xlarge"></span></h5></strong>
-    <p>Жила-была мама-свинка, у которой было три поросенка. Она очень любила их, но не хватало еды, чтобы накормить их, поэтому она отправила их в огромный мир искать счастья.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Once upon a time there was a mama pig who had three little pigs. She loved them very much but there was not enough food to feed them, so she sent them out into the vast world to seek their fortunes.</i></p>
+            <h3>More Russian Stories</h3>
+            <div class="related-grid">
+                <a href="RussianDuck.html" class="related-card">
+                    <div class="related-icon">🦢</div>
+                    <div class="related-title">The Ugly Duckling</div>
+                </a>
+                <a href="RussianTortoise.html" class="related-card">
+                    <div class="related-icon">🐢</div>
+                    <div class="related-title">The Tortoise &amp; the Hare</div>
+                </a>
+                <a href="RussianAladdin.html" class="related-card">
+                    <div class="related-icon">🪔</div>
+                    <div class="related-title">Aladdin</div>
+                </a>
+                <a href="RussianKing.html" class="related-card">
+                    <div class="related-icon">👑</div>
+                    <div class="related-title">King Midas</div>
+                </a>
+                <a href="RussianJack.html" class="related-card">
+                    <div class="related-icon">🌱</div>
+                    <div class="related-title">Jack &amp; the Beanstalk</div>
+                </a>
+                <a href="RussianPage.html" class="related-card">
+                    <div class="related-icon">🇷🇺</div>
+                    <div class="related-title">All Russian Resources</div>
+                </a>
+            </div>
+        </div>
     </div>
-    <img src="images/3realpigs.jpg" style="width:100%;max-width:500px" class="w3-margin-top w3-center">
-
-  </div>
-</div>
-<br>
-<br>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>Первый поросенок решил отправиться на юг. Он встретил на дороге фермера, который нес вязанку соломы. Поросенок вежливо спросил: «Не могли бы вы дать мне эту солому, чтобы я мог построить дом?»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The first little pig decided to go South. He met a farmer on the road who was carrying a bundle of straw. The little pig asked politely: "Could you please give me that straw, so that I can build a house?"</i></p>
-    </div>
-  </div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>Поскольку поросенок сказал «пожалуйста», фермер дал ему солому, и поросенок построил из нее красивый дом. В доме стены из соломы, пол из соломы, а внутри... удобная кровать из соломы.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Because the little pig said "please", the farmer gave him the straw and the little pig used it to build a beautiful house. The house had walls made of straw, a floor made of straw, and inside... a comfortable bed made of straw.</i></p>
-</div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>Построив дом, поросенок решил лечь и вздремнуть в своей постели из соломы, но к дому подошел большой злой волк. Он почувствовал запах свиньи в доме, и у него потекли слюнки. «Ммммм... бутерброды с беконом!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>After building the house, the little pig decided to lay down and take a nap in his bed made of straw but, the big bad wolf arrived at the house. He smelled the pig inside the house, and his mouth started to water. "Mmmmm... bacon sandwiches!"</i></p>
-</div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>Так волк постучал в дверь дома из соломы и сказал: «Поросенок! Поросенок! Впусти меня! Впусти меня!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>So the wolf knocked at the door of the house made of straw and said: "Little pig! Little pig! Let me in! Let me in!"</i></p>
-</div><img src="images/wolf.jpg" style="width:100%;max-width:500px" class="w3-margin-top w3-center">
-</div>
-	&nbsp;
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Но когда поросенок увидел в замочную скважину большие лапы волка, он ответил: «Нет! Нет! Нет! Волосы на моем подбородке!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>But as the little pig saw the wolf's big paws through the keyhole, he replied: "No! No! No! By the hairs of my chin!"</i></p>
-    </div>
-    
-
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Тогда волк оскалил зубы и сказал: «Тогда я буду пыхтеть и пыхтеть, и ваш дом рухнет!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Then wolf showed his teeth and said: "Then I'll huff and I'll puff and your house will fall down!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Так что он пыхтел, пыхтел, и дом рухнул. Поросенок побежал обратно в дом своей матери.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>So he huffed and he puffed and the house fell down. The little pig ran back to his mother's house.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Второй поросенок решил отправиться на север. Когда он шел, он нашел на дороге крестьянина, который нес вязанку дров. Поросенок вежливо спросил: «Извините, можно мне из этих дров построить дом?»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The second little pig decided to go North. As he walked, he found a farmer on the road who was carrying a bundle of wood. The little pig asked politely: "Excuse me, could I have that wood to build a house?"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Поскольку поросенок сказал «извините», фермер дал ему дрова, и поросенок построил из них красивый дом. В доме были деревянные стены, деревянный пол, а внутри... прочный деревянный стол.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Because the little pig had said "excuse me", the farmer gave him the wood, and the little pig used it to build a beautiful house. The house had wood walls, a wood floor, and inside... a strong wood table.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Когда маленький поросенок только что закончил строить свой дом и расставлял цветы на своем прочном деревянном столе, в дом пришел большой злой волк. Он почувствовал запах свиньи в доме, и его желудок заурчал. «Ммммм... жареная свинина!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>When the little pig had just finished building his house and was arranging flowers on his strong wood table, the big bad wolf came arrived at the house. He smelt the scent of the pig inside the house, and his stomach started to rumble. "Mmmmm... roast pork!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Так волк постучал в дверь дома из дерева и сказал: «Поросенок! Поросенок! Впусти меня! Впусти меня!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>So the wolf knocked at the door of the house made of wood and said: "Little pig! Little pig! Let me in! Let me it!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Но когда поросенок увидел в замочную скважину длинный нос волка, он ответил: «Нет! Нет! Нет!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>But as the little pig had seen the wolf's long nose through the keyhole, he replied: "No! No! No! by the hair of my chin!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Тогда волк оскалил зубы и сказал: «Тогда я буду дуть и дуть, и твой дом рухнет!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Then the wolf showed his teeth and said: "Then I'll blow and I'll blow and your house will fall down!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Он дунул, дунул, и дом рухнул. Поросенок побежал домой к своей маме, которая была недовольна!</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>So he blew and he blew and the house fell down. The little pig ran back home to his mother — who was not happy!</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Третий поросенок решил отправиться на Запад. Когда он шел по дороге, он встретил фермера, несущего груз кирпичей. Поэтому он вежливо спросил человека: «Здравствуйте, сэр, можно мне несколько кирпичей, чтобы построить дом?»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The third little pig decided to go West. As he walked along the road he met a farmer carrying a load of bricks. So he asked the man politely: "Hello sir, may I have some of those bricks to build a house?"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Фермеру нравилось, когда его называли «сэр», поэтому он дал поросенку несколько кирпичей, и поросенок построил из них красивый дом. В доме были кирпичные стены, кирпичный пол, а внутри... большой кирпичный камин.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The farmer liked being called "sir" so he gave the little pig some bricks, and the little pig used them to build a beautiful house. The house had brick walls, a brick floor, and inside... a large brick fireplace.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Когда маленький поросенок только что закончил строить свой дом и варил большую кастрюлю супа в своем кирпичном камине, в дом пришел большой злой волк. Он почувствовал запах свиньи в доме и облизал губы. «Ммммм… свиные отбивные с соусом барбекю и зеленой фасолью!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>When the little pig had just finished building his house and was cooking a big pot of soup in his brick fireplace, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and he licked his lips. "Mmmmm… pork chops with barbeque sauce and green beans!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Так волк постучал в дверь кирпичного дома и сказал: «Поросенок! Поросенок! Впусти меня! Впусти меня!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>So the wolf knocked at the door of the brick house and said: "Little pig! Little pig! Let me in! Let me in!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Но когда поросенок увидел в замочную скважину большие уши волка, он ответил: «Нет! Нет! Нет!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>But as the little pig had seen the wolf's big ears through the keyhole, he replied: "No! No! No! by the hair of my chin!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Тогда волк оскалил зубы и сказал: «Тогда я буду дуть и дуть, и твой дом рухнет!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Then the wolf showed his teeth and said: "Then I'll blow and I'll blow and your house will fall down!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Так что он дул и дул, снова и снова. Но он не мог заставить дом рухнуть. Наконец он так запыхался, что больше не мог дуть.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>So he blew and he blew, again and again. But he could not make the house fall down. At last he was so out of breath that he couldn't blow any more.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Маленькая свинья просто помешивала свою большую кастрюлю с супом и смеялась.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The little pig just stirred his big pot of soup, and laughed.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Но волку так хотелось свиных отбивных... он не хотел сдаваться! Он прокрался вокруг задней части дома и забрался на крышу. «Теперь я точно достану эту свинью!»</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>But the wolf had such a craving to eat pork chops... he didn't want to give up! He snuck around the back of the house and climbed onto the roof. "Now I'll get that pig, for certain!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Волк соскользнул в большую кирпичную трубу и приземлился... БУХ! Дном вперед в большую кастрюлю с супом маленькой свиньи... которая теперь была очень горячей! Волк взвыл и выпрыгнул из котла, потом выбежал из дома и помчался по дороге, держась за обгоревший зад.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The wolf let himself slide down the great brick chimney and landed ... PLOP! Bottom-first into the little pig’s big pot of soup... which was now very hot! The wolf howled and jumped out of the pot, then ran out of the house and hurtled down the road, clutching his burnt bottom.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Маленький поросенок позвонил своей матери и двум своим братьям на свой кирпичный мобильный телефон и пригласил их на вкусный ужин из супа из волчьего дна.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The little pig called his mother and his two brothers on his brick mobile phone, and invited them to share a delicious dinner of wolf-bottom soup.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Суп из волчьего дна был так вкусен, что вскоре все в радиусе ста километров захотели поймать волка и заставить его посидеть в своем супе. Бедному волку пришлось бежать далеко в дремучий темный лес, где он мог жить в тишине и покое.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The wolf-bottom soup was so tasty that soon everybody within one hundred kilometres wanted to catch the wolf and make him sit in their soup. The poor wolf had to run far away to the deep dark forest where he could live in peace and quiet.</i></p>
-    </div>
-  </div>
-</div>
-
-                    </div> <!-- end of text-container -->
-                    
-                    
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic -->
-    <!-- end of terms content -->
-			    
-		</div> <!-- end of col--> 
-                    </div> <!-- end of row -->
-                    &nbsp;&nbsp;<a class="btn-outline-reg back" href="RussianResources.html">BACK</a>
-                </div> <!-- end of col-->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-2 -->
-    <!-- end of privacy content -->
-
-    
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Also Enjoy in: <a class="green" href="LosTresCerditosNew.html">Spanish</a>, <a class="green" href="LesTroisPetitCochons.html">French</a>, <a class="green" href="OsTresPorquinhos.html">Portuguese</a>, <a class="green" href="Porcellini.html">Italian</a>, <a class="green" href="GermanPigs.html">German</a>, <a class="green" href="SwedishPigs.html">Swedish</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
-
 
     <!-- Footer -->
-    <div class="footer">
+    <div class="story-footer">
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
-                    <div class="text-container about">
-                        <h4>Few Words About Lingua Bud</h4>
-                        <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
-                <div class="col-md-2">
-                    <div class="text-container">
-                        <h4>Links</h4>
-                        <ul class="list-unstyled li-space-lg white">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
-                        </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
-                <div class="col-md-2">
-                    <div class="text-container">
-                        <h4>Tools</h4>
-                        <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li class="media">
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
-                        </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
-                <div class="col-md-2">
-                    <div class="text-container">
-                        <h4>Partners</h4>
-                        <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
-                        </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of footer -->  
-    <!-- end of footer -->
+                <div class="col-md-4 mb-3">
+                    <h5>Lingua Bud</h5>
+                    <p style="font-size:0.88rem;">Free bilingual stories to help you learn Russian and 7 other languages at your own pace.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Learn</h5>
+                    <a href="RussianPage.html">Russian Resources</a>
+                    <a href="Resources2.html">All Resources</a>
+                    <a href="instructors.html">Find an Instructor</a>
+                    <a href="connect.html">Language Partners</a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Languages</h5>
+                    <a href="NewSpanishPage.html">Spanish</a>
+                    <a href="NewFrenchPage.html">French</a>
+                    <a href="NewPortuguesePage.html">Portuguese</a>
+                    <a href="NewItalianPage.html">Italian</a>
+                    <a href="GermanPage.html">German</a>
+                    <a href="SwedishPage.html">Swedish</a>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2026 Lingua Bud &mdash; <a href="privacy-policy.html" style="color:#aac8d8;">Privacy Policy</a></p>
+            </div>
+        </div>
+    </div>
 
-
-    <!-- Copyright -->
-    <div class="copyright">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">Lingua Bud</a></p>
-                </div> <!-- end of col -->
-            </div> <!-- enf of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of copyright --> 
-    <!-- end of copyright -->
-
-	
     <!-- Scripts -->
-    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
-    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
-    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
-    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
-    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
-    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
-    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
-    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
-    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <!-- Firebase Auth navbar -->
+    <script type="module">
+        import { auth, db, onAuthStateChanged, doc, getDoc } from './lib/firebaseClient.js';
+        onAuthStateChanged(auth, async (user) => {
+            const authItem = document.getElementById('nav-auth-item');
+            if (user) {
+                let displayName = user.displayName || user.email;
+                try {
+                    const snap = await getDoc(doc(db, 'users', user.uid));
+                    if (snap.exists() && snap.data().name) displayName = snap.data().name;
+                    else {
+                        const isnap = await getDoc(doc(db, 'instructors', user.uid));
+                        if (isnap.exists() && isnap.data().name) displayName = isnap.data().name;
+                    }
+                } catch(e) {}
+                authItem.innerHTML = `<div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userMenuDrop" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-user-circle"></i> ${displayName}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userMenuDrop">
+                        <a class="dropdown-item" href="student-dashboard.html">My Profile</a>
+                        <a class="dropdown-item" href="dashboard.html">Instructor Dashboard</a>
+                        <a class="dropdown-item" href="activity.html">My Lessons</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" id="signOutBtn">Sign Out</a>
+                    </div>
+                </div>`;
+                document.getElementById('signOutBtn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    import('./lib/firebaseClient.js').then(({ signOut }) => signOut(auth));
+                });
+            }
+        });
+    </script>
+
+    <!-- TTS Narration -->
+    <script>
+        let russianVoice = null;
+        let isPlaying = false;
+        let utterances = [];
+        let currentUtteranceIndex = 0;
+
+        function initVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            const preferredLocales = ['ru-RU'];
+            for (let locale of preferredLocales) {
+                russianVoice = voices.find(v => v.lang === locale);
+                if (russianVoice) { updateStatus('Using ' + russianVoice.name + ' (' + russianVoice.lang + ')'); return; }
+            }
+            russianVoice = voices.find(v => v.lang.startsWith('ru'));
+            if (russianVoice) updateStatus('Using ' + russianVoice.name + ' (' + russianVoice.lang + ')');
+            else updateStatus('Russian voice not found — using default');
+        }
+
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = initVoices;
+        }
+        initVoices();
+
+        function collectRussianText() {
+            const texts = [];
+            document.querySelectorAll('.story-russian').forEach(el => {
+                texts.push(el.innerText.trim());
+            });
+            return texts;
+        }
+
+        function toggleNarration() {
+            if (isPlaying) { pauseNarration(); return; }
+            if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); setPlayingState(true); return; }
+            startNarration();
+        }
+
+        function startNarration() {
+            window.speechSynthesis.cancel();
+            const texts = collectRussianText();
+            utterances = texts.map((text, i) => {
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'ru-RU';
+                u.rate = 0.88;
+                u.pitch = 1.0;
+                if (russianVoice) u.voice = russianVoice;
+                u.onstart = () => { currentUtteranceIndex = i; updateStatus('Reading part ' + (i + 1) + ' of ' + texts.length + '…'); };
+                u.onend = () => { if (i === texts.length - 1) { setPlayingState(false); updateStatus('Finished!'); } };
+                u.onerror = () => { setPlayingState(false); updateStatus('Error during narration'); };
+                return u;
+            });
+            utterances.forEach(u => window.speechSynthesis.speak(u));
+            setPlayingState(true);
+        }
+
+        function pauseNarration() {
+            window.speechSynthesis.pause();
+            setPlayingState(false);
+            updateStatus('Paused');
+        }
+
+        function stopNarration() {
+            window.speechSynthesis.cancel();
+            setPlayingState(false);
+            updateStatus('Ready');
+        }
+
+        function setPlayingState(playing) {
+            isPlaying = playing;
+            const btn = document.getElementById('btnPlay');
+            if (playing) {
+                btn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                btn.classList.add('playing');
+            } else {
+                btn.innerHTML = '<i class="fas fa-play"></i> Play Story';
+                btn.classList.remove('playing');
+            }
+        }
+
+        function updateStatus(msg) {
+            const el = document.getElementById('narratorStatus');
+            if (el) el.textContent = msg;
+        }
+
+        window.addEventListener('beforeunload', () => window.speechSynthesis.cancel());
+    </script>
+
 </body>
 </html>
