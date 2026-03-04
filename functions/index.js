@@ -870,7 +870,8 @@ exports.submitReview = onCall(async (request) => {
   const instructorRef = admin.firestore().collection('instructors').doc(booking.instructorId);
   await admin.firestore().runTransaction(async (tx) => {
     const instSnap = await tx.get(instructorRef);
-    const inst = instSnap.exists ? instSnap.data() : {};
+    if (!instSnap.exists) throw new HttpsError('not-found', 'Instructor profile not found');
+    const inst = instSnap.data();
     const count = inst.reviewCount || 0;
     const avg = inst.averageRating || 0;
     const newCount = count + 1;
