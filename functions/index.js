@@ -830,3 +830,64 @@ exports.createPaymentIntent = onCall(async (request) => {
     platformFee
   };
 });
+
+/**
+ * Submits a student review for a completed lesson.
+ * Atomically writes the review and updates instructor averageRating + reviewCount.
+ */
+exports.submitReview = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+
+  const { bookingId, rating, review } = request.data;
+  if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required');
+  if (!rating || !Number.isInteger(rating) || rating < 1 || rating > 5)
+    throw new HttpsError('invalid-argument', 'Rating must be an integer 1–5');
+
+  const studentId = request.auth.uid;
+
+  // Verify booking exists and belongs to this student
+  const bookingRef = admin.firestore().collection('bookings').doc(bookingId);
+  const bookingSnap = await bookingRef.get();
+  if (!bookingSnap.exists) throw new HttpsError('not-found', 'Booking not found');
+  const booking = bookingSnap.data();
+  if (booking.studentId !== studentId) throw new HttpsError('permission-denied', 'Not your booking');
+
+  // Verify lesson has ended (lesson start + 55 min)
+  const lessonTime = booking.dateTime.toDate();
+  if (new Date() < new Date(lessonTime.getTime() + 55 * 60 * 1000))
+    throw new HttpsError('failed-precondition', 'Lesson has not ended yet');
+
+  // Prevent duplicate reviews
+  const existing = await admin.firestore().collection('reviews')
+    .where('bookingId', '==', bookingId).limit(1).get();
+  if (!existing.empty) throw new HttpsError('already-exists', 'You have already reviewed this lesson');
+
+  // Get student's display name
+  const studentSnap = await admin.firestore().collection('users').doc(studentId).get();
+  const studentName = studentSnap.exists ? (studentSnap.data().name || 'Student') : 'Student';
+
+  // Atomic transaction: write review + update instructor averageRating & reviewCount
+  const instructorRef = admin.firestore().collection('instructors').doc(booking.instructorId);
+  await admin.firestore().runTransaction(async (tx) => {
+    const instSnap = await tx.get(instructorRef);
+    const inst = instSnap.exists ? instSnap.data() : {};
+    const count = inst.reviewCount || 0;
+    const avg = inst.averageRating || 0;
+    const newCount = count + 1;
+    const newAvg = Math.round(((avg * count) + rating) / newCount * 10) / 10;
+
+    tx.set(admin.firestore().collection('reviews').doc(), {
+      bookingId,
+      instructorId: booking.instructorId,
+      studentId,
+      studentName,
+      rating,
+      review: (review || '').trim(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    tx.update(instructorRef, { averageRating: newAvg, reviewCount: newCount });
+  });
+
+  return { success: true };
+});

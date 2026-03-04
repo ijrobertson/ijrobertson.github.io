@@ -541,6 +541,18 @@
             .activity-hero h1 { font-size: 1.7rem; }
             .activity-hero-icon { width: 52px; height: 52px; }
         }
+
+        /* ===== REVIEW BUTTON & STAR MODAL ===== */
+        .btn-rate {
+            background: #f5a623; color: #fff; border: none;
+            border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer;
+            font-size: 0.9rem; transition: background 0.2s;
+        }
+        .btn-rate:hover:not(:disabled) { background: #e0941a; }
+        .btn-rate.reviewed { background: #28a745; cursor: default; }
+        .review-star-row { display:flex; justify-content:center; gap:0.5rem; margin-top:0.5rem; }
+        .review-star-row i { font-size:2rem; color:#ddd; cursor:pointer; transition:color 0.15s; }
+        .review-star-row i.active { color:#f5a623; }
     </style>
 </head>
 <body>
@@ -690,7 +702,7 @@
 
     <script type="module">
         import {
-            auth, db,
+            auth, db, functions, httpsCallable,
             onAuthStateChanged, signOut,
             collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp, onSnapshot
         } from './lib/firebaseClient.js';
@@ -823,9 +835,26 @@
                     return;
                 }
 
+                // Fetch which completed student bookings have already been reviewed
+                const reviewedBookingIds = new Set();
+                const studentBookingIds = bookings
+                    .filter(b => b.myRole === 'student')
+                    .map(b => b.id);
+                if (studentBookingIds.length > 0) {
+                    try {
+                        const revSnap = await getDocs(query(
+                            collection(db, 'reviews'),
+                            where('studentId', '==', currentUser.uid)
+                        ));
+                        revSnap.forEach(d => {
+                            if (d.data().bookingId) reviewedBookingIds.add(d.data().bookingId);
+                        });
+                    } catch (e) {}
+                }
+
                 const grid = document.createElement('div');
                 grid.className = 'lessons-grid';
-                bookings.forEach(booking => grid.appendChild(createLessonCard(booking)));
+                bookings.forEach(booking => grid.appendChild(createLessonCard(booking, reviewedBookingIds)));
 
                 container.innerHTML = '';
                 container.appendChild(grid);
@@ -872,7 +901,7 @@
             }).format(amount / 100);
         }
 
-        function createLessonCard(booking) {
+        function createLessonCard(booking, reviewedBookingIds = new Set()) {
             const lessonTime = getLessonTime(booking);
             const status = getLessonStatus(lessonTime);
             const channelName = `lesson-${booking.id}`;
@@ -900,6 +929,16 @@
                 btnClass = 'btn-join';
                 btnHtml = '<i class="fas fa-hourglass-half"></i> Not started yet';
                 btnDisabled = true;
+            }
+
+            // Rate Lesson button for completed student lessons
+            let reviewFooterHtml = '';
+            if (status === 'completed' && booking.myRole === 'student') {
+                if (reviewedBookingIds.has(booking.id)) {
+                    reviewFooterHtml = `<button class="btn-rate reviewed" disabled><i class="fas fa-star"></i> Reviewed</button>`;
+                } else {
+                    reviewFooterHtml = `<button class="btn-rate" onclick="openReviewModal('${escapeAttr(booking.id)}', '${escapeAttr(otherName)}')"><i class="fas fa-star"></i> Rate Lesson</button>`;
+                }
             }
 
             const card = document.createElement('div');
@@ -938,6 +977,7 @@
                             onclick="joinLesson('${escapeAttr(channelName)}', ${btnDisabled})">
                         ${btnHtml}
                     </button>
+                    ${reviewFooterHtml}
                 </div>
             `;
 
@@ -1277,7 +1317,100 @@
         function escapeAttr(text) {
             return String(text || '').replace(/'/g, '%27').replace(/"/g, '&quot;');
         }
+
+        // ===== REVIEW MODAL =====
+        let currentReviewBookingId = null;
+        let currentReviewRating = 0;
+
+        window.openReviewModal = (bookingId, instructorName) => {
+            currentReviewBookingId = bookingId;
+            currentReviewRating = 0;
+            document.getElementById('reviewModalSubtitle').textContent = `How was your lesson with ${instructorName}?`;
+            document.getElementById('reviewText').value = '';
+            document.getElementById('reviewError').style.display = 'none';
+            renderReviewStars(0);
+            $('#reviewModal').modal('show');
+        };
+
+        function renderReviewStars(selected) {
+            const labels = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+            const row = document.getElementById('reviewStarRow');
+            row.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('i');
+                star.className = `fas fa-star${i <= selected ? ' active' : ''}`;
+                star.dataset.value = i;
+                star.onmouseenter = () => renderReviewStars(i);
+                star.onmouseleave = () => renderReviewStars(currentReviewRating);
+                star.onclick = () => { currentReviewRating = i; renderReviewStars(i); };
+                row.appendChild(star);
+            }
+            document.getElementById('reviewStarLabel').textContent = selected ? labels[selected] : '';
+        }
+
+        window.submitReview = async () => {
+            if (!currentReviewRating) {
+                showReviewError('Please select a star rating.');
+                return;
+            }
+            const btn = document.getElementById('submitReviewBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting\u2026';
+            try {
+                const fn = httpsCallable(functions, 'submitReview');
+                await fn({
+                    bookingId: currentReviewBookingId,
+                    rating: currentReviewRating,
+                    review: document.getElementById('reviewText').value.trim()
+                });
+                $('#reviewModal').modal('hide');
+                // Update button in the card to show "Reviewed"
+                const card = document.querySelector(`[data-booking-id="${currentReviewBookingId}"] .btn-rate`);
+                if (card) {
+                    card.innerHTML = '<i class="fas fa-star"></i> Reviewed';
+                    card.classList.add('reviewed');
+                    card.disabled = true;
+                    card.onclick = null;
+                }
+            } catch (err) {
+                showReviewError(err.message || 'Could not submit review. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit Review';
+            }
+        };
+
+        function showReviewError(msg) {
+            const el = document.getElementById('reviewError');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
     </script>
+
+    <!-- Review Modal -->
+    <div class="modal fade" id="reviewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-star" style="color:#f5a623;"></i> Rate Your Lesson</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p id="reviewModalSubtitle" style="color:#666;margin-bottom:1.2rem;"></p>
+                    <div class="review-star-row" id="reviewStarRow"></div>
+                    <p id="reviewStarLabel" style="text-align:center;color:#999;font-size:0.9rem;margin-top:0.4rem;min-height:1.2rem;"></p>
+                    <textarea id="reviewText" class="form-control" rows="4"
+                        placeholder="Share your experience (optional)&hellip;"
+                        style="margin-top:1rem;resize:vertical;"></textarea>
+                    <p id="reviewError" style="color:#dc3545;margin-top:0.6rem;display:none;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitReviewBtn" onclick="submitReview()">Submit Review</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
