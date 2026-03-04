@@ -1321,6 +1321,35 @@
         // ===== REVIEW MODAL =====
         let currentReviewBookingId = null;
         let currentReviewRating = 0;
+        const STAR_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+
+        // Build the 5 stars once; use event delegation so DOM is never recreated
+        (function initStarRow() {
+            const row = document.getElementById('reviewStarRow');
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('i');
+                star.className = 'fas fa-star';
+                star.dataset.value = i;
+                row.appendChild(star);
+            }
+            row.addEventListener('mouseover', (e) => {
+                if (e.target.tagName === 'I') highlightStars(parseInt(e.target.dataset.value));
+            });
+            row.addEventListener('mouseleave', () => highlightStars(currentReviewRating));
+            row.addEventListener('click', (e) => {
+                if (e.target.tagName === 'I') {
+                    currentReviewRating = parseInt(e.target.dataset.value);
+                    highlightStars(currentReviewRating);
+                    document.getElementById('reviewStarLabel').textContent = STAR_LABELS[currentReviewRating];
+                }
+            });
+        })();
+
+        function highlightStars(count) {
+            document.querySelectorAll('#reviewStarRow i').forEach((star, idx) => {
+                star.classList.toggle('active', idx + 1 <= count);
+            });
+        }
 
         window.openReviewModal = (bookingId, instructorName) => {
             currentReviewBookingId = bookingId;
@@ -1328,25 +1357,10 @@
             document.getElementById('reviewModalSubtitle').textContent = `How was your lesson with ${instructorName}?`;
             document.getElementById('reviewText').value = '';
             document.getElementById('reviewError').style.display = 'none';
-            renderReviewStars(0);
+            highlightStars(0);
+            document.getElementById('reviewStarLabel').textContent = '';
             $('#reviewModal').modal('show');
         };
-
-        function renderReviewStars(selected) {
-            const labels = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
-            const row = document.getElementById('reviewStarRow');
-            row.innerHTML = '';
-            for (let i = 1; i <= 5; i++) {
-                const star = document.createElement('i');
-                star.className = `fas fa-star${i <= selected ? ' active' : ''}`;
-                star.dataset.value = i;
-                star.onmouseenter = () => renderReviewStars(i);
-                star.onmouseleave = () => renderReviewStars(currentReviewRating);
-                star.onclick = () => { currentReviewRating = i; renderReviewStars(i); };
-                row.appendChild(star);
-            }
-            document.getElementById('reviewStarLabel').textContent = selected ? labels[selected] : '';
-        }
 
         window.submitReview = async () => {
             if (!currentReviewRating) {
