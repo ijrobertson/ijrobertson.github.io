@@ -886,7 +886,7 @@ exports.submitReview = onCall(async (request) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    tx.update(instructorRef, { averageRating: newAvg, reviewCount: newCount });
+    tx.set(instructorRef, { averageRating: newAvg, reviewCount: newCount }, { merge: true });
   });
 
   return { success: true };

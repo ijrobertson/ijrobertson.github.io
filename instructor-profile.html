@@ -1045,9 +1045,7 @@
             try {
                 const q = query(
                     collection(db, 'reviews'),
-                    where('instructorId', '==', uid),
-                    orderBy('createdAt', 'desc'),
-                    limit(20)
+                    where('instructorId', '==', uid)
                 );
                 const snap = await getDocs(q);
 
@@ -1061,7 +1059,12 @@
                 }
 
                 listEl.innerHTML = '';
-                snap.docs.forEach(d => {
+                const sortedDocs = snap.docs.slice().sort((a, b) => {
+                    const ta = a.data().createdAt?.toDate ? a.data().createdAt.toDate() : new Date(0);
+                    const tb = b.data().createdAt?.toDate ? b.data().createdAt.toDate() : new Date(0);
+                    return tb - ta;
+                }).slice(0, 20);
+                sortedDocs.forEach(d => {
                     const rv = d.data();
                     const date = rv.createdAt?.toDate ? rv.createdAt.toDate() : new Date(rv.createdAt);
                     const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
