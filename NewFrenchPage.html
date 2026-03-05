@@ -1191,6 +1191,18 @@
             }
         }
 
+        function renderStarsHtml(rating) {
+            const r = rating || 0;
+            const full = Math.floor(r);
+            const half = r - full >= 0.5;
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= full) html += '<i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i>';
+                else if (i === full + 1 && half) html += '<i class="fas fa-star-half-alt" style="color:#f5a623;font-size:0.85em;"></i>';
+                else html += '<i class="far fa-star" style="color:#ddd;font-size:0.85em;"></i>';
+            }
+            return html;
+        }
         function buildInstructorCard(i) {
             const card = document.createElement('div');
             card.className = 'profile-card';
@@ -1204,6 +1216,9 @@
             const _cSym = _csMap[_cCode] || '';
             const priceHtml = i.price_per_lesson
                 ? `<div class="profile-card-price"><i class="fas fa-tag"></i> ${_cCode} ${_cSym}${i.price_per_lesson}/hour</div>`
+                : '';
+            const starsHtml = i.reviewCount
+                ? `<div class="profile-card-rating" style="display:flex;align-items:center;gap:4px;margin:4px 0;">${renderStarsHtml(i.averageRating)}<span style="font-size:0.82rem;color:#666;"> ${i.averageRating.toFixed(1)} (${i.reviewCount})</span></div>`
                 : '';
 
             const hasVideo = !!i.intro_video_url;
@@ -1227,6 +1242,7 @@
                     <div class="profile-card-name">${i.name || 'French Instructor'}</div>
                     ${countryHtml}
                     ${priceHtml}
+                    ${starsHtml}
                     <div class="profile-card-languages">${langs}</div>
                     <div class="profile-card-bio">${i.about_me || 'Experienced French instructor ready to help you reach fluency!'}</div>
                 </div>`;

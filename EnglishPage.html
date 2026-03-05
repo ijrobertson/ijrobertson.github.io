@@ -195,6 +195,68 @@
         .profile-card:hover { transform: translateY(-5px); box-shadow: 0 10px 24px rgba(0,0,0,.14); }
         .profile-card-image { width: 100%; height: 220px; overflow: hidden; background: #e8f8f7; }
         .profile-card-avatar { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+        .card-hover-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(32,188,186,0.82) 0%, transparent 50%);
+            color: white;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 0.85rem;
+            opacity: 0;
+            transition: opacity 0.25s;
+            pointer-events: none;
+            font-weight: 700;
+            font-size: 0.88rem;
+        }
+        .profile-card:hover .card-hover-overlay { opacity: 1; }
+        .card-video-container { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #111; flex-shrink: 0; }
+        .card-video-el { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .card-play-btn {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 52px; height: 52px;
+            background: rgba(20, 20, 20, 0.55);
+            border: 3px solid rgba(255,255,255,0.85);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s, background 0.2s;
+            z-index: 4; color: white; font-size: 1.1rem;
+            backdrop-filter: blur(2px); pointer-events: all;
+        }
+        .card-play-btn i { margin-left: 3px; }
+        .card-play-btn:hover {
+            background: rgba(32, 188, 186, 0.9); border-color: white;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .card-video-container.is-playing .card-play-btn { opacity: 0; pointer-events: none; }
+        .card-video-container.is-playing:hover .card-play-btn { opacity: 1; pointer-events: all; }
+        .card-video-container.is-playing .card-hover-overlay,
+        .card-video-container.is-playing:hover .card-hover-overlay { opacity: 0 !important; }
+        .card-mute-btn {
+            position: absolute;
+            bottom: 0.6rem;
+            right: 0.6rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid rgba(255,255,255,0.8);
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, background 0.2s, transform 0.15s;
+            z-index: 5;
+        }
+        .card-video-container.is-playing .card-mute-btn { opacity: 1; pointer-events: all; }
+        .card-mute-btn:hover { background: #e8fffe; transform: scale(1.1); }
         .profile-card-body { padding: 1.25rem; }
         .profile-card-name { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: .25rem; }
         .profile-card-country { font-size: .87rem; color: #777; margin-bottom: .6rem; display: flex; align-items: center; gap: .3rem; }
@@ -1088,6 +1150,18 @@
             }
         }
 
+        function renderStarsHtml(rating) {
+            const r = rating || 0;
+            const full = Math.floor(r);
+            const half = r - full >= 0.5;
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= full) html += '<i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i>';
+                else if (i === full + 1 && half) html += '<i class="fas fa-star-half-alt" style="color:#f5a623;font-size:0.85em;"></i>';
+                else html += '<i class="far fa-star" style="color:#ddd;font-size:0.85em;"></i>';
+            }
+            return html;
+        }
         function buildInstructorCard(i) {
             const card = document.createElement('div');
             card.className = 'profile-card';
@@ -1101,19 +1175,69 @@
             const priceHtml = i.price_per_lesson
                 ? `<div class="profile-card-price"><i class="fas fa-tag"></i> ${_cCode} ${_cSym}${i.price_per_lesson}/hour</div>`
                 : '';
+            const starsHtml = i.reviewCount
+                ? `<div class="profile-card-rating" style="display:flex;align-items:center;gap:4px;margin:4px 0;">${renderStarsHtml(i.averageRating)}<span style="font-size:0.82rem;color:#666;"> ${i.averageRating.toFixed(1)} (${i.reviewCount})</span></div>`
+                : '';
+
+            const hasVideo = !!i.intro_video_url;
             card.innerHTML = `
-                <div class="profile-card-image">
-                    <img class="profile-card-avatar" src="${i.avatar_url || AVT}"
-                         alt="${i.name || 'Instructor'}" onerror="this.src='${AVT}'">
-                </div>
+                ${hasVideo
+                    ? `<div class="card-video-container">
+                           <video class="card-video-el" src="${i.intro_video_url}" muted loop playsinline preload="metadata"></video>
+                           <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
+                           <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+                           <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+                       </div>`
+                    : `<div class="profile-card-image">
+                           <img class="profile-card-avatar"
+                                src="${i.avatar_url || AVT}"
+                                alt="${i.name || 'Instructor'}"
+                                onerror="this.src='${AVT}'">
+                           <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
+                       </div>`
+                }
                 <div class="profile-card-body">
                     <div class="profile-card-name">${i.name || 'English Instructor'}</div>
                     ${countryHtml}
                     ${priceHtml}
+                    ${starsHtml}
                     <div class="profile-card-languages">${langs}</div>
                     <div class="profile-card-bio">${i.about_me || 'Experienced English instructor ready to help you reach fluency!'}</div>
                 </div>`;
-            card.addEventListener('click', () => { window.location.href = 'instructors.html'; });
+            // Card click → dedicated profile page in new tab
+            card.addEventListener('click', () => {
+                window.open(`instructor-profile.html?id=${i.id}`, '_blank');
+            });
+            if (hasVideo) {
+                const videoEl = card.querySelector('.card-video-el');
+                const playBtn = card.querySelector('.card-play-btn');
+                const vidWrap = card.querySelector('.card-video-container');
+                videoEl.addEventListener('loadedmetadata', () => {
+                    if (videoEl.videoHeight > videoEl.videoWidth) {
+                        videoEl.style.objectFit = 'cover';
+                    }
+                });
+                playBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (videoEl.paused) {
+                        videoEl.play().catch(() => {});
+                        playBtn.querySelector('i').className = 'fas fa-pause';
+                        playBtn.querySelector('i').style.marginLeft = '0';
+                        vidWrap.classList.add('is-playing');
+                    } else {
+                        videoEl.pause();
+                        playBtn.querySelector('i').className = 'fas fa-play';
+                        playBtn.querySelector('i').style.marginLeft = '3px';
+                        vidWrap.classList.remove('is-playing');
+                    }
+                });
+                const muteBtn = card.querySelector('.card-mute-btn');
+                muteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    videoEl.muted = !videoEl.muted;
+                    muteBtn.querySelector('i').className = videoEl.muted ? 'fas fa-volume-off' : 'fas fa-volume-up';
+                });
+            }
             return card;
         }
 
