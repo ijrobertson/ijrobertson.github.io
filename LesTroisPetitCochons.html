@@ -208,11 +208,15 @@
             bottom: 125%;
             left: 50%;
             transform: translateX(-50%);
-            white-space: nowrap;
+            white-space: normal;
+            width: max-content;
+            max-width: min(220px, 80vw);
             z-index: 100;
             transition: opacity 0.2s;
+            pointer-events: none;
         }
-        .tooltip-word:hover .tooltip-def { visibility: visible; opacity: 1; }
+        .tooltip-word:hover .tooltip-def,
+        .tooltip-word.tooltip-active .tooltip-def { visibility: visible; opacity: 1; }
 
         /* ── More French Stories (card grid) ── */
         .related-section { background: #f4f7f9; padding: 3rem 0; margin-top: 0; }
@@ -471,7 +475,7 @@
             <div class="story-card-num">Partie 1 &mdash; La famille des cochons</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Il était une fois une maman cochon qui avait trois petits cochons. Elle les aimait beaucoup, mais comme il n'y avait pas assez de nourriture pour qu'ils puissent tous manger à leur faim, elle les a envoyés tenter leur chance dans le vaste monde.</p>
+                    <p class="story-french french-text"><span class="tooltip-word">Il était une fois<span class="tooltip-def">Once upon a time</span></span> une maman cochon qui avait trois petits cochons. Elle les aimait beaucoup, mais comme il n'y avait pas assez de nourriture pour qu'ils puissent tous manger à leur faim, elle les a envoyés <span class="tooltip-word">tenter leur chance<span class="tooltip-def">to seek their fortunes</span></span> dans le <span class="tooltip-word">vaste monde<span class="tooltip-def">vast world</span></span>.</p>
                     <div class="story-english">Once upon a time there was a mama pig who had three little pigs. She loved them very much but there was not enough food to feed them, so she sent them out into the vast world to seek their fortunes.</div>
                 </div>
                 <img src="images/3realpigs.jpg" class="story-image" alt="Three little pigs">
@@ -483,12 +487,12 @@
             <div class="story-card-num">Partie 2 &mdash; La maison de paille</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Le premier petit cochon a décidé d'aller vers le Sud. Alors qu'il marchait le long de la route, il a rencontré un fermier qui portait une botte de paille. Il lui a alors demandé poliment : "Pourriez-vous s'il vous plaît me donner cette paille, que je puisse construire une maison?"</p>
+                    <p class="story-french french-text">Le premier petit cochon a décidé d'aller vers le Sud. Alors qu'il marchait le long de la route, il a rencontré un fermier qui portait <span class="tooltip-word">une botte de paille<span class="tooltip-def">a bundle of straw</span></span>. Il lui a alors demandé <span class="tooltip-word">poliment<span class="tooltip-def">politely</span></span> : "Pourriez-vous s'il vous plaît me donner cette paille, que je puisse construire une maison?"</p>
                     <div class="story-english">The first little pig decided to go South. He met a farmer on the road who was carrying a bundle of straw. The little pig asked politely: "Could you please give me that straw, so that I can build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Comme le petit cochon avait dit "s'il vous plaît", le fermier lui a donné la paille, et le petit cochon l'a utilisée pour construire une belle maison. La maison avait des murs en paille, un plancher en paille, et à l'intérieur... un confortable lit en paille.</p>
+                    <p class="story-french french-text">Comme le petit cochon avait dit "s'il vous plaît", le fermier lui a donné la paille, et le petit cochon l'a utilisée pour construire une belle maison. La maison avait des murs en paille, un <span class="tooltip-word">plancher en paille<span class="tooltip-def">straw floor</span></span>, et à l'intérieur... un <span class="tooltip-word">confortable<span class="tooltip-def">comfortable</span></span> lit en paille.</p>
                     <div class="story-english">Because the little pig said "please", the farmer gave him the straw and the little pig used it to build a beautiful house. The house had walls made of straw, a floor made of straw, and inside... a comfortable bed made of straw.</div>
                 </div>
             </div>
@@ -499,7 +503,7 @@
             <div class="story-card-num">Partie 3 &mdash; Le loup et la maison de paille</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Alors que le petit cochon venait juste de finir de construire sa maison et qu'il s'était allongé pour faire une sieste dans son lit en paille, le grand méchant loup est arrivé près de la maison. Il a senti l'odeur du cochon à l'intérieur de la maison, et cela lui a mis l'eau à la bouche. "Mmm... Des sandwichs au bacon!"</p>
+                    <p class="story-french french-text">Alors que le petit cochon venait juste de finir de construire sa maison et qu'il s'était allongé pour <span class="tooltip-word">faire une sieste<span class="tooltip-def">to take a nap</span></span> dans son lit en paille, le grand méchant loup est arrivé près de la maison. Il a senti l'odeur du cochon à l'intérieur de la maison, et <span class="tooltip-word">cela lui a mis l'eau à la bouche<span class="tooltip-def">his mouth started to water</span></span>. "Mmm... Des sandwichs au bacon!"</p>
                     <div class="story-english">After building the house, the little pig decided to lay down and take a nap in his bed made of straw but, the big bad wolf arrived at the house. He smelled the pig inside the house, and his mouth started to water. "Mmmmm... bacon sandwiches!"</div>
                 </div>
                 <hr class="para-divider">
@@ -510,7 +514,7 @@
                 <img src="images/wolf.jpg" class="story-image" alt="The big bad wolf">
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Mais comme le petit cochon avait vu les grandes griffes du loup à travers la serrure, il a répondu: "Non, non, non! <span class="tooltip-word">Par les poils de mon menton!<span class="tooltip-def">By the hairs of my chin!</span></span>"</p>
+                    <p class="story-french french-text">Mais comme le petit cochon avait vu les grandes <span class="tooltip-word">griffes<span class="tooltip-def">claws</span></span> du loup à travers la <span class="tooltip-word">serrure<span class="tooltip-def">keyhole</span></span>, il a répondu: "Non, non, non! <span class="tooltip-word">Par les poils de mon menton!<span class="tooltip-def">By the hairs of my chin!</span></span>"</p>
                     <div class="story-english">But as the little pig saw the wolf's big paws through the keyhole, he replied: "No! No! No! By the hairs of my chin!"</div>
                 </div>
                 <hr class="para-divider">
@@ -531,12 +535,12 @@
             <div class="story-card-num">Partie 4 &mdash; La maison de bois</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Le deuxième petit cochon a décidé d'aller vers le Nord. Alors qu'il marchait le long de la route, il a rencontré un fermier qui portait un fagot de bois. Il lui a alors demandé poliment: "Excusez-moi, puis-je avoir ce bois pour construire une maison?"</p>
+                    <p class="story-french french-text">Le deuxième petit cochon a décidé d'aller vers le Nord. Alors qu'il marchait le long de la route, il a rencontré un fermier qui portait <span class="tooltip-word">un fagot de bois<span class="tooltip-def">a bundle of wood</span></span>. Il lui a alors demandé poliment: "<span class="tooltip-word">Excusez-moi<span class="tooltip-def">Excuse me</span></span>, puis-je avoir ce bois pour construire une maison?"</p>
                     <div class="story-english">The second little pig decided to go North. As he walked, he found a farmer on the road who was carrying a bundle of wood. The little pig asked politely: "Excuse me, could I have that wood to build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Comme le petit cochon avait dit "excusez-moi", le fermier lui a donné le bois, et le petit cochon l'a utilisé pour construire une belle maison. La maison avait des murs en bois, un plancher en bois, et à l'intérieur... une solide table en bois.</p>
+                    <p class="story-french french-text">Comme le petit cochon avait dit "excusez-moi", le fermier lui a donné le bois, et le petit cochon l'a utilisé pour construire une belle maison. La maison avait des murs en bois, un plancher en bois, et à l'intérieur... une <span class="tooltip-word">solide<span class="tooltip-def">sturdy / strong</span></span> table en bois.</p>
                     <div class="story-english">Because the little pig had said "excuse me", the farmer gave him the wood, and the little pig used it to build a beautiful house. The house had wood walls, a wood floor, and inside... a strong wood table.</div>
                 </div>
             </div>
@@ -547,7 +551,7 @@
             <div class="story-card-num">Partie 5 &mdash; Le loup et la maison de bois</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Alors que le petit cochon venait juste de finir de construire sa maison et qu'il faisait un bouquet pour sa solide table en bois, le grand méchant loup est arrivé près de la maison. Il a senti l'odeur du cochon à l'intérieur de la maison, et son estomac s'est mis à gronder. "Mmm... Du rôti de porc!"</p>
+                    <p class="story-french french-text">Alors que le petit cochon venait juste de finir de construire sa maison et qu'il <span class="tooltip-word">faisait un bouquet<span class="tooltip-def">was arranging flowers</span></span> pour sa solide table en bois, le grand méchant loup est arrivé près de la maison. Il a senti l'odeur du cochon à l'intérieur de la maison, et <span class="tooltip-word">son estomac s'est mis à gronder<span class="tooltip-def">his stomach started to rumble</span></span>. "Mmm... Du rôti de porc!"</p>
                     <div class="story-english">When the little pig had just finished building his house and was arranging flowers on his strong wood table, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and his stomach started to rumble. "Mmmmm... roast pork!"</div>
                 </div>
                 <hr class="para-divider">
@@ -557,7 +561,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Mais comme le petit cochon avait vu le long nez du loup à travers la serrure, il a répondu: "Non, non, non! Par les poils de mon menton!"</p>
+                    <p class="story-french french-text">Mais comme le petit cochon avait vu le <span class="tooltip-word">long nez<span class="tooltip-def">long nose</span></span> du loup à travers la serrure, il a répondu: "Non, non, non! Par les poils de mon menton!"</p>
                     <div class="story-english">But as the little pig had seen the wolf's long nose through the keyhole, he replied: "No! No! No! By the hair of my chin!"</div>
                 </div>
                 <hr class="para-divider">
@@ -578,12 +582,12 @@
             <div class="story-card-num">Partie 6 &mdash; La maison de brique</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Le troisième petit cochon a décidé d'aller vers l'Ouest. Alors qu'il marchait le long de la route, il a rencontré un fermier qui portait un chargement de briques. Il lui a alors demandé poliment : "Bonjour monsieur, puis-je avoir quelques-unes de ces briques pour construire une maison?"</p>
+                    <p class="story-french french-text">Le troisième petit cochon a décidé d'aller vers l'Ouest. Alors qu'il marchait le long de la route, il a rencontré un fermier qui portait <span class="tooltip-word">un chargement de briques<span class="tooltip-def">a load of bricks</span></span>. Il lui a alors demandé poliment : "Bonjour monsieur, puis-je avoir quelques-unes de ces briques pour construire une maison?"</p>
                     <div class="story-english">The third little pig decided to go West. As he walked along the road he met a farmer carrying a load of bricks. So he asked the man politely: "Hello sir, may I have some of those bricks to build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Comme le fermier appréciait qu'on l'appelle "monsieur", il a donné au petit cochon quelques briques, et le petit cochon les a utilisées pour construire une belle maison. La maison avait des murs en brique, un plancher en brique, et à l'intérieur... une grande cheminée en brique.</p>
+                    <p class="story-french french-text">Comme le fermier appréciait qu'on l'appelle "monsieur", il a donné au petit cochon quelques briques, et le petit cochon les a utilisées pour construire une belle maison. La maison avait des murs en brique, un plancher en brique, et à l'intérieur... une grande <span class="tooltip-word">cheminée en brique<span class="tooltip-def">brick fireplace</span></span>.</p>
                     <div class="story-english">The farmer liked being called "sir" so he gave the little pig some bricks, and the little pig used them to build a beautiful house. The house had brick walls, a brick floor, and inside... a large brick fireplace.</div>
                 </div>
             </div>
@@ -594,7 +598,7 @@
             <div class="story-card-num">Partie 7 &mdash; Le loup et la maison de brique</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Alors que le petit cochon venait juste de finir de construire sa maison et qu'il préparait une grande marmite de soupe dans sa cheminée en brique, le grand méchant loup est arrivé près de la maison. Il a senti l'odeur du cochon à l'intérieur de la maison, et s'est léché les babines. "Mmm... Des côtelettes de porc avec de la sauce barbecue et des haricots verts!"</p>
+                    <p class="story-french french-text">Alors que le petit cochon venait juste de finir de construire sa maison et qu'il préparait <span class="tooltip-word">une grande marmite de soupe<span class="tooltip-def">a big pot of soup</span></span> dans sa cheminée en brique, le grand méchant loup est arrivé près de la maison. Il a senti l'odeur du cochon à l'intérieur de la maison, et <span class="tooltip-word">s'est léché les babines<span class="tooltip-def">licked his lips</span></span>. "Mmm... Des côtelettes de porc avec de la sauce barbecue et des haricots verts!"</p>
                     <div class="story-english">When the little pig had just finished building his house and was cooking a big pot of soup in his brick fireplace, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and he licked his lips. "Mmmmm&hellip; pork chops with barbeque sauce and green beans!"</div>
                 </div>
                 <hr class="para-divider">
@@ -604,7 +608,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Mais le petit cochon a vu les grandes oreilles du loup à travers la serrure, il a donc répondu: "Non, non, non! Par les poils de mon menton!"</p>
+                    <p class="story-french french-text">Mais le petit cochon a vu les grandes <span class="tooltip-word">oreilles<span class="tooltip-def">ears</span></span> du loup à travers la serrure, il a donc répondu: "Non, non, non! Par les poils de mon menton!"</p>
                     <div class="story-english">But as the little pig had seen the wolf's big ears through the keyhole, he replied: "No! No! No! By the hair of my chin!"</div>
                 </div>
                 <hr class="para-divider">
@@ -614,7 +618,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Alors il a soufflé et soufflé, encore et encore. Mais il n'a pas réussi à faire s'effondrer la maison. À la fin il était tellement essoufflé qu'il ne pouvait plus du tout souffler.</p>
+                    <p class="story-french french-text">Alors il a soufflé et soufflé, encore et encore. Mais il n'a pas réussi à faire s'effondrer la maison. À la fin il était tellement <span class="tooltip-word">essoufflé<span class="tooltip-def">out of breath</span></span> qu'il ne pouvait plus du tout souffler.</p>
                     <div class="story-english">So he blew and he blew, again and again. But he could not make the house fall down. At last he was so out of breath that he couldn't blow any more.</div>
                 </div>
             </div>
@@ -625,17 +629,17 @@
             <div class="story-card-num">Partie 8 &mdash; La défaite du loup</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Le petit cochon se contentait de remuer sa grande marmite de soupe, et de rire.</p>
+                    <p class="story-french french-text">Le petit cochon se contentait de <span class="tooltip-word">remuer<span class="tooltip-def">to stir</span></span> sa grande marmite de soupe, et de rire.</p>
                     <div class="story-english">The little pig just stirred his big pot of soup, and laughed.</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Mais le loup avait tellement envie de manger des côtelettes de porc... il ne voulait pas abandonner! Il s'est faufilé derrière la maison et a grimpé sur le toit. "À présent, j'aurai ce cochon, c'est certain!"</p>
+                    <p class="story-french french-text">Mais le loup avait tellement envie de manger des côtelettes de porc... il ne voulait pas <span class="tooltip-word">abandonner<span class="tooltip-def">to give up</span></span>! <span class="tooltip-word">Il s'est faufilé<span class="tooltip-def">He snuck around</span></span> derrière la maison et <span class="tooltip-word">a grimpé sur le toit<span class="tooltip-def">climbed onto the roof</span></span>. "À présent, j'aurai ce cochon, c'est certain!"</p>
                     <div class="story-english">But the wolf had such a craving to eat pork chops... he didn't want to give up! He snuck around the back of the house and climbed onto the roof. "Now I'll get that pig, for certain!"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">Le loup s'est laissé glisser dans la grande cheminée en brique et a atterri... PLOUF! Les fesses les premières dans la grande marmite de soupe du petit cochon... qui était alors très chaude! Le loup a hurlé et a bondi hors de la marmite, puis est sorti en courant de la maison et a dévalé la route, serrant très fort ses fesses brûlées.</p>
+                    <p class="story-french french-text">Le loup <span class="tooltip-word">s'est laissé glisser<span class="tooltip-def">let himself slide down</span></span> dans la grande cheminée en brique et a atterri... PLOUF! Les fesses les premières dans la grande marmite de soupe du petit cochon... qui était alors très chaude! Le loup <span class="tooltip-word">a hurlé<span class="tooltip-def">howled</span></span> et a bondi hors de la marmite, puis est sorti en courant de la maison et a dévalé la route, <span class="tooltip-word">serrant très fort ses fesses brûlées<span class="tooltip-def">clutching his burnt bottom</span></span>.</p>
                     <div class="story-english">The wolf let himself slide down the great brick chimney and landed&hellip; PLOP! Bottom-first into the little pig's big pot of soup&hellip; which was now very hot! The wolf howled and jumped out of the pot, then ran out of the house and hurtled down the road, clutching his burnt bottom.</div>
                 </div>
             </div>
@@ -646,12 +650,12 @@
             <div class="story-card-num">Partie 9 &mdash; Fin</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-french french-text">Le petit cochon a appelé sa mère et ses deux frères sur son téléphone portable en brique, et les a invités à partager un délicieux dîner de soupe aux fesses de loup.</p>
+                    <p class="story-french french-text">Le petit cochon a appelé sa mère et ses deux frères sur son <span class="tooltip-word">téléphone portable<span class="tooltip-def">mobile phone</span></span> en brique, et <span class="tooltip-word">les a invités à partager<span class="tooltip-def">invited them to share</span></span> un délicieux dîner de soupe aux fesses de loup.</p>
                     <div class="story-english">The little pig called his mother and his two brothers on his brick mobile phone, and invited them to share a delicious dinner of wolf-bottom soup.</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-french french-text">La soupe aux fesses de loup était si savoureuse que bientôt tous les gens à cent kilomètres à la ronde ont voulu attraper le loup et le faire s'asseoir dans leur soupe. Le pauvre loup a dû s'enfuir très loin jusqu'à la sombre forêt profonde où il a pu vivre en paix et dans le calme.</p>
+                    <p class="story-french french-text">La soupe aux fesses de loup était si <span class="tooltip-word">savoureuse<span class="tooltip-def">tasty / delicious</span></span> que bientôt tous les gens à cent kilomètres à la ronde ont voulu <span class="tooltip-word">attraper<span class="tooltip-def">to catch</span></span> le loup et le faire s'asseoir dans leur soupe. Le pauvre loup a dû <span class="tooltip-word">s'enfuir<span class="tooltip-def">to flee / run away</span></span> très loin jusqu'à la <span class="tooltip-word">sombre forêt profonde<span class="tooltip-def">deep dark forest</span></span> où il a pu vivre <span class="tooltip-word">en paix et dans le calme<span class="tooltip-def">in peace and quiet</span></span>.</p>
                     <div class="story-english">The wolf-bottom soup was so tasty that soon everybody within one hundred kilometres wanted to catch the wolf and make him sit in their soup. The poor wolf had to run far away to the deep dark forest where he could live in peace and quiet.</div>
                 </div>
             </div>
@@ -766,6 +770,41 @@
     <script src="js/validator.min.js"></script>
     <script src="js/morphext.min.js"></script>
     <script src="js/scripts.js"></script>
+
+    <!-- Tooltip clamp + mobile support -->
+    <script>
+    (function () {
+        function clampTooltip(word) {
+            var def = word.querySelector('.tooltip-def');
+            if (!def) return;
+            def.style.left = '50%';
+            def.style.right = 'auto';
+            def.style.transform = 'translateX(-50%)';
+            var rect = def.getBoundingClientRect();
+            var vw = window.innerWidth || document.documentElement.clientWidth;
+            var PAD = 10;
+            if (rect.right > vw - PAD) {
+                def.style.left = 'auto'; def.style.right = '0'; def.style.transform = 'none';
+            } else if (rect.left < PAD) {
+                def.style.left = '0'; def.style.right = 'auto'; def.style.transform = 'none';
+            }
+        }
+        document.querySelectorAll('.tooltip-word').forEach(function (word) {
+            word.addEventListener('mouseenter', function () { clampTooltip(this); });
+            word.addEventListener('touchend', function (e) {
+                var isActive = this.classList.contains('tooltip-active');
+                document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                if (!isActive) { this.classList.add('tooltip-active'); clampTooltip(this); }
+                e.preventDefault();
+            });
+        });
+        document.addEventListener('touchend', function (e) {
+            if (!e.target.closest('.tooltip-word')) {
+                document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+            }
+        });
+    })();
+    </script>
 
     <!-- French Narrator Script -->
     <script>
