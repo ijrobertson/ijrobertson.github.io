@@ -1217,70 +1217,6 @@
             .fun-fact-banner { padding: 1rem 0; }
         }
 
-        /* ── Language of the Month ── */
-        .language-of-month { padding: 4rem 0; background: #f7fffe; }
-        .lotm-inner {
-            display: flex;
-            align-items: center;
-            gap: 3rem;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
-            border-radius: 24px;
-            padding: 3rem 3.5rem;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-        .lotm-inner::after {
-            content: '';
-            position: absolute;
-            top: -40%;
-            right: -8%;
-            width: 55%;
-            height: 170%;
-            background: rgba(32,188,186,0.08);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .lotm-badge {
-            position: absolute;
-            top: 1.4rem;
-            left: 1.8rem;
-            background: #20bcba;
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            padding: 0.35rem 1rem;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-        .lotm-flag { font-size: 6rem; flex-shrink: 0; line-height: 1; margin-top: 1.5rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
-        .lotm-content { flex: 1; padding-top: 1.5rem; }
-        .lotm-month-label { color: #20bcba; font-weight: 700; font-size: 0.82rem; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.4rem; }
-        .lotm-language { font-size: 2.6rem; font-weight: 700; color: white; margin-bottom: 0.5rem; line-height: 1.1; }
-        .lotm-phrase { font-size: 1.35rem; font-style: italic; color: #20bcba; margin-bottom: 0.35rem; }
-        .lotm-translation { font-size: 0.92rem; color: rgba(255,255,255,0.65); margin-bottom: 1.3rem; }
-        .lotm-desc { font-size: 0.98rem; color: rgba(255,255,255,0.82); line-height: 1.7; margin-bottom: 1.8rem; max-width: 560px; }
-        .lotm-btn {
-            display: inline-block;
-            background: #20bcba;
-            color: white;
-            padding: 0.8rem 2.2rem;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            text-decoration: none;
-            transition: background 0.2s, transform 0.2s;
-            position: relative;
-            z-index: 1;
-        }
-        .lotm-btn:hover { background: #1a9d9b; transform: translateY(-3px); color: white; text-decoration: none; }
-        @media (max-width: 768px) {
-            .lotm-inner { flex-direction: column; text-align: center; padding: 2.5rem 1.5rem; gap: 1.5rem; }
-            .lotm-flag { font-size: 4rem; margin-top: 2rem; }
-            .lotm-language { font-size: 2rem; }
-            .lotm-desc { max-width: 100%; }
-        }
 
         /* Home CTA (sign-up) Section */
         .home-cta {
@@ -1616,25 +1552,6 @@
     </div>
     <!-- end of resources section -->
 
-
-    <!-- Language of the Month -->
-    <div class="language-of-month">
-        <div class="container">
-            <div class="lotm-inner">
-                <span class="lotm-badge">🏆 Language of the Month</span>
-                <div class="lotm-flag" id="lotmFlag">🇪🇸</div>
-                <div class="lotm-content">
-                    <div class="lotm-month-label" id="lotmMonthLabel">February</div>
-                    <div class="lotm-language" id="lotmLanguage">Spanish</div>
-                    <div class="lotm-phrase" id="lotmPhrase">"Je t'aime"</div>
-                    <div class="lotm-translation" id="lotmTranslation">— "I love you"</div>
-                    <p class="lotm-desc" id="lotmDesc">Loading…</p>
-                    <a class="lotm-btn" id="lotmBtn" href="SpanishBasics.html">Start Learning Spanish →</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- end of language of the month -->
 
 
 	<!-- Testimonials -->
@@ -3145,7 +3062,7 @@
         }
     </script>
 
-    <!-- Fun Fact of the Day + Language of the Month JS -->
+    <!-- Fun Fact of the Day JS -->
     <script>
     (function () {
         /* ── Fun Fact of the Day ──────────────────────────────── */
@@ -3208,119 +3125,6 @@
         var textEl = document.getElementById('funFactText');
         if (iconEl) iconEl.textContent = fact.icon;
         if (textEl) textEl.textContent = fact.text;
-
-        /* ── Language of the Month ────────────────────────────── */
-        var months = [
-            {
-                language: 'Spanish', flag: '🇪🇸',
-                phrase: '"¡Feliz Año Nuevo!"',
-                translation: '— "Happy New Year!"',
-                desc: 'Start the new year by learning Spanish — the world\'s second most-spoken native language. Spoken in 21 countries across three continents, Spanish opens doors to incredible cultures, cuisine, and connections.',
-                link: 'SpanishBasics.html'
-            },
-            {
-                language: 'French', flag: '🇫🇷',
-                phrase: '"Je t\'aime"',
-                translation: '— "I love you"',
-                desc: 'February is the month of love — and what better language than French? Spoken in 29 countries and renowned as the language of romance, diplomacy, and haute cuisine, French is endlessly beautiful.',
-                link: 'FrenchBasics.html'
-            },
-            {
-                language: 'Italian', flag: '🇮🇹',
-                phrase: '"La dolce vita"',
-                translation: '— "The sweet life"',
-                desc: 'As spring arrives, embrace the Italian way of life. Italian is the language of art, opera, and world-class food. From Venice to Sicily, learning Italian turns every trip into an adventure.',
-                link: 'ItalianBasics.html'
-            },
-            {
-                language: 'Portuguese', flag: '🇧🇷',
-                phrase: '"Saudade"',
-                translation: '— A beautiful longing for something cherished',
-                desc: 'Portuguese is spoken by over 250 million people across the globe — from Brazil to Portugal to Mozambique. With its musical rhythm and rich literary tradition, it\'s one of the most expressive languages on Earth.',
-                link: 'PortugueseBasics.html'
-            },
-            {
-                language: 'German', flag: '🇩🇪',
-                phrase: '"Fernweh"',
-                translation: '— "A longing for distant places"',
-                desc: 'German is the most widely spoken native language in the EU. Known for its precision and creativity — especially in compound words — German is a fascinating language that opens doors to business, philosophy, and culture.',
-                link: 'GermanBasics.html'
-            },
-            {
-                language: 'Swedish', flag: '🇸🇪',
-                phrase: '"Lagom"',
-                translation: '— "Just the right amount — perfectly balanced"',
-                desc: 'Sweden consistently ranks among the world\'s happiest countries. The Swedish concept of "lagom" — balance and moderation — is central to their way of life. Start your Swedish journey this summer!',
-                link: 'SwedishBasics.html'
-            },
-            {
-                language: 'Russian', flag: '🇷🇺',
-                phrase: '"Белые ночи"',
-                translation: '— "White Nights" — the magical midnight sun of summer',
-                desc: 'Russian is the most widely spoken Slavic language and unlocks a breathtaking world of literature, music, and history. The Cyrillic alphabet looks challenging, but you can master the basics faster than you think!',
-                link: 'RussianBasics.html'
-            },
-            {
-                language: 'Spanish', flag: '🇪🇸',
-                phrase: '"Buen viaje"',
-                translation: '— "Have a wonderful trip!"',
-                desc: 'August is peak travel season — and Spanish is the ultimate travel companion. Spoken across 21 countries on three continents, knowing Spanish transforms every adventure into a deeper cultural experience.',
-                link: 'SpanishBasics.html'
-            },
-            {
-                language: 'French', flag: '🇫🇷',
-                phrase: '"La rentrée"',
-                translation: '— "Back to school — a beloved fresh start"',
-                desc: 'September is "la rentrée" in France — the joyful return to school and routines. What better time to pick up French? Whether you\'re a student or a lifelong learner, French will enrich your mind all year long.',
-                link: 'FrenchBasics.html'
-            },
-            {
-                language: 'Italian', flag: '🇮🇹',
-                phrase: '"In bocca al lupo!"',
-                translation: '— "In the mouth of the wolf!" (the Italian way to say Good luck!)',
-                desc: 'October is harvest season in Italy — a time of wine, truffles, and golden landscapes. This month, explore Italian and discover why it\'s considered one of the most beautiful languages ever spoken.',
-                link: 'ItalianBasics.html'
-            },
-            {
-                language: 'German', flag: '🇩🇪',
-                phrase: '"Gemütlichkeit"',
-                translation: '— "A warm, cozy sense of togetherness"',
-                desc: 'As November nights grow longer, embrace the German art of Gemütlichkeit — the feeling of warmth, good company, and comfort. Curl up with a hot drink and start your German adventure!',
-                link: 'GermanBasics.html'
-            },
-            {
-                language: 'Portuguese', flag: '🇧🇷',
-                phrase: '"Feliz Natal!"',
-                translation: '— "Merry Christmas!"',
-                desc: 'Celebrate December with the festive warmth of Brazil and Portugal! Portuguese is the 6th most spoken language in the world, and its melodic, joyful sound makes it the perfect holiday language to learn.',
-                link: 'PortugueseBasics.html'
-            }
-        ];
-
-        var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-        var m = new Date().getMonth();
-        var data = months[m];
-
-        var els = {
-            flag:   document.getElementById('lotmFlag'),
-            month:  document.getElementById('lotmMonthLabel'),
-            lang:   document.getElementById('lotmLanguage'),
-            phrase: document.getElementById('lotmPhrase'),
-            trans:  document.getElementById('lotmTranslation'),
-            desc:   document.getElementById('lotmDesc'),
-            btn:    document.getElementById('lotmBtn')
-        };
-
-        if (els.flag)   els.flag.textContent   = data.flag;
-        if (els.month)  els.month.textContent   = monthNames[m];
-        if (els.lang)   els.lang.textContent    = data.language;
-        if (els.phrase) els.phrase.textContent  = data.phrase;
-        if (els.trans)  els.trans.textContent   = data.translation;
-        if (els.desc)   els.desc.textContent    = data.desc;
-        if (els.btn) {
-            els.btn.href        = data.link;
-            els.btn.textContent = 'Start Learning ' + data.language + ' \u2192';
-        }
     })();
     </script>
 
