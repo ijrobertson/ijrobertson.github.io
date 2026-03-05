@@ -215,11 +215,15 @@
             bottom: 125%;
             left: 50%;
             transform: translateX(-50%);
-            white-space: nowrap;
+            white-space: normal;
+            width: max-content;
+            max-width: min(220px, 80vw);
             z-index: 100;
             transition: opacity 0.2s;
+            pointer-events: none;
         }
-        .tooltip-word:hover .tooltip-def { visibility: visible; opacity: 1; }
+        .tooltip-word:hover .tooltip-def,
+        .tooltip-word.tooltip-active .tooltip-def { visibility: visible; opacity: 1; }
 
         /* ── More Spanish Stories (card grid) ── */
         .related-section { background: #f4f7f9; padding: 3rem 0; margin-top: 0; }
@@ -881,6 +885,66 @@
     <script src="js/validator.min.js"></script>
     <script src="js/morphext.min.js"></script>
     <script src="js/scripts.js"></script>
+
+    <!-- Tooltip edge-clamping + mobile tap support -->
+    <script>
+        (function () {
+            function clampTooltip(word) {
+                var def = word.querySelector('.tooltip-def');
+                if (!def) return;
+                // Reset to centred default first
+                def.style.left = '50%';
+                def.style.right = 'auto';
+                def.style.transform = 'translateX(-50%)';
+
+                var rect = def.getBoundingClientRect();
+                var vw = window.innerWidth || document.documentElement.clientWidth;
+                var PAD = 10;
+
+                if (rect.right > vw - PAD) {
+                    // Overflows right — anchor right edge of tooltip to right edge of word
+                    def.style.left = 'auto';
+                    def.style.right = '0';
+                    def.style.transform = 'none';
+                } else if (rect.left < PAD) {
+                    // Overflows left — anchor left edge of tooltip to left edge of word
+                    def.style.left = '0';
+                    def.style.right = 'auto';
+                    def.style.transform = 'none';
+                }
+            }
+
+            document.querySelectorAll('.tooltip-word').forEach(function (word) {
+                // Desktop: reposition whenever the cursor enters
+                word.addEventListener('mouseenter', function () {
+                    clampTooltip(this);
+                });
+
+                // Mobile: tap toggles the tooltip
+                word.addEventListener('touchend', function (e) {
+                    var isActive = this.classList.contains('tooltip-active');
+                    // Dismiss any open tooltip
+                    document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) {
+                        w.classList.remove('tooltip-active');
+                    });
+                    if (!isActive) {
+                        this.classList.add('tooltip-active');
+                        clampTooltip(this);
+                    }
+                    e.preventDefault(); // prevents phantom mouse events on touch
+                });
+            });
+
+            // Tap anywhere outside a tooltip word to dismiss
+            document.addEventListener('touchend', function (e) {
+                if (!e.target.closest('.tooltip-word')) {
+                    document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) {
+                        w.classList.remove('tooltip-active');
+                    });
+                }
+            });
+        })();
+    </script>
 
     <!-- Spanish Narrator Script -->
     <script>
