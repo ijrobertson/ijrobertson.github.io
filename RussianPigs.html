@@ -208,11 +208,15 @@
             bottom: 125%;
             left: 50%;
             transform: translateX(-50%);
-            white-space: nowrap;
+            white-space: normal;
+            width: max-content;
+            max-width: min(220px, 80vw);
             z-index: 100;
             transition: opacity 0.2s;
+            pointer-events: none;
         }
-        .tooltip-word:hover .tooltip-def { visibility: visible; opacity: 1; }
+        .tooltip-word:hover .tooltip-def,
+        .tooltip-word.tooltip-active .tooltip-def { visibility: visible; opacity: 1; }
 
         /* ── More Russian Stories (card grid) ── */
         .related-section { background: #f4f7f9; padding: 3rem 0; margin-top: 0; }
@@ -471,7 +475,7 @@
             <div class="story-card-num">Часть 1 &mdash; Семья поросят</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Жила-была мама-свинка, у которой было три поросенка. Она очень любила их, но не хватало еды, чтобы накормить их, поэтому она отправила их в огромный мир искать счастья.</p>
+                    <p class="story-russian russian-text"><span class="tooltip-word">Жила-была<span class="tooltip-def">Once upon a time</span></span> мама-свинка, у которой было три поросенка. Она очень любила их, но не хватало еды, чтобы накормить их, поэтому она отправила их в <span class="tooltip-word">огромный мир<span class="tooltip-def">the vast world</span></span> <span class="tooltip-word">искать счастья<span class="tooltip-def">to seek their fortunes</span></span>.</p>
                     <div class="story-english">Once upon a time there was a mama pig who had three little pigs. She loved them very much but there was not enough food to feed them, so she sent them out into the vast world to seek their fortunes.</div>
                 </div>
                 <img src="images/3realpigs.jpg" class="story-image" alt="Three little pigs">
@@ -483,12 +487,12 @@
             <div class="story-card-num">Часть 2 &mdash; Дом из соломы</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Первый поросенок решил отправиться на юг. Он встретил на дороге фермера, который нес вязанку соломы. Поросенок вежливо спросил: «Не могли бы вы дать мне эту солому, чтобы я мог построить дом?»</p>
+                    <p class="story-russian russian-text">Первый поросенок решил отправиться на юг. Он встретил на дороге фермера, который нес <span class="tooltip-word">вязанку соломы<span class="tooltip-def">a bundle of straw</span></span>. Поросенок <span class="tooltip-word">вежливо<span class="tooltip-def">politely</span></span> спросил: «Не могли бы вы дать мне эту солому, чтобы я мог построить дом?»</p>
                     <div class="story-english">The first little pig decided to go South. He met a farmer on the road who was carrying a bundle of straw. The little pig asked politely: "Could you please give me that straw, so that I can build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Поскольку поросенок сказал «пожалуйста», фермер дал ему солому, и поросенок построил из нее красивый дом. В доме стены из соломы, пол из соломы, а внутри... удобная кровать из соломы.</p>
+                    <p class="story-russian russian-text">Поскольку поросенок сказал «пожалуйста», фермер дал ему солому, и поросенок построил из нее красивый дом. В доме стены из соломы, <span class="tooltip-word">пол из соломы<span class="tooltip-def">straw floor</span></span>, а внутри... <span class="tooltip-word">удобная<span class="tooltip-def">comfortable</span></span> кровать из соломы.</p>
                     <div class="story-english">Because the little pig said "please", the farmer gave him the straw and the little pig used it to build a beautiful house. The house had walls made of straw, a floor made of straw, and inside... a comfortable bed made of straw.</div>
                 </div>
             </div>
@@ -499,7 +503,7 @@
             <div class="story-card-num">Часть 3 &mdash; Волк у соломенного дома</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Построив дом, поросенок решил лечь и вздремнуть в своей постели из соломы, но к дому подошел большой злой волк. Он почувствовал запах свиньи в доме, и у него <span class="tooltip-word">потекли слюнки<span class="tooltip-def">потекли слюнки = his mouth watered (lit. "the saliva flowed")</span></span>. «Ммммм... бутерброды с беконом!»</p>
+                    <p class="story-russian russian-text">Построив дом, поросенок решил лечь и <span class="tooltip-word">вздремнуть<span class="tooltip-def">to take a nap</span></span> в своей постели из соломы, но к дому подошел большой злой волк. Он почувствовал запах свиньи в доме, и у него <span class="tooltip-word">потекли слюнки<span class="tooltip-def">потекли слюнки = his mouth watered (lit. "the saliva flowed")</span></span>. «Ммммм... бутерброды с беконом!»</p>
                     <div class="story-english">After building the house, the little pig decided to lay down and take a nap in his bed made of straw but, the big bad wolf arrived at the house. He smelled the pig inside the house, and his mouth started to water. "Mmmmm... bacon sandwiches!"</div>
                 </div>
                 <hr class="para-divider">
@@ -510,17 +514,17 @@
                 <img src="images/wolf.jpg" class="story-image" alt="The big bad wolf">
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Но когда поросенок увидел в замочную скважину большие лапы волка, он ответил: «Нет! Нет! Нет! Волосы на моем подбородке!»</p>
+                    <p class="story-russian russian-text">Но когда поросенок увидел в <span class="tooltip-word">замочную скважину<span class="tooltip-def">keyhole</span></span> большие <span class="tooltip-word">лапы<span class="tooltip-def">paws</span></span> волка, он ответил: «Нет! Нет! Нет! Волосы на моем подбородке!»</p>
                     <div class="story-english">But as the little pig saw the wolf's big paws through the keyhole, he replied: "No! No! No! By the hairs of my chin!"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Тогда волк оскалил зубы и сказал: «Тогда я буду пыхтеть и пыхтеть, и ваш дом рухнет!»</p>
+                    <p class="story-russian russian-text">Тогда волк <span class="tooltip-word">оскалил зубы<span class="tooltip-def">bared his teeth</span></span> и сказал: «Тогда я буду пыхтеть и пыхтеть, и ваш дом рухнет!»</p>
                     <div class="story-english">Then wolf showed his teeth and said: "Then I'll huff and I'll puff and your house will fall down!"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Так что он пыхтел, пыхтел, и дом рухнул. Поросенок побежал обратно в дом своей матери.</p>
+                    <p class="story-russian russian-text">Так что он пыхтел, пыхтел, и дом <span class="tooltip-word">рухнул<span class="tooltip-def">fell down</span></span>. Поросенок побежал обратно в дом своей матери.</p>
                     <div class="story-english">So he huffed and he puffed and the house fell down. The little pig ran back to his mother's house.</div>
                 </div>
             </div>
@@ -531,12 +535,12 @@
             <div class="story-card-num">Часть 4 &mdash; Дом из дерева</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Второй поросенок решил отправиться на север. Когда он шел, он нашел на дороге крестьянина, который нес вязанку дров. Поросенок вежливо спросил: «Извините, можно мне из этих дров построить дом?»</p>
+                    <p class="story-russian russian-text">Второй поросенок решил отправиться на север. Когда он шел, он нашел на дороге крестьянина, который нес <span class="tooltip-word">вязанку дров<span class="tooltip-def">a bundle of wood</span></span>. Поросенок вежливо спросил: «<span class="tooltip-word">Извините<span class="tooltip-def">Excuse me</span></span>, можно мне из этих дров построить дом?»</p>
                     <div class="story-english">The second little pig decided to go North. As he walked, he found a farmer on the road who was carrying a bundle of wood. The little pig asked politely: "Excuse me, could I have that wood to build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Поскольку поросенок сказал «извините», фермер дал ему дрова, и поросенок построил из них красивый дом. В доме были деревянные стены, деревянный пол, а внутри... прочный деревянный стол.</p>
+                    <p class="story-russian russian-text">Поскольку поросенок сказал «извините», фермер дал ему дрова, и поросенок построил из них красивый дом. В доме были деревянные стены, деревянный пол, а внутри... <span class="tooltip-word">прочный<span class="tooltip-def">sturdy / strong</span></span> деревянный стол.</p>
                     <div class="story-english">Because the little pig had said "excuse me", the farmer gave him the wood, and the little pig used it to build a beautiful house. The house had wood walls, a wood floor, and inside... a strong wood table.</div>
                 </div>
             </div>
@@ -547,7 +551,7 @@
             <div class="story-card-num">Часть 5 &mdash; Волк у деревянного дома</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Когда маленький поросенок только что закончил строить свой дом и расставлял цветы на своем прочном деревянном столе, в дом пришел большой злой волк. Он почувствовал запах свиньи в доме, и его желудок заурчал. «Ммммм... жареная свинина!»</p>
+                    <p class="story-russian russian-text">Когда маленький поросенок только что закончил строить свой дом и <span class="tooltip-word">расставлял цветы<span class="tooltip-def">was arranging flowers</span></span> на своем прочном деревянном столе, в дом пришел большой злой волк. Он почувствовал запах свиньи в доме, и его <span class="tooltip-word">желудок заурчал<span class="tooltip-def">stomach started to rumble</span></span>. «Ммммм... жареная свинина!»</p>
                     <div class="story-english">When the little pig had just finished building his house and was arranging flowers on his strong wood table, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and his stomach started to rumble. "Mmmmm... roast pork!"</div>
                 </div>
                 <hr class="para-divider">
@@ -557,7 +561,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Но когда поросенок увидел в замочную скважину длинный нос волка, он ответил: «Нет! Нет! Нет!»</p>
+                    <p class="story-russian russian-text">Но когда поросенок увидел в замочную скважину <span class="tooltip-word">длинный нос<span class="tooltip-def">long nose</span></span> волка, он ответил: «Нет! Нет! Нет!»</p>
                     <div class="story-english">But as the little pig had seen the wolf's long nose through the keyhole, he replied: "No! No! No! By the hair of my chin!"</div>
                 </div>
                 <hr class="para-divider">
@@ -578,12 +582,12 @@
             <div class="story-card-num">Часть 6 &mdash; Дом из кирпичей</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Третий поросенок решил отправиться на Запад. Когда он шел по дороге, он встретил фермера, несущего груз кирпичей. Поэтому он вежливо спросил человека: «Здравствуйте, сэр, можно мне несколько кирпичей, чтобы построить дом?»</p>
+                    <p class="story-russian russian-text">Третий поросенок решил отправиться на Запад. Когда он шел по дороге, он встретил фермера, несущего <span class="tooltip-word">груз кирпичей<span class="tooltip-def">a load of bricks</span></span>. Поэтому он вежливо спросил человека: «Здравствуйте, сэр, можно мне несколько кирпичей, чтобы построить дом?»</p>
                     <div class="story-english">The third little pig decided to go West. As he walked along the road he met a farmer carrying a load of bricks. So he asked the man politely: "Hello sir, may I have some of those bricks to build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Фермеру нравилось, когда его называли «сэр», поэтому он дал поросенку несколько кирпичей, и поросенок построил из них красивый дом. В доме были кирпичные стены, кирпичный пол, а внутри... большой кирпичный камин.</p>
+                    <p class="story-russian russian-text">Фермеру нравилось, когда его называли «сэр», поэтому он дал поросенку несколько кирпичей, и поросенок построил из них красивый дом. В доме были кирпичные стены, кирпичный пол, а внутри... большой <span class="tooltip-word">кирпичный камин<span class="tooltip-def">brick fireplace</span></span>.</p>
                     <div class="story-english">The farmer liked being called "sir" so he gave the little pig some bricks, and the little pig used them to build a beautiful house. The house had brick walls, a brick floor, and inside... a large brick fireplace.</div>
                 </div>
             </div>
@@ -594,7 +598,7 @@
             <div class="story-card-num">Часть 7 &mdash; Волк у кирпичного дома</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Когда маленький поросенок только что закончил строить свой дом и варил большую кастрюлю супа в своем кирпичном камине, в дом пришел большой злой волк. Он почувствовал запах свиньи в доме и облизал губы. «Ммммм… свиные отбивные с соусом барбекю и зеленой фасолью!»</p>
+                    <p class="story-russian russian-text">Когда маленький поросенок только что закончил строить свой дом и варил <span class="tooltip-word">большую кастрюлю супа<span class="tooltip-def">a big pot of soup</span></span> в своем кирпичном камине, в дом пришел большой злой волк. Он почувствовал запах свиньи в доме и <span class="tooltip-word">облизал губы<span class="tooltip-def">licked his lips</span></span>. «Ммммм… свиные отбивные с соусом барбекю и зеленой фасолью!»</p>
                     <div class="story-english">When the little pig had just finished building his house and was cooking a big pot of soup in his brick fireplace, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and he licked his lips. "Mmmmm&hellip; pork chops with barbeque sauce and green beans!"</div>
                 </div>
                 <hr class="para-divider">
@@ -604,7 +608,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Но когда поросенок увидел в замочную скважину большие уши волка, он ответил: «Нет! Нет! Нет!»</p>
+                    <p class="story-russian russian-text">Но когда поросенок увидел в замочную скважину большие <span class="tooltip-word">уши<span class="tooltip-def">ears</span></span> волка, он ответил: «Нет! Нет! Нет!»</p>
                     <div class="story-english">But as the little pig had seen the wolf's big ears through the keyhole, he replied: "No! No! No! By the hair of my chin!"</div>
                 </div>
                 <hr class="para-divider">
@@ -614,7 +618,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Так что он дул и дул, снова и снова. Но он не мог заставить дом рухнуть. Наконец он так запыхался, что больше не мог дуть.</p>
+                    <p class="story-russian russian-text">Так что он дул и дул, снова и снова. Но он не мог заставить дом рухнуть. Наконец он так <span class="tooltip-word">запыхался<span class="tooltip-def">out of breath</span></span>, что больше не мог дуть.</p>
                     <div class="story-english">So he blew and he blew, again and again. But he could not make the house fall down. At last he was so out of breath that he couldn't blow any more.</div>
                 </div>
             </div>
@@ -625,17 +629,17 @@
             <div class="story-card-num">Часть 8 &mdash; Поражение волка</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Маленькая свинья просто помешивала свою большую кастрюлю с супом и смеялась.</p>
+                    <p class="story-russian russian-text">Маленькая свинья просто <span class="tooltip-word">помешивала<span class="tooltip-def">stirred</span></span> свою большую кастрюлю с супом и смеялась.</p>
                     <div class="story-english">The little pig just stirred his big pot of soup, and laughed.</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Но волку так хотелось свиных отбивных... он не хотел сдаваться! Он прокрался вокруг задней части дома и забрался на крышу. «Теперь я точно достану эту свинью!»</p>
+                    <p class="story-russian russian-text">Но волку так хотелось свиных отбивных... он не хотел <span class="tooltip-word">сдаваться<span class="tooltip-def">give up</span></span>! <span class="tooltip-word">Он прокрался<span class="tooltip-def">He snuck around</span></span> вокруг задней части дома и <span class="tooltip-word">забрался на крышу<span class="tooltip-def">climbed onto the roof</span></span>. «Теперь я точно достану эту свинью!»</p>
                     <div class="story-english">But the wolf had such a craving to eat pork chops... he didn't want to give up! He snuck around the back of the house and climbed onto the roof. "Now I'll get that pig, for certain!"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Волк соскользнул в большую кирпичную трубу и приземлился... БУХ! Дном вперед в большую кастрюлю с супом маленькой свиньи... которая теперь была очень горячей! Волк взвыл и выпрыгнул из котла, потом выбежал из дома и помчался по дороге, держась за обгоревший зад.</p>
+                    <p class="story-russian russian-text">Волк <span class="tooltip-word">соскользнул<span class="tooltip-def">slid down</span></span> в большую кирпичную трубу и приземлился... БУХ! Дном вперед в большую кастрюлю с супом маленькой свиньи... которая теперь была очень горячей! Волк <span class="tooltip-word">взвыл<span class="tooltip-def">howled</span></span> и выпрыгнул из котла, потом выбежал из дома и помчался по дороге, <span class="tooltip-word">держась за обгоревший зад<span class="tooltip-def">clutching his burnt bottom</span></span>.</p>
                     <div class="story-english">The wolf let himself slide down the great brick chimney and landed&hellip; PLOP! Bottom-first into the little pig's big pot of soup&hellip; which was now very hot! The wolf howled and jumped out of the pot, then ran out of the house and hurtled down the road, clutching his burnt bottom.</div>
                 </div>
             </div>
@@ -646,12 +650,12 @@
             <div class="story-card-num">Часть 9 &mdash; Конец</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Маленький поросенок позвонил своей матери и двум своим братьям на свой кирпичный мобильный телефон и пригласил их на вкусный ужин из супа из волчьего дна.</p>
+                    <p class="story-russian russian-text">Маленький поросенок позвонил своей матери и двум своим братьям на свой <span class="tooltip-word">мобильный телефон<span class="tooltip-def">mobile phone</span></span> и <span class="tooltip-word">пригласил их<span class="tooltip-def">invited them</span></span> на вкусный ужин из супа из волчьего дна.</p>
                     <div class="story-english">The little pig called his mother and his two brothers on his brick mobile phone, and invited them to share a delicious dinner of wolf-bottom soup.</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-russian russian-text">Суп из волчьего дна был так вкусен, что вскоре все в радиусе ста километров захотели поймать волка и заставить его посидеть в своем супе. Бедному волку пришлось бежать далеко в дремучий темный лес, где он мог жить в тишине и покое.</p>
+                    <p class="story-russian russian-text">Суп из волчьего дна был так <span class="tooltip-word">вкусен<span class="tooltip-def">tasty / delicious</span></span>, что вскоре все в радиусе ста километров захотели <span class="tooltip-word">поймать<span class="tooltip-def">catch</span></span> волка и заставить его посидеть в своем супе. Бедному волку пришлось бежать далеко в <span class="tooltip-word">дремучий темный лес<span class="tooltip-def">deep dark forest</span></span>, где он мог жить <span class="tooltip-word">в тишине и покое<span class="tooltip-def">in peace and quiet</span></span>.</p>
                     <div class="story-english">The wolf-bottom soup was so tasty that soon everybody within one hundred kilometres wanted to catch the wolf and make him sit in their soup. The poor wolf had to run far away to the deep dark forest where he could live in peace and quiet.</div>
                 </div>
             </div>
@@ -766,6 +770,41 @@
     <script src="js/morphext.min.js"></script>
     <script src="js/scripts.js"></script>
 
+    <!-- Tooltip clamp + mobile support -->
+    <script>
+    (function () {
+        function clampTooltip(word) {
+            var def = word.querySelector('.tooltip-def');
+            if (!def) return;
+            def.style.left = '50%';
+            def.style.right = 'auto';
+            def.style.transform = 'translateX(-50%)';
+            var rect = def.getBoundingClientRect();
+            var vw = window.innerWidth || document.documentElement.clientWidth;
+            var PAD = 10;
+            if (rect.right > vw - PAD) {
+                def.style.left = 'auto'; def.style.right = '0'; def.style.transform = 'none';
+            } else if (rect.left < PAD) {
+                def.style.left = '0'; def.style.right = 'auto'; def.style.transform = 'none';
+            }
+        }
+        document.querySelectorAll('.tooltip-word').forEach(function (word) {
+            word.addEventListener('mouseenter', function () { clampTooltip(this); });
+            word.addEventListener('touchend', function (e) {
+                var isActive = this.classList.contains('tooltip-active');
+                document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                if (!isActive) { this.classList.add('tooltip-active'); clampTooltip(this); }
+                e.preventDefault();
+            });
+        });
+        document.addEventListener('touchend', function (e) {
+            if (!e.target.closest('.tooltip-word')) {
+                document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+            }
+        });
+    })();
+    </script>
+
     <!-- Russian Narrator Script -->
     <script>
         const synth = window.speechSynthesis;
@@ -796,7 +835,9 @@
         function createUtterances() {
             utterances = [];
             russianParagraphs.forEach(function(paragraph, index) {
-                var utterance = new SpeechSynthesisUtterance(paragraph.textContent);
+                var clone = paragraph.cloneNode(true);
+                clone.querySelectorAll('.tooltip-def').forEach(function(el) { el.remove(); });
+                var utterance = new SpeechSynthesisUtterance(clone.textContent);
                 utterance.rate = currentSpeed;
                 utterance.lang = 'ru-RU';
                 if (russianVoice) utterance.voice = russianVoice;
