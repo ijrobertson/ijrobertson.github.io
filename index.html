@@ -2658,6 +2658,19 @@
             });
         }
 
+        function renderStarsHtml(rating) {
+            const r = rating || 0;
+            const full = Math.floor(r);
+            const half = r - full >= 0.5;
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= full) html += '<i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i>';
+                else if (i === full + 1 && half) html += '<i class="fas fa-star-half-alt" style="color:#f5a623;font-size:0.85em;"></i>';
+                else html += '<i class="far fa-star" style="color:#ddd;font-size:0.85em;"></i>';
+            }
+            return html;
+        }
+
         // Render instructor cards
         function renderInstructors(filterLanguage = 'all') {
             const grid = document.getElementById('instructorsGrid');
@@ -2756,6 +2769,7 @@
                         <i class="fas fa-map-marker-alt"></i> ${country}
                     </div>
                     ${price ? `<div class="profile-card-price">${price}</div>` : ''}
+                    ${instructor.reviewCount ? `<div class="profile-card-rating" style="display:flex;align-items:center;gap:4px;margin:4px 0;">${renderStarsHtml(instructor.averageRating)}<span style="font-size:0.82rem;color:#666;">${instructor.averageRating.toFixed(1)} (${instructor.reviewCount})</span></div>` : ''}
                     ${languages.length > 0 ? `
                         <div class="profile-card-languages">
                             ${languages.slice(0, 3).map(lang =>
