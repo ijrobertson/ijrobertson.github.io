@@ -542,6 +542,38 @@
             .activity-hero-icon { width: 52px; height: 52px; }
         }
 
+        /* ===== PREVIOUS LESSONS PAGINATION ===== */
+        .prev-lessons-pagination {
+            text-align: center;
+            margin-top: 1.75rem;
+        }
+
+        .btn-load-older {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1.75rem;
+            background: white;
+            color: #113448;
+            border: 2px solid #113448;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-load-older:hover {
+            background: #113448;
+            color: white;
+        }
+
+        .prev-page-info {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 0.6rem;
+        }
+
         /* ===== REVIEW BUTTON & STAR MODAL ===== */
         .btn-rate {
             background: #f5a623; color: #fff; border: none;
@@ -678,6 +710,26 @@
 
         <hr class="section-divider">
 
+        <!-- ===== PREVIOUS LESSONS ===== -->
+        <div class="section-header">
+            <div class="section-icon" style="background: linear-gradient(135deg, #6c757d, #495057);"><i class="fas fa-history"></i></div>
+            <h2>Previous Lessons</h2>
+        </div>
+        <div id="previousLessonsContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading previous lessons...</div>
+            </div>
+        </div>
+        <div class="prev-lessons-pagination" id="prevLessonsPagination" style="display: none;">
+            <button class="btn-load-older" id="loadOlderBtn" onclick="loadOlderLessons()">
+                <i class="fas fa-chevron-left"></i> Load Older Lessons
+            </button>
+            <div class="prev-page-info" id="prevPageInfo"></div>
+        </div>
+
+        <hr class="section-divider">
+
         <!-- ===== PARTNER REQUESTS ===== -->
         <div class="section-header">
             <div class="section-icon"><i class="fas fa-user-friends"></i></div>
@@ -711,6 +763,12 @@
 
         let currentUser = null;
         let joinTimerInterval = null;
+
+        // Previous lessons pagination state
+        const PREV_PAGE_SIZE = 6;
+        let allPreviousBookings = [];
+        let reviewedBookingIdsCache = new Set();
+        let currentPreviousPage = 0;
 
         // ===== AUTH =====
         onAuthStateChanged(auth, async (user) => {
@@ -831,17 +889,15 @@
                     }
                 });
 
-                if (bookings.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-calendar-alt"></i>
-                            <p>No booked lessons yet.</p>
-                            <p><a href="instructors.html">Browse instructors</a> to book your first lesson!</p>
-                        </div>`;
-                    return;
-                }
+                // Split into upcoming (live/upcoming) and previous (completed)
+                const upcoming = bookings.filter(b => getLessonStatus(getLessonTime(b)) !== 'completed');
+                const previous = bookings.filter(b => getLessonStatus(getLessonTime(b)) === 'completed');
 
-                // Fetch which completed student bookings have already been reviewed
+                // Sort upcoming ascending (nearest first), previous descending (newest first)
+                upcoming.sort((a, b) => getLessonTime(a) - getLessonTime(b));
+                previous.sort((a, b) => getLessonTime(b) - getLessonTime(a));
+
+                // Fetch which completed student lessons have already been reviewed
                 const reviewedBookingIds = new Set();
                 const studentBookingIds = bookings
                     .filter(b => b.myRole === 'student')
@@ -858,22 +914,87 @@
                     } catch (e) {}
                 }
 
-                const grid = document.createElement('div');
-                grid.className = 'lessons-grid';
-                bookings.forEach(booking => grid.appendChild(createLessonCard(booking, reviewedBookingIds)));
+                // Render upcoming lessons
+                if (upcoming.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-alt"></i>
+                            <p>No upcoming lessons.</p>
+                            <p><a href="instructors.html">Browse instructors</a> to book your next lesson!</p>
+                        </div>`;
+                } else {
+                    const upcomingGrid = document.createElement('div');
+                    upcomingGrid.className = 'lessons-grid';
+                    upcoming.forEach(b => upcomingGrid.appendChild(createLessonCard(b, reviewedBookingIds)));
+                    container.innerHTML = '';
+                    container.appendChild(upcomingGrid);
+                }
 
-                container.innerHTML = '';
-                container.appendChild(grid);
+                // Initialize previous lessons pagination
+                allPreviousBookings = previous;
+                reviewedBookingIdsCache = reviewedBookingIds;
+                currentPreviousPage = 0;
+                renderPreviousLessonsPage();
 
             } catch (e) {
                 console.error('Error loading lessons:', e);
-                container.innerHTML = `
+                const errorHtml = `
                     <div class="empty-state">
                         <i class="fas fa-exclamation-triangle"></i>
                         <p>Could not load lessons. Please refresh the page.</p>
                     </div>`;
+                container.innerHTML = errorHtml;
+                document.getElementById('previousLessonsContainer').innerHTML = errorHtml;
             }
         }
+
+        function renderPreviousLessonsPage() {
+            const prevContainer = document.getElementById('previousLessonsContainer');
+            const pagination = document.getElementById('prevLessonsPagination');
+            const pageInfo = document.getElementById('prevPageInfo');
+
+            if (allPreviousBookings.length === 0) {
+                prevContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>No previous lessons yet.</p>
+                    </div>`;
+                pagination.style.display = 'none';
+                return;
+            }
+
+            const start = currentPreviousPage * PREV_PAGE_SIZE;
+            const end = start + PREV_PAGE_SIZE;
+            const pageBookings = allPreviousBookings.slice(start, end);
+            const hasMore = end < allPreviousBookings.length;
+
+            // On first page, clear the container; on subsequent pages, append
+            if (currentPreviousPage === 0) {
+                prevContainer.innerHTML = '';
+                const grid = document.createElement('div');
+                grid.className = 'lessons-grid';
+                grid.id = 'previousLessonsGrid';
+                pageBookings.forEach(b => grid.appendChild(createLessonCard(b, reviewedBookingIdsCache)));
+                prevContainer.appendChild(grid);
+            } else {
+                const grid = document.getElementById('previousLessonsGrid');
+                pageBookings.forEach(b => grid.appendChild(createLessonCard(b, reviewedBookingIdsCache)));
+            }
+
+            // Show/hide pagination button
+            if (hasMore) {
+                pagination.style.display = 'block';
+                const remaining = allPreviousBookings.length - end;
+                pageInfo.textContent = `Showing ${end} of ${allPreviousBookings.length} previous lessons`;
+            } else {
+                pagination.style.display = 'none';
+            }
+        }
+
+        window.loadOlderLessons = () => {
+            currentPreviousPage++;
+            renderPreviousLessonsPage();
+        };
 
         function getLessonTime(booking) {
             return booking.dateTime?.toDate ? booking.dateTime.toDate() : new Date(booking.dateTime);
