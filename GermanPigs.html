@@ -208,11 +208,15 @@
             bottom: 125%;
             left: 50%;
             transform: translateX(-50%);
-            white-space: nowrap;
+            white-space: normal;
+            width: max-content;
+            max-width: min(220px, 80vw);
             z-index: 100;
             transition: opacity 0.2s;
+            pointer-events: none;
         }
-        .tooltip-word:hover .tooltip-def { visibility: visible; opacity: 1; }
+        .tooltip-word:hover .tooltip-def,
+        .tooltip-word.tooltip-active .tooltip-def { visibility: visible; opacity: 1; }
 
         /* ── More German Stories (card grid) ── */
         .related-section { background: #f4f7f9; padding: 3rem 0; margin-top: 0; }
@@ -471,7 +475,7 @@
             <div class="story-card-num">Teil 1 &mdash; Die Familie der Schweinchen</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Es war einmal eine Schweinemutter, die hatte drei kleine Schweinchen. Sie liebte sie sehr, aber es gab nicht genug Nahrung, um sie zu ernähren, also schickte sie sie hinaus in die weite Welt, um ihr Glück zu suchen.</p>
+                    <p class="story-german german-text"><span class="tooltip-word">Es war einmal<span class="tooltip-def">Once upon a time</span></span> eine Schweinemutter, die hatte drei kleine Schweinchen. Sie liebte sie sehr, aber es gab nicht genug Nahrung, um sie zu ernähren, also schickte sie sie hinaus in die <span class="tooltip-word">weite Welt<span class="tooltip-def">vast world</span></span>, um ihr <span class="tooltip-word">Glück zu suchen<span class="tooltip-def">seek their fortunes</span></span>.</p>
                     <div class="story-english">Once upon a time there was a mama pig who had three little pigs. She loved them very much but there was not enough food to feed them, so she sent them out into the vast world to seek their fortunes.</div>
                 </div>
                 <img src="images/3realpigs.jpg" class="story-image" alt="Three little pigs">
@@ -483,12 +487,12 @@
             <div class="story-card-num">Teil 2 &mdash; Das Haus aus Stroh</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Das erste kleine Schwein beschloss, nach Süden zu gehen. Auf der Straße traf er einen Bauern, der ein Bündel Stroh trug. Das Schweinchen fragte höflich: „Könntest du mir bitte das Stroh geben, damit ich ein Haus bauen kann?"</p>
+                    <p class="story-german german-text">Das erste kleine Schwein beschloss, nach Süden zu gehen. Auf der Straße traf er einen Bauern, der <span class="tooltip-word">ein Bündel Stroh<span class="tooltip-def">a bundle of straw</span></span> trug. Das Schweinchen fragte <span class="tooltip-word">höflich<span class="tooltip-def">politely</span></span>: „Könntest du mir bitte das Stroh geben, damit ich ein Haus bauen kann?"</p>
                     <div class="story-english">The first little pig decided to go South. He met a farmer on the road who was carrying a bundle of straw. The little pig asked politely: "Could you please give me that straw, so that I can build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Weil das Schweinchen „bitte" sagte, gab ihm der Bauer das Stroh und das Schweinchen baute daraus ein schönes Haus. Das Haus hatte Wände aus Stroh, einen Boden aus Stroh und innen ein bequemes Bett aus Stroh.</p>
+                    <p class="story-german german-text">Weil das Schweinchen „bitte" sagte, gab ihm der Bauer das Stroh und das Schweinchen baute daraus ein schönes Haus. Das Haus hatte Wände aus Stroh, einen <span class="tooltip-word">Boden aus Stroh<span class="tooltip-def">straw floor</span></span> und innen ein <span class="tooltip-word">bequemes<span class="tooltip-def">comfortable</span></span> Bett aus Stroh.</p>
                     <div class="story-english">Because the little pig said "please", the farmer gave him the straw and the little pig used it to build a beautiful house. The house had walls made of straw, a floor made of straw, and inside... a comfortable bed made of straw.</div>
                 </div>
             </div>
@@ -499,7 +503,7 @@
             <div class="story-card-num">Teil 3 &mdash; Der Wolf und das Haus aus Stroh</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Nachdem das Haus gebaut war, beschloss das kleine Schwein, sich hinzulegen und in seinem Bett aus Stroh ein Nickerchen zu machen, aber der große böse Wolf kam am Haus an. Er roch das Schwein im Haus und ihm lief das Wasser im Mund zusammen. „Mmmmm... Specksandwiches!"</p>
+                    <p class="story-german german-text">Nachdem das Haus gebaut war, beschloss das kleine Schwein, sich hinzulegen und in seinem Bett aus Stroh <span class="tooltip-word">ein Nickerchen zu machen<span class="tooltip-def">to take a nap</span></span>, aber der große böse Wolf kam am Haus an. Er roch das Schwein im Haus und <span class="tooltip-word">ihm lief das Wasser im Mund zusammen<span class="tooltip-def">his mouth started to water</span></span>. „Mmmmm... Specksandwiches!"</p>
                     <div class="story-english">After building the house, the little pig decided to lay down and take a nap in his bed made of straw but, the big bad wolf arrived at the house. He smelled the pig inside the house, and his mouth started to water. "Mmmmm... bacon sandwiches!"</div>
                 </div>
                 <hr class="para-divider">
@@ -510,17 +514,17 @@
                 <img src="images/wolf.jpg" class="story-image" alt="The big bad wolf">
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Aber als das Schweinchen durch das <span class="tooltip-word">Schlüsselloch<span class="tooltip-def">keyhole (lit. "key hole")</span></span> die großen Tatzen des Wolfes sah, antwortete es: „Nein! Nein! Nein! Bei den Haaren an meinem Kinn!"</p>
+                    <p class="story-german german-text">Aber als das Schweinchen durch das <span class="tooltip-word">Schlüsselloch<span class="tooltip-def">keyhole (lit. "key hole")</span></span> die großen <span class="tooltip-word">Tatzen<span class="tooltip-def">paws</span></span> des Wolfes sah, antwortete es: „Nein! Nein! Nein! Bei den Haaren an meinem Kinn!"</p>
                     <div class="story-english">But as the little pig saw the wolf's big paws through the keyhole, he replied: "No! No! No! By the hairs of my chin!"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Dann zeigte Wolf seine Zähne und sagte: „Dann werde ich schnaufen und ich werde pusten und dein Haus wird einstürzen!"</p>
+                    <p class="story-german german-text">Dann zeigte Wolf seine <span class="tooltip-word">Zähne<span class="tooltip-def">teeth</span></span> und sagte: „Dann werde ich schnaufen und ich werde pusten und dein Haus wird einstürzen!"</p>
                     <div class="story-english">Then wolf showed his teeth and said: "Then I'll huff and I'll puff and your house will fall down!"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Also schnaufte er und er schnaufte und das Haus stürzte ein. Das kleine Schwein rannte zurück zum Haus seiner Mutter.</p>
+                    <p class="story-german german-text">Also schnaufte er und er schnaufte und das Haus <span class="tooltip-word">stürzte ein<span class="tooltip-def">fell down</span></span>. Das kleine Schwein rannte zurück zum Haus seiner Mutter.</p>
                     <div class="story-english">So he huffed and he puffed and the house fell down. The little pig ran back to his mother's house.</div>
                 </div>
             </div>
@@ -531,12 +535,12 @@
             <div class="story-card-num">Teil 4 &mdash; Das Haus aus Holz</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Das zweite kleine Schwein beschloss, nach Norden zu gehen. Als er ging, traf er auf der Straße einen Bauern, der ein Bündel Holz trug. Das Schweinchen fragte höflich: „Entschuldigung, könnte ich das Holz haben, um ein Haus zu bauen?"</p>
+                    <p class="story-german german-text">Das zweite kleine Schwein beschloss, nach Norden zu gehen. Als er ging, traf er auf der Straße einen Bauern, der <span class="tooltip-word">ein Bündel Holz<span class="tooltip-def">a bundle of wood</span></span> trug. Das Schweinchen fragte höflich: "<span class="tooltip-word">Entschuldigung<span class="tooltip-def">Excuse me</span></span>, könnte ich das Holz haben, um ein Haus zu bauen?"</p>
                     <div class="story-english">The second little pig decided to go North. As he walked, he found a farmer on the road who was carrying a bundle of wood. The little pig asked politely: "Excuse me, could I have that wood to build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Weil das Schweinchen „Entschuldigung" gesagt hatte, gab ihm der Bauer das Holz, und das Schweinchen baute daraus ein schönes Haus. Das Haus hatte Holzwände, einen Holzfußboden und innen einen stabilen Holztisch.</p>
+                    <p class="story-german german-text">Weil das Schweinchen „Entschuldigung" gesagt hatte, gab ihm der Bauer das Holz, und das Schweinchen baute daraus ein schönes Haus. Das Haus hatte Holzwände, einen Holzfußboden und innen einen <span class="tooltip-word">stabilen<span class="tooltip-def">sturdy / solid</span></span> Holztisch.</p>
                     <div class="story-english">Because the little pig had said "excuse me", the farmer gave him the wood, and the little pig used it to build a beautiful house. The house had wood walls, a wood floor, and inside... a strong wood table.</div>
                 </div>
             </div>
@@ -547,7 +551,7 @@
             <div class="story-card-num">Teil 5 &mdash; Der Wolf und das Haus aus Holz</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Als das kleine Schwein gerade sein Haus fertig gebaut hatte und Blumen auf seinem stabilen Holztisch arrangierte, kam der große böse Wolf am Haus an. Er roch den Geruch des Schweins im Haus und sein Magen begann zu knurren. „Mmmmm... Schweinebraten!"</p>
+                    <p class="story-german german-text">Als das kleine Schwein gerade sein Haus fertig gebaut hatte und <span class="tooltip-word">Blumen auf seinem stabilen Holztisch arrangierte<span class="tooltip-def">was arranging flowers on his wood table</span></span>, kam der große böse Wolf am Haus an. Er roch den Geruch des Schweins im Haus und sein <span class="tooltip-word">Magen begann zu knurren<span class="tooltip-def">stomach started to rumble</span></span>. „Mmmmm... Schweinebraten!"</p>
                     <div class="story-english">When the little pig had just finished building his house and was arranging flowers on his strong wood table, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and his stomach started to rumble. "Mmmmm... roast pork!"</div>
                 </div>
                 <hr class="para-divider">
@@ -557,7 +561,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Aber als das Schweinchen durch das Schlüsselloch die lange Nase des Wolfes gesehen hatte, antwortete es: „Nein! Nein! Nein! Bei den Haaren meines Kinns!"</p>
+                    <p class="story-german german-text">Aber als das Schweinchen durch das Schlüsselloch die <span class="tooltip-word">lange Nase<span class="tooltip-def">long nose</span></span> des Wolfes gesehen hatte, antwortete es: „Nein! Nein! Nein! Bei den Haaren meines Kinns!"</p>
                     <div class="story-english">But as the little pig had seen the wolf's long nose through the keyhole, he replied: "No! No! No! By the hair of my chin!"</div>
                 </div>
                 <hr class="para-divider">
@@ -578,12 +582,12 @@
             <div class="story-card-num">Teil 6 &mdash; Das Haus aus Ziegeln</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Das dritte kleine Schwein beschloss, nach Westen zu gehen. Als er die Straße entlangging, begegnete er einem Bauern, der eine Ladung Ziegel trug. Also fragte er den Mann höflich: „Hallo mein Herr, darf ich ein paar von diesen Ziegeln haben, um ein Haus zu bauen?"</p>
+                    <p class="story-german german-text">Das dritte kleine Schwein beschloss, nach Westen zu gehen. Als er die Straße entlangging, begegnete er einem Bauern, der <span class="tooltip-word">eine Ladung Ziegel<span class="tooltip-def">a load of bricks</span></span> trug. Also fragte er den Mann höflich: „Hallo mein Herr, darf ich ein paar von diesen Ziegeln haben, um ein Haus zu bauen?"</p>
                     <div class="story-english">The third little pig decided to go West. As he walked along the road he met a farmer carrying a load of bricks. So he asked the man politely: "Hello sir, may I have some of those bricks to build a house?"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Der Bauer mochte es, „Herr" genannt zu werden, also gab er dem kleinen Schwein ein paar Ziegel, und das kleine Schwein baute daraus ein schönes Haus. Das Haus hatte Backsteinwände, einen Backsteinboden und im Inneren... einen großen Backsteinkamin.</p>
+                    <p class="story-german german-text">Der Bauer mochte es, „Herr" genannt zu werden, also gab er dem kleinen Schwein ein paar Ziegel, und das kleine Schwein baute daraus ein schönes Haus. Das Haus hatte Backsteinwände, einen Backsteinboden und im Inneren... einen großen <span class="tooltip-word">Backsteinkamin<span class="tooltip-def">brick fireplace</span></span>.</p>
                     <div class="story-english">The farmer liked being called "sir" so he gave the little pig some bricks, and the little pig used them to build a beautiful house. The house had brick walls, a brick floor, and inside... a large brick fireplace.</div>
                 </div>
             </div>
@@ -594,7 +598,7 @@
             <div class="story-card-num">Teil 7 &mdash; Der Wolf und das Haus aus Ziegeln</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Als das kleine Schwein gerade sein Haus fertig gebaut hatte und in seinem gemauerten Kamin einen großen Topf Suppe kochte, kam der große böse Wolf im Haus an. Er roch den Geruch des Schweins im Haus und leckte sich die Lippen. „Mmmmm&hellip; Schweinekoteletts mit Barbeque-Sauce und grünen Bohnen!"</p>
+                    <p class="story-german german-text">Als das kleine Schwein gerade sein Haus fertig gebaut hatte und in seinem gemauerten Kamin <span class="tooltip-word">einen großen Topf Suppe<span class="tooltip-def">a big pot of soup</span></span> kochte, kam der große böse Wolf im Haus an. Er roch den Geruch des Schweins im Haus und <span class="tooltip-word">leckte sich die Lippen<span class="tooltip-def">licked his lips</span></span>. „Mmmmm&hellip; Schweinekoteletts mit Barbeque-Sauce und grünen Bohnen!"</p>
                     <div class="story-english">When the little pig had just finished building his house and was cooking a big pot of soup in his brick fireplace, the big bad wolf arrived at the house. He smelt the scent of the pig inside the house, and he licked his lips. "Mmmmm&hellip; pork chops with barbeque sauce and green beans!"</div>
                 </div>
                 <hr class="para-divider">
@@ -604,7 +608,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Aber als das Schweinchen durch das Schlüsselloch die großen Ohren des Wolfs gesehen hatte, antwortete es: „Nein! Nein! Nein! Bei den Haaren meines Kinns!"</p>
+                    <p class="story-german german-text">Aber als das Schweinchen durch das Schlüsselloch die großen <span class="tooltip-word">Ohren<span class="tooltip-def">ears</span></span> des Wolfs gesehen hatte, antwortete es: „Nein! Nein! Nein! Bei den Haaren meines Kinns!"</p>
                     <div class="story-english">But as the little pig had seen the wolf's big ears through the keyhole, he replied: "No! No! No! By the hair of my chin!"</div>
                 </div>
                 <hr class="para-divider">
@@ -614,7 +618,7 @@
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Also blies er und blies, immer und immer wieder. Aber er konnte das Haus nicht zum Einsturz bringen. Zuletzt war er so außer Atem, dass er nicht mehr blasen konnte.</p>
+                    <p class="story-german german-text">Also blies er und blies, immer und immer wieder. Aber er konnte das Haus nicht zum Einsturz bringen. Zuletzt war er so <span class="tooltip-word">außer Atem<span class="tooltip-def">out of breath</span></span>, dass er nicht mehr blasen konnte.</p>
                     <div class="story-english">So he blew and he blew, again and again. But he could not make the house fall down. At last he was so out of breath that he couldn't blow any more.</div>
                 </div>
             </div>
@@ -625,17 +629,17 @@
             <div class="story-card-num">Teil 8 &mdash; Die Niederlage des Wolfes</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Das kleine Schwein rührte nur in seinem großen Topf Suppe um und lachte.</p>
+                    <p class="story-german german-text">Das kleine Schwein <span class="tooltip-word">rührte<span class="tooltip-def">stirred</span></span> nur in seinem großen Topf Suppe um und lachte.</p>
                     <div class="story-english">The little pig just stirred his big pot of soup, and laughed.</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Aber der Wolf hatte so ein Verlangen nach Schweinekoteletts... er wollte nicht aufgeben! Er schlich um die Rückseite des Hauses herum und kletterte auf das Dach. „Jetzt hole ich das Schwein sicher!"</p>
+                    <p class="story-german german-text">Aber der Wolf hatte so ein Verlangen nach Schweinekoteletts... er wollte nicht <span class="tooltip-word">aufgeben<span class="tooltip-def">give up</span></span>! <span class="tooltip-word">Er schlich<span class="tooltip-def">He snuck around</span></span> um die Rückseite des Hauses herum und <span class="tooltip-word">kletterte auf das Dach<span class="tooltip-def">climbed onto the roof</span></span>. „Jetzt hole ich das Schwein sicher!"</p>
                     <div class="story-english">But the wolf had such a craving to eat pork chops... he didn't want to give up! He snuck around the back of the house and climbed onto the roof. "Now I'll get that pig, for certain!"</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Der Wolf ließ sich den großen gemauerten Schornstein hinunterrutschen und landete... PLOP! Mit dem Boden voran in den großen Suppentopf des kleinen Schweinchens... die jetzt sehr heiß war! Der Wolf heulte und sprang aus dem Topf, rannte dann aus dem Haus und raste die Straße hinunter, wobei er sich an seinen verbrannten Hintern klammerte.</p>
+                    <p class="story-german german-text">Der Wolf <span class="tooltip-word">ließ sich den großen gemauerten Schornstein hinunterrutschen<span class="tooltip-def">let himself slide down the chimney</span></span> und landete... PLOP! Mit dem Boden voran in den großen Suppentopf des kleinen Schweinchens... die jetzt sehr heiß war! Der Wolf <span class="tooltip-word">heulte<span class="tooltip-def">howled</span></span> und sprang aus dem Topf, rannte dann aus dem Haus und raste die Straße hinunter, wobei er sich an seinen <span class="tooltip-word">verbrannten Hintern klammerte<span class="tooltip-def">burnt bottom, clutching it</span></span>.</p>
                     <div class="story-english">The wolf let himself slide down the great brick chimney and landed&hellip; PLOP! Bottom-first into the little pig's big pot of soup&hellip; which was now very hot! The wolf howled and jumped out of the pot, then ran out of the house and hurtled down the road, clutching his burnt bottom.</div>
                 </div>
             </div>
@@ -646,12 +650,12 @@
             <div class="story-card-num">Teil 9 &mdash; Ende</div>
             <div class="story-card-body">
                 <div class="para-block">
-                    <p class="story-german german-text">Das kleine Schwein rief seine Mutter und seine beiden Brüder auf seinem gemauerten Handy an und lud sie zu einem köstlichen Abendessen mit Wolfspo-Suppe ein.</p>
+                    <p class="story-german german-text">Das kleine Schwein rief seine Mutter und seine beiden Brüder auf seinem <span class="tooltip-word">Handy<span class="tooltip-def">mobile phone</span></span> an und <span class="tooltip-word">lud sie ein<span class="tooltip-def">invited them</span></span> zu einem köstlichen Abendessen mit Wolfspo-Suppe ein.</p>
                     <div class="story-english">The little pig called his mother and his two brothers on his brick mobile phone, and invited them to share a delicious dinner of wolf-bottom soup.</div>
                 </div>
                 <hr class="para-divider">
                 <div class="para-block">
-                    <p class="story-german german-text">Die Wolfsbodensuppe war so lecker, dass bald alle im Umkreis von hundert Kilometern den Wolf fangen und ihn in ihre Suppe setzen wollten. Der arme Wolf musste weit weg in den tiefen dunklen Wald laufen, wo er in Frieden und Ruhe leben konnte.</p>
+                    <p class="story-german german-text">Die Wolfsbodensuppe war so <span class="tooltip-word">lecker<span class="tooltip-def">tasty / delicious</span></span>, dass bald alle im Umkreis von hundert Kilometern den Wolf <span class="tooltip-word">fangen<span class="tooltip-def">catch</span></span> und ihn in ihre Suppe setzen wollten. Der arme Wolf musste weit weg in den <span class="tooltip-word">tiefen dunklen Wald<span class="tooltip-def">deep dark forest</span></span> laufen, wo er in <span class="tooltip-word">Frieden und Ruhe<span class="tooltip-def">peace and quiet</span></span> leben konnte.</p>
                     <div class="story-english">The wolf-bottom soup was so tasty that soon everybody within one hundred kilometres wanted to catch the wolf and make him sit in their soup. The poor wolf had to run far away to the deep dark forest where he could live in peace and quiet.</div>
                 </div>
             </div>
@@ -766,6 +770,41 @@
     <script src="js/validator.min.js"></script>
     <script src="js/morphext.min.js"></script>
     <script src="js/scripts.js"></script>
+
+    <!-- Tooltip clamp + mobile support -->
+    <script>
+    (function () {
+        function clampTooltip(word) {
+            var def = word.querySelector('.tooltip-def');
+            if (!def) return;
+            def.style.left = '50%';
+            def.style.right = 'auto';
+            def.style.transform = 'translateX(-50%)';
+            var rect = def.getBoundingClientRect();
+            var vw = window.innerWidth || document.documentElement.clientWidth;
+            var PAD = 10;
+            if (rect.right > vw - PAD) {
+                def.style.left = 'auto'; def.style.right = '0'; def.style.transform = 'none';
+            } else if (rect.left < PAD) {
+                def.style.left = '0'; def.style.right = 'auto'; def.style.transform = 'none';
+            }
+        }
+        document.querySelectorAll('.tooltip-word').forEach(function (word) {
+            word.addEventListener('mouseenter', function () { clampTooltip(this); });
+            word.addEventListener('touchend', function (e) {
+                var isActive = this.classList.contains('tooltip-active');
+                document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                if (!isActive) { this.classList.add('tooltip-active'); clampTooltip(this); }
+                e.preventDefault();
+            });
+        });
+        document.addEventListener('touchend', function (e) {
+            if (!e.target.closest('.tooltip-word')) {
+                document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+            }
+        });
+    })();
+    </script>
 
     <!-- German Narrator Script -->
     <script>
