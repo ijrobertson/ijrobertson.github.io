@@ -841,7 +841,9 @@
         function createUtterances() {
             utterances = [];
             frenchParagraphs.forEach(function(paragraph, index) {
-                var utterance = new SpeechSynthesisUtterance(paragraph.textContent);
+                var clone = paragraph.cloneNode(true);
+                clone.querySelectorAll('.tooltip-def').forEach(function(el) { el.remove(); });
+                var utterance = new SpeechSynthesisUtterance(clone.textContent);
                 utterance.rate = currentSpeed;
                 utterance.lang = 'fr-FR';
                 if (frenchVoice) utterance.voice = frenchVoice;

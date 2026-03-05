@@ -840,7 +840,9 @@
         function createUtterances() {
             utterances = [];
             germanParagraphs.forEach(function(paragraph, index) {
-                var utterance = new SpeechSynthesisUtterance(paragraph.textContent);
+                var clone = paragraph.cloneNode(true);
+                clone.querySelectorAll('.tooltip-def').forEach(function(el) { el.remove(); });
+                var utterance = new SpeechSynthesisUtterance(clone.textContent);
                 utterance.rate = currentSpeed;
                 utterance.lang = 'de-DE';
                 if (germanVoice) utterance.voice = germanVoice;
