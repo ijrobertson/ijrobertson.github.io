@@ -712,7 +712,7 @@
                         <a href="learner-profile.html" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
                         <a href="messages.html" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
                         <a href="bookings.html" class="active-nav-link"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
-                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends</a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
                         <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
@@ -783,21 +783,6 @@
             <div class="prev-page-info" id="prevPageInfo"></div>
         </div>
 
-        <hr class="section-divider">
-
-        <!-- ===== PARTNER REQUESTS ===== -->
-        <div class="section-header">
-            <div class="section-icon"><i class="fas fa-user-friends"></i></div>
-            <h2>Partner Requests</h2>
-            <span class="section-badge" id="requestsBadge" style="display: none;"></span>
-        </div>
-        <div id="requestsContainer">
-            <div class="loading-state">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                <div>Loading requests...</div>
-            </div>
-        </div>
-
     </div>
 
     <!-- Scripts -->
@@ -840,7 +825,7 @@
             await routeProfileLink(user.uid);
 
             // Load page data
-            await Promise.all([loadLessons(), loadRequests()]);
+            await loadLessons();
 
             // Start countdown timer (updates join buttons)
             updateJoinButtons();
@@ -1218,177 +1203,6 @@
             });
         }
 
-        // ===== PARTNER REQUESTS =====
-        async function loadRequests() {
-            const container = document.getElementById('requestsContainer');
-            try {
-                const snap = await getDocs(query(
-                    collection(db, 'friendRequests'),
-                    where('toId', '==', currentUser.uid),
-                    where('status', '==', 'pending')
-                ));
-
-                const requests = [];
-                snap.forEach(d => requests.push({ id: d.id, ...d.data() }));
-
-                updateRequestsBadge(requests.length);
-
-                if (requests.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-user-friends"></i>
-                            <p>No pending partner requests.</p>
-                            <p><a href="friends.html">Visit Friends</a> to manage your connections!</p>
-                        </div>`;
-                    return;
-                }
-
-                // Fetch sender profiles — check instructors first, then students
-                const enriched = await Promise.all(requests.map(async (req) => {
-                    try {
-                        const instructorSnap = await getDoc(doc(db, 'instructors', req.fromId));
-                        if (instructorSnap.exists()) {
-                            return { ...req, profile: instructorSnap.data(), senderRole: 'instructor' };
-                        }
-                        const userSnap = await getDoc(doc(db, 'users', req.fromId));
-                        if (userSnap.exists()) {
-                            return { ...req, profile: userSnap.data(), senderRole: 'student' };
-                        }
-                    } catch (e) {}
-                    return req;
-                }));
-
-                const grid = document.createElement('div');
-                grid.className = 'requests-grid';
-                grid.id = 'requestsGrid';
-                enriched.forEach(req => grid.appendChild(createRequestCard(req)));
-
-                container.innerHTML = '';
-                container.appendChild(grid);
-
-            } catch (e) {
-                console.error('Error loading requests:', e);
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Could not load requests. Please refresh the page.</p>
-                    </div>`;
-            }
-        }
-
-        function createRequestCard(req) {
-            const profile = req.profile || {};
-            const isInstructor = req.senderRole === 'instructor';
-
-            // Prefer fresh profile data; fall back to what was stored on the request doc
-            const name = escapeHtml(profile.name || req.fromName || 'Language Partner');
-            const avatar = escapeAttr(profile.avatar_url || req.fromAvatar || DEFAULT_AVATAR);
-            const country = profile.country ? escapeHtml(profile.country) : '';
-
-            // Build language line appropriate to role
-            let langLine = '';
-            if (isInstructor) {
-                const teaching = (profile.languages_teaching || profile.languages || []).slice(0, 3);
-                const spoken = (profile.languages_spoken || []).slice(0, 2);
-                if (teaching.length > 0) {
-                    langLine = `<i class="fas fa-chalkboard-teacher"></i> Teaches: ${escapeHtml(teaching.join(', '))}`;
-                } else if (spoken.length > 0) {
-                    langLine = `<i class="fas fa-language"></i> ${escapeHtml(spoken.join(', '))}`;
-                }
-            } else {
-                const spoken = (profile.languages_spoken || []).slice(0, 2);
-                const learning = (profile.languages_learning || []).slice(0, 2);
-                const parts = [];
-                if (spoken.length > 0) parts.push(`Speaks: ${spoken.join(', ')}`);
-                if (learning.length > 0) parts.push(`Learning: ${learning.join(', ')}`);
-                if (parts.length > 0) langLine = `<i class="fas fa-language"></i> ${escapeHtml(parts.join(' · '))}`;
-            }
-
-            const roleBadge = isInstructor
-                ? `<span class="request-role-badge instructor"><i class="fas fa-chalkboard-teacher"></i> Instructor</span>`
-                : `<span class="request-role-badge learner"><i class="fas fa-user-graduate"></i> Language Learner</span>`;
-
-            const card = document.createElement('div');
-            card.className = 'request-card';
-            card.id = `request-${req.id}`;
-
-            card.innerHTML = `
-                <img class="request-avatar"
-                     src="${avatar}"
-                     onerror="this.src='${DEFAULT_AVATAR}'"
-                     alt="${name}">
-                <div class="request-name">${name}</div>
-                ${roleBadge}
-                ${country ? `<div class="request-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>` : ''}
-                ${langLine ? `<div class="request-langs">${langLine}</div>` : ''}
-                <div class="request-actions">
-                    <button class="btn-accept" onclick="acceptRequest('${req.id}')">
-                        <i class="fas fa-check"></i> Accept
-                    </button>
-                    <button class="btn-decline" onclick="declineRequest('${req.id}')">
-                        <i class="fas fa-times"></i> Decline
-                    </button>
-                </div>
-            `;
-            return card;
-        }
-
-        window.acceptRequest = async (reqId) => {
-            try {
-                await updateDoc(doc(db, 'friendRequests', reqId), {
-                    status: 'accepted',
-                    respondedAt: serverTimestamp()
-                });
-                animateRemoveCard(reqId);
-            } catch (e) {
-                console.error('Error accepting request:', e);
-            }
-        };
-
-        window.declineRequest = async (reqId) => {
-            try {
-                await updateDoc(doc(db, 'friendRequests', reqId), {
-                    status: 'declined',
-                    respondedAt: serverTimestamp()
-                });
-                animateRemoveCard(reqId);
-            } catch (e) {
-                console.error('Error declining request:', e);
-            }
-        };
-
-        function animateRemoveCard(reqId) {
-            const card = document.getElementById(`request-${reqId}`);
-            if (!card) return;
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.85)';
-            card.style.transition = 'all 0.3s ease';
-            setTimeout(() => {
-                card.remove();
-                const grid = document.getElementById('requestsGrid');
-                const remaining = grid ? grid.children.length : 0;
-                updateRequestsBadge(remaining);
-                if (remaining === 0) {
-                    document.getElementById('requestsContainer').innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-user-friends"></i>
-                            <p>No pending partner requests.</p>
-                            <p><a href="friends.html">Visit Friends</a> to manage your connections!</p>
-                        </div>`;
-                }
-            }, 300);
-        }
-
-        function updateRequestsBadge(count) {
-            const badge = document.getElementById('requestsBadge');
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
         // ===== NOTIFICATION COUNTS (messages + friend requests + new bookings) =====
         let _unreadMsgCount = 0;
         let _pendingReqCount = 0;
@@ -1428,15 +1242,15 @@
         }
 
         function _updateActivityBadge() {
-            const total = _pendingReqCount + _newBookingCount;
-            const el = document.getElementById('bookingsCount');
-            if (el) {
-                if (total > 0) {
-                    el.textContent = total;
-                    el.classList.add('show');
-                } else {
-                    el.classList.remove('show');
-                }
+            const bookingsEl = document.getElementById('bookingsCount');
+            if (bookingsEl) {
+                if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); }
+                else { bookingsEl.classList.remove('show'); }
+            }
+            const friendsEl = document.getElementById('friendsCount');
+            if (friendsEl) {
+                if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); }
+                else { friendsEl.classList.remove('show'); }
             }
         }
 
