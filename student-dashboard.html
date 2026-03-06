@@ -389,6 +389,72 @@
       background: #c82333;
     }
 
+    /* ── Cancel Booking Confirmation Modal ──────────────── */
+    .cancel-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .cancel-backdrop.active { display: flex; }
+    .cancel-modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem 2rem;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      animation: cancelSlideUp 0.22s ease;
+    }
+    @keyframes cancelSlideUp {
+      from { transform: translateY(18px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .cancel-modal-icon {
+      width: 64px;
+      height: 64px;
+      background: #fff3cd;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      font-size: 1.5rem;
+      color: #d97706;
+    }
+    .cancel-modal h3 { font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0 0 0.75rem; }
+    .cancel-lesson-info {
+      background: #f8f9fa;
+      border-left: 4px solid #20bcba;
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      text-align: left;
+      font-size: 0.9rem;
+      color: #333;
+      margin-bottom: 1rem;
+      line-height: 1.7;
+    }
+    .cancel-policy-text {
+      font-size: 0.85rem;
+      color: #64748b;
+      line-height: 1.6;
+      margin: 0 0 1.5rem;
+    }
+    .cancel-policy-text a { color: #20bcba; text-decoration: underline; }
+    .cancel-confirm-btn {
+      flex: 1; padding: 0.72rem; border-radius: 7px;
+      border: none; background: #d97706; color: #fff;
+      font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;
+    }
+    .cancel-confirm-btn:hover { background: #b45309; }
+    .cancel-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .cancel-error { font-size: 0.82rem; color: #c0392b; margin-top: 0.75rem; min-height: 1em; }
+
     /* Toggle Switch */
     .toggle-switch {
       position: relative;
@@ -889,6 +955,29 @@
     </div>
   </div>
 
+  <!-- Cancel Booking Modal -->
+  <div class="cancel-backdrop" id="cancel-backdrop">
+    <div class="cancel-modal">
+      <div class="cancel-modal-icon">
+        <i class="fas fa-calendar-times"></i>
+      </div>
+      <h3>Cancel This Lesson?</h3>
+      <div id="cancel-lesson-details" class="cancel-lesson-info"></div>
+      <p class="cancel-policy-text">
+        By cancelling, you confirm that you have read and agree to our
+        <a href="refund-policy.html" target="_blank">Cancellation &amp; Refund Policy</a>.
+        Refunds are subject to the terms outlined in that policy.
+      </p>
+      <div class="del-btns">
+        <button class="del-btn-cancel" id="cancel-keep-btn">Keep Lesson</button>
+        <button class="cancel-confirm-btn" id="cancel-confirm-btn">
+          <span id="cancel-btn-text">Cancel Lesson</span>
+        </button>
+      </div>
+      <div class="cancel-error" id="cancel-error"></div>
+    </div>
+  </div>
+
   <!-- Delete Account Modal -->
   <div class="del-backdrop" id="del-backdrop">
     <div class="del-modal">
@@ -939,7 +1028,9 @@
       onSnapshot,
       ref,
       uploadBytes,
-      getDownloadURL
+      getDownloadURL,
+      functions,
+      httpsCallable
     } from './lib/firebaseClient.js';
 
     const countries = [
@@ -1620,7 +1711,7 @@
       `;
 
       card.querySelector('.cancel-booking-btn').addEventListener('click', () => {
-        cancelBooking(booking.id);
+        openCancelModal(booking.id, booking);
       });
 
       return card;
@@ -1637,23 +1728,60 @@
         .replace(/'/g, "&#039;");
     }
 
-    async function cancelBooking(bookingId) {
-      if (!confirm('Are you sure you want to cancel this lesson?')) return;
+    // ── Cancel Booking Modal ──────────────────────────────
+    let _cancelBookingId = null;
+
+    function openCancelModal(bookingId, booking) {
+      _cancelBookingId = bookingId;
+
+      const details = document.getElementById('cancel-lesson-details');
+      details.innerHTML = `
+        <strong style="font-size:1rem;">${escapeHtml(booking.instructorName || 'Instructor')}</strong><br>
+        <span style="color:#20bcba;"><i class="fas fa-calendar" style="width:16px;"></i></span>
+        ${booking.dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+        <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
+        ${booking.dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+      `;
+
+      document.getElementById('cancel-error').textContent = '';
+      const btn = document.getElementById('cancel-confirm-btn');
+      btn.disabled = false;
+      document.getElementById('cancel-btn-text').textContent = 'Cancel Lesson';
+      document.getElementById('cancel-backdrop').classList.add('active');
+    }
+
+    document.getElementById('cancel-keep-btn').addEventListener('click', () => {
+      document.getElementById('cancel-backdrop').classList.remove('active');
+    });
+
+    document.getElementById('cancel-backdrop').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('cancel-backdrop')) {
+        document.getElementById('cancel-backdrop').classList.remove('active');
+      }
+    });
+
+    document.getElementById('cancel-confirm-btn').addEventListener('click', async () => {
+      if (!_cancelBookingId) return;
+
+      const btn = document.getElementById('cancel-confirm-btn');
+      const err = document.getElementById('cancel-error');
+      btn.disabled = true;
+      document.getElementById('cancel-btn-text').textContent = 'Cancelling…';
+      err.textContent = '';
 
       try {
-        await updateDoc(doc(db, 'bookings', bookingId), {
-          status: 'cancelled',
-          cancelledAt: new Date()
-        });
-
-        alert('Lesson cancelled successfully.');
-        loadStudentBookings(); // Refresh
-
+        const cancelFn = httpsCallable(functions, 'cancelBooking');
+        await cancelFn({ bookingId: _cancelBookingId });
+        document.getElementById('cancel-backdrop').classList.remove('active');
+        _cancelBookingId = null;
+        await loadStudentBookings();
       } catch (error) {
-        console.error('Error cancelling:', error);
-        alert('Error cancelling lesson. Please try again.');
+        console.error('Error cancelling booking:', error);
+        err.textContent = error.message || 'Error cancelling lesson. Please try again.';
+        btn.disabled = false;
+        document.getElementById('cancel-btn-text').textContent = 'Cancel Lesson';
       }
-    }
+    });
 
     // UNREAD MESSAGE COUNT
 

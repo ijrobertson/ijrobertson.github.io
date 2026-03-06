@@ -462,6 +462,116 @@
     .del-btn-confirm:hover { background: #a93226; }
     .del-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
     .del-error { font-size: 0.8rem; color: #c0392b; margin-top: 1rem; display: none; }
+
+    /* ── Upcoming Lessons (Instructor) ───────────────────── */
+    .booking-card-inst {
+      background: #f8f9fa;
+      padding: 1.25rem 1.5rem;
+      border-radius: 8px;
+      border-left: 4px solid #20bcba;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .booking-card-inst h5 {
+      margin: 0 0 0.4rem;
+      color: #113448;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .booking-detail-inst {
+      color: #666;
+      font-size: 0.9rem;
+      margin: 0.2rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cancel-lesson-btn {
+      padding: 0.55rem 1.1rem;
+      background: transparent;
+      color: #d97706;
+      border: 1.5px solid #d97706;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .cancel-lesson-btn:hover {
+      background: #d97706;
+      color: #fff;
+    }
+
+    /* ── Cancel Booking Confirmation Modal ────────────────── */
+    .cancel-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .cancel-backdrop.active { display: flex; }
+    .cancel-modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem 2rem;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      animation: cancelSlideUp 0.22s ease;
+    }
+    @keyframes cancelSlideUp {
+      from { transform: translateY(18px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .cancel-modal-icon {
+      width: 64px;
+      height: 64px;
+      background: #fff3cd;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      font-size: 1.5rem;
+      color: #d97706;
+    }
+    .cancel-modal h3 { font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0 0 0.75rem; }
+    .cancel-lesson-info {
+      background: #f8f9fa;
+      border-left: 4px solid #20bcba;
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      text-align: left;
+      font-size: 0.9rem;
+      color: #333;
+      margin-bottom: 1rem;
+      line-height: 1.7;
+    }
+    .cancel-policy-text {
+      font-size: 0.85rem;
+      color: #64748b;
+      line-height: 1.6;
+      margin: 0 0 1.5rem;
+    }
+    .cancel-policy-text a { color: #20bcba; text-decoration: underline; }
+    .cancel-confirm-btn {
+      flex: 1; padding: 0.72rem; border-radius: 7px;
+      border: none; background: #d97706; color: #fff;
+      font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;
+    }
+    .cancel-confirm-btn:hover { background: #b45309; }
+    .cancel-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .cancel-error { font-size: 0.82rem; color: #c0392b; margin-top: 0.75rem; min-height: 1em; }
   </style>
 </head>
 <body>
@@ -633,6 +743,14 @@
       <p style="color: #666; font-size: 0.9rem;">Loading payment status...</p>
     </div>
 
+    <!-- UPCOMING LESSONS SECTION -->
+    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
+      <i class="fas fa-calendar-check"></i> Upcoming Lessons
+    </h3>
+    <div id="instructor-bookings" style="min-height: 80px;">
+      <p style="color: #999; font-size: 0.95rem;">Loading...</p>
+    </div>
+
     <!-- Danger Zone -->
     <div class="danger-card">
       <div class="danger-header">
@@ -643,6 +761,29 @@
       <button class="btn-delete-account" id="open-delete-modal">
         <i class="fas fa-trash-alt"></i> Delete My Account
       </button>
+    </div>
+  </div>
+
+  <!-- Cancel Booking Modal -->
+  <div class="cancel-backdrop" id="cancel-backdrop">
+    <div class="cancel-modal">
+      <div class="cancel-modal-icon">
+        <i class="fas fa-calendar-times"></i>
+      </div>
+      <h3>Cancel This Lesson?</h3>
+      <div id="cancel-lesson-details" class="cancel-lesson-info"></div>
+      <p class="cancel-policy-text">
+        By cancelling, you confirm that you have read and agree to our
+        <a href="refund-policy.html" target="_blank">Cancellation &amp; Refund Policy</a>.
+        Your student will be notified immediately via email.
+      </p>
+      <div class="del-btns">
+        <button class="del-btn-cancel" id="cancel-keep-btn">Keep Lesson</button>
+        <button class="cancel-confirm-btn" id="cancel-confirm-btn">
+          <span id="cancel-btn-text">Cancel Lesson</span>
+        </button>
+      </div>
+      <div class="cancel-error" id="cancel-error"></div>
     </div>
   </div>
 
@@ -696,6 +837,7 @@
       ref,
       uploadBytes,
       getDownloadURL,
+      updateDoc,
       onSnapshot,
       httpsCallable
     } from './lib/firebaseClient.js';
@@ -899,6 +1041,9 @@
           // Check Stripe payment setup status
           const urlParams = new URLSearchParams(window.location.search);
           await checkStripePaymentStatus(urlParams.get('stripe') === 'success');
+
+          // Load instructor's upcoming lessons
+          loadInstructorBookings();
 
           // Load unread message count
           try {
@@ -1269,6 +1414,132 @@
         console.error('Error loading availability:', error);
       }
     }
+
+    // ── INSTRUCTOR BOOKING MANAGEMENT ────────────────────────
+
+    async function loadInstructorBookings() {
+      if (!currentUser) return;
+      const container = document.getElementById('instructor-bookings');
+
+      try {
+        const now = new Date();
+        const q = query(
+          collection(db, 'bookings'),
+          where('instructorId', '==', currentUser.uid),
+          where('status', '==', 'confirmed')
+        );
+        const snapshot = await getDocs(q);
+
+        const upcoming = snapshot.docs
+          .map(d => ({ id: d.id, ...d.data(), dateTime: d.data().dateTime.toDate() }))
+          .filter(b => b.dateTime >= now)
+          .sort((a, b) => a.dateTime - b.dateTime);
+
+        if (upcoming.length === 0) {
+          container.innerHTML = '<p style="color:#999;font-size:0.95rem;">No upcoming lessons scheduled.</p>';
+          return;
+        }
+
+        container.innerHTML = '';
+        upcoming.forEach(booking => container.appendChild(createInstructorBookingCard(booking)));
+
+      } catch (err) {
+        console.error('Error loading instructor bookings:', err);
+        container.innerHTML = '<p style="color:#dc3545;font-size:0.9rem;">Error loading bookings.</p>';
+      }
+    }
+
+    function createInstructorBookingCard(booking) {
+      const card = document.createElement('div');
+      card.className = 'booking-card-inst';
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      card.innerHTML = `
+        <div>
+          <h5>${escapeHtmlInst(booking.studentName || 'Student')}</h5>
+          <div class="booking-detail-inst">
+            <i class="fas fa-calendar" style="color:#20bcba;width:14px;"></i>
+            ${booking.dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+          <div class="booking-detail-inst">
+            <i class="fas fa-clock" style="color:#20bcba;width:14px;"></i>
+            ${booking.dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+            <span style="color:#bbb;font-size:0.82rem;">(${tz})</span>
+          </div>
+          <div class="booking-detail-inst">
+            <i class="fas fa-hourglass-half" style="color:#20bcba;width:14px;"></i>
+            60 minutes
+          </div>
+        </div>
+        <button class="cancel-lesson-btn"><i class="fas fa-times"></i> Cancel</button>
+      `;
+      card.querySelector('.cancel-lesson-btn').addEventListener('click', () => {
+        openInstructorCancelModal(booking.id, booking);
+      });
+      return card;
+    }
+
+    function escapeHtmlInst(unsafe) {
+      if (!unsafe) return '';
+      return unsafe.toString()
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // ── Cancel Booking Modal (Instructor) ─────────────────
+
+    let _instCancelBookingId = null;
+
+    function openInstructorCancelModal(bookingId, booking) {
+      _instCancelBookingId = bookingId;
+
+      const details = document.getElementById('cancel-lesson-details');
+      details.innerHTML = `
+        <strong style="font-size:1rem;">${escapeHtmlInst(booking.studentName || 'Student')}</strong><br>
+        <span style="color:#20bcba;"><i class="fas fa-calendar" style="width:16px;"></i></span>
+        ${booking.dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+        <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
+        ${booking.dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+      `;
+
+      document.getElementById('cancel-error').textContent = '';
+      const btn = document.getElementById('cancel-confirm-btn');
+      btn.disabled = false;
+      document.getElementById('cancel-btn-text').textContent = 'Cancel Lesson';
+      document.getElementById('cancel-backdrop').classList.add('active');
+    }
+
+    document.getElementById('cancel-keep-btn').addEventListener('click', () => {
+      document.getElementById('cancel-backdrop').classList.remove('active');
+    });
+
+    document.getElementById('cancel-backdrop').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('cancel-backdrop')) {
+        document.getElementById('cancel-backdrop').classList.remove('active');
+      }
+    });
+
+    document.getElementById('cancel-confirm-btn').addEventListener('click', async () => {
+      if (!_instCancelBookingId) return;
+
+      const btn = document.getElementById('cancel-confirm-btn');
+      const err = document.getElementById('cancel-error');
+      btn.disabled = true;
+      document.getElementById('cancel-btn-text').textContent = 'Cancelling…';
+      err.textContent = '';
+
+      try {
+        const cancelFn = httpsCallable(functions, 'cancelBooking');
+        await cancelFn({ bookingId: _instCancelBookingId });
+        document.getElementById('cancel-backdrop').classList.remove('active');
+        _instCancelBookingId = null;
+        await loadInstructorBookings();
+      } catch (error) {
+        console.error('Error cancelling booking:', error);
+        err.textContent = error.message || 'Error cancelling lesson. Please try again.';
+        btn.disabled = false;
+        document.getElementById('cancel-btn-text').textContent = 'Cancel Lesson';
+      }
+    });
 
     // UNREAD MESSAGE COUNT
 

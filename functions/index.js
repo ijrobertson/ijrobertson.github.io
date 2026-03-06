@@ -955,6 +955,172 @@ exports.createPaymentIntent = onCall(async (request) => {
 });
 
 /**
+ * Cancels a booking and sends email notifications to both parties.
+ * Can be called by either the student or the instructor on the booking.
+ */
+exports.cancelBooking = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+
+  const { bookingId } = request.data;
+  if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required');
+
+  const uid = request.auth.uid;
+  const bookingRef = admin.firestore().collection('bookings').doc(bookingId);
+  const bookingSnap = await bookingRef.get();
+
+  if (!bookingSnap.exists) throw new HttpsError('not-found', 'Booking not found');
+  const booking = bookingSnap.data();
+
+  if (booking.studentId !== uid && booking.instructorId !== uid) {
+    throw new HttpsError('permission-denied', 'Not authorized to cancel this booking');
+  }
+  if (booking.status === 'cancelled') {
+    throw new HttpsError('failed-precondition', 'Booking is already cancelled');
+  }
+
+  const cancelledBy = booking.studentId === uid ? 'student' : 'instructor';
+
+  await bookingRef.update({
+    status: 'cancelled',
+    cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+    cancelledBy
+  });
+
+  // Format lesson date/time for emails
+  const lessonDate = booking.dateTime?.toDate ? booking.dateTime.toDate() : new Date(booking.dateTime);
+  const tz = booking.instructorTimezone || 'UTC';
+  const formattedDate = lessonDate.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: tz
+  });
+  const formattedTime = lessonDate.toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', timeZoneName: 'short', timeZone: tz
+  });
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  const emailHeader = `
+    <tr>
+      <td style="padding: 36px 40px 20px 40px; text-align: center; background-color: #113448;">
+        <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: bold;">Lingua Bud</h1>
+      </td>
+    </tr>`;
+  const emailFooter = `
+    <tr>
+      <td style="padding: 24px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
+        <p style="margin: 0; color: #999999; font-size: 12px; text-align: center;">
+          © 2026 Lingua Bud. Connect with language partners worldwide.<br>
+          Questions? <a href="mailto:support@linguabud.com" style="color: #20bcba;">support@linguabud.com</a>
+        </p>
+      </td>
+    </tr>`;
+
+  try {
+    if (cancelledBy === 'student') {
+      // Notify instructor that student cancelled
+      const instructorSnap = await admin.firestore().collection('instructors').doc(booking.instructorId).get();
+      if (instructorSnap.exists && instructorSnap.data().email) {
+        const instructor = instructorSnap.data();
+        const studentName = booking.studentName || 'A student';
+        await resend.emails.send({
+          from: 'Lingua Bud <notifications@linguabud.com>',
+          to: instructor.email,
+          subject: `Lesson cancelled by ${studentName}`,
+          html: `
+            <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;">
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr><td align="center" style="padding:40px 0;">
+                  <table role="presentation" style="width:600px;border-collapse:collapse;background-color:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    ${emailHeader}
+                    <tr><td style="padding:40px;">
+                      <h2 style="margin:0 0 16px;color:#333;font-size:22px;">Lesson Cancellation Notice</h2>
+                      <p style="margin:0 0 20px;color:#666;font-size:16px;line-height:1.6;">
+                        Hi ${instructor.name || 'Instructor'},<br><br>
+                        <strong>${studentName}</strong> has cancelled their upcoming lesson with you.
+                      </p>
+                      <div style="background:#f8f9fa;border-left:4px solid #20bcba;border-radius:6px;padding:20px;margin:0 0 24px;">
+                        <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Student:</strong> ${studentName}</p>
+                        <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Date:</strong> ${formattedDate}</p>
+                        <p style="margin:0;color:#333;font-size:15px;"><strong>Time:</strong> ${formattedTime}</p>
+                      </div>
+                      <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">
+                        This time slot is now available for other students to book. Visit your dashboard to review your schedule.
+                      </p>
+                      <p style="margin:0 0 28px;text-align:center;">
+                        <a href="https://linguabud.com/dashboard.html" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
+                          Go to Dashboard
+                        </a>
+                      </p>
+                    </td></tr>
+                    ${emailFooter}
+                  </table>
+                </td></tr>
+              </table>
+            </body></html>
+          `,
+          text: `Hi ${instructor.name || 'Instructor'},\n\n${studentName} has cancelled their lesson with you.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\nThis slot is now available for other students.\n\nDashboard: https://linguabud.com/dashboard.html\n\n© 2026 Lingua Bud`
+        });
+        console.log('Cancellation email sent to instructor:', instructor.email);
+      }
+    } else {
+      // Notify student that instructor cancelled
+      const studentSnap = await admin.firestore().collection('users').doc(booking.studentId).get();
+      if (studentSnap.exists && studentSnap.data().email) {
+        const student = studentSnap.data();
+        const instructorSnap = await admin.firestore().collection('instructors').doc(booking.instructorId).get();
+        const instructorName = instructorSnap.exists ? (instructorSnap.data().name || 'Your instructor') : 'Your instructor';
+        await resend.emails.send({
+          from: 'Lingua Bud <notifications@linguabud.com>',
+          to: student.email,
+          subject: `Your lesson with ${instructorName} has been cancelled`,
+          html: `
+            <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;">
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr><td align="center" style="padding:40px 0;">
+                  <table role="presentation" style="width:600px;border-collapse:collapse;background-color:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    ${emailHeader}
+                    <tr><td style="padding:40px;">
+                      <h2 style="margin:0 0 16px;color:#333;font-size:22px;">Lesson Cancellation Notice</h2>
+                      <p style="margin:0 0 20px;color:#666;font-size:16px;line-height:1.6;">
+                        Hi ${student.name || 'there'},<br><br>
+                        We're sorry to let you know that <strong>${instructorName}</strong> has cancelled your upcoming lesson.
+                      </p>
+                      <div style="background:#f8f9fa;border-left:4px solid #20bcba;border-radius:6px;padding:20px;margin:0 0 24px;">
+                        <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Instructor:</strong> ${instructorName}</p>
+                        <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Date:</strong> ${formattedDate}</p>
+                        <p style="margin:0;color:#333;font-size:15px;"><strong>Time:</strong> ${formattedTime}</p>
+                      </div>
+                      <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">
+                        We apologize for any inconvenience. Please browse our other available instructors to rebook your lesson.
+                        Refunds are processed according to our <a href="https://linguabud.com/refund-policy.html" style="color:#20bcba;">Cancellation &amp; Refund Policy</a>.
+                      </p>
+                      <p style="margin:0 0 28px;text-align:center;">
+                        <a href="https://linguabud.com/instructors.html" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
+                          Find Another Instructor
+                        </a>
+                      </p>
+                    </td></tr>
+                    ${emailFooter}
+                  </table>
+                </td></tr>
+              </table>
+            </body></html>
+          `,
+          text: `Hi ${student.name || 'there'},\n\n${instructorName} has cancelled your upcoming lesson.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\nPlease browse other instructors to rebook: https://linguabud.com/instructors.html\n\nRefunds: https://linguabud.com/refund-policy.html\n\n© 2026 Lingua Bud`
+        });
+        console.log('Cancellation email sent to student:', student.email);
+      }
+    }
+  } catch (emailErr) {
+    console.error('Error sending cancellation email:', emailErr);
+    // Don't fail the cancellation if email fails
+  }
+
+  return { success: true, cancelledBy };
+});
+
+/**
  * Submits a student review for a completed lesson.
  * Atomically writes the review and updates instructor averageRating + reviewCount.
  */
