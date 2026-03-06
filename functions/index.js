@@ -328,7 +328,7 @@ exports.sendBookingNotification = onDocumentCreated(
                           </p>
 
                           <p style="margin: 0 0 30px 0; text-align: center;">
-                            <a href="https://linguabud.com/activity.html"
+                            <a href="https://linguabud.com/bookings.html"
                                style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
                               View Upcoming Lesson
                             </a>
@@ -367,7 +367,7 @@ Date: ${formattedDate}
 Time: ${formattedTime}
 ${amountStr ? `Payment: ${amountStr} (confirmed)` : ''}
 
-View your upcoming lesson: https://linguabud.com/activity.html
+View your upcoming lesson: https://linguabud.com/bookings.html
 
 © 2026 Lingua Bud
         `.trim()
@@ -447,7 +447,7 @@ View your upcoming lesson: https://linguabud.com/activity.html
                             </p>
 
                             <p style="margin: 0 0 30px 0; text-align: center;">
-                              <a href="https://linguabud.com/activity.html"
+                              <a href="https://linguabud.com/bookings.html"
                                  style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
                                 View My Booking
                               </a>
@@ -486,7 +486,7 @@ Date: ${formattedDate}
 Time: ${formattedTime}
 ${amountStr ? `Amount Paid: ${amountStr}` : ''}
 
-View your booking: https://linguabud.com/activity.html
+View your booking: https://linguabud.com/bookings.html
 
 Questions? Email support@linguabud.com
 

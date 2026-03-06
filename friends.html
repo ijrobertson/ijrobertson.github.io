@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="View your friends and pending friend requests on Lingua Bud.">
+    <meta name="author" content="Lingua Bud">
+    <title>Friends - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        body {
+            padding-top: 4.5rem;
+            background-color: #f8f9fa;
+        }
+
+        .navbar-custom {
+            background-color: #113448 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* ===== NAVBAR PROFILE DROPDOWN ===== */
+        .profile-nav-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: 1rem;
+        }
+
+        .profile-pic-nav {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .profile-pic-nav:hover { transform: scale(1.1); }
+
+        .profile-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem;
+            top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+
+        @media (min-width: 992px) {
+            .profile-dropdown-content {
+                position: absolute;
+                right: 0;
+                top: 100%;
+                margin-top: 0.25rem;
+            }
+        }
+
+        .profile-dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background 0.2s;
+        }
+
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+
+        .profile-dropdown-content a.active-nav-link {
+            background-color: #e8f8f7;
+            color: #20bcba;
+            font-weight: 600;
+        }
+
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content:hover,
+        .profile-dropdown-content.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            border: 2px solid white;
+            animation: badgePulse 2s infinite;
+        }
+
+        .notification-badge.show { display: flex; }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .unread-count {
+            display: none;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .unread-count.show { display: inline-block; }
+
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+
+        @media (max-width: 767px) {
+            .navbar-nav { margin-left: 0 !important; }
+        }
+
+        /* ===== HERO ===== */
+        .friends-hero {
+            background: linear-gradient(135deg, #113448 0%, #1a5276 100%);
+            color: white;
+            padding: 3.5rem 0 3rem;
+            text-align: center;
+            border-bottom: 4px solid #20bcba;
+        }
+
+        .friends-hero-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(32, 188, 186, 0.15);
+            border: 2px solid rgba(32, 188, 186, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+        }
+
+        .friends-hero-icon i {
+            font-size: 1.6rem;
+            color: #20bcba;
+        }
+
+        .friends-hero h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .friends-hero p {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.7);
+            margin: 0;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .friends-container {
+            max-width: 1100px;
+            margin: 2.5rem auto;
+            padding: 0 1rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .section-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #20bcba, #1a9d9b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+        }
+
+        .section-badge {
+            background: #dc3545;
+            color: white;
+            border-radius: 12px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        hr.section-divider {
+            border: none;
+            border-top: 2px solid #e9ecef;
+            margin: 3rem 0;
+        }
+
+        /* ===== SEARCH BAR ===== */
+        .friends-search-bar {
+            position: relative;
+            margin-bottom: 1.75rem;
+        }
+
+        .friends-search-bar input {
+            width: 100%;
+            padding: 0.85rem 1rem 0.85rem 2.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .friends-search-bar input:focus {
+            outline: none;
+            border-color: #20bcba;
+        }
+
+        .friends-search-bar i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        /* ===== FRIENDS GRID ===== */
+        .friends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* ===== FRIEND CARD ===== */
+        .friend-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .friend-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.13);
+        }
+
+        .friend-card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.75rem 1.25rem 1rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .friend-avatar {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            margin: 0 auto 0.75rem;
+            display: block;
+        }
+
+        .friend-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0 0 0.3rem;
+        }
+
+        .friend-country {
+            color: #888;
+            font-size: 0.875rem;
+        }
+
+        .friend-card-body {
+            padding: 1rem 1.25rem 0.5rem;
+        }
+
+        .friend-lang-row {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .friend-lang-row i { color: #20bcba; margin-top: 1px; width: 14px; flex-shrink: 0; }
+
+        .friend-bio {
+            font-size: 0.875rem;
+            color: #777;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-top: 0.6rem;
+        }
+
+        .friend-card-footer {
+            padding: 0.75rem 1.25rem 1.25rem;
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .btn-view-friend {
+            flex: 1;
+            padding: 0.65rem;
+            background: #20bcba;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-view-friend:hover { background: #1a9d9b; color: white; text-decoration: none; }
+
+        .btn-message-friend {
+            padding: 0.65rem 1rem;
+            background: white;
+            color: #113448;
+            border: 2px solid #113448;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-message-friend:hover { background: #113448; color: white; }
+
+        /* ===== LOAD MORE ===== */
+        .load-more-wrap {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .btn-load-more {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 2rem;
+            background: white;
+            color: #113448;
+            border: 2px solid #113448;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-load-more:hover { background: #113448; color: white; }
+        .btn-load-more:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .load-more-info {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 0.5rem;
+        }
+
+        /* ===== REQUEST CARDS ===== */
+        .requests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .request-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 1.5rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .request-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+
+        .request-avatar {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e8f8f7;
+            margin-bottom: 0.75rem;
+        }
+
+        .request-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .request-role-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .request-role-badge.instructor { background: #e8f8f7; color: #1a9d9b; }
+        .request-role-badge.learner { background: #e8f4fd; color: #1565c0; }
+
+        .request-meta {
+            font-size: 0.82rem;
+            color: #999;
+            margin-bottom: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 0.65rem;
+            width: 100%;
+        }
+
+        .btn-accept {
+            flex: 1;
+            padding: 0.6rem;
+            background: #20bcba;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-accept:hover { background: #1a9d9b; }
+
+        .btn-decline {
+            flex: 1;
+            padding: 0.6rem;
+            background: white;
+            color: #dc3545;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-decline:hover { background: #dc3545; color: white; }
+
+        /* ===== EMPTY / LOADING ===== */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #aaa;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #ddd;
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p { font-size: 1rem; margin-bottom: 0.4rem; color: #999; }
+        .empty-state a { color: #20bcba; font-weight: 600; text-decoration: none; }
+        .empty-state a:hover { text-decoration: underline; }
+
+        .loading-state {
+            text-align: center;
+            padding: 2.5rem;
+            color: #aaa;
+        }
+
+        .loading-state i {
+            font-size: 2rem;
+            color: #20bcba;
+            display: block;
+            margin-bottom: 0.75rem;
+        }
+
+        @media (max-width: 600px) {
+            .friends-grid, .requests-grid { grid-template-columns: 1fr; }
+            .friends-hero h1 { font-size: 1.7rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+                aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+                </li>
+
+                <!-- Languages Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown"
+                       role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewFrenchPage.html"><span class="item-text">FRENCH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewPortuguesePage.html"><span class="item-text">PORTUGUESE</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewItalianPage.html"><span class="item-text">ITALIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
+                </li>
+
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
+                </li>
+            </ul>
+
+            <!-- Profile Picture Dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                         alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile.html" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html" class="active-nav-link"><i class="fas fa-user-friends"></i> Friends</a>
+                        <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            <span class="nav-item social-icons">
+                <span class="fa-stack">
+                    <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-facebook-f fa-stack-1x"></i>
+                    </a>
+                </span>
+                <span class="fa-stack">
+                    <a href="https://www.instagram.com/lingua_bud/" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-instagram fa-stack-1x"></i>
+                    </a>
+                </span>
+            </span>
+        </div>
+    </nav>
+    <!-- end of navbar -->
+
+    <!-- Hero -->
+    <div class="friends-hero">
+        <div class="container">
+            <div class="friends-hero-icon">
+                <i class="fas fa-user-friends"></i>
+            </div>
+            <h1>Friends</h1>
+            <p>Your language learning community</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="friends-container">
+
+        <!-- ===== PENDING REQUESTS ===== -->
+        <div class="section-header">
+            <div class="section-icon"><i class="fas fa-bell"></i></div>
+            <h2>Pending Requests</h2>
+            <span class="section-badge" id="requestsBadge" style="display:none;"></span>
+        </div>
+        <div id="requestsContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading requests...</div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== FRIENDS LIST ===== -->
+        <div class="section-header">
+            <div class="section-icon" style="background: linear-gradient(135deg, #113448, #1a5276);"><i class="fas fa-users"></i></div>
+            <h2>My Friends</h2>
+            <span id="friendsCountLabel" style="font-size:0.9rem;color:#999;margin-left:0.25rem;"></span>
+        </div>
+
+        <!-- Search -->
+        <div class="friends-search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="friendSearch" placeholder="Search friends by name...">
+        </div>
+
+        <div id="friendsGrid" class="friends-grid">
+            <div class="loading-state" style="grid-column:1/-1;">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading friends...</div>
+            </div>
+        </div>
+
+        <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+            <button class="btn-load-more" id="loadMoreBtn">
+                <i class="fas fa-chevron-down"></i> Load More
+            </button>
+            <div class="load-more-info" id="loadMoreInfo"></div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <script type="module">
+        import {
+            auth, db, functions, httpsCallable,
+            onAuthStateChanged, signOut,
+            collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp, onSnapshot, addDoc
+        } from './lib/firebaseClient.js';
+
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+
+        const PAGE_SIZE = 6;
+        let currentUser = null;
+        let allFriends = [];       // all loaded friend profiles
+        let filteredFriends = [];  // after search
+        let displayedCount = 0;
+
+        // ===== AUTH =====
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+
+            document.getElementById('profileNavWrapper').style.display = 'block';
+            document.getElementById('signInWrapper').style.display = 'none';
+
+            await loadNavAvatar(user);
+            await routeProfileLink(user.uid);
+
+            await Promise.all([loadRequests(), loadFriends()]);
+
+            loadUnreadCount();
+            loadNotificationCounts();
+        });
+
+        async function loadNavAvatar(user) {
+            try {
+                const instDoc = await getDoc(doc(db, 'instructors', user.uid));
+                if (instDoc.exists() && instDoc.data().avatar_url) {
+                    document.getElementById('navProfilePic').src = instDoc.data().avatar_url;
+                    return;
+                }
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists() && userDoc.data().avatar_url) {
+                    document.getElementById('navProfilePic').src = userDoc.data().avatar_url;
+                }
+            } catch (e) {}
+        }
+
+        async function routeProfileLink(uid) {
+            try {
+                const snap = await getDoc(doc(db, 'instructors', uid));
+                if (snap.exists()) {
+                    document.getElementById('myProfileLink').href = 'learner-profile.html';
+                }
+            } catch (e) {}
+        }
+
+        // ===== FRIENDS =====
+        async function loadFriends() {
+            const grid = document.getElementById('friendsGrid');
+            try {
+                const uid = currentUser.uid;
+
+                // Query requests where I'm the sender or receiver and status = accepted
+                const [sentSnap, receivedSnap] = await Promise.all([
+                    getDocs(query(
+                        collection(db, 'friendRequests'),
+                        where('fromId', '==', uid),
+                        where('status', '==', 'accepted')
+                    )),
+                    getDocs(query(
+                        collection(db, 'friendRequests'),
+                        where('toId', '==', uid),
+                        where('status', '==', 'accepted')
+                    ))
+                ]);
+
+                const friendIds = new Set();
+                sentSnap.forEach(d => friendIds.add(d.data().toId));
+                receivedSnap.forEach(d => friendIds.add(d.data().fromId));
+
+                if (friendIds.size === 0) {
+                    grid.innerHTML = `
+                        <div class="empty-state" style="grid-column:1/-1;">
+                            <i class="fas fa-user-friends"></i>
+                            <p>You haven't connected with anyone yet.</p>
+                            <p><a href="connect.html">Find language partners</a> to start building your community!</p>
+                        </div>`;
+                    document.getElementById('friendsCountLabel').textContent = '';
+                    return;
+                }
+
+                // Fetch each friend's profile (check instructors then users)
+                const profiles = await Promise.all([...friendIds].map(async (fid) => {
+                    try {
+                        const instSnap = await getDoc(doc(db, 'instructors', fid));
+                        if (instSnap.exists()) return { uid: fid, ...instSnap.data(), role: 'instructor' };
+                        const userSnap = await getDoc(doc(db, 'users', fid));
+                        if (userSnap.exists()) return { uid: fid, ...userSnap.data(), role: 'student' };
+                    } catch (e) {}
+                    return null;
+                }));
+
+                allFriends = profiles.filter(Boolean).sort((a, b) =>
+                    (a.name || '').localeCompare(b.name || '')
+                );
+
+                document.getElementById('friendsCountLabel').textContent = `(${allFriends.length})`;
+
+                applySearchAndRender(true);
+
+            } catch (e) {
+                console.error('Error loading friends:', e);
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Could not load friends. Please refresh.</p>
+                    </div>`;
+            }
+        }
+
+        function applySearchAndRender(reset = false) {
+            const term = document.getElementById('friendSearch').value.trim().toLowerCase();
+            filteredFriends = term
+                ? allFriends.filter(f => (f.name || '').toLowerCase().includes(term))
+                : allFriends;
+
+            if (reset) {
+                displayedCount = 0;
+                document.getElementById('friendsGrid').innerHTML = '';
+            }
+
+            renderNextPage();
+        }
+
+        function renderNextPage() {
+            const grid = document.getElementById('friendsGrid');
+            const slice = filteredFriends.slice(displayedCount, displayedCount + PAGE_SIZE);
+
+            if (filteredFriends.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <i class="fas fa-search"></i>
+                        <p>No friends match your search.</p>
+                    </div>`;
+                document.getElementById('loadMoreWrap').style.display = 'none';
+                return;
+            }
+
+            slice.forEach(friend => grid.appendChild(createFriendCard(friend)));
+            displayedCount += slice.length;
+
+            const remaining = filteredFriends.length - displayedCount;
+            const wrap = document.getElementById('loadMoreWrap');
+            const info = document.getElementById('loadMoreInfo');
+
+            if (remaining > 0) {
+                wrap.style.display = 'block';
+                info.textContent = `Showing ${displayedCount} of ${filteredFriends.length} friends`;
+            } else {
+                wrap.style.display = 'none';
+            }
+        }
+
+        document.getElementById('friendSearch').addEventListener('input', () => applySearchAndRender(true));
+        document.getElementById('loadMoreBtn').addEventListener('click', renderNextPage);
+
+        function createFriendCard(friend) {
+            const name = escapeHtml(friend.name || 'Language Partner');
+            const avatar = friend.avatar_url || DEFAULT_AVATAR;
+            const country = friend.country ? escapeHtml(friend.country) : '';
+            const bio = friend.about_me ? escapeHtml(friend.about_me) : '';
+
+            const isInstructor = friend.role === 'instructor';
+            const spokenLangs = (isInstructor
+                ? (friend.languages_spoken || [])
+                : (friend.languages_spoken || [])).slice(0, 3);
+            const learningOrTeaching = (isInstructor
+                ? (friend.languages_teaching || [])
+                : (friend.languages_learning || [])).slice(0, 3);
+
+            const card = document.createElement('div');
+            card.className = 'friend-card';
+
+            card.innerHTML = `
+                <div class="friend-card-header">
+                    <img class="friend-avatar"
+                         src="${escapeAttr(avatar)}"
+                         onerror="this.src='${DEFAULT_AVATAR}'"
+                         alt="${name}">
+                    <div class="friend-name">${name}</div>
+                    ${country ? `<div class="friend-country"><i class="fas fa-map-marker-alt" style="color:#20bcba;margin-right:4px;"></i>${country}</div>` : ''}
+                </div>
+                <div class="friend-card-body">
+                    ${spokenLangs.length > 0 ? `<div class="friend-lang-row"><i class="fas fa-comments"></i><span>Speaks: ${escapeHtml(spokenLangs.join(', '))}</span></div>` : ''}
+                    ${learningOrTeaching.length > 0 ? `<div class="friend-lang-row"><i class="fas fa-${isInstructor ? 'chalkboard-teacher' : 'graduation-cap'}"></i><span>${isInstructor ? 'Teaches' : 'Learning'}: ${escapeHtml(learningOrTeaching.join(', '))}</span></div>` : ''}
+                    ${bio ? `<div class="friend-bio">${bio}</div>` : ''}
+                </div>
+                <div class="friend-card-footer">
+                    <a href="learner-profile.html?uid=${encodeURIComponent(friend.uid)}" class="btn-view-friend" onclick="event.stopPropagation()">
+                        <i class="fas fa-user"></i> View Profile
+                    </a>
+                    <button class="btn-message-friend" data-friend-uid="${escapeAttr(friend.uid)}" data-friend-name="${escapeAttr(friend.name || 'Friend')}" onclick="event.stopPropagation()">
+                        <i class="fas fa-comment"></i> Message
+                    </button>
+                </div>
+            `;
+
+            // Whole card click → profile
+            card.addEventListener('click', () => {
+                window.location.href = `learner-profile.html?uid=${encodeURIComponent(friend.uid)}`;
+            });
+
+            // Message button
+            card.querySelector('.btn-message-friend').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await openOrCreateConversation(friend.uid, friend.name || 'Friend');
+            });
+
+            return card;
+        }
+
+        async function openOrCreateConversation(friendUid, friendName) {
+            try {
+                const uid = currentUser.uid;
+
+                // Look for existing conversation between the two users
+                const q = query(
+                    collection(db, 'conversations'),
+                    where('participants', 'array-contains', uid)
+                );
+                const snap = await getDocs(q);
+                let existingId = null;
+                snap.forEach(d => {
+                    const participants = d.data().participants || [];
+                    if (participants.includes(friendUid)) existingId = d.id;
+                });
+
+                if (existingId) {
+                    window.location.href = `messages.html?conv=${existingId}`;
+                    return;
+                }
+
+                // Create new conversation
+                const [myInstSnap, myUserSnap] = await Promise.all([
+                    getDoc(doc(db, 'instructors', uid)),
+                    getDoc(doc(db, 'users', uid))
+                ]);
+                const myData = myInstSnap.exists() ? myInstSnap.data() : (myUserSnap.exists() ? myUserSnap.data() : {});
+                const myName = myData.name || 'User';
+                const myAvatar = myData.avatar_url || '';
+
+                const [friendInstSnap, friendUserSnap] = await Promise.all([
+                    getDoc(doc(db, 'instructors', friendUid)),
+                    getDoc(doc(db, 'users', friendUid))
+                ]);
+                const friendData = friendInstSnap.exists() ? friendInstSnap.data() : (friendUserSnap.exists() ? friendUserSnap.data() : {});
+                const friendAvatar = friendData.avatar_url || '';
+
+                const convRef = await addDoc(collection(db, 'conversations'), {
+                    participants: [uid, friendUid],
+                    participantDetails: {
+                        [uid]: { name: myName, avatar: myAvatar },
+                        [friendUid]: { name: friendName, avatar: friendAvatar }
+                    },
+                    createdAt: serverTimestamp(),
+                    lastMessage: '',
+                    lastMessageAt: serverTimestamp(),
+                    unreadCount: { [uid]: 0, [friendUid]: 0 }
+                });
+
+                window.location.href = `messages.html?conv=${convRef.id}`;
+            } catch (e) {
+                console.error('Error opening conversation:', e);
+                alert('Could not open conversation. Please try again.');
+            }
+        }
+
+        // ===== PARTNER REQUESTS =====
+        async function loadRequests() {
+            const container = document.getElementById('requestsContainer');
+            try {
+                const snap = await getDocs(query(
+                    collection(db, 'friendRequests'),
+                    where('toId', '==', currentUser.uid),
+                    where('status', '==', 'pending')
+                ));
+
+                const requests = [];
+                snap.forEach(d => requests.push({ id: d.id, ...d.data() }));
+                updateRequestsBadge(requests.length);
+
+                if (requests.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-bell"></i>
+                            <p>No pending requests right now.</p>
+                            <p><a href="connect.html">Discover new language partners</a>!</p>
+                        </div>`;
+                    return;
+                }
+
+                // Enrich with sender profiles
+                const enriched = await Promise.all(requests.map(async (req) => {
+                    try {
+                        const instSnap = await getDoc(doc(db, 'instructors', req.fromId));
+                        if (instSnap.exists()) return { ...req, profile: instSnap.data(), senderRole: 'instructor' };
+                        const userSnap = await getDoc(doc(db, 'users', req.fromId));
+                        if (userSnap.exists()) return { ...req, profile: userSnap.data(), senderRole: 'student' };
+                    } catch (e) {}
+                    return req;
+                }));
+
+                const grid = document.createElement('div');
+                grid.className = 'requests-grid';
+                grid.id = 'requestsGrid';
+                enriched.forEach(req => grid.appendChild(createRequestCard(req)));
+                container.innerHTML = '';
+                container.appendChild(grid);
+
+            } catch (e) {
+                console.error('Error loading requests:', e);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Could not load requests. Please refresh.</p>
+                    </div>`;
+            }
+        }
+
+        function createRequestCard(req) {
+            const profile = req.profile || {};
+            const isInstructor = req.senderRole === 'instructor';
+            const name = escapeHtml(profile.name || req.fromName || 'Language Partner');
+            const avatar = escapeAttr(profile.avatar_url || req.fromAvatar || DEFAULT_AVATAR);
+            const country = profile.country ? escapeHtml(profile.country) : '';
+
+            let langMeta = '';
+            if (isInstructor) {
+                const teaches = (profile.languages_teaching || []).slice(0, 2);
+                if (teaches.length) langMeta = `Teaches: ${escapeHtml(teaches.join(', '))}`;
+            } else {
+                const speaks = (profile.languages_spoken || []).slice(0, 2);
+                const learning = (profile.languages_learning || []).slice(0, 2);
+                const parts = [];
+                if (speaks.length) parts.push(`Speaks: ${escapeHtml(speaks.join(', '))}`);
+                if (learning.length) parts.push(`Learning: ${escapeHtml(learning.join(', '))}`);
+                langMeta = parts.join(' · ');
+            }
+
+            const roleBadge = isInstructor
+                ? `<span class="request-role-badge instructor"><i class="fas fa-chalkboard-teacher"></i> Instructor</span>`
+                : `<span class="request-role-badge learner"><i class="fas fa-user-graduate"></i> Language Learner</span>`;
+
+            const card = document.createElement('div');
+            card.className = 'request-card';
+            card.id = `request-${req.id}`;
+
+            card.innerHTML = `
+                <img class="request-avatar"
+                     src="${avatar}"
+                     onerror="this.src='${DEFAULT_AVATAR}'"
+                     alt="${name}">
+                <div class="request-name">${name}</div>
+                ${roleBadge}
+                <div class="request-meta">
+                    ${country ? `<i class="fas fa-map-marker-alt" style="color:#20bcba;margin-right:4px;"></i>${country}<br>` : ''}
+                    ${langMeta}
+                </div>
+                <div class="request-actions">
+                    <button class="btn-accept" data-req-id="${escapeAttr(req.id)}"><i class="fas fa-check"></i> Accept</button>
+                    <button class="btn-decline" data-req-id="${escapeAttr(req.id)}"><i class="fas fa-times"></i> Decline</button>
+                </div>
+            `;
+
+            card.querySelector('.btn-accept').addEventListener('click', () => acceptRequest(req.id));
+            card.querySelector('.btn-decline').addEventListener('click', () => declineRequest(req.id));
+
+            return card;
+        }
+
+        async function acceptRequest(reqId) {
+            try {
+                await updateDoc(doc(db, 'friendRequests', reqId), {
+                    status: 'accepted',
+                    respondedAt: serverTimestamp()
+                });
+                animateRemoveCard(reqId);
+                // Reload friends list to show the newly accepted friend
+                allFriends = [];
+                document.getElementById('friendsGrid').innerHTML = `<div class="loading-state" style="grid-column:1/-1;"><i class="fas fa-circle-notch fa-spin"></i><div>Refreshing...</div></div>`;
+                await loadFriends();
+            } catch (e) {
+                console.error('Error accepting request:', e);
+            }
+        }
+
+        async function declineRequest(reqId) {
+            try {
+                await updateDoc(doc(db, 'friendRequests', reqId), {
+                    status: 'declined',
+                    respondedAt: serverTimestamp()
+                });
+                animateRemoveCard(reqId);
+            } catch (e) {
+                console.error('Error declining request:', e);
+            }
+        }
+
+        function animateRemoveCard(reqId) {
+            const card = document.getElementById(`request-${reqId}`);
+            if (!card) return;
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.85)';
+            card.style.transition = 'all 0.3s ease';
+            setTimeout(() => {
+                card.remove();
+                const grid = document.getElementById('requestsGrid');
+                const remaining = grid ? grid.children.length : 0;
+                updateRequestsBadge(remaining);
+                if (remaining === 0) {
+                    document.getElementById('requestsContainer').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-bell"></i>
+                            <p>No pending requests right now.</p>
+                            <p><a href="connect.html">Discover new language partners</a>!</p>
+                        </div>`;
+                }
+            }, 300);
+        }
+
+        function updateRequestsBadge(count) {
+            const badge = document.getElementById('requestsBadge');
+            if (count > 0) { badge.textContent = count; badge.style.display = 'inline-block'; }
+            else { badge.style.display = 'none'; }
+        }
+
+        // ===== NOTIFICATION COUNTS =====
+        let _unreadMsgCount = 0;
+        let _pendingReqCount = 0;
+        let _newBookingCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+        }
+
+        function _updateBookingsBadge() {
+            const total = _pendingReqCount + _newBookingCount;
+            const el = document.getElementById('bookingsCount');
+            if (el) {
+                if (total > 0) { el.textContent = total; el.classList.add('show'); }
+                else { el.classList.remove('show'); }
+            }
+        }
+
+        function loadUnreadCount() {
+            const q = query(collection(db, 'conversations'), where('participants', 'array-contains', currentUser.uid));
+            onSnapshot(q, (snap) => {
+                _unreadMsgCount = 0;
+                snap.forEach(d => {
+                    const conv = d.data();
+                    if (conv.unreadCount?.[currentUser.uid]) _unreadMsgCount += conv.unreadCount[currentUser.uid];
+                });
+                const el = document.getElementById('unreadCount');
+                if (_unreadMsgCount > 0) {
+                    if (el) { el.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; el.classList.add('show'); }
+                } else { el?.classList.remove('show'); }
+                _updateProfileBadge();
+            });
+        }
+
+        function loadNotificationCounts() {
+            const uid = currentUser.uid;
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+                (snap) => {
+                    _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                    _updateBookingsBadge();
+                    _updateProfileBadge();
+                }
+            );
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', uid)),
+                (snap) => {
+                    _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                    _updateBookingsBadge();
+                    _updateProfileBadge();
+                }
+            );
+        }
+
+        // ===== LOGOUT =====
+        document.getElementById('logoutLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            window.location.href = 'index.html';
+        });
+
+        // ===== MOBILE DROPDOWN =====
+        const profileDropdown = document.querySelector('.profile-dropdown');
+        const profileDropdownContent = document.querySelector('.profile-dropdown-content');
+        const navProfilePic = document.getElementById('navProfilePic');
+
+        if (navProfilePic && profileDropdownContent) {
+            navProfilePic.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdownContent.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target)) {
+                    profileDropdownContent.classList.remove('show');
+                }
+            });
+            profileDropdownContent.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => profileDropdownContent.classList.remove('show'));
+            });
+        }
+
+        // ===== HELPERS =====
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return String(text || '').replace(/'/g, '%27').replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>

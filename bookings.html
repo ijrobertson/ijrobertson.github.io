@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="View your upcoming lessons and partner requests on Lingua Bud.">
+    <meta name="description" content="View your upcoming and past lessons on Lingua Bud. Cancel lessons and join video calls.">
     <meta name="author" content="Lingua Bud">
-    <title>Activity - Lingua Bud</title>
+    <title>Bookings - Lingua Bud</title>
 
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
@@ -585,6 +585,61 @@
         .review-star-row { display:flex; justify-content:center; gap:0.5rem; margin-top:0.5rem; }
         .review-star-row i { font-size:2rem; color:#ddd; cursor:pointer; transition:color 0.15s; }
         .review-star-row i.active { color:#f5a623; }
+
+        /* ===== CANCEL BOOKING MODAL ===== */
+        .cancel-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55); z-index: 9999;
+            align-items: center; justify-content: center; padding: 1rem;
+        }
+        .cancel-backdrop.active { display: flex; }
+        .cancel-modal-box {
+            background: #fff; border-radius: 16px; padding: 2.5rem 2rem 2rem;
+            max-width: 460px; width: 100%; text-align: center;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+            animation: cslideUp 0.22s ease;
+        }
+        @keyframes cslideUp {
+            from { transform: translateY(18px); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+        }
+        .cancel-modal-icon-box {
+            width: 64px; height: 64px; background: #fff3cd; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.25rem; font-size: 1.5rem; color: #d97706;
+        }
+        .cancel-modal-box h3 { font-size: 1.2rem; font-weight: 700; color: #1a1a2e; margin: 0 0 0.75rem; }
+        .cancel-lesson-info-box {
+            background: #f8f9fa; border-left: 4px solid #20bcba; border-radius: 6px;
+            padding: 0.85rem 1rem; text-align: left; font-size: 0.9rem;
+            color: #333; margin-bottom: 1rem; line-height: 1.7;
+        }
+        .cancel-policy-note { font-size: 0.85rem; color: #64748b; line-height: 1.6; margin: 0 0 1.5rem; }
+        .cancel-policy-note a { color: #20bcba; text-decoration: underline; }
+        .cancel-modal-btns { display: flex; gap: 0.75rem; }
+        .cancel-keep-btn {
+            flex: 1; padding: 0.72rem; border-radius: 7px;
+            border: 1.5px solid #d0d5dd; background: #fff;
+            font-weight: 600; font-size: 0.875rem; color: #334155; cursor: pointer; transition: all 0.2s;
+        }
+        .cancel-keep-btn:hover { background: #f1f5f9; }
+        .cancel-do-btn {
+            flex: 1; padding: 0.72rem; border-radius: 7px;
+            border: none; background: #d97706; color: #fff;
+            font-weight: 700; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;
+        }
+        .cancel-do-btn:hover { background: #b45309; }
+        .cancel-do-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .cancel-modal-err { font-size: 0.82rem; color: #c0392b; margin-top: 0.75rem; min-height: 1em; }
+
+        /* Cancel button on lesson card */
+        .btn-cancel-lesson {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.5rem 1rem; background: transparent; color: #d97706;
+            border: 1.5px solid #d97706; border-radius: 6px;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-cancel-lesson:hover { background: #d97706; color: #fff; }
     </style>
 </head>
 <body>
@@ -656,8 +711,8 @@
                     <div class="profile-dropdown-content">
                         <a href="learner-profile.html" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
                         <a href="messages.html" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
-                        <a href="activity.html" class="active-nav-link"><i class="fas fa-bell"></i> Activity <span class="unread-count" id="activityCount"></span></a>
-                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="bookings.html" class="active-nav-link"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends</a>
                         <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
@@ -686,10 +741,10 @@
     <div class="activity-hero">
         <div class="container">
             <div class="activity-hero-icon">
-                <i class="fas fa-bell"></i>
+                <i class="fas fa-calendar-check"></i>
             </div>
-            <h1>Activity</h1>
-            <p>Your upcoming lessons and partner requests</p>
+            <h1>My Bookings</h1>
+            <p>Your upcoming and past lessons</p>
         </div>
     </div>
 
@@ -1097,7 +1152,7 @@
                     </div>
                     ${amountStr ? `<div class="lesson-detail-row"><i class="fas fa-receipt"></i><span>Paid: ${escapeHtml(amountStr)}</span></div>` : ''}
                 </div>
-                <div class="lesson-card-footer">
+                <div class="lesson-card-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                     <button class="${btnClass}"
                             ${btnDisabled ? 'disabled' : ''}
                             data-join-btn="${escapeAttr(booking.id)}"
@@ -1105,6 +1160,7 @@
                         ${btnHtml}
                     </button>
                     ${reviewFooterHtml}
+                    ${status === 'upcoming' ? `<button class="btn-cancel-lesson" data-cancel-id="${escapeAttr(booking.id)}" data-cancel-name="${escapeAttr(otherName)}" data-cancel-time="${escapeAttr(lessonTime.toISOString())}"><i class="fas fa-times"></i> Cancel</button>` : ''}
                 </div>
             `;
 
@@ -1182,7 +1238,7 @@
                         <div class="empty-state">
                             <i class="fas fa-user-friends"></i>
                             <p>No pending partner requests.</p>
-                            <p><a href="connect.html">Find language partners</a> to start connecting!</p>
+                            <p><a href="friends.html">Visit Friends</a> to manage your connections!</p>
                         </div>`;
                     return;
                 }
@@ -1317,7 +1373,7 @@
                         <div class="empty-state">
                             <i class="fas fa-user-friends"></i>
                             <p>No pending partner requests.</p>
-                            <p><a href="connect.html">Find language partners</a> to start connecting!</p>
+                            <p><a href="friends.html">Visit Friends</a> to manage your connections!</p>
                         </div>`;
                 }
             }, 300);
@@ -1373,7 +1429,7 @@
 
         function _updateActivityBadge() {
             const total = _pendingReqCount + _newBookingCount;
-            const el = document.getElementById('activityCount');
+            const el = document.getElementById('bookingsCount');
             if (el) {
                 if (total > 0) {
                     el.textContent = total;
@@ -1405,6 +1461,59 @@
                 }
             );
         }
+
+        // ===== CANCEL BOOKING MODAL =====
+        let _cancelId = null;
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-cancel-id]');
+            if (!btn) return;
+            _cancelId = btn.dataset.cancelId;
+            const name = btn.dataset.cancelName;
+            const time = new Date(btn.dataset.cancelTime);
+            document.getElementById('cancelLessonInfo').innerHTML = `
+                <strong style="font-size:1rem;">${escapeHtml(name)}</strong><br>
+                <span style="color:#20bcba;"><i class="fas fa-calendar" style="width:16px;"></i></span>
+                ${time.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+                <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
+                ${time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+            `;
+            document.getElementById('cancelModalErr').textContent = '';
+            const doBtn = document.getElementById('cancelDoBtn');
+            doBtn.disabled = false;
+            document.getElementById('cancelDoBtnText').textContent = 'Cancel Lesson';
+            document.getElementById('cancelBackdrop').classList.add('active');
+        });
+
+        document.getElementById('cancelKeepBtn').addEventListener('click', () => {
+            document.getElementById('cancelBackdrop').classList.remove('active');
+        });
+
+        document.getElementById('cancelBackdrop').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('cancelBackdrop')) {
+                document.getElementById('cancelBackdrop').classList.remove('active');
+            }
+        });
+
+        document.getElementById('cancelDoBtn').addEventListener('click', async () => {
+            if (!_cancelId) return;
+            const doBtn = document.getElementById('cancelDoBtn');
+            const err = document.getElementById('cancelModalErr');
+            doBtn.disabled = true;
+            document.getElementById('cancelDoBtnText').textContent = 'Cancelling…';
+            err.textContent = '';
+            try {
+                const cancelFn = httpsCallable(functions, 'cancelBooking');
+                await cancelFn({ bookingId: _cancelId });
+                document.getElementById('cancelBackdrop').classList.remove('active');
+                _cancelId = null;
+                await loadLessons();
+            } catch (error) {
+                err.textContent = error.message || 'Error cancelling lesson. Please try again.';
+                doBtn.disabled = false;
+                document.getElementById('cancelDoBtnText').textContent = 'Cancel Lesson';
+            }
+        });
 
         // ===== LOGOUT =====
         document.getElementById('logoutLink').addEventListener('click', async (e) => {
@@ -1527,6 +1636,29 @@
             el.style.display = 'block';
         }
     </script>
+
+    <!-- Cancel Booking Modal -->
+    <div class="cancel-backdrop" id="cancelBackdrop">
+        <div class="cancel-modal-box">
+            <div class="cancel-modal-icon-box">
+                <i class="fas fa-calendar-times"></i>
+            </div>
+            <h3>Cancel This Lesson?</h3>
+            <div id="cancelLessonInfo" class="cancel-lesson-info-box"></div>
+            <p class="cancel-policy-note">
+                By cancelling, you confirm you have read our
+                <a href="refund-policy.html" target="_blank">Cancellation &amp; Refund Policy</a>.
+                The other party will be notified immediately by email.
+            </p>
+            <div class="cancel-modal-btns">
+                <button class="cancel-keep-btn" id="cancelKeepBtn">Keep Lesson</button>
+                <button class="cancel-do-btn" id="cancelDoBtn">
+                    <span id="cancelDoBtnText">Cancel Lesson</span>
+                </button>
+            </div>
+            <div class="cancel-modal-err" id="cancelModalErr"></div>
+        </div>
+    </div>
 
     <!-- Review Modal -->
     <div class="modal fade" id="reviewModal" tabindex="-1">
