@@ -811,9 +811,10 @@
 
         function loadPendingRequests(uid) {
             function _updateActivityBadge() {
-                const total = _pendingReqCount + _newBookingCount;
-                const el = document.getElementById('activityCount');
-                if (el) { if (total > 0) { el.textContent = total; el.classList.add('show'); } else el.classList.remove('show'); }
+                const bookingsEl = document.getElementById('bookingsCount');
+                if (bookingsEl) { if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); } else bookingsEl.classList.remove('show'); }
+                const friendsEl = document.getElementById('friendsCount');
+                if (friendsEl) { if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); } else friendsEl.classList.remove('show'); }
             }
             onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
                 _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;

@@ -1363,8 +1363,8 @@
                     <div class="profile-dropdown-content">
                         <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
                         <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
-                        <a href="activity.html"><i class="fas fa-bell"></i> Activity <span class="unread-count" id="activityCount"></span></a>
-                        <a href="connect.html"><i class="fas fa-users"></i> Find Partners</a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
                         <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
@@ -2985,11 +2985,15 @@
                         badge.classList.remove('show');
                     }
                 }
-                const actTotal = _reqCount + _bookingCount;
-                const actEl = document.getElementById('activityCount');
-                if (actEl) {
-                    if (actTotal > 0) { actEl.textContent = actTotal; actEl.classList.add('show'); }
-                    else { actEl.classList.remove('show'); }
+                const bookingsEl = document.getElementById('bookingsCount');
+                if (bookingsEl) {
+                    if (_bookingCount > 0) { bookingsEl.textContent = _bookingCount; bookingsEl.classList.add('show'); }
+                    else { bookingsEl.classList.remove('show'); }
+                }
+                const friendsEl = document.getElementById('friendsCount');
+                if (friendsEl) {
+                    if (_reqCount > 0) { friendsEl.textContent = _reqCount; friendsEl.classList.add('show'); }
+                    else { friendsEl.classList.remove('show'); }
                 }
                 const msgEl = document.getElementById('unreadCount');
                 if (msgEl) {
@@ -3047,9 +3051,10 @@
 
         function loadPendingRequests(uid) {
             function _updateActivityBadge() {
-                const total = _pendingReqCount + _newBookingCount;
-                const el = document.getElementById('activityCount');
-                if (el) { if (total > 0) { el.textContent = total; el.classList.add('show'); } else el.classList.remove('show'); }
+                const bookingsEl = document.getElementById('bookingsCount');
+                if (bookingsEl) { if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); } else bookingsEl.classList.remove('show'); }
+                const friendsEl = document.getElementById('friendsCount');
+                if (friendsEl) { if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); } else friendsEl.classList.remove('show'); }
             }
             onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
                 _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
@@ -3192,9 +3197,10 @@
 
         function loadPendingRequests(uid) {
             function _updateActivityBadge() {
-                const total = _pendingReqCount + _newBookingCount;
-                const el = document.getElementById('activityCount');
-                if (el) { if (total > 0) { el.textContent = total; el.classList.add('show'); } else el.classList.remove('show'); }
+                const bookingsEl = document.getElementById('bookingsCount');
+                if (bookingsEl) { if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); } else bookingsEl.classList.remove('show'); }
+                const friendsEl = document.getElementById('friendsCount');
+                if (friendsEl) { if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); } else friendsEl.classList.remove('show'); }
             }
             onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
                 _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
