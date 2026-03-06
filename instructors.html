@@ -1819,8 +1819,12 @@
 
                         if (paymentIntent && paymentIntent.status === 'succeeded') {
                             const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                            const instructorSnap = await getDoc(doc(db, 'instructors', currentInstructorId));
+                            const [instructorSnap, studentSnap] = await Promise.all([
+                                getDoc(doc(db, 'instructors', currentInstructorId)),
+                                getDoc(doc(db, 'users', auth.currentUser.uid))
+                            ]);
                             const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
+                            const studentData = studentSnap.exists() ? studentSnap.data() : {};
 
                             await addDoc(collection(db, 'bookings'), {
                                 instructorId: currentInstructorId,
@@ -1832,7 +1836,7 @@
                                 studentTimezone: studentTZ,
                                 bookedAt: new Date(),
                                 instructorName: instructorData.name || currentInstructorName,
-                                studentName: auth.currentUser.email,
+                                studentName: studentData.name || auth.currentUser.displayName || auth.currentUser.email,
                                 paymentIntentId: paymentIntent.id,
                                 paymentStatus: 'paid',
                                 amount: paymentIntent.amount,

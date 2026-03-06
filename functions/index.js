@@ -1078,13 +1078,19 @@ exports.cancelBooking = onCall(async (request) => {
       </td>
     </tr>`;
 
+  // Look up student's real name (stored booking.studentName may be an email for older bookings)
+  const studentProfileSnap = await admin.firestore().collection('users').doc(booking.studentId).get();
+  const studentDisplayName = (studentProfileSnap.exists && studentProfileSnap.data().name)
+    ? studentProfileSnap.data().name
+    : (booking.studentName && !booking.studentName.includes('@') ? booking.studentName : 'A student');
+
   try {
     if (cancelledBy === 'student') {
       // Notify instructor that student cancelled
       const instructorSnap = await admin.firestore().collection('instructors').doc(booking.instructorId).get();
       if (instructorSnap.exists && instructorSnap.data().email) {
         const instructor = instructorSnap.data();
-        const studentName = booking.studentName || 'A student';
+        const studentName = studentDisplayName;
         await resend.emails.send({
           from: 'Lingua Bud <notifications@linguabud.com>',
           to: instructor.email,
@@ -1128,10 +1134,9 @@ exports.cancelBooking = onCall(async (request) => {
         console.log('Cancellation email sent to instructor:', instructor.email);
       }
 
-      // Also notify student of their refund status
-      const studentSnap = await admin.firestore().collection('users').doc(booking.studentId).get();
-      if (studentSnap.exists && studentSnap.data().email) {
-        const student = studentSnap.data();
+      // Also notify student of their refund status (reuse already-fetched profile)
+      if (studentProfileSnap.exists && studentProfileSnap.data().email) {
+        const student = studentProfileSnap.data();
         const refundNote = refundPercent === 0
           ? `Per our <a href="https://linguabud.com/refund-policy.html" style="color:#20bcba;">cancellation policy</a>, no refund is issued for cancellations within 12 hours of the lesson.`
           : `<strong>${refundPercent === 100 ? 'A full refund' : 'A 50% refund'}${refundAmountStr ? ` of ${refundAmountStr}` : ''}</strong> has been issued to your original payment method and should appear within 5–10 business days.`;
@@ -1176,10 +1181,9 @@ exports.cancelBooking = onCall(async (request) => {
         });
       }
     } else {
-      // Notify student that instructor cancelled — always full refund
-      const studentSnap = await admin.firestore().collection('users').doc(booking.studentId).get();
-      if (studentSnap.exists && studentSnap.data().email) {
-        const student = studentSnap.data();
+      // Notify student that instructor cancelled — always full refund (reuse already-fetched profile)
+      if (studentProfileSnap.exists && studentProfileSnap.data().email) {
+        const student = studentProfileSnap.data();
         const instructorSnap = await admin.firestore().collection('instructors').doc(booking.instructorId).get();
         const instructorName = instructorSnap.exists ? (instructorSnap.data().name || 'Your instructor') : 'Your instructor';
         const refundNote = stripeRefundId
