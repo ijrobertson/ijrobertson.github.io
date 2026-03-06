@@ -1734,6 +1734,23 @@
     function openCancelModal(bookingId, booking) {
       _cancelBookingId = bookingId;
 
+      const hoursUntil = (booking.dateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+      const amount = booking.amount || 0;
+      const fmtAmount = (cents) => amount > 0
+        ? new Intl.NumberFormat(undefined, { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(cents / 100)
+        : null;
+
+      let refundNote = '';
+      if (amount > 0) {
+        if (hoursUntil > 24) {
+          refundNote = `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> <strong>Full refund</strong> of ${fmtAmount(amount)} will be issued.`;
+        } else if (hoursUntil > 12) {
+          refundNote = `<span style="color:#e67e22;"><i class="fas fa-undo" style="width:16px;"></i></span> <strong>50% refund</strong> of ${fmtAmount(Math.round(amount * 0.5))} will be issued (12–24 hrs notice).`;
+        } else {
+          refundNote = '<span style="color:#dc3545;"><i class="fas fa-times-circle" style="width:16px;"></i></span> <strong>No refund</strong> — cancellation is within 12 hours of the lesson.';
+        }
+      }
+
       const details = document.getElementById('cancel-lesson-details');
       details.innerHTML = `
         <strong style="font-size:1rem;">${escapeHtml(booking.instructorName || 'Instructor')}</strong><br>
@@ -1741,6 +1758,7 @@
         ${booking.dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
         <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
         ${booking.dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+        ${refundNote ? `<br><br>${refundNote}` : ''}
       `;
 
       document.getElementById('cancel-error').textContent = '';

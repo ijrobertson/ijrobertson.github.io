@@ -1492,6 +1492,11 @@
     function openInstructorCancelModal(bookingId, booking) {
       _instCancelBookingId = bookingId;
 
+      const amount = booking.amount || 0;
+      const refundNote = amount > 0
+        ? `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> A <strong>full refund</strong> of ${new Intl.NumberFormat(undefined, { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(amount / 100)} will be issued to the student.`
+        : '';
+
       const details = document.getElementById('cancel-lesson-details');
       details.innerHTML = `
         <strong style="font-size:1rem;">${escapeHtmlInst(booking.studentName || 'Student')}</strong><br>
@@ -1499,6 +1504,7 @@
         ${booking.dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
         <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
         ${booking.dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+        ${refundNote ? `<br><br>${refundNote}` : ''}
       `;
 
       document.getElementById('cancel-error').textContent = '';

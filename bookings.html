@@ -1145,7 +1145,7 @@
                         ${btnHtml}
                     </button>
                     ${reviewFooterHtml}
-                    ${status === 'upcoming' ? `<button class="btn-cancel-lesson" data-cancel-id="${escapeAttr(booking.id)}" data-cancel-name="${escapeAttr(otherName)}" data-cancel-time="${escapeAttr(lessonTime.toISOString())}"><i class="fas fa-times"></i> Cancel</button>` : ''}
+                    ${status === 'upcoming' ? `<button class="btn-cancel-lesson" data-cancel-id="${escapeAttr(booking.id)}" data-cancel-name="${escapeAttr(otherName)}" data-cancel-time="${escapeAttr(lessonTime.toISOString())}" data-cancel-amount="${booking.amount || ''}" data-cancel-currency="${escapeAttr(booking.currency || '')}" data-cancel-role="${escapeAttr(booking.myRole)}"><i class="fas fa-times"></i> Cancel</button>` : ''}
                 </div>
             `;
 
@@ -1285,12 +1285,31 @@
             _cancelId = btn.dataset.cancelId;
             const name = btn.dataset.cancelName;
             const time = new Date(btn.dataset.cancelTime);
+            const role = btn.dataset.cancelRole;
+            const amount = parseInt(btn.dataset.cancelAmount) || 0;
+            const currency = btn.dataset.cancelCurrency;
+            const hoursUntil = (time.getTime() - Date.now()) / (1000 * 60 * 60);
+
+            let refundNote = '';
+            if (role === 'instructor') {
+                refundNote = '<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> A <strong>full refund</strong> will be issued to the student.';
+            } else if (amount > 0) {
+                if (hoursUntil > 24) {
+                    refundNote = `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> <strong>Full refund</strong> of ${escapeHtml(formatAmount(amount, currency))} will be issued.`;
+                } else if (hoursUntil > 12) {
+                    refundNote = `<span style="color:#e67e22;"><i class="fas fa-undo" style="width:16px;"></i></span> <strong>50% refund</strong> of ${escapeHtml(formatAmount(Math.round(amount * 0.5), currency))} will be issued (12–24 hrs notice).`;
+                } else {
+                    refundNote = '<span style="color:#dc3545;"><i class="fas fa-times-circle" style="width:16px;"></i></span> <strong>No refund</strong> — cancellation is within 12 hours of the lesson.';
+                }
+            }
+
             document.getElementById('cancelLessonInfo').innerHTML = `
                 <strong style="font-size:1rem;">${escapeHtml(name)}</strong><br>
                 <span style="color:#20bcba;"><i class="fas fa-calendar" style="width:16px;"></i></span>
                 ${time.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
                 <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
                 ${time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                ${refundNote ? `<br><br>${refundNote}` : ''}
             `;
             document.getElementById('cancelModalErr').textContent = '';
             const doBtn = document.getElementById('cancelDoBtn');

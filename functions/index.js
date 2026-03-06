@@ -955,8 +955,15 @@ exports.createPaymentIntent = onCall(async (request) => {
 });
 
 /**
- * Cancels a booking and sends email notifications to both parties.
+ * Cancels a booking, issues a Stripe refund per the cancellation policy,
+ * and sends email notifications to both parties.
  * Can be called by either the student or the instructor on the booking.
+ *
+ * Refund policy:
+ *   Instructor cancels             → 100% refund always
+ *   Student cancels >24h before    → 100% refund
+ *   Student cancels 12–24h before  → 50% refund
+ *   Student cancels <12h before    → no refund
  */
 exports.cancelBooking = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
@@ -980,14 +987,71 @@ exports.cancelBooking = onCall(async (request) => {
 
   const cancelledBy = booking.studentId === uid ? 'student' : 'instructor';
 
+  // ── Determine refund percentage ──────────────────────────────────────────
+  const lessonDate = booking.dateTime?.toDate ? booking.dateTime.toDate() : new Date(booking.dateTime);
+  const now = new Date();
+  const hoursUntilLesson = (lessonDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+  let refundPercent = 0;
+  let refundLabel = '';
+
+  if (cancelledBy === 'instructor') {
+    refundPercent = 100;
+    refundLabel = 'Full refund (instructor cancellation)';
+  } else if (hoursUntilLesson > 24) {
+    refundPercent = 100;
+    refundLabel = 'Full refund (cancelled more than 24 hours before lesson)';
+  } else if (hoursUntilLesson > 12) {
+    refundPercent = 50;
+    refundLabel = '50% refund (cancelled 12–24 hours before lesson)';
+  } else {
+    refundPercent = 0;
+    refundLabel = 'No refund (cancelled less than 12 hours before lesson)';
+  }
+
+  // ── Process Stripe refund if payment was made ────────────────────────────
+  let stripeRefundId = null;
+  let refundAmountCents = 0;
+
+  if (refundPercent > 0 && booking.paymentIntentId && booking.paymentStatus === 'paid') {
+    try {
+      const stripe = getStripe();
+      refundAmountCents = refundPercent === 100
+        ? booking.amount
+        : Math.round(booking.amount * refundPercent / 100);
+
+      const refund = await stripe.refunds.create({
+        payment_intent: booking.paymentIntentId,
+        ...(refundPercent < 100 && { amount: refundAmountCents }),
+        refund_application_fee: true,
+        reverse_transfer: true,
+      });
+      stripeRefundId = refund.id;
+      console.log(`Refund created: ${refund.id} — ${refundPercent}% of ${booking.amount} ${booking.currency}`);
+    } catch (refundErr) {
+      console.error('Stripe refund error:', refundErr);
+      // Don't block the cancellation — refund can be issued manually if needed
+    }
+  }
+
+  // Helper: format cents to display amount (e.g. 5000 USD → "$50.00")
+  const formatCurrency = (cents, currency) => {
+    if (!cents || !currency) return null;
+    return (cents / 100).toLocaleString('en-US', { style: 'currency', currency: currency.toUpperCase() });
+  };
+  const refundAmountStr = formatCurrency(refundAmountCents, booking.currency);
+
   await bookingRef.update({
     status: 'cancelled',
     cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
-    cancelledBy
+    cancelledBy,
+    refundPercent,
+    refundLabel,
+    refundAmountCents,
+    ...(stripeRefundId && { stripeRefundId }),
   });
 
-  // Format lesson date/time for emails
-  const lessonDate = booking.dateTime?.toDate ? booking.dateTime.toDate() : new Date(booking.dateTime);
+  // Format lesson date/time for emails (lessonDate already declared above for refund calc)
   const tz = booking.instructorTimezone || 'UTC';
   const formattedDate = lessonDate.toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: tz
@@ -1041,7 +1105,8 @@ exports.cancelBooking = onCall(async (request) => {
                       <div style="background:#f8f9fa;border-left:4px solid #20bcba;border-radius:6px;padding:20px;margin:0 0 24px;">
                         <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Student:</strong> ${studentName}</p>
                         <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Date:</strong> ${formattedDate}</p>
-                        <p style="margin:0;color:#333;font-size:15px;"><strong>Time:</strong> ${formattedTime}</p>
+                        <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Time:</strong> ${formattedTime}</p>
+                        <p style="margin:0;color:#333;font-size:15px;"><strong>Refund:</strong> ${refundLabel}</p>
                       </div>
                       <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">
                         This time slot is now available for other students to book. Visit your dashboard to review your schedule.
@@ -1058,17 +1123,75 @@ exports.cancelBooking = onCall(async (request) => {
               </table>
             </body></html>
           `,
-          text: `Hi ${instructor.name || 'Instructor'},\n\n${studentName} has cancelled their lesson with you.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\nThis slot is now available for other students.\n\nDashboard: https://linguabud.com/dashboard.html\n\n© 2026 Lingua Bud`
+          text: `Hi ${instructor.name || 'Instructor'},\n\n${studentName} has cancelled their lesson with you.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\nRefund: ${refundLabel}\n\nThis slot is now available for other students.\n\nDashboard: https://linguabud.com/dashboard.html\n\n© 2026 Lingua Bud`
         });
         console.log('Cancellation email sent to instructor:', instructor.email);
       }
+
+      // Also notify student of their refund status
+      const studentSnap = await admin.firestore().collection('users').doc(booking.studentId).get();
+      if (studentSnap.exists && studentSnap.data().email) {
+        const student = studentSnap.data();
+        const refundNote = refundPercent === 0
+          ? `Per our <a href="https://linguabud.com/refund-policy.html" style="color:#20bcba;">cancellation policy</a>, no refund is issued for cancellations within 12 hours of the lesson.`
+          : `<strong>${refundPercent === 100 ? 'A full refund' : 'A 50% refund'}${refundAmountStr ? ` of ${refundAmountStr}` : ''}</strong> has been issued to your original payment method and should appear within 5–10 business days.`;
+        const refundNotePlain = refundPercent === 0
+          ? 'Per our cancellation policy, no refund is issued for cancellations within 12 hours of the lesson.'
+          : `${refundPercent === 100 ? 'A full refund' : 'A 50% refund'}${refundAmountStr ? ` of ${refundAmountStr}` : ''} has been issued to your original payment method and should appear within 5–10 business days.`;
+        await resend.emails.send({
+          from: 'Lingua Bud <notifications@linguabud.com>',
+          to: student.email,
+          subject: 'Your lesson has been cancelled',
+          html: `
+            <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;">
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr><td align="center" style="padding:40px 0;">
+                  <table role="presentation" style="width:600px;border-collapse:collapse;background-color:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                    ${emailHeader}
+                    <tr><td style="padding:40px;">
+                      <h2 style="margin:0 0 16px;color:#333;font-size:22px;">Lesson Cancellation Confirmed</h2>
+                      <p style="margin:0 0 20px;color:#666;font-size:16px;line-height:1.6;">
+                        Hi ${student.name || 'there'},<br><br>
+                        Your lesson has been successfully cancelled.
+                      </p>
+                      <div style="background:#f8f9fa;border-left:4px solid #20bcba;border-radius:6px;padding:20px;margin:0 0 24px;">
+                        <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Date:</strong> ${formattedDate}</p>
+                        <p style="margin:0;color:#333;font-size:15px;"><strong>Time:</strong> ${formattedTime}</p>
+                      </div>
+                      <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">${refundNote}</p>
+                      <p style="margin:0 0 28px;text-align:center;">
+                        <a href="https://linguabud.com/instructors.html" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
+                          Find Another Instructor
+                        </a>
+                      </p>
+                    </td></tr>
+                    ${emailFooter}
+                  </table>
+                </td></tr>
+              </table>
+            </body></html>
+          `,
+          text: `Hi ${student.name || 'there'},\n\nYour lesson has been cancelled.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors.html\n\n© 2026 Lingua Bud`
+        });
+      }
     } else {
-      // Notify student that instructor cancelled
+      // Notify student that instructor cancelled — always full refund
       const studentSnap = await admin.firestore().collection('users').doc(booking.studentId).get();
       if (studentSnap.exists && studentSnap.data().email) {
         const student = studentSnap.data();
         const instructorSnap = await admin.firestore().collection('instructors').doc(booking.instructorId).get();
         const instructorName = instructorSnap.exists ? (instructorSnap.data().name || 'Your instructor') : 'Your instructor';
+        const refundNote = stripeRefundId
+          ? `A <strong>full refund${refundAmountStr ? ` of ${refundAmountStr}` : ''}</strong> has been issued to your original payment method and should appear within 5–10 business days.`
+          : booking.paymentStatus === 'paid'
+            ? `A full refund will be processed to your original payment method within 5–10 business days.`
+            : `No payment was charged for this lesson.`;
+        const refundNotePlain = stripeRefundId
+          ? `A full refund${refundAmountStr ? ` of ${refundAmountStr}` : ''} has been issued to your original payment method and should appear within 5–10 business days.`
+          : booking.paymentStatus === 'paid'
+            ? `A full refund will be processed to your original payment method within 5–10 business days.`
+            : `No payment was charged for this lesson.`;
         await resend.emails.send({
           from: 'Lingua Bud <notifications@linguabud.com>',
           to: student.email,
@@ -1091,9 +1214,9 @@ exports.cancelBooking = onCall(async (request) => {
                         <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Date:</strong> ${formattedDate}</p>
                         <p style="margin:0;color:#333;font-size:15px;"><strong>Time:</strong> ${formattedTime}</p>
                       </div>
+                      <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">${refundNote}</p>
                       <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">
-                        We apologize for any inconvenience. Please browse our other available instructors to rebook your lesson.
-                        Refunds are processed according to our <a href="https://linguabud.com/refund-policy.html" style="color:#20bcba;">Cancellation &amp; Refund Policy</a>.
+                        We apologize for the inconvenience. Please browse our other available instructors to rebook your lesson.
                       </p>
                       <p style="margin:0 0 28px;text-align:center;">
                         <a href="https://linguabud.com/instructors.html" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
@@ -1107,7 +1230,7 @@ exports.cancelBooking = onCall(async (request) => {
               </table>
             </body></html>
           `,
-          text: `Hi ${student.name || 'there'},\n\n${instructorName} has cancelled your upcoming lesson.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\nPlease browse other instructors to rebook: https://linguabud.com/instructors.html\n\nRefunds: https://linguabud.com/refund-policy.html\n\n© 2026 Lingua Bud`
+          text: `Hi ${student.name || 'there'},\n\n${instructorName} has cancelled your upcoming lesson.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors.html\n\n© 2026 Lingua Bud`
         });
         console.log('Cancellation email sent to student:', student.email);
       }
@@ -1117,7 +1240,7 @@ exports.cancelBooking = onCall(async (request) => {
     // Don't fail the cancellation if email fails
   }
 
-  return { success: true, cancelledBy };
+  return { success: true, cancelledBy, refundPercent, refundLabel, refundAmountCents };
 });
 
 /**
