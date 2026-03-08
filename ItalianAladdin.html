@@ -1,89 +1,361 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Read the Adventures of Aladdin in Italian. Learn Italian for free and the fun way by reading short stories in Italian.">
-    <meta name="keywords" content="Italian short stories, Aladdin in Italian, Le Avventure di Aladino, storie italiano, Lingua Bud">
+    <meta name="description" content="Read The Adventures of Aladdin in Italian with audio narration and English translation. Learn Italian through reading — Le Avventure di Aladino.">
+    <meta name="keywords" content="The Adventures of Aladdin in Italian, Le Avventure di Aladino, learn Italian, Italian stories, bilingual Italian, Italian audio stories, Lingua Bud">
     <meta name="author" content="Lingua Bud">
 
-    <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
-	<meta property="og:site_name" content="" /> <!-- website name -->
-	<meta property="og:site" content="" /> <!-- website link -->
-	<meta property="og:title" content=""/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="" /> <!-- image link, make sure it's jpg -->
-	<meta property="og:url" content="" /> <!-- where do you want your post to link to -->
-	<meta property="og:type" content="article" />
+    <!-- OG Meta Tags -->
+    <meta property="og:site_name" content="Lingua Bud" />
+    <meta property="og:title" content="Le Avventure di Aladino &ndash; Learn Italian with Stories"/>
+    <meta property="og:description" content="Read The Adventures of Aladdin in Italian. A bilingual story with audio narration and English translation to help you learn Italian." />
+    <meta property="og:type" content="article" />
 
     <!-- Website Title -->
     <title>Le Avventure di Aladino - Lingua Bud</title>
-    
+
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/fontawesome-all.css" rel="stylesheet">
     <link href="css/swiper.css" rel="stylesheet">
-	<link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
-	
-	<!-- Favicon  -->
+
+    <!-- Favicon -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ── Hero ── */
+        .sd-hero {
+            background: linear-gradient(135deg, #153e52 0%, #0a2236 100%);
+            padding: 7rem 0 3.5rem;
+            text-align: center;
+            color: white;
+        }
+        .sd-hero-icon { font-size: 4rem; margin-bottom: 0.5rem; line-height: 1; }
+        .sd-hero h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 0.75rem; color: white; }
+        .sd-hero-sub {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.88);
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            line-height: 1.6;
+        }
+        .sd-hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+        .sd-hero-badge {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 20px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* ── Language Strip ── */
+        .sd-lang-strip {
+            background: #f0fffe;
+            border-bottom: 1px solid #c9efee;
+            padding: 0.7rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #444;
+        }
+        .sd-lang-strip a { color: #20bcba; font-weight: 600; text-decoration: none; margin: 0 0.2rem; }
+        .sd-lang-strip a:hover { text-decoration: underline; }
+
+        /* ── Main container ── */
+        .sd-main { padding: 2.5rem 0 3rem; max-width: 820px; }
+
+        /* ── Generic card ── */
+        .sd-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 1.75rem;
+            overflow: hidden;
+        }
+        .sd-card-header {
+            background: linear-gradient(135deg, #20bcba 0%, #17a39f 100%);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .sd-card-header-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+        .sd-card-header-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 0.1rem;
+        }
+        .sd-card-header-title { font-size: 1rem; font-weight: 700; color: white; margin: 0; }
+        .sd-card-body { padding: 1.5rem; }
+
+        /* ── Narrator controls ── */
+        .narrator-btn {
+            background: #20bcba;
+            color: white;
+            border: none;
+            padding: 9px 20px;
+            margin: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .narrator-btn:hover { background: #1a9d9b; transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+        .speed-controls { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+        .speed-btn {
+            background: #f0fffe;
+            color: #20bcba;
+            border: 1px solid #c9efee;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .speed-btn:hover { background: #e0f8f7; }
+        .speed-btn.active { background: #20bcba; color: white; border-color: #20bcba; }
+        .narrator-status {
+            color: #20bcba;
+            margin-top: 0.6rem;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        /* ── Story paragraph cards ── */
+        .story-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .story-card-num {
+            background: linear-gradient(90deg, #20bcba 0%, #17a39f 100%);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 0.4rem 1.25rem;
+        }
+        .story-card-body { padding: 1.25rem 1.5rem; }
+
+        /* ── Paragraph block within a card ── */
+        .para-block { margin-bottom: 1.4rem; }
+        .para-block:last-child { margin-bottom: 0; }
+        .para-divider { border: none; border-top: 1px solid #e8f8f7; margin: 1.25rem 0; }
+
+        .story-italian {
+            font-size: 1.05rem;
+            color: #222;
+            line-height: 1.85;
+            margin-bottom: 0.5rem;
+        }
+        .story-italian.speaking {
+            background-color: #fff3cd;
+            border-radius: 6px;
+            padding: 0.3rem 0.6rem;
+            transition: background-color 0.3s;
+        }
+        .story-english {
+            background: #f8fffe;
+            border-left: 3px solid #20bcba;
+            padding: 0.75rem 1rem;
+            border-radius: 0 6px 6px 0;
+            color: #555;
+            font-style: italic;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* ── Ending card ── */
+        .moral-card {
+            background: linear-gradient(135deg, #153e52 0%, #0a2236 100%);
+            border-radius: 12px;
+            padding: 2rem 1.75rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .moral-card .moral-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 0.75rem;
+        }
+        .moral-card .moral-text-it {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        .moral-card .moral-text-en {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+            font-style: italic;
+        }
+
+        /* ── Vocabulary tooltip ── */
+        .tooltip-word {
+            border-bottom: 2px dashed #20bcba;
+            cursor: help;
+            position: relative;
+        }
+        .tooltip-word .tooltip-def {
+            visibility: hidden;
+            opacity: 0;
+            background: #113448;
+            color: white;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            width: max-content;
+            max-width: min(200px, 80vw);
+            z-index: 100;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .tooltip-word:hover .tooltip-def,
+        .tooltip-word.tooltip-active .tooltip-def { visibility: visible; opacity: 1; }
+
+        /* ── More Italian Stories (card grid) ── */
+        .related-section { background: #f4f7f9; padding: 3rem 0; margin-top: 0; }
+        .related-section h3 { text-align: center; color: #0a2236; margin-bottom: 1.5rem; font-size: 1.4rem; }
+        .related-grid-cards { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+        .related-card {
+            background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1rem 1.2rem; text-align: center; text-decoration: none; color: #1a1a2e;
+            min-width: 140px; flex: 1 1 140px; max-width: 180px; transition: transform 0.18s, box-shadow 0.18s;
+        }
+        .related-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.13); text-decoration: none; color: #153e52; }
+        .related-card .related-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+        .related-card .related-title { font-size: 0.88rem; font-weight: 600; }
+
+        /* ── Profile Dropdown ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px; border-radius: 50%;
+            cursor: pointer; object-fit: cover;
+            border: 2px solid #20bcba; transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed; right: 1rem; top: 60px;
+            background-color: white; min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px; z-index: 9999;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a i { margin-right: 8px; color: #20bcba; }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .notification-badge {
+            position: absolute; top: -2px; right: -2px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            display: none; align-items: center; justify-content: center; border: 2px solid white; animation: badgePulse 2s infinite;
+        }
+        .notification-badge.show { display: flex; }
+        @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        .profile-dropdown-content a.messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count { display: none; background-color: #dc3545; color: white; border-radius: 10px; padding: 2px 6px; font-size: 11px; font-weight: bold; margin-left: 8px; min-width: 18px; text-align: center; }
+        .unread-count.show { display: inline-block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* ── Navbar centering ── */
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .sd-hero { padding: 5.5rem 0 3rem; }
+            .sd-hero h1 { font-size: 2rem; }
+            .sd-hero-icon { font-size: 3rem; }
+            .sd-main { padding: 1.5rem 1rem 2rem; }
+            .story-card-body { padding: 1rem 1.1rem; }
+            .sd-card-body { padding: 1.1rem; }
+            .moral-card .moral-text-it { font-size: 1.2rem; }
+        }
+        @media (max-width: 480px) { .sd-hero h1 { font-size: 1.7rem; } }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
-    
+
     <!-- Preloader -->
-	<div class="spinner-wrapper">
+    <div class="spinner-wrapper">
         <div class="spinner">
             <div class="bounce1"></div>
             <div class="bounce2"></div>
             <div class="bounce3"></div>
         </div>
     </div>
-    <!-- end of preloader -->
-    
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
 
-        <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
-        <!-- Mobile Menu Toggle Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
             <span class="navbar-toggler-awesome fas fa-times"></span>
         </button>
-        <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
 
-                <!-- Dropdown Menu -->          
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -96,9 +368,8 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
                 <!-- end of dropdown menu -->
@@ -106,11 +377,31 @@
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+
+                <!-- Sign In link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <!-- Profile dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
+                        <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -126,558 +417,369 @@
                 </span>
             </span>
         </div>
-    </nav> <!-- end of navbar -->
+    </nav>
     <!-- end of navbar -->
 
 
-    <!-- Header -->
-    <header id="header" class="ex-header">
+    <!-- Hero -->
+    <div class="sd-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1>Le Avventure di Aladino</h1>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </header> <!-- end of ex-header -->
-    <!-- end of header -->
+            <div class="sd-hero-icon">&#x1FA94;&#x2728;</div>
+            <h1>Le Avventure di Aladino</h1>
+            <p class="sd-hero-sub">Leggi <em>Le Avventure di Aladino</em> in italiano &mdash; il racconto classico di una lampada magica, un potente genio e il potere dell&rsquo;ingegno. Every paragraph includes audio narration and a full English translation.</p>
+            <div class="sd-hero-badges">
+                <span class="sd-hero-badge">&#x1F1EE;&#x1F1F9; Italian</span>
+                <span class="sd-hero-badge">&#x1F4DA; Short Story</span>
+                <span class="sd-hero-badge">&#x1F3A7; Audio Narration</span>
+                <span class="sd-hero-badge">&#x1F30E; Bilingual</span>
+                <span class="sd-hero-badge">&#x2728; Classic Tale</span>
+            </div>
+        </div>
+    </div>
+    <!-- end of hero -->
 
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Language strip -->
+    <div class="sd-lang-strip">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Other stories in Italian: <a class="green" href="Porcellini.html">The Three Little Pigs</a>, <a class="green" href="ItalianTortoise.html">The Tortoise and the Hare</a>, <a class="green" href="ItalianDuck.html">The Ugly Duckling</a>, <a class="green" href="ItalianKing.html">King Midas</a>, <a class="green" href="ItalianJack.html">Jack and the Beanstalk</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+            Also available in:
+            <a href="SpanishAladdin.html">Spanish</a>,
+            <a href="FrenchAladdin.html">French</a>,
+            <a href="PortugueseAladdin.html">Portuguese</a>,
+            <a href="GermanAladdin.html">German</a>,
+            <a href="RussianAladdin.html">Russian</a>,
+            <a href="SwedishAladdin.html">Swedish</a>
+        </div>
+    </div>
+    <!-- end of language strip -->
 
 
-    <!-- Terms Content -->
-    <div class="ex-basic-2">
+    <!-- Main Content -->
+    <div class="container sd-main">
+
+        <!-- Narrator Card -->
+        <div class="sd-card">
+            <div class="sd-card-header">
+                <div class="sd-card-header-icon">&#x1F3A7;</div>
+                <div>
+                    <div class="sd-card-header-label">Audio</div>
+                    <div class="sd-card-header-title">Narratore italiano &mdash; Italian Narrator</div>
+                </div>
+            </div>
+            <div class="sd-card-body">
+                <p style="color:#555; margin-bottom:1rem; font-size:0.95rem;">Use the buttons below to listen to the full story read aloud in Italian. Hover over <span style="border-bottom:2px dashed #20bcba; cursor:help;">underlined words</span> to see their English translations.</p>
+                <div>
+                    <button class="narrator-btn" id="playBtn" onclick="playNarration()">
+                        <i class="fas fa-play"></i> Play Story
+                    </button>
+                    <button class="narrator-btn" id="pauseBtn" onclick="pauseNarration()" style="display:none;">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button class="narrator-btn" onclick="stopNarration()">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                </div>
+                <div style="margin-top:0.9rem; font-size:0.85rem; color:#444; font-weight:600;">Playback Speed:</div>
+                <div class="speed-controls">
+                    <button class="speed-btn" onclick="setSpeed(0.5)">0.5&times; Slow</button>
+                    <button class="speed-btn" onclick="setSpeed(0.75)">0.75&times;</button>
+                    <button class="speed-btn active" onclick="setSpeed(1)">1&times; Normal</button>
+                    <button class="speed-btn" onclick="setSpeed(1.25)">1.25&times;</button>
+                    <button class="speed-btn" onclick="setSpeed(1.5)">1.5&times; Fast</button>
+                </div>
+                <div class="narrator-status" id="narratorStatus">
+                    Ready to play &bull; Italian voice
+                </div>
+            </div>
+        </div>
+        <!-- end of narrator card -->
+
+
+        <!-- Parte 1 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 1 &mdash; La vedova e suo figlio</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">C&rsquo;era una volta una <span class="tooltip-word">vedova<span class="tooltip-def">widow</span></span> che aveva un figlio che si chiamava Aladino. Erano molto <span class="tooltip-word">poveri<span class="tooltip-def">poor</span></span>, anche se Aladino faceva quello che poteva per guadagnare qualche soldo, raccogliendo <span class="tooltip-word">frutti<span class="tooltip-def">fruits</span></span> in luoghi lontani.</p>
+                    <div class="story-english">Once upon a time, a widow had a son whose name was Aladdin. They were very poor, though Aladdin did what he could to earn some pennies, by picking fruits in faraway places.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">Un giorno, mentre cercava fichi selvatici in un <span class="tooltip-word">boschetto<span class="tooltip-def">grove</span></span> lontano dalla citt&agrave;, Aladino incontr&ograve; un <span class="tooltip-word">misterioso<span class="tooltip-def">mysterious</span></span> sconosciuto. Quest&rsquo;uomo dagli occhi scuri ben vestito con una barba nera curata e uno <span class="tooltip-word">splendido<span class="tooltip-def">splendid</span></span> zaffiro nel turbante, fece ad Aladino una domanda <span class="tooltip-word">insolita<span class="tooltip-def">unusual</span></span>.</p>
+                    <div class="story-english">One day, as he was looking for wild figs in a grove far from the town, Aladdin met a mysterious stranger. This well dressed dark-eyed man with a trim black beard and a splendid sapphire in his turban, asked Aladdin an unusual question.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Vieni qui, ragazzo&rdquo;, <span class="tooltip-word">ordin&ograve;<span class="tooltip-def">ordered</span></span>. &ldquo;Ti piacerebbe guadagnare un penny d&rsquo;argento?&rdquo;</p>
+                    <div class="story-english">&ldquo;Come here, boy,&rdquo; he ordered. &ldquo;How would you like to earn a silver penny?&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Un soldo d&rsquo;argento!&rdquo; <span class="tooltip-word">esclam&ograve;<span class="tooltip-def">exclaimed</span></span> Aladino. &ldquo;Signore, farei qualsiasi cosa per quel tipo di pagamento.&rdquo;</p>
+                    <div class="story-english">&ldquo;A silver penny!&rdquo; exclaimed Aladdin. &ldquo;Sir, I&rsquo;d do anything for that kind of payment.&rdquo;</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 2 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 2 &mdash; La caverna del tesoro</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Non ti chieder&ograve; di fare molto. Entra in questa <span class="tooltip-word">caverna<span class="tooltip-def">cave</span></span>. Sono troppo grande per farmi passare.&rdquo; Lo sconosciuto aiut&ograve; Aladino a infilarsi nella caverna. Snello e agile com&rsquo;era, il ragazzo cadde facilmente. I suoi piedi toccarono la pietra e scese con cautela alcuni gradini&hellip; e si ritrov&ograve; in una grande <span class="tooltip-word">camera<span class="tooltip-def">chamber</span></span>. Sembrava scintillare, anche se debolmente illuminata dalla luce tremolante di una vecchia <span class="tooltip-word">lampada a olio<span class="tooltip-def">oil lamp</span></span>. Quando gli occhi di Aladino si abituarono all&rsquo;oscurit&agrave;, vide uno spettacolo meraviglioso: alberi grondanti di <span class="tooltip-word">gioielli<span class="tooltip-def">jewels</span></span> scintillanti, vasi d&rsquo;oro e scrigni pieni di gemme inestimabili. Migliaia di oggetti preziosi giacevano sparsi qua e l&agrave;. Era un <span class="tooltip-word">tesoro<span class="tooltip-def">treasure</span></span>! Incapace di credere ai suoi occhi, Aladino era stordito quando sent&igrave; un grido dietro di lui.</p>
+                    <div class="story-english">&ldquo;I&rsquo;m not going to ask you to do much. Just enter this cave. I&rsquo;m much too big to squeeze through myself.&rdquo; The stranger helped Aladdin squeeze into the cave. Slim and agile as he was, the boy easily went down. His feet touched stone and he carefully made his way down some steps&hellip; and found himself in a large chamber. It seemed to sparkle, though dimly lit by the flickering light of an old oil lamp. When Aladdin&rsquo;s eyes became used to the gloom, he saw a wonderful sight: trees dripping with glittering jewels, pots of gold and caskets full of priceless gems. Thousands of precious objects lay scattered about. It was a treasure trove! Unable to believe his eyes, Aladdin was standing dazed when he heard a shout behind him.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;La <span class="tooltip-word">lampada<span class="tooltip-def">lamp</span></span>! Spegni la fiamma e portami la lampada!&rdquo; Sorpreso e <span class="tooltip-word">sospettoso<span class="tooltip-def">suspicious</span></span>, perch&eacute; lo straniero dovrebbe volere solo una vecchia lampada da tutto un simile tesoro, si chiese Aladino. Forse era un <span class="tooltip-word">mago<span class="tooltip-def">wizard</span></span>. Decise di stare in guardia. Raccolta la lampada, torn&ograve; sui suoi passi fino all&rsquo;ingresso.</p>
+                    <div class="story-english">&ldquo;The lamp! Put out the flame and bring me the lamp!&rdquo; Surprised and suspicious, for why should the stranger, out of all such a treasure, want only an old lamp, Aladdin wondered. Perhaps he was a wizard. He decided to be on his guard. Picking up the lamp, he retraced his steps up to the entrance.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 3 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 3 &mdash; La trappola del mago</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Dammi la lampada&rdquo;, esort&ograve; il mago con <span class="tooltip-word">impazienza<span class="tooltip-def">impatience</span></span>. &ldquo;Dammela&rdquo;, inizi&ograve; a gridare, allungando il braccio per afferrarla, ma Aladino <span class="tooltip-word">cautamente<span class="tooltip-def">cautiously</span></span> si ritrasse.</p>
+                    <div class="story-english">&ldquo;Give me the lamp,&rdquo; urged the wizard impatiently. &ldquo;Hand it over,&rdquo; he began to shout, thrusting out his arm to grab it, but Aladdin cautiously drew back.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Fammi uscire prima&hellip;&rdquo;</p>
+                    <div class="story-english">&ldquo;Let me out first&hellip;&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Peccato per te&rdquo;, sbott&ograve; lo sconosciuto, coprendo l&rsquo;ingresso della caverna, senza mai accorgersi che, mentre lo faceva, un <span class="tooltip-word">anello<span class="tooltip-def">ring</span></span> gli scivolò dal dito. Un Aladino terrorizzato fu lasciato nell&rsquo;oscurit&agrave; totale, chiedendosi cosa avrebbe fatto il mago dopo. Poi provò l&rsquo;anello. Mettendolo senza meta al dito, lo gir&ograve; in tondo. All&rsquo;improvviso, la stanza fu inondata da una luce rosata e un grande <span class="tooltip-word">genio<span class="tooltip-def">genie</span></span> con le mani giunte apparve su una <span class="tooltip-word">nuvola<span class="tooltip-def">cloud</span></span>.</p>
+                    <div class="story-english">&ldquo;Too bad for you,&rdquo; snapped the stranger, covering the cave entrance, never noticing that, as he did so, a ring slid off his finger. A terrified Aladdin was left in pitch darkness, wondering what the wizard would do next. Then he tried on the ring. Aimlessly putting it on his finger, he twisted it round and round. Suddenly, the room was flooded with a rosy light and a great genie with clasped hands appeared on a cloud.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 4 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 4 &mdash; Il genio dell&rsquo;anello</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Al tuo <span class="tooltip-word">comando<span class="tooltip-def">command</span></span>, sire&rdquo;, disse il genio.</p>
+                    <div class="story-english">&ldquo;At your command, sire,&rdquo; said the genie.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">Sbalordito, Aladino non pot&eacute; che <span class="tooltip-word">balbettare<span class="tooltip-def">stammer</span></span>: &ldquo;Voglio andare a casa!&rdquo; In un <span class="tooltip-word">attimo<span class="tooltip-def">flash</span></span> fu di nuovo a casa sua.</p>
+                    <div class="story-english">Now astounded, Aladdin could only stammer: &ldquo;I want to go home!&rdquo; In a flash he was back in his own home.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Come sei entrato?&rdquo; chiam&ograve; sua madre dal <span class="tooltip-word">fornello<span class="tooltip-def">stove</span></span> della cucina, non appena lo vide. <span class="tooltip-word">Eccitato<span class="tooltip-def">excited</span></span>, suo figlio le raccont&ograve; le sue avventure.</p>
+                    <div class="story-english">&ldquo;How did you get in?&rdquo; called his mother from the kitchen stove, the minute she set eyes on him. Excitedly, her son told her of his adventures.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 5 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 5 &mdash; Il genio della lampada</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Dov&rsquo;&egrave; la moneta d&rsquo;argento?&rdquo; chiese sua madre. Aladino si mise una mano sulla fronte. Perch&eacute; tutto quello che aveva portato a casa era la vecchia lampada a olio. &ldquo;Oh, mamma! Mi dispiace tanto. Questo &egrave; tutto quello che ho.&rdquo;</p>
+                    <div class="story-english">&ldquo;Where&rsquo;s the silver coin?&rdquo; his mother asked. Aladdin placed his hand on his forehead. For all he had brought home was the old oil lamp. &ldquo;Oh, mother! I&rsquo;m so sorry. This is all I&rsquo;ve got.&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Beh, speriamo che funzioni. &Egrave; cos&igrave; sporco&hellip;&rdquo; e la vedova cominciò a <span class="tooltip-word">strofinare<span class="tooltip-def">rub</span></span> la lampada.</p>
+                    <div class="story-english">&ldquo;Well, let&rsquo;s hope it works. It&rsquo;s so dirty&hellip;&rdquo; and the widow began to rub the lamp.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">All&rsquo;improvviso spar&ograve; un altro genio, in una <span class="tooltip-word">nuvola di fumo<span class="tooltip-def">cloud of smoke</span></span>.</p>
+                    <div class="story-english">Suddenly out shot another genie, in a cloud of smoke.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Mi hai liberato, dopo secoli! Ero <span class="tooltip-word">prigioniero<span class="tooltip-def">prisoner</span></span> nella lampada, in attesa di essere liberato da qualcuno che la strofinava. Ora sono il tuo <span class="tooltip-word">servo<span class="tooltip-def">servant</span></span> obbediente. Esprimi i tuoi <span class="tooltip-word">desideri<span class="tooltip-def">wishes</span></span>.&rdquo; E il genio si inchin&ograve; rispettosamente, aspettando gli ordini di Aladino. Il ragazzo e sua madre rimasero a bocca aperta davanti a questa incredibile apparizione.</p>
+                    <div class="story-english">&ldquo;You&rsquo;ve set me free, after centuries! I was a prisoner in the lamp, waiting to be freed by someone rubbing it. Now, I&rsquo;m your obedient servant. Tell me your wishes.&rdquo; And the genie bowed respectfully, awaiting Aladdin&rsquo;s orders. The boy and his mother gaped wordlessly at this incredible apparition.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Sono qui al tuo comando. Dimmi cosa vuoi. Tutto quello che vuoi!&rdquo; Aladino deglut&igrave;, poi disse: &ldquo;Portaci&hellip; portaci un gran bel <span class="tooltip-word">banchetto<span class="tooltip-def">feast</span></span>.&rdquo;</p>
+                    <div class="story-english">&ldquo;I&rsquo;m here at your command. Tell me what you want. Anything you like!&rdquo; Aladdin gulped, then said: &ldquo;Bring us&hellip; bring us a great delicious feast.&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">Da quel giorno la vedova e suo figlio ebbero tutto ci&ograve; che potevano desiderare: cibo, vestiti e una bella casa, perch&eacute; il genio della lampada concesse loro tutto ci&ograve; che gli chiedevano. Aladino divent&ograve; un giovane alto e bello e sua madre sent&igrave; che avrebbe dovuto trovarsi una <span class="tooltip-word">moglie<span class="tooltip-def">wife</span></span>, prima o poi.</p>
+                    <div class="story-english">From that day on, the widow and her son had everything they could wish for: food, clothes and a fine home, for the genie of the lamp granted them everything they asked him. Aladdin grew into a tall handsome young man and his mother felt that he ought to find himself a wife, sooner or later.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 6 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 6 &mdash; La principessa Halima</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">Un giorno, mentre lasciava il mercato, Aladino vide per caso la figlia del <span class="tooltip-word">sultano<span class="tooltip-def">sultan</span></span>, Halima, sul suo trono, portata per le strade. Ha solo intravisto di sfuggita la <span class="tooltip-word">principessa<span class="tooltip-def">princess</span></span>, ma gli &egrave; bastato volerla sposare. Aladino disse a sua madre e lei disse rapidamente: &ldquo;Chieder&ograve; al Sultano la mano di sua figlia. Non potr&agrave; mai rifiutare. Aspetta e vedrai!&rdquo;</p>
+                    <div class="story-english">One day, as he left the market, Aladdin happened to see the Sultan&rsquo;s daughter Halima on her throne being carried through the streets. He only caught a fleeting glimpse of the princess, but it was enough for him to want to marry her. Aladdin told his mother and she quickly said: &ldquo;I&rsquo;ll ask the Sultan for his daughter&rsquo;s hand. He&rsquo;ll never be able to refuse. Wait and see!&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">E infatti, il Sultano fu facilmente convinto da uno <span class="tooltip-word">scrigno<span class="tooltip-def">casket</span></span> pieno di grossi diamanti ad ammettere la vedova a palazzo. Tuttavia, quando seppe perch&eacute; era venuta, disse alla vedova che suo figlio doveva portare la prova del suo potere e della sua ricchezza. Questa era principalmente un&rsquo;idea del ciambellano, poich&eacute; lui stesso era ansioso di sposare la bella figlia del sultano dagli occhi neri.</p>
+                    <div class="story-english">And indeed, the Sultan was easily persuaded by a casket full of big diamonds to admit the widow to the palace. However, when he learned why she had come, he told the widow that her son must bring proof of his power and riches. This was mostly the Chamberlain&rsquo;s idea, for he himself was eager to marry the beautiful black-eyed Sultan&rsquo;s daughter.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Se Aladino vuole sposare Halima&rdquo;, disse il Sultano, &ldquo;deve mandarmi domani quaranta scrigni pieni di diamanti. E quaranta guerrieri arabi devono <span class="tooltip-word">scortare<span class="tooltip-def">escort</span></span> il tesoro.&rdquo; Aladino per&ograve;, quando apprese la notizia, non rimase affatto sgomento. Prese la lampada, la strofin&ograve; pi&ugrave; forte che mai e disse al genio ci&ograve; di cui aveva bisogno. Il genio batt&eacute; semplicemente le mani tre volte. Apparvero magicamente quaranta scrigni di diamanti, con la loro scorta di quaranta guerrieri arabi.</p>
+                    <div class="story-english">&ldquo;If Aladdin wants to marry Halima,&rdquo; said the Sultan, &ldquo;he must send me forty caskets full of diamonds tomorrow. And forty Arab warriors must escort the treasure.&rdquo; Aladdin however, when he heard the news, was not at all dismayed. He picked up the lamp, rubbed it harder than ever and told the genie what he required. The genie simply clapped his hands three times. Forty caskets of diamonds magically appeared, with their escort of forty Arab warriors.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Dove vivranno?&rdquo; chiese il ciambellano invidioso. Il Sultano riflett&eacute; per un momento, poi permettendo all&rsquo;<span class="tooltip-word">avarizia<span class="tooltip-def">greed</span></span> di avere la meglio, disse ad Aladino di costruire un grande, splendido <span class="tooltip-word">palazzo<span class="tooltip-def">palace</span></span> per Halima. Aladino and&ograve; dritto a casa e, in quello che un tempo era un deserto, il genio gli costrui un palazzo. Le <span class="tooltip-word">nozze<span class="tooltip-def">wedding</span></span> si svolsero con grandi festeggiamenti e il Sultano fu particolarmente felice di trovare un genero cos&igrave; ricco e potente.</p>
+                    <div class="story-english">&ldquo;Where will they live?&rdquo; asked the envious Chamberlain. The Sultan pondered for a moment, then allowing greed to get the better of him, he told Aladdin to build a great, splendid palace for Halima. Aladdin went straight home and, in what was once a wilderness, the genie built him a palace. The wedding took place with great celebrations and the Sultan was especially happy at finding such a rich and powerful son-in-law.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 7 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 7 &mdash; Il mago ruba la lampada</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">La notizia dell&rsquo;improvvisa fortuna e ricchezza di Aladino si diffuse a macchia d&rsquo;olio, finch&eacute;&hellip; un giorno, uno strano <span class="tooltip-word">mercante<span class="tooltip-def">merchant</span></span> si ferm&ograve; sotto la finestra del palazzo.</p>
+                    <div class="story-english">News of Aladdin&rsquo;s sudden fortune and wealth spread like wildfire, until&hellip; one day, a strange merchant stopped beneath the palace window.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Vecchie lampade per nuove&rdquo;, disse alla principessa, in piedi sul <span class="tooltip-word">balcone<span class="tooltip-def">balcony</span></span>. Aladino aveva sempre tenuto per s&eacute; il suo <span class="tooltip-word">segreto<span class="tooltip-def">secret</span></span>. Solo sua madre lo sapeva e non l&rsquo;aveva mai detto a nessuno. Halima, ahim&egrave;, era stata tenuta all&rsquo;oscuro. E cos&igrave;, ora, volendo fare una sorpresa ad Aladino oltre che fare un buon affare, and&ograve; a prendere la vecchia lampada a olio che aveva visto Aladino riporre e la diede al mercante in cambio di una nuova. Il mercante inizi&ograve; rapidamente a strofinarla&hellip; e il genio era ora al servizio del mago che aveva riavuto la sua lampada magica.</p>
+                    <div class="story-english">&ldquo;Old lamps for new,&rdquo; he called to the princess, standing on the balcony. Aladdin had always kept his secret to himself. Only his mother knew it and she had never told a soul. Halima, alas, had been kept in the dark. And so, now, wanting to give Aladdin a surprise as well as make a good bargain, she fetched the old oil lamp she had seen Aladdin tuck away, and gave it to the merchant in exchange for a new one. The merchant quickly began to rub it&hellip; and the genie was now at the service of the wizard who had got his magic lamp back.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 8 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 8 &mdash; Il salvataggio</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">In un secondo port&ograve; via tutti i <span class="tooltip-word">beni<span class="tooltip-def">possessions</span></span> di Aladino e mand&ograve; magicamente il palazzo e la principessa in una terra sconosciuta. Aladino e il Sultano erano al limite. Nessuno sapeva cosa fosse successo. Solo Aladino sapeva che aveva qualcosa a che fare con la lampada magica. Ma mentre piangeva per il genio perduto della lampada, ricord&ograve; il genio dell&rsquo;anello dal dito del mago. Infilandosi l&rsquo;anello al dito, Aladino lo rigir&ograve; in tondo.</p>
+                    <div class="story-english">In a second he whisked away all Aladdin&rsquo;s possessions and magically sent the palace and the princess to an unknown land. Aladdin and the Sultan were at their wits&rsquo; end. Nobody knew what had happened. Only Aladdin knew it had something to do with the magic lamp. But as he wept over the lost genie of the lamp, he remembered the genie of the ring from the wizard&rsquo;s finger. Slipping the ring on his finger, Aladdin twisted it round and round.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Portami nel luogo in cui il mago ha nascosto mia moglie&rdquo;, ordin&ograve; al genio. In un <span class="tooltip-word">lampo<span class="tooltip-def">flash</span></span>, si ritrov&ograve; all&rsquo;interno del proprio palazzo e, <span class="tooltip-word">sbirciando<span class="tooltip-def">peeping</span></span> da dietro una tenda, vide il mago e la principessa, ora sua serva.</p>
+                    <div class="story-english">&ldquo;Take me to the place where the wizard has hidden my wife,&rdquo; he ordered the genie. In a flash, he found himself inside his own palace, and peeping from behind a curtain, he saw the wizard and the princess, now his servant.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Psst! Psst!&rdquo; <span class="tooltip-word">sibil&ograve;<span class="tooltip-def">hissed</span></span> Aladino. &ldquo;Aladino! Sei tu&hellip;!&rdquo;</p>
+                    <div class="story-english">&ldquo;Psst! Psst!&rdquo; hissed Aladdin. &ldquo;Aladdin! It&rsquo;s you&hellip;!&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Ssh. Non farti sentire. Prendi questa <span class="tooltip-word">polvere<span class="tooltip-def">powder</span></span> e mettila nel suo t&egrave;. Fidati di me.&rdquo; La polvere fece rapidamente effetto e il mago cadde in un sonno profondo. Aladino cerc&ograve; la lampada in alto e in basso, ma non si vedeva da nessuna parte. Mentre Aladino guardava il suo nemico addormentato, pens&ograve; di sbirciare sotto il <span class="tooltip-word">cuscino<span class="tooltip-def">pillow</span></span>. &ldquo;La lampada! Finalmente&rdquo;, sospir&ograve; Aladino, strofinandola frettolosamente.</p>
+                    <div class="story-english">&ldquo;Ssh. Don&rsquo;t let him hear you. Take this powder and put it into his tea. Trust me.&rdquo; The powder quickly took effect and the wizard fell into a deep sleep. Aladdin hunted for the lamp high and low, but it was nowhere to be seen. As Aladdin gazed at his sleeping enemy, he thought of peering underneath the pillow. &ldquo;The lamp! At last,&rdquo; sighed Aladdin, hastily rubbing it.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Bentornato, Maestro!&rdquo; esclam&ograve; il genio. &ldquo;Perch&eacute; mi hai lasciato cos&igrave; a lungo al servizio di un altro?&rdquo; &ldquo;Sono felice di rivederti. &Egrave; ora di tirarci fuori di qui.&rdquo; &ldquo;Al tuo comando&rdquo;, sorrise il genio.</p>
+                    <div class="story-english">&ldquo;Welcome back, Master!&rdquo; exclaimed the genie. &ldquo;Why did you leave me at another&rsquo;s service for so long?&rdquo; &ldquo;I&rsquo;m glad to see you again. It&rsquo;s time to get us out of here.&rdquo; &ldquo;At your command,&rdquo; smiled the genie.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Per prima cosa, metti in catene questo <span class="tooltip-word">stregone<span class="tooltip-def">sorcerer</span></span> malvagio e portalo lontano dove non sar&agrave; mai pi&ugrave; ritrovato.&rdquo; Il genio sorrise di piacere, annuì e il mago svan&igrave;. Halima strinse Aladino nella paura: &ldquo;Cosa sta succedendo? Chi &egrave; quel genio?&rdquo;</p>
+                    <div class="story-english">&ldquo;First, put this wicked wizard in chains and take him far away where he&rsquo;ll never be found again.&rdquo; The genie grinned with pleasure, nodded his head, and the wizard vanished. Halima clutched Aladdin in fear: &ldquo;What&rsquo;s going on? Who is that genie?&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Non preoccuparti, va tutto bene&rdquo;, la <span class="tooltip-word">rassicur&ograve;<span class="tooltip-def">reassured</span></span> Aladino, mentre raccontava alla moglie tutta la storia di come aveva incontrato il mago e trovato la lampada magica che gli aveva permesso di sposarla. Tutto torn&ograve; alla normalit&agrave; e la coppia felice si abbracc&igrave; con <span class="tooltip-word">tenerezza<span class="tooltip-def">tenderness</span></span>.</p>
+                    <div class="story-english">&ldquo;Don&rsquo;t worry, everything is all right,&rdquo; Aladdin reassured her, as he told his wife the whole story of how he had met the wizard and found the magic lamp that had enabled him to marry her. Everything went back to normal and the happy pair hugged each other tenderly.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 9 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 9 &mdash; Il ritorno a casa</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;Possiamo tornare nel nostro <span class="tooltip-word">regno<span class="tooltip-def">kingdom</span></span>?&rdquo; chiese timidamente la principessa, pensando a suo padre, cos&igrave; lontano. Aladino la guard&ograve; con un sorriso. &ldquo;La magia che ti ha portato qui ti riporter&agrave; indietro, ma con me al tuo fianco, per sempre.&rdquo;</p>
+                    <div class="story-english">&ldquo;Can we return to our own kingdom?&rdquo; the princess asked timidly, thinking of her father, so far away. Aladdin glanced at her with a smile. &ldquo;The magic that brought you here will take you back, but with me at your side, forever.&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">Il Sultano era quasi malato di preoccupazione. Sua figlia era scomparsa insieme al palazzo, e poi anche suo genero era scomparso. Nessuno sapeva dove fossero. Il <span class="tooltip-word">geloso<span class="tooltip-def">jealous</span></span> ciambellano continuava a ripetere: &ldquo;Te l&rsquo;avevo detto che la fortuna di Aladino non poteva durare.&rdquo;</p>
+                    <div class="story-english">The Sultan was almost ill with worry. His daughter had disappeared along with the palace, and then his son-in-law had vanished too. Nobody knew where they were. The jealous Chamberlain kept on repeating: &ldquo;I told you Aladdin&rsquo;s fortune couldn&rsquo;t last.&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">Tutti avevano perso ogni speranza di rivedere la coppia scomparsa, quando lontano Aladino strofin&ograve; la lampada magica e disse al genio: &ldquo;Riporta mia moglie, me stesso e il palazzo nella nostra terra, il pi&ugrave; velocemente possibile.&rdquo;</p>
+                    <div class="story-english">Everyone had lost all hope of ever seeing the missing pair again, when far away, Aladdin rubbed the magic lamp and said to the genie: &ldquo;Take my wife, myself and the palace back to our own land, as fast as you can.&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">&ldquo;In un lampo, Sire&rdquo;, rispose il genio. Con uno <span class="tooltip-word">schiocco di dita<span class="tooltip-def">snap of a finger</span></span>, il palazzo si lev&ograve; in aria e sfrecciò sopra il <span class="tooltip-word">regno<span class="tooltip-def">kingdom</span></span> del Sultano, sopra le teste dei suoi attoniti <span class="tooltip-word">sudditi<span class="tooltip-def">subjects</span></span>. Flutt&ograve; dolcemente sulla terra e atterr&ograve; sul suo vecchio sito. Aladino e Halima si precipitarono ad <span class="tooltip-word">abbracciare<span class="tooltip-def">embrace</span></span> il Sultano.</p>
+                    <div class="story-english">&ldquo;In a flash, Sire,&rdquo; replied the genie. At the snap of a finger, the palace rose into the air and sped over the Sultan&rsquo;s kingdom, above the heads of his astonished subjects. It gently floated down to earth and landed on its old site. Aladdin and Halima rushed to embrace the Sultan.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-italian italian-text">Ancora oggi, in quel paese lontano, si possono ancora <span class="tooltip-word">ammirare<span class="tooltip-def">admire</span></span> le tracce di un antico palazzo che la gente chiama il palazzo venuto dal cielo.</p>
+                    <div class="story-english">To this very day, in that distant country, you can still admire the traces of an ancient palace which folk call the palace that came from the skies.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ending card -->
+        <div class="moral-card">
+            <div class="moral-label">&#x1FA94; Fine della storia &mdash; The End</div>
+            <div class="moral-text-it">&ldquo;L&rsquo;ingegno vale pi&ugrave; della ricchezza.&rdquo;</div>
+            <div class="moral-text-en">&ldquo;Wit is worth more than wealth.&rdquo;</div>
+        </div>
+
+    </div>
+    <!-- end of main -->
+
+
+    <!-- More Italian Stories -->
+    <div class="related-section">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3>Le Avventure di Aladino</h3>
-                            <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <h5 class="w3-center w3-padding-64"><strong><span class="w3-wide w3-xlarge"></span></h5></strong>
-    <p>C'era una volta una vedova che aveva un figlio che si chiamava Aladino. Erano molto poveri, anche se Aladino faceva quello che poteva per guadagnare qualche soldo, raccogliendo frutti in luoghi lontani.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Once upon a time, a widow had a son whose name was Aladdin. They were very poor, though Aladdin did what he could to earn some pennies, by picking fruits in faraway places.</i></p>
+            <h3>More Italian Stories</h3>
+            <div class="related-grid-cards">
+                <a href="Porcellini.html" class="related-card">
+                    <div class="related-icon">&#x1F437;</div>
+                    <div class="related-title">The Three Little Pigs</div>
+                </a>
+                <a href="ItalianTortoise.html" class="related-card">
+                    <div class="related-icon">&#x1F422;</div>
+                    <div class="related-title">Tortoise &amp; the Hare</div>
+                </a>
+                <a href="ItalianDuck.html" class="related-card">
+                    <div class="related-icon">&#x1F9A2;</div>
+                    <div class="related-title">The Ugly Duckling</div>
+                </a>
+                <a href="ItalianKing.html" class="related-card">
+                    <div class="related-icon">&#x1F451;</div>
+                    <div class="related-title">King Midas</div>
+                </a>
+                <a href="ItalianJack.html" class="related-card">
+                    <div class="related-icon">&#x1F331;</div>
+                    <div class="related-title">Jack &amp; the Beanstalk</div>
+                </a>
+                <a href="NewItalianPage.html" class="related-card">
+                    <div class="related-icon">&#x1F1EE;&#x1F1F9;</div>
+                    <div class="related-title">All Italian Resources</div>
+                </a>
+            </div>
+        </div>
     </div>
-    <img src="images/morocco.jpg" style="width:100%;max-width:500px" class="w3-margin-top w3-center">
-
-  </div>
-</div>
-<br>
-<br>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>Un giorno, mentre cercava fichi selvatici in un boschetto lontano dalla città, Aladino incontrò un misterioso sconosciuto. Quest'uomo dagli occhi scuri ben vestito con una barba nera curata e uno splendido zaffiro nel turbante, fece ad Aladino una domanda insolita:</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>One day, as he was looking for wild figs in a grove far from the town, Aladdin met a mysterious stranger. This well dressed dark-eyed man with a trim black beard and a splendid sapphire in his turban, asked Aladdin an unusual question:</i></p>
-    </div>
-  </div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>"Vieni qui, ragazzo," ordinò. "Ti piacerebbe guadagnare un penny d'argento?"</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Come here, boy," he ordered. "How would you like to earn a silver penny?"</i></p>
-</div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>"Un soldo d'argento!" esclamò Aladino. "Signore, farei qualsiasi cosa per quel tipo di pagamento."</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"A silver penny!" exclaimed Aladdin. "Sir, I'd do anything for that kind of payment."</i></p>
-</div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>"Non ti chiederò di fare molto. Entra in questa caverna. Sono troppo grande per farmi passare attraverso me stesso. Se fai come ti chiedo, avrai la tua ricompensa." Lo sconosciuto aiutò Aladdin a infilarsi nella caverna. Snello e agile com'era, il ragazzo cadde facilmente. I suoi piedi toccarono la pietra e scese con cautela alcuni gradini. . . e si ritrovò in una grande camera. Sembrava scintillare, anche se debolmente illuminata dalla luce tremolante di una vecchia lampada a olio. Quando gli occhi di Aladino si abituarono all'oscurità, vide uno spettacolo meraviglioso: alberi grondanti di gioielli scintillanti, vasi d'oro e scrigni pieni di gemme inestimabili. Migliaia di oggetti preziosi giacevano sparsi qua e là. Era un tesoro! Incapace di credere ai suoi occhi, Aladdin era stordito quando sentì un grido dietro di lui.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"I'm not going to ask you to do much. Just enter this cave. I'm much too big to squeeze through myself. If you do as I ask, you'll have your reward." The stranger helped Aladdin squeeze into the cave. Slim and agile as he was, the boy easily went down. His feet touched stone and he carefully made his way down some steps . . . and found himself in a large chamber. It seemed to sparkle, though dimly lit by the flickering light of an old oil lamp. When Aladdin's eyes became used to the gloom, he saw a wonderful sight: trees dripping with glittering jewels, pots of gold and caskets full of priceless gems. Thousands of precious objects lay scattered about. It was a treasure trove! Unable to believe his eyes, Aladdin was standing dazed when he heard a shout behind him.</i></p>
-</div><img src="images/aladdin.jpg" style="width:100%;max-width:500px" class="w3-margin-top w3-center">
-</div>
-	&nbsp;
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"La lampada! Spegni la fiamma e portami la lampada!" Sorpreso e sospettoso, perché lo straniero dovrebbe volere solo una vecchia lampada da tutto un simile tesoro, si chiese Aladino. Forse era un mago. Decise di stare in guardia. Raccolta la lampada, tornò sui suoi passi fino all'ingresso.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"The lamp! Put out the flame and bring me the lamp!" Surprised and suspicious, for why should the stranger, out of all such a treasure want only an old lamp, Aladdin wondered. Perhaps he was a wizard. He decided to be on his guard. Picking up the lamp, he retraced his steps up to the entrance.</i></p>
-    </div>
-    
-
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Dammi la lampada," esortò il mago con impazienza. "Dammelo," iniziò a gridare, allungando il braccio per afferrarlo, ma Aladdin cautamente si ritrasse.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Give me the lamp," urged the wizard impatiently. "Hand it over," he began to shout, thrusting out his arm to grab it, but Aladdin cautiously drew back.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Fammi uscire prima..."</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Let me out first..."</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Peccato per te," sbottò lo sconosciuto, coprendo l'ingresso della caverna, senza mai accorgersi che, mentre lo faceva, un anello gli scivolò dal dito. Un Aladdin terrorizzato fu lasciato nell'oscurità totale, chiedendosi cosa avrebbe fatto il mago dopo. Poi ha provato sul ring. Mettendolo senza meta al dito, lo girò in tondo. All'improvviso, la stanza fu inondata da una luce rosata e un grande genio con le mani giunte apparve su una nuvola.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Too bad for you," snapped the stranger, covering the cave entrance, never noticing that, as he did so, a ring slid off his finger. A terrified Aladdin was left in pitch darkness, wondering what the wizard would do next. Then he tried on the ring. Aimlessly putting it on his finger, he twisted it round and round. Suddenly, the room was flooded with a rosy light and a great genie with clasped hands appeared on a cloud.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Al tuo comando, sire", disse il genio.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"At your command, sire," said the genie.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Sbalordito, Aladino non poté che balbettare:</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Now astounded, Aladdin could only stammer:</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Voglio andare a casa!" In un attimo fu di nuovo a casa sua.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"I want to go home!" In a flash he was back in his own home.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Come sei entrato?" chiamò sua madre dal fornello della cucina, non appena lo vide. Eccitato, suo figlio le raccontò le sue avventure.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"How did you get in?" called his mother from the kitchen stove, the minute she set eyes on him. Excitedly, her son told her of his adventures.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Dov'è la moneta d'argento?" chiese sua madre. Aladino si mise una mano sulla fronte. Perché tutto quello che aveva portato a casa era la vecchia lampada a olio "Oh, mamma! Mi dispiace tanto. Questo è tutto quello che ho."</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Where's the silver coin?" his mother asked. Aladdin placed his hand on his forhead. For all he had brought home was the old oil lamp "Oh, mother! I'm so sorry. This is all I've got."</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Beh, speriamo che funzioni. È così sporco..." e la vedova cominciò a sfregare la lampada.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Well, let's hope it works. It's so dirty..." and the widow began to rub the lamp.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>All'improvviso sparò un altro genio, in una nuvola di fumo.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Suddenly out shot another genie, in a cloud of smoke.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Mi hai liberato, dopo secoli! Ero prigioniero nella lampada, in attesa di essere liberato da qualcuno che lo strofinava. Ora sono il tuo servitore obbediente. Esprimi i tuoi desideri." E il genio si inchinò rispettosamente, aspettando gli ordini di Aladino. Il ragazzo e sua madre rimasero a bocca aperta davanti a questa incredibile apparizione, poi il genio disse con una punta di impazienza nella voce:</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"You've set me free, after centuries! I was a prisoner in the lamp, waiting to be freed by someone rubbing it. Now, I'm your obedient servant. Tell me your wishes." And the genie bowed respectfully, awaiting Aladdin's orders. The boy and his mother gaped wordlessly at this incredible apparition, then the genie said with a hint of impatience in his voice:</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Sono qui al tuo comando. Dimmi cosa vuoi. Tutto quello che vuoi!" Aladino deglutì, poi disse:</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"I'm here at your command. Tell me what you want. Anything you like!" Aladdin gulped, then said:</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Portaci... portaci..." continuò la madre, che ancora non si era messa a preparare la cena: "un gran bel banchetto".</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Bring us... bring us..." his mother, who still had not started cooking dinner, continued saying: "a great delicious feast".</i></p>
-    </div>
-      <p><i></i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Da quel giorno la vedova e suo figlio ebbero tutto ciò che potevano desiderare: cibo, vestiti e una bella casa, perché il genio della lampada concesse loro tutto ciò che gli chiedevano. Aladdin divenne un giovane alto e bello e sua madre sentì che avrebbe dovuto trovarsi una moglie, prima o poi.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>From that day on, the widow and her son had everything they could wish for: food, clothes and a fine home, for the genie of the lamp granted them everything they asked him. Aladdin grew into a tall handsome young man and his mother felt that he ought to find himself a wife, sooner or later.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Un giorno, mentre lasciava il mercato, Aladino vide per caso la figlia del Sultano, Halima, sul suo trono, portata per le strade. Ha solo intravisto di sfuggita la principessa, ma gli è bastato volerla sposare. Aladdin disse a sua madre e lei disse rapidamente:</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>One day, as he left the market, Aladdin happened to see the Sultan's daughter Halima in her throne being carried through the streets. He only caught a fleeting glimpse of the princess, but it was enough for him to want to marry her. Aladdin told his mother and she quickly said:</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Chiederò al Sultano la mano di sua figlia. Non potrà mai rifiutare. Aspetta e vedrai!"</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"I'll ask the Sultan for his daughter's hand. He'll never be able to refuse. Wait and see!"</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>E infatti, il Sultano fu facilmente convinto da uno scrigno pieno di grossi diamanti ad ammettere la vedova a palazzo. Tuttavia, quando seppe perché era venuta, disse alla vedova che suo figlio doveva portare la prova del suo potere e della sua ricchezza. Questa era principalmente un'idea del ciambellano, poiché lui stesso era ansioso di sposare la bella figlia del sultano dagli occhi neri.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>And indeed, the Sultan was easily persuaded by a casket full of big diamonds to admit the widow to the palace. However, when he learned why she had come, he told the widow that her son must bring proof of his power and riches. This was mostly the Chamberlain's idea, for he himself was eager to marry the beautiful black-eyed Sultan's daughter.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Se Aladino vuole sposare Halima," disse il Sultano, "deve mandarmi domani quaranta scrigni pieni di diamanti. E quaranta guerrieri arabi devono scortare il tesoro."</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"If Aladdin wants to marry Halima," said the Sultan, "he must send me forty caskets full of diamonds tomorrow. And forty Arab warriors must escort the treasure."</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>La madre di Aladino andò tristemente a casa. Il genio della lampada magica aveva già fatto miracoli, ma niente del genere. Aladino però, quando apprese la notizia, non rimase affatto sgomento. Prese la lampada, la strofinò più forte che mai e disse al genio ciò di cui aveva bisogno. Il genio ha semplicemente battuto le mani tre volte. Apparvero magicamente quaranta scrigni di diamanti, con la loro scorta di quaranta guerrieri arabi. Quando vide tutto ciò il giorno dopo, il Sultano fu colto alla sprovvista. Non avrebbe mai immaginato che una simile ricchezza potesse esistere. Proprio mentre stava per accettare Aladino come sposo di sua figlia, l'invidioso Chamberlain irruppe con una domanda.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Aladdin's mother went sadly home. The genie of the magic lamp had already worked wonders, but nothing like this. Aladdin however, when he heard the news, was not at all dismayed. He picked up the lamp, rubbed it harder than ever and told the genie what he required. The genie simply clapped his hands three times. Forty caskets of diamonds magically appeared, with their escort of forty Arab warriors. When he saw all thls the next day, the Sultan was taken aback. He never imagined such wealth could exist. Just as he was about to accept Aladdin as his daughter's bridegroom, the envious Chamberlain broke in with a question.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Dove vivranno?" chiese. Il Sultano rifletté per un momento, poi permettendo all'avidità di avere la meglio su hlm, disse ad Aladino di costruire un grande, splendido palazzo per Halima. Aladino andò dritto a casa e, in quello che un tempo era un deserto, il genio gli costruì un palazzo. L'ultimo ostacolo era stato superato. Le nozze si svolsero con grandi festeggiamenti e il Sultano fu particolarmente felice di trovare un genero così ricco e potente.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Where wlll they live?" he asked. The Sultan pondered for a moment, then allowing greed to get the better of hlm, he told Aladdin to build a great, splendid palace for Halima. Aladdin went straight home and, in what was once a wilderness, the genie built him a palace. The last obstacle had been overcome. The wedding took place with great celebrations and the Sultan was especially happy at finding such a rich and powerful son-in-law.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>La notizia dell'improvvisa fortuna e ricchezza di Aladino si diffuse a macchia d'olio, finché... un giorno, uno strano mercante si fermò sotto la finestra del palazzo.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>News of Aladdin's sudden fortune and wealth spread like wildfire, until.... one day, a strange merchant stopped beneath the palace window.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Vecchie lampade per nuove", disse alla principessa, in piedi sul balcone. Ora, Aladino aveva sempre tenuto per sé il suo segreto. Solo sua madre lo sapeva e non l'aveva mai detto a nessuno. Halima, ahimè, era stata tenuta all'oscuro. E così, ora, volendo fare una sorpresa ad Aladino oltre che fare un buon affare, andò a prendere la vecchia lampada a olio che aveva visto Aladino riporre e la diede al mercante in cambio di una nuova. Il mercante iniziò rapidamente a strofinarlo... e il genio era ora al servizio del mago che aveva riavuto la sua lampada magica.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Old lamps for new," he called to the princess, standing on the balcony. Now, Aladdin had always kept his secret to himself. Only his mother knew it and she had never told a soul. Halima, alas, had been kept in the dark. And so, now, wanting to give Aladdin a surprise as well as make a good bargain, she fetched the old oil lamp she had seen Aladdin tuck away, and gave it to the merchant in exchange for a new one. The merchant quickly began to rub it... and the genie was now at the service of the wizard who had got his magic lamp back.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>In un secondo portò via tutti i beni di Aladino e mandò magicamente il palazzo e la principessa in una terra sconosciuta. Aladino e il Sultano erano al limite. Nessuno sapeva cosa fosse successo. Solo Aladino sapeva che aveva qualcosa a che fare con la lampada magica. Ma mentre piangeva per il genio perduto della lampada, ricordò il genio dell'anello dal dito del mago. Infilandosi l'anello al dito, Aladino lo rigirò in tondo.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>In a second he whisked away all Aladdin's possessions and magically sent the palace and the princess to an unknown land. Aladdin and the Sultan were at their wits' end. Nobody knew what had happened. Only Aladdin knew it had something to do with the magic lamp. But as he wept over the lost genie of the lamp, he remembered the genie of the ring from the wizard's finger. Slipping the ring on his finger, Aladdin twisted it round and round.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Portami nel luogo in cui il mago ha nascosto mia moglie", ordinò al genio. In un lampo, si ritrovò all'interno del proprio palazzo e, sbirciando da dietro una tenda, vide il mago e la principessa, ora sua serva.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Take me to the place where the wizard has hidden my wife," he ordered the genie. In a flash, he found himself inside his own palace, and peeping from behind a curtain, he saw the wizard and the princess, now his servant.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Psst! Psst!" sibilò Aladino.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Psst! Psst!" hissed Aladdin.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Aladino! Sei tu...!"</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Aladdin! It's you...!"</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Ssh. Non farti sentire. Prendi questa polvere e mettila nel suo tè. Fidati di me." La polvere fece rapidamente effetto e il mago cadde in un sonno profondo. Aladino cercò la lampada in alto e in basso, ma non si vedeva da nessuna parte. Ma doveva essere lì. Come, altrimenti, il mago aveva spostato il palazzo? Mentre Aladino guardava il suo nemico addormentato, pensò di sbirciare sotto il cuscino. "La lampada! Finalmente," sospirò Aladino, strofinandola frettolosamente.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Ssh. Don't let him hear you. Take this powder and put it into his tea. Trust me." The powder quickly took effect and the wizard fell into a deep sleep. Aladdin hunted for the lamp high and low, but it was nowere to be seen. But it had to be there. How, otherwise, had the wizard moved the palace? As Aladdin gazed at his sleeping enemy, he thought of peering underneath the pillow. "The lamp! At last," sighed Aladdin, hastily rubbing it.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Bentornato, Maestro!" esclamò il genio. "Perché mi hai lasciato così a lungo al servizio di un altro?"</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Welcome back, Master!" exclaimed the genie. "Why did you leave me at another's service for so long?"</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Benvenuto" rispose Aladino. "Sono felice di rivederti. Sicuramente mi sei mancato! È ora di tirarci fuori di qui."</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Welcome," replied Aladdin. "I'm glad to see you again. I've certainly missed you! It's time to get us out of here."</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Al tuo comando", sorrise il genio.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"At your command," smiled the genie.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Per prima cosa, metti in catene questo mago malvagio e portalo lontano dove non sarà mai più ritrovato." Il genio sorrise di piacere, annuì e il mago svanì. Halima strinse Aladino nella paura:</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"First, put this wicked wizard in chains and take him far away where he'll never be found again." The genie grinned with pleasure, nodded his head, and the wizard vanished. Halima clutched Aladdin in fear:</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Cosa sta succedendo? Chi è quel genio?"</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"What's going on? Who is that genie?"</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Non preoccuparti, va tutto bene", la rassicurò Aladino, mentre raccontava alla moglie tutta la storia di come aveva incontrato il mago e trovato la lampada magica che gli aveva permesso di sposarla. Tutto è tornato alla normalità e la coppia felice si è abbracciata teneramente.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Don't worry, everything is all right," Aladdin reassured her, as he told his wife the whole story of how he had met the wizard and found the magic lamp that had enabled him to marry her. Everything went back to normal and the happy pair hugged each other tenderly.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Possiamo tornare nel nostro regno?" chiese timidamente la principessa, pensando a suo padre, così lontano. Aladino la guardò con un sorriso.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Can we return to our own kingdom?" the princess asked timidly, thinking of her father, so far away. Aladdin glanced at her with a smile.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"La magia che ti ha portato qui ti riporterà indietro, ma con me al tuo fianco, per sempre."</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"The magic that brought you here will take you back, but with me at your side, forever."</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Il Sultano era quasi malato di preoccupazione. Sua figlia era scomparsa insieme al palazzo, e poi anche suo genero era scomparso. Nessuno sapeva dove fossero, nemmeno i saggi chiamati frettolosamente a palazzo per descrivere l'accaduto. Il geloso ciambellano continuava a ripetere:</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The Sultan was almost ill with worry. His daughter had disappeared along with the palace, and then his son-in-law had vanished too. Nobody knew where they were, not even the wise men hastily called to the palace to describe what had happened. The jealous Chamberlain kept on repeating:</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Te l'avevo detto che la fortuna di Aladino non poteva durare."</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"I told you Aladdin's fortune couldn't last."</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Tutti avevano perso ogni speranza di rivedere la coppia scomparsa, quando lontano Aladino strofinò la lampada magica e disse al genio:</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Everyone had lost all hope of ever seeing the missing pair again, when far away, Aladdin rubbed the magic lamp and said to the genie:</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"Riporta mia moglie, me stesso e il palazzo nella nostra terra, il più velocemente possibile."</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Take my wife, myself and the palace back to our own land, as fast as you can."</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>"In un lampo, Sire", rispose il genio. Con uno schiocco di dita, il palazzo si levò in aria e sfrecciò sopra il regno del Sultano, sopra le teste dei suoi attoniti sudditi. Fluttuò dolcemente sulla terra e atterrò sul suo vecchio sito. Aladino e Halima si precipitarono ad abbracciare il Sultano.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"In a flash, Sire," replied the genie. At the snap of a finger, the palace rose into the air and sped over the Sultan's kingdom, above the heads of his astonished subjects. It gently floated down to earth and landed on its old site. Aladdin and Halima rushed to embrace the Sultan.</i></p>
-    </div>
-  </div>
-</div>
-  <!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Ancora oggi, in quel paese lontano, si possono ancora ammirare le tracce di un antico palazzo che la gente chiama il palazzo venuto dal cielo.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>To this very day, in that distant country, you can still admire the traces of an ancient palace which folk call the palace that came from the skies.</i></p>
-    </div>
-  </div>
-</div>
-
-                    </div> <!-- end of text-container -->
-                    
-                    
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic -->
-    <!-- end of terms content -->
-			    
-                        </div> <!-- end of col--> 
-                    </div> <!-- end of row -->
-                    &nbsp;&nbsp;<a class="btn-outline-reg back" href="ItalianResources.html">BACK</a>
-                </div> <!-- end of col-->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-2 -->
-    <!-- end of privacy content -->
-
-    
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Also Enjoy in: <a class="green" href="SpanishAladdin.html">Spanish</a>, <a class="green" href="FrenchAladdin.html.html">French</a>, <a class="green" href="PortugueseAladdin.html">Portuguese</a>, <a class="green" href="GermanAladdin.html">German</a>, <a class="green" href="RussianAladdin.html">Russian</a>, <a class="green" href="SwedishAladdin.html">Swedish</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
 
 
     <!-- Footer -->
@@ -687,60 +789,42 @@
                 <div class="col-md-6">
                     <div class="text-container about">
                         <h4>Few Words About Lingua Bud</h4>
-                        <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                        <p class="white">We&rsquo;re passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Links</h4>
                         <ul class="list-unstyled li-space-lg white">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="index.html">Home</a></li>
+                            <li><a class="white" href="terms-conditions.html">Terms &amp; Conditions</a></li>
+                            <li><a class="white" href="privacy-policy.html">Privacy Policy</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Tools</h4>
+                        <h4>Learn</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li class="media">
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="Resources2.html">Resources</a></li>
+                            <li><a class="white" href="instructors.html">Instructors</a></li>
+                            <li><a class="white" href="connect.html">Find Partners</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Partners</h4>
+                        <h4>Languages</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="NewItalianPage.html">Italian</a></li>
+                            <li><a class="white" href="NewSpanishPage.html">Spanish</a></li>
+                            <li><a class="white" href="NewFrenchPage.html">French</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of footer -->  
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- end of footer -->
 
 
@@ -749,24 +833,264 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">Lingua Bud</a></p>
-                </div> <!-- end of col -->
-            </div> <!-- enf of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of copyright --> 
+                    <p class="p-small">Copyright &copy; 2026 <a href="index.html">Lingua Bud</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- end of copyright -->
 
-	
+
     <!-- Scripts -->
-    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
-    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
-    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
-    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
-    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
-    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
-    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
-    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
-    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <!-- Tooltip edge-clamping + mobile tap support -->
+    <script>
+        (function () {
+            function clampTooltip(word) {
+                var def = word.querySelector('.tooltip-def');
+                if (!def) return;
+                def.style.left = '50%';
+                def.style.right = 'auto';
+                def.style.transform = 'translateX(-50%)';
+                var rect = def.getBoundingClientRect();
+                var vw = window.innerWidth || document.documentElement.clientWidth;
+                var PAD = 10;
+                if (rect.right > vw - PAD) {
+                    def.style.left = 'auto';
+                    def.style.right = '0';
+                    def.style.transform = 'none';
+                } else if (rect.left < PAD) {
+                    def.style.left = '0';
+                    def.style.right = 'auto';
+                    def.style.transform = 'none';
+                }
+            }
+
+            document.querySelectorAll('.tooltip-word').forEach(function (word) {
+                word.addEventListener('mouseenter', function () { clampTooltip(this); });
+                word.addEventListener('touchend', function (e) {
+                    var isActive = this.classList.contains('tooltip-active');
+                    document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                    if (!isActive) { this.classList.add('tooltip-active'); clampTooltip(this); }
+                    e.preventDefault();
+                });
+            });
+
+            document.addEventListener('touchend', function (e) {
+                if (!e.target.closest('.tooltip-word')) {
+                    document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                }
+            });
+        })();
+    </script>
+
+    <!-- Italian Narrator Script -->
+    <script>
+        const synth = window.speechSynthesis;
+        let utterances = [];
+        let currentUtteranceIndex = 0;
+        let currentSpeed = 1;
+        let isPaused = false;
+        let isPlaying = false;
+        let italianVoice = null;
+
+        const italianParagraphs = document.querySelectorAll('.italian-text');
+
+        function initVoices() {
+            const voices = synth.getVoices();
+            italianVoice = voices.find(v => v.lang === 'it-IT');
+            if (!italianVoice) italianVoice = voices.find(v => v.lang.startsWith('it'));
+            if (italianVoice) updateStatus('Using ' + italianVoice.name + ' (' + italianVoice.lang + ')');
+            else updateStatus('No Italian voice found. Using default.');
+        }
+
+        if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = initVoices;
+        setTimeout(initVoices, 100);
+
+        function updateStatus(msg) {
+            document.getElementById('narratorStatus').textContent = msg;
+        }
+
+        function createUtterances() {
+            utterances = [];
+            italianParagraphs.forEach(function(paragraph, index) {
+                var clone = paragraph.cloneNode(true);
+                clone.querySelectorAll('.tooltip-def').forEach(function(el) { el.remove(); });
+                var utterance = new SpeechSynthesisUtterance(clone.textContent);
+                utterance.rate = currentSpeed;
+                utterance.lang = 'it-IT';
+                if (italianVoice) utterance.voice = italianVoice;
+                utterance.onstart = function() {
+                    italianParagraphs.forEach(function(p) { p.classList.remove('speaking'); });
+                    paragraph.classList.add('speaking');
+                    updateStatus('Reading paragraph ' + (index + 1) + ' of ' + italianParagraphs.length + '...');
+                };
+                utterance.onend = function() {
+                    paragraph.classList.remove('speaking');
+                    currentUtteranceIndex++;
+                    if (currentUtteranceIndex < utterances.length) {
+                        synth.speak(utterances[currentUtteranceIndex]);
+                    } else {
+                        stopNarration();
+                        updateStatus('Story completed! Ready to play again.');
+                    }
+                };
+                utterances.push(utterance);
+            });
+        }
+
+        function playNarration() {
+            if (!isPlaying) {
+                createUtterances();
+                currentUtteranceIndex = 0;
+                isPlaying = true;
+                isPaused = false;
+                if (utterances.length > 0) {
+                    synth.speak(utterances[0]);
+                    document.getElementById('playBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-block';
+                }
+            } else if (isPaused) {
+                synth.resume();
+                isPaused = false;
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                updateStatus('Resumed...');
+            }
+        }
+
+        function pauseNarration() {
+            if (isPlaying && !isPaused) {
+                synth.pause();
+                isPaused = true;
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                updateStatus('Paused');
+            }
+        }
+
+        function stopNarration() {
+            synth.cancel();
+            isPlaying = false;
+            isPaused = false;
+            currentUtteranceIndex = 0;
+            italianParagraphs.forEach(function(p) { p.classList.remove('speaking'); });
+            document.getElementById('playBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+            updateStatus(italianVoice ? 'Ready to play \u2022 ' + italianVoice.name : 'Ready to play \u2022 Italian voice');
+        }
+
+        function setSpeed(speed) {
+            currentSpeed = speed;
+            document.querySelectorAll('.speed-btn').forEach(function(btn) { btn.classList.remove('active'); });
+            event.target.classList.add('active');
+            if (isPlaying) {
+                var wasPlaying = !isPaused;
+                synth.cancel();
+                createUtterances();
+                if (wasPlaying && currentUtteranceIndex < utterances.length) {
+                    synth.speak(utterances[currentUtteranceIndex]);
+                }
+            }
+            updateStatus('Speed set to ' + speed + '\u00d7');
+        }
+
+        window.addEventListener('beforeunload', function() { synth.cancel(); });
+    </script>
+
+    <!-- Firebase Auth for navbar -->
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
+
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
+                    }
+                } catch (e) { console.error('Profile load error:', e); }
+
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
+                loadUnreadMessageCount(user.uid);
+                loadPendingRequests(user.uid);
+
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
+            }
+        });
+
+        // ── Notification counts ──────────────────────────────────────────────────
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+        }
+
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(query(collection(db, 'conversations'), where('participants', 'array-contains', uid)), (snap) => {
+                _unreadMsgCount = 0;
+                snap.forEach(d => { const c = d.data(); if (c.unreadCount && c.unreadCount[uid]) _unreadMsgCount += c.unreadCount[uid]; });
+                const ml = document.getElementById('messagesLink'), uc = document.getElementById('unreadCount');
+                if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+                if (uc) { if (_unreadMsgCount > 0) { uc.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; uc.classList.add('show'); } else uc.classList.remove('show'); }
+                _updateProfileBadge();
+            });
+        }
+
+        function loadPendingRequests(uid) {
+            function _updateActivityBadge() {
+                const bookingsEl = document.getElementById('bookingsCount');
+                if (bookingsEl) { if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); } else bookingsEl.classList.remove('show'); }
+                const friendsEl = document.getElementById('friendsCount');
+                if (friendsEl) { if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); } else friendsEl.classList.remove('show'); }
+            }
+            onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
+                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
+                _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+        }
+    </script>
 </body>
 </html>
