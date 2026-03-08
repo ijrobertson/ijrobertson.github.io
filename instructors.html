@@ -762,13 +762,62 @@
 
         #payment-error-msg {
             display: none;
-            background: #f8d7da;
-            color: #dc3545;
+            background: #fff5f5;
+            color: #721c24;
             border: 1px solid #f5c6cb;
+            border-left: 4px solid #dc3545;
             border-radius: 6px;
-            padding: 0.75rem 1rem;
+            padding: 0.85rem 1rem;
             margin-top: 1rem;
             font-size: 0.9rem;
+        }
+
+        #payment-success-msg {
+            display: none;
+            text-align: center;
+            padding: 2rem 1rem 1.5rem;
+        }
+        #payment-success-msg .success-icon {
+            width: 72px;
+            height: 72px;
+            background: #d4edda;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+        }
+        #payment-success-msg .success-icon i {
+            font-size: 2rem;
+            color: #28a745;
+        }
+        #payment-success-msg h5 {
+            color: #155724;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        #payment-success-msg p {
+            color: #555;
+            font-size: 0.92rem;
+            margin-bottom: 1.25rem;
+        }
+        #payment-success-msg .redirect-bar {
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            max-width: 240px;
+            margin: 0 auto;
+        }
+        #payment-success-msg .redirect-bar-fill {
+            height: 100%;
+            background: #28a745;
+            border-radius: 2px;
+            animation: fillBar 2.5s linear forwards;
+        }
+        @keyframes fillBar {
+            from { width: 0%; }
+            to   { width: 100%; }
         }
 
         .stripe-pending-badge {
@@ -1748,7 +1797,7 @@
                 console.error('Payment init error:', error);
                 document.getElementById('payment-element-loading').style.display = 'none';
                 const errEl = document.getElementById('payment-error-msg');
-                errEl.textContent = error.message || 'Failed to initialize payment. Please try again.';
+                errEl.innerHTML = '<strong><i class="fas fa-exclamation-circle"></i> Unable to Load Payment</strong><br><span style="font-size:0.85rem; display:block; margin-top:0.3rem;">We were unable to initialize the payment form. Please close this window and try again.</span>';
                 errEl.style.display = 'block';
             }
         }
@@ -1810,7 +1859,7 @@
 
                         if (error) {
                             const errEl = document.getElementById('payment-error-msg');
-                            errEl.textContent = error.message;
+                            errEl.innerHTML = `<strong><i class="fas fa-exclamation-circle"></i> Payment Unsuccessful</strong><br><span style="font-size:0.85rem; display:block; margin-top:0.3rem;">${error.message || 'Your payment could not be processed. Please try again or use a different payment method.'}</span>`;
                             errEl.style.display = 'block';
                             payBookBtn.disabled = false;
                             payBookBtn.innerHTML = '<i class="fas fa-lock"></i> Pay & Book';
@@ -1849,14 +1898,21 @@
                             selectedSlot = null;
                             stripeElements = null;
                             stripeInstance = null;
-                            // Redirect to Bookings page to see the upcoming lesson
-                            window.location.href = 'bookings.html';
+
+                            // Show success screen, then redirect
+                            document.getElementById('payment-element-wrapper').style.display = 'none';
+                            document.getElementById('payment-error-msg').style.display = 'none';
+                            document.getElementById('payment-success-msg').style.display = 'block';
+                            payBookBtn.style.display = 'none';
+                            document.getElementById('back-to-calendar-btn').style.display = 'none';
+                            document.getElementById('close-booking-btn').style.display = 'none';
+                            setTimeout(() => { window.location.href = 'bookings.html'; }, 2500);
                         }
 
                     } catch (err) {
                         console.error('Payment error:', err);
                         const errEl = document.getElementById('payment-error-msg');
-                        errEl.textContent = err.message || 'Payment failed. Please try again.';
+                        errEl.innerHTML = '<strong><i class="fas fa-exclamation-circle"></i> Payment Unsuccessful</strong><br><span style="font-size:0.85rem; display:block; margin-top:0.3rem;">Your payment could not be processed. Please try again or use a different payment method.</span>';
                         errEl.style.display = 'block';
                         payBookBtn.disabled = false;
                         payBookBtn.innerHTML = '<i class="fas fa-lock"></i> Pay & Book';
@@ -1871,6 +1927,9 @@
                 document.getElementById('back-to-calendar-btn').style.display = 'none';
                 document.getElementById('pay-book-btn').style.display = 'none';
                 document.getElementById('payment-element').innerHTML = '';
+                document.getElementById('payment-error-msg').style.display = 'none';
+                document.getElementById('payment-success-msg').style.display = 'none';
+                document.getElementById('payment-element-wrapper').style.display = 'none';
                 selectedSlot = null;
                 stripeElements = null;
                 stripeInstance = null;
@@ -2291,6 +2350,17 @@
                         </div>
 
                         <div id="payment-error-msg"></div>
+
+                        <div id="payment-success-msg">
+                            <div class="success-icon">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <h5>Payment Successful!</h5>
+                            <p>Your payment was successfully accepted and your lesson has been booked.<br>Redirecting you to your bookings…</p>
+                            <div class="redirect-bar">
+                                <div class="redirect-bar-fill"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
