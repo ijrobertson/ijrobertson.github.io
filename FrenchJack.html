@@ -1,89 +1,370 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Read Jack and the Beanstalk in French. Learn how to speak French by reading this classic. Learn French through stories.">
-    <meta name="keywords" content="Jack and the Beanstalk in French, lire en français, read French, Jacques et les Haricots Magiques, short stories">
+    <meta name="description" content="Apprenez le français en lisant Jacques et les Haricots Magiques. Read Jack and the Beanstalk in French with English translation to learn French the fun way.">
+    <meta name="keywords" content="French stories, short stories in French, Jacques et les Haricots Magiques, learn French for free, Jack and the Beanstalk in French, Lingua Bud">
     <meta name="author" content="Lingua Bud">
 
-    <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
-	<meta property="og:site_name" content="" /> <!-- website name -->
-	<meta property="og:site" content="" /> <!-- website link -->
-	<meta property="og:title" content=""/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="" /> <!-- image link, make sure it's jpg -->
-	<meta property="og:url" content="" /> <!-- where do you want your post to link to -->
-	<meta property="og:type" content="article" />
+    <!-- OG Meta Tags -->
+    <meta property="og:site_name" content="Lingua Bud" />
+    <meta property="og:title" content="Jacques et les Haricots Magiques &ndash; Learn French with Stories"/>
+    <meta property="og:description" content="Read Jack and the Beanstalk in French. A bilingual short story with English translation to help you learn French." />
+    <meta property="og:type" content="article" />
 
     <!-- Website Title -->
     <title>Jacques et les Haricots Magiques - Lingua Bud</title>
-    
+
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/fontawesome-all.css" rel="stylesheet">
     <link href="css/swiper.css" rel="stylesheet">
-	<link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
-	
-	<!-- Favicon  -->
+
+    <!-- Favicon -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ── Hero ── */
+        .sd-hero {
+            background: linear-gradient(135deg, #153e52 0%, #0a2236 100%);
+            padding: 7rem 0 3.5rem;
+            text-align: center;
+            color: white;
+        }
+        .sd-hero-icon { font-size: 4rem; margin-bottom: 0.5rem; line-height: 1; }
+        .sd-hero h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 0.75rem; color: white; }
+        .sd-hero-sub {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.88);
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            line-height: 1.6;
+        }
+        .sd-hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+        .sd-hero-badge {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 20px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* ── Language Strip ── */
+        .sd-lang-strip {
+            background: #f0fffe;
+            border-bottom: 1px solid #c9efee;
+            padding: 0.7rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #444;
+        }
+        .sd-lang-strip a { color: #20bcba; font-weight: 600; text-decoration: none; margin: 0 0.2rem; }
+        .sd-lang-strip a:hover { text-decoration: underline; }
+
+        /* ── Main container ── */
+        .sd-main { padding: 2.5rem 0 3rem; max-width: 820px; }
+
+        /* ── Generic card ── */
+        .sd-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 1.75rem;
+            overflow: hidden;
+        }
+        .sd-card-header {
+            background: linear-gradient(135deg, #20bcba 0%, #17a39f 100%);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .sd-card-header-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+        .sd-card-header-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 0.1rem;
+        }
+        .sd-card-header-title { font-size: 1rem; font-weight: 700; color: white; margin: 0; }
+        .sd-card-body { padding: 1.5rem; }
+
+        /* ── Narrator controls ── */
+        .narrator-btn {
+            background: #20bcba;
+            color: white;
+            border: none;
+            padding: 9px 20px;
+            margin: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .narrator-btn:hover { background: #1a9d9b; transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+        .speed-controls { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+        .speed-btn {
+            background: #f0fffe;
+            color: #20bcba;
+            border: 1px solid #c9efee;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .speed-btn:hover { background: #e0f8f7; }
+        .speed-btn.active { background: #20bcba; color: white; border-color: #20bcba; }
+        .narrator-status {
+            color: #20bcba;
+            margin-top: 0.6rem;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        /* ── Story paragraph cards ── */
+        .story-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .story-card-num {
+            background: linear-gradient(90deg, #20bcba 0%, #17a39f 100%);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 0.4rem 1.25rem;
+        }
+        .story-card-body { padding: 1.25rem 1.5rem; }
+
+        /* ── Paragraph block within a card ── */
+        .para-block { margin-bottom: 1.4rem; }
+        .para-block:last-child { margin-bottom: 0; }
+        .para-divider { border: none; border-top: 1px solid #e8f8f7; margin: 1.25rem 0; }
+
+        .story-french {
+            font-size: 1.05rem;
+            color: #222;
+            line-height: 1.85;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .story-french.speaking {
+            background-color: #fff3cd;
+            border-radius: 6px;
+            padding: 0.3rem 0.6rem;
+            transition: background-color 0.3s;
+        }
+        .story-english {
+            background: #f8fffe;
+            border-left: 3px solid #20bcba;
+            padding: 0.75rem 1rem;
+            border-radius: 0 6px 6px 0;
+            color: #555;
+            font-style: italic;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            text-align: left;
+        }
+        .story-image {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 8px;
+            margin: 1.25rem auto 0;
+            display: block;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+        }
+
+        /* ── Moral / highlight card ── */
+        .moral-card {
+            background: linear-gradient(135deg, #153e52 0%, #0a2236 100%);
+            border-radius: 12px;
+            padding: 2rem 1.75rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .moral-card .moral-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 0.75rem;
+        }
+        .moral-card .moral-text-fr {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        .moral-card .moral-text-en {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+            font-style: italic;
+            margin-bottom: 0;
+        }
+
+        /* ── Vocabulary tooltip ── */
+        .tooltip-word {
+            border-bottom: 2px dashed #20bcba;
+            cursor: help;
+            position: relative;
+        }
+        .tooltip-word .tooltip-def {
+            visibility: hidden;
+            opacity: 0;
+            background: #113448;
+            color: white;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: normal;
+            width: max-content;
+            max-width: min(220px, 80vw);
+            z-index: 100;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .tooltip-word:hover .tooltip-def,
+        .tooltip-word.tooltip-active .tooltip-def { visibility: visible; opacity: 1; }
+
+        /* ── More French Stories (card grid) ── */
+        .related-section { background: #f4f7f9; padding: 3rem 0; margin-top: 0; }
+        .related-section h3 { text-align: center; color: #0a2236; margin-bottom: 1.5rem; font-size: 1.4rem; }
+        .related-grid-cards { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+        .related-card {
+            background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1rem 1.2rem; text-align: center; text-decoration: none; color: #1a1a2e;
+            min-width: 140px; flex: 1 1 140px; max-width: 180px; transition: transform 0.18s, box-shadow 0.18s;
+        }
+        .related-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.13); text-decoration: none; color: #153e52; }
+        .related-card .related-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+        .related-card .related-title { font-size: 0.88rem; font-weight: 600; }
+
+        /* ── Profile Dropdown ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px; border-radius: 50%;
+            cursor: pointer; object-fit: cover;
+            border: 2px solid #20bcba; transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed; right: 1rem; top: 60px;
+            background-color: white; min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px; z-index: 9999;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a i { margin-right: 8px; color: #20bcba; }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .notification-badge {
+            position: absolute; top: -2px; right: -2px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            display: none; align-items: center; justify-content: center; border: 2px solid white; animation: badgePulse 2s infinite;
+        }
+        .notification-badge.show { display: flex; }
+        @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .profile-dropdown-content a.messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count { display: none; background-color: #dc3545; color: white; border-radius: 10px; padding: 2px 6px; font-size: 11px; font-weight: bold; margin-left: 8px; min-width: 18px; text-align: center; }
+        .unread-count.show { display: inline-block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* ── Navbar centering ── */
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .sd-hero { padding: 5.5rem 0 3rem; }
+            .sd-hero h1 { font-size: 2rem; }
+            .sd-hero-icon { font-size: 3rem; }
+            .sd-main { padding: 1.5rem 1rem 2rem; }
+            .story-card-body { padding: 1rem 1.1rem; }
+            .sd-card-body { padding: 1.1rem; }
+        }
+        @media (max-width: 480px) { .sd-hero h1 { font-size: 1.7rem; } }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
-    
+
     <!-- Preloader -->
-	<div class="spinner-wrapper">
+    <div class="spinner-wrapper">
         <div class="spinner">
             <div class="bounce1"></div>
             <div class="bounce2"></div>
             <div class="bounce3"></div>
         </div>
     </div>
-    <!-- end of preloader -->
-    
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
 
-        <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
-        <!-- Mobile Menu Toggle Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
             <span class="navbar-toggler-awesome fas fa-times"></span>
         </button>
-        <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
 
-                <!-- Dropdown Menu -->          
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -96,9 +377,8 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
                 <!-- end of dropdown menu -->
@@ -106,11 +386,31 @@
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+
+                <!-- Sign In link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <!-- Profile dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
+                        <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -126,131 +426,192 @@
                 </span>
             </span>
         </div>
-    </nav> <!-- end of navbar -->
+    </nav>
     <!-- end of navbar -->
 
 
-    <!-- Header -->
-    <header id="header" class="ex-header">
+    <!-- Hero -->
+    <div class="sd-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1>Jacques et les Haricots Magiques</h1>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </header> <!-- end of ex-header -->
-    <!-- end of header -->
-
-
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Other stories in French: <a class="green" href="LesTroisPetitCochons.html">The Three Little Pigs</a>, <a class="green" href="TortueLievre.html">The Tortoise and the Hare</a>, <a class="green" href="FrenchAladdin.html">Aladdin</a>, <a class="green" href="FrenchDuck.html">The Ugly Duckling</a>, <a class="green" href="FrenchKing.html">King Midas</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
-
-
-    <!-- Terms Content -->
-    <div class="ex-basic-2">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3>Jacques et les Haricots Magiques</h3>
-                            <p>Un jour, dans un pays lointain, un pauvre garçon nommé Jacques a décidé de vendre sa vache pour de l'argent. Sur le chemin du marché, il rencontra un homme étrange qui lui demanda d'acheter sa vache contre des haricots magiques. Curieux Jacques a vendu la vache au voyageur.</p>
-    
-                        <div class="w3-panel w3-notleftbar w3-light-grey">
-                            <p><i>One day, in a faraway land, a poor boy named Jack decided to sell his cow for some money. On the way to the market, he encountered a strange man who asked to buy his cow for some magical beans. Curious Jack sold the cow to the traveler.</i></p>
-
-                            <p>Jacques était ravi de voir ce que les haricots pouvaient faire. Quand il est rentré chez lui, cependant, la mère de Jack était furieuse qu'il soit revenu sans argent. Avec colère, elle a jeté les haricots par la fenêtre. Le lendemain matin, dehors se trouvait le haricot le plus haut du monde. Il est allé jusqu'aux nuages.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Jack was excited to see what the beans could do. When he returned home, however, Jack's mother was furious that he returned without any money. She angrily threw the beans out of the window. The next morning, outside was the world's tallest beanstalk. It went all the way up to the clouds.</i></p>
-</div><img src="../images/bean.jpg" style="width:100%;max-width:500px" class="w3-margin-top w3-center">
-			    </div>
-&nbsp; &nbsp;
-      <p>Jacques se demanda ce qu'il y avait au sommet du haricot. Il a décidé de grimper au sommet. Après avoir grimpé pendant un certain temps, le haricot magique a finalement pris fin. Au sommet, il est tombé sur une terre étrange avec un château au loin.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Jack wondered what was up at the top of the beanstalk. He decided to climb to the top. After climbing for quite some time, the beanstalk finally came to an end. At the top he came across a strange land with a castle in the distance.</i></p>
-
-      <div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p>Jacques entra lentement et remarqua un énorme géant qui dormait à l'intérieur. Il a tranquillement commencé à explorer le château et a trouvé une salle pleine de trésors. Il a décidé d'en ramener avec lui, pour que lui et sa mère ne soient plus pauvres.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Jack slowly entered an noticed a huge giant sleeping inside. He quietly began to explore the castle and found a room full of treasure. He decided to take some back with him, so that he and his mother would no longer be poor.</i></p>
-
-</div>
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Juste au moment où Jacques était sur le point de quitter le château, le géant se réveilla et vit Jacques. Il a commencé à poursuivre Jack avec colère, mais Jacques a réussi à s'échapper. Il descendit le haricot aussi vite qu'il le put. Après ce qui sembla être une éternité, Jacques atteignit finalement le sol. Il attrapa rapidement une hache et coupa le haricot. Le haricot est tombé et le géant a disparu.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Just as Jack was about to leave the castle, the giant woke up and saw Jack. He began chasing Jack in anger, but Jack managed to escape. He descended down the beanstalk as fast as he could. After what felt like an eternity, Jack finally reached the ground. He quickly grabbed an ax and chopped down the beanstalk. The beanstalk fell and the giant disappeared.</i></p>
+            <div class="sd-hero-icon">&#x1F331;&#x1F3F0;</div>
+            <h1>Jacques et les Haricots Magiques</h1>
+            <p class="sd-hero-sub">Lisez <em>Jacques et les Haricots Magiques</em> en fran&ccedil;ais &mdash; le conte classique de Jacques, une vache et un haricot magique qui monte jusqu&rsquo;aux nuages. Every paragraph includes a full English translation.</p>
+            <div class="sd-hero-badges">
+                <span class="sd-hero-badge">&#x1F1EB;&#x1F1F7; French</span>
+                <span class="sd-hero-badge">&#x1F4DA; Short Story</span>
+                <span class="sd-hero-badge">&#x1F3A7; Audio Narration</span>
+                <span class="sd-hero-badge">&#x1F30E; Bilingual</span>
+                <span class="sd-hero-badge">&#x1F9FE; Classic Tale</span>
+            </div>
+        </div>
     </div>
-
-    <div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Jacques a dit à sa mère ce qu'il avait traversé et elle était reconnaissante qu'il soit en sécurité.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Jack told his mother what he had been through and she was grateful that he was safe.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p>Jacques et sa mère n'étaient plus pauvres et appréciaient leur fortune au quotidien.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Jack and his mother were no longer poor and they appreciated their fortune everyday.</i></p>
-    </div>
-  </div>
-</div>
+    <!-- end of hero -->
 
 
-                    </div> <!-- end of text-container -->
-                    
-                    
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic -->
-    <!-- end of terms content -->
-	    
-	    </div> <!-- end of col--> 
-                    </div> <!-- end of row -->
-                    <a class="btn-outline-reg back" href="FrenchResources.html">BACK</a>
-                </div> <!-- end of col-->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-2 -->
-    <!-- end of privacy content -->
-
-    
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Language strip -->
+    <div class="sd-lang-strip">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Also Enjoy in: <a class="green" href="SpanishJack.html">Spanish</a>, <a class="green" href="PortugueseJack.html">Portuguese</a>, <a class="green" href="ItalianJack.html">Italian</a>, <a class="green" href="GermanJack.html">German</a>, <a class="green" href="RussianJack.html">Russian</a>, <a class="green" href="SwedishJack.html">Swedish</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+            Also available in:
+            <a href="SpanishJack.html">Spanish</a>,
+            <a href="PortugueseJack.html">Portuguese</a>,
+            <a href="ItalianJack.html">Italian</a>,
+            <a href="GermanJack.html">German</a>,
+            <a href="RussianJack.html">Russian</a>,
+            <a href="SwedishJack.html">Swedish</a>
+        </div>
+    </div>
+    <!-- end of language strip -->
+
+
+    <!-- Main Content -->
+    <div class="container sd-main">
+
+        <!-- Narrator Card -->
+        <div class="sd-card">
+            <div class="sd-card-header">
+                <div class="sd-card-header-icon">&#x1F3A7;</div>
+                <div>
+                    <div class="sd-card-header-label">Audio</div>
+                    <div class="sd-card-header-title">Narrateur Fran&ccedil;ais &mdash; French Narrator</div>
+                </div>
+            </div>
+            <div class="sd-card-body">
+                <p style="color:#555; margin-bottom:1rem; font-size:0.95rem;">Use the buttons below to read the full story aloud in French. Hover over <span style="border-bottom:2px dashed #20bcba; cursor:help;">underlined words</span> to see their translations.</p>
+                <div>
+                    <button class="narrator-btn" id="playBtn" onclick="playNarration()">
+                        <i class="fas fa-play"></i> Play Story
+                    </button>
+                    <button class="narrator-btn" id="pauseBtn" onclick="pauseNarration()" style="display:none;">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button class="narrator-btn" onclick="stopNarration()">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                </div>
+                <div style="margin-top:0.9rem; font-size:0.85rem; color:#444; font-weight:600;">Playback Speed:</div>
+                <div class="speed-controls">
+                    <button class="speed-btn" onclick="setSpeed(0.5)">0.5&times; Slow</button>
+                    <button class="speed-btn" onclick="setSpeed(0.75)">0.75&times;</button>
+                    <button class="speed-btn active" onclick="setSpeed(1)">1&times; Normal</button>
+                    <button class="speed-btn" onclick="setSpeed(1.25)">1.25&times;</button>
+                    <button class="speed-btn" onclick="setSpeed(1.5)">1.5&times; Fast</button>
+                </div>
+                <div class="narrator-status" id="narratorStatus">
+                    Ready to play &bull; French voice
+                </div>
+            </div>
+        </div>
+        <!-- end of narrator card -->
+
+
+        <!-- Partie 1 -->
+        <div class="story-card">
+            <div class="story-card-num">Partie 1 &mdash; Le Voyageur Myst&eacute;rieux</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-french french-text">Un jour, dans un <span class="tooltip-word">pays lointain<span class="tooltip-def">faraway land</span></span>, un pauvre gar&ccedil;on nomm&eacute; Jacques a d&eacute;cid&eacute; de <span class="tooltip-word">vendre<span class="tooltip-def">to sell</span></span> sa <span class="tooltip-word">vache<span class="tooltip-def">cow</span></span> pour de l&rsquo;argent. Sur le chemin du march&eacute;, il rencontra un homme &eacute;trange qui lui demanda d&rsquo;acheter sa vache contre des <span class="tooltip-word">haricots magiques<span class="tooltip-def">magical beans</span></span>. Curieux Jacques a vendu la vache au <span class="tooltip-word">voyageur<span class="tooltip-def">traveler</span></span>.</p>
+                    <div class="story-english">One day, in a faraway land, a poor boy named Jack decided to sell his cow for some money. On the way to the market, he encountered a strange man who asked to buy his cow for some magical beans. Curious Jack sold the cow to the traveler.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-french french-text">Jacques &eacute;tait <span class="tooltip-word">ravi<span class="tooltip-def">delighted / excited</span></span> de voir ce que les haricots pouvaient faire. Quand il est rentr&eacute; chez lui, cependant, la m&egrave;re de Jacques &eacute;tait <span class="tooltip-word">furieuse<span class="tooltip-def">furious</span></span> qu&rsquo;il soit revenu sans argent. Avec <span class="tooltip-word">col&egrave;re<span class="tooltip-def">anger</span></span>, elle a <span class="tooltip-word">jet&eacute;<span class="tooltip-def">threw</span></span> les haricots par la fen&ecirc;tre.</p>
+                    <div class="story-english">Jack was excited to see what the beans could do. When he returned home, however, Jack&rsquo;s mother was furious that he returned without any money. She angrily threw the beans out of the window.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Partie 2 -->
+        <div class="story-card">
+            <div class="story-card-num">Partie 2 &mdash; Le Haricot Magique</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-french french-text">Le lendemain matin, dehors se trouvait le <span class="tooltip-word">haricot<span class="tooltip-def">beanstalk</span></span> le plus haut du monde. Il est all&eacute; jusqu&rsquo;aux <span class="tooltip-word">nuages<span class="tooltip-def">clouds</span></span>.</p>
+                    <div class="story-english">The next morning, outside was the world&rsquo;s tallest beanstalk. It went all the way up to the clouds.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-french french-text">Jacques se demanda ce qu&rsquo;il y avait au sommet du haricot. Il a d&eacute;cid&eacute; de <span class="tooltip-word">grimper<span class="tooltip-def">to climb</span></span> au sommet. Apr&egrave;s avoir grimpe pendant un certain temps, le haricot magique a finalement pris fin. Au sommet, il est tomb&eacute; sur une terre &eacute;trange avec un <span class="tooltip-word">ch&acirc;teau<span class="tooltip-def">castle</span></span> au loin.</p>
+                    <div class="story-english">Jack wondered what was up at the top of the beanstalk. He decided to climb to the top. After climbing for quite some time, the beanstalk finally came to an end. At the top he came across a strange land with a castle in the distance.</div>
+                </div>
+                <img src="images/bean.jpg" class="story-image" alt="Jacques et le haricot magique">
+            </div>
+        </div>
+
+
+        <!-- Partie 3 -->
+        <div class="story-card">
+            <div class="story-card-num">Partie 3 &mdash; Le G&eacute;ant Endormi</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-french french-text">Jacques entra lentement et remarqua un &eacute;norme <span class="tooltip-word">g&eacute;ant<span class="tooltip-def">giant</span></span> qui dormait &agrave; l&rsquo;int&eacute;rieur. Il a <span class="tooltip-word">tranquillement<span class="tooltip-def">quietly</span></span> commenc&eacute; &agrave; explorer le ch&acirc;teau et a trouv&eacute; une salle pleine de <span class="tooltip-word">tr&eacute;sors<span class="tooltip-def">treasures</span></span>. Il a d&eacute;cid&eacute; d&rsquo;en ramener avec lui, pour que lui et sa m&egrave;re ne soient plus <span class="tooltip-word">pauvres<span class="tooltip-def">poor</span></span>.</p>
+                    <div class="story-english">Jack slowly entered and noticed a huge giant sleeping inside. He quietly began to explore the castle and found a room full of treasure. He decided to take some back with him, so that he and his mother would no longer be poor.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Partie 4 -->
+        <div class="story-card">
+            <div class="story-card-num">Partie 4 &mdash; La Fuite</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-french french-text">Juste au moment o&ugrave; Jacques &eacute;tait sur le point de quitter le ch&acirc;teau, le g&eacute;ant se <span class="tooltip-word">r&eacute;veilla<span class="tooltip-def">woke up</span></span> et vit Jacques. Il a commenc&eacute; &agrave; <span class="tooltip-word">poursuivre<span class="tooltip-def">to chase</span></span> Jacques avec col&egrave;re, mais Jacques a r&eacute;ussi &agrave; <span class="tooltip-word">s&rsquo;&eacute;chapper<span class="tooltip-def">to escape</span></span>. Il descendit le haricot aussi vite qu&rsquo;il le put. Apr&egrave;s ce qui sembla &ecirc;tre une <span class="tooltip-word">&eacute;ternit&eacute;<span class="tooltip-def">eternity</span></span>, Jacques atteignit finalement le sol.</p>
+                    <div class="story-english">Just as Jack was about to leave the castle, the giant woke up and saw Jack. He began chasing Jack in anger, but Jack managed to escape. He descended down the beanstalk as fast as he could. After what felt like an eternity, Jack finally reached the ground.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-french french-text">Il attrapa rapidement une <span class="tooltip-word">hache<span class="tooltip-def">axe</span></span> et <span class="tooltip-word">coupa<span class="tooltip-def">chopped down</span></span> le haricot. Le haricot est tomb&eacute; et le g&eacute;ant a <span class="tooltip-word">disparu<span class="tooltip-def">disappeared</span></span>. Jacques a dit &agrave; sa m&egrave;re ce qu&rsquo;il avait travers&eacute; et elle &eacute;tait <span class="tooltip-word">reconnaissante<span class="tooltip-def">grateful</span></span> qu&rsquo;il soit en s&eacute;curit&eacute;.</p>
+                    <div class="story-english">He quickly grabbed an axe and chopped down the beanstalk. The beanstalk fell and the giant disappeared. Jack told his mother what he had been through and she was grateful that he was safe.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Ending -->
+        <div class="moral-card">
+            <div class="moral-label">La Fin &mdash; The Ending</div>
+            <div class="moral-text-fr">&ldquo;Jacques et sa m&egrave;re n&rsquo;&eacute;taient plus pauvres et appr&eacute;ciaient leur fortune au quotidien.&rdquo;</div>
+            <div class="moral-text-en">&ldquo;Jack and his mother were no longer poor and they appreciated their fortune every day.&rdquo;</div>
+        </div>
+
+
+    </div>
+    <!-- end of main -->
+
+
+    <!-- More French Stories -->
+    <div class="related-section">
+        <div class="container">
+            <h3>More French Stories</h3>
+            <div class="related-grid-cards">
+                <a href="LesTroisPetitCochons.html" class="related-card">
+                    <div class="related-icon">&#x1F437;</div>
+                    <div class="related-title">The Three Little Pigs</div>
+                </a>
+                <a href="TortueLievre.html" class="related-card">
+                    <div class="related-icon">&#x1F422;</div>
+                    <div class="related-title">Tortoise &amp; the Hare</div>
+                </a>
+                <a href="FrenchDuck.html" class="related-card">
+                    <div class="related-icon">&#x1F9A2;</div>
+                    <div class="related-title">The Ugly Duckling</div>
+                </a>
+                <a href="FrenchAladdin.html" class="related-card">
+                    <div class="related-icon">&#x1FA94;</div>
+                    <div class="related-title">Aladdin</div>
+                </a>
+                <a href="FrenchKing.html" class="related-card">
+                    <div class="related-icon">&#x1F451;</div>
+                    <div class="related-title">King Midas</div>
+                </a>
+                <a href="FrenchResources.html" class="related-card">
+                    <div class="related-icon">&#x1F1EB;&#x1F1F7;</div>
+                    <div class="related-title">All French Resources</div>
+                </a>
+            </div>
+        </div>
+    </div>
 
 
     <!-- Footer -->
@@ -260,60 +621,42 @@
                 <div class="col-md-6">
                     <div class="text-container about">
                         <h4>Few Words About Lingua Bud</h4>
-                        <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                        <p class="white">We&rsquo;re passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Links</h4>
                         <ul class="list-unstyled li-space-lg white">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="index.html">Home</a></li>
+                            <li><a class="white" href="terms-conditions.html">Terms &amp; Conditions</a></li>
+                            <li><a class="white" href="privacy-policy.html">Privacy Policy</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Tools</h4>
+                        <h4>Learn</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li class="media">
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="Resources2.html">Resources</a></li>
+                            <li><a class="white" href="instructors.html">Instructors</a></li>
+                            <li><a class="white" href="connect.html">Find Partners</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Partners</h4>
+                        <h4>Languages</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="NewFrenchPage.html">French</a></li>
+                            <li><a class="white" href="NewSpanishPage.html">Spanish</a></li>
+                            <li><a class="white" href="NewItalianPage.html">Italian</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of footer -->  
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- end of footer -->
 
 
@@ -322,24 +665,268 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">Lingua Bud</a></p>
-                </div> <!-- end of col -->
-            </div> <!-- enf of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of copyright --> 
+                    <p class="p-small">Copyright &copy; 2026 <a href="index.html">Lingua Bud</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- end of copyright -->
 
-	
+
     <!-- Scripts -->
-    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
-    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
-    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
-    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
-    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
-    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
-    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
-    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
-    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <!-- Tooltip edge-clamping + mobile tap support -->
+    <script>
+        (function () {
+            function clampTooltip(word) {
+                var def = word.querySelector('.tooltip-def');
+                if (!def) return;
+                def.style.left = '50%';
+                def.style.right = 'auto';
+                def.style.transform = 'translateX(-50%)';
+                var rect = def.getBoundingClientRect();
+                var vw = window.innerWidth || document.documentElement.clientWidth;
+                var PAD = 10;
+                if (rect.right > vw - PAD) {
+                    def.style.left = 'auto';
+                    def.style.right = '0';
+                    def.style.transform = 'none';
+                } else if (rect.left < PAD) {
+                    def.style.left = '0';
+                    def.style.right = 'auto';
+                    def.style.transform = 'none';
+                }
+            }
+
+            document.querySelectorAll('.tooltip-word').forEach(function (word) {
+                word.addEventListener('mouseenter', function () { clampTooltip(this); });
+                word.addEventListener('touchend', function (e) {
+                    var isActive = this.classList.contains('tooltip-active');
+                    document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                    if (!isActive) { this.classList.add('tooltip-active'); clampTooltip(this); }
+                    e.preventDefault();
+                });
+            });
+
+            document.addEventListener('touchend', function (e) {
+                if (!e.target.closest('.tooltip-word')) {
+                    document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                }
+            });
+        })();
+    </script>
+
+    <!-- French Narrator Script (Web Speech API) -->
+    <script>
+        const synth = window.speechSynthesis;
+        let utterances = [];
+        let currentUtteranceIndex = 0;
+        let currentSpeed = 1;
+        let isPaused = false;
+        let isPlaying = false;
+        let frenchVoice = null;
+
+        const frenchParagraphs = document.querySelectorAll('.french-text');
+
+        function initVoices() {
+            const voices = synth.getVoices();
+            const preferredLocales = ['fr-FR', 'fr-CA', 'fr-BE', 'fr-CH'];
+            for (let locale of preferredLocales) {
+                frenchVoice = voices.find(v => v.lang === locale);
+                if (frenchVoice) { updateStatus('Using ' + frenchVoice.name + ' (' + frenchVoice.lang + ')'); return; }
+            }
+            frenchVoice = voices.find(v => v.lang.startsWith('fr'));
+            if (frenchVoice) updateStatus('Using ' + frenchVoice.name + ' (' + frenchVoice.lang + ')');
+            else updateStatus('No French voice found. Using default.');
+        }
+
+        if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = initVoices;
+        setTimeout(initVoices, 100);
+
+        function updateStatus(msg) {
+            document.getElementById('narratorStatus').textContent = msg;
+        }
+
+        function createUtterances() {
+            utterances = [];
+            frenchParagraphs.forEach(function(paragraph, index) {
+                var clone = paragraph.cloneNode(true);
+                clone.querySelectorAll('.tooltip-def').forEach(function(el) { el.remove(); });
+                var utterance = new SpeechSynthesisUtterance(clone.textContent);
+                utterance.rate = currentSpeed;
+                utterance.lang = 'fr-FR';
+                if (frenchVoice) utterance.voice = frenchVoice;
+                utterance.onstart = function() {
+                    frenchParagraphs.forEach(function(p) { p.classList.remove('speaking'); });
+                    paragraph.classList.add('speaking');
+                    updateStatus('Reading paragraph ' + (index + 1) + ' of ' + frenchParagraphs.length + '...');
+                };
+                utterance.onend = function() {
+                    paragraph.classList.remove('speaking');
+                    currentUtteranceIndex++;
+                    if (currentUtteranceIndex < utterances.length) {
+                        synth.speak(utterances[currentUtteranceIndex]);
+                    } else {
+                        stopNarration();
+                        updateStatus('Story completed! Ready to play again.');
+                    }
+                };
+                utterances.push(utterance);
+            });
+        }
+
+        function playNarration() {
+            if (!isPlaying) {
+                createUtterances();
+                currentUtteranceIndex = 0;
+                isPlaying = true;
+                isPaused = false;
+                if (utterances.length > 0) {
+                    synth.speak(utterances[0]);
+                    document.getElementById('playBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-block';
+                }
+            } else if (isPaused) {
+                synth.resume();
+                isPaused = false;
+                document.getElementById('playBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                updateStatus('Resumed...');
+            }
+        }
+
+        function pauseNarration() {
+            if (isPlaying && !isPaused) {
+                synth.pause();
+                isPaused = true;
+                document.getElementById('playBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+                updateStatus('Paused');
+            }
+        }
+
+        function stopNarration() {
+            synth.cancel();
+            isPlaying = false;
+            isPaused = false;
+            currentUtteranceIndex = 0;
+            frenchParagraphs.forEach(function(p) { p.classList.remove('speaking'); });
+            document.getElementById('playBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+            updateStatus(frenchVoice ? 'Ready to play \u2022 ' + frenchVoice.name : 'Ready to play \u2022 French voice');
+        }
+
+        function setSpeed(speed) {
+            currentSpeed = speed;
+            document.querySelectorAll('.speed-btn').forEach(function(btn) { btn.classList.remove('active'); });
+            event.target.classList.add('active');
+            if (isPlaying) {
+                var wasPlaying = !isPaused;
+                synth.cancel();
+                createUtterances();
+                if (wasPlaying && currentUtteranceIndex < utterances.length) {
+                    synth.speak(utterances[currentUtteranceIndex]);
+                }
+            }
+            updateStatus('Speed set to ' + speed + '\u00d7');
+        }
+
+        window.addEventListener('beforeunload', function() { synth.cancel(); });
+    </script>
+
+    <!-- Firebase Auth for navbar -->
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
+
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
+                    }
+                } catch (e) { console.error('Profile load error:', e); }
+
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
+                loadUnreadMessageCount(user.uid);
+                loadPendingRequests(user.uid);
+
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
+            }
+        });
+
+        // ── Notification counts ──────────────────────────────────────────────────
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+        }
+
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(query(collection(db, 'conversations'), where('participants', 'array-contains', uid)), (snap) => {
+                _unreadMsgCount = 0;
+                snap.forEach(d => { const c = d.data(); if (c.unreadCount && c.unreadCount[uid]) _unreadMsgCount += c.unreadCount[uid]; });
+                const ml = document.getElementById('messagesLink'), uc = document.getElementById('unreadCount');
+                if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+                if (uc) { if (_unreadMsgCount > 0) { uc.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; uc.classList.add('show'); } else uc.classList.remove('show'); }
+                _updateProfileBadge();
+            });
+        }
+
+        function loadPendingRequests(uid) {
+            function _updateActivityBadge() {
+                const bookingsEl = document.getElementById('bookingsCount');
+                if (bookingsEl) { if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); } else bookingsEl.classList.remove('show'); }
+                const friendsEl = document.getElementById('friendsCount');
+                if (friendsEl) { if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); } else friendsEl.classList.remove('show'); }
+            }
+            onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
+                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
+                _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+        }
+    </script>
 </body>
 </html>
