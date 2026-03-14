@@ -1,160 +1,370 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Learn Spanish by reading short stories. Read King Midas in Spanish to imporve your grammar and vocabulary and learn Spanish the fun way.">
-    <meta name="keywords" content="Spanish stories, short stories in Spanish, how to speak Spanish, Rey Midas y el toque dorado, learn Spanish for free">
+    <meta name="description" content="Aprende español leyendo El Rey Midas y el Toque Dorado. Read King Midas in Spanish with English translation to learn Spanish the fun way.">
+    <meta name="keywords" content="Spanish stories, short stories in Spanish, El Rey Midas y el Toque Dorado, learn Spanish for free, King Midas in Spanish, Lingua Bud">
     <meta name="author" content="Lingua Bud">
 
-    <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
-	<meta property="og:site_name" content="" /> <!-- website name -->
-	<meta property="og:site" content="" /> <!-- website link -->
-	<meta property="og:title" content=""/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="" /> <!-- image link, make sure it's jpg -->
-	<meta property="og:url" content="" /> <!-- where do you want your post to link to -->
-	<meta property="og:type" content="article" />
+    <!-- OG Meta Tags -->
+    <meta property="og:site_name" content="Lingua Bud" />
+    <meta property="og:title" content="El Rey Midas y el Toque Dorado &ndash; Learn Spanish with Stories"/>
+    <meta property="og:description" content="Read King Midas in Spanish. A bilingual short story with English translation to help you learn Spanish." />
+    <meta property="og:type" content="article" />
 
     <!-- Website Title -->
     <title>El Rey Midas y el Toque Dorado - Lingua Bud</title>
-    
+
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/fontawesome-all.css" rel="stylesheet">
     <link href="css/swiper.css" rel="stylesheet">
-	<link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
 
-    <!-- Narrator Controls Styles -->
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
     <style>
-        .narrator-controls {
+        /* ── Hero ── */
+        .sd-hero {
+            background: linear-gradient(135deg, #153e52 0%, #0a2236 100%);
+            padding: 7rem 0 3.5rem;
+            text-align: center;
+            color: white;
+        }
+        .sd-hero-icon { font-size: 4rem; margin-bottom: 0.5rem; line-height: 1; }
+        .sd-hero h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 0.75rem; color: white; }
+        .sd-hero-sub {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.88);
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            line-height: 1.6;
+        }
+        .sd-hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+        .sd-hero-badge {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 20px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* ── Language Strip ── */
+        .sd-lang-strip {
+            background: #f0fffe;
+            border-bottom: 1px solid #c9efee;
+            padding: 0.7rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #444;
+        }
+        .sd-lang-strip a { color: #20bcba; font-weight: 600; text-decoration: none; margin: 0 0.2rem; }
+        .sd-lang-strip a:hover { text-decoration: underline; }
+
+        /* ── Main container ── */
+        .sd-main { padding: 2.5rem 0 3rem; max-width: 820px; }
+
+        /* ── Generic card ── */
+        .sd-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 1.75rem;
+            overflow: hidden;
+        }
+        .sd-card-header {
             background: linear-gradient(135deg, #20bcba 0%, #17a39f 100%);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .narrator-controls h4 {
-            color: white;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-        }
-        .narrator-btn {
-            background: white;
-            color: #20bcba;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        .narrator-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .narrator-btn:active {
-            transform: translateY(0);
-        }
-        .narrator-btn.active {
-            background: #20bcba;
-            color: white;
-        }
-        .speed-controls {
+            padding: 1rem 1.5rem;
             display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-top: 10px;
+            align-items: center;
+            gap: 0.75rem;
         }
-        .speed-btn {
-            background: rgba(255,255,255,0.9);
-            color: #20bcba;
-            border: 2px solid white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
+        .sd-card-header-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+        .sd-card-header-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 0.1rem;
         }
-        .speed-btn:hover {
-            background: white;
-        }
-        .speed-btn.active {
+        .sd-card-header-title { font-size: 1rem; font-weight: 700; color: white; margin: 0; }
+        .sd-card-body { padding: 1.5rem; }
+
+        /* ── Narrator controls ── */
+        .narrator-btn {
             background: #20bcba;
             color: white;
-            border-color: #20bcba;
+            border: none;
+            padding: 9px 20px;
+            margin: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.2s;
         }
-        .spanish-text.speaking {
-            background-color: #fff3cd;
-            transition: background-color 0.3s;
+        .narrator-btn:hover { background: #1a9d9b; transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+        .speed-controls { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.75rem; }
+        .speed-btn {
+            background: #f0fffe;
+            color: #20bcba;
+            border: 1px solid #c9efee;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
         }
+        .speed-btn:hover { background: #e0f8f7; }
+        .speed-btn.active { background: #20bcba; color: white; border-color: #20bcba; }
         .narrator-status {
-            color: white;
-            margin-top: 10px;
+            color: #20bcba;
+            margin-top: 0.6rem;
+            font-size: 0.85rem;
             font-style: italic;
         }
+
+        /* ── Story paragraph cards ── */
+        .story-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .story-card-num {
+            background: linear-gradient(90deg, #20bcba 0%, #17a39f 100%);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 0.4rem 1.25rem;
+        }
+        .story-card-body { padding: 1.25rem 1.5rem; }
+
+        /* ── Paragraph block within a card ── */
+        .para-block { margin-bottom: 1.4rem; }
+        .para-block:last-child { margin-bottom: 0; }
+        .para-divider { border: none; border-top: 1px solid #e8f8f7; margin: 1.25rem 0; }
+
+        .story-spanish {
+            font-size: 1.05rem;
+            color: #222;
+            line-height: 1.85;
+            margin-bottom: 0.5rem;
+            text-align: left;
+        }
+        .story-spanish.speaking {
+            background-color: #fff3cd;
+            border-radius: 6px;
+            padding: 0.3rem 0.6rem;
+            transition: background-color 0.3s;
+        }
+        .story-english {
+            background: #f8fffe;
+            border-left: 3px solid #20bcba;
+            padding: 0.75rem 1rem;
+            border-radius: 0 6px 6px 0;
+            color: #555;
+            font-style: italic;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            text-align: left;
+        }
+        .story-image {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 8px;
+            margin: 1.25rem auto 0;
+            display: block;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+        }
+
+        /* ── Moral / highlight card ── */
+        .moral-card {
+            background: linear-gradient(135deg, #153e52 0%, #0a2236 100%);
+            border-radius: 12px;
+            padding: 2rem 1.75rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .moral-card .moral-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 0.75rem;
+        }
+        .moral-card .moral-text-es {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        .moral-card .moral-text-en {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+            font-style: italic;
+            margin-bottom: 0;
+        }
+
+        /* ── Vocabulary tooltip ── */
+        .tooltip-word {
+            border-bottom: 2px dashed #20bcba;
+            cursor: help;
+            position: relative;
+        }
+        .tooltip-word .tooltip-def {
+            visibility: hidden;
+            opacity: 0;
+            background: #113448;
+            color: white;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: normal;
+            width: max-content;
+            max-width: min(220px, 80vw);
+            z-index: 100;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .tooltip-word:hover .tooltip-def,
+        .tooltip-word.tooltip-active .tooltip-def { visibility: visible; opacity: 1; }
+
+        /* ── More Spanish Stories (card grid) ── */
+        .related-section { background: #f4f7f9; padding: 3rem 0; margin-top: 0; }
+        .related-section h3 { text-align: center; color: #0a2236; margin-bottom: 1.5rem; font-size: 1.4rem; }
+        .related-grid-cards { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+        .related-card {
+            background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1rem 1.2rem; text-align: center; text-decoration: none; color: #1a1a2e;
+            min-width: 140px; flex: 1 1 140px; max-width: 180px; transition: transform 0.18s, box-shadow 0.18s;
+        }
+        .related-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.13); text-decoration: none; color: #153e52; }
+        .related-card .related-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+        .related-card .related-title { font-size: 0.88rem; font-weight: 600; }
+
+        /* ── Profile Dropdown ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px; border-radius: 50%;
+            cursor: pointer; object-fit: cover;
+            border: 2px solid #20bcba; transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed; right: 1rem; top: 60px;
+            background-color: white; min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px; z-index: 9999;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a i { margin-right: 8px; color: #20bcba; }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .notification-badge {
+            position: absolute; top: -2px; right: -2px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            display: none; align-items: center; justify-content: center; border: 2px solid white; animation: badgePulse 2s infinite;
+        }
+        .notification-badge.show { display: flex; }
+        @keyframes badgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .profile-dropdown-content a.messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count { display: none; background-color: #dc3545; color: white; border-radius: 10px; padding: 2px 6px; font-size: 11px; font-weight: bold; margin-left: 8px; min-width: 18px; text-align: center; }
+        .unread-count.show { display: inline-block; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* ── Navbar centering ── */
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .sd-hero { padding: 5.5rem 0 3rem; }
+            .sd-hero h1 { font-size: 2rem; }
+            .sd-hero-icon { font-size: 3rem; }
+            .sd-main { padding: 1.5rem 1rem 2rem; }
+            .story-card-body { padding: 1rem 1.1rem; }
+            .sd-card-body { padding: 1.1rem; }
+        }
+        @media (max-width: 480px) { .sd-hero h1 { font-size: 1.7rem; } }
     </style>
-	
-	<!-- Favicon  -->
-    <link rel="icon" href="images/NuevoFavicon.png">
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
-    
+
     <!-- Preloader -->
-	<div class="spinner-wrapper">
+    <div class="spinner-wrapper">
         <div class="spinner">
             <div class="bounce1"></div>
             <div class="bounce2"></div>
             <div class="bounce3"></div>
         </div>
     </div>
-    <!-- end of preloader -->
-    
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
 
-        <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
-        <!-- Mobile Menu Toggle Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
             <span class="navbar-toggler-awesome fas fa-times"></span>
         </button>
-        <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
 
-                <!-- Dropdown Menu -->          
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -167,9 +377,8 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
                 <!-- end of dropdown menu -->
@@ -177,11 +386,31 @@
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+
+                <!-- Sign In link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <!-- Profile dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
+                        <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -197,161 +426,202 @@
                 </span>
             </span>
         </div>
-    </nav> <!-- end of navbar -->
+    </nav>
     <!-- end of navbar -->
 
 
-    <!-- Header -->
-    <header id="header" class="ex-header">
+    <!-- Hero -->
+    <div class="sd-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1>El Rey Midas y el Toque Dorado</h1>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </header> <!-- end of ex-header -->
-    <!-- end of header -->
-
-
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Other stories in Spanish: <a class="green" href="LosTresCerditosNew.html">The Three Little Pigs</a>, <a class="green" href="TortugaLiebre.html">The Tortoise and the Hare</a>, <a class="green" href="SpanishAladdin.html">Aladdin</a>, <a class="green" href="SpanishDuck.html">The Ugly Duckling</a>, <a class="green" href="SpanishJack.html">Jack and the Beanstalk</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
-
-
-    <!-- Terms Content -->
-    <div class="ex-basic-2">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3>El Rey Midas y el Toque Dorado</h3>
-
-                        <!-- Narrator Controls -->
-                        <div class="narrator-controls">
-                            <h4><i class="fas fa-volume-up"></i> Narrador Español (Spanish Narrator)</h4>
-                            <div>
-                                <button class="narrator-btn" id="playBtn" onclick="playNarration()">
-                                    <i class="fas fa-play"></i> Play Story
-                                </button>
-                                <button class="narrator-btn" id="pauseBtn" onclick="pauseNarration()" style="display:none;">
-                                    <i class="fas fa-pause"></i> Pause
-                                </button>
-                                <button class="narrator-btn" id="stopBtn" onclick="stopNarration()">
-                                    <i class="fas fa-stop"></i> Stop
-                                </button>
-                            </div>
-                            <div style="margin-top: 15px; color: white;">
-                                <strong>Playback Speed:</strong>
-                            </div>
-                            <div class="speed-controls">
-                                <button class="speed-btn" onclick="setSpeed(0.5)">0.5x (Slow)</button>
-                                <button class="speed-btn" onclick="setSpeed(0.75)">0.75x</button>
-                                <button class="speed-btn active" onclick="setSpeed(1)">1x (Normal)</button>
-                                <button class="speed-btn" onclick="setSpeed(1.25)">1.25x</button>
-                                <button class="speed-btn" onclick="setSpeed(1.5)">1.5x (Fast)</button>
-                            </div>
-                            <div class="narrator-status" id="narratorStatus">
-                                Ready to play • Latin American Spanish voice
-                            </div>
-                        </div>
-
-                            <p class="spanish-text">Había una vez un rey llamado Midas. Tenía un gran reino, con muchos palacios. Sin embargo, a pesar de toda su riqueza, todavía no era feliz. Decidió que quería más oro. Un día, mientras comía, apareció un mago. El rey Midas le preguntó al mago: "¡Concédeme un mago de hechizos! ¡Todo lo que toque se convertirá en oro!" El mago respondió: "Tu deseo está concedido". El rey estaba complacido.</p>
-    
-                        <div class="w3-panel w3-notleftbar w3-light-grey">
-                            <p><i>There once lived a king named Midas. He had a large kingdom, with many palaces. Despite all of his wealth, however, he was still not happy. He decided he wanted more gold. One day, as he was eating, a wizard appeared. King Midas asked the wizard: "Grant me a spell wizard! Whatever I touch shall turn into gold!" The wizard replied: "Your wish is granted." The king was pleased.</i></p>
-
-                            <p class="spanish-text">Tocó su trono y se convirtió en oro. Tocó las sillas, las mesas, los jarrones y las estatuas y todo se transformó en oro. El rey Midas estaba feliz más allá de las palabras. Creía que ahora era el hombre más rico del mundo. Regresó a la mesa del comedor para comer. Cuando recogió su tenedor, también se convirtió en oro. Luego tocó su plato y éste y su comida se convirtieron en oro. El rey estaba asombrado. No podía comer ni beber nada.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>He touched his throne and it turned into gold. He touched the chairs, tables, vases, and statues and they all truned into gold. King Midas was happy beyond words. He believed he was now the richest man in the world. He returned back to the dinner table to eat. As he picked up his fork, it too turned into gold. Then he touched his plate and it and his food turned into gold. The king was astonished. He could not eat or drink anything.</i></p>
-</div><img src="../images/gold.jpg" style="width:100%;max-width:500px" class="w3-margin-top w3-center">
-			    </div>
-&nbsp; &nbsp;
-      <p class="spanish-text">De repente, su hija entró corriendo en la habitación. Cuando la rodeó con sus brazos, ella también se convirtió en una estatua de oro. El rey Midas se sorprendió.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Suddenly, his daughter rushed into the room. As he put his arms around her, she too turned into a statue of gold. King Midas was shocked.</i></p>
-
-      <div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    
-    <p class="spanish-text">"¡Oh, no!" - exclamó el rey. "No quiero más oro. ¡Quiero recuperar a mi hija!"</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>"Oh no!" - the king exclaimed. "I do not want any more gold. I want my daughter back!"</i></p>
-
-</div>
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p class="spanish-text">Entonces, el mago apareció de nuevo con una botella de agua y dijo: "Rocía esta agua sobre todo lo que has convertido en oro".</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>Then, the wizard appeared again with a bottle of water and said: "Sprinkle this water over everything you have turned into gold."</i></p>
+            <div class="sd-hero-icon">&#x1F451;&#x2728;</div>
+            <h1>El Rey Midas y el Toque Dorado</h1>
+            <p class="sd-hero-sub">Lee <em>El Rey Midas y el Toque Dorado</em> en espa&ntilde;ol &mdash; el cl&aacute;sico cuento del rey que deseaba que todo lo que tocara se convirtiera en oro. Every paragraph includes a full English translation.</p>
+            <div class="sd-hero-badges">
+                <span class="sd-hero-badge">&#x1F1EA;&#x1F1F8; Spanish</span>
+                <span class="sd-hero-badge">&#x1F4DA; Short Story</span>
+                <span class="sd-hero-badge">&#x1F3A7; Audio Narration</span>
+                <span class="sd-hero-badge">&#x1F30E; Bilingual</span>
+                <span class="sd-hero-badge">&#x1F9FE; Classic Tale</span>
+            </div>
+        </div>
     </div>
-
-    <div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p class="spanish-text">El rey hizo lo que le dijo y para su asombro, todo el oro que roció con agua volvió a su forma original.</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The king did as he was told and to his amazement, all of the gold he sprinkled with water, came back to their original form.</i></p>
-    </div>
-  </div>
-</div>
-<!-- About Container -->
-<div class="w3-container" id="about">
-  <div class="w3-content w3-xlarge" style="max-width:800px">
-    <p class="spanish-text">El rey aprendió una lección muy importante ese día: "La vida vale mucho más que el oro".</p>
-    
-    <div class="w3-panel w3-notleftbar w3-light-grey">
-      <p><i>The king learned a very important lesson that day: "Life is worth much more than gold."</i></p>
-    </div>
-  </div>
-</div>
+    <!-- end of hero -->
 
 
-                    </div> <!-- end of text-container -->
-                    
-                    
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic -->
-    <!-- end of terms content -->
-	    
-	    </div> <!-- end of col--> 
-                    </div> <!-- end of row -->
-                    <a class="btn-outline-reg back" href="SpanishResources.html">BACK</a>
-                </div> <!-- end of col-->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-2 -->
-    <!-- end of privacy content -->
-
-    
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Language strip -->
+    <div class="sd-lang-strip">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Also Enjoy in: <a class="green" href="FrenchKing.html">French</a>, <a class="green" href="PortugueseKing.html">Portuguese</a>, <a class="green" href="ItalianKing.html">Italian</a>, <a class="green" href="GermanKing.html">German</a>, <a class="green" href="RussianKing.html">Russian</a>, <a class="green" href="SwedishKing.html">Swedish</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+            Also available in:
+            <a href="FrenchKing.html">French</a>,
+            <a href="PortugueseKing.html">Portuguese</a>,
+            <a href="ItalianKing.html">Italian</a>,
+            <a href="GermanKing.html">German</a>,
+            <a href="RussianKing.html">Russian</a>,
+            <a href="SwedishKing.html">Swedish</a>
+        </div>
+    </div>
+    <!-- end of language strip -->
+
+
+    <!-- Main Content -->
+    <div class="container sd-main">
+
+        <!-- Narrator Card -->
+        <div class="sd-card">
+            <div class="sd-card-header">
+                <div class="sd-card-header-icon">&#x1F3A7;</div>
+                <div>
+                    <div class="sd-card-header-label">Audio</div>
+                    <div class="sd-card-header-title">Narrador Espa&ntilde;ol &mdash; Spanish Narrator</div>
+                </div>
+            </div>
+            <div class="sd-card-body">
+                <p style="color:#555; margin-bottom:1rem; font-size:0.95rem;">Use the buttons below to read the full story aloud in Spanish. Hover over <span style="border-bottom:2px dashed #20bcba; cursor:help;">underlined words</span> to see their definitions.</p>
+                <div>
+                    <button class="narrator-btn" id="playBtn" onclick="playNarration()">
+                        <i class="fas fa-play"></i> Play Story
+                    </button>
+                    <button class="narrator-btn" id="pauseBtn" onclick="pauseNarration()" style="display:none;">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button class="narrator-btn" onclick="stopNarration()">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                </div>
+                <div style="margin-top:0.9rem; font-size:0.85rem; color:#444; font-weight:600;">Playback Speed:</div>
+                <div class="speed-controls">
+                    <button class="speed-btn" onclick="setSpeed(0.5)">0.5&times; Slow</button>
+                    <button class="speed-btn" onclick="setSpeed(0.75)">0.75&times;</button>
+                    <button class="speed-btn active" onclick="setSpeed(1)">1&times; Normal</button>
+                    <button class="speed-btn" onclick="setSpeed(1.25)">1.25&times;</button>
+                    <button class="speed-btn" onclick="setSpeed(1.5)">1.5&times; Fast</button>
+                </div>
+                <div class="narrator-status" id="narratorStatus">
+                    Ready to play &bull; Latin American Spanish voice
+                </div>
+            </div>
+        </div>
+        <!-- end of narrator card -->
+
+
+        <!-- Parte 1 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 1 &mdash; El Deseo Dorado</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">Hab&iacute;a una vez un rey llamado Midas. Ten&iacute;a un gran <span class="tooltip-word">reino<span class="tooltip-def">kingdom / realm &mdash; the land a king rules over</span></span>, con muchos palacios. Sin embargo, a pesar de toda su <span class="tooltip-word">riqueza<span class="tooltip-def">wealth / riches &mdash; having a great amount of money or possessions</span></span>, todav&iacute;a no era feliz. Decidi&oacute; que quer&iacute;a m&aacute;s <span class="tooltip-word">oro<span class="tooltip-def">gold &mdash; the precious yellow metal</span></span>.</p>
+                    <div class="story-english">There once lived a king named Midas. He had a large kingdom, with many palaces. Despite all of his wealth, however, he was still not happy. He decided he wanted more gold.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">Un d&iacute;a, mientras com&iacute;a, apareci&oacute; un <span class="tooltip-word">mago<span class="tooltip-def">wizard / sorcerer &mdash; a person who uses magic</span></span>. El rey Midas le pregunt&oacute; al mago: &ldquo;&iexcl;<span class="tooltip-word">C&oacute;ncedeme<span class="tooltip-def">Grant me (imperative of conceder) &mdash; used to make a wish or request</span></span> un <span class="tooltip-word">hechizo<span class="tooltip-def">spell / enchantment &mdash; a magical effect caused by a sorcerer</span></span>! &iexcl;Todo lo que toque se convertir&aacute; en oro!&rdquo; El mago respondi&oacute;: &ldquo;Tu <span class="tooltip-word">deseo<span class="tooltip-def">wish / desire &mdash; something strongly wanted</span></span> est&aacute; concedido.&rdquo; El rey estaba <span class="tooltip-word">complacido<span class="tooltip-def">pleased / satisfied &mdash; feeling content with something</span></span>.</p>
+                    <div class="story-english">One day, as he was eating, a wizard appeared. King Midas asked the wizard: &ldquo;Grant me a spell! Whatever I touch shall turn into gold!&rdquo; The wizard replied: &ldquo;Your wish is granted.&rdquo; The king was pleased.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 2 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 2 &mdash; El Toque de Midas</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">Toc&oacute; su <span class="tooltip-word">trono<span class="tooltip-def">throne &mdash; the special chair a king or queen sits on</span></span> y se convirti&oacute; en oro. Toc&oacute; las sillas, las mesas, los <span class="tooltip-word">jarrones<span class="tooltip-def">vases &mdash; decorative containers, often for flowers</span></span> y las <span class="tooltip-word">estatuas<span class="tooltip-def">statues &mdash; carved or sculpted figures</span></span> y todo se transform&oacute; en oro. El rey Midas estaba feliz m&aacute;s all&aacute; de las palabras. Cre&iacute;a que ahora era el hombre m&aacute;s rico del mundo.</p>
+                    <div class="story-english">He touched his throne and it turned into gold. He touched the chairs, tables, vases, and statues and they all turned into gold. King Midas was happy beyond words. He believed he was now the richest man in the world.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">Regres&oacute; a la mesa del comedor para comer. Cuando recogi&oacute; su <span class="tooltip-word">tenedor<span class="tooltip-def">fork &mdash; the utensil used to pick up food</span></span>, tambi&eacute;n se convirti&oacute; en oro. Luego toc&oacute; su plato y &eacute;ste y su comida se convirtieron en oro. El rey estaba <span class="tooltip-word">asombrado<span class="tooltip-def">astonished / amazed &mdash; feeling great surprise</span></span>. No pod&iacute;a comer ni beber nada.</p>
+                    <div class="story-english">He returned back to the dinner table to eat. As he picked up his fork, it too turned into gold. Then he touched his plate and it and his food turned into gold. The king was astonished. He could not eat or drink anything.</div>
+                </div>
+                <img src="images/gold.jpg" class="story-image" alt="El Rey Midas y el toque dorado">
+            </div>
+        </div>
+
+
+        <!-- Parte 3 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 3 &mdash; La Tragedia</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">De repente, su hija entr&oacute; corriendo en la habitaci&oacute;n. Cuando la <span class="tooltip-word">rode&oacute;<span class="tooltip-def">encircled / put his arms around (past tense of rodear)</span></span> con sus brazos, ella tambi&eacute;n se convirti&oacute; en una <span class="tooltip-word">estatua de oro<span class="tooltip-def">golden statue &mdash; a motionless figure made entirely of gold</span></span>. El rey Midas se <span class="tooltip-word">sorprendi&oacute;<span class="tooltip-def">was shocked / surprised (past tense of sorprenderse)</span></span>.</p>
+                    <div class="story-english">Suddenly, his daughter rushed into the room. As he put his arms around her, she too turned into a statue of gold. King Midas was shocked.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">&ldquo;&iexcl;Oh, no!&rdquo; &mdash; <span class="tooltip-word">exclam&oacute;<span class="tooltip-def">exclaimed (past tense of exclamar) &mdash; cried out with strong emotion</span></span> el rey. &ldquo;No quiero m&aacute;s oro. &iexcl;Quiero <span class="tooltip-word">recuperar<span class="tooltip-def">to get back / to recover &mdash; to have something returned to you</span></span> a mi hija!&rdquo;</p>
+                    <div class="story-english">&ldquo;Oh no!&rdquo; &mdash; the king exclaimed. &ldquo;I do not want any more gold. I want my daughter back!&rdquo;</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Parte 4 -->
+        <div class="story-card">
+            <div class="story-card-num">Parte 4 &mdash; La Lecci&oacute;n</div>
+            <div class="story-card-body">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">Entonces, el mago apareci&oacute; de nuevo con una botella de agua y dijo: &ldquo;<span class="tooltip-word">Roc&iacute;a<span class="tooltip-def">Sprinkle (imperative of rociar) &mdash; to scatter liquid in small drops</span></span> esta agua sobre todo lo que has convertido en oro&rdquo;.</p>
+                    <div class="story-english">Then, the wizard appeared again with a bottle of water and said: &ldquo;Sprinkle this water over everything you have turned into gold.&rdquo;</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">El rey hizo lo que le dijo y para su <span class="tooltip-word">asombro<span class="tooltip-def">amazement / wonder &mdash; a feeling of great surprise and admiration</span></span>, todo el oro que roci&oacute; con agua volvi&oacute; a su forma original. Su hija era libre una vez m&aacute;s.</p>
+                    <div class="story-english">The king did as he was told and to his amazement, all of the gold he sprinkled with water came back to its original form. His daughter was free once more.</div>
+                </div>
+                <hr class="para-divider">
+                <div class="para-block">
+                    <p class="story-spanish spanish-text">El rey <span class="tooltip-word">aprendi&oacute;<span class="tooltip-def">learned (past tense of aprender) &mdash; to gain knowledge or understanding</span></span> una lecci&oacute;n muy importante ese d&iacute;a: la vida vale mucho m&aacute;s que el oro. Desde ese d&iacute;a, el rey Midas <span class="tooltip-word">apreciaba<span class="tooltip-def">appreciated / valued (imperfect of apreciar) &mdash; to recognize the worth of something</span></span> a su familia por encima de todas las riquezas del mundo.</p>
+                    <div class="story-english">The king learned a very important lesson that day: life is worth much more than gold. From that day on, King Midas appreciated his family above all the riches in the world.</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Moral / Ending -->
+        <div class="moral-card">
+            <div class="moral-label">La Moral &mdash; The Moral</div>
+            <div class="moral-text-es">&ldquo;La vida vale mucho m&aacute;s que el oro.&rdquo;</div>
+            <div class="moral-text-en">&ldquo;Life is worth much more than gold.&rdquo;</div>
+        </div>
+
+
+    </div>
+    <!-- end of main -->
+
+
+    <!-- More Spanish Stories -->
+    <div class="related-section">
+        <div class="container">
+            <h3>More Spanish Stories</h3>
+            <div class="related-grid-cards">
+                <a href="LosTresCerditosNew.html" class="related-card">
+                    <div class="related-icon">&#x1F437;</div>
+                    <div class="related-title">The Three Little Pigs</div>
+                </a>
+                <a href="TortugaLiebre.html" class="related-card">
+                    <div class="related-icon">&#x1F422;</div>
+                    <div class="related-title">Tortoise &amp; the Hare</div>
+                </a>
+                <a href="SpanishDuck.html" class="related-card">
+                    <div class="related-icon">&#x1F9A2;</div>
+                    <div class="related-title">The Ugly Duckling</div>
+                </a>
+                <a href="SpanishAladdin.html" class="related-card">
+                    <div class="related-icon">&#x1FA94;</div>
+                    <div class="related-title">Aladdin</div>
+                </a>
+                <a href="SpanishJack.html" class="related-card">
+                    <div class="related-icon">&#x1F331;</div>
+                    <div class="related-title">Jack &amp; the Beanstalk</div>
+                </a>
+                <a href="SpanishResources.html" class="related-card">
+                    <div class="related-icon">&#x1F1EA;&#x1F1F8;</div>
+                    <div class="related-title">All Spanish Resources</div>
+                </a>
+            </div>
+        </div>
+    </div>
 
 
     <!-- Footer -->
@@ -361,60 +631,42 @@
                 <div class="col-md-6">
                     <div class="text-container about">
                         <h4>Few Words About Lingua Bud</h4>
-                        <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                        <p class="white">We&rsquo;re passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Links</h4>
                         <ul class="list-unstyled li-space-lg white">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="index.html">Home</a></li>
+                            <li><a class="white" href="terms-conditions.html">Terms &amp; Conditions</a></li>
+                            <li><a class="white" href="privacy-policy.html">Privacy Policy</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Tools</h4>
+                        <h4>Learn</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li class="media">
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="Resources2.html">Resources</a></li>
+                            <li><a class="white" href="instructors.html">Instructors</a></li>
+                            <li><a class="white" href="connect.html">Find Partners</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
+                    </div>
+                </div>
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Partners</h4>
+                        <h4>Languages</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="NewSpanishPage.html">Spanish</a></li>
+                            <li><a class="white" href="NewFrenchPage.html">French</a></li>
+                            <li><a class="white" href="NewItalianPage.html">Italian</a></li>
                         </ul>
-                    </div> <!-- end of text-container -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of footer -->  
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- end of footer -->
 
 
@@ -423,29 +675,69 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">Lingua Bud</a></p>
-                </div> <!-- end of col -->
-            </div> <!-- enf of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of copyright --> 
+                    <p class="p-small">Copyright &copy; 2026 <a href="index.html">Lingua Bud</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- end of copyright -->
 
-	
-    <!-- Scripts -->
-    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
-    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
-    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
-    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
-    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
-    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
-    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
-    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
-    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
 
-    <!-- Spanish Narrator Script -->
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <!-- Tooltip edge-clamping + mobile tap support -->
     <script>
-        // Web Speech API setup
+        (function () {
+            function clampTooltip(word) {
+                var def = word.querySelector('.tooltip-def');
+                if (!def) return;
+                def.style.left = '50%';
+                def.style.right = 'auto';
+                def.style.transform = 'translateX(-50%)';
+                var rect = def.getBoundingClientRect();
+                var vw = window.innerWidth || document.documentElement.clientWidth;
+                var PAD = 10;
+                if (rect.right > vw - PAD) {
+                    def.style.left = 'auto';
+                    def.style.right = '0';
+                    def.style.transform = 'none';
+                } else if (rect.left < PAD) {
+                    def.style.left = '0';
+                    def.style.right = 'auto';
+                    def.style.transform = 'none';
+                }
+            }
+
+            document.querySelectorAll('.tooltip-word').forEach(function (word) {
+                word.addEventListener('mouseenter', function () { clampTooltip(this); });
+                word.addEventListener('touchend', function (e) {
+                    var isActive = this.classList.contains('tooltip-active');
+                    document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                    if (!isActive) { this.classList.add('tooltip-active'); clampTooltip(this); }
+                    e.preventDefault();
+                });
+            });
+
+            document.addEventListener('touchend', function (e) {
+                if (!e.target.closest('.tooltip-word')) {
+                    document.querySelectorAll('.tooltip-word.tooltip-active').forEach(function (w) { w.classList.remove('tooltip-active'); });
+                }
+            });
+        })();
+    </script>
+
+    <!-- Spanish Narrator Script (Web Speech API) -->
+    <script>
         const synth = window.speechSynthesis;
         let utterances = [];
         let currentUtteranceIndex = 0;
@@ -454,105 +746,68 @@
         let isPlaying = false;
         let spanishVoice = null;
 
-        // Get all Spanish text paragraphs
         const spanishParagraphs = document.querySelectorAll('.spanish-text');
 
-        // Initialize voices (must wait for voices to load)
         function initVoices() {
             const voices = synth.getVoices();
-
-            // Prefer Latin American Spanish voices over Spain Spanish
-            // Priority order: Mexican, US Spanish, Argentine, Colombian, Chilean, then any Spanish except Spain
             const preferredLocales = ['es-MX', 'es-US', 'es-AR', 'es-CO', 'es-CL', 'es-VE', 'es-PE'];
-
-            // Try to find preferred Latin American voice
             for (let locale of preferredLocales) {
-                spanishVoice = voices.find(voice => voice.lang === locale);
-                if (spanishVoice) {
-                    updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
-                    return;
-                }
+                spanishVoice = voices.find(v => v.lang === locale);
+                if (spanishVoice) { updateStatus('Using ' + spanishVoice.name + ' (' + spanishVoice.lang + ')'); return; }
             }
-
-            // Fallback: any Spanish voice that's NOT from Spain (es-ES)
-            spanishVoice = voices.find(voice => voice.lang.startsWith('es-') && voice.lang !== 'es-ES');
-
-            // Last resort: any Spanish voice (including Spain)
-            if (!spanishVoice) {
-                spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
-            }
-
-            if (spanishVoice) {
-                updateStatus(`Using ${spanishVoice.name} (${spanishVoice.lang})`);
-            } else {
-                updateStatus('No Spanish voice found. Using default voice.');
-            }
+            spanishVoice = voices.find(v => v.lang.startsWith('es-') && v.lang !== 'es-ES');
+            if (!spanishVoice) spanishVoice = voices.find(v => v.lang.startsWith('es'));
+            if (spanishVoice) updateStatus('Using ' + spanishVoice.name + ' (' + spanishVoice.lang + ')');
+            else updateStatus('No Spanish voice found. Using default.');
         }
 
-        // Load voices when available
-        if (synth.onvoiceschanged !== undefined) {
-            synth.onvoiceschanged = initVoices;
-        }
-        // Also try immediately in case voices are already loaded
+        if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = initVoices;
         setTimeout(initVoices, 100);
 
-        function updateStatus(message) {
-            document.getElementById('narratorStatus').textContent = message;
+        function updateStatus(msg) {
+            document.getElementById('narratorStatus').textContent = msg;
         }
 
         function createUtterances() {
             utterances = [];
-            spanishParagraphs.forEach((paragraph, index) => {
-                const utterance = new SpeechSynthesisUtterance(paragraph.textContent);
+            spanishParagraphs.forEach(function(paragraph, index) {
+                var clone = paragraph.cloneNode(true);
+                clone.querySelectorAll('.tooltip-def').forEach(function(el) { el.remove(); });
+                var utterance = new SpeechSynthesisUtterance(clone.textContent);
                 utterance.rate = currentSpeed;
-                utterance.lang = 'es-MX'; // Set language to Mexican Spanish
-
-                if (spanishVoice) {
-                    utterance.voice = spanishVoice;
-                }
-
-                // Highlight current paragraph being read
+                utterance.lang = 'es-MX';
+                if (spanishVoice) utterance.voice = spanishVoice;
                 utterance.onstart = function() {
-                    // Remove previous highlights
-                    spanishParagraphs.forEach(p => p.classList.remove('speaking'));
-                    // Add highlight to current paragraph
+                    spanishParagraphs.forEach(function(p) { p.classList.remove('speaking'); });
                     paragraph.classList.add('speaking');
-                    updateStatus(`Reading paragraph ${index + 1} of ${spanishParagraphs.length}...`);
+                    updateStatus('Reading paragraph ' + (index + 1) + ' of ' + spanishParagraphs.length + '...');
                 };
-
                 utterance.onend = function() {
                     paragraph.classList.remove('speaking');
                     currentUtteranceIndex++;
-
-                    // If there are more paragraphs, speak the next one
                     if (currentUtteranceIndex < utterances.length) {
                         synth.speak(utterances[currentUtteranceIndex]);
                     } else {
-                        // Story finished
                         stopNarration();
                         updateStatus('Story completed! Ready to play again.');
                     }
                 };
-
                 utterances.push(utterance);
             });
         }
 
         function playNarration() {
             if (!isPlaying) {
-                // Start from beginning
                 createUtterances();
                 currentUtteranceIndex = 0;
                 isPlaying = true;
                 isPaused = false;
-
                 if (utterances.length > 0) {
                     synth.speak(utterances[0]);
                     document.getElementById('playBtn').style.display = 'none';
                     document.getElementById('pauseBtn').style.display = 'inline-block';
                 }
             } else if (isPaused) {
-                // Resume
                 synth.resume();
                 isPaused = false;
                 document.getElementById('playBtn').style.display = 'none';
@@ -576,49 +831,113 @@
             isPlaying = false;
             isPaused = false;
             currentUtteranceIndex = 0;
-
-            // Remove all highlights
-            spanishParagraphs.forEach(p => p.classList.remove('speaking'));
-
+            spanishParagraphs.forEach(function(p) { p.classList.remove('speaking'); });
             document.getElementById('playBtn').style.display = 'inline-block';
             document.getElementById('pauseBtn').style.display = 'none';
-
-            if (spanishVoice) {
-                updateStatus(`Ready to play • ${spanishVoice.name}`);
-            } else {
-                updateStatus('Ready to play • Latin American Spanish voice');
-            }
+            updateStatus(spanishVoice ? 'Ready to play \u2022 ' + spanishVoice.name : 'Ready to play \u2022 Latin American Spanish voice');
         }
 
         function setSpeed(speed) {
             currentSpeed = speed;
-
-            // Update active button
-            document.querySelectorAll('.speed-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.speed-btn').forEach(function(btn) { btn.classList.remove('active'); });
             event.target.classList.add('active');
-
-            // If currently playing, update the speed
             if (isPlaying) {
-                const wasPlaying = !isPaused;
+                var wasPlaying = !isPaused;
                 synth.cancel();
-
-                // Recreate utterances with new speed
                 createUtterances();
-
                 if (wasPlaying && currentUtteranceIndex < utterances.length) {
                     synth.speak(utterances[currentUtteranceIndex]);
                 }
             }
-
-            updateStatus(`Speed set to ${speed}x`);
+            updateStatus('Speed set to ' + speed + '\u00d7');
         }
 
-        // Stop narration when user navigates away
-        window.addEventListener('beforeunload', function() {
-            synth.cancel();
+        window.addEventListener('beforeunload', function() { synth.cancel(); });
+    </script>
+
+    <!-- Firebase Auth for navbar -->
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
+
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
+                    }
+                } catch (e) { console.error('Profile load error:', e); }
+
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
+                loadUnreadMessageCount(user.uid);
+                loadPendingRequests(user.uid);
+
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
+            }
         });
+
+        // ── Notification counts ──────────────────────────────────────────────────
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+        }
+
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(query(collection(db, 'conversations'), where('participants', 'array-contains', uid)), (snap) => {
+                _unreadMsgCount = 0;
+                snap.forEach(d => { const c = d.data(); if (c.unreadCount && c.unreadCount[uid]) _unreadMsgCount += c.unreadCount[uid]; });
+                const ml = document.getElementById('messagesLink'), uc = document.getElementById('unreadCount');
+                if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+                if (uc) { if (_unreadMsgCount > 0) { uc.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; uc.classList.add('show'); } else uc.classList.remove('show'); }
+                _updateProfileBadge();
+            });
+        }
+
+        function loadPendingRequests(uid) {
+            function _updateActivityBadge() {
+                const bookingsEl = document.getElementById('bookingsCount');
+                if (bookingsEl) { if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); } else bookingsEl.classList.remove('show'); }
+                const friendsEl = document.getElementById('friendsCount');
+                if (friendsEl) { if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); } else friendsEl.classList.remove('show'); }
+            }
+            onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
+                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
+                _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                _updateActivityBadge(); _updateProfileBadge();
+            });
+        }
     </script>
 </body>
 </html>
