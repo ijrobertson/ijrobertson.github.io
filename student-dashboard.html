@@ -1405,6 +1405,22 @@
       }
 
       const statusEl = document.getElementById('status-msg');
+      statusEl.textContent = '';
+      statusEl.style.color = 'red';
+
+      const name = document.getElementById('name').value.trim();
+      const country = document.getElementById('native_country').value;
+      const about = document.getElementById('about_me').value.trim();
+      const avatarSrc = document.getElementById('avatarPreview').getAttribute('src') || '';
+      const hasAvatar = avatarSrc !== '' && !avatarSrc.startsWith('data:image/svg+xml');
+
+      if (!name) { statusEl.textContent = 'Please enter your full name.'; return; }
+      if (!country) { statusEl.textContent = 'Please select your native country.'; return; }
+      if (spokenLanguages.length === 0) { statusEl.textContent = 'Please add at least one language you speak.'; return; }
+      if (learningLanguages.length === 0) { statusEl.textContent = 'Please add at least one language you\'re learning.'; return; }
+      if (!about) { statusEl.textContent = 'Please write something in the About Me field.'; return; }
+      if (!hasAvatar) { statusEl.textContent = 'Please upload a profile picture.'; return; }
+
       statusEl.textContent = 'Saving...';
       statusEl.style.color = '#666';
 
