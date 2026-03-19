@@ -2266,13 +2266,13 @@
         // Load students from users collection
         async function loadStudents() {
             try {
-                const q = query(collection(db, 'users'), limit(8));
+                const q = query(collection(db, 'users'), limit(30));
                 const querySnapshot = await getDocs(q);
 
                 allStudents = [];
                 querySnapshot.forEach((doc) => {
                     const userData = { id: doc.id, ...doc.data() };
-                    if (userData.role === 'student') {
+                    if (userData.role === 'student' && userData.avatar_url) {
                         allStudents.push(userData);
 
                         // Collect languages for filters
