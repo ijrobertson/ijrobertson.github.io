@@ -1007,7 +1007,11 @@
           setStatus("Photo uploaded!", false);
         } catch (err) {
           console.error(err);
-          setStatus("Photo upload failed: " + err.message, true);
+          if (err.code === 'storage/unauthorized') {
+            setStatus("Photo file size too large. Please try again with a smaller file size.", true);
+          } else {
+            setStatus("Photo upload failed: " + err.message, true);
+          }
         }
       });
 

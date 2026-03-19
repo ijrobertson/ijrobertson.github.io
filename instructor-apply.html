@@ -561,7 +561,11 @@
                 statusEl.textContent = 'Photo uploaded ✓';
                 statusEl.style.color = '#198754';
             } catch (err) {
-                statusEl.textContent = 'Upload failed: ' + err.message;
+                if (err.code === 'storage/unauthorized') {
+                    statusEl.textContent = 'Photo file size too large. Please try again with a smaller file size.';
+                } else {
+                    statusEl.textContent = 'Upload failed: ' + err.message;
+                }
                 statusEl.style.color = '#dc3545';
             }
             checkSubmitReady();

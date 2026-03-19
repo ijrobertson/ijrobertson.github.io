@@ -1343,7 +1343,11 @@
           statusEl.style.color = 'green';
         } catch (err) {
           console.error(err);
-          statusEl.textContent = 'Photo upload failed: ' + err.message;
+          if (err.code === 'storage/unauthorized') {
+            statusEl.textContent = 'Photo file size too large. Please try again with a smaller file size.';
+          } else {
+            statusEl.textContent = 'Photo upload failed: ' + err.message;
+          }
           statusEl.style.color = 'red';
         }
       });
@@ -1642,7 +1646,11 @@
 
       } catch (err) {
         console.error('Setup error:', err);
-        errorEl.textContent = 'Error saving profile: ' + err.message;
+        if (err.code === 'storage/unauthorized') {
+          errorEl.textContent = 'Photo file size too large. Please try again with a smaller file size.';
+        } else {
+          errorEl.textContent = 'Error saving profile: ' + err.message;
+        }
         submitBtn.disabled = false;
         submitBtn.textContent = 'Complete Profile & Get Started';
         progressEl.textContent = '';
