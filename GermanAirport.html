@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -10,10 +10,13 @@
     <meta name="author" content="Lingua Bud">
 
     <!-- OG Meta Tags -->
-    <meta property="og:site_name" content="Lingua Bud" />
-    <meta property="og:title" content="Am Flughafen - Lingua Bud"/>
-    <meta property="og:description" content="Learn German airport vocabulary and conversations with Lingua Bud." />
-    <meta property="og:type" content="article" />
+	<meta property="og:site_name" content="" />
+	<meta property="og:site" content="" />
+	<meta property="og:title" content=""/>
+	<meta property="og:description" content="" />
+	<meta property="og:image" content="" />
+	<meta property="og:url" content="" />
+	<meta property="og:type" content="article" />
 
     <!-- Website Title -->
     <title>Am Flughafen - Lingua Bud</title>
@@ -23,260 +26,337 @@
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
 
-    <!-- Favicon -->
+	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
 
     <style>
-        /* Hero Section */
+        /* ─── Am Flughafen page ───────────────────── */
+
+        /* Hero */
         .sf-hero {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            padding: 120px 0 60px;
+            background: linear-gradient(135deg, #0f3460 0%, #1a5f7a 45%, #20bcba 100%);
+            padding: 6.5rem 0 4.5rem;
             text-align: center;
-            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .sf-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #20bcba 0%, #0f3460 50%, #20bcba 100%);
         }
         .sf-hero-flag {
-            width: 90px;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
+            height: 60px;
+            margin-bottom: 0.75rem;
+            filter: drop-shadow(0 4px 14px rgba(0,0,0,0.35));
+            border-radius: 4px;
         }
-        .sf-hero h1 {
-            font-size: 2.8rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: white;
-        }
-        .sf-hero p {
+        .sf-hero h1 { color: white; font-size: 3rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .sf-hero-sub {
+            color: rgba(255,255,255,0.82);
             font-size: 1.1rem;
-            opacity: 0.85;
-            margin-bottom: 25px;
+            max-width: 560px;
+            margin: 0 auto 2.2rem;
+            line-height: 1.65;
         }
-        .sf-hero-links a {
-            display: inline-block;
-            margin: 5px 8px;
-            padding: 8px 20px;
-            border-radius: 25px;
-            background: rgba(255,255,255,0.15);
+        .sf-hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; }
+        .sf-hero-link {
+            background: rgba(255,255,255,0.12);
             color: white;
-            font-size: 0.85rem;
-            text-decoration: none;
             border: 1px solid rgba(255,255,255,0.3);
-            transition: background 0.2s;
-        }
-        .sf-hero-links a:hover {
-            background: rgba(255,255,255,0.28);
-            text-decoration: none;
-            color: white;
-        }
-
-        /* Language Strip */
-        .sf-lang-strip {
-            background: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 12px 0;
-            text-align: center;
+            border-radius: 25px;
+            padding: 0.45rem 1.15rem;
             font-size: 0.85rem;
-            color: #555;
-        }
-        .sf-lang-strip a {
-            margin: 0 8px;
-            color: #0f3460;
             font-weight: 600;
             text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
         }
+        .sf-hero-link:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.55);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Language strip */
+        .sf-lang-strip {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0.7rem 0;
+            text-align: center;
+            font-size: 0.87rem;
+            color: #666;
+        }
+        .sf-lang-strip a { color: #20bcba; font-weight: 600; text-decoration: none; margin: 0 0.4rem; }
         .sf-lang-strip a:hover { text-decoration: underline; }
 
-        /* Content Area */
-        .sf-content {
-            padding: 50px 0 60px;
-            background: #f0f2f5;
-        }
+        /* Content area */
+        .sf-content { background: #f4f8f8; padding: 3rem 0; }
 
-        /* Cards */
+        /* Section cards */
         .sf-card {
             background: white;
-            border-radius: 14px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-            margin-bottom: 28px;
+            border-radius: 16px;
+            box-shadow: 0 2px 18px rgba(0,0,0,0.07);
+            margin-bottom: 2rem;
             overflow: hidden;
         }
         .sf-card-header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
-            color: white;
-            padding: 18px 24px;
-            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.4rem 2rem;
+            border-bottom: 2px solid #f0f0f0;
+            background: var(--hdr-bg, #fafafa);
+        }
+        .sf-card-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+        .sf-card-label {
+            font-size: 0.7rem;
             font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--hdr-accent, #20bcba);
+            margin-bottom: 0.2rem;
         }
-        .sf-card-header span {
-            font-size: 0.9rem;
-            font-weight: 400;
-            opacity: 0.8;
-            margin-left: 8px;
-        }
-        .sf-card-body {
-            padding: 24px;
-        }
+        .sf-card-title { font-size: 1.2rem; font-weight: 700; color: #222; margin: 0; }
+        .sf-card-body { padding: 1.75rem 2rem; }
+        .sf-card-body > p { color: #555; line-height: 1.7; margin-bottom: 1rem; }
 
-        /* Vocab Grid */
+        /* Vocab grid */
         .vocab-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 14px;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
         }
+        @media (max-width: 576px) { .vocab-grid { grid-template-columns: 1fr; } }
         .vocab-item {
-            background: #f8f9fa;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.7rem 1rem;
             border-radius: 10px;
-            padding: 14px 16px;
-            border-left: 4px solid #0f3460;
+            background: #f8fdfd;
+            border: 1px solid #e8f8f7;
+            font-size: 0.95rem;
+            color: #444;
+            line-height: 1.5;
+            transition: border-color 0.2s, background 0.2s;
         }
-        .vocab-de {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 3px;
-        }
-        .vocab-en {
-            font-size: 0.85rem;
-            color: #666;
-        }
+        .vocab-item:hover { border-color: #20bcba; background: #e8fffe; }
+        .vocab-icon { color: #20bcba; font-size: 0.65rem; flex-shrink: 0; margin-top: 0.45rem; }
+        .vocab-de { font-weight: 700; color: #0f3460; }
+        .vocab-en { font-size: 0.88rem; color: #777; }
 
-        /* Conversation */
-        .convo-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+        /* Conversation lines */
+        .convo-list { list-style: none; padding: 0; margin: 0; }
         .convo-item {
             display: flex;
-            gap: 14px;
-            padding: 14px 0;
-            border-bottom: 1px solid #f0f0f0;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.55rem;
+            border: 1px solid #eee;
+            transition: box-shadow 0.2s, border-color 0.2s;
         }
-        .convo-item:last-child { border-bottom: none; }
+        .convo-item:hover { border-color: #20bcba; box-shadow: 0 3px 10px rgba(32,188,186,0.12); }
         .convo-num {
-            width: 32px;
-            height: 32px;
-            min-width: 32px;
-            background: linear-gradient(135deg, #1a1a2e, #0f3460);
+            background: #20bcba;
             color: white;
+            font-size: 0.72rem;
+            font-weight: 700;
             border-radius: 50%;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
-            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 0.15rem;
         }
-        .convo-de {
-            font-weight: 600;
-            color: #1a1a2e;
-            margin-bottom: 2px;
-        }
-        .convo-en {
-            font-size: 0.88rem;
-            color: #666;
-            font-style: italic;
-        }
+        .convo-body { flex: 1; }
+        .convo-de { font-weight: 700; color: #0f3460; font-size: 0.97rem; margin-bottom: 0.2rem; }
+        .convo-en { font-size: 0.88rem; color: #777; font-style: italic; }
 
-        /* Tip Box */
+        /* Callouts */
         .sf-tip {
-            background: linear-gradient(135deg, #e8f0fe, #f0f4ff);
-            border-radius: 12px;
-            padding: 20px 24px;
-            border-left: 5px solid #0f3460;
-            margin-bottom: 28px;
-            font-size: 0.95rem;
-            color: #333;
+            background: #e8fffe;
+            border-left: 4px solid #20bcba;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin-top: 1.3rem;
+            font-size: 0.93rem;
+            color: #444;
+            line-height: 1.65;
         }
-        .sf-tip strong { color: #0f3460; }
 
-        /* Next Steps */
-        .sf-next-steps { margin-top: 10px; }
+        /* Keep Exploring */
+        .sf-next-steps {
+            background: linear-gradient(135deg, #1a3a5c 0%, #1a6080 55%, #1a9d9b 100%);
+            padding: 3.5rem 0 4rem;
+        }
+        .sf-next-steps h3 { color: white; text-align: center; font-size: 1.9rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .ns-sub { color: rgba(255,255,255,0.72); text-align: center; margin-bottom: 2.2rem; font-size: 0.97rem; }
         .ns-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 14px;
-            margin-top: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
         }
         .ns-card {
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 18px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 14px;
+            padding: 1.5rem 1rem;
             text-align: center;
             text-decoration: none;
-            transition: transform 0.2s, box-shadow 0.2s;
+            color: white;
             display: block;
+            transition: background 0.2s, transform 0.2s;
         }
         .ns-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(15,52,96,0.35);
-            color: white;
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-5px);
             text-decoration: none;
-        }
-        .ns-card .ns-icon { font-size: 1.6rem; margin-bottom: 6px; }
-        .ns-card .ns-title { font-weight: 700; font-size: 0.95rem; }
-        .ns-card .ns-sub { font-size: 0.78rem; opacity: 0.8; margin-top: 3px; }
-
-        /* Notification badges */
-        .notification-badge {
-            position: absolute;
-            top: -6px;
-            right: -8px;
-            background: #e74c3c;
             color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
         }
+        .ns-card-icon { font-size: 2rem; margin-bottom: 0.55rem; }
+        .ns-card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .ns-card-sub { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+        .sf-back-row { text-align: center; }
 
-        /* Profile dropdown */
-        .profile-dropdown { position: relative; display: inline-block; }
-        .profile-dropdown img {
-            width: 36px; height: 36px;
+        /* ── Profile nav (matches home page) ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px;
             border-radius: 50%;
             cursor: pointer;
-            border: 2px solid rgba(255,255,255,0.6);
             object-fit: cover;
+            border: 2px solid #20bcba;
+            transition: border-color 0.3s;
         }
-        .profile-dropdown .dropdown-menu {
-            right: 0; left: auto; min-width: 180px;
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem; top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
         }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        /* Notification badge */
+        .notification-badge {
+            display: none; position: absolute; top: -4px; right: -4px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center; z-index: 10000;
+            animation: badgePulse 2s infinite;
+        }
+        .notification-badge.show { display: flex; }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count {
+            display: none; background-color: #dc3545; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center;
+            margin-left: 4px;
+        }
+        .unread-count.show { display: inline-flex; }
+        /* Navbar centering */
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
 
-        .unread-count { display: none; }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sf-hero { padding: 5.5rem 0 3.5rem; }
+            .sf-hero h1 { font-size: 2.2rem; }
+            .sf-card-header { padding: 1.2rem 1.25rem; }
+            .sf-card-body { padding: 1.25rem 1.25rem; }
+        }
+        @media (max-width: 480px) {
+            .sf-hero h1 { font-size: 1.8rem; }
+            .sf-hero-flag { font-size: 3rem; }
+        }
     </style>
 </head>
-<body>
+<body data-spy="scroll" data-target=".fixed-top">
+
+    <!-- Preloader -->
+	<div class="spinner-wrapper">
+        <div class="spinner">
+            <div class="bounce1"></div>
+            <div class="bounce2"></div>
+            <div class="bounce3"></div>
+        </div>
+    </div>
+    <!-- end of preloader -->
+
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <!-- Image Logo -->
         <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
 
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
-            aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <!-- Mobile Menu Toggle Button -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
             <span class="navbar-toggler-awesome fas fa-times"></span>
         </button>
+        <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#header">HOME</a></li>
-                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#intro">ABOUT</a></li>
-                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#services">SERVICES</a></li>
-                <li class="nav-item"><a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a></li>
-                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a></li>
-                <li class="nav-item"><a class="nav-link page-scroll" href="connect.html">CONNECT</a></li>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
+                </li>
 
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -295,42 +375,35 @@
                         <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
+                <!-- end of dropdown menu -->
 
-                <li class="nav-item"><a class="nav-link page-scroll" href="index.html#contact">CONTACT</a></li>
-
-                <!-- Auth: Sign Up / Profile -->
-                <li class="nav-item" id="nav-signup-btn">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="login.html">SIGN UP/LOG IN</a>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-                <li class="nav-item" id="nav-profile-btn" style="display:none; align-items:center; gap:14px;">
-                    <!-- Messages -->
-                    <a href="messages.html" style="position:relative; color:white; font-size:1.2rem; margin-right:4px;">
-                        <i class="fas fa-envelope"></i>
-                        <span class="notification-badge unread-count" id="msg-badge">0</span>
-                    </a>
-                    <!-- Friend Requests -->
-                    <a href="connect.html" style="position:relative; color:white; font-size:1.2rem; margin-right:4px;">
-                        <i class="fas fa-user-friends"></i>
-                        <span class="notification-badge unread-count" id="friend-badge">0</span>
-                    </a>
-                    <!-- Bookings -->
-                    <a href="student-dashboard.html" style="position:relative; color:white; font-size:1.2rem; margin-right:10px;">
-                        <i class="fas fa-calendar-check"></i>
-                        <span class="notification-badge unread-count" id="booking-badge">0</span>
-                    </a>
-                    <!-- Profile Picture -->
-                    <div class="profile-dropdown dropdown">
-                        <img src="images/default-avatar.png" alt="Profile" id="nav-profile-pic"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="student-dashboard.html">My Profile</a>
-                            <a class="dropdown-item" href="dashboard.html">Instructor Dashboard</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#" id="nav-signout">Sign Out</a>
-                        </div>
-                    </div>
+
+                <!-- Sign In link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <!-- Profile dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
+                        <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
 
             <span class="nav-item social-icons">
                 <span class="fa-stack">
@@ -347,224 +420,254 @@
                 </span>
             </span>
         </div>
-    </nav>
-    <!-- end of navbar -->
+    </nav> <!-- end of navbar -->
+
 
     <!-- Hero -->
     <div class="sf-hero">
-        <img src="images/GermanFlag.png" alt="German Flag" class="sf-hero-flag">
-        <h1>Am Flughafen</h1>
-        <p>German Airport Vocabulary &amp; Conversations</p>
-        <div class="sf-hero-links">
-            <a href="GermanPage.html">&#127968; German Hub</a>
-            <a href="GermanBasics.html">&#128218; Basics</a>
-            <a href="GermanRestaurant.html">&#127859; Restaurant</a>
-            <a href="GermanHotel.html">&#127970; Hotel</a>
+        <div class="container">
+            <img class="sf-hero-flag" src="images/GermanFlag.png" alt="German Flag">
+            <h1>Am Flughafen</h1>
+            <p class="sf-hero-sub">Learn how to navigate a German-speaking airport. Master key vocabulary and phrases for a smooth check-in and boarding experience.</p>
+            <div class="sf-hero-links">
+                <a href="#vocabulary" class="sf-hero-link">&#128218; Vocabulary</a>
+                <a href="#conversation" class="sf-hero-link">&#9992;&#65039; The Conversation</a>
+                <a href="#next-steps" class="sf-hero-link">&#128640; Keep Exploring</a>
+            </div>
         </div>
     </div>
+    <!-- end of hero -->
 
-    <!-- Language Strip -->
+
+    <!-- Language strip -->
     <div class="sf-lang-strip">
-        This lesson in other languages:
-        <a href="SpanishAirport.html">&#127466;&#127480; Spanish</a>
-        <a href="FrenchAirport.html">&#127467;&#127479; French</a>
-        <a href="PortugueseAirport.html">&#127463;&#127479; Portuguese</a>
-        <a href="ItalianAirport.html">&#127470;&#127481; Italian</a>
-        <a href="RussianAirport.html">&#127479;&#127482; Russian</a>
-        <a href="SwedishAirport.html">&#127480;&#127466; Swedish</a>
+        Also available in:
+        <a href="SpanishAirport.html">Spanish</a>,
+        <a href="FrenchAirport.html">French</a>,
+        <a href="PortugueseAirport.html">Portuguese</a>,
+        <a href="ItalianAirport.html">Italian</a>,
+        <a href="RussianAirport.html">Russian</a>,
+        <a href="SwedishAirport.html">Swedish</a>
     </div>
+    <!-- end of language strip -->
 
-    <!-- Main Content -->
+
+    <!-- Content -->
     <div class="sf-content">
         <div class="container">
 
-            <!-- Tip Box -->
-            <div class="sf-tip">
-                <strong>&#128161; Lerntipp:</strong> German airports are called <strong>Flughafen</strong>. Major hubs include Frankfurt (FRA), Munich (MUC), and Berlin (BER). Gate announcements are usually in German and English.
-            </div>
-
-            <!-- Vocabulary Card -->
-            <div class="sf-card">
-                <div class="sf-card-header">
-                    &#128218; Airport Vocabulary <span>(Flughafen-Vokabular)</span>
+            <!-- Vocabulary -->
+            <div class="sf-card" id="vocabulary">
+                <div class="sf-card-header" style="--hdr-bg:#e8fffe; --hdr-accent:#20bcba;">
+                    <span class="sf-card-icon">&#128218;</span>
+                    <div>
+                        <div class="sf-card-label">Key Words</div>
+                        <div class="sf-card-title">Common Airport Vocabulary <span style="color:#999;font-weight:400;font-size:0.9rem;">(Flughafen-Vokabular)</span></div>
+                    </div>
                 </div>
                 <div class="sf-card-body">
+                    <p>Study these common words before arriving at a German-speaking airport. If you want to visit our <a href="GermanPage.html" style="color:#20bcba;font-weight:600;">German Hub page, click here</a>.</p>
                     <div class="vocab-grid">
                         <div class="vocab-item">
-                            <div class="vocab-de">Das Flugzeug</div>
-                            <div class="vocab-en">The Plane</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Das Flugzeug</span> &mdash; <span class="vocab-en">'The Plane'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Ank&uuml;nfte</div>
-                            <div class="vocab-en">Arrivals</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Ank&uuml;nfte</span> &mdash; <span class="vocab-en">'Arrivals'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Abfl&uuml;ge</div>
-                            <div class="vocab-en">Departures</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Abfl&uuml;ge</span> &mdash; <span class="vocab-en">'Departures'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Der Pass</div>
-                            <div class="vocab-en">The Passport</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Der Pass</span> &mdash; <span class="vocab-en">'The Passport'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Gep&auml;ck</div>
-                            <div class="vocab-en">Luggage</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Gep&auml;ck</span> &mdash; <span class="vocab-en">'Luggage'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Der Koffer</div>
-                            <div class="vocab-en">The Suitcase</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Der Koffer</span> &mdash; <span class="vocab-en">'The Suitcase'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Das Ticket</div>
-                            <div class="vocab-en">The Ticket</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Das Ticket</span> &mdash; <span class="vocab-en">'The Ticket'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Die Fluggesellschaft</div>
-                            <div class="vocab-en">The Airline</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Die Fluggesellschaft</span> &mdash; <span class="vocab-en">'The Airline'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Boarding-Zeit</div>
-                            <div class="vocab-en">Boarding Time</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Boarding-Zeit</span> &mdash; <span class="vocab-en">'Boarding Time'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Flughafensicherheit</div>
-                            <div class="vocab-en">Airport Security</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Flughafensicherheit</span> &mdash; <span class="vocab-en">'Airport Security'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Das Tor</div>
-                            <div class="vocab-en">The Gate</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Das Tor</span> &mdash; <span class="vocab-en">'The Gate'</span></div>
                         </div>
                         <div class="vocab-item">
-                            <div class="vocab-de">Der Flug</div>
-                            <div class="vocab-en">The Flight</div>
+                            <i class="fas fa-square vocab-icon"></i>
+                            <div><span class="vocab-de">Der Flug</span> &mdash; <span class="vocab-en">'The Flight'</span></div>
                         </div>
+                    </div>
+                    <div class="sf-tip">
+                        &#128161; <strong>Pro tip:</strong> Before your session, review the <a href="GermanBasics.html" style="color:#20bcba;font-weight:600;">German Basics</a> page to brush up on common greetings and phrases.
                     </div>
                 </div>
             </div>
+            <!-- end of vocabulary -->
 
-            <!-- Conversation Card -->
-            <div class="sf-card">
-                <div class="sf-card-header">
-                    &#9992;&#65039; Airport Conversation <span>(Grundlegendes Gespr&auml;ch am Flughafen)</span>
+            <!-- Conversation -->
+            <div class="sf-card" id="conversation">
+                <div class="sf-card-header" style="--hdr-bg:#f0fffe; --hdr-accent:#20bcba;">
+                    <span class="sf-card-icon">&#9992;&#65039;</span>
+                    <div>
+                        <div class="sf-card-label">The Script</div>
+                        <div class="sf-card-title">Basic Conversation at the Airport <span style="color:#999;font-weight:400;font-size:0.9rem;">(Grundlegendes Gespr&auml;ch am Flughafen)</span></div>
+                    </div>
                 </div>
                 <div class="sf-card-body">
-                    <ul class="convo-list">
+                    <p>Follow this conversation to practice checking in at the airport with your Lingua Bud. Take turns playing the agent and the traveller!</p>
+                    <ol class="convo-list">
                         <li class="convo-item">
-                            <div class="convo-num">1</div>
-                            <div>
+                            <span class="convo-num">1</span>
+                            <div class="convo-body">
                                 <div class="convo-de">Hallo, guten Tag. Ich brauche Ihren Nachnamen und die P&auml;sse aller Reisenden.</div>
-                                <div class="convo-en">'Hello, good afternoon. I need your last name and the passports of all of the travelers.'</div>
+                                <div class="convo-en">Hello, good afternoon. I need your last name and the passports of all of the travelers.</div>
                             </div>
                         </li>
                         <li class="convo-item">
-                            <div class="convo-num">2</div>
-                            <div>
+                            <span class="convo-num">2</span>
+                            <div class="convo-body">
                                 <div class="convo-de">Wie viele Koffer wollen Sie einchecken?</div>
-                                <div class="convo-en">'How many suitcases are you going to check in?'</div>
+                                <div class="convo-en">How many suitcases are you going to check in?</div>
                             </div>
                         </li>
                         <li class="convo-item">
-                            <div class="convo-num">3</div>
-                            <div>
+                            <span class="convo-num">3</span>
+                            <div class="convo-body">
                                 <div class="convo-de">Wir haben insgesamt drei Koffer.</div>
-                                <div class="convo-en">'We have three suitcases in total.'</div>
+                                <div class="convo-en">We have three suitcases in total.</div>
                             </div>
                         </li>
                         <li class="convo-item">
-                            <div class="convo-num">4</div>
-                            <div>
+                            <span class="convo-num">4</span>
+                            <div class="convo-body">
                                 <div class="convo-de">K&ouml;nnen Sie die Koffer bitte auf die Waage stellen?</div>
-                                <div class="convo-en">'Can you place the suitcases on the scale, please?'</div>
+                                <div class="convo-en">Can you place the suitcases on the scale, please?</div>
                             </div>
                         </li>
                         <li class="convo-item">
-                            <div class="convo-num">5</div>
-                            <div>
+                            <span class="convo-num">5</span>
+                            <div class="convo-body">
                                 <div class="convo-de">Vielen Dank. Ihr Terminal ist B und Ihr Tor ist 24.</div>
-                                <div class="convo-en">'Thank you very much. Your terminal is B and your gate is 24.'</div>
+                                <div class="convo-en">Thank you very much. Your terminal is B and your gate is 24.</div>
                             </div>
                         </li>
                         <li class="convo-item">
-                            <div class="convo-num">6</div>
-                            <div>
+                            <span class="convo-num">6</span>
+                            <div class="convo-body">
                                 <div class="convo-de">Bitte legen Sie Ihre Tickets und P&auml;sse bei der Flughafensicherheit vor.</div>
-                                <div class="convo-en">'Please present your tickets and passports to airport security.'</div>
+                                <div class="convo-en">Please present your tickets and passports to airport security.</div>
                             </div>
                         </li>
                         <li class="convo-item">
-                            <div class="convo-num">7</div>
-                            <div>
+                            <span class="convo-num">7</span>
+                            <div class="convo-body">
                                 <div class="convo-de">Vielen Dank, ich w&uuml;nsche Ihnen einen sch&ouml;nen Tag.</div>
-                                <div class="convo-en">'Thank you very much, I hope you have a beautiful day.'</div>
+                                <div class="convo-en">Thank you very much, I hope you have a beautiful day.</div>
                             </div>
                         </li>
                         <li class="convo-item">
-                            <div class="convo-num">8</div>
-                            <div>
+                            <span class="convo-num">8</span>
+                            <div class="convo-body">
                                 <div class="convo-de">Alle Passagiere in Zone 4 sind zum Einsteigen herzlich willkommen.</div>
-                                <div class="convo-en">'All passengers in Zone 4 are welcome to board.'</div>
+                                <div class="convo-en">All passengers in Zone 4 are welcome to board.</div>
                             </div>
                         </li>
                         <li class="convo-item">
-                            <div class="convo-num">9</div>
-                            <div>
+                            <span class="convo-num">9</span>
+                            <div class="convo-body">
                                 <div class="convo-de">Vielen Dank, ich w&uuml;nsche Ihnen einen guten Flug.</div>
-                                <div class="convo-en">'Thank you very much, I hope you have a good flight.'</div>
+                                <div class="convo-en">Thank you very much, I hope you have a good flight.</div>
                             </div>
                         </li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Keep Exploring -->
-            <div class="sf-card sf-next-steps">
-                <div class="sf-card-header">
-                    &#127758; Keep Exploring German
-                </div>
-                <div class="sf-card-body">
-                    <div class="ns-grid">
-                        <a href="GermanBasics.html" class="ns-card">
-                            <div class="ns-icon">&#128218;</div>
-                            <div class="ns-title">Basics</div>
-                            <div class="ns-sub">Deutsche Grundlagen</div>
-                        </a>
-                        <a href="GermanFirst.html" class="ns-card">
-                            <div class="ns-icon">&#128172;</div>
-                            <div class="ns-title">First Conversation</div>
-                            <div class="ns-sub">Erstes Gespr&auml;ch</div>
-                        </a>
-                        <a href="GermanRestaurant.html" class="ns-card">
-                            <div class="ns-icon">&#127859;</div>
-                            <div class="ns-title">Restaurant</div>
-                            <div class="ns-sub">Im Restaurant</div>
-                        </a>
-                        <a href="GermanHotel.html" class="ns-card">
-                            <div class="ns-icon">&#127970;</div>
-                            <div class="ns-title">Hotel</div>
-                            <div class="ns-sub">Einchecken im Hotel</div>
-                        </a>
-                        <a href="GermanDay.html" class="ns-card">
-                            <div class="ns-icon">&#9728;&#65039;</div>
-                            <div class="ns-title">A Typical Day</div>
-                            <div class="ns-sub">Ein typischer Tag</div>
-                        </a>
-                        <a href="GermanDuck.html" class="ns-card">
-                            <div class="ns-icon">&#129414;</div>
-                            <div class="ns-title">The Ugly Duckling</div>
-                            <div class="ns-sub">Das h&auml;ssliche Entlein</div>
-                        </a>
+                    </ol>
+                    <div class="sf-tip">
+                        &#9992;&#65039; <strong>Remember:</strong> Swap roles each session &mdash; one person plays the check-in agent, the other the traveller, then switch! This helps both partners practice all the vocabulary equally.
                     </div>
                 </div>
             </div>
-
-            <!-- Back Button -->
-            <div class="text-center mt-3">
-                <a class="btn-outline-reg" href="GermanResources.html">&#8592; Back to German Resources</a>
-            </div>
+            <!-- end of conversation -->
 
         </div>
     </div>
-    <!-- end of main content -->
+    <!-- end of content -->
+
+
+    <!-- Keep Exploring -->
+    <div class="sf-next-steps" id="next-steps">
+        <div class="container">
+            <h3>Keep Exploring &#128640;</h3>
+            <p class="ns-sub">Ready for more? Continue your German journey with these resources.</p>
+            <div class="ns-grid">
+                <a href="GermanBasics.html" class="ns-card">
+                    <div class="ns-card-icon">&#128075;</div>
+                    <div class="ns-card-title">German Basics</div>
+                    <div class="ns-card-sub">Greetings, numbers &amp; more</div>
+                </a>
+                <a href="GermanFirst.html" class="ns-card">
+                    <div class="ns-card-icon">&#128172;</div>
+                    <div class="ns-card-title">First Conversation</div>
+                    <div class="ns-card-sub">Your first chat with a Bud</div>
+                </a>
+                <a href="GermanRestaurant.html" class="ns-card">
+                    <div class="ns-card-icon">&#127829;</div>
+                    <div class="ns-card-title">At the Restaurant</div>
+                    <div class="ns-card-sub">Order food with confidence</div>
+                </a>
+                <a href="GermanHotel.html" class="ns-card">
+                    <div class="ns-card-icon">&#127963;</div>
+                    <div class="ns-card-title">At the Hotel</div>
+                    <div class="ns-card-sub">Check in like a local</div>
+                </a>
+                <a href="GermanDay.html" class="ns-card">
+                    <div class="ns-card-icon">&#9728;&#65039;</div>
+                    <div class="ns-card-title">Typical Day</div>
+                    <div class="ns-card-sub">Everyday German phrases</div>
+                </a>
+                <a href="GermanDuck.html" class="ns-card">
+                    <div class="ns-card-icon">&#128214;</div>
+                    <div class="ns-card-title">German Stories</div>
+                    <div class="ns-card-sub">Learn through classic tales</div>
+                </a>
+            </div>
+            <div class="sf-back-row">
+                <a class="btn-outline-reg" href="GermanResources.html" style="color:white;border-color:rgba(255,255,255,0.45);">&larr; Back to German Resources</a>
+            </div>
+        </div>
+    </div>
+    <!-- end of keep exploring -->
+
+
+    <!-- Language strip (bottom) -->
+    <div class="sf-lang-strip">
+        Translate this page to:
+        <a href="SpanishAirport.html">Spanish</a>,
+        <a href="FrenchAirport.html">French</a>,
+        <a href="PortugueseAirport.html">Portuguese</a>,
+        <a href="ItalianAirport.html">Italian</a>,
+        <a href="RussianAirport.html">Russian</a>,
+        <a href="SwedishAirport.html">Swedish</a>
+    </div>
+    <!-- end of language strip (bottom) -->
 
 
     <!-- Footer -->
@@ -575,116 +678,172 @@
                     <div class="text-container about">
                         <h4>Few Words About Lingua Bud</h4>
                         <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
-                    </div>
-                </div>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Links</h4>
                         <ul class="list-unstyled li-space-lg white">
-                            <li><a class="white" href="index.html">Home</a></li>
-                            <li><a class="white" href="terms-conditions.html">Terms &amp; Conditions</a></li>
-                            <li><a class="white" href="privacy-policy.html">Privacy Policy</a></li>
+                            <li>
+                                <a class="white" href="Resources2.html">Resources</a>
+                            </li>
+                            <li>
+                                <a class="white" href="terms-conditions.html">Terms &amp; Conditions</a>
+                            </li>
+                            <li>
+                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
+                            </li>
                         </ul>
-                    </div>
-                </div>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Languages</h4>
-                        <ul class="list-unstyled li-space-lg white">
+                        <ul class="list-unstyled li-space-lg">
                             <li><a class="white" href="NewSpanishPage.html">Spanish</a></li>
                             <li><a class="white" href="NewFrenchPage.html">French</a></li>
-                            <li><a class="white" href="NewItalianPage.html">Italian</a></li>
+                            <li><a class="white" href="NewPortuguesePage.html">Portuguese</a></li>
                         </ul>
-                    </div>
-                </div>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
                         <h4>Connect</h4>
-                        <ul class="list-unstyled li-space-lg white">
-                            <li><a class="white" href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">Facebook</a></li>
-                            <li><a class="white" href="https://www.instagram.com/lingua_bud/" target="_blank">Instagram</a></li>
-                            <li><a class="white" href="connect.html">Find a Partner</a></li>
+                        <ul class="list-unstyled li-space-lg">
+                            <li><a class="white" href="connect.html">Find a Bud</a></li>
+                            <li><a class="white" href="instructors.html">Instructors</a></li>
+                            <li><a class="white" href="index.html#contact">Contact Us</a></li>
                         </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+        </div> <!-- end of container -->
+    </div> <!-- end of footer -->
+    <!-- end of footer -->
+
 
     <!-- Copyright -->
     <div class="copyright">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright &copy; 2026 Lingua Bud &mdash; All Rights Reserved</p>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <p class="p-small">Copyright &copy; 2026 <a href="https://inovatik.com">Lingua Bud, All Rights Reserved</a></p>
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+        </div> <!-- end of container -->
+    </div> <!-- end of copyright -->
+    <!-- end of copyright -->
 
 
     <!-- Scripts -->
     <script src="js/jquery.min.js"></script>
     <script src="js/popper.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
     <script src="js/scripts.js"></script>
 
-    <!-- Firebase Auth for Navbar -->
+    <!-- Firebase Auth for navbar -->
     <script type="module">
-        import { auth, db, onAuthStateChanged, doc, onSnapshot, collection, query, where } from './lib/firebaseClient.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
             if (user) {
-                document.getElementById('nav-signup-btn').style.display = 'none';
-                const profileBtn = document.getElementById('nav-profile-btn');
-                profileBtn.style.display = 'flex';
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
 
-                // Profile picture
-                const userDocRef = doc(db, 'users', user.uid);
-                onSnapshot(userDocRef, (docSnap) => {
-                    if (docSnap.exists() && docSnap.data().avatar_url) {
-                        document.getElementById('nav-profile-pic').src = docSnap.data().avatar_url;
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
                     }
-                });
+                } catch (e) { console.error('Profile load error:', e); }
 
-                // Unread messages badge
-                const msgsQuery = query(collection(db, 'messages'), where('recipientId', '==', user.uid), where('read', '==', false));
-                onSnapshot(msgsQuery, (snap) => {
-                    const count = snap.size;
-                    const badge = document.getElementById('msg-badge');
-                    badge.textContent = count;
-                    badge.style.display = count > 0 ? 'flex' : 'none';
-                });
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
 
-                // Pending friend requests badge
-                const friendsQuery = query(collection(db, 'friendRequests'), where('toId', '==', user.uid), where('status', '==', 'pending'));
-                onSnapshot(friendsQuery, (snap) => {
-                    const count = snap.size;
-                    const badge = document.getElementById('friend-badge');
-                    badge.textContent = count;
-                    badge.style.display = count > 0 ? 'flex' : 'none';
-                });
-
-                // New bookings badge
-                const bookingsQuery = query(collection(db, 'bookings'), where('studentId', '==', user.uid), where('seen', '==', false));
-                onSnapshot(bookingsQuery, (snap) => {
-                    const count = snap.size;
-                    const badge = document.getElementById('booking-badge');
-                    badge.textContent = count;
-                    badge.style.display = count > 0 ? 'flex' : 'none';
-                });
-
+                loadUnreadMessageCount(user.uid);
+                loadPendingRequests(user.uid);
             } else {
-                document.getElementById('nav-signup-btn').style.display = 'block';
-                document.getElementById('nav-profile-btn').style.display = 'none';
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
             }
         });
 
-        // Sign out
-        document.getElementById('nav-signout').addEventListener('click', (e) => {
-            e.preventDefault();
-            auth.signOut();
-        });
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+            const msgEl = document.getElementById('unreadCount');
+            if (msgEl) {
+                if (_unreadMsgCount > 0) { msgEl.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; msgEl.classList.add('show'); }
+                else { msgEl.classList.remove('show'); }
+            }
+            const bookingsEl = document.getElementById('bookingsCount');
+            if (bookingsEl) {
+                if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); }
+                else { bookingsEl.classList.remove('show'); }
+            }
+            const friendsEl = document.getElementById('friendsCount');
+            if (friendsEl) {
+                if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); }
+                else { friendsEl.classList.remove('show'); }
+            }
+            const ml = document.getElementById('messagesLink');
+            if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+        }
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(
+                query(collection(db, 'conversations'), where('participants', 'array-contains', uid)),
+                (snap) => {
+                    let count = 0;
+                    snap.forEach(d => { const c = d.data(); if (c.unreadCount?.[uid]) count += c.unreadCount[uid]; });
+                    _unreadMsgCount = count;
+                    _updateProfileBadge();
+                }
+            );
+        }
+        function loadPendingRequests(uid) {
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+                (snap) => {
+                    _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                    _updateProfileBadge();
+                }
+            );
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', uid), where('status', '==', 'pending')),
+                (snap) => {
+                    _newBookingCount = snap.size;
+                    _updateProfileBadge();
+                }
+            );
+        }
     </script>
 
 </body>
