@@ -3,25 +3,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    
+
     <!-- SEO Meta Tags -->
     <meta name="description" content="Learn how to pronounce accent marks in French. What is the difference between different accent marks in French and when do you use them?">
     <meta name="keywords" content="French accent marks, French accents, learn French, how to pronounce French, French language, Lingua Bud.">
     <meta name="author" content="Lingua Bud">
 
-
-    <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
-	<meta property="og:site_name" content="" /> <!-- website name -->
-	<meta property="og:site" content="" /> <!-- website link -->
-	<meta property="og:title" content=""/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="" /> <!-- image link, make sure it's jpg -->
-	<meta property="og:url" content="" /> <!-- where do you want your post to link to -->
+    <!-- OG Meta Tags -->
+	<meta property="og:site_name" content="" />
+	<meta property="og:site" content="" />
+	<meta property="og:title" content=""/>
+	<meta property="og:description" content="" />
+	<meta property="og:image" content="" />
+	<meta property="og:url" content="" />
 	<meta property="og:type" content="article" />
 
     <!-- Website Title -->
     <title>French Accent Marks - Lingua Bud</title>
-    
+
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
@@ -30,12 +29,218 @@
     <link href="css/swiper.css" rel="stylesheet">
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
-	
+
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ── Profile nav ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem; top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .notification-badge {
+            display: none; position: absolute; top: -4px; right: -4px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center; z-index: 10000;
+            animation: badgePulse 2s infinite;
+        }
+        .notification-badge.show { display: flex; }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count {
+            display: none; background-color: #dc3545; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center;
+            margin-left: 4px;
+        }
+        .unread-count.show { display: inline-flex; }
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* ── Recommended resources bar ── */
+        .fr-resources-bar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0.75rem 0;
+            font-size: 0.87rem;
+            color: #666;
+        }
+        .fr-resources-bar .container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .fr-resources-bar .bar-label {
+            font-weight: 700;
+            color: #444;
+            margin-right: 0.25rem;
+        }
+        .fr-resources-bar a {
+            color: #20bcba;
+            font-weight: 600;
+            text-decoration: none;
+            background: #e8fffe;
+            border: 1px solid #b2eeec;
+            border-radius: 20px;
+            padding: 0.2rem 0.75rem;
+            font-size: 0.82rem;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .fr-resources-bar a:hover {
+            background: #c8f7f5;
+            border-color: #20bcba;
+            text-decoration: none;
+        }
+
+        /* ── Accent mark section improvements ── */
+        .accent-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #0f3460, #20bcba);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            text-align: center;
+            line-height: 52px;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(32,188,186,0.25);
+        }
+        .accent-section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .accent-section-title h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #0f3460;
+        }
+        .accent-section-title .accent-sub {
+            font-size: 0.85rem;
+            color: #20bcba;
+            font-weight: 600;
+            margin-top: 0.1rem;
+        }
+        .accent-example-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem;
+            margin: 0.75rem 0;
+        }
+        @media (max-width: 576px) { .accent-example-grid { grid-template-columns: 1fr; } }
+        .accent-example-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.85rem;
+            border-radius: 8px;
+            background: #f8fdfd;
+            border: 1px solid #e8f8f7;
+            font-size: 0.92rem;
+            color: #444;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .accent-example-item:hover { border-color: #20bcba; background: #e8fffe; }
+        .accent-example-item i { color: #20bcba; font-size: 0.6rem; flex-shrink: 0; }
+        .accent-word { font-weight: 700; color: #0f3460; }
+        .accent-meaning { color: #777; font-size: 0.85rem; }
+        .accent-tip {
+            background: #e8fffe;
+            border-left: 4px solid #20bcba;
+            border-radius: 0 8px 8px 0;
+            padding: 0.85rem 1.1rem;
+            margin: 1rem 0 0.5rem;
+            font-size: 0.91rem;
+            color: #444;
+            line-height: 1.6;
+        }
+        .accent-subsection {
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #e0e0e0;
+        }
+        .accent-subsection h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f3460;
+            margin-bottom: 0.6rem;
+        }
+
+        /* Summary card at top */
+        .accent-summary-card {
+            background: linear-gradient(135deg, #0f3460 0%, #1a5f7a 60%, #20bcba 100%);
+            border-radius: 14px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
+        .accent-summary-card h4 { color: white; font-size: 1rem; margin-bottom: 1rem; opacity: 0.85; letter-spacing: 1px; text-transform: uppercase; font-size: 0.75rem; }
+        .accent-pills { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+        .accent-pill {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 0.4rem 1rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: white;
+        }
+        .accent-pill span { opacity: 0.75; font-weight: 400; margin-left: 0.35rem; }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
-    
+
     <!-- Preloader -->
 	<div class="spinner-wrapper">
         <div class="spinner">
@@ -45,16 +250,13 @@
         </div>
     </div>
     <!-- end of preloader -->
-    
+
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
-
         <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
         <!-- Mobile Menu Toggle Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
@@ -63,28 +265,25 @@
         <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
 
-                <!-- Dropdown Menu -->          
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -97,9 +296,8 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
                 <!-- end of dropdown menu -->
@@ -107,11 +305,31 @@
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+
+                <!-- Sign In link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <!-- Profile dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
+                        <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -128,7 +346,6 @@
             </span>
         </div>
     </nav> <!-- end of navbar -->
-    <!-- end of navbar -->
 
 
     <!-- Header -->
@@ -144,303 +361,220 @@
     <!-- end of header -->
 
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Recommended Resources Bar -->
+    <div class="fr-resources-bar">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span><a class="green" href="FrenchBasics.html">French Basics - Bases du Français</a>, <a class="green" href="FrenchFirst.html">First Conversation - Première Conversation</a>, <a class="green" href="FrenchRestaurant.html">At the Restaurant - Commande au Restaurant</a>, <a class="green" href="FrenchHotel.html">Checking into the Hotel - Enregistrement à l'hôtel</a>, <a class="green" href="FrenchAirport.html">At the Airport - À l'aéroport</a>, <a class="green" href="FrenchDay.html">Typical Day - Journée Typique</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+            <span class="bar-label">&#128218; Explore French:</span>
+            <a href="FrenchBasics.html">French Basics</a>
+            <a href="FrenchFirst.html">First Conversation</a>
+            <a href="FrenchRestaurant.html">At the Restaurant</a>
+            <a href="FrenchHotel.html">At the Hotel</a>
+            <a href="FrenchAirport.html">At the Airport</a>
+            <a href="FrenchDay.html">Typical Day</a>
+            <a href="NewFrenchPage.html">French Hub &rarr;</a>
+        </div>
+    </div>
+    <!-- end of recommended resources bar -->
 
 
-    <!-- Terms Content -->
+    <!-- Content -->
     <div class="ex-basic-2">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3><u>Accent Marks in French</u></h3>
-                        <p>French accent marks are a big challenge for beginner French students, especially when it comes to reading them. The names of the French accents are: the l’accent aigu (é), l’accent grave (è), le circonflexe (ê), l’accent tréma (ë) and la cédille (ç).
 
-The purpose of this post is to demystify the French accents and explain the pronunciation so you can start to incorporate them into your reading and speaking.</p>
-                        <p>In a nutshell, here are the French accent marks:<a class="green" href="#your-link"></a> </p>
-                        <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">é - l’accent aigu acute accent</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">à, è, ì, ò, ù - l’accent grave grave accent</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">â, ê, î, ô, û - l’accent circonflexe circumflex</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">ë, ï, ü - l’accent tréma diaeresis</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">ç - la cédille cedilla</div>
-                            </li>
-      
-                        </ul>
-                    </div> <!-- end of text-container -->
-                    
-                    <div class="text-container">
-                        <h3>1. Acute accent (l’accent aigu)</h3>
-                        <p>L’accent aigu is an upward slanting accent and appears only over the letter -e and looks like this: é. Of all the French accents this one is by far the most important as it’s used very widely throughout the language and has a big impact on how the é is pronounced.</p>
-			<p>Many French teachers and writers of French textbooks will suggest that the accent aigu sounds like the -e in the English word 'bed'. However, we at LinguaBud.com, believe that the é in French is more similar to the -ay, as in the English word 'play'.</p>
-			<p>É accent aigu has a ton of usages. The first one we’ll look at is the last letter of many French adjectives:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">occupé - 'busy'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">salé - 'salty'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">fatigué - 'tired'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">protégé - 'protected'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">distingué - 'distinguished'</div>
-                            </li>
-      
-                        </ul>
-			    <p>L’accent aigu can also appear in or at the end of countless French nouns. Par example:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">été - 'summer'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">café - 'coffee'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">musée - 'museum'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">désir - 'desire'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">médecin - 'doctor'</div>
-                            </li>
-      
-                        </ul>
-			    <p>For regular -er verbs, the -er is removed and replaced with -é to form the past participle. Par example:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">parlé - 'spoke'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">donné - 'gave'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">mangé - 'ate'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">téléfoné - 'called'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">cuisiné - 'cooked'</div>
-                            </li>
-      
-                        </ul>
-			    
-                    </div> <!-- end of text-container -->
+                    <!-- Summary card -->
+                    <div class="accent-summary-card">
+                        <h4>The 5 French Accent Marks at a Glance</h4>
+                        <div class="accent-pills">
+                            <div class="accent-pill">é <span>l'accent aigu</span></div>
+                            <div class="accent-pill">à, è, ù <span>l'accent grave</span></div>
+                            <div class="accent-pill">â, ê, î, ô, û <span>le circonflexe</span></div>
+                            <div class="accent-pill">ë, ï, ü <span>le tréma</span></div>
+                            <div class="accent-pill">ç <span>la cédille</span></div>
+                        </div>
+                    </div>
 
+                    <!-- Intro -->
                     <div class="text-container">
-                        <h3>2. Grave accent (l’accent grave)</h3>
-                        <p>This is the downward sloping accent that appears over the following letters: -à, -è and -ù.</p>
-                        <p>The accent grave has two primary usages: 1. to alter the pronunciation of the letter -e and 2. to differentiate homonyms (two words that are spelled the exact same way and are pronounced the exact same way but, have different meanings).</p>
-			<p>First we’ll take a look at how the accent grave is used over the letter -e and its effects on pronunciation.</p>
-			<p>To pronounce this accent mark, read the -è as the “eh” or the -e sound in American English 'get' or 'bed'. Let’s look at some examples of -è in common words:</p>
-			<ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">mère - 'mother'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">frère - 'brother'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">scène - 'stage'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">très - 'very'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">crème - 'cream'</div>
-                            </li>
-      
-                        </ul>
-			    <h3>Accent Grave vs. Aigu</h3>
-			    <p>Some words have both an accent aigu (é) and an accent grave (è). This poses a question: What do I do here? The answer is simple: pronounce -é as the "ay" in 'play' and -è as "eh" or the -e sound in 'get' and 'bed'. Try saying these:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">je préfère - 'I prefer'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">je célèbre - 'I celebrate'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">je révèle - 'I reveal'</div>
-                            </li>
-      
-                        </ul>
-			    <p>Now we’ll look at words where the accent grave distinguishes between two homonyms. It’s crucial when writing to include these accents where necessary. If not you only have a 50% chance of writing the word correctly! Par Example:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">là - 'there' vs. la - 'the'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">à - 'to/at' vs. a - 'he/she has'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">où - 'where' vs. ou - 'or'</div>
-                            </li>
-      
-                        </ul>
-			    <h3>3. Circumflex (le circonflexe)</h3> 
-			    <p>The circumflex accent is the little hat (le petit chapeau) accent that appears over the following letters: -â, -ê, -î, -ô, -û. The accent has two main purposes 1. Replacing an -s, and 2. Distinguishing homophones. In some words such dîner (to eat, have dinner) the accent seems totally useless. Indeed, there’s been lots of talk over the years about doing away with the beloved circonflexe.</p>
-			    <p>Where some English words have an -s, their French equivalents omit the -s and use an accent circonflexe over the vowel preceding where the -s would have been in old French. Par example:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">l’île - 'the island'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">la forêt - 'the forest'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">l’hôpital - 'the hospital'</div>
-                            </li>
-      
-                        </ul>
-			    <h3>Does the circumflex affect pronunciation?</h3>
-			    <p>This is a heavily disputed topic. While some might argue that l’accent circonflexe has an impact on the pronunciation when it appears over the -a, -e, and -o, many believe it is purely academic. Discuss amongst yourselves!</p>
-			    <h3>Distinguishing between homophones</h3>
-			    <p>The circumflex is also used to distinguish between homophones (words spelled the same which have different meanings). Par example:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">sûr - 'certain, sure' vs. sur - 'on, on top of'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">tâche - 'task, chore' vs. tache - 'stain'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">mûr - 'ripe' vs. mur - 'wall'</div>
-                            </li>
-      
-                        </ul>
-			    <h3>4. Diaeresis accent (l’accent tréma)</h3>
-			    <p>Of all the French accents the tréma is probably the least common. The accent only appears over the letters -ï and -ë. When two vowels appear next to each other and one of them has a diaeresis, both vowels get pronounced. Hence, when you read Noël (Christmas), both the -o and -e get pronounced: “noh-el”. Some examples of French words with the tréma accent:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">maïs - 'corn'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Caraïbes - 'Caribbean'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">naïf/naïve - 'naive'</div>
-                            </li>
-      
-                        </ul>
-			    <h3>5. Cedilla (la cédille)</h3>
-			    <p>The cedilla (la cédille) is the little squiggly mark that appears under the letter -c. It looks like this: -Ç -ç. The function of the cedilla is to make the letter -c have a soft 's' sound like -s in 'Sam'. The ç is found before the letters -a, -o and -u.</p>
-			    <p>With the cedilla, ça va sounds like sa va. Without the cedilla it would sound like ka va. Separately, without the cedilla français would sound like frankay. Est-ce que tu parles frakay?</p>
-			    <p>Note that before the letters -e and -i the -c automatically has a soft sound. Hence, la cédille is not needed. Examples: cerise (cherry) or ciseaux (scissors). French words with cedilla:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Français - 'French'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">déçu - 'disappointed'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">reçu - 'receipt'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">garçon - 'boy'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">façon - 'way/manner'</div>
-                            </li>
-      
-                        </ul>
-			    <a class="btn-outline-reg" href="FrenchResources.html">BACK</a>
-                    </div> <!-- end of text-container -->
+                        <p>French accent marks are a big challenge for beginner French students, especially when it comes to reading them. The purpose of this guide is to demystify the French accents and explain the pronunciation so you can start to incorporate them into your reading and speaking.</p>
+                    </div>
 
-                    
+                    <!-- 1. Accent Aigu -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">é</div>
+                            <div>
+                                <h3>1. Acute Accent</h3>
+                                <div class="accent-sub">l'accent aigu</div>
+                            </div>
+                        </div>
+                        <p>L'accent aigu is an upward slanting accent that appears only over the letter -e (é). Of all the French accents this one is by far the most important &mdash; it is used very widely throughout the language and has a big impact on pronunciation.</p>
+                        <p>Many French teachers suggest the accent aigu sounds like the -e in the English word 'bed'. At Lingua Bud, we believe the é is more similar to the -ay in the English word 'play'.</p>
+
+                        <div class="accent-subsection">
+                            <h4>Adjectives ending in -é</h4>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">occupé</span> <span class="accent-meaning">&mdash; 'busy'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">salé</span> <span class="accent-meaning">&mdash; 'salty'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">fatigué</span> <span class="accent-meaning">&mdash; 'tired'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">protégé</span> <span class="accent-meaning">&mdash; 'protected'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">distingué</span> <span class="accent-meaning">&mdash; 'distinguished'</span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="accent-subsection">
+                            <h4>Nouns containing -é</h4>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">été</span> <span class="accent-meaning">&mdash; 'summer'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">café</span> <span class="accent-meaning">&mdash; 'coffee'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">musée</span> <span class="accent-meaning">&mdash; 'museum'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">désir</span> <span class="accent-meaning">&mdash; 'desire'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">médecin</span> <span class="accent-meaning">&mdash; 'doctor'</span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="accent-subsection">
+                            <h4>Past participles of -er verbs</h4>
+                            <p style="font-size:0.92rem;color:#555;">For regular -er verbs, the -er is removed and replaced with -é to form the past participle.</p>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">parlé</span> <span class="accent-meaning">&mdash; 'spoke'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">donné</span> <span class="accent-meaning">&mdash; 'gave'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">mangé</span> <span class="accent-meaning">&mdash; 'ate'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">téléfoné</span> <span class="accent-meaning">&mdash; 'called'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">cuisiné</span> <span class="accent-meaning">&mdash; 'cooked'</span></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Accent Grave -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">è</div>
+                            <div>
+                                <h3>2. Grave Accent</h3>
+                                <div class="accent-sub">l'accent grave</div>
+                            </div>
+                        </div>
+                        <p>The accent grave is the downward sloping accent that appears over -à, -è and -ù. It has two primary uses: (1) to alter the pronunciation of the letter -e, and (2) to differentiate homonyms &mdash; two words spelled and pronounced the same way but with different meanings.</p>
+                        <p>To pronounce -è, read it as the "eh" sound in American English 'get' or 'bed'.</p>
+
+                        <div class="accent-subsection">
+                            <h4>Common words with -è</h4>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">mère</span> <span class="accent-meaning">&mdash; 'mother'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">frère</span> <span class="accent-meaning">&mdash; 'brother'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">scène</span> <span class="accent-meaning">&mdash; 'stage'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">très</span> <span class="accent-meaning">&mdash; 'very'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">crème</span> <span class="accent-meaning">&mdash; 'cream'</span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="accent-subsection">
+                            <h4>Accent Grave vs. Aigu: words with both</h4>
+                            <p style="font-size:0.92rem;color:#555;">Pronounce -é as "ay" (play) and -è as "eh" (get). Try these:</p>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">je préfère</span> <span class="accent-meaning">&mdash; 'I prefer'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">je célèbre</span> <span class="accent-meaning">&mdash; 'I celebrate'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">je révèle</span> <span class="accent-meaning">&mdash; 'I reveal'</span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="accent-subsection">
+                            <h4>Distinguishing homonyms</h4>
+                            <p style="font-size:0.92rem;color:#555;">It's crucial to include these accents when writing &mdash; without them you only have a 50% chance of writing the word correctly!</p>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">là</span> <span class="accent-meaning">&mdash; 'there' vs. <strong>la</strong> 'the'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">à</span> <span class="accent-meaning">&mdash; 'to/at' vs. <strong>a</strong> 'he/she has'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">où</span> <span class="accent-meaning">&mdash; 'where' vs. <strong>ou</strong> 'or'</span></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Circumflex -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">ê</div>
+                            <div>
+                                <h3>3. Circumflex</h3>
+                                <div class="accent-sub">le circonflexe</div>
+                            </div>
+                        </div>
+                        <p>The circumflex &mdash; the little hat (le petit chapeau) &mdash; appears over: -â, -ê, -î, -ô, -û. It has two main purposes: (1) replacing a historical -s, and (2) distinguishing homophones.</p>
+
+                        <div class="accent-subsection">
+                            <h4>Replacing a historical -s</h4>
+                            <p style="font-size:0.92rem;color:#555;">Where English words have an -s, their French equivalents often omit it and use a circonflexe over the preceding vowel.</p>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">l'île</span> <span class="accent-meaning">&mdash; 'the island'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">la forêt</span> <span class="accent-meaning">&mdash; 'the forest'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">l'hôpital</span> <span class="accent-meaning">&mdash; 'the hospital'</span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="accent-subsection">
+                            <h4>Distinguishing homophones</h4>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">sûr</span> <span class="accent-meaning">&mdash; 'certain' vs. <strong>sur</strong> 'on'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">tâche</span> <span class="accent-meaning">&mdash; 'task' vs. <strong>tache</strong> 'stain'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">mûr</span> <span class="accent-meaning">&mdash; 'ripe' vs. <strong>mur</strong> 'wall'</span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="accent-tip">
+                            &#128172; <strong>Debated topic:</strong> Whether the circonflexe affects pronunciation over -a, -e, and -o is heavily disputed among French speakers and academics. Discuss amongst yourselves!
+                        </div>
+                    </div>
+
+                    <!-- 4. Diaeresis -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">ë</div>
+                            <div>
+                                <h3>4. Diaeresis</h3>
+                                <div class="accent-sub">l'accent tréma</div>
+                            </div>
+                        </div>
+                        <p>The tréma is probably the least common French accent and appears over -ï and -ë. When two vowels appear next to each other and one has a tréma, both vowels get pronounced separately. For example, <strong>Noël</strong> (Christmas) is pronounced "noh-el" &mdash; both the -o and -e are sounded out.</p>
+
+                        <div class="accent-example-grid">
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">maïs</span> <span class="accent-meaning">&mdash; 'corn'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">Caraïbes</span> <span class="accent-meaning">&mdash; 'Caribbean'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">naïf / naïve</span> <span class="accent-meaning">&mdash; 'naive'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">Noël</span> <span class="accent-meaning">&mdash; 'Christmas'</span></span></div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Cedilla -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">ç</div>
+                            <div>
+                                <h3>5. Cedilla</h3>
+                                <div class="accent-sub">la cédille</div>
+                            </div>
+                        </div>
+                        <p>The cedilla is the little squiggly mark under -c (ç). It makes the -c have a soft 's' sound, like the -s in 'Sam'. The ç appears before the letters -a, -o and -u.</p>
+                        <p>With the cedilla, <em>ça va</em> sounds like "sa va". Without it, it would sound like "ka va". Note that before -e and -i, the -c automatically has a soft sound, so la cédille is not needed there (e.g. <em>cerise</em> &mdash; cherry, <em>ciseaux</em> &mdash; scissors).</p>
+
+                        <div class="accent-example-grid">
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">Français</span> <span class="accent-meaning">&mdash; 'French'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">déçu</span> <span class="accent-meaning">&mdash; 'disappointed'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">reçu</span> <span class="accent-meaning">&mdash; 'receipt'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">garçon</span> <span class="accent-meaning">&mdash; 'boy'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">façon</span> <span class="accent-meaning">&mdash; 'way / manner'</span></span></div>
+                        </div>
+
+                        <div style="margin-top:2rem;">
+                            <a class="btn-outline-reg" href="FrenchResources.html">&larr; Back to French Resources</a>
+                        </div>
+                    </div>
+
                 </div>
             </div> <!-- end of row -->
         </div> <!-- end of container -->
-    </div> <!-- end of ex-basic -->
-    <!-- end of terms content -->
-
-   
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span></span>Translate this page to: <a class="green" href="#your-link">Spanish</a>, <a class="green" href="#your-link">Portuguese</a>, <a class="green" href="#your-link">Italian</a>, <a class="green" href="#your-link">German</a>, <a class="green" href="#your-link">Russian</a>, <a class="green" href="#your-link">Swedish</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+    </div> <!-- end of ex-basic-2 -->
+    <!-- end of content -->
 
 
     <!-- Footer -->
@@ -450,7 +584,7 @@ The purpose of this post is to demystify the French accents and explain the pron
                 <div class="col-md-6">
                     <div class="text-container about">
                         <h4>Few Words About Lingua Bud</h4>
-                        <p class="white">We're passionate about hosting the world's best language learning platform and to help people become fluent in their desired languages.</p>
+                        <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
                     </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
                 <div class="col-md-2">
@@ -458,10 +592,10 @@ The purpose of this post is to demystify the French accents and explain the pron
                         <h4>Links</h4>
                         <ul class="list-unstyled li-space-lg white">
                             <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
+                                <a class="white" href="Resources2.html">Resources</a>
                             </li>
                             <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
+                                <a class="white" href="terms-conditions.html">Terms &amp; Conditions</a>
                             </li>
                             <li>
                                 <a class="white" href="privacy-policy.html">Privacy Policy</a>
@@ -471,39 +605,27 @@ The purpose of this post is to demystify the French accents and explain the pron
                 </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Tools</h4>
+                        <h4>Languages</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li class="media">
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="NewSpanishPage.html">Spanish</a></li>
+                            <li><a class="white" href="NewFrenchPage.html">French</a></li>
+                            <li><a class="white" href="NewPortuguesePage.html">Portuguese</a></li>
                         </ul>
                     </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Partners</h4>
+                        <h4>Connect</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="connect.html">Find a Bud</a></li>
+                            <li><a class="white" href="instructors.html">Instructors</a></li>
+                            <li><a class="white" href="index.html#contact">Contact Us</a></li>
                         </ul>
                     </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
             </div> <!-- end of row -->
         </div> <!-- end of container -->
-    </div> <!-- end of footer -->  
+    </div> <!-- end of footer -->
     <!-- end of footer -->
 
 
@@ -512,24 +634,124 @@ The purpose of this post is to demystify the French accents and explain the pron
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">All Rights Reserved</a></p>
+                    <p class="p-small">Copyright &copy; 2026 <a href="https://inovatik.com">Lingua Bud, All Rights Reserved</a></p>
                 </div> <!-- end of col -->
-            </div> <!-- enf of row -->
+            </div> <!-- end of row -->
         </div> <!-- end of container -->
-    </div> <!-- end of copyright --> 
+    </div> <!-- end of copyright -->
     <!-- end of copyright -->
 
-	
+
     <!-- Scripts -->
-    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
-    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
-    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
-    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
-    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
-    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
-    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
-    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
-    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <!-- Firebase Auth for navbar -->
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
+
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
+                    }
+                } catch (e) { console.error('Profile load error:', e); }
+
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
+
+                loadUnreadMessageCount(user.uid);
+                loadPendingRequests(user.uid);
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
+            }
+        });
+
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+            const msgEl = document.getElementById('unreadCount');
+            if (msgEl) {
+                if (_unreadMsgCount > 0) { msgEl.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; msgEl.classList.add('show'); }
+                else { msgEl.classList.remove('show'); }
+            }
+            const bookingsEl = document.getElementById('bookingsCount');
+            if (bookingsEl) {
+                if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); }
+                else { bookingsEl.classList.remove('show'); }
+            }
+            const friendsEl = document.getElementById('friendsCount');
+            if (friendsEl) {
+                if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); }
+                else { friendsEl.classList.remove('show'); }
+            }
+            const ml = document.getElementById('messagesLink');
+            if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+        }
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(
+                query(collection(db, 'conversations'), where('participants', 'array-contains', uid)),
+                (snap) => {
+                    let count = 0;
+                    snap.forEach(d => { const c = d.data(); if (c.unreadCount?.[uid]) count += c.unreadCount[uid]; });
+                    _unreadMsgCount = count;
+                    _updateProfileBadge();
+                }
+            );
+        }
+        function loadPendingRequests(uid) {
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+                (snap) => {
+                    _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                    _updateProfileBadge();
+                }
+            );
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', uid), where('status', '==', 'pending')),
+                (snap) => {
+                    _newBookingCount = snap.size;
+                    _updateProfileBadge();
+                }
+            );
+        }
+    </script>
+
 </body>
 </html>
