@@ -3,24 +3,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    
+
     <!-- SEO Meta Tags -->
     <meta name="description" content="Learn how to pronounce every letter in the Russian alphabet. Russian alphabet guide for beginners.">
     <meta name="keywords" content="Russian alphabet, letters in Russian, how to pronounce Russian, cyrillic alphabet, Pусский Aлфавит, learn Russian for free">
     <meta name="author" content="Lingua Bud">
 
-    <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
-	<meta property="og:site_name" content="" /> <!-- website name -->
-	<meta property="og:site" content="" /> <!-- website link -->
-	<meta property="og:title" content=""/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="" /> <!-- image link, make sure it's jpg -->
-	<meta property="og:url" content="" /> <!-- where do you want your post to link to -->
+    <!-- OG Meta Tags -->
+	<meta property="og:site_name" content="" />
+	<meta property="og:site" content="" />
+	<meta property="og:title" content=""/>
+	<meta property="og:description" content="" />
+	<meta property="og:image" content="" />
+	<meta property="og:url" content="" />
 	<meta property="og:type" content="article" />
 
     <!-- Website Title -->
     <title>Pусский Aлфавит - Lingua Bud</title>
-    
+
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
@@ -29,12 +29,269 @@
     <link href="css/swiper.css" rel="stylesheet">
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
-	
+
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ── Profile nav ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem; top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .notification-badge {
+            display: none; position: absolute; top: -4px; right: -4px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center; z-index: 10000;
+            animation: badgePulse 2s infinite;
+        }
+        .notification-badge.show { display: flex; }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count {
+            display: none; background-color: #dc3545; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center;
+            margin-left: 4px;
+        }
+        .unread-count.show { display: inline-flex; }
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* ── Resources bar ── */
+        .ru-resources-bar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0.75rem 0;
+            font-size: 0.87rem;
+            color: #666;
+        }
+        .ru-resources-bar .container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .ru-resources-bar .bar-label {
+            font-weight: 700;
+            color: #444;
+            margin-right: 0.25rem;
+        }
+        .ru-resources-bar a {
+            color: #20bcba;
+            font-weight: 600;
+            text-decoration: none;
+            background: #e8fffe;
+            border: 1px solid #b2eeec;
+            border-radius: 20px;
+            padding: 0.2rem 0.75rem;
+            font-size: 0.82rem;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .ru-resources-bar a:hover {
+            background: #c8f7f5;
+            border-color: #20bcba;
+            text-decoration: none;
+        }
+
+        /* ── Alphabet table card ── */
+        .alphabet-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 18px rgba(0,0,0,0.07);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .alphabet-card-header {
+            background: linear-gradient(135deg, #0f3460 0%, #1a5f7a 50%, #20bcba 100%);
+            padding: 1.4rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .alphabet-card-header-icon {
+            font-size: 2rem;
+            line-height: 1;
+        }
+        .alphabet-card-header-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 0.15rem;
+        }
+        .alphabet-card-header-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+        }
+
+        /* Legend */
+        .alphabet-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            padding: 0.85rem 1.5rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-size: 0.82rem;
+        }
+        .legend-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            margin-right: 0.3rem;
+        }
+        .legend-vowel .legend-dot   { background: #20bcba; }
+        .legend-cons .legend-dot    { background: #0f3460; }
+        .legend-special .legend-dot { background: #e8a020; }
+        .legend-item { display: flex; align-items: center; color: #555; }
+
+        /* Table */
+        .alphabet-table-wrap { overflow-x: auto; }
+        .alphabet-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .alphabet-table thead tr {
+            background: #f4f8f8;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .alphabet-table thead th {
+            padding: 0.85rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #555;
+            white-space: nowrap;
+        }
+        .alphabet-table tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+        }
+        .alphabet-table tbody tr:hover { background: #f0fffe; }
+        .alphabet-table tbody td {
+            padding: 0.7rem 1rem;
+            color: #444;
+            vertical-align: middle;
+        }
+
+        /* Cyrillic letter cell */
+        .cyrillic-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+        .cyrillic-char {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #0f3460;
+            line-height: 1;
+            min-width: 2.4rem;
+            text-align: center;
+        }
+        .letter-type-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .dot-vowel   { background: #20bcba; }
+        .dot-cons    { background: #0f3460; }
+        .dot-special { background: #e8a020; }
+
+        /* English equiv */
+        .eng-equiv {
+            font-weight: 700;
+            color: #1a5f7a;
+            font-size: 0.92rem;
+        }
+
+        /* Sound */
+        .sound-text { color: #555; font-style: italic; font-size: 0.88rem; }
+
+        /* Letter name */
+        .letter-name {
+            display: inline-block;
+            background: #f4f8f8;
+            border: 1px solid #e0eeee;
+            border-radius: 6px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.83rem;
+            font-weight: 600;
+            color: #0f3460;
+            white-space: nowrap;
+        }
+
+        /* Tip box */
+        .ru-tip {
+            background: #e8fffe;
+            border-left: 4px solid #20bcba;
+            border-radius: 0 8px 8px 0;
+            padding: 0.9rem 1.2rem;
+            margin: 1.5rem 0 0.5rem;
+            font-size: 0.91rem;
+            color: #444;
+            line-height: 1.65;
+        }
+
+        @media (max-width: 576px) {
+            .alphabet-card-header { padding: 1.1rem 1.25rem; }
+            .cyrillic-char { font-size: 1.4rem; }
+            .alphabet-table tbody td { padding: 0.6rem 0.65rem; }
+            .alphabet-table thead th { padding: 0.7rem 0.65rem; }
+        }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
-    
+
     <!-- Preloader -->
 	<div class="spinner-wrapper">
         <div class="spinner">
@@ -44,16 +301,13 @@
         </div>
     </div>
     <!-- end of preloader -->
-    
+
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
-
         <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
         <!-- Mobile Menu Toggle Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
@@ -62,28 +316,25 @@
         <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
 
-                <!-- Dropdown Menu -->          
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -96,9 +347,8 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
                 <!-- end of dropdown menu -->
@@ -106,11 +356,31 @@
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+
+                <!-- Sign In link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <!-- Profile dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
+                        <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -127,8 +397,6 @@
             </span>
         </div>
     </nav> <!-- end of navbar -->
-    <!-- end of navbar -->
-
 
 
     <!-- Header -->
@@ -137,332 +405,286 @@
             <div class="row">
                 <div class="col-md-12">
                     <h1>Pусский Aлфавит</h1>
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </header> <!-- end of ex-header -->
+                </div>
+            </div>
+        </div>
+    </header>
     <!-- end of header -->
 
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Resources Bar -->
+    <div class="ru-resources-bar">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span><a class="green" href="RussianBasics.html">Russian Basics - Основы Pусского</a>, <a class="green" href="RussianFirst.html">First Conversation - Первый Pазговор</a>, <a class="green" href="RussianRestaurant.html">At the Restaurant - В Pесторане</a>, <a class="green" href="RussianAirport.html">At the Airport - В Aэропорту</a>, <a class="green" href="RussianDay.html">Typical Day - Обычный День</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+            <span class="bar-label">&#128218; Explore Russian:</span>
+            <a href="RussianBasics.html">Russian Basics</a>
+            <a href="RussianFirst.html">First Conversation</a>
+            <a href="RussianRestaurant.html">At the Restaurant</a>
+            <a href="RussianAirport.html">At the Airport</a>
+            <a href="RussianDay.html">Typical Day</a>
+            <a href="RussianPage.html">Russian Hub &rarr;</a>
+        </div>
+    </div>
+    <!-- end of resources bar -->
 
 
-    <!-- Privacy Content -->
+    <!-- Content -->
     <div class="ex-basic-2">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
+
                     <div class="text-container">
-                        <h3>Learn the Russian Alphabet (Изучите русский алфавит)</h3>
-                        <p>Study the table below to learn the letters of the modern Russian alphabet and how they are pronounced.</p>
-                        <p>If you want to visit our Russian Page, <a class="green" href="RussianPage.html">click here</a>. </p>
-		
-&nbsp;
-			
+                        <p>Study the table below to learn the 33 letters of the modern Russian (Cyrillic) alphabet and how each one is pronounced. Most letters have a close English equivalent &mdash; and since the alphabet is only 33 letters, it is very learnable!</p>
+                        <p>If you want to visit our Russian Hub page, <a class="green" href="RussianPage.html">click here</a>.</p>
+                    </div>
 
-<div class="w3-container">
+                    <!-- Alphabet card -->
+                    <div class="alphabet-card">
+                        <div class="alphabet-card-header">
+                            <div class="alphabet-card-header-icon">&#1071;</div>
+                            <div>
+                                <div class="alphabet-card-header-label">Complete Reference</div>
+                                <div class="alphabet-card-header-title">The Russian Alphabet &mdash; All 33 Letters</div>
+                            </div>
+                        </div>
 
+                        <!-- Legend -->
+                        <div class="alphabet-legend">
+                            <div class="legend-item legend-vowel"><span class="legend-dot"></span> Vowel (10)</div>
+                            <div class="legend-item legend-cons"><span class="legend-dot"></span> Consonant (21)</div>
+                            <div class="legend-item legend-special"><span class="legend-dot"></span> Special sign (2)</div>
+                        </div>
 
-  <table class="table striped border bordered">
-    <tr>
-      <th>Russian Character</th>
-      <th>English Equivalent</th>
-      <th>Sound</th>
-      <th>Letter Name in Russian</th>
-    </tr>
-    <tr>
-      <td>A a</td>
-      <td>A a</td>
-      <td>Like "a" in far</td>
-      <td>"ah"</td>
-    </tr>
-    <tr>
-      <td>Б б</td>
-      <td>B b</td>
-      <td>Like "b' in boy</td>
-      <td>"beh"</td>
-    </tr>
-    <tr>
-      <td>В в</td>
-      <td>V v</td>
-      <td>Like "v" in very</td>
-      <td>"veh"</td>
-    </tr>
-    <tr>
-      <td>Г г</td>
-      <td>G g</td>
-      <td>Like "g" in go</td>
-      <td>"goh"</td>
-    </tr>
-    <tr>
-      <td>Д д</td>
-      <td>D d</td>
-      <td>Like "d" in Dad</td>
-      <td>"deh"</td>
-    </tr>
-    <tr>
-      <td>E e</td>
-      <td>YE ye</td>
-      <td>Like "ye" in yet</td>
-      <td>"yeh"</td>
-    </tr>
-    <tr>
-      <td>Ё ё</td>
-      <td>YO yo</td>
-      <td>Like "yo" in yoga</td>
-      <td>"yo"</td>
-    </tr>
-    <tr>
-      <td>Ж ж</td>
-      <td>ZH zh</td>
-      <td>Like "s" in pleasure</td>
-      <td>"zheh"</td>
-    </tr>
-    <tr>
-      <td>З з</td>
-      <td>Z z</td>
-      <td>Like "z" in zest</td>
-      <td>"zeh"</td>
-    </tr>
-    <tr>
-      <td>И и</td>
-      <td>EE ee</td>
-      <td>Like "ee" in see</td>
-      <td>"ee"</td>
-    </tr>
-    <tr>
-      <td>Й й</td>
-      <td>I or Y</td>
-      <td>Like "y" in toy</td>
-      <td>"ee kratkoyeh"</td>
-    </tr>
-    <tr>
-      <td>К к</td>
-      <td>K k</td>
-      <td>Like "k" in kitchen</td>
-      <td>"kah"</td>
-    </tr>
-    <tr>
-      <td>Л л</td>
-      <td>L l</td>
-      <td>Like "l" in little</td>
-      <td>"ehl"</td>
-    </tr>
-    <tr>
-      <td>М м</td>
-      <td>M m</td>
-      <td>Like "m" in mouse</td>
-      <td>"ehm"</td>
-    </tr>
-    <tr>
-      <td>Н н</td>
-      <td>N n</td>
-      <td>Like "n" in nice</td>
-      <td>"ehn"</td>
-    </tr>
-    <tr>
-      <td>О о</td>
-      <td>Stressed: O o; Unstressed: A a</td>
-      <td>Like "o" in sore and "a" in star</td>
-      <td>"oh"</td>
-    </tr>
-    <tr>
-      <td>П п</td>
-      <td>P p</td>
-      <td>Like "p" in pan</td>
-      <td>"peh"</td>
-    </tr>
-    <tr>
-      <td>Р р</td>
-      <td>R r</td>
-      <td>Like "r" in really (rolled)</td>
-      <td>"ehr"</td>
-    </tr>
-    <tr>
-      <td>С с</td>
-      <td>S s</td>
-      <td>Like "s" in salmon</td>
-      <td>"ehs"</td>
-    </tr>
-    <tr>
-      <td>Т т</td>
-      <td>T t</td>
-      <td>Like "t" in tip</td>
-      <td>"teh"</td>
-    </tr>
-    <tr>
-      <td>У у</td>
-      <td>U u</td>
-      <td>Like "oo" in boot</td>
-      <td>"oo"</td>
-    </tr>
-    <tr>
-      <td>Ф ф</td>
-      <td>F f</td>
-      <td>Like "f" in fish</td>
-      <td>"ehf"</td>
-    </tr>
-    <tr>
-      <td>Х х</td>
-      <td>H h, KH kh</td>
-      <td>Like "j" in jalapeño or "ch" in Bach</td>
-      <td>"khah"</td>
-    </tr>
-    <tr>
-      <td>Ц ц</td>
-      <td>TS ts</td>
-      <td>Like "ts" in tsumani</td>
-      <td>"tseh"</td>
-    </tr>
-    <tr>
-      <td>Ч ч</td>
-      <td>CH ch</td>
-      <td>Like "ch" in chop</td>
-      <td>"cheh"</td>
-    </tr>
-    <tr>
-      <td>Ш ш</td>
-      <td>SH sh (hard)</td>
-      <td>Like "sh" in shut</td>
-      <td>"shah"</td>
-    </tr>
-    <tr>
-      <td>Щ щ</td>
-      <td>SH sh (soft)</td>
-      <td>Like "sh" in shelf</td>
-      <td>"schyah"</td>
-    </tr>
-    <tr>
-      <td>Ъ ъ</td>
-      <td>Hard sign</td>
-      <td>Letter before is stronger</td>
-      <td>"tvyordiy znahk"</td>
-    </tr>
-    <tr>
-      <td>Ы ы</td>
-      <td>I i</td>
-      <td>Like "i" in bill</td>
-      <td>"i"</td>
-    </tr>
-    <tr>
-      <td>Ь ь</td>
-      <td>Soft sign</td>
-      <td>Letter before is softer</td>
-      <td>"myagkeey znahk"</td>
-    </tr>
-    <tr>
-      <td>Э э</td>
-      <td>EH eh</td>
-      <td>Like "e" in set</td>
-      <td>"eh"</td>
-    </tr>
-    <tr>
-      <td>Ю ю</td>
-      <td>YU yu</td>
-      <td>Like "u" in use</td>
-      <td>"yoo"</td>
-    </tr>
-    <tr>
-      <td>Я я</td>
-      <td>YA ya</td>
-      <td>Like "ya" in yacht</td>
-      <td>"yah"</td>
-    </tr>
-	  
-	  
-  </table>
-</div>
+                        <div class="alphabet-table-wrap">
+                            <table class="alphabet-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cyrillic</th>
+                                        <th>English Equiv.</th>
+                                        <th>Sound</th>
+                                        <th>Letter Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">А а</span></div></td>
+                                        <td><span class="eng-equiv">A a</span></td>
+                                        <td><span class="sound-text">Like "a" in <em>far</em></span></td>
+                                        <td><span class="letter-name">"ah"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Б б</span></div></td>
+                                        <td><span class="eng-equiv">B b</span></td>
+                                        <td><span class="sound-text">Like "b" in <em>boy</em></span></td>
+                                        <td><span class="letter-name">"beh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">В в</span></div></td>
+                                        <td><span class="eng-equiv">V v</span></td>
+                                        <td><span class="sound-text">Like "v" in <em>very</em></span></td>
+                                        <td><span class="letter-name">"veh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Г г</span></div></td>
+                                        <td><span class="eng-equiv">G g</span></td>
+                                        <td><span class="sound-text">Like "g" in <em>go</em></span></td>
+                                        <td><span class="letter-name">"goh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Д д</span></div></td>
+                                        <td><span class="eng-equiv">D d</span></td>
+                                        <td><span class="sound-text">Like "d" in <em>dad</em></span></td>
+                                        <td><span class="letter-name">"deh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">Е е</span></div></td>
+                                        <td><span class="eng-equiv">YE ye</span></td>
+                                        <td><span class="sound-text">Like "ye" in <em>yet</em></span></td>
+                                        <td><span class="letter-name">"yeh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">Ё ё</span></div></td>
+                                        <td><span class="eng-equiv">YO yo</span></td>
+                                        <td><span class="sound-text">Like "yo" in <em>yoga</em></span></td>
+                                        <td><span class="letter-name">"yo"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Ж ж</span></div></td>
+                                        <td><span class="eng-equiv">ZH zh</span></td>
+                                        <td><span class="sound-text">Like "s" in <em>pleasure</em></span></td>
+                                        <td><span class="letter-name">"zheh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">З з</span></div></td>
+                                        <td><span class="eng-equiv">Z z</span></td>
+                                        <td><span class="sound-text">Like "z" in <em>zest</em></span></td>
+                                        <td><span class="letter-name">"zeh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">И и</span></div></td>
+                                        <td><span class="eng-equiv">EE ee</span></td>
+                                        <td><span class="sound-text">Like "ee" in <em>see</em></span></td>
+                                        <td><span class="letter-name">"ee"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Й й</span></div></td>
+                                        <td><span class="eng-equiv">I or Y</span></td>
+                                        <td><span class="sound-text">Like "y" in <em>toy</em></span></td>
+                                        <td><span class="letter-name">"ee kratkoyeh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">К к</span></div></td>
+                                        <td><span class="eng-equiv">K k</span></td>
+                                        <td><span class="sound-text">Like "k" in <em>kitchen</em></span></td>
+                                        <td><span class="letter-name">"kah"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Л л</span></div></td>
+                                        <td><span class="eng-equiv">L l</span></td>
+                                        <td><span class="sound-text">Like "l" in <em>little</em></span></td>
+                                        <td><span class="letter-name">"ehl"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">М м</span></div></td>
+                                        <td><span class="eng-equiv">M m</span></td>
+                                        <td><span class="sound-text">Like "m" in <em>mouse</em></span></td>
+                                        <td><span class="letter-name">"ehm"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Н н</span></div></td>
+                                        <td><span class="eng-equiv">N n</span></td>
+                                        <td><span class="sound-text">Like "n" in <em>nice</em></span></td>
+                                        <td><span class="letter-name">"ehn"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">О о</span></div></td>
+                                        <td><span class="eng-equiv">Stressed: O; Unstressed: A</span></td>
+                                        <td><span class="sound-text">Like "o" in <em>sore</em> / "a" in <em>star</em></span></td>
+                                        <td><span class="letter-name">"oh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">П п</span></div></td>
+                                        <td><span class="eng-equiv">P p</span></td>
+                                        <td><span class="sound-text">Like "p" in <em>pan</em></span></td>
+                                        <td><span class="letter-name">"peh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Р р</span></div></td>
+                                        <td><span class="eng-equiv">R r</span></td>
+                                        <td><span class="sound-text">Like "r" in <em>really</em> (rolled)</span></td>
+                                        <td><span class="letter-name">"ehr"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">С с</span></div></td>
+                                        <td><span class="eng-equiv">S s</span></td>
+                                        <td><span class="sound-text">Like "s" in <em>salmon</em></span></td>
+                                        <td><span class="letter-name">"ehs"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Т т</span></div></td>
+                                        <td><span class="eng-equiv">T t</span></td>
+                                        <td><span class="sound-text">Like "t" in <em>tip</em></span></td>
+                                        <td><span class="letter-name">"teh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">У у</span></div></td>
+                                        <td><span class="eng-equiv">U u</span></td>
+                                        <td><span class="sound-text">Like "oo" in <em>boot</em></span></td>
+                                        <td><span class="letter-name">"oo"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Ф ф</span></div></td>
+                                        <td><span class="eng-equiv">F f</span></td>
+                                        <td><span class="sound-text">Like "f" in <em>fish</em></span></td>
+                                        <td><span class="letter-name">"ehf"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Х х</span></div></td>
+                                        <td><span class="eng-equiv">H h / KH kh</span></td>
+                                        <td><span class="sound-text">Like "j" in <em>jalapeño</em> or "ch" in <em>Bach</em></span></td>
+                                        <td><span class="letter-name">"khah"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Ц ц</span></div></td>
+                                        <td><span class="eng-equiv">TS ts</span></td>
+                                        <td><span class="sound-text">Like "ts" in <em>tsunami</em></span></td>
+                                        <td><span class="letter-name">"tseh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Ч ч</span></div></td>
+                                        <td><span class="eng-equiv">CH ch</span></td>
+                                        <td><span class="sound-text">Like "ch" in <em>chop</em></span></td>
+                                        <td><span class="letter-name">"cheh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Ш ш</span></div></td>
+                                        <td><span class="eng-equiv">SH sh (hard)</span></td>
+                                        <td><span class="sound-text">Like "sh" in <em>shut</em></span></td>
+                                        <td><span class="letter-name">"shah"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-cons"></div><span class="cyrillic-char">Щ щ</span></div></td>
+                                        <td><span class="eng-equiv">SH sh (soft)</span></td>
+                                        <td><span class="sound-text">Like "sh" in <em>shelf</em></span></td>
+                                        <td><span class="letter-name">"schyah"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-special"></div><span class="cyrillic-char">Ъ ъ</span></div></td>
+                                        <td><span class="eng-equiv">Hard sign</span></td>
+                                        <td><span class="sound-text">Makes the preceding letter harder</span></td>
+                                        <td><span class="letter-name">"tvyordiy znahk"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">Ы ы</span></div></td>
+                                        <td><span class="eng-equiv">I i</span></td>
+                                        <td><span class="sound-text">Like "i" in <em>bill</em></span></td>
+                                        <td><span class="letter-name">"i"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-special"></div><span class="cyrillic-char">Ь ь</span></div></td>
+                                        <td><span class="eng-equiv">Soft sign</span></td>
+                                        <td><span class="sound-text">Makes the preceding letter softer</span></td>
+                                        <td><span class="letter-name">"myagkeey znahk"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">Э э</span></div></td>
+                                        <td><span class="eng-equiv">EH eh</span></td>
+                                        <td><span class="sound-text">Like "e" in <em>set</em></span></td>
+                                        <td><span class="letter-name">"eh"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">Ю ю</span></div></td>
+                                        <td><span class="eng-equiv">YU yu</span></td>
+                                        <td><span class="sound-text">Like "u" in <em>use</em></span></td>
+                                        <td><span class="letter-name">"yoo"</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cyrillic-cell"><div class="letter-type-dot dot-vowel"></div><span class="cyrillic-char">Я я</span></div></td>
+                                        <td><span class="eng-equiv">YA ya</span></td>
+                                        <td><span class="sound-text">Like "ya" in <em>yacht</em></span></td>
+                                        <td><span class="letter-name">"yah"</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- end of alphabet card -->
 
-&nbsp;
-			    
-<p>Notice how most of the letters of the Russian alphabet already exist in English. Although some of the letters and sounds do not exist in English, since the modern Russian alphabet only has 33 letters, it is easy to learn.</p>
+                    <div class="ru-tip">
+                        &#128161; <strong>Good news:</strong> Most letters of the Russian alphabet already exist in English. Although a few sounds are unique to Russian, with only 33 letters in total, the alphabet is very achievable to master.
+                    </div>
 
-&nbsp;
-&nbsp;
-&nbsp;                   
-             
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="text-container last">
-                                <h3>Sign up for Our Newsletter (Подпишитесь на Hаши Hовости)</h3>
-                                <p>Sign up here to receive more charts and information to help you master the Russian language! Our team of experts is dedicated to helping you feel confident in your new language skills.</p>
-                                <p> By visiting Lingua Bud or using the Services you agree to the use of cookies in your browser and HTML-based emails. Cookies are small text files placed on your device when you visit a website. By using any of the Services, or submitting or collecting any Personal Information via the Services, you consent the use of your <a class="green" href="#your-link">Personal Information</a>.</p>
-                            </div> <!-- end of text container -->
-                        </div> <!-- end of col-->
-                        <div class="col-md-6">
+                    <div style="margin-top: 2rem;">
+                        <a class="btn-outline-reg" href="RussianResources.html">&larr; Back to Russian Resources</a>
+                    </div>
 
-                            <!-- Privacy Form -->
-                            <div class="form-container">
-                                <form id="privacyForm" data-toggle="validator" data-focus="false">
-                                    <div class="form-group">
-                                        <input type="text" class="form-control-input" id="pname" required>
-                                        <label class="label-control" for="pname">Name</label>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="email" class="form-control-input" id="pemail" required>
-                                        <label class="label-control" for="pemail">Email</label>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <select class="form-control-select" id="pselect" required>
-                                            <option class="select-option" value="" disabled selected>Select Option</option>
-                                            <option class="select-option" value="Delete data">Delete my data</option>
-                                            <option class="select-option" value="Show me data">Show me my data</option>
-                                        </select>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group checkbox">
-                                        <input type="checkbox" id="pterms" value="Agreed-to-Terms" required>I have read and agree to Lingua Bud's <a href="privacy-policy.html">Privacy Policy</a> and <a href="terms-conditions.html">Terms Conditions</a>
-                                        <div class="help-block with-errors"></div>
-                                    </div>
-                                    <div class="form-group">
-                                        <button type="submit" class="form-control-submit-button">SUBMIT</button>
-                                    </div>
-                                    <div class="form-message">
-                                        <div id="pmsgSubmit" class="h3 text-center hidden"></div>
-                                    </div>
-                                </form>
-                            </div> <!-- end of form container -->
-                            <!-- end of privacy form -->
-
-                        </div> <!-- end of col--> 
-                    </div> <!-- end of row -->
-                    <a class="btn-outline-reg back" href="RussianResources.html">BACK</a>
-                </div> <!-- end of col-->
+                </div>
             </div> <!-- end of row -->
         </div> <!-- end of container -->
     </div> <!-- end of ex-basic-2 -->
-    <!-- end of privacy content -->
+    <!-- end of content -->
 
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span></span>Translate this page to: <a class="green" href="SpanishHotel.html">Spanish</a>, <a class="green" href="FrenchHotel.html">French</a>, <a class="green" href="PortugueseHotel.html">Portuguese</a>, <a class="green" href="ItalianHotel.html">Italian</a>, <a class="green" href="GermanHotel.html">German</a>, <a class="green" href="SwedishHotel.html">Swedish</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
-
-    
     <!-- Footer -->
     <div class="footer">
         <div class="container">
@@ -478,10 +700,10 @@
                         <h4>Links</h4>
                         <ul class="list-unstyled li-space-lg white">
                             <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
+                                <a class="white" href="Resources2.html">Resources</a>
                             </li>
                             <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
+                                <a class="white" href="terms-conditions.html">Terms &amp; Conditions</a>
                             </li>
                             <li>
                                 <a class="white" href="privacy-policy.html">Privacy Policy</a>
@@ -491,39 +713,27 @@
                 </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Tools</h4>
+                        <h4>Languages</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li class="media">
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="NewSpanishPage.html">Spanish</a></li>
+                            <li><a class="white" href="NewFrenchPage.html">French</a></li>
+                            <li><a class="white" href="NewPortuguesePage.html">Portuguese</a></li>
                         </ul>
                     </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Partners</h4>
+                        <h4>Connect</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="connect.html">Find a Bud</a></li>
+                            <li><a class="white" href="instructors.html">Instructors</a></li>
+                            <li><a class="white" href="index.html#contact">Contact Us</a></li>
                         </ul>
                     </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
             </div> <!-- end of row -->
         </div> <!-- end of container -->
-    </div> <!-- end of footer -->  
+    </div> <!-- end of footer -->
     <!-- end of footer -->
 
 
@@ -532,24 +742,124 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">All Rights Reserved</a></p>
+                    <p class="p-small">Copyright &copy; 2026 <a href="https://inovatik.com">Lingua Bud, All Rights Reserved</a></p>
                 </div> <!-- end of col -->
-            </div> <!-- enf of row -->
+            </div> <!-- end of row -->
         </div> <!-- end of container -->
-    </div> <!-- end of copyright --> 
+    </div> <!-- end of copyright -->
     <!-- end of copyright -->
 
-    
+
     <!-- Scripts -->
-    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
-    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
-    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
-    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
-    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
-    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
-    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
-    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
-    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <!-- Firebase Auth for navbar -->
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
+
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
+                    }
+                } catch (e) { console.error('Profile load error:', e); }
+
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
+
+                loadUnreadMessageCount(user.uid);
+                loadPendingRequests(user.uid);
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
+            }
+        });
+
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+            const msgEl = document.getElementById('unreadCount');
+            if (msgEl) {
+                if (_unreadMsgCount > 0) { msgEl.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; msgEl.classList.add('show'); }
+                else { msgEl.classList.remove('show'); }
+            }
+            const bookingsEl = document.getElementById('bookingsCount');
+            if (bookingsEl) {
+                if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); }
+                else { bookingsEl.classList.remove('show'); }
+            }
+            const friendsEl = document.getElementById('friendsCount');
+            if (friendsEl) {
+                if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); }
+                else { friendsEl.classList.remove('show'); }
+            }
+            const ml = document.getElementById('messagesLink');
+            if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+        }
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(
+                query(collection(db, 'conversations'), where('participants', 'array-contains', uid)),
+                (snap) => {
+                    let count = 0;
+                    snap.forEach(d => { const c = d.data(); if (c.unreadCount?.[uid]) count += c.unreadCount[uid]; });
+                    _unreadMsgCount = count;
+                    _updateProfileBadge();
+                }
+            );
+        }
+        function loadPendingRequests(uid) {
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+                (snap) => {
+                    _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                    _updateProfileBadge();
+                }
+            );
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', uid), where('status', '==', 'pending')),
+                (snap) => {
+                    _newBookingCount = snap.size;
+                    _updateProfileBadge();
+                }
+            );
+        }
+    </script>
+
 </body>
 </html>
