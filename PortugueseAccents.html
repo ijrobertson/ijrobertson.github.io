@@ -3,24 +3,24 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    
+
     <!-- SEO Meta Tags -->
     <meta name="description" content="Learn how to pronounce accent marks in Portuguese with this free guide. Learn how to pronounce the 5 accent marks in Portuguese to help you become fluent.">
     <meta name="keywords" content="Portuguese accent marks, accents in Portuguese, how to pronounce Portuguese, acento agudo, acento grave, circonflexo, tilde, cedilha">
     <meta name="author" content="Lingua Bud">
 
-    <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
-	<meta property="og:site_name" content="" /> <!-- website name -->
-	<meta property="og:site" content="" /> <!-- website link -->
-	<meta property="og:title" content=""/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="" /> <!-- image link, make sure it's jpg -->
-	<meta property="og:url" content="" /> <!-- where do you want your post to link to -->
+    <!-- OG Meta Tags -->
+	<meta property="og:site_name" content="" />
+	<meta property="og:site" content="" />
+	<meta property="og:title" content=""/>
+	<meta property="og:description" content="" />
+	<meta property="og:image" content="" />
+	<meta property="og:url" content="" />
 	<meta property="og:type" content="article" />
 
     <!-- Website Title -->
     <title>Portuguese Accent Marks - Lingua Bud</title>
-    
+
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
@@ -29,12 +29,225 @@
     <link href="css/swiper.css" rel="stylesheet">
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
-	
+
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
+
+    <style>
+        /* ── Profile nav ── */
+        .profile-nav-wrapper { margin-left: 1rem; }
+        .profile-pic-nav {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid #20bcba;
+            transition: border-color 0.3s;
+        }
+        .profile-pic-nav:hover { border-color: #1a9d9b; }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed;
+            right: 1rem; top: 60px;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 9999;
+            opacity: 0; visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a {
+            color: #333; padding: 12px 16px;
+            text-decoration: none; display: block; transition: background 0.2s;
+        }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content.show {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .notification-badge {
+            display: none; position: absolute; top: -4px; right: -4px;
+            background-color: #dc3545; color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center; z-index: 10000;
+            animation: badgePulse 2s infinite;
+        }
+        .notification-badge.show { display: flex; }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
+        .unread-count {
+            display: none; background-color: #dc3545; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 11px; font-weight: bold;
+            align-items: center; justify-content: center;
+            margin-left: 4px;
+        }
+        .unread-count.show { display: inline-flex; }
+        @media (min-width: 768px) {
+            .navbar-nav { margin-left: 8rem !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+
+        /* ── Recommended resources bar ── */
+        .pt-resources-bar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 0.75rem 0;
+            font-size: 0.87rem;
+            color: #666;
+        }
+        .pt-resources-bar .container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pt-resources-bar .bar-label {
+            font-weight: 700;
+            color: #444;
+            margin-right: 0.25rem;
+        }
+        .pt-resources-bar a {
+            color: #20bcba;
+            font-weight: 600;
+            text-decoration: none;
+            background: #e8fffe;
+            border: 1px solid #b2eeec;
+            border-radius: 20px;
+            padding: 0.2rem 0.75rem;
+            font-size: 0.82rem;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .pt-resources-bar a:hover {
+            background: #c8f7f5;
+            border-color: #20bcba;
+            text-decoration: none;
+        }
+
+        /* ── Accent mark section styling ── */
+        .accent-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #0f3460, #20bcba);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            text-align: center;
+            line-height: 52px;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(32,188,186,0.25);
+        }
+        .accent-section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .accent-section-title h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #0f3460;
+        }
+        .accent-section-title .accent-sub {
+            font-size: 0.85rem;
+            color: #20bcba;
+            font-weight: 600;
+            margin-top: 0.1rem;
+        }
+        .accent-example-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem;
+            margin: 0.75rem 0;
+        }
+        @media (max-width: 576px) { .accent-example-grid { grid-template-columns: 1fr; } }
+        .accent-example-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.85rem;
+            border-radius: 8px;
+            background: #f8fdfd;
+            border: 1px solid #e8f8f7;
+            font-size: 0.92rem;
+            color: #444;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .accent-example-item:hover { border-color: #20bcba; background: #e8fffe; }
+        .accent-example-item i { color: #20bcba; font-size: 0.6rem; flex-shrink: 0; }
+        .accent-word { font-weight: 700; color: #0f3460; }
+        .accent-meaning { color: #777; font-size: 0.85rem; }
+        .accent-tip {
+            background: #e8fffe;
+            border-left: 4px solid #20bcba;
+            border-radius: 0 8px 8px 0;
+            padding: 0.85rem 1.1rem;
+            margin: 1rem 0 0.5rem;
+            font-size: 0.91rem;
+            color: #444;
+            line-height: 1.6;
+        }
+        .accent-subsection {
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #e0e0e0;
+        }
+        .accent-subsection h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f3460;
+            margin-bottom: 0.6rem;
+        }
+
+        /* Summary card at top */
+        .accent-summary-card {
+            background: linear-gradient(135deg, #0f3460 0%, #1a5f7a 60%, #20bcba 100%);
+            border-radius: 14px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
+        .accent-summary-card h4 {
+            color: white;
+            margin-bottom: 1rem;
+            opacity: 0.85;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        .accent-pills { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+        .accent-pill {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            padding: 0.4rem 1rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: white;
+        }
+        .accent-pill span { opacity: 0.75; font-weight: 400; margin-left: 0.35rem; }
+    </style>
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
-    
+
     <!-- Preloader -->
 	<div class="spinner-wrapper">
         <div class="spinner">
@@ -44,16 +257,13 @@
         </div>
     </div>
     <!-- end of preloader -->
-    
+
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <!-- Text Logo - Use this if you don't have a graphic logo -->
-        <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Lingua Bud</a> -->
-
         <!-- Image Logo -->
-        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="alternative"></a>
-        
+        <a class="navbar-brand logo-image" href="index.html"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
         <!-- Mobile Menu Toggle Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-awesome fas fa-bars"></span>
@@ -62,28 +272,25 @@
         <!-- end of mobile menu toggle button -->
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#header">HOME <span class="sr-only">(current)</span></a>
+                    <a class="nav-link page-scroll" href="index.html#header">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#intro">ABOUT</a>
+                    <a class="nav-link page-scroll" href="connect.html">CONNECT</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#services">SERVICES</a>
+                    <a class="nav-link page-scroll" href="instructors.html">INSTRUCTORS</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="Resources2.html">RESOURCES</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index.html#projects">INSTRUCTORS</a>
-                </li>
 
-                <!-- Dropdown Menu -->          
+                <!-- Dropdown Menu -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <a class="nav-link dropdown-toggle page-scroll" href="#" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-			<a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
+                        <a class="dropdown-item" href="EnglishPage.html"><span class="item-text">ENGLISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="NewSpanishPage.html"><span class="item-text">SPANISH</span></a>
                         <div class="dropdown-items-divide-hr"></div>
@@ -96,9 +303,8 @@
                         <a class="dropdown-item" href="GermanPage.html"><span class="item-text">GERMAN</span></a>
                         <div class="dropdown-items-divide-hr"></div>
                         <a class="dropdown-item" href="RussianPage.html"><span class="item-text">RUSSIAN</span></a>
-			<div class="dropdown-items-divide-hr"></div>
-			<a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
-                        
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage.html"><span class="item-text">SWEDISH</span></a>
                     </div>
                 </li>
                 <!-- end of dropdown menu -->
@@ -106,11 +312,31 @@
                 <li class="nav-item">
                     <a class="nav-link page-scroll" href="index.html#contact">CONTACT</a>
                 </li>
-		
-                <li class="nav-item">
-                    <a class="btn-solid-xlg nav-link page-scroll" href="index.html#callMe">SIGN UP/LOG IN</a>
+
+                <!-- Sign In link (shown when not logged in) -->
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login.html">SIGN IN/SIGN UP</a>
                 </li>
             </ul>
+
+            <!-- Profile dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display:none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages.html" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings.html"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends.html"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
+                        <a href="student-dashboard.html"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
             <span class="nav-item social-icons">
                 <span class="fa-stack">
                     <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
@@ -127,7 +353,6 @@
             </span>
         </div>
     </nav> <!-- end of navbar -->
-    <!-- end of navbar -->
 
 
     <!-- Header -->
@@ -143,237 +368,182 @@
     <!-- end of header -->
 
 
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
+    <!-- Recommended Resources Bar -->
+    <div class="pt-resources-bar">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span><a class="green" href="PortugueseBasics.html">Portuguese Basics - Básicos do Português</a>, <a class="green" href="PortugueseFirst.html">First Conversation - Primeira Conversação</a>, <a class="green" href="PortugueseRestaurant.html">At the Restaurant - No Restaurante</a>, <a class="green" href="PortugueseHotel.html">Checking into the Hotel - Check-in no Hotel</a>, <a class="green" href="PortugueseAirport.html">At the Airport - No Aeroporto</a>, <a class="green" href="PortugueseDay.html">Typical Day - Dia Típico</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+            <span class="bar-label">&#128218; Explore Portuguese:</span>
+            <a href="PortugueseBasics.html">Portuguese Basics</a>
+            <a href="PortugueseFirst.html">First Conversation</a>
+            <a href="PortugueseRestaurant.html">At the Restaurant</a>
+            <a href="PortugueseHotel.html">At the Hotel</a>
+            <a href="PortugueseAirport.html">At the Airport</a>
+            <a href="PortugueseDay.html">Typical Day</a>
+            <a href="NewPortuguesePage.html">Portuguese Hub &rarr;</a>
+        </div>
+    </div>
+    <!-- end of recommended resources bar -->
 
 
-    <!-- Terms Content -->
+    <!-- Content -->
     <div class="ex-basic-2">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <div class="text-container">
-                        <h3><u>Accent Marks in Portuguese</u></h3>
-                        <p>Portuguese has many sounds and accents alike. The names of the Portuguese accents are: agudo (é), grave (è), circonflexo (ê), til/tilde (ã) and cedilha (ç).
 
-The purpose of this post is to demystify the Portuguese accents and explain the pronunciation so you can start to incorporate them into your reading and speaking.</p>
-                        <p>In a nutshell, here are all the Portuguese accent marks:<a class="green" href="#your-link"></a> </p>
-                        <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">á,é,í,ó,ú - o acento agudo - acute accent</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">à - o acento grave - grave accent</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">â, ê, ô, - o acento circonflexo - circumflex accent</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">ã,õ - til/tilde - tilda</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">ç - a cedilha - cedilla</div>
-                            </li>
-      
-                        </ul>
-                    </div> <!-- end of text-container -->
-                    
-                    <div class="text-container">
-                        <h3>1. Acute Accent (O Acento Agudo)</h3>
-                        <p>O Acento Agudo is an upward slanting accent that can appear over any vowel and looks like this: é. Of all the Portuguese accents this one is by far the most important as it’s used very widely throughout the language and has a big impact on how the vowel is pronounced.</p>
-			<p>When saying a word in Portuguese that has this accent mark, make sure to pronounce the vowel that has this the mark with the most emphasis and open your mouth more when pronouncing it.</p>
-			<p>The acute accent is used heavily in Portuguese. Here are some examples:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">máquina - 'machine'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">útil - 'useful'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">épico - 'epic'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">íntimo - 'intimate'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">óbvio - 'obvious'</div>
-                            </li>
-      
-                        </ul>
-			    <p>Remember though, Brazilian Portuguese and Portuguese from Portugal have their differences and sometimes spell their words differently. Por exemplo:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">arquitetónico (PT) → arquitetônico (BR)</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">atómico (PT) → atômico (BR)</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">anatómico (PT) → anatômico (BR)</div>
-                            </li>
-                            
-      
-                        </ul>
-			    
-			    
-                    </div> <!-- end of text-container -->
+                    <!-- Summary card -->
+                    <div class="accent-summary-card">
+                        <h4>The 5 Portuguese Accent Marks at a Glance</h4>
+                        <div class="accent-pills">
+                            <div class="accent-pill">á é í ó ú <span>o acento agudo</span></div>
+                            <div class="accent-pill">à <span>o acento grave</span></div>
+                            <div class="accent-pill">â ê ô <span>o circonflexo</span></div>
+                            <div class="accent-pill">ã õ <span>til / tilde</span></div>
+                            <div class="accent-pill">ç <span>a cedilha</span></div>
+                        </div>
+                    </div>
 
+                    <!-- Intro -->
                     <div class="text-container">
-                        <h3>2. Grave Accent (O Acento Grave)</h3>
-                        <p>This is the downward sloping accent that appears only over the letter -à.</p>
-                        <p>The accent grave is somewhat rare in Portuguese and is pronounced exactly the same way as the acute accent -á.</p>
-			<p>First we’ll take a look at how the accent grave is used over the letter -e and its effects on pronunciation.</p>
-			<p>The only difference between the acute accent and the grave accent is found in written form. The -à is either alone or accompanied by an 's' and means 'to or 'on' Here are some examples:</p>
-			<ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Eu como feijoada às quinta-feiras. - I eat feijoada on Thursdays.</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Estou à espera! - I’m waiting!</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Vou à Azerbaijão. (I will go to Azerbaijan.)</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Fui à escola. - I went to school.</div>
-                            </li>
-                           
-      
-                        </ul>
-			    
-			    <h3>3. Circumflex (O Circonflexo)</h3> 
-			    <p>The circumflex accent is the little hat (o chapeuzinho) accent that appears over the following letters: -â,-ê,-ô. The circumflex accent in Portuguese changes the sound of the vowel to make it sound more closed. </p>
-			    <p>Try to keep your mouth more closed when pronouncing this accent mark, like the word 'flow' in English. Por exemplo:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">experiência - 'experience'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">você - 'you'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">âmbito - 'scope'</div>
-                            </li>
-      
-                        </ul>
-			    
-			    <h3>4. Tilda (Til/Tilde)</h3>
-			    <p>Of all the Portuguese accents, this is probably the most unique. Pronouncing this accent requires a sound unique to Portuguese. It is 'nasaly' and is very important to the Portuguese language. Imagine you are humming as you pronounce the vowel. Here are some examples:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">não - 'no'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">estação - 'station'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">coração - 'heart'</div>
-                            </li>
-      
-                        </ul>
-			    <h3>Making Words with Tilda the Plural</h3>
-			    <p>For words in Portuguese that end in either -ã or -ão in their singular form, to make them plural, the ending will change to either -ãs or -ões. Similarly, for singular words that end with -ãe, the plural form will be -ães. Some examples:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">irmã → irmãs - 'sister → sisters'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">coração → corações - 'heart → hearts'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">mãe → mães - 'mother → mothers'.</div>
-                            </li>
-      
-                        </ul>
-			    <h3>5. Cedilla (A Cedilha)</h3>
-			    <p>The cedilla (a cedilha) is the little squiggly mark that appears under the letter -c. It looks like this: -Ç -ç. The function of the cedilla is to make the letter -c have a strong sound like -s as in Sam.</p>
-			    <p></p>
-			    <p>Portuguese words with cedilla:</p>
-			    <ul class="list-unstyled li-space-lg indent">
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">Praça - 'Plaza'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">relação - 'relationship'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">maçã - 'apple'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">esperança - 'hope'</div>
-                            </li>
-                            <li class="media">
-                                <i class="fas fa-square"></i>
-                                <div class="media-body">canção - 'song'</div>
-                            </li>
-      
-                        </ul>
-			    <a class="btn-outline-reg" href="PortugueseResources.html">BACK</a>
-                    </div> <!-- end of text-container -->
+                        <p>Portuguese has many sounds and accent marks. The purpose of this guide is to demystify the Portuguese accents and explain the pronunciation so you can start to incorporate them into your reading and speaking.</p>
+                    </div>
 
-                    
+                    <!-- 1. Acute Accent -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">á</div>
+                            <div>
+                                <h3>1. Acute Accent</h3>
+                                <div class="accent-sub">o acento agudo</div>
+                            </div>
+                        </div>
+                        <p>O acento agudo is an upward slanting accent that can appear over any vowel (á, é, í, ó, ú). Of all the Portuguese accents this one is by far the most important &mdash; it is used very widely throughout the language and has a big impact on how the vowel is pronounced.</p>
+                        <p>When saying a word with this accent mark, pronounce the accented vowel with the most emphasis and open your mouth more when pronouncing it.</p>
+
+                        <div class="accent-subsection">
+                            <h4>Common examples</h4>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">máquina</span> <span class="accent-meaning">&mdash; 'machine'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">útil</span> <span class="accent-meaning">&mdash; 'useful'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">épico</span> <span class="accent-meaning">&mdash; 'epic'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">íntimo</span> <span class="accent-meaning">&mdash; 'intimate'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">óbvio</span> <span class="accent-meaning">&mdash; 'obvious'</span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="accent-subsection">
+                            <h4>Brazilian vs. European Portuguese</h4>
+                            <p style="font-size:0.92rem;color:#555;">Brazilian and European Portuguese sometimes spell words differently with the acute accent. Por exemplo:</p>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">arquitetónico</span> <span class="accent-meaning">&mdash; PT &rarr; arquitetônico (BR)</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">atómico</span> <span class="accent-meaning">&mdash; PT &rarr; atômico (BR)</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">anatómico</span> <span class="accent-meaning">&mdash; PT &rarr; anatômico (BR)</span></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Grave Accent -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">à</div>
+                            <div>
+                                <h3>2. Grave Accent</h3>
+                                <div class="accent-sub">o acento grave</div>
+                            </div>
+                        </div>
+                        <p>The accent grave is the downward sloping accent that appears only over the letter -à in Portuguese. It is somewhat rare and is pronounced exactly the same way as the acute accent -á.</p>
+                        <p>The -à is used on its own or followed by -s and means 'to' or 'at'. It is the result of combining the preposition <em>a</em> with the feminine definite article <em>a/as</em>.</p>
+
+                        <div class="accent-example-grid">
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">Eu como feijoada às quinta-feiras.</span> <span class="accent-meaning">&mdash; 'I eat feijoada on Thursdays.'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">Estou à espera!</span> <span class="accent-meaning">&mdash; 'I'm waiting!'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">Vou à Azerbaijão.</span> <span class="accent-meaning">&mdash; 'I will go to Azerbaijan.'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">Fui à escola.</span> <span class="accent-meaning">&mdash; 'I went to school.'</span></span></div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Circumflex -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">ê</div>
+                            <div>
+                                <h3>3. Circumflex</h3>
+                                <div class="accent-sub">o circonflexo</div>
+                            </div>
+                        </div>
+                        <p>The circumflex &mdash; the little hat (o chapeuzinho) &mdash; appears over -â, -ê, -ô. It changes the sound of the vowel to make it sound more closed, similar to the 'o' sound in the English word 'flow'.</p>
+                        <p>Try to keep your mouth more closed when pronouncing a vowel with this accent mark. Por exemplo:</p>
+
+                        <div class="accent-example-grid">
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">experiência</span> <span class="accent-meaning">&mdash; 'experience'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">você</span> <span class="accent-meaning">&mdash; 'you'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">âmbito</span> <span class="accent-meaning">&mdash; 'scope'</span></span></div>
+                        </div>
+
+                        <div class="accent-tip">
+                            &#128161; <strong>Remember:</strong> The circumflex is also how Brazilian Portuguese spells many words that European Portuguese writes with an acute accent &mdash; like <em>atômico</em> (BR) vs. <em>atómico</em> (PT).
+                        </div>
+                    </div>
+
+                    <!-- 4. Tilde -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">ã</div>
+                            <div>
+                                <h3>4. Tilde</h3>
+                                <div class="accent-sub">til / tilde</div>
+                            </div>
+                        </div>
+                        <p>Of all the Portuguese accents, the tilde is probably the most unique. It appears over -ã and -õ and creates a nasal vowel sound that is very important to the Portuguese language. Imagine you are humming as you pronounce the vowel &mdash; the sound resonates through your nose.</p>
+
+                        <div class="accent-subsection">
+                            <h4>Common words with tilde</h4>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">não</span> <span class="accent-meaning">&mdash; 'no'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">estação</span> <span class="accent-meaning">&mdash; 'station'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">coração</span> <span class="accent-meaning">&mdash; 'heart'</span></span></div>
+                            </div>
+                        </div>
+
+                        <div class="accent-subsection">
+                            <h4>Making tilde words plural</h4>
+                            <p style="font-size:0.92rem;color:#555;">Words ending in -ã or -ão (singular) become -ãs or -ões (plural). Words ending in -ãe become -ães.</p>
+                            <div class="accent-example-grid">
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">irmã &rarr; irmãs</span> <span class="accent-meaning">&mdash; 'sister &rarr; sisters'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">coração &rarr; corações</span> <span class="accent-meaning">&mdash; 'heart &rarr; hearts'</span></span></div>
+                                <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">mãe &rarr; mães</span> <span class="accent-meaning">&mdash; 'mother &rarr; mothers'</span></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Cedilla -->
+                    <div class="text-container">
+                        <div class="accent-section-title">
+                            <div class="accent-badge">ç</div>
+                            <div>
+                                <h3>5. Cedilla</h3>
+                                <div class="accent-sub">a cedilha</div>
+                            </div>
+                        </div>
+                        <p>The cedilla is the little squiggly mark under the letter -c (ç). It makes the -c produce a strong 's' sound, like the -s in 'Sam'. The ç only appears before the letters -a, -o and -u.</p>
+
+                        <div class="accent-example-grid">
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">Praça</span> <span class="accent-meaning">&mdash; 'plaza'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">relação</span> <span class="accent-meaning">&mdash; 'relationship'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">maçã</span> <span class="accent-meaning">&mdash; 'apple'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">esperança</span> <span class="accent-meaning">&mdash; 'hope'</span></span></div>
+                            <div class="accent-example-item"><i class="fas fa-square"></i><span><span class="accent-word">canção</span> <span class="accent-meaning">&mdash; 'song'</span></span></div>
+                        </div>
+
+                        <div style="margin-top:2rem;">
+                            <a class="btn-outline-reg" href="PortugueseResources.html">&larr; Back to Portuguese Resources</a>
+                        </div>
+                    </div>
+
                 </div>
             </div> <!-- end of row -->
         </div> <!-- end of container -->
-    </div> <!-- end of ex-basic -->
-    <!-- end of terms content -->
-
-   
-    <!-- Breadcrumbs -->
-    <div class="ex-basic-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumbs">
-                        <a href="index.html">Home</a><i class="fa fa-angle-double-right"></i><span>Translate this page to: <a class="green" href="#your-link">Spanish</a>, <a class="green" href="#your-link">French</a>, <a class="green" href="#your-link">Italian</a>, <a class="green" href="#your-link">German</a>, <a class="green" href="#your-link">Russian</a>, <a class="green" href="#your-link">Swedish</a></span>
-                    </div> <!-- end of breadcrumbs -->
-                </div> <!-- end of col -->
-            </div> <!-- end of row -->
-        </div> <!-- end of container -->
-    </div> <!-- end of ex-basic-1 -->
-    <!-- end of breadcrumbs -->
+    </div> <!-- end of ex-basic-2 -->
+    <!-- end of content -->
 
 
     <!-- Footer -->
@@ -383,7 +553,7 @@ The purpose of this post is to demystify the Portuguese accents and explain the 
                 <div class="col-md-6">
                     <div class="text-container about">
                         <h4>Few Words About Lingua Bud</h4>
-                        <p class="white">We're passionate about hosting the world's best language learning platform and to help people become fluent in their desired languages.</p>
+                        <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
                     </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
                 <div class="col-md-2">
@@ -391,10 +561,10 @@ The purpose of this post is to demystify the Portuguese accents and explain the 
                         <h4>Links</h4>
                         <ul class="list-unstyled li-space-lg white">
                             <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
+                                <a class="white" href="Resources2.html">Resources</a>
                             </li>
                             <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
+                                <a class="white" href="terms-conditions.html">Terms &amp; Conditions</a>
                             </li>
                             <li>
                                 <a class="white" href="privacy-policy.html">Privacy Policy</a>
@@ -404,39 +574,27 @@ The purpose of this post is to demystify the Portuguese accents and explain the 
                 </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Tools</h4>
+                        <h4>Languages</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li class="media">
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="NewSpanishPage.html">Spanish</a></li>
+                            <li><a class="white" href="NewFrenchPage.html">French</a></li>
+                            <li><a class="white" href="NewPortuguesePage.html">Portuguese</a></li>
                         </ul>
                     </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
                 <div class="col-md-2">
                     <div class="text-container">
-                        <h4>Partners</h4>
+                        <h4>Connect</h4>
                         <ul class="list-unstyled li-space-lg">
-                            <li>
-                                <a class="white" href="#your-link">startupguide.com</a>
-                            </li>
-                            <li>
-                                <a class="white" href="terms-conditions.html">Terms & Conditions</a>
-                            </li>
-                            <li>
-                                <a class="white" href="privacy-policy.html">Privacy Policy</a>
-                            </li>
+                            <li><a class="white" href="connect.html">Find a Bud</a></li>
+                            <li><a class="white" href="instructors.html">Instructors</a></li>
+                            <li><a class="white" href="index.html#contact">Contact Us</a></li>
                         </ul>
                     </div> <!-- end of text-container -->
                 </div> <!-- end of col -->
             </div> <!-- end of row -->
         </div> <!-- end of container -->
-    </div> <!-- end of footer -->  
+    </div> <!-- end of footer -->
     <!-- end of footer -->
 
 
@@ -445,24 +603,124 @@ The purpose of this post is to demystify the Portuguese accents and explain the 
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <p class="p-small">Copyright © 2023 <a href="https://inovatik.com">Lingua Bud - All Rights Reserved</a></p>
+                    <p class="p-small">Copyright &copy; 2026 <a href="https://inovatik.com">Lingua Bud, All Rights Reserved</a></p>
                 </div> <!-- end of col -->
-            </div> <!-- enf of row -->
+            </div> <!-- end of row -->
         </div> <!-- end of container -->
-    </div> <!-- end of copyright --> 
+    </div> <!-- end of copyright -->
     <!-- end of copyright -->
 
-	
+
     <!-- Scripts -->
-    <script src="js/jquery.min.js"></script> <!-- jQuery for Bootstrap's JavaScript plugins -->
-    <script src="js/popper.min.js"></script> <!-- Popper tooltip library for Bootstrap -->
-    <script src="js/bootstrap.min.js"></script> <!-- Bootstrap framework -->
-    <script src="js/jquery.easing.min.js"></script> <!-- jQuery Easing for smooth scrolling between anchors -->
-    <script src="js/swiper.min.js"></script> <!-- Swiper for image and text sliders -->
-    <script src="js/jquery.magnific-popup.js"></script> <!-- Magnific Popup for lightboxes -->
-    <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
-    <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
-    <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/swiper.min.js"></script>
+    <script src="js/jquery.magnific-popup.js"></script>
+    <script src="js/morphext.min.js"></script>
+    <script src="js/isotope.pkgd.min.js"></script>
+    <script src="js/validator.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <!-- Firebase Auth for navbar -->
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, onSnapshot } from './lib/firebaseClient.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            const profileNavWrapper = document.getElementById('profileNavWrapper');
+            const signInWrapper     = document.getElementById('signInWrapper');
+            const navProfilePic     = document.getElementById('navProfilePic');
+            const logoutLink        = document.getElementById('logoutLink');
+
+            if (user) {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'block';
+                if (signInWrapper)     signInWrapper.style.display     = 'none';
+
+                try {
+                    const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+                    if (instructorSnap.exists()) {
+                        const d = instructorSnap.data();
+                        if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                    } else {
+                        const userSnap = await getDoc(doc(db, 'users', user.uid));
+                        if (userSnap.exists()) {
+                            const d = userSnap.data();
+                            if (d.avatar_url && navProfilePic) navProfilePic.src = d.avatar_url;
+                        }
+                    }
+                } catch (e) { console.error('Profile load error:', e); }
+
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try { await signOut(auth); window.location.href = 'index.html'; }
+                        catch (e) { console.error('Sign-out error:', e); }
+                    });
+                }
+
+                loadUnreadMessageCount(user.uid);
+                loadPendingRequests(user.uid);
+            } else {
+                if (profileNavWrapper) profileNavWrapper.style.display = 'none';
+                if (signInWrapper)     signInWrapper.style.display     = 'block';
+            }
+        });
+
+        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
+        function _updateProfileBadge() {
+            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
+                else { badge.classList.remove('show'); }
+            }
+            const msgEl = document.getElementById('unreadCount');
+            if (msgEl) {
+                if (_unreadMsgCount > 0) { msgEl.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; msgEl.classList.add('show'); }
+                else { msgEl.classList.remove('show'); }
+            }
+            const bookingsEl = document.getElementById('bookingsCount');
+            if (bookingsEl) {
+                if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); }
+                else { bookingsEl.classList.remove('show'); }
+            }
+            const friendsEl = document.getElementById('friendsCount');
+            if (friendsEl) {
+                if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); }
+                else { friendsEl.classList.remove('show'); }
+            }
+            const ml = document.getElementById('messagesLink');
+            if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
+        }
+        function loadUnreadMessageCount(uid) {
+            onSnapshot(
+                query(collection(db, 'conversations'), where('participants', 'array-contains', uid)),
+                (snap) => {
+                    let count = 0;
+                    snap.forEach(d => { const c = d.data(); if (c.unreadCount?.[uid]) count += c.unreadCount[uid]; });
+                    _unreadMsgCount = count;
+                    _updateProfileBadge();
+                }
+            );
+        }
+        function loadPendingRequests(uid) {
+            onSnapshot(
+                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+                (snap) => {
+                    _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
+                    _updateProfileBadge();
+                }
+            );
+            onSnapshot(
+                query(collection(db, 'bookings'), where('instructorId', '==', uid), where('status', '==', 'pending')),
+                (snap) => {
+                    _newBookingCount = snap.size;
+                    _updateProfileBadge();
+                }
+            );
+        }
+    </script>
+
 </body>
 </html>
