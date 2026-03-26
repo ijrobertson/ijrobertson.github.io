@@ -957,7 +957,18 @@
 
                 tbody.innerHTML = reports.map(r => {
                     const date = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString() : '—';
-                    const details = escHtml(r.details || '—');
+                    const fullDetails = r.details || '—';
+                    const isLong = fullDetails.length > 100;
+                    const preview = isLong ? escHtml(fullDetails.substring(0, 100)) + '…' : escHtml(fullDetails);
+                    const detailsHtml = isLong
+                        ? `<div id="report-detail-${r.id}">
+                               <span class="report-detail-preview">${preview}</span>
+                               <span class="report-detail-full" style="display:none;">${escHtml(fullDetails)}</span>
+                               <button class="btn-sm-icon" title="Expand" onclick="toggleReportDetail('${r.id}')" style="margin-left:4px;">
+                                   <i class="fas fa-expand-alt"></i>
+                               </button>
+                           </div>`
+                        : escHtml(fullDetails);
                     return `<tr>
                         <td><small style="color:#999;">${escHtml(r.reporterId || '—')}</small></td>
                         <td>
@@ -965,7 +976,7 @@
                             <small style="color:#999;">${escHtml(r.reportedUserId || '—')}</small>
                         </td>
                         <td><span class="status-badge badge-pending">${escHtml(r.reason || '—')}</span></td>
-                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${details}</td>
+                        <td style="max-width:220px;">${detailsHtml}</td>
                         <td>${date}</td>
                         <td style="white-space:nowrap;">
                             <button class="btn-unflag" style="margin-right:4px;" onclick="dismissReport('${r.id}')">Dismiss</button>
@@ -1397,6 +1408,18 @@
             }
         }
         window.loadMessages = loadMessages;
+
+        window.toggleReportDetail = function(id) {
+            const container = document.getElementById('report-detail-' + id);
+            if (!container) return;
+            const preview = container.querySelector('.report-detail-preview');
+            const full    = container.querySelector('.report-detail-full');
+            const icon    = container.querySelector('.btn-sm-icon i');
+            const isExpanded = full.style.display !== 'none';
+            preview.style.display = isExpanded ? '' : 'none';
+            full.style.display    = isExpanded ? 'none' : '';
+            icon.className = isExpanded ? 'fas fa-expand-alt' : 'fas fa-compress-alt';
+        };
 
         window.toggleMsg = function(id, text) {
             const el  = document.getElementById('msg-text-' + id);
