@@ -331,6 +331,19 @@
             color: white;
         }
 
+        .chat-header-name-link {
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .chat-header-name-link:hover {
+            color: white;
+            border-bottom-color: rgba(255,255,255,0.7);
+            text-decoration: none;
+        }
+
         .messages-area {
             flex: 1;
             overflow-y: auto;
@@ -1068,7 +1081,8 @@
 
                     otherUser = {
                         name: userData.name || 'Unknown User',
-                        avatar_url: userData.avatar_url || ''
+                        avatar_url: userData.avatar_url || '',
+                        isInstructor: source === 'instructors'
                     };
                     console.log('✅ Final otherUser object:', otherUser);
                 } else {
@@ -1080,11 +1094,14 @@
 
             console.log('🖼️ Rendering chat interface...');
             // Render chat interface
+            const profileUrl = otherUser.isInstructor
+                ? `instructor-profile.html?id=${otherUserId}`
+                : `learner-profile.html?uid=${otherUserId}`;
             chatPanel.innerHTML = `
                 <div class="chat-header">
                     <img class="chat-header-avatar" src="${otherUser.avatar_url || 'https://via.placeholder.com/45'}" alt="${otherUser.name}">
                     <div class="chat-header-info">
-                        <h3>${otherUser.name || 'Unknown User'}</h3>
+                        <h3><a href="${profileUrl}" class="chat-header-name-link" title="View profile">${otherUser.name || 'Unknown User'}</a></h3>
                     </div>
                 </div>
                 <div class="messages-area" id="messagesArea"></div>
