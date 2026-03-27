@@ -2002,6 +2002,34 @@
             }
         }
 
+        // Returns true when a phrase looks like a question in the given language.
+        // Each entry is a list of lowercase prefixes that typically start a question.
+        function isQuestion(phrase, langCode) {
+            const p = phrase.toLowerCase();
+            const starters = {
+                'en': ['what ', 'who ', 'where ', 'when ', 'why ', 'how ', 'which ',
+                       'is ', 'are ', 'was ', 'were ', 'do ', 'does ', 'did ',
+                       'can ', 'could ', 'would ', 'should ', 'will ', 'have ', 'has ',
+                       'am i', 'isn\'t', 'aren\'t', 'don\'t', 'doesn\'t'],
+                'es': ['qué ', 'cuál ', 'quién ', 'dónde ', 'cuándo ', 'por qué ',
+                       'cómo ', 'cuánto ', 'cuánta ', 'cuántos ', 'cuántas ', '¿'],
+                'fr': ['quoi ', 'qui ', 'où ', 'quand ', 'pourquoi ', 'comment ',
+                       'quel ', 'quelle ', 'quels ', 'quelles ', 'est-ce', 'qu\''],
+                'pt': ['o que ', 'quem ', 'onde ', 'quando ', 'por que ', 'porque ',
+                       'como ', 'qual ', 'quais ', 'quanto ', 'quanta '],
+                'it': ['cosa ', 'chi ', 'dove ', 'quando ', 'perché ', 'come ',
+                       'quale ', 'quali ', 'quanto ', 'quanta '],
+                'de': ['was ', 'wer ', 'wo ', 'wann ', 'warum ', 'wie ',
+                       'welch', 'ist ', 'sind ', 'hast ', 'haben ', 'kann ', 'gibt '],
+                'ru': ['что ', 'кто ', 'где ', 'когда ', 'почему ', 'как ',
+                       'какой ', 'какая ', 'какое ', 'какие ', 'зачем '],
+                'sv': ['vad ', 'vem ', 'var ', 'när ', 'varför ', 'hur ',
+                       'vilken ', 'vilket ', 'vilka ', 'är ', 'har '],
+            };
+            const checks = starters[langCode] || starters['en'];
+            return checks.some(s => p.startsWith(s) || p === s.trimEnd());
+        }
+
         async function translateText(text, sourceLang) {
             // sourceLang is an ISO 639-1 code (e.g. 'pt', 'es', 'fr')
             const langpair = `${sourceLang}|en`;
@@ -2044,8 +2072,27 @@
                         speechRecognition.interimResults = false;
                         speechRecognition.lang = recordingLanguage; // use selected language
                         speechRecognition.onresult = e => {
+                            const langBase = recordingLanguage.split('-')[0]; // 'pt-PT' → 'pt'
                             for (let i = e.resultIndex; i < e.results.length; i++) {
-                                if (e.results[i].isFinal) recordingTranscript += e.results[i][0].transcript + ' ';
+                                if (!e.results[i].isFinal) continue;
+                                const phrase = e.results[i][0].transcript.trim();
+                                if (!phrase) continue;
+
+                                // Capitalise first letter of each recognised phrase
+                                const capped = phrase.charAt(0).toUpperCase() + phrase.slice(1);
+
+                                // If the API already added punctuation, keep it as-is.
+                                // Otherwise decide between '?' and '.'
+                                let punctuated;
+                                if (/[.!?]$/.test(capped)) {
+                                    punctuated = capped;
+                                } else if (isQuestion(capped, langBase)) {
+                                    punctuated = capped + '?';
+                                } else {
+                                    punctuated = capped + '.';
+                                }
+
+                                recordingTranscript += (recordingTranscript ? ' ' : '') + punctuated;
                             }
                         };
                         // Set up end/error handlers BEFORE start() so the promise captures
