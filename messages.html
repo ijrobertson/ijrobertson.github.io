@@ -2118,6 +2118,8 @@
             await Promise.all([mediaStopPromise, recognitionEndPromise]);
             stream.getTracks().forEach(t => t.stop());
 
+            // Re-enable before hiding so the button is ready for the next recording
+            if (recSendBtn) recSendBtn.disabled = false;
             document.getElementById('recordingUI').style.display = 'none';
             document.getElementById('messageForm').style.display = 'flex';
 
