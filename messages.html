@@ -1909,11 +1909,15 @@
             }
         }
 
+        let _isSendingMessage = false;
         async function sendMessage(conversationId) {
+            if (_isSendingMessage) return;
+            _isSendingMessage = true;
+
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
 
-            if (!text) return;
+            if (!text) { _isSendingMessage = false; return; }
 
             try {
                 // Get conversation to find other participant(s)
@@ -1954,6 +1958,8 @@
             } catch (error) {
                 console.error('Error sending message:', error);
                 alert('Failed to send message. Please try again.');
+            } finally {
+                _isSendingMessage = false;
             }
         }
 
@@ -2650,17 +2656,6 @@
                 console.error('💥 Error in startNewConversation:', error);
                 throw error;
             }
-        }
-
-        // Handle message form submission
-        const messageForm = document.getElementById('messageForm');
-        if (messageForm) {
-            messageForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (activeConversationId) {
-                    await sendMessage(activeConversationId);
-                }
-            });
         }
 
         // NOTIFICATION COUNTS (messages + friend requests + new bookings)
