@@ -2081,15 +2081,20 @@
                                 // Capitalise first letter of each recognised phrase
                                 const capped = phrase.charAt(0).toUpperCase() + phrase.slice(1);
 
-                                // If the API already added punctuation, keep it as-is.
-                                // Otherwise decide between '?' and '.'
+                                // Strip any punctuation the API already appended so we can
+                                // apply the correct mark ourselves. Question detection must
+                                // run before accepting a period, because Chrome often adds
+                                // '.' to phrases that are actually questions.
+                                const stripped = capped.replace(/[.!?]+$/, '').trim();
+                                const apiEndedWithExclaim = /!$/.test(capped);
+
                                 let punctuated;
-                                if (/[.!?]$/.test(capped)) {
-                                    punctuated = capped;
-                                } else if (isQuestion(capped, langBase)) {
-                                    punctuated = capped + '?';
+                                if (isQuestion(stripped, langBase) || /\?$/.test(capped)) {
+                                    punctuated = stripped + '?';
+                                } else if (apiEndedWithExclaim) {
+                                    punctuated = stripped + '!';
                                 } else {
-                                    punctuated = capped + '.';
+                                    punctuated = stripped + '.';
                                 }
 
                                 recordingTranscript += (recordingTranscript ? ' ' : '') + punctuated;
