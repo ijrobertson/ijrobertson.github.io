@@ -1982,7 +1982,7 @@
 
         function cancelRecording(stream) {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-            if (speechRecognition) { speechRecognition.stop(); speechRecognition = null; }
+            if (speechRecognition) { const sr = speechRecognition; speechRecognition = null; sr.onend = null; sr.stop(); }
             clearInterval(recordingTimerInterval);
             stream.getTracks().forEach(t => t.stop());
             audioChunks = [];
@@ -1994,14 +1994,31 @@
             if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
             const duration = (Date.now() - recordingStartTime) / 1000;
 
-            if (speechRecognition) { speechRecognition.stop(); speechRecognition = null; }
             clearInterval(recordingTimerInterval);
 
-            // Disable the send button to prevent double-send
             const recSendBtn = document.getElementById('recSendBtn');
             if (recSendBtn) recSendBtn.disabled = true;
 
-            await new Promise(resolve => { mediaRecorder.onstop = resolve; mediaRecorder.stop(); });
+            // Stop MediaRecorder and wait for the final ondataavailable + onstop
+            const mediaStopPromise = new Promise(resolve => {
+                mediaRecorder.onstop = resolve;
+                mediaRecorder.stop();
+            });
+
+            // Stop SpeechRecognition and wait for onend so final results arrive
+            // before we read recordingTranscript
+            let recognitionDonePromise = Promise.resolve();
+            if (speechRecognition) {
+                const sr = speechRecognition;
+                speechRecognition = null;
+                recognitionDonePromise = new Promise(resolve => {
+                    sr.onend = resolve;
+                    sr.onerror = resolve;
+                    sr.stop();
+                });
+            }
+
+            await Promise.all([mediaStopPromise, recognitionDonePromise]);
             stream.getTracks().forEach(t => t.stop());
 
             document.getElementById('recordingUI').style.display = 'none';
@@ -2011,6 +2028,7 @@
 
             const mimeType = mediaRecorder.mimeType || 'audio/webm';
             const blob = new Blob(audioChunks, { type: mimeType });
+            // recordingTranscript is now fully populated (onend has fired)
             await sendAudioMessage(conversationId, blob, duration, recordingTranscript.trim());
         }
 
