@@ -623,6 +623,130 @@
             display: none !important;
         }
 
+        /* ===== EMOJI REACTIONS ===== */
+
+        /* Wraps bubble + reactions in a column */
+        .msg-col {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 0;
+        }
+
+        /* Small smiley trigger beside each bubble */
+        .react-trigger {
+            align-self: center;
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0;
+            opacity: 0;
+            transition: opacity 0.15s, background 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Show on hover (desktop) */
+        .message:hover .react-trigger {
+            opacity: 0.55;
+        }
+
+        .react-trigger:hover {
+            opacity: 1 !important;
+            background: #e8e8e8;
+        }
+
+        /* Always show on touch screens */
+        @media (hover: none) {
+            .react-trigger {
+                opacity: 0.45;
+            }
+        }
+
+        /* Floating emoji picker */
+        .emoji-picker {
+            position: fixed;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            padding: 5px 8px;
+            display: flex;
+            gap: 2px;
+            z-index: 9999;
+            animation: reactionPopIn 0.15s ease-out;
+        }
+
+        @keyframes reactionPopIn {
+            from { transform: scale(0.75); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+
+        .emoji-option {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.35rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.12s, background 0.12s;
+            padding: 0;
+        }
+
+        .emoji-option:hover {
+            transform: scale(1.35);
+            background: #f2f2f2;
+        }
+
+        /* Reaction chips below a bubble */
+        .message-reactions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .message.sent .message-reactions {
+            justify-content: flex-end;
+        }
+
+        .reaction-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: white;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 2px 7px 2px 5px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            user-select: none;
+            line-height: 1.4;
+        }
+
+        .reaction-chip.mine {
+            border-color: #20bcba;
+            background: #f0fffe;
+        }
+
+        .reaction-chip:hover {
+            border-color: #20bcba;
+        }
+
+        .reaction-chip .r-emoji { font-size: 0.9rem; }
+        .reaction-chip .r-count { font-weight: 700; color: #777; }
+        .reaction-chip.mine .r-count { color: #20bcba; }
+
         /* ===== AUDIO MESSAGING ===== */
 
         .mic-btn {
@@ -1127,6 +1251,8 @@
             onAuthStateChanged,
             signOut,
             updateDoc,
+            arrayUnion,
+            arrayRemove,
             ref,
             uploadBytesResumable,
             getDownloadURL
@@ -1221,6 +1347,9 @@
                 if (signInWrapper) {
                     signInWrapper.style.display = 'none';
                 }
+
+                // Set up the singleton emoji picker (safe to call multiple times)
+                setupEmojiPicker();
 
                 // Load conversations
                 await loadConversations();
@@ -1731,27 +1860,40 @@
 
                         const messageEl = document.createElement('div');
                         messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
+                        messageEl.dataset.msgId  = message.id;
+                        messageEl.dataset.convId = conversationId;
+
+                        const reactBtn = `<button class="react-trigger" data-msg-id="${message.id}" data-conv-id="${conversationId}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
+                        const reactionChips = renderReactions(message.reactions, currentUser.uid);
 
                         if (message.type === 'audio') {
-                            messageEl.innerHTML = renderAudioMessage(message, senderAvatar);
+                            messageEl.innerHTML = renderAudioMessage(message, senderAvatar, conversationId);
                         } else if (message.type === 'video_call_request') {
                             const safeChannel = escapeHtml(message.channelName || '');
                             messageEl.innerHTML = `
                                 <img class="message-avatar" src="${senderAvatar}" alt="Avatar">
-                                <div class="message-content video-call-request-card">
-                                    <div class="video-call-request-icon"><i class="fas fa-video"></i></div>
-                                    <p class="message-text" style="margin:0;">${escapeHtml(message.text)}</p>
-                                    <a href="video-call.html?channel=${safeChannel}" target="_blank" class="join-call-btn">Join Now</a>
-                                    <div class="message-time">${formatTime(message.timestamp)}</div>
+                                <div class="msg-col">
+                                    <div class="message-content video-call-request-card">
+                                        <div class="video-call-request-icon"><i class="fas fa-video"></i></div>
+                                        <p class="message-text" style="margin:0;">${escapeHtml(message.text)}</p>
+                                        <a href="video-call.html?channel=${safeChannel}" target="_blank" class="join-call-btn">Join Now</a>
+                                        <div class="message-time">${formatTime(message.timestamp)}</div>
+                                    </div>
+                                    <div class="message-reactions">${reactionChips}</div>
                                 </div>
+                                ${reactBtn}
                             `;
                         } else {
                             messageEl.innerHTML = `
                                 <img class="message-avatar" src="${senderAvatar}" alt="Avatar">
-                                <div class="message-content">
-                                    <p class="message-text">${escapeHtml(message.text)}</p>
-                                    <div class="message-time">${formatTime(message.timestamp)}</div>
+                                <div class="msg-col">
+                                    <div class="message-content">
+                                        <p class="message-text">${escapeHtml(message.text)}</p>
+                                        <div class="message-time">${formatTime(message.timestamp)}</div>
+                                    </div>
+                                    <div class="message-reactions">${reactionChips}</div>
                                 </div>
+                                ${reactBtn}
                             `;
                         }
                         fragment.appendChild(messageEl);
@@ -1821,6 +1963,95 @@
             return div.innerHTML;
         }
 
+        // ===== EMOJI REACTIONS =====
+
+        const QUICK_EMOJIS = ['👍','❤️','😂','😮','😢','😡'];
+        let emojiPickerEl = null;
+        let pickerMsgId = null;
+        let pickerConvId = null;
+
+        function setupEmojiPicker() {
+            if (emojiPickerEl) return; // already set up
+            emojiPickerEl = document.createElement('div');
+            emojiPickerEl.className = 'emoji-picker';
+            emojiPickerEl.style.display = 'none';
+            emojiPickerEl.innerHTML = QUICK_EMOJIS
+                .map(e => `<button class="emoji-option" data-emoji="${e}" aria-label="${e}">${e}</button>`)
+                .join('');
+            document.body.appendChild(emojiPickerEl);
+
+            emojiPickerEl.addEventListener('click', e => {
+                const btn = e.target.closest('.emoji-option');
+                if (btn && pickerMsgId && pickerConvId) {
+                    toggleReaction(pickerConvId, pickerMsgId, btn.dataset.emoji);
+                    hideEmojiPicker();
+                }
+            });
+
+            document.addEventListener('click', e => {
+                if (emojiPickerEl && emojiPickerEl.style.display !== 'none') {
+                    if (!emojiPickerEl.contains(e.target) && !e.target.closest('.react-trigger')) {
+                        hideEmojiPicker();
+                    }
+                }
+            }, { capture: true });
+        }
+
+        function showEmojiPicker(msgId, convId, triggerEl) {
+            pickerMsgId = msgId;
+            pickerConvId = convId;
+            emojiPickerEl.style.display = 'flex';
+
+            // Position above the trigger, centred on it
+            const r = triggerEl.getBoundingClientRect();
+            const pw = emojiPickerEl.offsetWidth || 256;
+            const ph = emojiPickerEl.offsetHeight || 48;
+            let left = r.left + r.width / 2 - pw / 2;
+            let top  = r.top - ph - 8;
+            if (top < 8) top = r.bottom + 8;
+            left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+            emojiPickerEl.style.left = left + 'px';
+            emojiPickerEl.style.top  = top  + 'px';
+        }
+
+        function hideEmojiPicker() {
+            if (emojiPickerEl) emojiPickerEl.style.display = 'none';
+            pickerMsgId = null;
+            pickerConvId = null;
+        }
+
+        function renderReactions(reactions, uid) {
+            if (!reactions) return '';
+            return Object.entries(reactions)
+                .filter(([, uids]) => Array.isArray(uids) && uids.length > 0)
+                .map(([emoji, uids]) => {
+                    const mine = uids.includes(uid);
+                    return `<button class="reaction-chip ${mine ? 'mine' : ''}"
+                        data-emoji="${emoji}"
+                        title="${uids.length} reaction${uids.length !== 1 ? 's' : ''}">
+                        <span class="r-emoji">${emoji}</span>
+                        <span class="r-count">${uids.length}</span>
+                    </button>`;
+                })
+                .join('');
+        }
+
+        async function toggleReaction(conversationId, messageId, emoji) {
+            try {
+                const msgRef = doc(db, 'conversations', conversationId, 'messages', messageId);
+                const snap = await getDoc(msgRef);
+                const existing = (snap.data()?.reactions?.[emoji]) || [];
+                const field = `reactions.${emoji}`;
+                if (existing.includes(currentUser.uid)) {
+                    await updateDoc(msgRef, { [field]: arrayRemove(currentUser.uid) });
+                } else {
+                    await updateDoc(msgRef, { [field]: arrayUnion(currentUser.uid) });
+                }
+            } catch (err) {
+                console.error('Error toggling reaction:', err);
+            }
+        }
+
         function formatDuration(seconds) {
             if (!seconds || isNaN(seconds)) return '0:00';
             const m = Math.floor(seconds / 60);
@@ -1828,12 +2059,12 @@
             return `${m}:${s.toString().padStart(2, '0')}`;
         }
 
-        function renderAudioMessage(message, senderAvatar) {
+        function renderAudioMessage(message, senderAvatar, conversationId) {
             const msgId = message.id;
             const duration = message.audioDuration || 0;
             const transcript = message.transcript || '';
             const audioUrl = message.audioUrl || '';
-            const audioLang = message.audioLang || 'en-US'; // BCP-47 stored at send time
+            const audioLang = message.audioLang || 'en-US';
             const myMemoryLang = (AUDIO_LANGUAGES[audioLang] || AUDIO_LANGUAGES['en-US']).myMemory;
             const langLabel = (AUDIO_LANGUAGES[audioLang] || AUDIO_LANGUAGES['en-US']).label;
 
@@ -1846,34 +2077,40 @@
                     <i class="fas fa-language"></i> Translate
                 </button>`;
 
+            const reactionChips = renderReactions(message.reactions, currentUser.uid);
+
             return `
                 <img class="message-avatar" src="${senderAvatar}" alt="Avatar">
-                <div class="message-content audio-message-content">
-                    <div class="audio-player" id="audioPlayer-${msgId}">
-                        <button class="audio-play-btn" id="playBtn-${msgId}"
-                            data-audio-url="${escapeHtml(audioUrl)}"
-                            data-msg-id="${msgId}"
-                            aria-label="Play audio message">
-                            <i class="fas fa-play"></i>
-                        </button>
-                        <div class="audio-progress-container">
-                            <div class="audio-waveform" data-msg-id="${msgId}">
-                                <div class="audio-progress-bar" id="progressBar-${msgId}"></div>
+                <div class="msg-col">
+                    <div class="message-content audio-message-content">
+                        <div class="audio-player" id="audioPlayer-${msgId}">
+                            <button class="audio-play-btn" id="playBtn-${msgId}"
+                                data-audio-url="${escapeHtml(audioUrl)}"
+                                data-msg-id="${msgId}"
+                                aria-label="Play audio message">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <div class="audio-progress-container">
+                                <div class="audio-waveform" data-msg-id="${msgId}">
+                                    <div class="audio-progress-bar" id="progressBar-${msgId}"></div>
+                                </div>
+                                <div class="audio-time">
+                                    <span id="currentTime-${msgId}">0:00</span> / ${formatDuration(duration)}
+                                </div>
                             </div>
-                            <div class="audio-time">
-                                <span id="currentTime-${msgId}">0:00</span> / ${formatDuration(duration)}
+                            <div class="speed-controls">
+                                <button class="speed-btn active" data-speed="1" data-msg-id="${msgId}">1x</button>
+                                <button class="speed-btn" data-speed="1.5" data-msg-id="${msgId}">1.5x</button>
+                                <button class="speed-btn" data-speed="2" data-msg-id="${msgId}">2x</button>
                             </div>
                         </div>
-                        <div class="speed-controls">
-                            <button class="speed-btn active" data-speed="1" data-msg-id="${msgId}">1x</button>
-                            <button class="speed-btn" data-speed="1.5" data-msg-id="${msgId}">1.5x</button>
-                            <button class="speed-btn" data-speed="2" data-msg-id="${msgId}">2x</button>
-                        </div>
+                        ${translateBtnHtml}
+                        <div class="translation-panel" id="translationPanel-${msgId}" style="display:none;"></div>
+                        <div class="message-time">${formatTime(message.timestamp)}</div>
                     </div>
-                    ${translateBtnHtml}
-                    <div class="translation-panel" id="translationPanel-${msgId}" style="display:none;"></div>
-                    <div class="message-time">${formatTime(message.timestamp)}</div>
-                </div>`;
+                    <div class="message-reactions">${reactionChips}</div>
+                </div>
+                <button class="react-trigger" data-msg-id="${msgId}" data-conv-id="${conversationId}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
         }
 
         function getAudioElement(msgId, url) {
@@ -1902,6 +2139,31 @@
         }
 
         function handleAudioClick(e) {
+            // React trigger — show emoji picker
+            const reactTrigger = e.target.closest('.react-trigger');
+            if (reactTrigger) {
+                const msgId  = reactTrigger.dataset.msgId;
+                const convId = reactTrigger.dataset.convId;
+                if (emojiPickerEl && emojiPickerEl.style.display !== 'none' && pickerMsgId === msgId) {
+                    hideEmojiPicker();
+                } else {
+                    showEmojiPicker(msgId, convId, reactTrigger);
+                }
+                e.stopPropagation();
+                return;
+            }
+
+            // Reaction chip — toggle the reaction directly
+            const chip = e.target.closest('.reaction-chip');
+            if (chip) {
+                const msgEl  = chip.closest('[data-msg-id]');
+                const convEl = chip.closest('[data-conv-id]');
+                if (msgEl && convEl) {
+                    toggleReaction(convEl.dataset.convId, msgEl.dataset.msgId, chip.dataset.emoji);
+                }
+                return;
+            }
+
             // Play / pause
             const playBtn = e.target.closest('.audio-play-btn');
             if (playBtn) {
