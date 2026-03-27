@@ -1758,10 +1758,10 @@
             const transcript = message.transcript || '';
             const audioUrl = message.audioUrl || '';
 
-            const translateBtnHtml = transcript ? `
+            const translateBtnHtml = `
                 <button class="translate-btn" data-transcript="${escapeHtml(transcript)}" data-msg-id="${msgId}">
                     <i class="fas fa-language"></i> Translate
-                </button>` : '';
+                </button>`;
 
             return `
                 <img class="message-avatar" src="${senderAvatar}" alt="Avatar">
@@ -1880,22 +1880,30 @@
 
                 if (panel.style.display === 'none') {
                     panel.style.display = 'block';
-                    panel.innerHTML = `<span class="translation-label">Original</span>
-                        <div class="transcript-text">${escapeHtml(transcript)}</div>
-                        <span class="translation-label" style="margin-top:0.3rem;">Translating…</span>`;
 
-                    translateText(transcript)
-                        .then(translation => {
-                            panel.innerHTML = `<span class="translation-label">Original</span>
-                                <div class="transcript-text">${escapeHtml(transcript)}</div>
-                                <span class="translation-label" style="margin-top:0.3rem;">English Translation</span>
-                                <div class="translation-text">${escapeHtml(translation)}</div>`;
-                        })
-                        .catch(() => {
-                            panel.innerHTML = `<span class="translation-label">Original</span>
-                                <div class="transcript-text">${escapeHtml(transcript)}</div>
-                                <span class="translation-label" style="margin-top:0.3rem; font-style:italic; opacity:0.5;">Translation unavailable</span>`;
-                        });
+                    if (!transcript) {
+                        panel.innerHTML = `<span class="translation-label" style="font-style:italic; opacity:0.6;">
+                            Auto-transcription is only available in Chrome and Edge desktop browsers.
+                            Translations cannot be shown for this message.
+                        </span>`;
+                    } else {
+                        panel.innerHTML = `<span class="translation-label">Original</span>
+                            <div class="transcript-text">${escapeHtml(transcript)}</div>
+                            <span class="translation-label" style="margin-top:0.3rem;">Translating…</span>`;
+
+                        translateText(transcript)
+                            .then(translation => {
+                                panel.innerHTML = `<span class="translation-label">Original</span>
+                                    <div class="transcript-text">${escapeHtml(transcript)}</div>
+                                    <span class="translation-label" style="margin-top:0.3rem;">English Translation</span>
+                                    <div class="translation-text">${escapeHtml(translation)}</div>`;
+                            })
+                            .catch(() => {
+                                panel.innerHTML = `<span class="translation-label">Original</span>
+                                    <div class="transcript-text">${escapeHtml(transcript)}</div>
+                                    <span class="translation-label" style="margin-top:0.3rem; font-style:italic; opacity:0.5;">Translation unavailable</span>`;
+                            });
+                    }
                 } else {
                     panel.style.display = 'none';
                 }
