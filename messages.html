@@ -1127,6 +1127,10 @@
         let recordingStartTime = null;
         let speechRecognition = null;
         let recordingTranscript = '';
+        let recognitionEndPromise = Promise.resolve();
+
+        // User data cache — avoids re-fetching Firestore on every conversation list update
+        const userCache = new Map();
 
         // Check authentication
         onAuthStateChanged(auth, async (user) => {
@@ -1274,6 +1278,49 @@
             }
         }
 
+        // Fetch a user's display data from Firestore, preferring the instructors collection.
+        // Results are cached so subsequent renders never hit the network.
+        async function getCachedUser(userId) {
+            if (userCache.has(userId)) return userCache.get(userId);
+            try {
+                const [userDoc, instructorDoc] = await Promise.all([
+                    getDoc(doc(db, 'users', userId)),
+                    getDoc(doc(db, 'instructors', userId))
+                ]);
+                const data = instructorDoc.exists() ? instructorDoc.data()
+                           : userDoc.exists()       ? userDoc.data()
+                           : null;
+                const result = data
+                    ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '' }
+                    : { name: 'Unknown User', avatar_url: '' };
+                userCache.set(userId, result);
+                return result;
+            } catch {
+                return { name: 'Unknown User', avatar_url: '' };
+            }
+        }
+
+        function buildConversationItem(conv, otherUser, otherUserId) {
+            const unread = conv.unreadCount && conv.unreadCount[currentUser.uid] > 0
+                ? conv.unreadCount[currentUser.uid] : 0;
+            const item = document.createElement('div');
+            item.className = 'conversation-item';
+            item.dataset.convId = conv.id;
+            if (activeConversationId === conv.id) item.classList.add('active');
+            item.innerHTML = `
+                <img class="conversation-avatar" src="${otherUser.avatar_url || 'https://via.placeholder.com/50'}" alt="${otherUser.name}">
+                <div class="conversation-info">
+                    <div class="conversation-name">${otherUser.name}</div>
+                    <div class="conversation-last-message">${conv.lastMessage || 'No messages yet'}</div>
+                </div>
+                <div class="conv-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+                    <div class="conversation-time">${formatTime(conv.lastMessageTime)}</div>
+                    ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
+                </div>`;
+            item.onclick = (e) => openConversation(conv.id, otherUserId, e);
+            return item;
+        }
+
         async function renderConversations(conversations) {
             if (conversations.length === 0) {
                 conversationsList.innerHTML = `
@@ -1281,85 +1328,55 @@
                         <i class="fas fa-comments"></i>
                         <h3>No conversations yet</h3>
                         <p>Start chatting with language partners!</p>
-                    </div>
-                `;
+                    </div>`;
                 return;
             }
 
-            conversationsList.innerHTML = '';
+            // Pre-fetch any uncached user data in parallel — no sequential awaits
+            const otherUserIds = conversations.map(c => c.participants.find(id => id !== currentUser.uid));
+            await Promise.all([...new Set(otherUserIds)].map(uid => getCachedUser(uid)));
 
-            // Fetch fresh user data for all participants
+            // Index existing DOM elements by conv id so we can update in-place
+            const existing = {};
+            conversationsList.querySelectorAll('[data-conv-id]').forEach(el => {
+                existing[el.dataset.convId] = el;
+            });
+
+            // Loop through conversations in sorted order (newest first from Firestore).
+            // appendChild re-inserts existing elements at the end, maintaining correct order
+            // without ever clearing the list.
             for (const conv of conversations) {
-                const otherUserId = conv.participants.find(id => id !== currentUser.uid);
-                console.log('🔄 [List] Fetching user data for conversation participant:', otherUserId);
+                const otherUserId = otherUserIds[conversations.indexOf(conv)];
+                const otherUser = userCache.get(otherUserId) || { name: 'Unknown User', avatar_url: '' };
+                const unread = conv.unreadCount && conv.unreadCount[currentUser.uid] > 0
+                    ? conv.unreadCount[currentUser.uid] : 0;
 
-                // Fetch user data from BOTH collections and prefer instructors
-                let otherUser = { name: 'Unknown User', avatar_url: '' };
-                try {
-                    console.log('🔍 [List] Fetching from BOTH users AND instructors collections...');
-
-                    // Fetch from both collections in parallel
-                    const [userDoc, instructorDoc] = await Promise.all([
-                        getDoc(doc(db, 'users', otherUserId)),
-                        getDoc(doc(db, 'instructors', otherUserId))
-                    ]);
-
-                    console.log('👤 [List] Users collection exists:', userDoc.exists());
-                    console.log('👨‍🏫 [List] Instructors collection exists:', instructorDoc.exists());
-
-                    // Prefer instructor data if it exists, otherwise use user data
-                    let userData = null;
-                    let source = '';
-
-                    if (instructorDoc.exists()) {
-                        userData = instructorDoc.data();
-                        source = 'instructors';
-                    } else if (userDoc.exists()) {
-                        userData = userDoc.data();
-                        source = 'users';
-                    }
-
-                    if (userData) {
-                        console.log('📋 [List] Using data from:', source);
-                        console.log('📋 [List] User data:', userData);
-                        console.log('📋 [List] userData.name =', userData.name);
-
-                        otherUser = {
-                            name: userData.name || 'Unknown User',
-                            avatar_url: userData.avatar_url || ''
-                        };
-                        console.log('✅ [List] Final user object:', otherUser);
-                    } else {
-                        console.error('❌ [List] User not found in either collection!');
-                    }
-                } catch (error) {
-                    console.error('❌ [List] Error loading user data:', error);
-                    // Fallback to cached data if fetch fails
-                    otherUser = conv.participantDetails[otherUserId] || otherUser;
-                    console.log('⚠️ [List] Using cached data as fallback:', otherUser);
+                if (existing[conv.id]) {
+                    // Update the mutable parts in-place — no DOM removal/re-creation
+                    const item = existing[conv.id];
+                    item.querySelector('.conversation-last-message').textContent =
+                        conv.lastMessage || 'No messages yet';
+                    item.querySelector('.conversation-time').textContent =
+                        formatTime(conv.lastMessageTime);
+                    const meta = item.querySelector('.conv-meta');
+                    const badge = meta.querySelector('.unread-badge');
+                    if (unread > 0) {
+                        if (badge) badge.textContent = unread;
+                        else { const b = document.createElement('div'); b.className = 'unread-badge'; b.textContent = unread; meta.appendChild(b); }
+                    } else if (badge) badge.remove();
+                    if (activeConversationId === conv.id) item.classList.add('active');
+                    else item.classList.remove('active');
+                    conversationsList.appendChild(item); // re-inserts at end to maintain order
+                    delete existing[conv.id];
+                } else {
+                    conversationsList.appendChild(buildConversationItem(conv, otherUser, otherUserId));
                 }
-
-                const item = document.createElement('div');
-                item.className = 'conversation-item';
-                if (activeConversationId === conv.id) {
-                    item.classList.add('active');
-                }
-
-                item.innerHTML = `
-                    <img class="conversation-avatar" src="${otherUser.avatar_url || 'https://via.placeholder.com/50'}" alt="${otherUser.name}">
-                    <div class="conversation-info">
-                        <div class="conversation-name">${otherUser.name || 'Unknown User'}</div>
-                        <div class="conversation-last-message">${conv.lastMessage || 'No messages yet'}</div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
-                        <div class="conversation-time">${formatTime(conv.lastMessageTime)}</div>
-                        ${(conv.unreadCount && conv.unreadCount[currentUser.uid] > 0) ? `<div class="unread-badge">${conv.unreadCount[currentUser.uid]}</div>` : ''}
-                    </div>
-                `;
-
-                item.onclick = (e) => openConversation(conv.id, otherUserId, e);
-                conversationsList.appendChild(item);
             }
+
+            // Remove any items for conversations that no longer exist
+            Object.values(existing).forEach(el => el.remove());
+            // Remove any lingering empty-state placeholder
+            conversationsList.querySelectorAll('.empty-state').forEach(el => el.remove());
         }
 
         async function checkMessagingBlocked(otherUserId) {
@@ -1939,8 +1956,9 @@
                 mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
                 mediaRecorder.start(100);
 
-                // Start SpeechRecognition in parallel (Chrome/Edge only)
+                // Start SpeechRecognition in parallel (Chrome/Edge on desktop; Android Chrome)
                 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognitionEndPromise = Promise.resolve(); // reset for this recording session
                 if (SR) {
                     try {
                         speechRecognition = new SR();
@@ -1951,6 +1969,12 @@
                                 if (e.results[i].isFinal) recordingTranscript += e.results[i][0].transcript + ' ';
                             }
                         };
+                        // Set up end/error handlers BEFORE start() so the promise captures
+                        // the event even if recognition ends naturally before stop() is called
+                        recognitionEndPromise = new Promise(resolve => {
+                            speechRecognition.onend = resolve;
+                            speechRecognition.onerror = resolve;
+                        });
                         speechRecognition.start();
                     } catch (err) {
                         speechRecognition = null;
@@ -2005,20 +2029,14 @@
                 mediaRecorder.stop();
             });
 
-            // Stop SpeechRecognition and wait for onend so final results arrive
-            // before we read recordingTranscript
-            let recognitionDonePromise = Promise.resolve();
+            // Trigger recognition stop; onend/onerror were already wired in startRecording
+            // so recognitionEndPromise is already set up and will resolve correctly
             if (speechRecognition) {
-                const sr = speechRecognition;
+                try { speechRecognition.stop(); } catch (e) {}
                 speechRecognition = null;
-                recognitionDonePromise = new Promise(resolve => {
-                    sr.onend = resolve;
-                    sr.onerror = resolve;
-                    sr.stop();
-                });
             }
 
-            await Promise.all([mediaStopPromise, recognitionDonePromise]);
+            await Promise.all([mediaStopPromise, recognitionEndPromise]);
             stream.getTracks().forEach(t => t.stop());
 
             document.getElementById('recordingUI').style.display = 'none';
