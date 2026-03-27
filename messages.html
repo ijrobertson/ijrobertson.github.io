@@ -411,15 +411,24 @@
         .message-input-form {
             display: flex;
             gap: 1rem;
+            align-items: flex-end;
         }
 
         .message-input {
             flex: 1;
             padding: 0.75rem 1rem;
             border: 2px solid #e0e0e0;
-            border-radius: 25px;
+            border-radius: 16px;
             font-size: 1rem;
             transition: border-color 0.2s;
+            resize: none;
+            overflow-y: hidden;
+            min-height: 44px;
+            max-height: 160px;
+            overflow-y: auto;
+            line-height: 1.5;
+            font-family: inherit;
+            display: block;
         }
 
         .message-input:focus {
@@ -1111,7 +1120,7 @@
                 </div>
                 <div class="message-input-area">
                     <form class="message-input-form" id="messageForm">
-                        <input type="text" class="message-input" id="messageInput" placeholder="Type a message..." required>
+                        <textarea class="message-input" id="messageInput" placeholder="Type a message..." rows="1" required></textarea>
                         <button type="button" class="video-call-btn" id="videoCallBtn" title="Start video call with this user">
                             <i class="fas fa-video"></i>
                         </button>
@@ -1144,6 +1153,19 @@
             document.getElementById('messageForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 sendMessage(conversationId);
+            });
+
+            // Auto-resize textarea and submit on Enter (Shift+Enter for newline)
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('input', () => {
+                messageInput.style.height = 'auto';
+                messageInput.style.height = Math.min(messageInput.scrollHeight, 160) + 'px';
+            });
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage(conversationId);
+                }
             });
 
             // Setup video call button
@@ -1341,6 +1363,7 @@
                 // when the message document is created in Firestore
 
                 input.value = '';
+                input.style.height = 'auto';
             } catch (error) {
                 console.error('Error sending message:', error);
                 alert('Failed to send message. Please try again.');
