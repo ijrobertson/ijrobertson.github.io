@@ -930,6 +930,30 @@
             }
         }
 
+        /* Language selector for audio recording */
+        .lang-select {
+            padding: 0.55rem 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            background: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #555;
+            cursor: pointer;
+            outline: none;
+            flex-shrink: 0;
+            appearance: none;
+            -webkit-appearance: none;
+            text-align: center;
+            min-width: 48px;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .lang-select:focus, .lang-select:hover {
+            border-color: #20bcba;
+            color: #20bcba;
+        }
+
         @media (max-width: 480px) {
             .audio-message-content {
                 min-width: 180px;
@@ -941,6 +965,11 @@
             .mic-btn {
                 padding: 0.65rem 0.75rem;
                 border-radius: 20px;
+            }
+            .lang-select {
+                padding: 0.5rem 0.4rem;
+                min-width: 42px;
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -1128,6 +1157,19 @@
         let speechRecognition = null;
         let recordingTranscript = '';
         let recognitionEndPromise = Promise.resolve();
+        let recordingLanguage = 'en-US'; // BCP-47 tag for SpeechRecognition
+
+        // Supported languages: BCP-47 tag → { label, myMemory ISO code }
+        const AUDIO_LANGUAGES = {
+            'en-US': { label: 'EN', name: 'English',    myMemory: 'en' },
+            'es-ES': { label: 'ES', name: 'Spanish',    myMemory: 'es' },
+            'fr-FR': { label: 'FR', name: 'French',     myMemory: 'fr' },
+            'pt-PT': { label: 'PT', name: 'Portuguese', myMemory: 'pt' },
+            'it-IT': { label: 'IT', name: 'Italian',    myMemory: 'it' },
+            'de-DE': { label: 'DE', name: 'German',     myMemory: 'de' },
+            'ru-RU': { label: 'RU', name: 'Russian',    myMemory: 'ru' },
+            'sv-SE': { label: 'SV', name: 'Swedish',    myMemory: 'sv' },
+        };
 
         // User data cache — avoids re-fetching Firestore on every conversation list update
         const userCache = new Map();
@@ -1486,6 +1528,16 @@
                         </div>
                     </div>
                     <form class="message-input-form" id="messageForm">
+                        <select class="lang-select" id="langSelect" title="Language you will speak in the audio message">
+                            <option value="en-US">EN</option>
+                            <option value="es-ES">ES</option>
+                            <option value="fr-FR">FR</option>
+                            <option value="pt-PT">PT</option>
+                            <option value="it-IT">IT</option>
+                            <option value="de-DE">DE</option>
+                            <option value="ru-RU">RU</option>
+                            <option value="sv-SE">SV</option>
+                        </select>
                         <button type="button" class="mic-btn" id="micBtn" title="Send audio message">
                             <i class="fas fa-microphone"></i>
                         </button>
@@ -1578,6 +1630,13 @@
 
                 // Open video call page in a new tab so the messages tab stays open
                 window.open(`video-call.html?channel=${channelName}`, '_blank');
+            });
+
+            // Restore last-used recording language and keep it in sync
+            const langSelectEl = document.getElementById('langSelect');
+            langSelectEl.value = recordingLanguage;
+            langSelectEl.addEventListener('change', () => {
+                recordingLanguage = langSelectEl.value;
             });
 
             // Setup microphone button for audio messages
@@ -1774,9 +1833,16 @@
             const duration = message.audioDuration || 0;
             const transcript = message.transcript || '';
             const audioUrl = message.audioUrl || '';
+            const audioLang = message.audioLang || 'en-US'; // BCP-47 stored at send time
+            const myMemoryLang = (AUDIO_LANGUAGES[audioLang] || AUDIO_LANGUAGES['en-US']).myMemory;
+            const langLabel = (AUDIO_LANGUAGES[audioLang] || AUDIO_LANGUAGES['en-US']).label;
 
             const translateBtnHtml = `
-                <button class="translate-btn" data-transcript="${escapeHtml(transcript)}" data-msg-id="${msgId}">
+                <button class="translate-btn"
+                    data-transcript="${escapeHtml(transcript)}"
+                    data-audio-lang="${myMemoryLang}"
+                    data-lang-label="${langLabel}"
+                    data-msg-id="${msgId}">
                     <i class="fas fa-language"></i> Translate
                 </button>`;
 
@@ -1892,6 +1958,8 @@
             if (translateBtn) {
                 const msgId = translateBtn.dataset.msgId;
                 const transcript = translateBtn.dataset.transcript;
+                const audioLang = translateBtn.dataset.audioLang || 'en';    // ISO source language
+                const langLabel = translateBtn.dataset.langLabel || 'EN';
                 const panel = document.getElementById(`translationPanel-${msgId}`);
                 if (!panel) return;
 
@@ -1900,25 +1968,31 @@
 
                     if (!transcript) {
                         panel.innerHTML = `<span class="translation-label" style="font-style:italic; opacity:0.6;">
-                            Auto-transcription is only available in Chrome and Edge desktop browsers.
+                            Auto-transcription is only supported in Chrome and Edge on desktop/Android.
                             Translations cannot be shown for this message.
                         </span>`;
-                    } else {
-                        panel.innerHTML = `<span class="translation-label">Original</span>
+                    } else if (audioLang === 'en') {
+                        // Source is English — show transcript only
+                        panel.innerHTML = `<span class="translation-label">Transcript (${langLabel})</span>
                             <div class="transcript-text">${escapeHtml(transcript)}</div>
-                            <span class="translation-label" style="margin-top:0.3rem;">Translating…</span>`;
+                            <span class="translation-label" style="margin-top:0.3rem;font-style:italic;opacity:0.55;">Message is already in English</span>`;
+                    } else {
+                        panel.innerHTML = `<span class="translation-label">Transcript (${langLabel})</span>
+                            <div class="transcript-text">${escapeHtml(transcript)}</div>
+                            <span class="translation-label" style="margin-top:0.3rem;">English Translation</span>
+                            <div class="translation-text" style="font-style:italic;opacity:0.6;">Translating…</div>`;
 
-                        translateText(transcript)
+                        translateText(transcript, audioLang)
                             .then(translation => {
-                                panel.innerHTML = `<span class="translation-label">Original</span>
+                                panel.innerHTML = `<span class="translation-label">Transcript (${langLabel})</span>
                                     <div class="transcript-text">${escapeHtml(transcript)}</div>
                                     <span class="translation-label" style="margin-top:0.3rem;">English Translation</span>
                                     <div class="translation-text">${escapeHtml(translation)}</div>`;
                             })
                             .catch(() => {
-                                panel.innerHTML = `<span class="translation-label">Original</span>
+                                panel.innerHTML = `<span class="translation-label">Transcript (${langLabel})</span>
                                     <div class="transcript-text">${escapeHtml(transcript)}</div>
-                                    <span class="translation-label" style="margin-top:0.3rem; font-style:italic; opacity:0.5;">Translation unavailable</span>`;
+                                    <span class="translation-label" style="margin-top:0.3rem;font-style:italic;opacity:0.5;">Translation unavailable — try again later</span>`;
                             });
                     }
                 } else {
@@ -1928,8 +2002,12 @@
             }
         }
 
-        async function translateText(text) {
-            const resp = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=autodetect|en`);
+        async function translateText(text, sourceLang) {
+            // sourceLang is an ISO 639-1 code (e.g. 'pt', 'es', 'fr')
+            const langpair = `${sourceLang}|en`;
+            const resp = await fetch(
+                `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`
+            );
             if (!resp.ok) throw new Error('Network error');
             const data = await resp.json();
             if (data.responseStatus !== 200 && data.responseStatus !== '200') throw new Error('Translation error');
@@ -1964,6 +2042,7 @@
                         speechRecognition = new SR();
                         speechRecognition.continuous = true;
                         speechRecognition.interimResults = false;
+                        speechRecognition.lang = recordingLanguage; // use selected language
                         speechRecognition.onresult = e => {
                             for (let i = e.resultIndex; i < e.results.length; i++) {
                                 if (e.results[i].isFinal) recordingTranscript += e.results[i][0].transcript + ' ';
@@ -2071,6 +2150,7 @@
                     type: 'audio',
                     audioUrl: downloadURL,
                     audioDuration: Math.round(duration),
+                    audioLang: recordingLanguage,   // BCP-47, e.g. 'pt-PT'
                     transcript: transcript || '',
                     timestamp: new Date(),
                     read: false
