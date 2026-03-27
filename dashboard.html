@@ -291,6 +291,62 @@
     #avatar {
       display: none;
     }
+    .video-upload-section {
+      margin-bottom: 1.5rem;
+    }
+    .video-preview-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 0.75rem;
+    }
+    #videoPreview {
+      display: none;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+      border: 2px solid #20bcba;
+      background: #000;
+    }
+    .video-upload-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #20bcba;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      min-width: auto;
+      margin-top: 0;
+    }
+    .video-upload-btn:hover {
+      background: #199c9a;
+    }
+    #videoInput {
+      display: none;
+    }
+    .video-progress-bar-wrap {
+      display: none;
+      margin-top: 0.5rem;
+      background: #e0e0e0;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+      max-width: 400px;
+    }
+    .video-progress-bar {
+      height: 100%;
+      background: #20bcba;
+      width: 0%;
+      transition: width 0.2s;
+    }
+    .video-status {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.25rem;
+    }
     .horizontal-btns {
       display: flex;
       gap: 0.5rem;
@@ -686,6 +742,24 @@
     </div>
 
 
+    <label>Intro Video</label>
+    <div class="video-upload-section">
+      <div class="video-preview-wrapper">
+        <video id="videoPreview" controls playsinline></video>
+      </div>
+      <div>
+        <button type="button" class="video-upload-btn" id="videoUploadBtn">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:white;flex-shrink:0"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+          Change Intro Video
+        </button>
+        <input type="file" id="videoInput" accept="video/*" />
+      </div>
+      <div class="video-progress-bar-wrap" id="videoProgressWrap">
+        <div class="video-progress-bar" id="videoProgressBar"></div>
+      </div>
+      <div class="video-status" id="videoStatus"></div>
+    </div>
+
     <label for="spokenLanguage">Languages You Speak</label>
     <select id="spokenLanguage"></select>
     <div id="languages_spoken"></div>
@@ -836,6 +910,7 @@
       where,
       ref,
       uploadBytes,
+      uploadBytesResumable,
       getDownloadURL,
       updateDoc,
       onSnapshot,
@@ -1013,6 +1088,55 @@
             setStatus("Photo upload failed: " + err.message, true);
           }
         }
+      });
+
+      // Intro video upload
+      document.getElementById('videoUploadBtn').onclick = () => {
+        document.getElementById('videoInput').click();
+      };
+
+      document.getElementById('videoInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentUser) return;
+
+        const progressWrap = document.getElementById('videoProgressWrap');
+        const progressBar = document.getElementById('videoProgressBar');
+        const videoStatus = document.getElementById('videoStatus');
+
+        progressWrap.style.display = 'block';
+        progressBar.style.width = '0%';
+        videoStatus.textContent = 'Uploading video...';
+
+        const videoRef = ref(storage, `instructor_videos/${currentUser.uid}`);
+        const uploadTask = uploadBytesResumable(videoRef, file);
+
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+            progressBar.style.width = pct + '%';
+            videoStatus.textContent = `Uploading... ${pct}%`;
+          },
+          (err) => {
+            console.error(err);
+            progressWrap.style.display = 'none';
+            if (err.code === 'storage/unauthorized') {
+              videoStatus.textContent = 'Upload failed: file too large or wrong format.';
+            } else {
+              videoStatus.textContent = 'Upload failed: ' + err.message;
+            }
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            await setDoc(doc(db, 'instructors', currentUser.uid),
+              { intro_video_url: downloadURL }, { merge: true });
+
+            const videoEl = document.getElementById('videoPreview');
+            videoEl.src = downloadURL;
+            videoEl.style.display = 'block';
+            progressWrap.style.display = 'none';
+            videoStatus.textContent = 'Video uploaded successfully!';
+          }
+        );
       });
 
       // Listen for auth state
@@ -1256,6 +1380,12 @@
             document.getElementById('navProfilePic').src = data.avatar_url;
             localStorage.setItem('instructor_avatar', data.avatar_url);
             avatarSet = true;
+          }
+
+          if (data.intro_video_url) {
+            const videoEl = document.getElementById('videoPreview');
+            videoEl.src = data.intro_video_url;
+            videoEl.style.display = 'block';
           }
         }
         setStatus("");
