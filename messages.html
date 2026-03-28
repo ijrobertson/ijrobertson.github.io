@@ -1626,8 +1626,8 @@
             console.log('🖼️ Rendering chat interface...');
             // Render chat interface
             const profileUrl = otherUser.isInstructor
-                ? "`instructor-profile?id=${otherUserId}`"
-                : "`learner-profile?uid=${otherUserId}`";
+                ? `instructor-profile?id=${otherUserId}`
+                : `learner-profile?uid=${otherUserId}`;
             chatPanel.innerHTML = `
                 <div class="chat-header">
                     <img class="chat-header-avatar" src="${otherUser.avatar_url || 'https://via.placeholder.com/45'}" alt="${otherUser.name}">
@@ -1758,7 +1758,7 @@
                 }
 
                 // Open video call page in a new tab so the messages tab stays open
-                window.open("`video-call?channel=${channelName}`", '_blank');
+                window.open(`video-call?channel=${channelName}`, '_blank');
             });
 
             // Restore last-used recording language and keep it in sync
