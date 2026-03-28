@@ -832,19 +832,39 @@ exports.createStripeConnectAccount = onCall(async (request) => {
   const instructorRef = admin.firestore().collection('instructors').doc(uid);
   const instructorSnap = await instructorRef.get();
 
+  // Determine which Stripe environment is active from the secret key prefix
+  const currentMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'live' : 'test';
+
+  const existingData = instructorSnap.exists ? instructorSnap.data() : {};
+  const existingAccountId = existingData.stripeAccountId;
+  // Accounts created before mode tracking was added are treated as test accounts
+  const existingMode = existingData.stripeMode || (existingAccountId ? 'test' : null);
+
   let stripeAccountId;
 
-  if (instructorSnap.exists && instructorSnap.data().stripeAccountId) {
-    // Reuse existing account — create a fresh onboarding link
-    stripeAccountId = instructorSnap.data().stripeAccountId;
+  if (existingAccountId && existingMode === currentMode) {
+    // Same mode — reuse the existing account, just generate a fresh onboarding link
+    stripeAccountId = existingAccountId;
   } else {
-    // Create a new Express account
+    // Need a new account: either first-time setup, or instructor transitioning test → live
     const account = await stripe.accounts.create({
       type: 'express',
-      metadata: { firebaseUid: uid }
+      metadata: { firebaseUid: uid, mode: currentMode }
     });
     stripeAccountId = account.id;
-    await instructorRef.set({ stripeAccountId }, { merge: true });
+
+    const updateData = {
+      stripeAccountId,
+      stripeMode: currentMode,
+      stripeOnboardingComplete: false
+    };
+
+    // Preserve the old account ID under a mode-specific key so it is never lost
+    if (existingAccountId && existingMode && existingMode !== currentMode) {
+      updateData[`stripeAccountId_${existingMode}`] = existingAccountId;
+    }
+
+    await instructorRef.set(updateData, { merge: true });
   }
 
   // Generate an account onboarding link
@@ -876,8 +896,29 @@ exports.getStripeConnectDashboard = onCall(async (request) => {
     throw new HttpsError('not-found', 'No Stripe account found. Please connect first.');
   }
 
-  const stripeAccountId = instructorSnap.data().stripeAccountId;
-  const account = await stripe.accounts.retrieve(stripeAccountId);
+  const data = instructorSnap.data();
+  const stripeAccountId = data.stripeAccountId;
+
+  // Detect test→live mode transition before hitting the Stripe API
+  const currentMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'live' : 'test';
+  const storedMode  = data.stripeMode || 'test'; // no stripeMode = legacy test account
+
+  if (storedMode !== currentMode) {
+    // The stored account belongs to a different Stripe environment.
+    // The instructor must complete a one-time live-mode onboarding.
+    return { needsLiveModeReconnect: true, chargesEnabled: false, loginUrl: null };
+  }
+
+  let account;
+  try {
+    account = await stripe.accounts.retrieve(stripeAccountId);
+  } catch (err) {
+    if (err.code === 'resource_missing') {
+      // Account ID doesn't exist in the current environment — stale test-mode reference
+      return { needsLiveModeReconnect: true, chargesEnabled: false, loginUrl: null };
+    }
+    throw err;
+  }
 
   let loginUrl = null;
   if (account.charges_enabled) {
@@ -888,7 +929,8 @@ exports.getStripeConnectDashboard = onCall(async (request) => {
   return {
     loginUrl,
     chargesEnabled: account.charges_enabled,
-    stripeAccountId
+    stripeAccountId,
+    needsLiveModeReconnect: false
   };
 });
 
@@ -1331,7 +1373,9 @@ exports.getStripeConfig = onCall(async (_request) => {
   if (!publishableKey) {
     throw new HttpsError('internal', 'Stripe publishable key not configured');
   }
-  return { publishableKey };
+  // `mode` lets the frontend detect test→live transitions without extra calls
+  const mode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'live' : 'test';
+  return { publishableKey, mode };
 });
 
 /**

@@ -1865,12 +1865,27 @@
 
         const data = instructorSnap.data();
 
-        // On return from Stripe onboarding, or if not yet marked complete, verify with Stripe
-        if (forceCheck || data.stripeOnboardingComplete !== true) {
+        // Accounts with no stripeMode were created in test mode
+        const storedMode = data.stripeMode || (data.stripeAccountId ? 'test' : null);
+
+        // Always verify with Stripe when:
+        //   • explicitly requested (e.g. returning from onboarding)
+        //   • onboarding not yet confirmed
+        //   • stored mode looks like a test account (catches test→live transition)
+        const needsVerification = forceCheck ||
+                                  data.stripeOnboardingComplete !== true ||
+                                  storedMode === 'test';
+
+        if (needsVerification) {
           try {
             const getDashboard = httpsCallable(functions, 'getStripeConnectDashboard');
             const result = await getDashboard();
-            const { chargesEnabled } = result.data;
+            const { chargesEnabled, needsLiveModeReconnect } = result.data;
+
+            if (needsLiveModeReconnect) {
+              renderStripeSection('needs-live-reconnect');
+              return;
+            }
 
             if (chargesEnabled) {
               await setDoc(doc(db, 'instructors', currentUser.uid),
@@ -1923,6 +1938,28 @@
         `;
         document.getElementById('complete-stripe-btn').onclick = continueStripeOnboarding;
 
+      } else if (state === 'needs-live-reconnect') {
+        section.innerHTML = `
+          <div style="display:flex;align-items:flex-start;gap:0.85rem;padding:1.1rem;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;margin-bottom:1rem;">
+            <i class="fas fa-exclamation-triangle" style="color:#f97316;font-size:1.25rem;flex-shrink:0;margin-top:2px;"></i>
+            <div>
+              <strong style="color:#9a3412;display:block;margin-bottom:0.3rem;">Live Mode Setup Required</strong>
+              <p style="margin:0;font-size:0.875rem;color:#57534e;line-height:1.55;">
+                Lingua Bud has switched to live payments. Your previous Stripe account was set up
+                in <strong>test mode</strong> and cannot receive real payments.
+                <br><br>
+                Please complete a one-time setup with Stripe (5–10 minutes) to start accepting
+                payments from students. Your booking history, profile, and earnings records
+                are not affected.
+              </p>
+            </div>
+          </div>
+          <button id="live-reconnect-btn" type="button">
+            <i class="fas fa-link"></i> Set Up Live Payments
+          </button>
+        `;
+        document.getElementById('live-reconnect-btn').onclick = setupLiveStripe;
+
       } else if (state === 'connected') {
         section.innerHTML = `
           <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;background:#d1fae5;border:1px solid #10b981;border-radius:8px;margin-bottom:1rem;">
@@ -1951,6 +1988,22 @@
         console.error('Error connecting Stripe:', error);
         setStatus('Error connecting Stripe: ' + error.message, true);
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-link"></i> Connect with Stripe'; }
+      }
+    }
+
+    async function setupLiveStripe() {
+      const btn = document.getElementById('live-reconnect-btn');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up...'; }
+      try {
+        // createStripeConnectAccount detects the mode mismatch server-side,
+        // archives the test account ID, and creates a fresh live Express account.
+        const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
+        const result = await createAccount();
+        window.location.href = result.data.url;
+      } catch (error) {
+        console.error('Error setting up live Stripe account:', error);
+        setStatus('Error: ' + error.message, true);
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-link"></i> Set Up Live Payments'; }
       }
     }
 
