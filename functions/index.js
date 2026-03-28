@@ -814,7 +814,7 @@ exports.adminMarkMessageRead = onCall(async (request) => {
 const PLATFORM_FEE_PERCENT = 0.10; // 10% platform fee — easy to adjust
 
 function getStripe() {
-  return Stripe(process.env.STRIPE_SECRET_KEY);
+  return Stripe(process.env.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);
 }
 
 /**
