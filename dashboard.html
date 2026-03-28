@@ -817,6 +817,14 @@
       <p style="color: #666; font-size: 0.9rem;">Loading payment status...</p>
     </div>
 
+    <!-- EARNINGS SECTION -->
+    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
+      <i class="fas fa-chart-line"></i> Earnings
+    </h3>
+    <div id="earnings-section">
+      <p style="color: #999; font-size: 0.95rem;">Loading earnings...</p>
+    </div>
+
     <!-- UPCOMING LESSONS SECTION -->
     <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
       <i class="fas fa-calendar-check"></i> Upcoming Lessons
@@ -1170,7 +1178,8 @@
           const urlParams = new URLSearchParams(window.location.search);
           await checkStripePaymentStatus(urlParams.get('stripe') === 'success');
 
-          // Load instructor's upcoming lessons
+          // Load earnings summary and upcoming lessons
+          loadEarnings();
           loadInstructorBookings();
 
           // Load unread message count
@@ -1780,6 +1789,70 @@
     }
 
     // ── Stripe Payment Setup ─────────────────────────────────────
+
+    async function loadEarnings() {
+      const section = document.getElementById('earnings-section');
+      try {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const bookingsSnap = await getDocs(
+          query(
+            collection(db, 'bookings'),
+            where('instructorId', '==', currentUser.uid),
+            where('paymentStatus', '==', 'paid')
+          )
+        );
+
+        let totalCents = 0;
+        let monthCents = 0;
+        let totalLessons = 0;
+        let monthLessons = 0;
+        let currency = 'USD';
+
+        bookingsSnap.forEach(d => {
+          const b = d.data();
+          if (!b.amount) return;
+          const bookedAt = b.bookedAt?.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
+          totalCents += b.amount;
+          totalLessons++;
+          currency = (b.currency || 'USD').toUpperCase();
+          if (bookedAt >= startOfMonth) {
+            monthCents += b.amount;
+            monthLessons++;
+          }
+        });
+
+        // Platform keeps 10%; instructor receives 90%
+        const fmtNet = (cents) => {
+          const net = Math.round(cents * 0.9);
+          return (net / 100).toLocaleString('en-US', { style: 'currency', currency });
+        };
+
+        section.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:0.5rem;">
+            <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
+              <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">This Month (net)</p>
+              <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmtNet(monthCents)}</p>
+              <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${monthLessons} lesson${monthLessons !== 1 ? 's' : ''}</p>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
+              <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">All Time (net)</p>
+              <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmtNet(totalCents)}</p>
+              <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${totalLessons} lesson${totalLessons !== 1 ? 's' : ''} total</p>
+            </div>
+          </div>
+          <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#aaa;">
+            Net earnings after 10% platform fee. For full payout details, use
+            <button id="earnings-stripe-btn" style="background:none;border:none;color:#20bcba;cursor:pointer;font-size:0.8rem;padding:0;text-decoration:underline;">View Stripe Dashboard</button>.
+          </p>`;
+
+        document.getElementById('earnings-stripe-btn').onclick = openStripeDashboard;
+      } catch (err) {
+        console.error('Error loading earnings:', err);
+        section.innerHTML = '<p style="color:#999;font-size:0.9rem;">Unable to load earnings.</p>';
+      }
+    }
 
     async function checkStripePaymentStatus(forceCheck = false) {
       try {

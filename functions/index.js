@@ -132,7 +132,7 @@ exports.sendMessageNotification = onDocumentCreated(
                           </div>
 
                           <p style="margin: 30px 0 20px 0;">
-                            <a href="https://linguabud.com/messages.html"
+                            <a href="https://linguabud.com/messages"
                                style="display: inline-block; padding: 14px 32px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
                               View Message
                             </a>
@@ -140,7 +140,7 @@ exports.sendMessageNotification = onDocumentCreated(
 
                           <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.5;">
                             Don't want to receive these emails? You can turn off email notifications in your
-                            <a href="https://linguabud.com/student-dashboard.html" style="color: #20bcba; text-decoration: none;">dashboard settings</a>.
+                            <a href="https://linguabud.com/student-dashboard" style="color: #20bcba; text-decoration: none;">dashboard settings</a>.
                           </p>
                         </td>
                       </tr>
@@ -165,9 +165,9 @@ New message from ${senderName}
 
 "${messagePreview}"
 
-View your message at: https://linguabud.com/messages.html
+View your message at: https://linguabud.com/messages
 
-Don't want to receive these emails? Turn off notifications in your dashboard: https://linguabud.com/student-dashboard.html
+Don't want to receive these emails? Turn off notifications in your dashboard: https://linguabud.com/student-dashboard
 
 © 2026 Lingua Bud
         `.trim()
@@ -328,7 +328,7 @@ exports.sendBookingNotification = onDocumentCreated(
                           </p>
 
                           <p style="margin: 0 0 30px 0; text-align: center;">
-                            <a href="https://linguabud.com/bookings.html"
+                            <a href="https://linguabud.com/bookings"
                                style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
                               View Upcoming Lesson
                             </a>
@@ -367,7 +367,7 @@ Date: ${formattedDate}
 Time: ${formattedTime}
 ${amountStr ? `Payment: ${amountStr} (confirmed)` : ''}
 
-View your upcoming lesson: https://linguabud.com/bookings.html
+View your upcoming lesson: https://linguabud.com/bookings
 
 © 2026 Lingua Bud
         `.trim()
@@ -447,7 +447,7 @@ View your upcoming lesson: https://linguabud.com/bookings.html
                             </p>
 
                             <p style="margin: 0 0 30px 0; text-align: center;">
-                              <a href="https://linguabud.com/bookings.html"
+                              <a href="https://linguabud.com/bookings"
                                  style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
                                 View My Booking
                               </a>
@@ -486,7 +486,7 @@ Date: ${formattedDate}
 Time: ${formattedTime}
 ${amountStr ? `Amount Paid: ${amountStr}` : ''}
 
-View your booking: https://linguabud.com/bookings.html
+View your booking: https://linguabud.com/bookings
 
 Questions? Email support@linguabud.com
 
@@ -524,7 +524,7 @@ Questions? Email support@linguabud.com
  * Generates an Agora RTC token for video calling
  * Called from the client when a user wants to join a video call
  */
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { RtcTokenBuilder, RtcRole } = require('agora-token');
 const functions = require('firebase-functions');
 
@@ -691,7 +691,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
               <p>Hi ${snap.data().name || 'Instructor'},</p>
               <p>Great news — your instructor application has been <strong>approved</strong>! Your profile is now live and students can book lessons with you.</p>
               <p style="margin-top:24px;">
-                <a href="https://linguabud.com/dashboard.html"
+                <a href="https://linguabud.com/dashboard"
                    style="background:#20bcba;color:white;padding:12px 28px;border-radius:4px;text-decoration:none;font-weight:bold;">
                   Go to Your Dashboard
                 </a>
@@ -700,7 +700,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'Instructor'},\n\nYour Lingua Bud instructor application has been approved! Your profile is now live.\n\nDashboard: https://linguabud.com/dashboard.html\n\nQuestions? Email support@linguabud.com`
+        text: `Hi ${snap.data().name || 'Instructor'},\n\nYour Lingua Bud instructor application has been approved! Your profile is now live.\n\nDashboard: https://linguabud.com/dashboard\n\nQuestions? Email support@linguabud.com`
       });
     }
   } catch (e) {
@@ -850,8 +850,8 @@ exports.createStripeConnectAccount = onCall(async (request) => {
   // Generate an account onboarding link
   const accountLink = await stripe.accountLinks.create({
     account: stripeAccountId,
-    refresh_url: 'https://linguabud.com/dashboard.html?stripe=refresh',
-    return_url: 'https://linguabud.com/dashboard.html?stripe=success',
+    refresh_url: 'https://linguabud.com/dashboard?stripe=refresh',
+    return_url: 'https://linguabud.com/dashboard?stripe=success',
     type: 'account_onboarding'
   });
 
@@ -901,7 +901,8 @@ exports.createPaymentIntent = onCall(async (request) => {
     throw new HttpsError('unauthenticated', 'Must be logged in');
   }
 
-  const { instructorId } = request.data;
+  const { instructorId, idempotencyKey } = request.data;
+  const uid = request.auth.uid;
 
   if (!instructorId) {
     throw new HttpsError('invalid-argument', 'instructorId is required');
@@ -936,6 +937,9 @@ exports.createPaymentIntent = onCall(async (request) => {
   const normalizedCurrency = (currency || 'USD').toLowerCase();
   const platformFee = Math.round(amount * PLATFORM_FEE_PERCENT);
 
+  // Idempotency key prevents duplicate charges on network retries
+  const stripeOptions = idempotencyKey ? { idempotencyKey } : {};
+
   const paymentIntent = await stripe.paymentIntents.create({
     amount,
     currency: normalizedCurrency,
@@ -943,11 +947,18 @@ exports.createPaymentIntent = onCall(async (request) => {
     transfer_data: {
       destination: stripeAccountId
     },
-    automatic_payment_methods: { enabled: true }
-  });
+    automatic_payment_methods: { enabled: true },
+    // Metadata lets the webhook reconcile bookings for redirect-based payments
+    metadata: {
+      instructorId,
+      studentId: uid,
+      platformFeePercent: String(Math.round(PLATFORM_FEE_PERCENT * 100))
+    }
+  }, stripeOptions);
 
   return {
     clientSecret: paymentIntent.client_secret,
+    paymentIntentId: paymentIntent.id,
     amount,
     currency: normalizedCurrency,
     platformFee
@@ -1118,7 +1129,7 @@ exports.cancelBooking = onCall(async (request) => {
                         This time slot is now available for other students to book. Visit your dashboard to review your schedule.
                       </p>
                       <p style="margin:0 0 28px;text-align:center;">
-                        <a href="https://linguabud.com/dashboard.html" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
+                        <a href="https://linguabud.com/dashboard" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
                           Go to Dashboard
                         </a>
                       </p>
@@ -1129,7 +1140,7 @@ exports.cancelBooking = onCall(async (request) => {
               </table>
             </body></html>
           `,
-          text: `Hi ${instructor.name || 'Instructor'},\n\n${studentName} has cancelled their lesson with you.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\nRefund: ${refundLabel}\n\nThis slot is now available for other students.\n\nDashboard: https://linguabud.com/dashboard.html\n\n© 2026 Lingua Bud`
+          text: `Hi ${instructor.name || 'Instructor'},\n\n${studentName} has cancelled their lesson with you.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\nRefund: ${refundLabel}\n\nThis slot is now available for other students.\n\nDashboard: https://linguabud.com/dashboard\n\n© 2026 Lingua Bud`
         });
         console.log('Cancellation email sent to instructor:', instructor.email);
       }
@@ -1138,7 +1149,7 @@ exports.cancelBooking = onCall(async (request) => {
       if (studentProfileSnap.exists && studentProfileSnap.data().email) {
         const student = studentProfileSnap.data();
         const refundNote = refundPercent === 0
-          ? `Per our <a href="https://linguabud.com/refund-policy.html" style="color:#20bcba;">cancellation policy</a>, no refund is issued for cancellations within 12 hours of the lesson.`
+          ? `Per our <a href="https://linguabud.com/refund-policy" style="color:#20bcba;">cancellation policy</a>, no refund is issued for cancellations within 12 hours of the lesson.`
           : `<strong>${refundPercent === 100 ? 'A full refund' : 'A 50% refund'}${refundAmountStr ? ` of ${refundAmountStr}` : ''}</strong> has been issued to your original payment method and should appear within 5–10 business days.`;
         const refundNotePlain = refundPercent === 0
           ? 'Per our cancellation policy, no refund is issued for cancellations within 12 hours of the lesson.'
@@ -1166,7 +1177,7 @@ exports.cancelBooking = onCall(async (request) => {
                       </div>
                       <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">${refundNote}</p>
                       <p style="margin:0 0 28px;text-align:center;">
-                        <a href="https://linguabud.com/instructors.html" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
+                        <a href="https://linguabud.com/instructors" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
                           Find Another Instructor
                         </a>
                       </p>
@@ -1177,7 +1188,7 @@ exports.cancelBooking = onCall(async (request) => {
               </table>
             </body></html>
           `,
-          text: `Hi ${student.name || 'there'},\n\nYour lesson has been cancelled.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors.html\n\n© 2026 Lingua Bud`
+          text: `Hi ${student.name || 'there'},\n\nYour lesson has been cancelled.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors\n\n© 2026 Lingua Bud`
         });
       }
     } else {
@@ -1223,7 +1234,7 @@ exports.cancelBooking = onCall(async (request) => {
                         We apologize for the inconvenience. Please browse our other available instructors to rebook your lesson.
                       </p>
                       <p style="margin:0 0 28px;text-align:center;">
-                        <a href="https://linguabud.com/instructors.html" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
+                        <a href="https://linguabud.com/instructors" style="display:inline-block;padding:13px 32px;background-color:#20bcba;color:#fff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:bold;">
                           Find Another Instructor
                         </a>
                       </p>
@@ -1234,7 +1245,7 @@ exports.cancelBooking = onCall(async (request) => {
               </table>
             </body></html>
           `,
-          text: `Hi ${student.name || 'there'},\n\n${instructorName} has cancelled your upcoming lesson.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors.html\n\n© 2026 Lingua Bud`
+          text: `Hi ${student.name || 'there'},\n\n${instructorName} has cancelled your upcoming lesson.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors\n\n© 2026 Lingua Bud`
         });
         console.log('Cancellation email sent to student:', student.email);
       }
@@ -1307,4 +1318,159 @@ exports.submitReview = onCall(async (request) => {
   });
 
   return { success: true };
+});
+
+// ── Stripe Config & Webhooks ────────────────────────────────────────────────
+
+/**
+ * Returns the Stripe publishable key to the frontend.
+ * Keeps the key out of HTML source; switching test↔live is a single .env change.
+ */
+exports.getStripeConfig = onCall(async (_request) => {
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+  if (!publishableKey) {
+    throw new HttpsError('internal', 'Stripe publishable key not configured');
+  }
+  return { publishableKey };
+});
+
+/**
+ * Stripe webhook endpoint — receives events from Stripe and keeps Firestore in sync.
+ *
+ * Register this URL in Stripe Dashboard → Developers → Webhooks:
+ *   https://us-central1-<YOUR_PROJECT_ID>.cloudfunctions.net/stripeWebhook
+ *
+ * Enable these events:
+ *   payment_intent.succeeded
+ *   payment_intent.payment_failed
+ *   account.updated
+ *   charge.refunded
+ */
+exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET is not set');
+    res.status(500).send('Webhook secret not configured');
+    return;
+  }
+
+  let event;
+  try {
+    const stripe = getStripe();
+    // req.rawBody is the raw Buffer required for Stripe signature verification
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+  } catch (err) {
+    console.error('Stripe webhook signature verification failed:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  const db = admin.firestore();
+
+  try {
+    switch (event.type) {
+
+      // ── Payment confirmed server-side ────────────────────────────────────
+      case 'payment_intent.succeeded': {
+        const pi = event.data.object;
+        console.log(`payment_intent.succeeded: ${pi.id}`);
+        const bookingsSnap = await db.collection('bookings')
+          .where('paymentIntentId', '==', pi.id)
+          .limit(1)
+          .get();
+        if (!bookingsSnap.empty) {
+          await bookingsSnap.docs[0].ref.update({
+            paymentStatus: 'paid',
+            webhookConfirmedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          console.log(`Booking ${bookingsSnap.docs[0].id} confirmed via webhook`);
+        } else {
+          // Redirect-based payment: booking not yet created client-side.
+          // Metadata holds instructorId + studentId for manual recovery if needed.
+          console.warn(`No booking found for paymentIntentId ${pi.id}. Metadata:`, pi.metadata);
+        }
+        break;
+      }
+
+      // ── Payment failed ───────────────────────────────────────────────────
+      case 'payment_intent.payment_failed': {
+        const pi = event.data.object;
+        console.log(`payment_intent.payment_failed: ${pi.id}`);
+        const bookingsSnap = await db.collection('bookings')
+          .where('paymentIntentId', '==', pi.id)
+          .limit(1)
+          .get();
+        if (!bookingsSnap.empty) {
+          await bookingsSnap.docs[0].ref.update({
+            paymentStatus: 'failed',
+            webhookFailedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        }
+        break;
+      }
+
+      // ── Instructor Stripe account updated (onboarding progress) ──────────
+      case 'account.updated': {
+        const account = event.data.object;
+        console.log(`account.updated: ${account.id}, charges_enabled=${account.charges_enabled}`);
+        const instructorsSnap = await db.collection('instructors')
+          .where('stripeAccountId', '==', account.id)
+          .limit(1)
+          .get();
+        if (!instructorsSnap.empty) {
+          await instructorsSnap.docs[0].ref.update({
+            stripeOnboardingComplete: account.charges_enabled === true,
+            stripePayoutsEnabled:     account.payouts_enabled === true,
+            stripeDetailsSubmitted:   account.details_submitted === true,
+            stripeAccountUpdatedAt:   admin.firestore.FieldValue.serverTimestamp()
+          });
+          console.log(`Instructor ${instructorsSnap.docs[0].id} Stripe status updated`);
+        }
+        break;
+      }
+
+      // ── Refund processed ─────────────────────────────────────────────────
+      case 'charge.refunded': {
+        const charge = event.data.object;
+        const piId = charge.payment_intent;
+        if (piId) {
+          const bookingsSnap = await db.collection('bookings')
+            .where('paymentIntentId', '==', piId)
+            .limit(1)
+            .get();
+          if (!bookingsSnap.empty) {
+            await bookingsSnap.docs[0].ref.update({
+              paymentStatus: 'refunded',
+              webhookRefundedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        }
+        break;
+      }
+
+      default:
+        console.log(`Unhandled Stripe event type: ${event.type}`);
+    }
+
+    // Append all events to an audit log for debugging and compliance
+    await db.collection('stripeEvents').add({
+      eventId:     event.id,
+      type:        event.type,
+      livemode:    event.livemode,
+      processedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+  } catch (handlerErr) {
+    // Return 200 anyway so Stripe does not retry indefinitely
+    console.error(`Error handling Stripe event ${event.type}:`, handlerErr);
+  }
+
+  res.json({ received: true });
 });

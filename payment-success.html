@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Successful – Lingua Bud</title>
+
+  <link rel="icon" href="images/NuevoFavicon.png">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+  <link href="css/bootstrap.css" rel="stylesheet">
+  <link href="css/fontawesome-all.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 3rem 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .icon-circle.success { background: #d1fae5; color: #10b981; }
+    .icon-circle.failed  { background: #fee2e2; color: #ef4444; }
+    .icon-circle.pending { background: #fef3c7; color: #f59e0b; }
+    h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.75rem; color: #113448; }
+    p  { color: #555; font-size: 1rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .btn-primary-custom {
+      display: inline-block;
+      padding: 0.75rem 2rem;
+      background: #20bcba;
+      color: #fff;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .btn-primary-custom:hover { background: #199c9a; color: #fff; text-decoration: none; }
+    .btn-secondary-custom {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.65rem 1.75rem;
+      background: transparent;
+      color: #20bcba;
+      border: 2px solid #20bcba;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .btn-secondary-custom:hover { background: #20bcba; color: #fff; text-decoration: none; }
+    .logo { margin-bottom: 1rem; }
+    .logo img { height: 36px; }
+    .detail-box {
+      background: #f8f9fa;
+      border-left: 4px solid #20bcba;
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      text-align: left;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      color: #444;
+    }
+    .detail-box p { margin: 0 0 4px; color: #444; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <a href="index"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+  </div>
+
+  <!-- Icon and heading injected by JS -->
+  <div id="icon-wrapper"></div>
+  <h2 id="heading">Processing your payment…</h2>
+  <p  id="subtext">Please wait while we confirm your booking.</p>
+
+  <!-- Payment detail box (shown on success) -->
+  <div class="detail-box" id="detail-box" style="display:none;"></div>
+
+  <!-- Action buttons injected by JS -->
+  <div id="actions"></div>
+</div>
+
+<script type="module">
+  import { auth, db, functions, onAuthStateChanged, collection, query, where, getDocs, httpsCallable } from './lib/firebaseClient.js';
+
+  const params        = new URLSearchParams(window.location.search);
+  const redirectStatus = params.get('redirect_status');
+  const piId           = params.get('payment_intent');
+
+  const iconEl   = document.getElementById('icon-wrapper');
+  const headingEl = document.getElementById('heading');
+  const subtextEl = document.getElementById('subtext');
+  const detailBox = document.getElementById('detail-box');
+  const actionsEl = document.getElementById('actions');
+
+  function renderSuccess() {
+    iconEl.innerHTML   = '<div class="icon-circle success"><i class="fas fa-check"></i></div>';
+    headingEl.textContent = 'Booking Confirmed!';
+    subtextEl.textContent = 'Your payment was successful and your lesson has been booked.';
+    actionsEl.innerHTML = `
+      <a href="bookings" class="btn-primary-custom">View My Bookings</a><br>
+      <a href="instructors" class="btn-secondary-custom">Browse Instructors</a>`;
+  }
+
+  function renderPending() {
+    iconEl.innerHTML   = '<div class="icon-circle pending"><i class="fas fa-clock"></i></div>';
+    headingEl.textContent = 'Payment Received';
+    subtextEl.textContent = 'Your payment is being processed. Your booking will appear in your activity page shortly.';
+    actionsEl.innerHTML = `<a href="bookings" class="btn-primary-custom">View My Bookings</a>`;
+  }
+
+  function renderFailed() {
+    iconEl.innerHTML   = '<div class="icon-circle failed"><i class="fas fa-times"></i></div>';
+    headingEl.textContent = 'Payment Unsuccessful';
+    subtextEl.textContent = 'Your payment could not be completed. No charge has been made. Please try again or use a different payment method.';
+    actionsEl.innerHTML = `
+      <a href="instructors" class="btn-primary-custom">Try Again</a><br>
+      <a href="index" class="btn-secondary-custom">Go Home</a>`;
+  }
+
+  // Case 1: Arrived here after a redirect-based payment (iDEAL, Bancontact, etc.)
+  if (redirectStatus) {
+    if (redirectStatus === 'succeeded') {
+      // Try to find the booking so we can show details
+      onAuthStateChanged(auth, async (user) => {
+        renderSuccess();
+        if (user && piId) {
+          try {
+            const snap = await getDocs(query(
+              collection(db, 'bookings'),
+              where('paymentIntentId', '==', piId)
+            ));
+            if (!snap.empty) {
+              const b = snap.docs[0].data();
+              const dt = b.dateTime?.toDate ? b.dateTime.toDate() : new Date(b.dateTime);
+              detailBox.innerHTML = `
+                <p><strong>Instructor:</strong> ${b.instructorName || 'Your instructor'}</p>
+                <p><strong>Date:</strong> ${dt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p><strong>Time:</strong> ${dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+                ${b.amount ? `<p><strong>Amount:</strong> ${(b.amount / 100).toFixed(2)} ${(b.currency || 'USD').toUpperCase()}</p>` : ''}`;
+              detailBox.style.display = 'block';
+            }
+          } catch (_) { /* non-critical */ }
+        }
+      });
+    } else if (redirectStatus === 'processing') {
+      renderPending();
+    } else {
+      renderFailed();
+    }
+    // Case 2: Arrived here directly (e.g. from an in-page success redirect, or bookmark)
+  } else {
+    renderSuccess();
+  }
+</script>
+
+</body>
+</html>

@@ -536,7 +536,16 @@
         import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
 
         // ── Booking state ───────────────────────────────────────────────────
-        const STRIPE_PUBLISHABLE_KEY = 'pk_test_51ReiozR5K3FFiwajzKtaXzCvx6BSBd52dRml2Z2kirtYBGyXOfONEZUFciFSOYi65xs99HvhgckNhG1i40hRicGJ001aPvyoDs';
+        // Stripe publishable key fetched from backend and cached (no hardcoded key in source)
+        let _stripePublishableKey = null;
+        async function getStripePublishableKey() {
+            if (_stripePublishableKey) return _stripePublishableKey;
+            const getConfig = httpsCallable(functions, 'getStripeConfig');
+            const result = await getConfig();
+            _stripePublishableKey = result.data.publishableKey;
+            return _stripePublishableKey;
+        }
+
         let currentInstructorId   = null;
         let currentInstructorName = null;
         let currentWeekStart      = null;
@@ -927,10 +936,14 @@
                 document.getElementById('pay-price').textContent = `${currency} ${sym}${price}`;
 
                 const createPI = httpsCallable(functions, 'createPaymentIntent');
-                const piResult = await createPI({ instructorId: currentInstructorId });
+                const piResult = await createPI({
+                    instructorId: currentInstructorId,
+                    idempotencyKey: crypto.randomUUID()
+                });
                 const { clientSecret } = piResult.data;
 
-                stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
+                const pubKey = await getStripePublishableKey();
+                stripeInstance = Stripe(pubKey);
                 stripeElements = stripeInstance.elements({ clientSecret });
                 const paymentElement = stripeElements.create('payment');
                 paymentElement.mount('#payment-element');
@@ -979,7 +992,9 @@
             try {
                 const { error, paymentIntent } = await stripeInstance.confirmPayment({
                     elements: stripeElements,
-                    confirmParams: { return_url: window.location.href },
+                    confirmParams: {
+                        return_url: window.location.origin + '/payment-success'
+                    },
                     redirect: 'if_required'
                 });
 

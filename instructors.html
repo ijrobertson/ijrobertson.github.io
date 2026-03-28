@@ -1167,9 +1167,17 @@
     <script type="module">
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
 
-        // Stripe publishable key (safe to expose — server-side key stays in Cloud Functions)
-        // TODO: Replace with your actual test publishable key from Stripe Dashboard
-        const STRIPE_PUBLISHABLE_KEY = 'pk_test_51ReiozR5K3FFiwajzKtaXzCvx6BSBd52dRml2Z2kirtYBGyXOfONEZUFciFSOYi65xs99HvhgckNhG1i40hRicGJ001aPvyoDs';
+        // Stripe publishable key is fetched once from the backend and cached.
+        // This keeps the key out of the HTML source; switching test↔live is a
+        // single change in functions/.env — no frontend deploys needed.
+        let _stripePublishableKey = null;
+        async function getStripePublishableKey() {
+            if (_stripePublishableKey) return _stripePublishableKey;
+            const getConfig = httpsCallable(functions, 'getStripeConfig');
+            const result = await getConfig();
+            _stripePublishableKey = result.data.publishableKey;
+            return _stripePublishableKey;
+        }
 
         const instructorGrid = document.getElementById('instructorGrid');
         const languageFilter = document.getElementById('languageFilter');
@@ -1778,13 +1786,18 @@
                 const sym = _csMap[currency] || '';
                 document.getElementById('pay-price').textContent = `${currency} ${sym}${price}`;
 
-                // Call Cloud Function to create PaymentIntent
+                // Call Cloud Function to create PaymentIntent.
+                // Pass a client-generated idempotency key so retries are safe.
                 const createPI = httpsCallable(functions, 'createPaymentIntent');
-                const piResult = await createPI({ instructorId: currentInstructorId });
+                const piResult = await createPI({
+                    instructorId: currentInstructorId,
+                    idempotencyKey: crypto.randomUUID()
+                });
                 const { clientSecret } = piResult.data;
 
-                // Initialize Stripe Elements
-                stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
+                // Fetch publishable key from backend (cached after first call)
+                const pubKey = await getStripePublishableKey();
+                stripeInstance = Stripe(pubKey);
                 stripeElements = stripeInstance.elements({ clientSecret });
                 const paymentElement = stripeElements.create('payment');
                 paymentElement.mount('#payment-element');
@@ -1852,7 +1865,8 @@
                         const { error, paymentIntent } = await stripeInstance.confirmPayment({
                             elements: stripeElements,
                             confirmParams: {
-                                return_url: window.location.origin + '/instructors'
+                                // Used only for redirect-based payment methods (iDEAL, Bancontact, etc.)
+                                return_url: window.location.origin + '/payment-success'
                             },
                             redirect: 'if_required'
                         });
