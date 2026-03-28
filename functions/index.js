@@ -1384,11 +1384,14 @@ exports.getStripeConfig = onCall(async (_request) => {
  * Register this URL in Stripe Dashboard → Developers → Webhooks:
  *   https://us-central1-<YOUR_PROJECT_ID>.cloudfunctions.net/stripeWebhook
  *
- * Enable these events:
- *   payment_intent.succeeded
- *   payment_intent.payment_failed
- *   account.updated
- *   charge.refunded
+ * Two Stripe webhook destinations point to this same URL:
+ *   Destination 1 — "Your Account"            → STRIPE_WEBHOOK_SECRET
+ *     events: payment_intent.succeeded, payment_intent.payment_failed, charge.refunded
+ *   Destination 2 — "Connected and v2 Accounts" → STRIPE_CONNECT_WEBHOOK_SECRET
+ *     events: account.updated
+ *
+ * Register at: Stripe Dashboard → Developers → Webhooks → Add Destination
+ * URL: https://us-central1-<YOUR_PROJECT_ID>.cloudfunctions.net/stripeWebhook
  */
 exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
   if (req.method !== 'POST') {
@@ -1397,22 +1400,35 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
   }
 
   const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const stripe = getStripe();
 
-  if (!webhookSecret) {
-    console.error('STRIPE_WEBHOOK_SECRET is not set');
-    res.status(500).send('Webhook secret not configured');
+  // Try each configured secret in turn — the one that matches will verify cleanly.
+  // This handles both the "Your Account" destination and the "Connected accounts"
+  // destination, which Stripe signs with different secrets.
+  const secrets = [
+    process.env.STRIPE_WEBHOOK_SECRET,
+    process.env.STRIPE_CONNECT_WEBHOOK_SECRET
+  ].filter(Boolean);
+
+  if (secrets.length === 0) {
+    console.error('No Stripe webhook secrets configured (STRIPE_WEBHOOK_SECRET / STRIPE_CONNECT_WEBHOOK_SECRET)');
+    res.status(500).send('Webhook secrets not configured');
     return;
   }
 
   let event;
-  try {
-    const stripe = getStripe();
-    // req.rawBody is the raw Buffer required for Stripe signature verification
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
-  } catch (err) {
-    console.error('Stripe webhook signature verification failed:', err.message);
-    res.status(400).send(`Webhook Error: ${err.message}`);
+  for (const secret of secrets) {
+    try {
+      event = stripe.webhooks.constructEvent(req.rawBody, sig, secret);
+      break; // verified — stop trying
+    } catch (_) {
+      // wrong secret for this delivery — try the next one
+    }
+  }
+
+  if (!event) {
+    console.error('Stripe webhook signature verification failed for all configured secrets');
+    res.status(400).send('Webhook signature verification failed');
     return;
   }
 
