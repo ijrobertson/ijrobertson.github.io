@@ -1273,10 +1273,11 @@
           selectedInterests = profile.interests || [];
           renderInterestsGrid('interests-grid', selectedInterests);
 
-          // Not a new user if profile exists
-          isNewUser = false;
+          // Show setup modal if profile is incomplete (missing about_me or avatar)
+          const isIncomplete = !profile.about_me || !profile.avatar_url;
+          isNewUser = isIncomplete;
         } else {
-          // This is a new user (no profile document exists yet)
+          // No profile document exists yet
           console.log('ℹ️ No existing profile found - new user');
           isNewUser = true;
         }
@@ -1527,6 +1528,22 @@
         const o2 = o1.cloneNode(true);
         learningSel.appendChild(o2);
       });
+
+      // Pre-populate from existing profile data (e.g. set during signup)
+      const existingName = document.getElementById('name').value;
+      if (existingName) document.getElementById('setup-name').value = existingName;
+
+      const existingCountry = document.getElementById('native_country').value;
+      if (existingCountry) document.getElementById('setup-country').value = existingCountry;
+
+      if (spokenLanguages.length > 0) {
+        setupSpokenLangs = [...spokenLanguages];
+        renderSetupTags('spoken');
+      }
+      if (learningLanguages.length > 0) {
+        setupLearningLangs = [...learningLanguages];
+        renderSetupTags('learning');
+      }
 
       spokenSel.addEventListener('change', () => {
         const val = spokenSel.value;

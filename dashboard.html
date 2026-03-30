@@ -1281,6 +1281,10 @@
         document.getElementById('name').focus();
         return;
       }
+      if (spokenLanguages.length === 0) {
+        setStatus('Please add at least one language you speak.', true);
+        return;
+      }
       if (teachingLanguages.length === 0) {
         setStatus('Please add at least one language you teach.', true);
         return;
@@ -1288,6 +1292,11 @@
       if (!about_me) {
         setStatus('Please write a short bio in the About Me section.', true);
         document.getElementById('about_me').focus();
+        return;
+      }
+      if (!document.getElementById('country').value) {
+        setStatus('Please select your native country.', true);
+        document.getElementById('country').focus();
         return;
       }
       if (!avatarSet) {

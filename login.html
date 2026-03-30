@@ -13,18 +13,19 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #f4f4f4;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
+      padding: 2rem 1rem;
     }
     .card {
       background: white;
       padding: 2rem;
       border-radius: 8px;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 360px;
+      width: 100%;
+      max-width: 440px;
     }
     h2 {
       text-align: center;
@@ -40,6 +41,7 @@
       margin-top: 0.3rem;
       border: 1px solid #ccc;
       border-radius: 4px;
+      box-sizing: border-box;
     }
     .btn {
       width: 100%;
@@ -50,6 +52,7 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      border-radius: 4px;
     }
     .btn:hover {
       background-color: #199c9a;
@@ -91,6 +94,41 @@
     .checkbox-container a:hover {
       color: #199c9a;
     }
+
+    /* Language tag styles (matches dashboard) */
+    .lang-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+      min-height: 24px;
+    }
+    .lang-tag {
+      background-color: #20bcba;
+      color: white;
+      border-radius: 15px;
+      padding: 0.3rem 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.88rem;
+    }
+    .lang-tag .remove-tag {
+      cursor: pointer;
+      font-weight: bold;
+      padding: 0 0.25rem;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      line-height: 1;
+      font-size: 0.85rem;
+    }
+    .lang-tag .remove-tag:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    select option:first-child {
+      color: #999;
+    }
+
     @media (max-width: 500px) {
       .card {
         padding: 1.5rem;
@@ -112,12 +150,32 @@
       <input type="password" id="confirm-password" placeholder="Re-enter password" />
     </div>
 
+    <div id="name-container" style="display: none;">
+      <label>Full Name</label>
+      <input type="text" id="name" placeholder="Your full name" />
+    </div>
+
     <div id="role-container" style="display: none;">
       <label>Sign up as:</label>
       <select id="role">
         <option value="student">Student</option>
         <option value="instructor">Instructor</option>
       </select>
+    </div>
+
+    <!-- Language sections (shown during signup) -->
+    <div id="language-section" style="display: none;">
+      <label id="spoken-label">I Speak</label>
+      <select id="spokenLanguage">
+        <option value="">Select a language to add...</option>
+      </select>
+      <div class="lang-tags" id="spoken-tags"></div>
+
+      <label id="learning-label">I'm Learning</label>
+      <select id="learningLanguage">
+        <option value="">Select a language to add...</option>
+      </select>
+      <div class="lang-tags" id="learning-tags"></div>
     </div>
 
     <div id="age-checkbox-container" class="checkbox-container" style="display: none;">
@@ -146,7 +204,38 @@
     setDoc
   } from './lib/firebaseClient.js';
 
+  const languages = [
+    "Afrikaans", "Akan", "Albanian", "Amharic", "Arabic", "Armenian", "Assamese", "Aymara", "Azerbaijani",
+    "Bambara", "Bangla", "Basque", "Belarusian", "Bhojpuri", "Bosnian", "Bulgarian", "Burmese",
+    "Cantonese", "Catalan", "Cebuano", "Central Kurdish", "Chinese (Simplified)", "Chinese (Traditional)", "Corsican", "Croatian", "Czech",
+    "Danish", "Divehi", "Dogri", "Dutch",
+    "English", "Esperanto", "Estonian", "Ewe",
+    "Filipino", "Finnish", "French",
+    "Galician", "Ganda", "Georgian", "German", "Goan Konkani", "Greek", "Greenlandic", "Guarani", "Gujarati",
+    "Haitian Creole", "Hausa", "Hawaiian", "Hebrew", "Hindi", "Hmong", "Hungarian",
+    "Icelandic", "Igbo", "Iloko", "Indonesian", "Irish", "Italian",
+    "Japanese", "Javanese",
+    "Kannada", "Kazakh", "Khmer", "Kinyarwanda", "Klingon", "Korean", "Krio", "Kurdish", "Kyrgyz",
+    "Lao", "Latin", "Latvian", "Lingala", "Lithuanian", "Luxembourgish",
+    "Macedonian", "Maithili", "Malagasy", "Malay", "Malayalam", "Maltese", "Manipuri (Meitei Mayek)", "Māori", "Marathi", "Mizo", "Mongolian",
+    "Nahuatl", "Nepali", "Northern Sotho", "Norwegian", "Nyanja",
+    "Odia", "Oromo",
+    "Papiamento", "Pashto", "Persian", "Polish", "Portuguese", "Punjabi",
+    "Quechua",
+    "Romanian", "Romansh", "Russian",
+    "Samoan", "Sanskrit", "Scottish Gaelic", "Serbian", "Shona", "Silbo Gomero", "Sindhi", "Sinhala", "Slovak", "Slovenian", "Somali", "Southern Sotho", "Spanish", "Sundanese", "Swahili", "Swedish",
+    "Tagalog", "Tajik", "Tamil", "Tatar", "Telugu", "Thai", "Tigrinya", "Tok Pisin", "Tsonga", "Turkish", "Turkmen", "Twi",
+    "Ukrainian", "Urdu", "Uyghur", "Uzbek",
+    "Vietnamese",
+    "Welsh", "Western Frisian", "Wu Chinese",
+    "Xhosa",
+    "Yiddish", "Yoruba", "Yue Chinese",
+    "Zulu"
+  ];
+
   let isSignup = false;
+  let spokenLangs = [];
+  let learningLangs = [];
 
   const emailEl = document.getElementById('email');
   const passwordEl = document.getElementById('password');
@@ -156,12 +245,78 @@
   const toggleFormLink = document.getElementById('toggle-form');
   const formTitle = document.getElementById('form-title');
   const confirmContainer = document.getElementById('confirm-password-container');
+  const nameContainer = document.getElementById('name-container');
   const roleContainer = document.getElementById('role-container');
+  const languageSection = document.getElementById('language-section');
   const ageCheckboxContainer = document.getElementById('age-checkbox-container');
   const termsCheckboxContainer = document.getElementById('terms-checkbox-container');
   const ageCheckbox = document.getElementById('age-checkbox');
   const termsCheckbox = document.getElementById('terms-checkbox');
   const errorMessage = document.getElementById('error-message');
+  const spokenSelect = document.getElementById('spokenLanguage');
+  const learningSelect = document.getElementById('learningLanguage');
+
+  // Populate language dropdowns
+  languages.forEach(lang => {
+    const o1 = document.createElement('option');
+    o1.value = lang;
+    o1.textContent = lang;
+    spokenSelect.appendChild(o1);
+
+    const o2 = document.createElement('option');
+    o2.value = lang;
+    o2.textContent = lang;
+    learningSelect.appendChild(o2);
+  });
+
+  function renderTags(type) {
+    const arr = type === 'spoken' ? spokenLangs : learningLangs;
+    const container = document.getElementById(type === 'spoken' ? 'spoken-tags' : 'learning-tags');
+    container.innerHTML = '';
+    arr.forEach(lang => {
+      const tag = document.createElement('span');
+      tag.className = 'lang-tag';
+      tag.innerHTML = `<span>${lang}</span><span class="remove-tag">×</span>`;
+      tag.querySelector('.remove-tag').addEventListener('click', () => {
+        if (type === 'spoken') {
+          spokenLangs = spokenLangs.filter(l => l !== lang);
+        } else {
+          learningLangs = learningLangs.filter(l => l !== lang);
+        }
+        renderTags(type);
+      });
+      container.appendChild(tag);
+    });
+  }
+
+  spokenSelect.addEventListener('change', () => {
+    const val = spokenSelect.value;
+    if (val && !spokenLangs.includes(val)) {
+      spokenLangs.push(val);
+      renderTags('spoken');
+    }
+    spokenSelect.value = '';
+  });
+
+  learningSelect.addEventListener('change', () => {
+    const val = learningSelect.value;
+    if (val && !learningLangs.includes(val)) {
+      learningLangs.push(val);
+      renderTags('learning');
+    }
+    learningSelect.value = '';
+  });
+
+  // Update language label when role changes
+  roleEl.addEventListener('change', () => {
+    updateLanguageLabels();
+  });
+
+  function updateLanguageLabels() {
+    const isInstructor = roleEl.value === 'instructor';
+    document.getElementById('spoken-label').textContent = 'I Speak';
+    document.getElementById('learning-label').textContent = isInstructor ? 'I Will Teach' : "I'm Learning";
+  }
 
   toggleFormLink.addEventListener('click', () => {
     isSignup = !isSignup;
@@ -171,13 +326,25 @@
       ? 'Already have an account? Sign In'
       : "Don't have an account? Sign Up";
     confirmContainer.style.display = isSignup ? 'block' : 'none';
+    nameContainer.style.display = isSignup ? 'block' : 'none';
     roleContainer.style.display = isSignup ? 'block' : 'none';
+    languageSection.style.display = isSignup ? 'block' : 'none';
     ageCheckboxContainer.style.display = isSignup ? 'flex' : 'none';
     termsCheckboxContainer.style.display = isSignup ? 'flex' : 'none';
 
-    // Reset checkboxes when switching modes
+    if (isSignup) {
+      updateLanguageLabels();
+    }
+
+    // Reset on switch
     ageCheckbox.checked = false;
     termsCheckbox.checked = false;
+    spokenLangs = [];
+    learningLangs = [];
+    renderTags('spoken');
+    renderTags('learning');
+    document.getElementById('name').value = '';
+    roleEl.value = 'student';
 
     errorMessage.textContent = '';
   });
@@ -196,35 +363,70 @@
     }
 
     if (isSignup) {
+      const name = document.getElementById('name').value.trim();
+
+      if (!name) {
+        errorMessage.textContent = 'Please enter your full name.';
+        return;
+      }
+
       if (password !== confirmPassword) {
         errorMessage.textContent = 'Passwords do not match.';
         return;
       }
 
-      // Check age confirmation
+      if (spokenLangs.length === 0) {
+        errorMessage.textContent = 'Please add at least one language you speak.';
+        return;
+      }
+
+      const isInstructor = role === 'instructor';
+      if (learningLangs.length === 0) {
+        errorMessage.textContent = isInstructor
+          ? 'Please add at least one language you will teach.'
+          : 'Please add at least one language you\'re learning.';
+        return;
+      }
+
       if (!ageCheckbox.checked) {
         errorMessage.textContent = 'You must confirm that you are 18 years old or older.';
         return;
       }
 
-      // Check terms and conditions agreement
       if (!termsCheckbox.checked) {
         errorMessage.textContent = 'You must agree to the Terms and Conditions and Privacy Policy.';
         return;
       }
 
       try {
-        // Create user in Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Create user profile in Firestore
-        await setDoc(doc(db, 'users', user.uid), {
-          email: email,
-          role: role,
+        // Save to users collection
+        const userData = {
+          email,
+          role,
+          name,
           emailNotifications: true,
           createdAt: new Date().toISOString()
-        });
+        };
+
+        if (isInstructor) {
+          userData.languages_spoken = spokenLangs;
+          // Save instructor profile doc
+          await setDoc(doc(db, 'instructors', user.uid), {
+            email,
+            name,
+            languages_spoken: spokenLangs,
+            languages_teaching: learningLangs,
+            createdAt: new Date().toISOString()
+          });
+        } else {
+          userData.languages_spoken = spokenLangs;
+          userData.languages_learning = learningLangs;
+        }
+
+        await setDoc(doc(db, 'users', user.uid), userData);
 
         alert('Account created successfully! You can now sign in.');
         toggleFormLink.click();
@@ -233,11 +435,9 @@
       }
     } else {
       try {
-        // Sign in with Firebase Auth
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Fetch user role from Firestore
         const userDoc = await getDoc(doc(db, 'users', user.uid));
 
         if (!userDoc.exists()) {
