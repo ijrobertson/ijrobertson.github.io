@@ -53,9 +53,13 @@
       font-weight: bold;
       cursor: pointer;
       border-radius: 4px;
+      font-size: 1rem;
+      transition: background 0.2s;
     }
-    .btn:hover {
-      background-color: #199c9a;
+    .btn:hover { background-color: #199c9a; }
+    .btn:disabled {
+      background-color: #a0dedd;
+      cursor: not-allowed;
     }
     .toggle-link {
       text-align: center;
@@ -91,11 +95,9 @@
       color: #20bcba;
       text-decoration: underline;
     }
-    .checkbox-container a:hover {
-      color: #199c9a;
-    }
+    .checkbox-container a:hover { color: #199c9a; }
 
-    /* Language tag styles (matches dashboard) */
+    /* Language tag styles */
     .lang-tags {
       display: flex;
       flex-wrap: wrap;
@@ -122,37 +124,59 @@
       line-height: 1;
       font-size: 0.85rem;
     }
-    .lang-tag .remove-tag:hover {
-      background: rgba(255,255,255,0.5);
+    .lang-tag .remove-tag:hover { background: rgba(255,255,255,0.5); }
+
+    /* Auth-check overlay */
+    #auth-check-overlay {
+      position: fixed;
+      inset: 0;
+      background: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
     }
-    select option:first-child {
-      color: #999;
+    .check-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #20bcba;
+      border-radius: 50%;
+      animation: loginSpin 0.8s linear infinite;
+      margin-bottom: 0.75rem;
     }
+    @keyframes loginSpin { to { transform: rotate(360deg); } }
 
     @media (max-width: 500px) {
-      .card {
-        padding: 1.5rem;
-      }
+      .card { padding: 1.5rem; }
     }
   </style>
 </head>
 <body>
-  <div class="card">
+
+  <!-- Shown while Firebase checks whether user is already signed in -->
+  <div id="auth-check-overlay">
+    <div class="check-spinner"></div>
+    <div style="color:#666;font-size:0.95rem;">Checking session...</div>
+  </div>
+
+  <div class="card" id="login-card" style="display:none;">
     <h2 id="form-title">Sign In</h2>
     <label>Email</label>
-    <input type="email" id="email" placeholder="you@example.com" />
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
 
     <label>Password</label>
-    <input type="password" id="password" placeholder="Enter password" />
+    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
 
     <div id="confirm-password-container" style="display: none;">
       <label>Confirm Password</label>
-      <input type="password" id="confirm-password" placeholder="Re-enter password" />
+      <input type="password" id="confirm-password" placeholder="Re-enter password" autocomplete="new-password" />
     </div>
 
     <div id="name-container" style="display: none;">
       <label>Full Name</label>
-      <input type="text" id="name" placeholder="Your full name" />
+      <input type="text" id="name" placeholder="Your full name" autocomplete="name" />
     </div>
 
     <div id="role-container" style="display: none;">
@@ -163,7 +187,7 @@
       </select>
     </div>
 
-    <!-- Language sections (shown during signup) -->
+    <!-- Language sections (signup only) -->
     <div id="language-section" style="display: none;">
       <label id="spoken-label">I Speak</label>
       <select id="spokenLanguage">
@@ -204,32 +228,103 @@
     setDoc
   } from './lib/firebaseClient.js';
 
+  // ── Safe storage helpers (localStorage throws in Safari Private Mode) ──────
+  function safeGetStorage(key) {
+    try { return localStorage.getItem(key); } catch(e) { return null; }
+  }
+  function safeSetStorage(key, val) {
+    try { localStorage.setItem(key, val); } catch(e) {}
+  }
+
+  // ── Friendly error messages ───────────────────────────────────────────────
+  function formatAuthError(msg) {
+    if (!msg) return 'An error occurred. Please try again.';
+    const m = msg.toLowerCase();
+    if (m.includes('network-request-failed') || m.includes('unavailable') || m.includes('network error')) {
+      return 'Network error — please check your connection and try again.';
+    }
+    if (m.includes('wrong-password') || m.includes('invalid-credential') || m.includes('invalid_login_credentials') || m.includes('invalid-login-credentials')) {
+      return 'Incorrect email or password.';
+    }
+    if (m.includes('user-not-found')) {
+      return 'No account found with this email.';
+    }
+    if (m.includes('too-many-requests')) {
+      return 'Too many failed attempts. Please try again in a few minutes.';
+    }
+    if (m.includes('email-already-in-use')) {
+      return 'An account with this email already exists.';
+    }
+    if (m.includes('weak-password')) {
+      return 'Password must be at least 6 characters.';
+    }
+    return msg;
+  }
+
+  // ── Redirect helper ───────────────────────────────────────────────────────
+  function redirectByRole(role) {
+    if (role === 'instructor') window.location.href = '/dashboard';
+    else if (role === 'student') window.location.href = '/student-dashboard';
+  }
+
+  // ── Check if already signed in — redirect immediately if so ───────────────
+  const overlayEl   = document.getElementById('auth-check-overlay');
+  const cardEl      = document.getElementById('login-card');
+
+  auth.authStateReady().then(async () => {
+    if (auth.currentUser) {
+      // Try Firestore for role; fall back to cache if offline
+      let role = null;
+      try {
+        const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        if (snap.exists()) {
+          role = snap.data().role;
+          if (role) safeSetStorage('user_role_cache', role);
+        }
+      } catch(e) {
+        role = safeGetStorage('user_role_cache');
+      }
+      if (role === 'instructor' || role === 'student') {
+        redirectByRole(role);
+        return; // stay on redirect, don't show form
+      }
+    }
+    // Not signed in (or role unknown) — show the login form
+    overlayEl.style.display = 'none';
+    cardEl.style.display = 'block';
+  }).catch(() => {
+    // authStateReady failed — show form anyway
+    overlayEl.style.display = 'none';
+    cardEl.style.display = 'block';
+  });
+
+  // ── Language list ─────────────────────────────────────────────────────────
   const languages = [
-    "Afrikaans", "Akan", "Albanian", "Amharic", "Arabic", "Armenian", "Assamese", "Aymara", "Azerbaijani",
-    "Bambara", "Bangla", "Basque", "Belarusian", "Bhojpuri", "Bosnian", "Bulgarian", "Burmese",
-    "Cantonese", "Catalan", "Cebuano", "Central Kurdish", "Chinese (Simplified)", "Chinese (Traditional)", "Corsican", "Croatian", "Czech",
-    "Danish", "Divehi", "Dogri", "Dutch",
-    "English", "Esperanto", "Estonian", "Ewe",
-    "Filipino", "Finnish", "French",
-    "Galician", "Ganda", "Georgian", "German", "Goan Konkani", "Greek", "Greenlandic", "Guarani", "Gujarati",
-    "Haitian Creole", "Hausa", "Hawaiian", "Hebrew", "Hindi", "Hmong", "Hungarian",
-    "Icelandic", "Igbo", "Iloko", "Indonesian", "Irish", "Italian",
-    "Japanese", "Javanese",
-    "Kannada", "Kazakh", "Khmer", "Kinyarwanda", "Klingon", "Korean", "Krio", "Kurdish", "Kyrgyz",
-    "Lao", "Latin", "Latvian", "Lingala", "Lithuanian", "Luxembourgish",
-    "Macedonian", "Maithili", "Malagasy", "Malay", "Malayalam", "Maltese", "Manipuri (Meitei Mayek)", "Māori", "Marathi", "Mizo", "Mongolian",
-    "Nahuatl", "Nepali", "Northern Sotho", "Norwegian", "Nyanja",
-    "Odia", "Oromo",
-    "Papiamento", "Pashto", "Persian", "Polish", "Portuguese", "Punjabi",
+    "Afrikaans","Akan","Albanian","Amharic","Arabic","Armenian","Assamese","Aymara","Azerbaijani",
+    "Bambara","Bangla","Basque","Belarusian","Bhojpuri","Bosnian","Bulgarian","Burmese",
+    "Cantonese","Catalan","Cebuano","Central Kurdish","Chinese (Simplified)","Chinese (Traditional)","Corsican","Croatian","Czech",
+    "Danish","Divehi","Dogri","Dutch",
+    "English","Esperanto","Estonian","Ewe",
+    "Filipino","Finnish","French",
+    "Galician","Ganda","Georgian","German","Goan Konkani","Greek","Greenlandic","Guarani","Gujarati",
+    "Haitian Creole","Hausa","Hawaiian","Hebrew","Hindi","Hmong","Hungarian",
+    "Icelandic","Igbo","Iloko","Indonesian","Irish","Italian",
+    "Japanese","Javanese",
+    "Kannada","Kazakh","Khmer","Kinyarwanda","Klingon","Korean","Krio","Kurdish","Kyrgyz",
+    "Lao","Latin","Latvian","Lingala","Lithuanian","Luxembourgish",
+    "Macedonian","Maithili","Malagasy","Malay","Malayalam","Maltese","Manipuri (Meitei Mayek)","Māori","Marathi","Mizo","Mongolian",
+    "Nahuatl","Nepali","Northern Sotho","Norwegian","Nyanja",
+    "Odia","Oromo",
+    "Papiamento","Pashto","Persian","Polish","Portuguese","Punjabi",
     "Quechua",
-    "Romanian", "Romansh", "Russian",
-    "Samoan", "Sanskrit", "Scottish Gaelic", "Serbian", "Shona", "Silbo Gomero", "Sindhi", "Sinhala", "Slovak", "Slovenian", "Somali", "Southern Sotho", "Spanish", "Sundanese", "Swahili", "Swedish",
-    "Tagalog", "Tajik", "Tamil", "Tatar", "Telugu", "Thai", "Tigrinya", "Tok Pisin", "Tsonga", "Turkish", "Turkmen", "Twi",
-    "Ukrainian", "Urdu", "Uyghur", "Uzbek",
+    "Romanian","Romansh","Russian",
+    "Samoan","Sanskrit","Scottish Gaelic","Serbian","Shona","Silbo Gomero","Sindhi","Sinhala","Slovak","Slovenian","Somali","Southern Sotho","Spanish","Sundanese","Swahili","Swedish",
+    "Tagalog","Tajik","Tamil","Tatar","Telugu","Thai","Tigrinya","Tok Pisin","Tsonga","Turkish","Turkmen","Twi",
+    "Ukrainian","Urdu","Uyghur","Uzbek",
     "Vietnamese",
-    "Welsh", "Western Frisian", "Wu Chinese",
+    "Welsh","Western Frisian","Wu Chinese",
     "Xhosa",
-    "Yiddish", "Yoruba", "Yue Chinese",
+    "Yiddish","Yoruba","Yue Chinese",
     "Zulu"
   ];
 
@@ -237,36 +332,32 @@
   let spokenLangs = [];
   let learningLangs = [];
 
-  const emailEl = document.getElementById('email');
-  const passwordEl = document.getElementById('password');
-  const confirmPasswordEl = document.getElementById('confirm-password');
-  const roleEl = document.getElementById('role');
-  const submitBtn = document.getElementById('submit-btn');
-  const toggleFormLink = document.getElementById('toggle-form');
-  const formTitle = document.getElementById('form-title');
-  const confirmContainer = document.getElementById('confirm-password-container');
-  const nameContainer = document.getElementById('name-container');
-  const roleContainer = document.getElementById('role-container');
-  const languageSection = document.getElementById('language-section');
-  const ageCheckboxContainer = document.getElementById('age-checkbox-container');
-  const termsCheckboxContainer = document.getElementById('terms-checkbox-container');
-  const ageCheckbox = document.getElementById('age-checkbox');
-  const termsCheckbox = document.getElementById('terms-checkbox');
-  const errorMessage = document.getElementById('error-message');
-  const spokenSelect = document.getElementById('spokenLanguage');
-  const learningSelect = document.getElementById('learningLanguage');
+  const emailEl        = document.getElementById('email');
+  const passwordEl     = document.getElementById('password');
+  const confirmPwdEl   = document.getElementById('confirm-password');
+  const roleEl         = document.getElementById('role');
+  const submitBtn      = document.getElementById('submit-btn');
+  const toggleLink     = document.getElementById('toggle-form');
+  const formTitle      = document.getElementById('form-title');
+  const confirmCont    = document.getElementById('confirm-password-container');
+  const nameCont       = document.getElementById('name-container');
+  const roleCont       = document.getElementById('role-container');
+  const langSection    = document.getElementById('language-section');
+  const ageCont        = document.getElementById('age-checkbox-container');
+  const termsCont      = document.getElementById('terms-checkbox-container');
+  const ageBox         = document.getElementById('age-checkbox');
+  const termsBox       = document.getElementById('terms-checkbox');
+  const errorEl        = document.getElementById('error-message');
+  const spokenSel      = document.getElementById('spokenLanguage');
+  const learningSel    = document.getElementById('learningLanguage');
 
   // Populate language dropdowns
   languages.forEach(lang => {
-    const o1 = document.createElement('option');
-    o1.value = lang;
-    o1.textContent = lang;
-    spokenSelect.appendChild(o1);
-
-    const o2 = document.createElement('option');
-    o2.value = lang;
-    o2.textContent = lang;
-    learningSelect.appendChild(o2);
+    [spokenSel, learningSel].forEach(sel => {
+      const o = document.createElement('option');
+      o.value = lang; o.textContent = lang;
+      sel.appendChild(o);
+    });
   });
 
   function renderTags(type) {
@@ -278,39 +369,27 @@
       tag.className = 'lang-tag';
       tag.innerHTML = `<span>${lang}</span><span class="remove-tag">×</span>`;
       tag.querySelector('.remove-tag').addEventListener('click', () => {
-        if (type === 'spoken') {
-          spokenLangs = spokenLangs.filter(l => l !== lang);
-        } else {
-          learningLangs = learningLangs.filter(l => l !== lang);
-        }
+        if (type === 'spoken') spokenLangs = spokenLangs.filter(l => l !== lang);
+        else learningLangs = learningLangs.filter(l => l !== lang);
         renderTags(type);
       });
       container.appendChild(tag);
     });
   }
 
-  spokenSelect.addEventListener('change', () => {
-    const val = spokenSelect.value;
-    if (val && !spokenLangs.includes(val)) {
-      spokenLangs.push(val);
-      renderTags('spoken');
-    }
-    spokenSelect.value = '';
+  spokenSel.addEventListener('change', () => {
+    const val = spokenSel.value;
+    if (val && !spokenLangs.includes(val)) { spokenLangs.push(val); renderTags('spoken'); }
+    spokenSel.value = '';
   });
 
-  learningSelect.addEventListener('change', () => {
-    const val = learningSelect.value;
-    if (val && !learningLangs.includes(val)) {
-      learningLangs.push(val);
-      renderTags('learning');
-    }
-    learningSelect.value = '';
+  learningSel.addEventListener('change', () => {
+    const val = learningSel.value;
+    if (val && !learningLangs.includes(val)) { learningLangs.push(val); renderTags('learning'); }
+    learningSel.value = '';
   });
 
-  // Update language label when role changes
-  roleEl.addEventListener('change', () => {
-    updateLanguageLabels();
-  });
+  roleEl.addEventListener('change', updateLanguageLabels);
 
   function updateLanguageLabels() {
     const isInstructor = roleEl.value === 'instructor';
@@ -318,149 +397,114 @@
     document.getElementById('learning-label').textContent = isInstructor ? 'I Will Teach' : "I'm Learning";
   }
 
-  toggleFormLink.addEventListener('click', () => {
+  toggleLink.addEventListener('click', () => {
     isSignup = !isSignup;
-    formTitle.textContent = isSignup ? 'Sign Up' : 'Sign In';
-    submitBtn.textContent = isSignup ? 'Sign Up' : 'Sign In';
-    toggleFormLink.textContent = isSignup
-      ? 'Already have an account? Sign In'
-      : "Don't have an account? Sign Up";
-    confirmContainer.style.display = isSignup ? 'block' : 'none';
-    nameContainer.style.display = isSignup ? 'block' : 'none';
-    roleContainer.style.display = isSignup ? 'block' : 'none';
-    languageSection.style.display = isSignup ? 'block' : 'none';
-    ageCheckboxContainer.style.display = isSignup ? 'flex' : 'none';
-    termsCheckboxContainer.style.display = isSignup ? 'flex' : 'none';
-
-    if (isSignup) {
-      updateLanguageLabels();
-    }
-
-    // Reset on switch
-    ageCheckbox.checked = false;
-    termsCheckbox.checked = false;
-    spokenLangs = [];
-    learningLangs = [];
-    renderTags('spoken');
-    renderTags('learning');
+    formTitle.textContent    = isSignup ? 'Sign Up' : 'Sign In';
+    submitBtn.textContent    = isSignup ? 'Sign Up' : 'Sign In';
+    toggleLink.textContent   = isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up";
+    confirmCont.style.display  = isSignup ? 'block' : 'none';
+    nameCont.style.display     = isSignup ? 'block' : 'none';
+    roleCont.style.display     = isSignup ? 'block' : 'none';
+    langSection.style.display  = isSignup ? 'block' : 'none';
+    ageCont.style.display      = isSignup ? 'flex'  : 'none';
+    termsCont.style.display    = isSignup ? 'flex'  : 'none';
+    if (isSignup) updateLanguageLabels();
+    // Reset
+    ageBox.checked = false; termsBox.checked = false;
+    spokenLangs = []; learningLangs = [];
+    renderTags('spoken'); renderTags('learning');
     document.getElementById('name').value = '';
     roleEl.value = 'student';
-
-    errorMessage.textContent = '';
+    errorEl.textContent = '';
   });
 
   submitBtn.addEventListener('click', async () => {
-    const email = emailEl.value.trim();
+    const email    = emailEl.value.trim();
     const password = passwordEl.value.trim();
-    const confirmPassword = confirmPasswordEl.value.trim();
-    const role = roleEl.value;
-
-    errorMessage.textContent = '';
+    errorEl.textContent = '';
 
     if (!email || !password) {
-      errorMessage.textContent = 'Please enter email and password.';
+      errorEl.textContent = 'Please enter your email and password.';
       return;
     }
 
-    if (isSignup) {
-      const name = document.getElementById('name').value.trim();
+    // Disable button and show progress
+    submitBtn.disabled = true;
+    const origText = submitBtn.textContent;
+    submitBtn.textContent = isSignup ? 'Creating account...' : 'Signing in...';
 
-      if (!name) {
-        errorMessage.textContent = 'Please enter your full name.';
-        return;
-      }
+    try {
+      if (isSignup) {
+        const name           = document.getElementById('name').value.trim();
+        const confirmPassword = confirmPwdEl.value.trim();
+        const role           = roleEl.value;
+        const isInstructor   = role === 'instructor';
 
-      if (password !== confirmPassword) {
-        errorMessage.textContent = 'Passwords do not match.';
-        return;
-      }
+        if (!name)                   { throw new Error('Please enter your full name.'); }
+        if (password !== confirmPassword) { throw new Error('Passwords do not match.'); }
+        if (spokenLangs.length === 0) { throw new Error('Please add at least one language you speak.'); }
+        if (learningLangs.length === 0) {
+          throw new Error(isInstructor ? 'Please add at least one language you will teach.' : "Please add at least one language you're learning.");
+        }
+        if (!ageBox.checked)   { throw new Error('You must confirm that you are 18 years old or older.'); }
+        if (!termsBox.checked) { throw new Error('You must agree to the Terms and Conditions and Privacy Policy.'); }
 
-      if (spokenLangs.length === 0) {
-        errorMessage.textContent = 'Please add at least one language you speak.';
-        return;
-      }
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCred.user;
 
-      const isInstructor = role === 'instructor';
-      if (learningLangs.length === 0) {
-        errorMessage.textContent = isInstructor
-          ? 'Please add at least one language you will teach.'
-          : 'Please add at least one language you\'re learning.';
-        return;
-      }
-
-      if (!ageCheckbox.checked) {
-        errorMessage.textContent = 'You must confirm that you are 18 years old or older.';
-        return;
-      }
-
-      if (!termsCheckbox.checked) {
-        errorMessage.textContent = 'You must agree to the Terms and Conditions and Privacy Policy.';
-        return;
-      }
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // Save to users collection
-        const userData = {
-          email,
-          role,
-          name,
-          emailNotifications: true,
-          createdAt: new Date().toISOString()
-        };
-
+        const userData = { email, role, name, emailNotifications: true, createdAt: new Date().toISOString() };
+        userData.languages_spoken = spokenLangs;
         if (isInstructor) {
-          userData.languages_spoken = spokenLangs;
-          // Save instructor profile doc
+          userData.languages_teaching = learningLangs;
           await setDoc(doc(db, 'instructors', user.uid), {
-            email,
-            name,
-            languages_spoken: spokenLangs,
-            languages_teaching: learningLangs,
+            email, name, languages_spoken: spokenLangs, languages_teaching: learningLangs,
             createdAt: new Date().toISOString()
           });
         } else {
-          userData.languages_spoken = spokenLangs;
           userData.languages_learning = learningLangs;
         }
-
         await setDoc(doc(db, 'users', user.uid), userData);
 
-        alert('Account created successfully! You can now sign in.');
-        toggleFormLink.click();
-      } catch (error) {
-        errorMessage.textContent = error.message;
-      }
-    } else {
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        alert('Account created! Please sign in.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = origText;
+        toggleLink.click();
 
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+      } else {
+        // ── Sign in ──────────────────────────────────────────────────────
+        const userCred = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCred.user;
 
-        if (!userDoc.exists()) {
-          errorMessage.textContent = 'User profile not found.';
-          return;
+        // Determine role — try Firestore, fall back to local cache
+        let role = null;
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) {
+            role = snap.data().role;
+            if (role) safeSetStorage('user_role_cache', role);
+          }
+        } catch(firestoreErr) {
+          // Firestore unavailable (offline/slow mobile) — use cached role
+          role = safeGetStorage('user_role_cache');
+          if (!role) throw firestoreErr; // re-throw only if no cache available
         }
 
-        const userData = userDoc.data();
-        const userRole = userData.role;
-
-        if (userRole === 'instructor') {
-          window.location.href = '/dashboard';
-        } else if (userRole === 'student') {
-          window.location.href = '/student-dashboard';
+        if (role === 'instructor' || role === 'student') {
+          redirectByRole(role);
+          // Don't re-enable button — page is navigating away
         } else {
-          errorMessage.textContent = 'Unknown user role.';
+          errorEl.textContent = 'Profile not found. Please contact support.';
+          submitBtn.disabled = false;
+          submitBtn.textContent = origText;
         }
-      } catch (error) {
-        errorMessage.textContent = error.message;
       }
+    } catch(error) {
+      errorEl.textContent = formatAuthError(error.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = origText;
     }
   });
-</script>
+  </script>
 
 </body>
 </html>

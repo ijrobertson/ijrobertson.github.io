@@ -802,6 +802,13 @@
   </nav>
   <!-- end of navbar -->
 
+  <!-- Auth loading overlay — shown until Firebase resolves auth state -->
+  <div id="auth-loading" style="position:fixed;inset:0;background:#f5f5f5;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99998;">
+    <div style="width:44px;height:44px;border:4px solid #e8e8e8;border-top-color:#20bcba;border-radius:50%;animation:authSpin 0.9s linear infinite;"></div>
+    <p style="margin-top:1rem;color:#666;font-family:'Segoe UI',sans-serif;font-size:0.95rem;">Loading your dashboard...</p>
+  </div>
+  <style>@keyframes authSpin{to{transform:rotate(360deg)}}</style>
+
   <!-- ── New-user setup modal (cannot be dismissed) ──────── -->
   <div id="setupModal">
     <div class="setup-inner">
@@ -1033,6 +1040,15 @@
       httpsCallable
     } from './lib/firebaseClient.js';
 
+    // Safe localStorage helpers — localStorage throws in Safari Private Mode,
+    // which would crash DOMContentLoaded and prevent auth from ever running.
+    function safeGetStorage(key) {
+      try { return localStorage.getItem(key); } catch(e) { return null; }
+    }
+    function safeSetStorage(key, val) {
+      try { localStorage.setItem(key, val); } catch(e) {}
+    }
+
     const countries = [
       "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
       "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia",
@@ -1261,7 +1277,7 @@
           if (profile.avatar_url) {
             document.getElementById('avatarPreview').src = profile.avatar_url;
             document.getElementById('navProfilePic').src = profile.avatar_url;
-            localStorage.setItem('student_avatar', profile.avatar_url);
+            safeSetStorage('student_avatar', profile.avatar_url);
           }
 
           // Email notifications (default to true if not set)
@@ -1296,7 +1312,7 @@
       console.log('🚀 DOM Content Loaded - Initializing student dashboard');
 
       // Load cached avatar immediately
-      const cachedAvatar = localStorage.getItem('student_avatar');
+      const cachedAvatar = safeGetStorage('student_avatar');
       if (cachedAvatar) {
         document.getElementById('avatarPreview').src = cachedAvatar;
         document.getElementById('navProfilePic').src = cachedAvatar;
@@ -1339,7 +1355,7 @@
 
           document.getElementById('avatarPreview').src = downloadURL;
           document.getElementById('navProfilePic').src = downloadURL;
-          localStorage.setItem('student_avatar', downloadURL);
+          safeSetStorage('student_avatar', downloadURL);
           statusEl.textContent = 'Photo uploaded!';
           statusEl.style.color = 'green';
         } catch (err) {
@@ -1355,6 +1371,10 @@
 
       // Listen for auth state
       onAuthStateChanged(auth, async (user) => {
+        // Hide loading overlay once auth state is determined
+        const loadingEl = document.getElementById('auth-loading');
+        if (loadingEl) loadingEl.style.display = 'none';
+
         console.log('🔐 Auth state changed:', user ? 'Logged in' : 'Not logged in');
         if (user) {
           currentUser = user;
@@ -1656,7 +1676,7 @@
         renderInterestsGrid('interests-grid', selectedInterests);
         document.getElementById('avatarPreview').src = avatarUrl;
         document.getElementById('navProfilePic').src = avatarUrl;
-        localStorage.setItem('student_avatar', avatarUrl);
+        safeSetStorage('student_avatar', avatarUrl);
 
         isNewUser = false;
         document.getElementById('setupModal').style.display = 'none';

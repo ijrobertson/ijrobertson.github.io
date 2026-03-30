@@ -728,6 +728,13 @@
   </nav>
   <!-- end of navbar -->
 
+  <!-- Auth loading overlay — shown until Firebase resolves auth state -->
+  <div id="auth-loading" style="position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99998;">
+    <div style="width:44px;height:44px;border:4px solid #e8e8e8;border-top-color:#20bcba;border-radius:50%;animation:authSpin 0.9s linear infinite;"></div>
+    <p style="margin-top:1rem;color:#666;font-family:'Segoe UI',sans-serif;font-size:0.95rem;">Loading your dashboard...</p>
+  </div>
+  <style>@keyframes authSpin{to{transform:rotate(360deg)}}</style>
+
   <div class="container" id="profile-container">
     <label for="name">Full Name</label>
     <input type="text" id="name" />
@@ -925,6 +932,15 @@
       httpsCallable
     } from './lib/firebaseClient.js';
 
+    // Safe localStorage helpers — localStorage throws in Safari Private Mode,
+    // which would crash DOMContentLoaded and prevent auth from ever running.
+    function safeGetStorage(key) {
+      try { return localStorage.getItem(key); } catch(e) { return null; }
+    }
+    function safeSetStorage(key, val) {
+      try { localStorage.setItem(key, val); } catch(e) {}
+    }
+
     // Language/country/currency data
     const languages = [
       "Afrikaans", "Akan", "Albanian", "Amharic", "Arabic", "Armenian", "Assamese", "Aymara", "Azerbaijani",
@@ -1009,7 +1025,7 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
       // Load cached avatar immediately
-      const cachedAvatar = localStorage.getItem('instructor_avatar');
+      const cachedAvatar = safeGetStorage('instructor_avatar');
       if (cachedAvatar) {
         document.getElementById('avatarPreview').src = cachedAvatar;
       }
@@ -1085,7 +1101,7 @@
             { avatar_url: downloadURL }, { merge: true });
 
           document.getElementById('avatarPreview').src = downloadURL;
-          localStorage.setItem('instructor_avatar', downloadURL);
+          safeSetStorage('instructor_avatar', downloadURL);
           avatarSet = true;
           setStatus("Photo uploaded!", false);
         } catch (err) {
@@ -1149,6 +1165,10 @@
 
       // Listen for auth state
       onAuthStateChanged(auth, async (user) => {
+        // Hide loading overlay once auth state is determined
+        const loadingEl = document.getElementById('auth-loading');
+        if (loadingEl) loadingEl.style.display = 'none';
+
         if (user) {
           currentUser = user;
 
@@ -1396,7 +1416,7 @@
           if (data.avatar_url) {
             document.getElementById('avatarPreview').src = data.avatar_url;
             document.getElementById('navProfilePic').src = data.avatar_url;
-            localStorage.setItem('instructor_avatar', data.avatar_url);
+            safeSetStorage('instructor_avatar', data.avatar_url);
             avatarSet = true;
           }
 
