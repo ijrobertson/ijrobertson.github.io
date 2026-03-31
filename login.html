@@ -271,7 +271,30 @@
   const overlayEl   = document.getElementById('auth-check-overlay');
   const cardEl      = document.getElementById('login-card');
 
-  auth.authStateReady().then(async () => {
+  // Safety net: no matter what happens, the login form appears within 5 seconds.
+  // This prevents the spinner from hanging forever if authStateReady throws or
+  // if Firebase takes too long to respond on a slow mobile connection.
+  let formShown = false;
+  function showLoginForm() {
+    if (formShown) return;
+    formShown = true;
+    overlayEl.style.display = 'none';
+    cardEl.style.display = 'block';
+  }
+  const safetyTimer = setTimeout(showLoginForm, 5000);
+
+  // authStateReady() may not exist in all SDK/browser combinations and can
+  // throw a synchronous TypeError before a .catch() is ever established.
+  let readyPromise;
+  try {
+    readyPromise = (typeof auth.authStateReady === 'function')
+      ? auth.authStateReady()
+      : Promise.resolve();
+  } catch(e) {
+    readyPromise = Promise.resolve();
+  }
+
+  readyPromise.then(async () => {
     if (auth.currentUser) {
       // Try Firestore for role; fall back to cache if offline
       let role = null;
@@ -285,17 +308,18 @@
         role = safeGetStorage('user_role_cache');
       }
       if (role === 'instructor' || role === 'student') {
+        clearTimeout(safetyTimer);
         redirectByRole(role);
         return; // stay on redirect, don't show form
       }
     }
     // Not signed in (or role unknown) — show the login form
-    overlayEl.style.display = 'none';
-    cardEl.style.display = 'block';
+    clearTimeout(safetyTimer);
+    showLoginForm();
   }).catch(() => {
     // authStateReady failed — show form anyway
-    overlayEl.style.display = 'none';
-    cardEl.style.display = 'block';
+    clearTimeout(safetyTimer);
+    showLoginForm();
   });
 
   // ── Language list ─────────────────────────────────────────────────────────
