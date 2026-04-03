@@ -1657,24 +1657,12 @@
             return new Date(date.setDate(diff));
         }
 
-        // Returns 'YYYY-MM-DD' for a given Date object interpreted in the specified IANA timezone.
-        // Used to compare student-calendar dates against the instructor's blocked dates list.
-        function dateStrInTZ(date, timezone) {
-            try {
-                const parts = new Intl.DateTimeFormat('en-CA', {
-                    timeZone: timezone,
-                    year: 'numeric', month: '2-digit', day: '2-digit'
-                }).formatToParts(date);
-                const p = {};
-                parts.forEach(({ type, value }) => { p[type] = value; });
-                return `${p.year}-${p.month}-${p.day}`;
-            } catch {
-                // Fallback if timezone is invalid or browser doesn't support it
-                const d = new Date(date);
-                return d.getFullYear() + '-' +
-                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
-                    String(d.getDate()).padStart(2, '0');
-            }
+        // Returns 'YYYY-MM-DD' using the browser's local date — same format the
+        // instructor dashboard uses when storing blocked dates via calDateStr().
+        function localDateStr(date) {
+            return date.getFullYear() + '-' +
+                String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                String(date.getDate()).padStart(2, '0');
         }
 
         function renderWeekCalendar() {
@@ -1701,11 +1689,11 @@
             const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const dayKey  = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
-            // Check if instructor has blocked this date (compare in instructor's timezone)
-            const instructorTZ   = instructorAvailability.timezone || 'UTC';
-            const blockedDates   = instructorAvailability.blockedDates || [];
-            const dateInInstrTZ  = dateStrInTZ(date, instructorTZ);
-            const isBlocked      = blockedDates.includes(dateInInstrTZ);
+            // Check if instructor has blocked this date.
+            // Both sides use YYYY-MM-DD in local browser time — consistent with
+            // how calDateStr() stores dates in the dashboard.
+            const blockedDates = instructorAvailability.blockedDates || [];
+            const isBlocked    = blockedDates.includes(localDateStr(date));
 
             if (isBlocked) {
                 column.className = 'day-column day-blocked';
@@ -1760,6 +1748,10 @@
         function generateSlotsForDay(date, dayKey) {
             const now = new Date();
             if (date < now.setHours(0, 0, 0, 0)) return [];
+
+            // Defence-in-depth: also block slots here in case createDayColumn check missed it
+            const blockedDates = instructorAvailability.blockedDates || [];
+            if (blockedDates.includes(localDateStr(date))) return [];
 
             const daySlots = instructorAvailability.weeklySchedule[dayKey] || [];
             const slots = [];
@@ -1826,13 +1818,14 @@
                 slot.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
                 ' at ' + formatTime(slot.startTime) + ' – ' + formatTime(slot.endTime);
 
-            // Reset payment element area
+            // Reset payment element area — set platform fee immediately so it's
+            // never blank; it's always $1 regardless of cloud function response
             document.getElementById('payment-element-loading').style.display = 'block';
             document.getElementById('payment-element-wrapper').style.display = 'none';
             document.getElementById('payment-element').innerHTML = '';
             document.getElementById('payment-error-msg').style.display = 'none';
             document.getElementById('pay-lesson-price').textContent = 'Loading...';
-            document.getElementById('pay-platform-fee').textContent = '—';
+            document.getElementById('pay-platform-fee').textContent = '$1.00';
             document.getElementById('pay-price').textContent = 'Loading...';
 
             try {
@@ -1842,17 +1835,16 @@
                 const currency = instructorData.currency || 'USD';
                 const _csMap = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
                 const sym = _csMap[currency] || '';
-                const fmt = (cents) => `${sym}${(cents / 100).toFixed(2)} ${currency}`;
+                const fmtPrice = (cents) => `${sym}${(cents / 100).toFixed(2)} ${currency}`;
 
-                // Show estimated breakdown immediately from Firestore while we wait
-                // for the cloud function (so the user never stares at "Loading...")
+                // Populate lesson price from Firestore immediately (before cloud fn returns)
                 const lessonPriceCents = Math.round((instructorData.price_per_lesson || 0) * 100);
-                document.getElementById('pay-lesson-price').textContent = fmt(lessonPriceCents);
-                document.getElementById('pay-platform-fee').textContent = fmt(100); // $1.00
-                document.getElementById('pay-price').textContent = fmt(lessonPriceCents + 100);
+                document.getElementById('pay-lesson-price').textContent = fmtPrice(lessonPriceCents);
+                // Platform fee is always $1.00 — show it now, update format after fn returns
+                document.getElementById('pay-platform-fee').textContent = `${sym}1.00 ${currency}`;
+                document.getElementById('pay-price').textContent = fmtPrice(lessonPriceCents + 100);
 
-                // Call Cloud Function to create PaymentIntent.
-                // Pass a client-generated idempotency key so retries are safe.
+                // Call Cloud Function to create PaymentIntent
                 const createPI = httpsCallable(functions, 'createPaymentIntent');
                 const piResult = await createPI({
                     instructorId: currentInstructorId,
@@ -1860,13 +1852,11 @@
                 });
                 const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
 
-                // Only overwrite the Firestore estimates when the new function returns all
-                // three fields. If any are missing (old function version), keep the estimates
-                // so partial overwrites can never corrupt the display.
+                // Update with server-authoritative amounts only when all three are present
                 if (lessonAmount != null && studentPlatformFee != null && amount != null) {
-                    document.getElementById('pay-lesson-price').textContent = fmt(lessonAmount);
-                    document.getElementById('pay-platform-fee').textContent = fmt(studentPlatformFee);
-                    document.getElementById('pay-price').textContent = fmt(amount);
+                    document.getElementById('pay-lesson-price').textContent = fmtPrice(lessonAmount);
+                    document.getElementById('pay-platform-fee').textContent = fmtPrice(studentPlatformFee);
+                    document.getElementById('pay-price').textContent = fmtPrice(amount);
                 }
 
                 // Fetch publishable key from backend (cached after first call)
