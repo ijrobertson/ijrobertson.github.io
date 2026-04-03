@@ -314,6 +314,18 @@
                 <p>Complete all required fields and upload your intro video to apply.</p>
             </div>
 
+            <!-- Account creation fields (shown only for unauthenticated visitors) -->
+            <div class="apply-card" id="accountDetailsCard" style="display:none;">
+                <div class="section-title"><i class="fas fa-lock"></i>Create Your Account</div>
+                <p style="font-size:0.88rem;color:#666;margin-top:-0.5rem;margin-bottom:0.5rem;">Your account will be created automatically when you submit your application.</p>
+                <label for="applyEmail">Email Address <span style="color:#dc3545;">*</span></label>
+                <input type="email" id="applyEmail" placeholder="you@example.com">
+                <label for="applyPassword">Password <span style="color:#dc3545;">*</span></label>
+                <input type="password" id="applyPassword" placeholder="At least 6 characters">
+                <label for="applyPasswordConfirm">Confirm Password <span style="color:#dc3545;">*</span></label>
+                <input type="password" id="applyPasswordConfirm" placeholder="Re-enter your password">
+            </div>
+
             <!-- Section 1: Personal Info -->
             <div class="apply-card">
                 <div class="section-title"><i class="fas fa-user"></i>Personal Information</div>
@@ -420,6 +432,7 @@
         import {
             auth, db, storage,
             onAuthStateChanged, signOut,
+            createUserWithEmailAndPassword,
             doc, getDoc, setDoc,
             ref, uploadBytes, uploadBytesResumable, getDownloadURL,
             collection, query, where, onSnapshot
@@ -486,10 +499,14 @@
 
         // ── State ─────────────────────────────────────────────────────────
         let currentUser = null;
+        let isAuthenticated = false;          // true once auth resolves with a user
+        let applicationJustSubmitted = false; // prevents auth callback overriding success screen
         let spokenLangs = [];
         let teachingLangs = [];
         let uploadedAvatarUrl = null;
         let uploadedVideoUrl = null;
+        let pendingAvatarFile = null;  // held for unauthenticated submit
+        let pendingVideoFile  = null;  // held for unauthenticated submit
 
         // ── Init selects ──────────────────────────────────────────────────
         function populateSelect(id, items) {
@@ -550,24 +567,36 @@
         // ── Avatar upload ─────────────────────────────────────────────────
         document.getElementById('avatarInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            if (!file || !currentUser) return;
+            if (!file) return;
             const statusEl = document.getElementById('avatarStatus');
-            statusEl.textContent = 'Uploading…';
-            try {
-                const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
-                await uploadBytes(avatarRef, file);
-                uploadedAvatarUrl = await getDownloadURL(avatarRef);
-                const preview = document.getElementById('avatarPreview');
-                preview.src = uploadedAvatarUrl;
-                statusEl.textContent = 'Photo uploaded ✓';
-                statusEl.style.color = '#198754';
-            } catch (err) {
-                if (err.code === 'storage/unauthorized') {
-                    statusEl.textContent = 'Photo file size too large. Please try again with a smaller file size.';
-                } else {
-                    statusEl.textContent = 'Upload failed: ' + err.message;
+            const preview  = document.getElementById('avatarPreview');
+
+            // Always show a local preview immediately
+            preview.src = URL.createObjectURL(file);
+
+            if (currentUser) {
+                // Authenticated — upload now
+                statusEl.textContent = 'Uploading…';
+                statusEl.style.color = '#555';
+                try {
+                    const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+                    await uploadBytes(avatarRef, file);
+                    uploadedAvatarUrl = await getDownloadURL(avatarRef);
+                    statusEl.textContent = 'Photo uploaded ✓';
+                    statusEl.style.color = '#198754';
+                } catch (err) {
+                    uploadedAvatarUrl = null;
+                    statusEl.textContent = err.code === 'storage/unauthorized'
+                        ? 'Photo file size too large. Please try again with a smaller file.'
+                        : 'Upload failed: ' + err.message;
+                    statusEl.style.color = '#dc3545';
                 }
-                statusEl.style.color = '#dc3545';
+            } else {
+                // Unauthenticated — hold the file; upload happens on submit
+                pendingAvatarFile = file;
+                uploadedAvatarUrl = null;
+                statusEl.textContent = 'Photo selected ✓';
+                statusEl.style.color = '#198754';
             }
             checkSubmitReady();
         });
@@ -588,7 +617,6 @@
         });
 
         function uploadVideo(file) {
-            if (!currentUser) return;
             const allowed = ['video/mp4', 'video/quicktime', 'video/webm'];
             if (!allowed.includes(file.type)) {
                 setVideoStatus('Invalid file type. Please upload MP4, MOV, or WebM.', 'error');
@@ -598,6 +626,22 @@
                 setVideoStatus('File exceeds 200 MB limit.', 'error');
                 return;
             }
+
+            if (!currentUser) {
+                // Unauthenticated — hold the file; upload happens on submit
+                pendingVideoFile = file;
+                uploadedVideoUrl = null;
+                document.getElementById('videoProgressWrapper').style.display = 'none';
+                setVideoStatus('Video selected ✓ — ' + file.name, 'success');
+                checkSubmitReady();
+                return;
+            }
+
+            // Authenticated — upload now
+            doVideoUpload(file);
+        }
+
+        function doVideoUpload(file) {
             const progressWrapper = document.getElementById('videoProgressWrapper');
             const progressBar = document.getElementById('videoProgressBar');
             progressWrapper.style.display = 'block';
@@ -628,6 +672,33 @@
             );
         }
 
+        // Promise-based video upload used during submit for unauthenticated users
+        function uploadVideoPromise(file) {
+            return new Promise((resolve, reject) => {
+                const progressWrapper = document.getElementById('videoProgressWrapper');
+                const progressBar = document.getElementById('videoProgressBar');
+                progressWrapper.style.display = 'block';
+                progressBar.style.width = '0%';
+                setVideoStatus('Uploading video…', '');
+
+                const videoRef = ref(storage, `instructor_videos/${currentUser.uid}`);
+                const task = uploadBytesResumable(videoRef, file);
+                task.on('state_changed',
+                    (snapshot) => {
+                        const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        progressBar.style.width = pct + '%';
+                        setVideoStatus(`Uploading video… ${pct}%`, '');
+                    },
+                    reject,
+                    async () => {
+                        const url = await getDownloadURL(task.snapshot.ref);
+                        setVideoStatus('Video uploaded ✓ — ' + file.name, 'success');
+                        resolve(url);
+                    }
+                );
+            });
+        }
+
         function setVideoStatus(msg, type) {
             const el = document.getElementById('videoStatus');
             el.textContent = msg;
@@ -636,10 +707,21 @@
 
         // ── Submit readiness ──────────────────────────────────────────────
         function checkSubmitReady() {
-            const name = (document.getElementById('applyName').value || '').trim();
+            const name       = (document.getElementById('applyName').value || '').trim();
             const experience = (document.getElementById('applyExperience').value || '').trim();
-            const style = (document.getElementById('applyTeachingStyle').value || '').trim();
-            const ready = name && uploadedAvatarUrl && teachingLangs.length > 0 && experience && style && uploadedVideoUrl;
+            const style      = (document.getElementById('applyTeachingStyle').value || '').trim();
+            const avatarOk   = !!(uploadedAvatarUrl || pendingAvatarFile);
+            const videoOk    = !!(uploadedVideoUrl  || pendingVideoFile);
+
+            let accountOk = true;
+            if (!isAuthenticated) {
+                const email   = (document.getElementById('applyEmail').value || '').trim();
+                const pwd     = (document.getElementById('applyPassword').value || '');
+                const confirm = (document.getElementById('applyPasswordConfirm').value || '');
+                accountOk = !!(email && pwd.length >= 6 && pwd === confirm);
+            }
+
+            const ready = name && avatarOk && teachingLangs.length > 0 && experience && style && videoOk && accountOk;
             document.getElementById('submitBtn').disabled = !ready;
         }
 
@@ -657,6 +739,47 @@
             btn.textContent = 'Submitting…';
 
             try {
+                // ── Step 1: Create account if visitor is not yet authenticated ──
+                if (!currentUser) {
+                    const email   = document.getElementById('applyEmail').value.trim();
+                    const pwd     = document.getElementById('applyPassword').value;
+                    const confirm = document.getElementById('applyPasswordConfirm').value;
+
+                    if (pwd !== confirm) throw new Error('Passwords do not match.');
+                    if (pwd.length < 6)  throw new Error('Password must be at least 6 characters.');
+
+                    btn.textContent = 'Creating account…';
+                    const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+                    currentUser = cred.user;
+                    // Prevent the auth callback from re-routing us mid-submit
+                    applicationJustSubmitted = true;
+
+                    // Create the users document
+                    await setDoc(doc(db, 'users', currentUser.uid), {
+                        email: currentUser.email,
+                        role: 'student',
+                        name: document.getElementById('applyName').value.trim(),
+                        emailNotifications: true,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+
+                // ── Step 2: Upload avatar if it was held as a pending file ──
+                if (pendingAvatarFile && !uploadedAvatarUrl) {
+                    btn.textContent = 'Uploading photo…';
+                    const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+                    await uploadBytes(avatarRef, pendingAvatarFile);
+                    uploadedAvatarUrl = await getDownloadURL(avatarRef);
+                }
+
+                // ── Step 3: Upload video if it was held as a pending file ──
+                if (pendingVideoFile && !uploadedVideoUrl) {
+                    btn.textContent = 'Uploading video…';
+                    uploadedVideoUrl = await uploadVideoPromise(pendingVideoFile);
+                }
+
+                // ── Step 4: Save instructor application ──
+                btn.textContent = 'Submitting…';
                 const data = {
                     name: document.getElementById('applyName').value.trim(),
                     email: currentUser.email,
@@ -677,7 +800,8 @@
                 await setDoc(doc(db, 'instructors', currentUser.uid), data, { merge: true });
                 showState('success');
             } catch (err) {
-                errEl.textContent = 'Error submitting application: ' + err.message;
+                applicationJustSubmitted = false;
+                errEl.textContent = 'Error: ' + err.message;
                 errEl.style.display = 'block';
                 btn.disabled = false;
                 btn.textContent = 'Submit Application';
@@ -726,11 +850,28 @@
 
         // ── Auth state machine ────────────────────────────────────────────
         onAuthStateChanged(auth, async (user) => {
+            // If submit just created an account, ignore auth callbacks until done
+            if (applicationJustSubmitted) return;
+
             if (!user) {
-                window.location.href = 'login';
+                // Not signed in — show the application form with account creation fields
+                isAuthenticated = false;
+                document.getElementById('accountDetailsCard').style.display = 'block';
+                // Wire up account fields to readiness checker
+                ['applyEmail','applyPassword','applyPasswordConfirm'].forEach(id => {
+                    document.getElementById(id).addEventListener('input', checkSubmitReady);
+                });
+                populateSelect('spokenLangSelect', languages);
+                populateSelect('teachingLangSelect', languages);
+                populateSelect('applyCountry', countries);
+                populateTimezone();
+                showState('form');
                 return;
             }
+
+            isAuthenticated = true;
             currentUser = user;
+            document.getElementById('accountDetailsCard').style.display = 'none';
 
             // Update navbar
             const profileNavWrapper = document.getElementById('profileNavWrapper');
