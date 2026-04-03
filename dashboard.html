@@ -776,7 +776,7 @@
     <div id="languages_teaching"></div>
 
     <label for="price">Price Per Lesson</label>
-    <input type="number" id="price" min="0" placeholder="Enter price" />
+    <input type="number" id="price" min="5" placeholder="Enter price (min $5)" />
     <label for="currency">Currency</label>
     <select id="currency"></select>
 
@@ -1324,11 +1324,19 @@
         return;
       }
 
+      const priceInput = document.getElementById('price').value;
+      const parsedPrice = parseFloat(priceInput);
+      if (priceInput && (!parsedPrice || parsedPrice < 5)) {
+        setStatus('Lesson rate must be at least $5. Please update your price.', true);
+        document.getElementById('price').focus();
+        return;
+      }
+
       const profile = {
         name,
         languages_spoken: spokenLanguages,
         languages_teaching: teachingLanguages,
-        price_per_lesson: parseFloat(document.getElementById('price').value) || null,
+        price_per_lesson: parsedPrice || null,
         currency: document.getElementById('currency').value,
         about_me,
         native_country: document.getElementById('country').value,

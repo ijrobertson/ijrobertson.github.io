@@ -369,9 +369,9 @@
                 <select id="teachingLangSelect" onchange="addLang('teaching')"><option value="">Select a language…</option></select>
                 <div class="tag-container" id="teachingTags" style="margin-bottom:1rem;"></div>
 
-                <label>Hourly Rate</label>
+                <label>Hourly Rate <span style="color:#666;font-weight:400;">(optional — minimum $5)</span></label>
                 <div class="rate-row">
-                    <input type="number" id="applyRate" class="rate-input" placeholder="e.g. 25" min="1" step="1">
+                    <input type="number" id="applyRate" class="rate-input" placeholder="e.g. 25" min="5" step="1">
                     <select id="applyCurrency" class="currency-select">
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
@@ -380,6 +380,7 @@
                         <option value="AUD">AUD</option>
                     </select>
                 </div>
+                <small style="color:#666;">Minimum rate is $5 per lesson. You can update this anytime from your dashboard.</small>
 
                 <label for="applyExperience">Teaching Experience <span style="color:#dc3545;">*</span></label>
                 <textarea id="applyExperience" placeholder="Describe your teaching background, years of experience, types of students you have taught, etc." rows="4" required></textarea>
@@ -780,6 +781,11 @@
 
                 // ── Step 4: Save instructor application ──
                 btn.textContent = 'Submitting…';
+                const rateValue = document.getElementById('applyRate').value;
+                const parsedRate = parseFloat(rateValue);
+                if (rateValue && (!parsedRate || parsedRate < 5)) {
+                    throw new Error('Hourly rate must be at least $5 per lesson.');
+                }
                 const data = {
                     name: document.getElementById('applyName').value.trim(),
                     email: currentUser.email,
@@ -787,7 +793,7 @@
                     timezone: document.getElementById('applyTimezone').value,
                     languages_spoken: [...spokenLangs],
                     languages_teaching: [...teachingLangs],
-                    price_per_lesson: parseFloat(document.getElementById('applyRate').value) || null,
+                    price_per_lesson: parsedRate || null,
                     currency: document.getElementById('applyCurrency').value,
                     teaching_experience: document.getElementById('applyExperience').value.trim(),
                     certifications: document.getElementById('applyCertifications').value.trim(),

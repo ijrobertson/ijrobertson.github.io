@@ -667,15 +667,43 @@ exports.adminApproveInstructor = onCall(async (request) => {
   const { instructorId } = request.data;
   if (!instructorId) throw new HttpsError('invalid-argument', 'instructorId required');
 
-  await admin.firestore().collection('instructors').doc(instructorId).update({
-    status: 'approved',
-    approvedAt: admin.firestore.FieldValue.serverTimestamp(),
-    approvedBy: request.auth.uid
-  });
+  const db = admin.firestore();
+  const instructorRef = db.collection('instructors').doc(instructorId);
+  const userRef = db.collection('users').doc(instructorId);
+  const statsRef = db.collection('platformStats').doc('global');
 
-  await admin.firestore().collection('users').doc(instructorId).update({
-    role: 'instructor',
-    status: 'approved'
+  // Use a transaction to atomically determine founding instructor status
+  const { isFoundingInstructor, commissionRate } = await db.runTransaction(async (tx) => {
+    const statsSnap = await tx.get(statsRef);
+    const currentCount = statsSnap.exists ? (statsSnap.data().foundingInstructorCount || 0) : 0;
+
+    let isFoundingInstructor = false;
+    let commissionRate = DEFAULT_COMMISSION_RATE;
+
+    if (currentCount < FOUNDING_INSTRUCTOR_LIMIT) {
+      isFoundingInstructor = true;
+      commissionRate = FOUNDING_INSTRUCTOR_RATE;
+      tx.set(statsRef, {
+        foundingInstructorCount: admin.firestore.FieldValue.increment(1)
+      }, { merge: true });
+    }
+
+    tx.update(instructorRef, {
+      status: 'approved',
+      approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      approvedBy: request.auth.uid,
+      commissionRate,
+      isFoundingInstructor
+    });
+
+    tx.set(userRef, {
+      role: 'instructor',
+      status: 'approved',
+      commissionRate,
+      isFoundingInstructor
+    }, { merge: true });
+
+    return { isFoundingInstructor, commissionRate };
   });
 
   // Notify instructor by email
@@ -683,6 +711,14 @@ exports.adminApproveInstructor = onCall(async (request) => {
     const snap = await admin.firestore().collection('instructors').doc(instructorId).get();
     if (snap.exists && snap.data().email) {
       const resend = new Resend(process.env.RESEND_API_KEY);
+      const keepPercent = Math.round((1 - commissionRate) * 100);
+      const foundingBadge = isFoundingInstructor
+        ? `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:4px;padding:12px 16px;margin:16px 0;">
+             <strong style="color:#f59e0b;">&#9733; Founding Instructor</strong>
+             <p style="margin:6px 0 0;">You are one of our first ${FOUNDING_INSTRUCTOR_LIMIT} approved instructors and have been granted a <strong>lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate</strong>. You keep ${keepPercent}% of every lesson — forever.</p>
+           </div>`
+        : `<p>You keep <strong>${keepPercent}% of every lesson</strong> you complete on Lingua Bud.</p>`;
+
       await resend.emails.send({
         from: 'Lingua Bud <notifications@linguabud.com>',
         to: snap.data().email,
@@ -695,6 +731,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
             <div style="background:white;padding:32px;border:1px solid #e9ecef;border-top:none;border-radius:0 0 4px 4px;">
               <p>Hi ${snap.data().name || 'Instructor'},</p>
               <p>Great news — your instructor application has been <strong>approved</strong>! Your profile is now live and students can book lessons with you.</p>
+              ${foundingBadge}
               <p style="margin-top:24px;">
                 <a href="https://linguabud.com/dashboard"
                    style="background:#20bcba;color:white;padding:12px 28px;border-radius:4px;text-decoration:none;font-weight:bold;">
@@ -705,7 +742,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'Instructor'},\n\nYour Lingua Bud instructor application has been approved! Your profile is now live.\n\nDashboard: https://linguabud.com/dashboard\n\nQuestions? Email support@linguabud.com`
+        text: `Hi ${snap.data().name || 'Instructor'},\n\nYour Lingua Bud instructor application has been approved! Your profile is now live.\n\n${isFoundingInstructor ? `Founding Instructor: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson.\n\n` : `You keep ${keepPercent}% of every lesson.\n\n`}Dashboard: https://linguabud.com/dashboard\n\nQuestions? Email support@linguabud.com`
       });
     }
   } catch (e) {
@@ -816,7 +853,10 @@ exports.adminMarkMessageRead = onCall(async (request) => {
 
 // ── Stripe Connect Integration ─────────────────────────────────────────────
 
-const PLATFORM_FEE_PERCENT = 0.10; // 10% platform fee — easy to adjust
+const STUDENT_PLATFORM_FEE = 1.00; // flat $1 fee added to every transaction
+const DEFAULT_COMMISSION_RATE = 0.15; // 15% commission for standard instructors
+const FOUNDING_INSTRUCTOR_RATE = 0.10; // 10% lifetime commission for first 50 instructors
+const FOUNDING_INSTRUCTOR_LIMIT = 50;
 
 function getStripe() {
   return Stripe(process.env.STRIPE_SECRET_KEY);
@@ -941,7 +981,9 @@ exports.getStripeConnectDashboard = onCall(async (request) => {
 
 /**
  * Creates a Stripe PaymentIntent for a student booking a lesson.
- * Directs funds to the instructor's Connect account; platform keeps 10%.
+ * Directs funds to the instructor's Connect account.
+ * Platform fee = instructor's commissionRate (default 15%, 10% for founding instructors)
+ * plus a flat $1 student platform fee, both collected as application_fee_amount.
  */
 exports.createPaymentIntent = onCall(async (request) => {
   if (!request.auth) {
@@ -970,8 +1012,8 @@ exports.createPaymentIntent = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'Instructor has not connected Stripe');
   }
 
-  if (!price_per_lesson || price_per_lesson <= 0) {
-    throw new HttpsError('failed-precondition', 'Instructor has not set a lesson price');
+  if (!price_per_lesson || price_per_lesson < 5) {
+    throw new HttpsError('failed-precondition', 'Instructor lesson price must be at least $5');
   }
 
   // Verify instructor can accept charges
@@ -980,17 +1022,28 @@ exports.createPaymentIntent = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'Instructor payment setup is incomplete');
   }
 
-  const amount = Math.round(price_per_lesson * 100); // convert to cents
+  // Use instructor's individual commission rate (set at approval time)
+  const commissionRate = typeof instructor.commissionRate === 'number'
+    ? instructor.commissionRate
+    : DEFAULT_COMMISSION_RATE;
+
+  const lessonAmountCents = Math.round(price_per_lesson * 100); // lesson price in cents
+  const studentFeeCents   = Math.round(STUDENT_PLATFORM_FEE * 100); // flat $1 fee in cents
+  const totalChargeCents  = lessonAmountCents + studentFeeCents; // student pays lesson + $1
+
+  const commissionCents   = Math.round(lessonAmountCents * commissionRate);
+  // Platform collects commission on lesson price + the student platform fee
+  const applicationFeeAmountCents = commissionCents + studentFeeCents;
+
   const normalizedCurrency = (currency || 'USD').toLowerCase();
-  const platformFee = Math.round(amount * PLATFORM_FEE_PERCENT);
 
   // Idempotency key prevents duplicate charges on network retries
   const stripeOptions = idempotencyKey ? { idempotencyKey } : {};
 
   const paymentIntent = await stripe.paymentIntents.create({
-    amount,
+    amount: totalChargeCents,
     currency: normalizedCurrency,
-    application_fee_amount: platformFee,
+    application_fee_amount: applicationFeeAmountCents,
     transfer_data: {
       destination: stripeAccountId
     },
@@ -999,16 +1052,21 @@ exports.createPaymentIntent = onCall(async (request) => {
     metadata: {
       instructorId,
       studentId: uid,
-      platformFeePercent: String(Math.round(PLATFORM_FEE_PERCENT * 100))
+      lessonAmount: String(lessonAmountCents),
+      studentPlatformFee: String(studentFeeCents),
+      commissionRate: String(commissionRate),
+      isFoundingInstructor: String(!!instructor.isFoundingInstructor)
     }
   }, stripeOptions);
 
   return {
     clientSecret: paymentIntent.client_secret,
     paymentIntentId: paymentIntent.id,
-    amount,
+    amount: totalChargeCents,
+    lessonAmount: lessonAmountCents,
+    studentPlatformFee: studentFeeCents,
     currency: normalizedCurrency,
-    platformFee
+    platformFee: applicationFeeAmountCents
   };
 });
 

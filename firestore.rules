@@ -167,6 +167,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Platform stats — read-only for clients; written only by Cloud Functions (Admin SDK)
+    match /platformStats/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // User reports — submitted when a user reports another user's profile
     match /userReports/{reportId} {
       // Any logged-in user can submit a report (cannot report themselves)
