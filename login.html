@@ -103,7 +103,7 @@
       flex-wrap: wrap;
       gap: 0.4rem;
       margin-top: 0.4rem;
-      min-height: 24px;
+      min-height: 0;
     }
     .lang-tag {
       background-color: #20bcba;
@@ -125,6 +125,24 @@
       font-size: 0.85rem;
     }
     .lang-tag .remove-tag:hover { background: rgba(255,255,255,0.5); }
+
+    /* Become an instructor link (signup only) */
+    .instructor-cta {
+      display: none;
+      text-align: center;
+      margin-top: 0.9rem;
+      padding-top: 0.9rem;
+      border-top: 1px solid #eee;
+      font-size: 0.85rem;
+      color: #777;
+    }
+    .instructor-cta a {
+      color: #20bcba;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .instructor-cta a:hover { text-decoration: underline; color: #199c9a; }
 
     /* Auth-check overlay */
     #auth-check-overlay {
@@ -206,6 +224,9 @@
 
     <button class="btn" id="submit-btn">Sign In</button>
     <div class="toggle-link" id="toggle-form">Don't have an account? Sign Up</div>
+    <div class="instructor-cta" id="instructor-cta">
+      Want to teach? <a href="become-an-instructor" target="_blank">Learn about becoming an instructor &rarr;</a>
+    </div>
     <div class="error" id="error-message"></div>
   </div>
 
@@ -418,6 +439,7 @@
     langSection.style.display  = isSignup ? 'block' : 'none';
     ageCont.style.display      = isSignup ? 'flex'  : 'none';
     termsCont.style.display    = isSignup ? 'flex'  : 'none';
+    document.getElementById('instructor-cta').style.display = isSignup ? 'block' : 'none';
     // Reset
     ageBox.checked = false; termsBox.checked = false;
     spokenLangs = []; learningLangs = [];
