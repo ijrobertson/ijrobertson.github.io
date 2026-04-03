@@ -277,11 +277,16 @@
 
   // authStateReady() may not exist in all SDK/browser combinations and can
   // throw a synchronous TypeError before a .catch() is ever established.
+  // Race against the safety timer so a hung IndexedDB never blocks the form.
   let readyPromise;
   try {
-    readyPromise = (typeof auth.authStateReady === 'function')
+    const rawReady = (typeof auth.authStateReady === 'function')
       ? auth.authStateReady()
       : Promise.resolve();
+    readyPromise = Promise.race([
+      rawReady,
+      new Promise(resolve => setTimeout(resolve, 5000))
+    ]);
   } catch(e) {
     readyPromise = Promise.resolve();
   }

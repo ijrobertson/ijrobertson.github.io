@@ -1288,8 +1288,8 @@
                 allInstructors = [];
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    // Only show approved instructors
-                    if (data.status === 'approved') {
+                    // Show approved instructors and legacy profiles without a status field
+                    if (!data.status || data.status === 'approved') {
                         allInstructors.push({ id: doc.id, ...data });
                     }
                 });
