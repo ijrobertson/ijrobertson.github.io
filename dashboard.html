@@ -981,6 +981,9 @@
             <div class="legend-dot" style="background:#f5f5f5;border:1px solid #ccc;"></div>
             No scheduled hours
           </div>
+          <div class="legend-item" style="margin-left:auto;">
+            <span id="blocked-save-indicator" style="font-size:0.82rem;font-weight:600;min-width:80px;text-align:right;"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -1873,7 +1876,7 @@
       }
     }
 
-    function toggleBlockDate(dateStr) {
+    async function toggleBlockDate(dateStr) {
       const idx = blockedDates.indexOf(dateStr);
       if (idx === -1) {
         blockedDates.push(dateStr);
@@ -1881,6 +1884,23 @@
         blockedDates.splice(idx, 1);
       }
       renderBlockedDatesCalendar();
+
+      // Persist immediately — instructors shouldn't need to remember to hit Save
+      if (!currentUser) return;
+      const saveIndicator = document.getElementById('blocked-save-indicator');
+      try {
+        if (saveIndicator) { saveIndicator.textContent = 'Saving…'; saveIndicator.style.color = '#888'; }
+        await setDoc(
+          doc(db, 'instructor_availability', currentUser.uid),
+          { blockedDates: [...blockedDates] },
+          { merge: true }
+        );
+        if (saveIndicator) { saveIndicator.textContent = 'Saved ✓'; saveIndicator.style.color = '#20bcba'; }
+        setTimeout(() => { if (saveIndicator) saveIndicator.textContent = ''; }, 2000);
+      } catch (e) {
+        console.error('Failed to save blocked date:', e);
+        if (saveIndicator) { saveIndicator.textContent = 'Save failed'; saveIndicator.style.color = '#dc3545'; }
+      }
     }
 
     // ── INSTRUCTOR BOOKING MANAGEMENT ────────────────────────

@@ -1860,11 +1860,14 @@
                 });
                 const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
 
-                // Update with server-authoritative amounts (always accurate, even if
-                // commission rate or fee changes — these come straight from the PaymentIntent)
-                if (lessonAmount != null)       document.getElementById('pay-lesson-price').textContent = fmt(lessonAmount);
-                if (studentPlatformFee != null) document.getElementById('pay-platform-fee').textContent = fmt(studentPlatformFee);
-                if (amount != null)             document.getElementById('pay-price').textContent = fmt(amount);
+                // Only overwrite the Firestore estimates when the new function returns all
+                // three fields. If any are missing (old function version), keep the estimates
+                // so partial overwrites can never corrupt the display.
+                if (lessonAmount != null && studentPlatformFee != null && amount != null) {
+                    document.getElementById('pay-lesson-price').textContent = fmt(lessonAmount);
+                    document.getElementById('pay-platform-fee').textContent = fmt(studentPlatformFee);
+                    document.getElementById('pay-price').textContent = fmt(amount);
+                }
 
                 // Fetch publishable key from backend (cached after first call)
                 const pubKey = await getStripePublishableKey();
