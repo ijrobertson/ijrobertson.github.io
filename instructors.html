@@ -1777,14 +1777,12 @@
             document.getElementById('pay-price').textContent = 'Loading...';
 
             try {
-                // Fetch price from instructor doc
+                // Fetch currency symbol from instructor doc for display
                 const instructorSnap = await getDoc(doc(db, 'instructors', currentInstructorId));
                 const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
-                const price = instructorData.price_per_lesson || 0;
                 const currency = instructorData.currency || 'USD';
                 const _csMap = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
                 const sym = _csMap[currency] || '';
-                document.getElementById('pay-price').textContent = `${currency} ${sym}${price}`;
 
                 // Call Cloud Function to create PaymentIntent.
                 // Pass a client-generated idempotency key so retries are safe.
@@ -1793,7 +1791,13 @@
                     instructorId: currentInstructorId,
                     idempotencyKey: crypto.randomUUID()
                 });
-                const { clientSecret } = piResult.data;
+                const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
+
+                // Populate price breakdown using authoritative amounts from the server
+                const fmt = (cents) => `${currency} ${sym}${(cents / 100).toFixed(2)}`;
+                document.getElementById('pay-lesson-price').textContent = fmt(lessonAmount);
+                document.getElementById('pay-platform-fee').textContent = fmt(studentPlatformFee);
+                document.getElementById('pay-price').textContent = fmt(amount);
 
                 // Fetch publishable key from backend (cached after first call)
                 const pubKey = await getStripePublishableKey();
@@ -2341,6 +2345,14 @@
                             <div class="summary-row">
                                 <span>Duration</span>
                                 <span>60 minutes</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Lesson Price</span>
+                                <span id="pay-lesson-price">Loading...</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Platform Fee</span>
+                                <span id="pay-platform-fee">$1.00</span>
                             </div>
                             <div class="summary-row total">
                                 <span>Total</span>
