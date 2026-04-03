@@ -734,6 +734,20 @@
             font-size: 0.85rem;
         }
 
+        .day-blocked {
+            opacity: 0.65;
+            background: #fdf5f5;
+        }
+
+        .day-header-blocked {
+            background: linear-gradient(135deg, #fde8e8 0%, #f5d0d0 100%);
+            border-bottom-color: #e0a0a0;
+        }
+
+        .blocked-msg {
+            color: #c9a0a0;
+        }
+
         /* Payment step styles */
         .payment-summary-box {
             background: #f8f9fa;
@@ -1643,6 +1657,26 @@
             return new Date(date.setDate(diff));
         }
 
+        // Returns 'YYYY-MM-DD' for a given Date object interpreted in the specified IANA timezone.
+        // Used to compare student-calendar dates against the instructor's blocked dates list.
+        function dateStrInTZ(date, timezone) {
+            try {
+                const parts = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: timezone,
+                    year: 'numeric', month: '2-digit', day: '2-digit'
+                }).formatToParts(date);
+                const p = {};
+                parts.forEach(({ type, value }) => { p[type] = value; });
+                return `${p.year}-${p.month}-${p.day}`;
+            } catch {
+                // Fallback if timezone is invalid or browser doesn't support it
+                const d = new Date(date);
+                return d.getFullYear() + '-' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(d.getDate()).padStart(2, '0');
+            }
+        }
+
         function renderWeekCalendar() {
             const daysGrid = document.getElementById('days-grid');
             daysGrid.innerHTML = '';
@@ -1662,12 +1696,35 @@
 
         function createDayColumn(date) {
             const column = document.createElement('div');
-            column.className = 'day-column';
 
             const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
             const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const dayKey = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+            const dayKey  = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
+            // Check if instructor has blocked this date (compare in instructor's timezone)
+            const instructorTZ   = instructorAvailability.timezone || 'UTC';
+            const blockedDates   = instructorAvailability.blockedDates || [];
+            const dateInInstrTZ  = dateStrInTZ(date, instructorTZ);
+            const isBlocked      = blockedDates.includes(dateInInstrTZ);
+
+            if (isBlocked) {
+                column.className = 'day-column day-blocked';
+                column.innerHTML = `
+                    <div class="day-header day-header-blocked">
+                        <div class="day-name">${dayName}</div>
+                        <div class="day-date">${dayDate}</div>
+                    </div>
+                    <div class="time-slots-list">
+                        <div class="no-slots-msg blocked-msg">
+                            <i class="fas fa-ban" style="display:block;font-size:1.4rem;margin-bottom:0.4rem;color:#e0a0a0;"></i>
+                            Unavailable
+                        </div>
+                    </div>
+                `;
+                return column;
+            }
+
+            column.className = 'day-column';
             column.innerHTML = `
                 <div class="day-header">
                     <div class="day-name">${dayName}</div>
@@ -1774,15 +1831,25 @@
             document.getElementById('payment-element-wrapper').style.display = 'none';
             document.getElementById('payment-element').innerHTML = '';
             document.getElementById('payment-error-msg').style.display = 'none';
+            document.getElementById('pay-lesson-price').textContent = 'Loading...';
+            document.getElementById('pay-platform-fee').textContent = '—';
             document.getElementById('pay-price').textContent = 'Loading...';
 
             try {
-                // Fetch currency symbol from instructor doc for display
+                // Fetch price and currency from instructor doc for immediate display
                 const instructorSnap = await getDoc(doc(db, 'instructors', currentInstructorId));
                 const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
                 const currency = instructorData.currency || 'USD';
                 const _csMap = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
                 const sym = _csMap[currency] || '';
+                const fmt = (cents) => `${sym}${(cents / 100).toFixed(2)} ${currency}`;
+
+                // Show estimated breakdown immediately from Firestore while we wait
+                // for the cloud function (so the user never stares at "Loading...")
+                const lessonPriceCents = Math.round((instructorData.price_per_lesson || 0) * 100);
+                document.getElementById('pay-lesson-price').textContent = fmt(lessonPriceCents);
+                document.getElementById('pay-platform-fee').textContent = fmt(100); // $1.00
+                document.getElementById('pay-price').textContent = fmt(lessonPriceCents + 100);
 
                 // Call Cloud Function to create PaymentIntent.
                 // Pass a client-generated idempotency key so retries are safe.
@@ -1793,11 +1860,11 @@
                 });
                 const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
 
-                // Populate price breakdown using authoritative amounts from the server
-                const fmt = (cents) => `${currency} ${sym}${(cents / 100).toFixed(2)}`;
-                document.getElementById('pay-lesson-price').textContent = fmt(lessonAmount);
-                document.getElementById('pay-platform-fee').textContent = fmt(studentPlatformFee);
-                document.getElementById('pay-price').textContent = fmt(amount);
+                // Update with server-authoritative amounts (always accurate, even if
+                // commission rate or fee changes — these come straight from the PaymentIntent)
+                if (lessonAmount != null)       document.getElementById('pay-lesson-price').textContent = fmt(lessonAmount);
+                if (studentPlatformFee != null) document.getElementById('pay-platform-fee').textContent = fmt(studentPlatformFee);
+                if (amount != null)             document.getElementById('pay-price').textContent = fmt(amount);
 
                 // Fetch publishable key from backend (cached after first call)
                 const pubKey = await getStripePublishableKey();

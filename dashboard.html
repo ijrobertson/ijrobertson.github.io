@@ -429,6 +429,146 @@
       transform: scale(1.1);
     }
 
+    /* ── Blocked Dates Calendar ───────────────── */
+    .blocked-dates-calendar {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .blocked-cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .blocked-cal-header h4 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .cal-nav-btn {
+      width: 34px;
+      height: 34px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      color: #555;
+      transition: all 0.15s;
+    }
+
+    .cal-nav-btn:hover {
+      background: #20bcba;
+      border-color: #20bcba;
+      color: #fff;
+    }
+
+    .blocked-cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .blocked-cal-weekdays span {
+      text-align: center;
+      padding: 0.5rem 0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .blocked-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 0.75rem;
+      gap: 4px;
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+      min-height: 36px;
+    }
+
+    .cal-day.empty,
+    .cal-day.past,
+    .cal-day.no-slots { color: #ccc; cursor: default; }
+
+    .cal-day.today-marker {
+      box-shadow: inset 0 0 0 2px #20bcba;
+      font-weight: 700;
+    }
+
+    .cal-day.has-slots {
+      background: #e8faf9;
+      color: #1a9d9b;
+      cursor: pointer;
+    }
+
+    .cal-day.has-slots:hover {
+      background: #20bcba;
+      color: #fff;
+    }
+
+    .cal-day.blocked {
+      background: #fde8e8;
+      color: #dc3545;
+      cursor: pointer;
+      text-decoration: line-through;
+    }
+
+    .cal-day.blocked:hover {
+      background: #dc3545;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .blocked-dates-legend {
+      display: flex;
+      gap: 1.5rem;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid #e0e0e0;
+      background: #f8f9fa;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+      color: #666;
+    }
+
+    .legend-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
     /* ── Danger Zone ─────────────────────────── */
     .danger-card {
       background: #fff;
@@ -806,6 +946,45 @@
       </div>
     </div>
 
+    <div style="margin-bottom: 2rem;">
+      <label style="display: block; margin-bottom: 0.5rem;">Block Specific Dates</label>
+      <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+        Click any upcoming date to block it — all slots for that day will be hidden from students even if your weekly schedule has hours. Tap a blocked date again to unblock it. Great for travel, holidays, or personal days.
+      </p>
+      <div class="blocked-dates-calendar">
+        <div class="blocked-cal-header">
+          <button type="button" class="cal-nav-btn" id="cal-prev-btn" title="Previous month">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <h4 id="cal-month-label">—</h4>
+          <button type="button" class="cal-nav-btn" id="cal-next-btn" title="Next month">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+        <div class="blocked-cal-weekdays">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+          <span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="blocked-cal-grid" id="blocked-cal-grid">
+          <!-- JS populates -->
+        </div>
+        <div class="blocked-dates-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#e8faf9;border:1px solid #20bcba;"></div>
+            Available (click to block)
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#fde8e8;border:1px solid #dc3545;"></div>
+            Blocked (click to unblock)
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#f5f5f5;border:1px solid #ccc;"></div>
+            No scheduled hours
+          </div>
+        </div>
+      </div>
+    </div>
+
     <button type="button" id="save-availability-btn"
             style="background-color: #6c757d; margin-top: 0; margin-bottom: 2rem;">
       <i class="fas fa-save"></i> Save Availability
@@ -1014,6 +1193,11 @@
       monday: [], tuesday: [], wednesday: [], thursday: [],
       friday: [], saturday: [], sunday: []
     };
+    let blockedDates = []; // array of 'YYYY-MM-DD' strings in instructor's timezone
+    const _calToday = new Date();
+    let calViewYear  = _calToday.getFullYear();
+    let calViewMonth = _calToday.getMonth(); // 0-indexed
+    const CAL_DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
     const commonTimezones = [
       'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -1036,6 +1220,19 @@
       populateCurrency();
       populateTimezoneSelect();
       renderWeeklyScheduleGrid();
+      renderBlockedDatesCalendar();
+
+      // Blocked dates calendar navigation
+      document.getElementById('cal-prev-btn').onclick = () => {
+        calViewMonth--;
+        if (calViewMonth < 0) { calViewMonth = 11; calViewYear--; }
+        renderBlockedDatesCalendar();
+      };
+      document.getElementById('cal-next-btn').onclick = () => {
+        calViewMonth++;
+        if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+        renderBlockedDatesCalendar();
+      };
 
       // Auto-add languages when selected from dropdown
       document.getElementById('spokenLanguage').addEventListener('change', () => addLanguage('spoken'));
@@ -1488,6 +1685,9 @@
           renderTimeSlot(day, slot.start, slot.end);
         });
       });
+
+      // Re-render blocked calendar since it depends on which days have slots
+      renderBlockedDatesCalendar();
     }
 
     function capitalizeFirst(str) {
@@ -1554,11 +1754,17 @@
       try {
         setStatus('Saving availability...', false);
 
+        // Purge blocked dates that are now in the past (keep the list clean)
+        const todayStr = calDateStr(new Date());
+        const cleanedBlockedDates = blockedDates.filter(d => d >= todayStr);
+        blockedDates = cleanedBlockedDates;
+
         await setDoc(
           doc(db, 'instructor_availability', currentUser.uid),
           {
             timezone,
             weeklySchedule,
+            blockedDates: cleanedBlockedDates,
             updatedAt: new Date().toISOString()
           },
           { merge: true }
@@ -1587,12 +1793,94 @@
             friday: [], saturday: [], sunday: []
           };
 
+          blockedDates = Array.isArray(data.blockedDates) ? data.blockedDates : [];
+
           renderWeeklyScheduleGrid();
+          renderBlockedDatesCalendar();
         }
 
       } catch (error) {
         console.error('Error loading availability:', error);
       }
+    }
+
+    // ── BLOCKED DATES CALENDAR ─────────────────────────────────
+
+    function calDateStr(date) {
+      return date.getFullYear() + '-' +
+        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getDate()).padStart(2, '0');
+    }
+
+    function calDayHasSlots(dayOfWeek) {
+      // dayOfWeek: 0=Sun … 6=Sat
+      const key = CAL_DAY_NAMES[dayOfWeek];
+      return (weeklyScheduleData[key] || []).length > 0;
+    }
+
+    function renderBlockedDatesCalendar() {
+      const grid = document.getElementById('blocked-cal-grid');
+      const monthLabel = document.getElementById('cal-month-label');
+      if (!grid || !monthLabel) return;
+
+      monthLabel.textContent = new Date(calViewYear, calViewMonth, 1)
+        .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      grid.innerHTML = '';
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = calDateStr(today);
+
+      const firstDOW   = new Date(calViewYear, calViewMonth, 1).getDay();
+      const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+
+      // Pad empty cells before first day of month
+      for (let i = 0; i < firstDOW; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day empty';
+        grid.appendChild(empty);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cellDate = new Date(calViewYear, calViewMonth, d);
+        cellDate.setHours(0, 0, 0, 0);
+        const dateStr   = calDateStr(cellDate);
+        const isPast    = cellDate < today;
+        const isToday   = dateStr === todayStr;
+        const isBlocked = blockedDates.includes(dateStr);
+        const hasSlots  = calDayHasSlots(cellDate.getDay());
+
+        const cell = document.createElement('div');
+        cell.textContent = d;
+
+        if (isPast) {
+          cell.className = 'cal-day past';
+        } else if (isBlocked) {
+          cell.className = 'cal-day blocked' + (isToday ? ' today-marker' : '');
+          cell.title = 'Blocked — click to unblock';
+          cell.onclick = () => toggleBlockDate(dateStr);
+        } else if (!hasSlots) {
+          cell.className = 'cal-day no-slots' + (isToday ? ' today-marker' : '');
+          cell.title = 'No scheduled hours this day';
+        } else {
+          cell.className = 'cal-day has-slots' + (isToday ? ' today-marker' : '');
+          cell.title = 'Available — click to block';
+          cell.onclick = () => toggleBlockDate(dateStr);
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+    function toggleBlockDate(dateStr) {
+      const idx = blockedDates.indexOf(dateStr);
+      if (idx === -1) {
+        blockedDates.push(dateStr);
+      } else {
+        blockedDates.splice(idx, 1);
+      }
+      renderBlockedDatesCalendar();
     }
 
     // ── INSTRUCTOR BOOKING MANAGEMENT ────────────────────────
