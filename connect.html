@@ -759,7 +759,7 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="speakingFilter"><i class="fas fa-comments"></i> They speak</label>
+                    <label for="speakingFilter"><i class="fas fa-graduation-cap"></i> They want to learn</label>
                     <select id="speakingFilter">
                         <option value="">All Languages</option>
                     </select>
@@ -930,33 +930,28 @@
         }
 
         function populateFilterOptions(data) {
-            const learningLanguages = new Set();
-            const speakingLanguages = new Set();
+            const spokenLanguages  = new Set(); // for "I want to learn" — lists what users speak
+            const learningLanguages = new Set(); // for "They want to learn" — lists what users are learning
             const countries = new Set();
 
             data.forEach(user => {
+                const spoken   = user.languages_spoken   || [];
                 const learning = user.languages_learning || [];
-                const speaking = user.languages_spoken || [];
 
-                if (Array.isArray(learning)) {
-                    learning.forEach(lang => learningLanguages.add(lang));
-                }
-                if (Array.isArray(speaking)) {
-                    speaking.forEach(lang => speakingLanguages.add(lang));
-                }
-                if (user.country) {
-                    countries.add(user.country);
-                }
+                if (Array.isArray(spoken))   spoken.forEach(lang   => spokenLanguages.add(lang));
+                if (Array.isArray(learning)) learning.forEach(lang => learningLanguages.add(lang));
+                if (user.country) countries.add(user.country);
             });
 
-            // Populate filters
+            // "I want to learn X" → show users who speak X
             learningFilter.innerHTML = `<option value="">All Languages</option>`;
-            Array.from(learningLanguages).sort().forEach(lang => {
+            Array.from(spokenLanguages).sort().forEach(lang => {
                 learningFilter.innerHTML += `<option value="${lang}">${lang}</option>`;
             });
 
+            // "They want to learn X" → show users who are learning X
             speakingFilter.innerHTML = `<option value="">All Languages</option>`;
-            Array.from(speakingLanguages).sort().forEach(lang => {
+            Array.from(learningLanguages).sort().forEach(lang => {
                 speakingFilter.innerHTML += `<option value="${lang}">${lang}</option>`;
             });
 
@@ -981,11 +976,13 @@
 
             const searchTerm = nameSearch.value.trim().toLowerCase();
             const filtered = allUsers.filter(user => {
+                const spoken   = user.languages_spoken   || [];
                 const learning = user.languages_learning || [];
-                const speaking = user.languages_spoken || [];
 
-                const matchesLearning = selectedLearning ? learning.includes(selectedLearning) : true;
-                const matchesSpeaking = selectedSpeaking ? speaking.includes(selectedSpeaking) : true;
+                // "I want to learn X" → match users who speak X
+                const matchesLearning = selectedLearning ? spoken.includes(selectedLearning) : true;
+                // "They want to learn X" → match users who are learning X
+                const matchesSpeaking = selectedSpeaking ? learning.includes(selectedSpeaking) : true;
                 const matchesCountry = selectedCountry ? user.country === selectedCountry : true;
                 const matchesName = searchTerm ? (user.name || '').toLowerCase().includes(searchTerm) : true;
 
