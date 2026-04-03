@@ -673,6 +673,11 @@ exports.adminApproveInstructor = onCall(async (request) => {
     approvedBy: request.auth.uid
   });
 
+  await admin.firestore().collection('users').doc(instructorId).update({
+    role: 'instructor',
+    status: 'approved'
+  });
+
   // Notify instructor by email
   try {
     const snap = await admin.firestore().collection('instructors').doc(instructorId).get();
@@ -814,7 +819,7 @@ exports.adminMarkMessageRead = onCall(async (request) => {
 const PLATFORM_FEE_PERCENT = 0.10; // 10% platform fee — easy to adjust
 
 function getStripe() {
-  return Stripe(process.env.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);
+  return Stripe(process.env.STRIPE_SECRET_KEY);
 }
 
 /**

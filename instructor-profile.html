@@ -700,7 +700,10 @@
 
                 // Book / message buttons
                 const bookBtn = document.getElementById('bookBtn');
-                if (p.stripeOnboardingComplete === true) {
+                if (p.status !== 'approved') {
+                    bookBtn.innerHTML = '<i class="fas fa-clock"></i> Not Available';
+                    bookBtn.disabled = true;
+                } else if (p.stripeOnboardingComplete === true) {
                     bookBtn.addEventListener('click', () => {
                         openBookingModal(uid, p.name || 'Instructor');
                     });

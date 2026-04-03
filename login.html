@@ -179,14 +179,6 @@
       <input type="text" id="name" placeholder="Your full name" autocomplete="name" />
     </div>
 
-    <div id="role-container" style="display: none;">
-      <label>Sign up as:</label>
-      <select id="role">
-        <option value="student">Student</option>
-        <option value="instructor">Instructor</option>
-      </select>
-    </div>
-
     <!-- Language sections (signup only) -->
     <div id="language-section" style="display: none;">
       <label id="spoken-label">I Speak</label>
@@ -195,7 +187,7 @@
       </select>
       <div class="lang-tags" id="spoken-tags"></div>
 
-      <label id="learning-label">I'm Learning</label>
+      <label>I'm Learning</label>
       <select id="learningLanguage">
         <option value="">Select a language to add...</option>
       </select>
@@ -359,13 +351,11 @@
   const emailEl        = document.getElementById('email');
   const passwordEl     = document.getElementById('password');
   const confirmPwdEl   = document.getElementById('confirm-password');
-  const roleEl         = document.getElementById('role');
   const submitBtn      = document.getElementById('submit-btn');
   const toggleLink     = document.getElementById('toggle-form');
   const formTitle      = document.getElementById('form-title');
   const confirmCont    = document.getElementById('confirm-password-container');
   const nameCont       = document.getElementById('name-container');
-  const roleCont       = document.getElementById('role-container');
   const langSection    = document.getElementById('language-section');
   const ageCont        = document.getElementById('age-checkbox-container');
   const termsCont      = document.getElementById('terms-checkbox-container');
@@ -413,14 +403,6 @@
     learningSel.value = '';
   });
 
-  roleEl.addEventListener('change', updateLanguageLabels);
-
-  function updateLanguageLabels() {
-    const isInstructor = roleEl.value === 'instructor';
-    document.getElementById('spoken-label').textContent = 'I Speak';
-    document.getElementById('learning-label').textContent = isInstructor ? 'I Will Teach' : "I'm Learning";
-  }
-
   toggleLink.addEventListener('click', () => {
     isSignup = !isSignup;
     formTitle.textContent    = isSignup ? 'Sign Up' : 'Sign In';
@@ -428,17 +410,14 @@
     toggleLink.textContent   = isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up";
     confirmCont.style.display  = isSignup ? 'block' : 'none';
     nameCont.style.display     = isSignup ? 'block' : 'none';
-    roleCont.style.display     = isSignup ? 'block' : 'none';
     langSection.style.display  = isSignup ? 'block' : 'none';
     ageCont.style.display      = isSignup ? 'flex'  : 'none';
     termsCont.style.display    = isSignup ? 'flex'  : 'none';
-    if (isSignup) updateLanguageLabels();
     // Reset
     ageBox.checked = false; termsBox.checked = false;
     spokenLangs = []; learningLangs = [];
     renderTags('spoken'); renderTags('learning');
     document.getElementById('name').value = '';
-    roleEl.value = 'student';
     errorEl.textContent = '';
   });
 
@@ -459,34 +438,25 @@
 
     try {
       if (isSignup) {
-        const name           = document.getElementById('name').value.trim();
+        const name            = document.getElementById('name').value.trim();
         const confirmPassword = confirmPwdEl.value.trim();
-        const role           = roleEl.value;
-        const isInstructor   = role === 'instructor';
 
-        if (!name)                   { throw new Error('Please enter your full name.'); }
+        if (!name)                    { throw new Error('Please enter your full name.'); }
         if (password !== confirmPassword) { throw new Error('Passwords do not match.'); }
-        if (spokenLangs.length === 0) { throw new Error('Please add at least one language you speak.'); }
-        if (learningLangs.length === 0) {
-          throw new Error(isInstructor ? 'Please add at least one language you will teach.' : "Please add at least one language you're learning.");
-        }
+        if (spokenLangs.length === 0)  { throw new Error('Please add at least one language you speak.'); }
+        if (learningLangs.length === 0) { throw new Error("Please add at least one language you're learning."); }
         if (!ageBox.checked)   { throw new Error('You must confirm that you are 18 years old or older.'); }
         if (!termsBox.checked) { throw new Error('You must agree to the Terms and Conditions and Privacy Policy.'); }
 
         const userCred = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCred.user;
 
-        const userData = { email, role, name, emailNotifications: true, createdAt: new Date().toISOString() };
-        userData.languages_spoken = spokenLangs;
-        if (isInstructor) {
-          userData.languages_teaching = learningLangs;
-          await setDoc(doc(db, 'instructors', user.uid), {
-            email, name, languages_spoken: spokenLangs, languages_teaching: learningLangs,
-            createdAt: new Date().toISOString()
-          });
-        } else {
-          userData.languages_learning = learningLangs;
-        }
+        const userData = {
+          email, role: 'student', name, emailNotifications: true,
+          createdAt: new Date().toISOString(),
+          languages_spoken: spokenLangs,
+          languages_learning: learningLangs
+        };
         await setDoc(doc(db, 'users', user.uid), userData);
 
         alert('Account created! Please sign in.');
