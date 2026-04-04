@@ -407,6 +407,7 @@
             padding: 1.5rem;
             border-top: 1px solid #e0e0e0;
             background: white;
+            flex-shrink: 0; /* never compress — always visible above keyboard */
         }
 
         .message-input-form {
@@ -524,12 +525,12 @@
 
         /* Mobile: full-panel switching — show conversations OR chat, not both stacked */
         @media (max-width: 767px) {
-            html, body {
-                overflow: hidden;
+            html {
                 height: 100%;
             }
-
             body {
+                height: 100%;
+                overflow: hidden;
                 padding-top: 4rem;
             }
 
@@ -537,25 +538,27 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 gap: 0;
-                height: calc(100vh - 4rem);
+                height: calc(100vh - 4rem);        /* fallback */
+                height: calc(100dvh - 4rem);       /* shrinks with keyboard on modern browsers */
                 display: flex;
                 flex-direction: column;
             }
 
             .conversations-panel {
-                height: 100%;
                 border-radius: 0;
                 box-shadow: none;
                 flex: 1;
                 min-height: 0;
+                overflow: hidden;
             }
 
             .chat-panel {
-                height: 100%;
                 border-radius: 0;
                 box-shadow: none;
                 flex: 1;
                 min-height: 0;
+                /* Flex column already set above — children stack header → messages → input */
+                overflow: hidden;
             }
 
             /* Panel switching — JS adds these classes */
