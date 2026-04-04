@@ -521,6 +521,78 @@
             }
         }
 
+        /* Mobile: full-panel switching — show conversations OR chat, not both stacked */
+        @media (max-width: 767px) {
+            body {
+                padding-top: 4rem;
+            }
+
+            .messages-container {
+                margin: 0 !important;
+                padding: 0 !important;
+                gap: 0;
+                height: calc(100vh - 4rem);
+                display: flex;
+                flex-direction: column;
+            }
+
+            .conversations-panel {
+                height: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                flex: 1;
+                min-height: 0;
+            }
+
+            .chat-panel {
+                height: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                flex: 1;
+                min-height: 0;
+            }
+
+            /* Panel switching — JS adds these classes */
+            .messages-container.chat-open .conversations-panel {
+                display: none;
+            }
+
+            .messages-container.conversations-open .chat-panel {
+                display: none;
+            }
+
+            /* Back button — only visible on mobile */
+            .chat-back-btn {
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                border: none;
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: background 0.2s;
+                flex-shrink: 0;
+                margin-right: 0.25rem;
+                text-decoration: none;
+            }
+
+            .chat-back-btn:hover,
+            .chat-back-btn:focus {
+                background: rgba(255, 255, 255, 0.35);
+                color: white;
+                outline: none;
+            }
+        }
+
+        /* Hide back button on desktop */
+        .chat-back-btn {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .messages-container {
                 margin: 1rem auto;
@@ -1300,6 +1372,14 @@
         // User data cache — avoids re-fetching Firestore on every conversation list update
         const userCache = new Map();
 
+        // Mobile: initialize in conversations-open state so conversations show first
+        (function initMobileView() {
+            if (window.innerWidth <= 767) {
+                const container = document.querySelector('.messages-container');
+                if (container) container.classList.add('conversations-open');
+            }
+        })();
+
         // Check authentication
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -1624,12 +1704,23 @@
             }
 
             console.log('🖼️ Rendering chat interface...');
+
+            // Mobile: switch to chat panel view
+            const messagesContainer = document.querySelector('.messages-container');
+            if (window.innerWidth <= 767) {
+                messagesContainer.classList.add('chat-open');
+                messagesContainer.classList.remove('conversations-open');
+            }
+
             // Render chat interface
             const profileUrl = otherUser.isInstructor
                 ? `instructor-profile?id=${otherUserId}`
                 : `learner-profile?uid=${otherUserId}`;
             chatPanel.innerHTML = `
                 <div class="chat-header">
+                    <button class="chat-back-btn" id="chatBackBtn" title="Back to conversations" aria-label="Back to conversations">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
                     <img class="chat-header-avatar" src="${otherUser.avatar_url || 'https://via.placeholder.com/45'}" alt="${otherUser.name}">
                     <div class="chat-header-info">
                         <h3><a href="${profileUrl}" class="chat-header-name-link" title="View profile">${otherUser.name || 'Unknown User'}</a></h3>
@@ -1683,6 +1774,16 @@
 
             console.log('✅ Chat interface rendered');
             console.log('📝 Message input element:', document.getElementById('messageInput'));
+
+            // Back button: return to conversations list on mobile
+            const chatBackBtn = document.getElementById('chatBackBtn');
+            if (chatBackBtn) {
+                chatBackBtn.addEventListener('click', () => {
+                    const container = document.querySelector('.messages-container');
+                    container.classList.remove('chat-open');
+                    container.classList.add('conversations-open');
+                });
+            }
 
             // Check if the other user is blocking new messages
             try {
