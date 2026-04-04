@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="description" content="Instructor profile - Lingua Bud">
     <meta name="author" content="Lingua Bud">
     <title>Instructor Profile - Lingua Bud</title>
@@ -497,6 +500,8 @@
                             <div class="summary-row"><span>Instructor</span><span id="pay-instructor-name"></span></div>
                             <div class="summary-row"><span>Date &amp; Time</span><span id="pay-datetime"></span></div>
                             <div class="summary-row"><span>Duration</span><span>60 minutes</span></div>
+                            <div class="summary-row"><span>Lesson Price</span><span id="pay-lesson-price">Loading...</span></div>
+                            <div class="summary-row"><span>Platform Fee</span><span id="pay-platform-fee">$1.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="pay-price"></span></div>
                         </div>
                         <hr style="margin: 1rem 0;">
@@ -533,7 +538,7 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
+        import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
 
         // ── Booking state ───────────────────────────────────────────────────
         // Stripe publishable key fetched from backend and cached (no hardcoded key in source)
@@ -808,7 +813,7 @@
         }
 
         async function loadInstructorAvailability(instructorId) {
-            const docSnap = await getDoc(doc(db, 'instructor_availability', instructorId));
+            const docSnap = await getDocFromServer(doc(db, 'instructor_availability', instructorId));
             instructorAvailability = docSnap.exists() ? docSnap.data() : null;
         }
 
@@ -849,12 +854,40 @@
             }
         }
 
+        // Returns 'YYYY-MM-DD' in local browser time — same format the
+        // instructor dashboard uses when storing blocked dates.
+        function localDateStr(date) {
+            return date.getFullYear() + '-' +
+                String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                String(date.getDate()).padStart(2, '0');
+        }
+
         function createDayColumn(date) {
             const column  = document.createElement('div');
-            column.className = 'day-column';
             const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
             const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const dayKey  = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+            const blockedDates = instructorAvailability.blockedDates || [];
+            const isBlocked    = blockedDates.includes(localDateStr(date));
+
+            if (isBlocked) {
+                column.className = 'day-column';
+                column.style.opacity = '0.55';
+                column.style.background = '#fdf5f5';
+                column.innerHTML = `
+                    <div class="day-header" style="background: linear-gradient(135deg, #fde8e8 0%, #f5d0d0 100%); border-bottom-color: #e0a0a0;">
+                        <div class="day-name">${dayName}</div>
+                        <div class="day-date">${dayDate}</div>
+                    </div>
+                    <div class="time-slots-list">
+                        <div class="no-slots-msg" style="color: #c9a0a0;">Unavailable</div>
+                    </div>
+                `;
+                return column;
+            }
+
+            column.className = 'day-column';
             column.innerHTML = `
                 <div class="day-header">
                     <div class="day-name">${dayName}</div>
@@ -883,6 +916,9 @@
         function generateSlotsForDay(date, dayKey) {
             const now = new Date();
             if (date < new Date().setHours(0, 0, 0, 0)) return [];
+            // Also block slots if the date is in the instructor's blocked list
+            const blockedDates = instructorAvailability.blockedDates || [];
+            if (blockedDates.includes(localDateStr(date))) return [];
             const daySlots = instructorAvailability.weeklySchedule[dayKey] || [];
             const slots = [];
             daySlots.forEach(range => {
@@ -927,23 +963,37 @@
             document.getElementById('payment-element-wrapper').style.display = 'none';
             document.getElementById('payment-element').innerHTML = '';
             document.getElementById('payment-error-msg').style.display = 'none';
+            document.getElementById('pay-lesson-price').textContent = 'Loading...';
+            document.getElementById('pay-platform-fee').textContent = '$1.00';
             document.getElementById('pay-price').textContent = 'Loading...';
 
             try {
                 const instructorSnap = await getDoc(doc(db, 'instructors', currentInstructorId));
                 const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
-                const price    = instructorData.price_per_lesson || 0;
                 const currency = instructorData.currency || 'USD';
                 const csMap    = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
                 const sym      = csMap[currency] || '';
-                document.getElementById('pay-price').textContent = `${currency} ${sym}${price}`;
+                const fmtPrice = (cents) => `${sym}${(cents / 100).toFixed(2)} ${currency}`;
+
+                // Show Firestore-based estimate immediately (before cloud fn returns)
+                const lessonPriceCents = Math.round((instructorData.price_per_lesson || 0) * 100);
+                document.getElementById('pay-lesson-price').textContent = fmtPrice(lessonPriceCents);
+                document.getElementById('pay-platform-fee').textContent = `${sym}1.00 ${currency}`;
+                document.getElementById('pay-price').textContent = fmtPrice(lessonPriceCents + 100);
 
                 const createPI = httpsCallable(functions, 'createPaymentIntent');
                 const piResult = await createPI({
                     instructorId: currentInstructorId,
                     idempotencyKey: crypto.randomUUID()
                 });
-                const { clientSecret } = piResult.data;
+                const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
+
+                // Update with server-authoritative amounts when all three are present
+                if (lessonAmount != null && studentPlatformFee != null && amount != null) {
+                    document.getElementById('pay-lesson-price').textContent = fmtPrice(lessonAmount);
+                    document.getElementById('pay-platform-fee').textContent = fmtPrice(studentPlatformFee);
+                    document.getElementById('pay-price').textContent = fmtPrice(amount);
+                }
 
                 const pubKey = await getStripePublishableKey();
                 stripeInstance = Stripe(pubKey);
