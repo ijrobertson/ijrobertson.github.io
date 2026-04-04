@@ -46,7 +46,7 @@ body {
   background: var(--vc-bg);
   color: var(--vc-text);
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden; /* horizontal only — allow vertical scroll for pre-join */
 }
 
 .hidden { display: none !important; }
@@ -56,13 +56,15 @@ body {
   position: fixed;
   inset: 0;
   z-index: 10;
+  overflow: hidden; /* in-call/loading clip themselves */
 }
 
 #screen-prejoin {
   position: relative;
   z-index: 10;
   min-height: 100vh;
-  overflow-y: auto;
+  overflow-y: auto; /* allow full scroll on pre-join screen */
+  overflow-x: hidden;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -675,6 +677,100 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ── FaceTime-style Video Swap ──────────────────────────── */
+/* Clicking the PiP swaps local ↔ remote: remote becomes the
+   small overlay and local becomes the full background view.
+   Transition animates the swap smoothly. */
+
+.vc-local-pip {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s,
+              transform 0.15s;
+}
+
+/* Swap hint tooltip shown on first hover */
+.vc-local-pip::before {
+  content: 'Tap to swap';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.75);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 3px 7px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 5;
+}
+.vc-local-pip:hover::before { opacity: 1; }
+.vc-local-pip.dragging::before { opacity: 0; } /* hide during drag */
+
+/* Swapped state: local pip expands to fill the full background */
+#vc-video-area.video-swapped .vc-local-pip {
+  inset: 0;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: none;
+  cursor: default;
+  z-index: 5;
+}
+
+/* When swapped, remote container shrinks to a small PiP corner */
+#vc-video-area.video-swapped #vc-remote-container {
+  position: absolute;
+  inset: auto;
+  bottom: calc(var(--vc-ctrl-h) + 1.25rem);
+  right: 1.25rem;
+  width: 160px;
+  height: 90px;
+  border-radius: var(--vc-radius-sm);
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  z-index: 25;
+  cursor: pointer;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+/* Tap-to-swap label on the remote PiP when swapped */
+#vc-video-area.video-swapped #vc-remote-container::after {
+  content: 'Tap to swap';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.75);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 3px 7px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+#vc-video-area.video-swapped #vc-remote-container:hover::after { opacity: 1; }
+
+/* Mobile: smaller remote PiP when swapped */
+@media (max-width: 768px) {
+  #vc-video-area.video-swapped #vc-remote-container {
+    width: 120px;
+    height: 68px;
+    bottom: calc(var(--vc-ctrl-h) + 1rem);
+    right: 0.75rem;
+  }
 }
 
 /* ── Control Bar ────────────────────────────────────────── */
@@ -1303,10 +1399,12 @@ body {
 }
 
 .wb-canvas-wrap {
-  flex: 1;
   overflow: auto;
   background: white;
   line-height: 0;
+  /* Do NOT use flex:1 — that makes the wrapper taller than the canvas,
+     creating a white dead-zone where drawing doesn't register. Let the
+     wrapper shrink-wrap the canvas naturally and scroll if needed. */
 }
 #whiteboard-canvas {
   width: 100%;
@@ -1521,18 +1619,50 @@ body {
 
 @media (max-width: 768px) {
   :root {
-    --vc-panel-w: 100vw;
-    --vc-panel-wide-w: 100vw;
     --ctrl-btn-size: 44px;
     --ctrl-btn-lg: 50px;
     --vc-ctrl-h: 74px;
   }
 
-  /* Panels become full-screen on mobile */
+  /* ── Bottom-sheet panels on mobile ──────────────────────────
+     Panels slide UP from the bottom so the video remains visible
+     above them — instead of covering the entire screen.
+     Regular panels occupy 65% of screen height,
+     whiteboard gets 78% for more drawing room.
+  ──────────────────────────────────────────────────────────── */
   .vc-panel {
+    /* Override desktop slide-from-right */
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
     width: 100%;
+    height: 65vh;
     border-left: none;
-    border-top: 1px solid var(--vc-border);
+    border-top: 2px solid var(--vc-border);
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%); /* slide down (hidden) */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .vc-panel.panel-open {
+    transform: translateY(0); /* slide up into view */
+  }
+
+  /* Whiteboard needs extra height for canvas usability */
+  .vc-panel--wide {
+    height: 78vh;
+    width: 100%;
+  }
+
+  /* Add a drag handle indicator at the top of each panel */
+  .panel-header::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--vc-border);
+    margin: 0 auto 0.75rem;
   }
 
   /* Control pill adapts */

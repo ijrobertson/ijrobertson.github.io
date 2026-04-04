@@ -76,6 +76,7 @@ const state = {
     activePanel: null,
     controlsHideTimer: null,
     controlsVisible: true,
+    isSwapped: false,      // FaceTime-style swap: local ↔ remote
 
     // Post-call rating
     selectedRating: 0,
@@ -1133,6 +1134,54 @@ function setupLocalPipDrag() {
         dragging = false;
         localPip.classList.remove('dragging');
     });
+
+    // ── FaceTime-style tap-to-swap ───────────────────────────
+    // Distinguish a tap (no drag) from a drag by checking movement.
+    // On tap: toggle video-swapped class on #vc-video-area.
+    let hasDragged = false;
+
+    localPip.addEventListener('mousedown', () => { hasDragged = false; });
+    document.addEventListener('mousemove', () => { if (dragging) hasDragged = true; });
+    localPip.addEventListener('click', e => {
+        if (e.target.closest('.vc-pip-btn')) return; // don't swap on control buttons
+        if (!hasDragged) swapVideos();
+    });
+
+    // Touch tap detection (touchend without significant movement)
+    let tapStartX = 0, tapStartY = 0;
+    localPip.addEventListener('touchstart', e => {
+        const t = e.touches[0];
+        tapStartX = t.clientX; tapStartY = t.clientY;
+    }, { passive: true });
+    localPip.addEventListener('touchend', e => {
+        if (e.target.closest('.vc-pip-btn')) return;
+        const t = e.changedTouches[0];
+        const dx = Math.abs(t.clientX - tapStartX);
+        const dy = Math.abs(t.clientY - tapStartY);
+        if (dx < 8 && dy < 8) swapVideos(); // was a tap, not a drag
+    });
+}
+
+// ── FaceTime video swap ──────────────────────────────────────
+function swapVideos() {
+    const videoArea = $('vc-video-area');
+    state.isSwapped = !state.isSwapped;
+    videoArea.classList.toggle('video-swapped', state.isSwapped);
+
+    // When swapped: remote container becomes the small PiP — allow clicking it to swap back
+    const remoteContainer = $('vc-remote-container');
+    if (state.isSwapped) {
+        remoteContainer._swapHandler = () => swapVideos();
+        remoteContainer.addEventListener('click', remoteContainer._swapHandler);
+        // Reset any drag-moved position so local video fills the background cleanly
+        localPip.style.right  = '';
+        localPip.style.bottom = '';
+    } else {
+        if (remoteContainer._swapHandler) {
+            remoteContainer.removeEventListener('click', remoteContainer._swapHandler);
+            remoteContainer._swapHandler = null;
+        }
+    }
 }
 
 // ════════════════════════════════════════════════════════════
