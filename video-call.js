@@ -244,6 +244,8 @@ function showScreen(id) {
         const el = $(s);
         if (el) el.classList.toggle('hidden', s !== id);
     });
+    // Lock body scroll when in-call or loading so mobile can't scroll outside the fixed screen
+    document.body.classList.toggle('in-call', id === 'screen-call' || id === 'screen-loading');
 }
 
 /** Show a brief toast notification */

@@ -315,6 +315,7 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            flex-shrink: 0; /* never shrink — keeps back button always visible */
         }
 
         .chat-header-avatar {
@@ -523,6 +524,11 @@
 
         /* Mobile: full-panel switching — show conversations OR chat, not both stacked */
         @media (max-width: 767px) {
+            html, body {
+                overflow: hidden;
+                height: 100%;
+            }
+
             body {
                 padding-top: 4rem;
             }
