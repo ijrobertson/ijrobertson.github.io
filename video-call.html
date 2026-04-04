@@ -3,2699 +3,538 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Video Call - Lingua Bud</title>
 
-    <title>Lingua Bud - Video Call</title>
-
-    <!-- Styles -->
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
-    <link href="css/bootstrap.css" rel="stylesheet">
+    <!-- Icons -->
     <link href="css/fontawesome-all.css" rel="stylesheet">
-    <link href="css/styles.css" rel="stylesheet">
-
     <!-- Favicon -->
     <link rel="icon" href="images/NuevoFavicon.png">
-
-    <style>
-        body {
-            background: linear-gradient(135deg, #113448 0%, #20bcba 100%);
-            min-height: 100vh;
-            padding-top: 80px;
-        }
-
-        /* Navbar styling */
-        .navbar-custom {
-            background-color: #113448 !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .profile-nav-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-left: 1rem;
-        }
-
-        .profile-pic-nav {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #20bcba;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .profile-pic-nav:hover {
-            transform: scale(1.1);
-        }
-
-        .profile-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .profile-dropdown-content {
-            position: fixed;
-            right: 1rem;
-            top: 60px;
-            background-color: white;
-            min-width: 200px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            border-radius: 8px;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
-        }
-
-        @media (min-width: 992px) {
-            .profile-dropdown-content {
-                position: absolute;
-                right: 0;
-                top: 100%;
-                margin-top: 0.25rem;
-            }
-        }
-
-        .profile-dropdown-content a {
-            color: #333;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            transition: background 0.2s;
-        }
-
-        .profile-dropdown-content a:hover {
-            background-color: #f1f1f1;
-        }
-
-        .profile-dropdown:hover .profile-dropdown-content {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        /* Navbar spacing — match all other pages */
-        @media (min-width: 768px) {
-            .navbar-nav {
-                margin-left: 8rem !important;
-            }
-            .profile-nav-wrapper {
-                margin-left: auto !important;
-            }
-            #signInWrapper {
-                margin-left: auto !important;
-            }
-        }
-
-        @media (max-width: 767px) {
-            .navbar-nav {
-                margin-left: 0 !important;
-            }
-        }
-
-        /* Notification badge on profile picture */
-        .notification-badge {
-            display: none;
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            background-color: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 11px;
-            font-weight: bold;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            animation: badgePulse 2s infinite;
-        }
-        .notification-badge.show { display: flex; }
-
-        @keyframes badgePulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .messages-link.has-unread i { color: #dc3545; animation: pulse 2s infinite; }
-
-        /* Unread count badges in dropdown */
-        .unread-count {
-            display: none;
-            background-color: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 11px;
-            font-weight: bold;
-            align-items: center;
-            justify-content: center;
-            margin-left: 4px;
-        }
-        .unread-count.show { display: inline-flex; }
-
-        .video-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            padding: 2rem;
-            margin: 2rem auto;
-            max-width: 1400px;
-        }
-
-        .video-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .video-header h1 {
-            color: #113448;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .video-header p {
-            color: #666;
-            font-size: 1.1rem;
-        }
-
-        #video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 1rem;
-            position: relative;
-        }
-
-        .video-player {
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-            aspect-ratio: 16/9;
-        }
-
-        .video-stream {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        .video-player video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .user-label {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 5px 12px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-
-        /* Grid-level expand button — bottom-right of the video grid container */
-        #video-grid-container {
-            position: relative;
-            margin-bottom: 2rem;
-        }
-
-        .grid-expand-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-            z-index: 20;
-            display: none;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .grid-expand-btn:hover {
-            background: rgba(0,0,0,0.9);
-        }
-
-        /* Native fullscreen: grid container fills the screen, grid tiles fill it */
-        #video-grid-container:fullscreen,
-        #video-grid-container:-webkit-full-screen,
-        #video-grid-container:-moz-full-screen {
-            background: #000;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 0.5rem;
-            box-sizing: border-box;
-        }
-
-        #video-grid-container:fullscreen #video-grid,
-        #video-grid-container:-webkit-full-screen #video-grid,
-        #video-grid-container:-moz-full-screen #video-grid {
-            flex: 1;
-            min-height: 0;
-            margin: 0;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            grid-auto-rows: 1fr;
-        }
-
-        #video-grid-container:fullscreen .video-player,
-        #video-grid-container:-webkit-full-screen .video-player,
-        #video-grid-container:-moz-full-screen .video-player {
-            aspect-ratio: unset;
-        }
-
-        /* Pin the grid expand button inside native fullscreen */
-        #video-grid-container:fullscreen .grid-expand-btn,
-        #video-grid-container:-webkit-full-screen .grid-expand-btn,
-        #video-grid-container:-moz-full-screen .grid-expand-btn {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            z-index: 10000;
-            display: flex;
-        }
-
-        /* CSS fallback for iOS Safari */
-        #video-grid-container.grid--expanded {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100svh;
-            z-index: 9999;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            padding: 0.5rem;
-            box-sizing: border-box;
-        }
-
-        #video-grid-container.grid--expanded #video-grid {
-            flex: 1;
-            min-height: 0;
-            margin: 0;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            grid-auto-rows: 1fr;
-        }
-
-        #video-grid-container.grid--expanded .video-player {
-            aspect-ratio: unset;
-        }
-
-        #video-grid-container.grid--expanded .grid-expand-btn {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            z-index: 10000;
-            display: flex;
-        }
-
-        /* In-video mute overlay button (local player only) */
-        .mute-overlay-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .mute-overlay-btn:hover {
-            background: rgba(0,0,0,0.9);
-        }
-
-        .mute-overlay-btn.muted {
-            background: rgba(230, 126, 34, 0.85);
-        }
-
-        .mute-overlay-btn.muted:hover {
-            background: rgba(211, 84, 0, 0.95);
-        }
-
-        /* In-video camera toggle button (local player only) */
-        .camera-overlay-btn {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .camera-overlay-btn:hover {
-            background: rgba(0,0,0,0.9);
-        }
-
-        .camera-overlay-btn.camera-off {
-            background: rgba(220, 53, 69, 0.85);
-        }
-
-        .camera-overlay-btn.camera-off:hover {
-            background: rgba(200, 35, 51, 0.95);
-        }
-
-        @media (max-width: 768px) {
-            .grid-expand-btn,
-            .mute-overlay-btn,
-            .camera-overlay-btn {
-                padding: 8px 12px;
-                font-size: 1rem;
-            }
-
-            /* On narrow screens in expanded view, stack tiles vertically */
-            #video-grid-container:fullscreen #video-grid,
-            #video-grid-container:-webkit-full-screen #video-grid,
-            #video-grid-container.grid--expanded #video-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-        }
-
-        .channel-input-group {
-            display: flex;
-            align-items: stretch;
-            max-width: 340px;
-            position: relative;
-        }
-
-        .controls input {
-            padding: 0.5rem;
-            border: 2px solid #ddd;
-            border-radius: 6px 0 0 6px;
-            border-right: none;
-            font-size: 1rem;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .controls input:focus {
-            outline: none;
-            border-color: #20bcba;
-        }
-
-        .copy-room-btn {
-            padding: 0 0.75rem;
-            background: white;
-            border: 2px solid #ddd;
-            border-left: none;
-            border-radius: 0 6px 6px 0;
-            cursor: pointer;
-            color: #555;
-            font-size: 1rem;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-            display: flex;
-            align-items: center;
-            white-space: nowrap;
-            gap: 0.4rem;
-        }
-
-        .copy-room-btn:hover {
-            background: #e8f8f7;
-            color: #20bcba;
-            border-color: #20bcba;
-        }
-
-        .copy-room-btn.copied {
-            background: #d1e7dd;
-            color: #198754;
-            border-color: #198754;
-        }
-
-        .controls input:focus + .copy-room-btn {
-            border-color: #20bcba;
-        }
-
-        .btn-video {
-            padding: 0.875rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-join {
-            background: #20bcba;
-            color: white;
-        }
-
-        .btn-join:hover {
-            background: #1aa9a7;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(32, 188, 186, 0.4);
-        }
-
-        .btn-leave {
-            background: #dc3545;
-            color: white;
-            display: none;
-        }
-
-        .btn-leave:hover {
-            background: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-        }
-
-        .btn-pip {
-            background: #113448;
-            color: white;
-            display: none;
-        }
-
-        .btn-pip:hover {
-            background: #0a1f2e;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(17, 52, 72, 0.5);
-        }
-
-        /* In-page floating mini-player (mobile / unsupported browsers) */
-        #pip-overlay {
-            position: fixed;
-            bottom: 80px;
-            right: 16px;
-            width: 260px;
-            background: #000;
-            border-radius: 12px;
-            z-index: 100001;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.7);
-            overflow: hidden;
-            touch-action: none;
-            user-select: none;
-        }
-
-        #pip-overlay-header {
-            background: #113448;
-            color: white;
-            padding: 7px 10px;
-            font-size: 12px;
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: move;
-        }
-
-        #pip-overlay-header button {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 15px;
-            line-height: 1;
-            padding: 0 2px;
-        }
-
-        #pip-overlay #video-grid {
-            width: 100%;
-            height: 146px;
-            margin: 0;
-            grid-template-columns: 1fr;
-            grid-auto-rows: 1fr;
-        }
-
-        #pip-overlay .video-player {
-            aspect-ratio: unset;
-        }
-
-        /* Navigation warning banner shown during active call */
-        #call-nav-warning {
-            position: fixed;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: white;
-            border: 2px solid #20bcba;
-            border-radius: 10px;
-            padding: 1.25rem 1.5rem;
-            z-index: 100000;
-            text-align: center;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            max-width: 480px;
-            width: 90%;
-            display: none;
-        }
-
-        #call-nav-warning p {
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        #call-nav-warning .warning-btns {
-            display: flex;
-            gap: 0.75rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        #call-nav-warning .warning-btns button {
-            padding: 0.5rem 1.25rem;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: opacity 0.2s;
-        }
-
-        #call-nav-warning .warning-btns button:hover {
-            opacity: 0.85;
-        }
-
-        .btn-video:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .status-message {
-            text-align: center;
-            padding: 1rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            display: none;
-        }
-
-        .status-message.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .status-message.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-message.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .call-timer {
-            text-align: center;
-            padding: 0.5rem 1rem;
-            background: #113448;
-            color: #20bcba;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            display: none;
-            letter-spacing: 0.05em;
-        }
-
-        .instructions {
-            background: #f8f9fa;
-            border-left: 4px solid #20bcba;
-            padding: 1.5rem;
-            border-radius: 6px;
-            margin-bottom: 2rem;
-        }
-
-        .instructions h3 {
-            color: #113448;
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-        }
-
-        .instructions ul {
-            margin: 0;
-            padding-left: 1.5rem;
-        }
-
-        .instructions li {
-            margin-bottom: 0.5rem;
-            color: #666;
-        }
-
-        @media (max-width: 768px) {
-            #video-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .controls input,
-            .btn-video {
-                width: 100%;
-            }
-        }
-
-        /* Whiteboard button */
-        .btn-whiteboard { background: #20bcba; color: white; display: none; }
-        .btn-whiteboard:hover { background: #1aa9a7; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(32,188,186,0.4); }
-
-        /* Panel (now lives inside #video-grid-container; no bottom margin needed) */
-        #whiteboard-panel { margin-bottom: 0; background: #fff; border: 1px solid #dee2e6; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-
-        /* Toolbar */
-        #whiteboard-toolbar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.625rem 1rem; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
-        .wb-tool-group { display: flex; align-items: center; gap: 0.375rem; }
-        .wb-tool-group + .wb-tool-group { padding-left: 0.75rem; border-left: 1px solid #dee2e6; }
-
-        /* Icon buttons (pen, eraser, clear, close) */
-        .wb-tool-btn { width: 36px; height: 36px; border: 2px solid transparent; border-radius: 6px; background: #e9ecef; color: #495057; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s, border-color 0.15s; padding: 0; }
-        .wb-tool-btn:hover { background: #dee2e6; color: #212529; }
-        .wb-tool-btn.wb-tool-active { background: #113448; color: #fff; border-color: #113448; }
-
-        /* Color swatches */
-        .wb-color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; padding: 0; display: block; flex-shrink: 0; }
-        .wb-color-btn:hover { transform: scale(1.15); box-shadow: 0 0 0 3px rgba(0,0,0,0.15); }
-        .wb-color-btn.wb-color-active { border-color: #113448; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #113448; transform: scale(1.1); }
-
-        /* Stroke width buttons */
-        .wb-stroke-btn { width: 44px; height: 36px; border: 2px solid transparent; border-radius: 6px; background: #e9ecef; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0 6px; transition: background 0.15s, border-color 0.15s; }
-        .wb-stroke-btn:hover { background: #dee2e6; }
-        .wb-stroke-btn.wb-stroke-active { background: #e9ecef; border-color: #113448; }
-        .wb-stroke-preview { display: block; width: 100%; background: #495057; border-radius: 2px; }
-
-        /* Canvas wrapper + canvas */
-        #whiteboard-canvas-wrapper { width: 100%; background: #fff; line-height: 0; }
-        #whiteboard-canvas { width: 100%; height: auto; display: block; cursor: crosshair; touch-action: none; }
-        #whiteboard-canvas.wb-eraser-cursor { cursor: cell; }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            #whiteboard-toolbar { gap: 0.5rem; padding: 0.5rem; }
-            .wb-color-btn { width: 24px; height: 24px; }
-            .wb-tool-btn { width: 32px; height: 32px; }
-        }
-
-        /* Inline whiteboard toggle button — position:fixed, shown only in fullscreen via JS */
-        .inline-wb-btn {
-            position: fixed;
-            bottom: 50px;
-            right: 10px;
-            background: rgba(32, 188, 186, 0.88);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-            z-index: 10000;
-            display: none; /* JS-controlled */
-            align-items: center;
-            gap: 5px;
-        }
-        .inline-wb-btn:hover { background: rgba(26, 169, 167, 0.98); }
-
-        /* Whiteboard panel inside the fullscreen/expanded container — capped height so videos keep space */
-        #video-grid-container:fullscreen #whiteboard-panel,
-        #video-grid-container:-webkit-full-screen #whiteboard-panel,
-        #video-grid-container.grid--expanded #whiteboard-panel {
-            max-height: 42vh;
-            overflow-y: auto;
-            border-radius: 0;
-            border: none;
-            border-top: 2px solid #6f42c1;
-            box-shadow: none;
-        }
-
-        /* ── Text Board ── */
-        #wb-textboard {
-            border-top: 1px solid #dee2e6;
-            background: #fafafa;
-        }
-        #wb-textboard-messages {
-            height: 130px;
-            overflow-y: auto;
-            padding: 0.6rem 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-        }
-        #wb-textboard-messages:empty::before {
-            content: 'No messages yet — type a word or phrase below and press Send.';
-            color: #aaa;
-            font-size: 0.82rem;
-            font-style: italic;
-        }
-        .wb-textboard-msg {
-            font-size: 0.87rem;
-            color: #333;
-            line-height: 1.45;
-            word-break: break-word;
-        }
-        .wb-textboard-msg-sender {
-            font-weight: 700;
-            color: #113448;
-            margin-right: 0.35rem;
-        }
-        .wb-textboard-msg-own .wb-textboard-msg-sender {
-            color: #20bcba;
-        }
-        #wb-textboard-input-row {
-            display: flex;
-            gap: 0.5rem;
-            padding: 0.45rem 1rem 0.6rem;
-            border-top: 1px solid #e9ecef;
-            background: #fff;
-        }
-        #wb-textboard-input {
-            flex: 1;
-            padding: 0.4rem 0.85rem;
-            border: 1.5px solid #dee2e6;
-            border-radius: 20px;
-            font-size: 0.88rem;
-            font-family: "Open Sans", sans-serif;
-            outline: none;
-            transition: border-color 0.15s;
-        }
-        #wb-textboard-input:focus { border-color: #20bcba; }
-        #wb-textboard-send-btn {
-            background: #20bcba;
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            padding: 0.4rem 1.1rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            font-family: "Montserrat", sans-serif;
-            cursor: pointer;
-            transition: background 0.15s;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-        }
-        #wb-textboard-send-btn:hover { background: #1aa9a7; }
-        @media (max-width: 768px) {
-            #wb-textboard-messages { height: 100px; }
-            #wb-textboard-input-row { padding: 0.4rem 0.625rem 0.5rem; gap: 0.4rem; }
-            #wb-textboard-input { font-size: 16px; /* prevent iOS zoom on focus */ padding: 0.45rem 0.75rem; }
-            #wb-textboard-send-btn { padding: 0.45rem 0.85rem; font-size: 0.82rem; }
-        }
-
-        /* Mobile: whiteboard controls bar wraps neatly */
-        @media (max-width: 600px) {
-            #whiteboard-toolbar { gap: 0.4rem; padding: 0.5rem 0.625rem; flex-wrap: wrap; }
-            .wb-tool-group { gap: 0.3rem; }
-            .wb-tool-group + .wb-tool-group { padding-left: 0.5rem; }
-            .wb-tool-btn { width: 34px; height: 34px; font-size: 0.8rem; }
-            .wb-color-btn { width: 22px; height: 22px; }
-            .wb-stroke-btn { width: 38px; height: 32px; }
-        }
-
-        /* ── Prompt Panel ── */
-        #wb-prompt-panel { border-top: 1px solid #dee2e6; background: #fafafa; }
-
-        #wb-prompt-category-bar {
-            display: flex;
-            gap: 0.4rem;
-            padding: 0.5rem 1rem;
-            overflow-x: auto;
-            background: #f1f3f5;
-            border-bottom: 1px solid #dee2e6;
-            -webkit-overflow-scrolling: touch;
-        }
-        #wb-prompt-category-bar::-webkit-scrollbar { height: 3px; }
-        #wb-prompt-category-bar::-webkit-scrollbar-thumb { background: #20bcba; border-radius: 2px; }
-
-        .wb-prompt-cat-btn {
-            padding: 0.28rem 0.85rem;
-            border: 1.5px solid #dee2e6;
-            border-radius: 20px;
-            background: #fff;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.15s;
-            font-family: "Open Sans", sans-serif;
-            flex-shrink: 0;
-        }
-        .wb-prompt-cat-btn:hover { border-color: #20bcba; color: #20bcba; }
-        .wb-prompt-cat-active { background: #20bcba !important; color: #fff !important; border-color: #20bcba !important; }
-
-        #wb-prompt-display { padding: 0.75rem 1rem; min-height: 78px; }
-        #wb-prompt-placeholder { color: #aaa; font-size: 0.87rem; font-style: italic; text-align: center; padding: 0.5rem 0; }
-
-        #wb-prompt-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #20bcba;
-            margin-bottom: 0.4rem;
-        }
-        #wb-prompt-text { font-size: 0.92rem; color: #333; line-height: 1.55; }
-
-        #wb-prompt-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.45rem 1rem 0.6rem;
-            border-top: 1px solid #e9ecef;
-            background: #fff;
-            gap: 0.75rem;
-        }
-        #wb-new-prompt-btn {
-            background: #20bcba;
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            padding: 0.4rem 1.1rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            font-family: "Montserrat", sans-serif;
-            cursor: pointer;
-            transition: background 0.15s;
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-            white-space: nowrap;
-        }
-        #wb-new-prompt-btn:hover { background: #1aa9a7; }
-        #wb-prompt-by { font-size: 0.78rem; color: #aaa; font-style: italic; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        @media (max-width: 768px) {
-            #wb-prompt-display { min-height: 64px; }
-            #wb-prompt-text { font-size: 0.87rem; }
-            #wb-prompt-category-bar { padding: 0.4rem 0.625rem; gap: 0.3rem; }
-            .wb-prompt-cat-btn { padding: 0.22rem 0.65rem; font-size: 0.75rem; }
-            #wb-prompt-footer { padding: 0.4rem 0.625rem 0.5rem; }
-            #wb-new-prompt-btn { padding: 0.38rem 0.9rem; font-size: 0.82rem; }
-        }
-    </style>
+    <!-- Video Call Styles -->
+    <link rel="stylesheet" href="video-call.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
-        <a class="navbar-brand logo-image" href="index"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
 
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-awesome fas fa-bars"></span>
-            <span class="navbar-toggler-awesome fas fa-times"></span>
-        </button>
+<!-- ══════════════════════════════════════════════════════
+     PRE-JOIN SCREEN
+     ══════════════════════════════════════════════════════ -->
+<div id="screen-prejoin" class="vc-screen">
+    <div class="pj-bg"></div>
 
-        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index#header">HOME</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="connect">CONNECT</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="instructors">INSTRUCTORS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="Resources2">RESOURCES</a>
-                </li>
-
-                <!-- Dropdown Menu -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="EnglishPage"><span class="item-text">ENGLISH</span></a>
-                        <div class="dropdown-items-divide-hr"></div>
-                        <a class="dropdown-item" href="NewSpanishPage"><span class="item-text">SPANISH</span></a>
-                        <div class="dropdown-items-divide-hr"></div>
-                        <a class="dropdown-item" href="NewFrenchPage"><span class="item-text">FRENCH</span></a>
-                        <div class="dropdown-items-divide-hr"></div>
-                        <a class="dropdown-item" href="NewPortuguesePage"><span class="item-text">PORTUGUESE</span></a>
-                        <div class="dropdown-items-divide-hr"></div>
-                        <a class="dropdown-item" href="NewItalianPage"><span class="item-text">ITALIAN</span></a>
-                        <div class="dropdown-items-divide-hr"></div>
-                        <a class="dropdown-item" href="GermanPage"><span class="item-text">GERMAN</span></a>
-                        <div class="dropdown-items-divide-hr"></div>
-                        <a class="dropdown-item" href="RussianPage"><span class="item-text">RUSSIAN</span></a>
-                        <div class="dropdown-items-divide-hr"></div>
-                        <a class="dropdown-item" href="SwedishPage"><span class="item-text">SWEDISH</span></a>
-                    </div>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link page-scroll" href="index#contact">CONTACT</a>
-                </li>
-
-                <!-- Sign In Link (shown when not logged in) -->
-                <li class="nav-item" id="signInWrapper">
-                    <a class="nav-link page-scroll" href="login">SIGN IN/SIGN UP</a>
-                </li>
-            </ul>
-
-            <!-- Profile Picture Dropdown (shown when logged in) -->
-            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
-                <div class="profile-dropdown">
-                    <img id="navProfilePic" class="profile-pic-nav" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile">
-                    <div class="notification-badge" id="notificationBadge"></div>
-                    <div class="profile-dropdown-content">
-                        <a href="learner-profile" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
-                        <a href="messages" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
-                        <a href="bookings"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
-                        <a href="friends"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
-                        <a href="student-dashboard"><i class="fas fa-cog"></i> Settings</a>
-                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                    </div>
-                </div>
+    <!-- Navbar -->
+    <nav class="pj-nav">
+        <a href="index" class="pj-nav-logo">
+            <img src="images/NewLogo8.png" alt="Lingua Bud">
+        </a>
+        <div id="pj-nav-profile" class="pj-nav-profile hidden">
+            <div class="pj-nav-avatar-wrap" id="pj-avatar-wrap">
+                <img id="navProfilePic"
+                     src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23aaa'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                     class="pj-nav-avatar" alt="Profile">
+                <span id="notificationBadge" class="pj-notif-badge hidden"></span>
             </div>
-
-            <span class="nav-item social-icons">
-                <span class="fa-stack">
-                    <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
-                        <span class="hexagon"></span>
-                        <i class="fab fa-facebook-f fa-stack-1x"></i>
-                    </a>
-                </span>
-                <span class="fa-stack">
-                    <a href="https://www.instagram.com/lingua_bud/" target="_blank">
-                        <span class="hexagon"></span>
-                        <i class="fab fa-instagram fa-stack-1x"></i>
-                    </a>
-                </span>
-            </span>
+            <div class="pj-nav-dropdown" id="pjDropdown">
+                <a href="learner-profile" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
+                <a href="messages" id="messagesLink" class="messages-link">
+                    <i class="fas fa-envelope"></i> Messages
+                    <span id="unreadCount" class="pj-count hidden"></span>
+                </a>
+                <a href="bookings">
+                    <i class="fas fa-calendar-check"></i> Bookings
+                    <span id="bookingsCount" class="pj-count hidden"></span>
+                </a>
+                <a href="friends">
+                    <i class="fas fa-user-friends"></i> Friends
+                    <span id="friendsCount" class="pj-count hidden"></span>
+                </a>
+                <a href="student-dashboard"><i class="fas fa-cog"></i> Settings</a>
+                <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        <div id="pj-nav-signin" class="hidden">
+            <a href="login" class="pj-signin-link">Sign In / Register</a>
         </div>
     </nav>
 
-    <!-- Warning banner shown when navigating away during an active call -->
-    <div id="call-nav-warning">
-        <p><strong>You're still in a video call!</strong><br>
-        Navigating here will disconnect you. Use <strong>Pop Out</strong> to keep watching while you browse in another tab, or open the link in a new tab.</p>
-        <div class="warning-btns">
-            <button id="warn-stay" style="background:#20bcba;color:white;">Stay in Call</button>
-            <button id="warn-newtab" style="background:#113448;color:white;">Open in New Tab</button>
-            <button id="warn-leave" style="background:#dc3545;color:white;">Leave &amp; Go</button>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="video-container">
-            <div class="video-header">
-                <h1>Video Call Room</h1>
-                <p>Practice languages with native speakers via video chat</p>
+    <!-- Join Card -->
+    <div class="pj-container">
+        <div class="pj-card">
+            <div class="pj-logo">
+                <img src="images/NewLogo8.png" alt="Lingua Bud">
             </div>
 
-            <div id="statusMessage" class="status-message"></div>
+            <h2 class="pj-title">Join Video Call</h2>
+            <p class="pj-subtitle">Practice languages with your partner</p>
 
-            <div id="callTimer" class="call-timer">
-                <i class="fas fa-clock"></i> Call Duration: <span id="callDuration">00:00</span>
-            </div>
-
-            <div class="controls">
-                <div class="channel-input-group">
-                    <input type="text" id="channelName" placeholder="Enter channel name (e.g., spanish-practice)" value="">
-                    <button id="copyRoomBtn" class="copy-room-btn" title="Copy room code">
-                        <i class="fas fa-clipboard"></i>
+            <!-- Room code input -->
+            <div class="pj-input-group">
+                <label class="pj-label" for="channelName">Room Code</label>
+                <div class="pj-input-row">
+                    <input type="text"
+                           id="channelName"
+                           class="pj-input"
+                           placeholder="e.g., spanish-practice"
+                           autocomplete="off"
+                           spellcheck="false">
+                    <button id="copyRoomBtn" class="pj-copy-btn" title="Copy room code">
+                        <i class="fas fa-copy"></i>
                     </button>
                 </div>
-                <button id="joinBtn" class="btn-video btn-join">Join Call</button>
-                <button id="leaveBtn" class="btn-video btn-leave">Leave Call</button>
-                <button id="whiteboardBtn" class="btn-video btn-whiteboard">
-                    <i class="fas fa-chalkboard"></i> Whiteboard
-                </button>
-                <button id="pipBtn" class="btn-video btn-pip">
-                    <i class="fas fa-external-link-alt"></i> Pop Out
-                </button>
             </div>
 
-            <div id="video-grid-container">
-                <div id="video-grid"></div>
+            <button id="joinBtn" class="pj-join-btn">
+                <i class="fas fa-video"></i> Join Call
+            </button>
 
-                <!-- Whiteboard Panel (inside container so it's visible in native fullscreen) -->
-                <div id="whiteboard-panel" style="display:none;">
-                    <div id="whiteboard-toolbar">
-                        <div class="wb-tool-group">
-                            <button id="wb-pen-btn" class="wb-tool-btn wb-tool-active" title="Pen"><i class="fas fa-pencil-alt"></i></button>
-                            <button id="wb-eraser-btn" class="wb-tool-btn" title="Eraser"><i class="fas fa-eraser"></i></button>
-                        </div>
-                        <div class="wb-tool-group" id="wb-color-palette">
-                            <button class="wb-color-btn wb-color-active" data-color="#000000" style="background:#000000;" title="Black"></button>
-                            <button class="wb-color-btn" data-color="#dc3545" style="background:#dc3545;" title="Red"></button>
-                            <button class="wb-color-btn" data-color="#0d6efd" style="background:#0d6efd;" title="Blue"></button>
-                            <button class="wb-color-btn" data-color="#198754" style="background:#198754;" title="Green"></button>
-                            <button class="wb-color-btn" data-color="#ffc107" style="background:#ffc107;" title="Yellow"></button>
-                            <button class="wb-color-btn" data-color="#6f42c1" style="background:#6f42c1;" title="Purple"></button>
-                            <button class="wb-color-btn" data-color="#fd7e14" style="background:#fd7e14;" title="Orange"></button>
-                            <button class="wb-color-btn" data-color="#ffffff" style="background:#ffffff;border:1px solid #ccc;" title="White"></button>
-                        </div>
-                        <div class="wb-tool-group">
-                            <button class="wb-stroke-btn wb-stroke-active" data-width="2" title="Thin"><span class="wb-stroke-preview" style="height:2px;"></span></button>
-                            <button class="wb-stroke-btn" data-width="5" title="Medium"><span class="wb-stroke-preview" style="height:5px;"></span></button>
-                            <button class="wb-stroke-btn" data-width="12" title="Thick"><span class="wb-stroke-preview" style="height:12px;"></span></button>
-                        </div>
-                        <div class="wb-tool-group">
-                            <button id="wb-text-btn" class="wb-tool-btn" title="Text Board"><i class="fas fa-keyboard"></i></button>
-                            <button id="wb-prompt-btn" class="wb-tool-btn" title="Random Prompts"><i class="fas fa-dice"></i></button>
-                        </div>
-                        <div class="wb-tool-group">
-                            <button id="wb-clear-btn" class="wb-tool-btn" title="Clear All"><i class="fas fa-trash-alt"></i></button>
-                            <button id="wb-close-btn" class="wb-tool-btn" title="Close Whiteboard"><i class="fas fa-times"></i></button>
-                        </div>
-                    </div>
+            <!-- Status / feedback -->
+            <div id="pj-status" class="pj-status hidden"></div>
 
-                    <!-- Prompt Panel — hidden until the dice button is toggled -->
-                    <div id="wb-prompt-panel" style="display:none;">
-                        <div id="wb-prompt-category-bar">
-                            <button class="wb-prompt-cat-btn wb-prompt-cat-active" data-cat="all">All</button>
-                            <button class="wb-prompt-cat-btn" data-cat="speaking">⏱️ Speaking</button>
-                            <button class="wb-prompt-cat-btn" data-cat="vocab">📚 Vocab</button>
-                            <button class="wb-prompt-cat-btn" data-cat="stories">📖 Stories</button>
-                            <button class="wb-prompt-cat-btn" data-cat="roleplay">🎭 Role Play</button>
-                            <button class="wb-prompt-cat-btn" data-cat="grammar">✏️ Grammar</button>
-                            <button class="wb-prompt-cat-btn" data-cat="culture">🌍 Culture</button>
-                            <button class="wb-prompt-cat-btn" data-cat="pronunciation">🎤 Pronunciation</button>
-                            <button class="wb-prompt-cat-btn" data-cat="games">🎮 Games</button>
-                        </div>
-                        <div id="wb-prompt-display">
-                            <div id="wb-prompt-placeholder">Click <strong>New Prompt</strong> below to get a random language exercise for your session!</div>
-                            <div id="wb-prompt-content" style="display:none;">
-                                <div id="wb-prompt-title"></div>
-                                <div id="wb-prompt-text"></div>
-                            </div>
-                        </div>
-                        <div id="wb-prompt-footer">
-                            <button id="wb-new-prompt-btn"><i class="fas fa-dice"></i> New Prompt</button>
-                            <span id="wb-prompt-by"></span>
-                        </div>
-                    </div>
-
-                    <!-- Text Board — hidden until the keyboard button is toggled -->
-                    <div id="wb-textboard" style="display:none;">
-                        <div id="wb-textboard-messages"></div>
-                        <div id="wb-textboard-input-row">
-                            <input type="text" id="wb-textboard-input" placeholder="Type a word or phrase to share…" maxlength="200" autocomplete="off">
-                            <button id="wb-textboard-send-btn"><i class="fas fa-paper-plane"></i> Send</button>
-                        </div>
-                    </div>
-
-                    <div id="whiteboard-canvas-wrapper">
-                        <canvas id="whiteboard-canvas" width="1280" height="720"></canvas>
-                    </div>
-                </div>
-
-                <!-- Inline whiteboard toggle — fixed overlay visible only in fullscreen/expanded mode -->
-                <button id="inline-wb-btn" class="inline-wb-btn" title="Toggle Whiteboard">
-                    <i class="fas fa-chalkboard"></i><span> Whiteboard</span>
-                </button>
-
-                <button id="gridExpandBtn" class="grid-expand-btn" title="Expand all videos">
-                    <i class="fas fa-expand"></i>
-                </button>
-            </div>
-
-            <div class="instructions">
-                <h3>How to Use:</h3>
+            <!-- How to use -->
+            <details class="pj-help">
+                <summary>How to use</summary>
                 <ul>
-                    <li><strong>Copy/Enter a Channel Name:</strong> This is your room name. Share it with your language partner.</li>
-                    <li><strong>Join Call:</strong> Click the button to enter the video room.</li>
-                    <li><strong>Camera & Microphone:</strong> Make sure to allow browser access to your camera and microphone.</li>
-                    <li><strong>Leave Call:</strong> Click the leave button when you're done.</li>
+                    <li>Enter or paste a room code above to join a call</li>
+                    <li>Share the code with your language partner so they can join you</li>
+                    <li>Allow camera &amp; microphone access when your browser asks</li>
+                    <li>
+                        Keyboard shortcuts while in-call:
+                        <kbd>M</kbd> mute &nbsp;
+                        <kbd>V</kbd> camera &nbsp;
+                        <kbd>D</kbd> dice &nbsp;
+                        <kbd>C</kbd> chat &nbsp;
+                        <kbd>W</kbd> whiteboard
+                    </li>
                 </ul>
+            </details>
+        </div>
+    </div>
+</div><!-- /screen-prejoin -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     LOADING SCREEN
+     ══════════════════════════════════════════════════════ -->
+<div id="screen-loading" class="vc-screen hidden">
+    <div class="loading-content">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+        </div>
+        <p id="loading-msg" class="loading-msg">Joining call…</p>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     IN-CALL SCREEN
+     ══════════════════════════════════════════════════════ -->
+<div id="screen-call" class="vc-screen hidden">
+
+    <!-- ── Top Bar ────────────────────────────────────── -->
+    <div id="vc-top-bar">
+        <div class="vc-top-left">
+            <a href="#" id="vc-logo-link" class="vc-logo-link">
+                <img src="images/NewLogo8.png" alt="Lingua Bud" class="vc-logo">
+            </a>
+            <div class="vc-room-info">
+                <span id="vc-room-name" class="vc-room-name"></span>
+                <button id="vc-copy-room" class="vc-copy-room-btn" title="Copy room code">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="vc-top-center">
+            <span class="vc-timer">
+                <i class="fas fa-circle vc-timer-dot"></i>
+                <span id="callDuration">00:00</span>
+            </span>
+        </div>
+
+        <div class="vc-top-right">
+            <div id="vc-quality" class="vc-quality" title="Connection quality">
+                <i class="fas fa-signal"></i>
+                <span id="vc-quality-label">Good</span>
             </div>
         </div>
     </div>
 
-    <!-- Agora Web SDK -->
-    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.21.0.js"></script>
-
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc, collection, getDocs, addDoc, query, where, functions, httpsCallable, onSnapshot, setDoc, deleteDoc } from './lib/firebaseClient.js';
-
-        // Agora Configuration
-        const APP_ID = 'dfd628e44de640e3b7717f422d1dc3e7';
-
-        let client;
-        let localAudioTrack;
-        let localVideoTrack;
-        let remoteUsers = {};
-        let currentUser = null;
-        let currentUserName = 'Guest';
-        let dataStreamId = null;
-        const remoteUserNames = {}; // agoraUid -> display name
-        let isMuted = false;
-        let isCameraOff = false;
-        let currentPresenceRef = null; // Firestore ref for our video_calls presence doc
-        let currentChannelName = '';   // Active channel name, used by name lookup
-        let callStartTime = null;      // epoch ms when the call started
-        let callTimerInterval = null;  // setInterval handle for the duration display
-        let isInstructor = false;      // true when the current user is an instructor
-        let wasCallActive = false;     // true once the user successfully joined a call
-        let selectedRating = 0;
-        let selectedAnswers = {};
-        const ratingLabels = ['', 'Needs Improvement', 'Fair', 'Good', 'Very Good', 'Excellent!'];
-
-        // Whiteboard state
-        let wbTool = 'pen';
-        let wbColor = '#000000';
-        let wbStrokeWidth = 2;
-        let wbIsDrawing = false;
-        let wbLastX = 0;
-        let wbLastY = 0;
-        let wbLastSentX = 0;  // position of the most recently *sent* point (not just drawn)
-        let wbLastSentY = 0;  // keeps sent segments gap-free on the remote canvas
-        let wbLastSentTime = 0;
-        const WB_THROTTLE_MS = 50;  // ~20 writes/sec
-        let wbMyUid = null;         // our Agora UID string, used to filter own relay docs
-        let wbRelayRef = null;      // Firestore doc ref for our outgoing strokes
-        let wbUnsubscribe = null;   // Firestore listener teardown
-        let wbJoinTime = 0;         // epoch ms when we joined — ignore older relay docs
-
-        // Text board state
-        let wbTextboardCol = null;  // Firestore collection ref for text messages
-        let wbTextUnsubscribe = null; // text board listener teardown
-
-        // Prompt state
-        let wbPromptRelayRef = null;
-        let wbCurrentPromptCat = 'all';
-
-        // Prompt library
-        const WB_PROMPTS = [
-            // Speaking
-            { cat:'speaking', icon:'⏱️', title:'60-Second Food Description', text:'Describe your favorite meal in 60 seconds — what does it look, smell, and taste like? Your partner takes notes on any errors to review together after.' },
-            { cat:'speaking', icon:'⏱️', title:'Memorable Travel Story', text:'Talk about the most memorable trip or travel experience you have ever had. Use as many descriptive words as possible — your partner will ask three follow-up questions.' },
-            { cat:'speaking', icon:'⏱️', title:'Ideal Day', text:'Describe your perfect day from the moment you wake up to when you go to sleep. Your partner will ask at least three follow-up questions to keep the conversation going.' },
-            { cat:'speaking', icon:'⏱️', title:'90-Second Debate', text:'Pick a side: "Social media is more harmful than helpful." You have 90 seconds to make your argument — then swap sides and try to argue the opposite!' },
-            { cat:'speaking', icon:'⏱️', title:'Speed Adjectives', text:'Name 10 adjectives that describe your own personality in 30 seconds. Your partner writes them down and then gives you honest feedback — do they agree?' },
-            { cat:'speaking', icon:'⏱️', title:'Explain Your Job Simply', text:'Explain what your job (or studies) involves to someone who knows nothing about it. Use simple, everyday language — absolutely no jargon or technical terms!' },
-            { cat:'speaking', icon:'⏱️', title:'Future Plans', text:'Describe where you see yourself in 5 years. Talk about your career, lifestyle, travel hopes, and personal goals — try to use future tense forms naturally throughout.' },
-            { cat:'speaking', icon:'⏱️', title:'Childhood Hobby', text:'Tell your partner about a hobby or activity you loved as a child. Why did you love it? Do you still do it? Your partner asks at least two follow-up questions.' },
-            // Vocabulary
-            { cat:'vocab', icon:'📚', title:'Word Association', text:'Take turns — one person says a word, the other immediately says the first word that comes to mind. Keep going for 2 minutes without repeating or hesitating!' },
-            { cat:'vocab', icon:'📚', title:'Category Sprint', text:'Name as many foods as you can in 45 seconds. Then switch — your partner tries to beat your score! Try again with: animals, furniture, emotions, or clothing.' },
-            { cat:'vocab', icon:'📚', title:'Synonym Challenge', text:'Your partner picks any common word. Give 3 different synonyms for it without repeating. Then swap — who can find more? Check a dictionary together if needed.' },
-            { cat:'vocab', icon:'📚', title:'Opposites Game', text:'Take turns saying a word. Your partner must immediately say the exact opposite. No hesitating — if they pause for more than 3 seconds, they lose a point!' },
-            { cat:'vocab', icon:'📚', title:'Word in Context', text:'Your partner gives you any vocabulary word. Use it in a natural, meaningful sentence within 10 seconds. Swap after 5 rounds — who used the words most naturally?' },
-            { cat:'vocab', icon:'📚', title:'Around the Room', text:'Look around wherever you are. Name 10 objects you can see, then describe what each one is used for — in a complete sentence for each one.' },
-            { cat:'vocab', icon:'📚', title:'Taboo!', text:'Think of a word and describe it to your partner WITHOUT saying the word itself or any obvious related words. Your partner guesses! Take turns — 5 words each.' },
-            { cat:'vocab', icon:'📚', title:'Collocations Challenge', text:'Your partner says a noun (e.g. "time," "money," "decision"). You must give 3 natural verbs or adjectives that go with it. Focus on natural word combinations!' },
-            // Storytelling
-            { cat:'stories', icon:'📖', title:'Three-Word Story', text:'Build a story together — take turns adding one sentence at a time. The story must include: a dog, a bus, and a mysterious letter. See where it goes!' },
-            { cat:'stories', icon:'📖', title:'Finish the Story', text:'"It was the strangest morning of my life. I woke up and found a key on my pillow that I had never seen before…" Take turns adding sentences to continue the story!' },
-            { cat:'stories', icon:'📖', title:'Twisted Fairy Tale', text:'Retell a classic fairy tale — but completely change the ending! Take turns adding sentences. Use as much past tense as you can and make it as dramatic as possible.' },
-            { cat:'stories', icon:'📖', title:'Headline News', text:'Invent the most outrageous but detailed news headline you can, then tell the full story behind it. Your partner plays the journalist and asks probing questions.' },
-            { cat:'stories', icon:'📖', title:'First Memory', text:'Share your earliest childhood memory in as much detail as possible. Use sensory language — what did you see, hear, smell, and feel? Your partner asks follow-up questions.' },
-            { cat:'stories', icon:'📖', title:'Alternative Life', text:'Tell the story of what your life might look like if you had made one major decision differently. Your partner asks questions to keep the story moving forward.' },
-            { cat:'stories', icon:'📖', title:'Story Dice', text:'Each person says 5 random nouns or adjectives. Together, you must build a coherent story using ALL 10 words — take turns sentence by sentence. No skipping words!' },
-            // Role Play
-            { cat:'roleplay', icon:'🎭', title:'At the Restaurant', text:'One person is the server, one is the customer. Order a meal, ask for recommendations — then the kitchen is out of your first choice. Handle it naturally and politely!' },
-            { cat:'roleplay', icon:'🎭', title:'Lost Tourist', text:'One person is a tourist who is lost and speaks the local language poorly. The other is a friendly local. Help the tourist find a famous landmark using clear directions.' },
-            { cat:'roleplay', icon:'🎭', title:'Job Interview', text:'One person interviews the other for a dream job of your choice. Use formal language, polite expressions, and full sentences. Swap roles after 5 minutes.' },
-            { cat:'roleplay', icon:'🎭', title:"Doctor's Visit", text:'One person is a patient with a strange or funny set of symptoms. The other is the doctor — diagnose and recommend treatment using appropriate medical vocabulary.' },
-            { cat:'roleplay', icon:'🎭', title:'Hotel Check-In', text:'One person calls to book a hotel. The other is the receptionist — but there is a complication (wrong room type, overbooked, or a billing issue). Resolve it politely.' },
-            { cat:'roleplay', icon:'🎭', title:'Meeting a New Neighbor', text:'You have just moved in and meet your neighbor for the first time. Introduce yourself, ask about the neighborhood, and make small talk. Keep it warm and natural.' },
-            { cat:'roleplay', icon:'🎭', title:'At the Airport', text:'One person has missed their flight and needs help at the service desk. The other is the airline employee. Rebook the ticket, discuss compensation, and stay calm!' },
-            // Grammar
-            { cat:'grammar', icon:'✏️', title:'Tense Switching', text:'Tell a 2-minute story about your day — but every other sentence must switch tenses (past → present → past). Your partner corrects any mistakes as you go.' },
-            { cat:'grammar', icon:'✏️', title:'No Filler Words', text:'Have a 2-minute conversation on any topic — but you are NOT allowed to say "um," "uh," "like," or "you know." Your partner calls it out every single time!' },
-            { cat:'grammar', icon:'✏️', title:'No Yes or No', text:'Your partner asks you 10 questions in a row. Answer each one in a full sentence WITHOUT using "yes" or "no." Then swap — who keeps it up longest?' },
-            { cat:'grammar', icon:'✏️', title:'Conditional Challenge', text:'Take turns making "If… then…" sentences. Try to use all three forms: present conditional (If I go…), past conditional (If I went…), and perfect conditional (If I had gone…).' },
-            { cat:'grammar', icon:'✏️', title:'Connector Challenge', text:'Have a conversation on any topic — but every sentence you say must BEGIN with a different connector: however, therefore, meanwhile, although, despite, furthermore…' },
-            { cat:'grammar', icon:'✏️', title:'Passive Voice Drill', text:'Describe everything that happened to you this morning using ONLY passive voice sentences ("I was woken up by…"). Your partner corrects anything that sounds unnatural.' },
-            { cat:'grammar', icon:'✏️', title:'Question Master', text:'Have a full 3-minute conversation using ONLY questions — no statements allowed! Every single thing you say must be a question. It is harder than it sounds!' },
-            // Culture
-            { cat:'culture', icon:'🌍', title:'Holiday Traditions', text:'Each person shares their favorite holiday or festival from their own culture. What do people eat, wear, and do? What is the history behind it? Compare traditions!' },
-            { cat:'culture', icon:'🌍', title:'Food Tour', text:'Name three dishes from your country that your partner absolutely must try. Describe each one in detail — ingredients, when people eat it, and why it matters to you.' },
-            { cat:'culture', icon:'🌍', title:'Proverb Exchange', text:'Share a famous saying or proverb from your culture and explain what it means in practice. Does your partner\'s language have a similar one? Compare and discuss.' },
-            { cat:'culture', icon:'🌍', title:'Music Recommendation', text:'Recommend a song in the target language. Explain the theme, why you like it, and what the lyrics mean. If you feel bold — sing or hum part of it!' },
-            { cat:'culture', icon:'🌍', title:'Dream Destination', text:'Describe a place in your partner\'s country you would most love to visit. Why that place? What would you do there? Your partner gives you insider tips and local advice.' },
-            { cat:'culture', icon:'🌍', title:'Daily Life Swap', text:'Compare a typical weekday in your life with what you imagine your partner\'s typical weekday looks like. Ask each other questions — you might be very surprised!' },
-            { cat:'culture', icon:'🌍', title:'Untranslatable Words', text:'Think of a word or concept from your language that is very hard to translate into another language. Explain it to your partner. Do they have something similar?' },
-            // Pronunciation
-            { cat:'pronunciation', icon:'🎤', title:'Read Aloud', text:'Each person finds a paragraph from any website or article in the target language and reads it aloud. Give each other honest, constructive feedback on pronunciation.' },
-            { cat:'pronunciation', icon:'🎤', title:'Minimal Pairs', text:'Your partner says a word. You repeat it back. They then change just ONE sound — can you hear the difference? Practice with words that sound almost identical.' },
-            { cat:'pronunciation', icon:'🎤', title:'Dictation Challenge', text:'One person slowly reads 3–4 sentences from any text; the other types or writes exactly what they hear. Compare results and discuss the gaps or mishearings.' },
-            { cat:'pronunciation', icon:'🎤', title:'Shadowing Practice', text:'Find a short video or audio clip in the target language (30–60 seconds). Both of you listen, then each tries to repeat what the speaker said as closely as possible.' },
-            { cat:'pronunciation', icon:'🎤', title:'Intonation Shift', text:'Say the sentence "I never said she stole the money" — stress a DIFFERENT word each time. Notice how the meaning shifts! Discuss how intonation works in each language.' },
-            { cat:'pronunciation', icon:'🎤', title:'Accent Analysis', text:'Speak 5 natural sentences. Your partner describes your accent — which region or influence do they hear? Discuss what sounds are trickiest for each of you to produce.' },
-            { cat:'pronunciation', icon:'🎤', title:'Slow to Fast', text:'Pick a tongue twister or complex sentence in the target language. Say it slowly three times, then gradually speed up. Your partner scores you 1–10 on clarity!' },
-            // Games
-            { cat:'games', icon:'🎮', title:'20 Questions', text:'One person thinks of a famous person, animal, or object. The other asks up to 20 yes/no questions to guess it. Take turns — play two rounds each. All questions must be in full sentences!' },
-            { cat:'games', icon:'🎮', title:'Two Truths and a Lie', text:'Each person says three statements about themselves — two true, one a lie. Your partner must guess which one is false. Try to make all three sound equally believable!' },
-            { cat:'games', icon:'🎮', title:'Word Chain', text:'One person says any word. The next must say a word that BEGINS with the last letter of the previous word. No repeating! Hesitate for more than 5 seconds — you lose a point.' },
-            { cat:'games', icon:'🎮', title:'Hot Seat', text:'One person sits in the "hot seat" and must answer any question their partner asks — truthfully, in full sentences. Swap after 10 questions. Great for practicing question forms!' },
-            { cat:'games', icon:'🎮', title:'Pictionary Twist', text:'Use the whiteboard! One person draws something — no letters or numbers. The other must describe what they see in the target language and then guess what it is.' },
-            { cat:'games', icon:'🎮', title:'Celebrity Guess', text:'Think of a famous person. Describe their appearance, personality, and career WITHOUT saying their name. Your partner asks yes/no questions to guess who it is. Swap after 3 rounds.' },
-            { cat:'games', icon:'🎮', title:'Alphabet Story', text:'Together, build a story where each sentence starts with the next letter of the alphabet — A, B, C… all the way to Z. Take turns, one sentence each. Full sentences only!' },
-        ];
-
-        // Format elapsed seconds as HH:MM:SS or MM:SS
-        function updateCallTimer() {
-            if (!callStartTime) return;
-            const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
-            const hours   = Math.floor(elapsed / 3600);
-            const minutes = Math.floor((elapsed % 3600) / 60);
-            const seconds = elapsed % 60;
-            const pad = n => String(n).padStart(2, '0');
-            document.getElementById('callDuration').textContent = hours > 0
-                ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-                : `${pad(minutes)}:${pad(seconds)}`;
-        }
-
-        // DOM Elements
-        const joinBtn = document.getElementById('joinBtn');
-        const leaveBtn = document.getElementById('leaveBtn');
-        const videoGridContainer = document.getElementById('video-grid-container');
-        const gridExpandBtn = document.getElementById('gridExpandBtn');
-        const channelNameInput = document.getElementById('channelName');
-        const videoGrid = document.getElementById('video-grid');
-        const statusMessage = document.getElementById('statusMessage');
-        const navProfilePic = document.getElementById('navProfilePic');
-        const profileNavWrapper = document.getElementById('profileNavWrapper');
-        const signInWrapper = document.getElementById('signInWrapper');
-        const logoutLink = document.getElementById('logoutLink');
-
-        // ── Copy room code button ─────────────────────────────────────────
-        document.getElementById('copyRoomBtn').addEventListener('click', () => {
-            const code = document.getElementById('channelName').value.trim();
-            if (!code) {
-                showStatus('Enter a room code first, then copy it.', 'error');
-                return;
-            }
-            navigator.clipboard.writeText(code).then(() => {
-                const btn = document.getElementById('copyRoomBtn');
-                btn.classList.add('copied');
-                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                showStatus('Room code copied to clipboard!', 'info');
-                setTimeout(() => {
-                    btn.classList.remove('copied');
-                    btn.innerHTML = '<i class="fas fa-clipboard"></i>';
-                }, 2500);
-            }).catch(() => {
-                showStatus('Could not copy — please copy the room code manually.', 'error');
-            });
-        });
-
-        // Immediately restore cached avatar so photo appears before Firestore loads
-        const _cachedAvatar = localStorage.getItem('nav_avatar') || localStorage.getItem('instructor_avatar');
-        if (_cachedAvatar && navProfilePic) navProfilePic.src = _cachedAvatar;
-
-        const pipBtn          = document.getElementById('pipBtn');
-        const whiteboardBtn   = document.getElementById('whiteboardBtn');
-        const whiteboardPanel = document.getElementById('whiteboard-panel');
-        const wbCanvas        = document.getElementById('whiteboard-canvas');
-        const wbCtx           = wbCanvas.getContext('2d');
-        const wbPenBtn        = document.getElementById('wb-pen-btn');
-        const wbEraserBtn     = document.getElementById('wb-eraser-btn');
-        const wbClearBtn      = document.getElementById('wb-clear-btn');
-        const wbCloseBtn      = document.getElementById('wb-close-btn');
-        const inlineWbBtn     = document.getElementById('inline-wb-btn');
-
-        // Text board elements
-        const wbTextBtn       = document.getElementById('wb-text-btn');
-        const wbTextboard     = document.getElementById('wb-textboard');
-        const wbTextMessages  = document.getElementById('wb-textboard-messages');
-        const wbTextInput     = document.getElementById('wb-textboard-input');
-        const wbTextSendBtn   = document.getElementById('wb-textboard-send-btn');
-
-        // Prompt panel elements
-        const wbPromptBtn         = document.getElementById('wb-prompt-btn');
-        const wbPromptPanel       = document.getElementById('wb-prompt-panel');
-        const wbNewPromptBtn      = document.getElementById('wb-new-prompt-btn');
-        const wbPromptPlaceholder = document.getElementById('wb-prompt-placeholder');
-        const wbPromptContent     = document.getElementById('wb-prompt-content');
-        const wbPromptTitle       = document.getElementById('wb-prompt-title');
-        const wbPromptText        = document.getElementById('wb-prompt-text');
-        const wbPromptBy          = document.getElementById('wb-prompt-by');
-
-        // Get channel from URL parameter (if coming from messages page)
-        const urlParams = new URLSearchParams(window.location.search);
-        const channelFromUrl = urlParams.get('channel');
-        if (channelFromUrl) {
-            channelNameInput.value = channelFromUrl;
-            showStatus('Ready to start video call. Click "Join Call" when ready.', 'info');
-        }
-
-        // Check authentication status
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-
-                // Load profile picture and name — check both collections in parallel; prefer instructors
-                try {
-                    const [usersSnap, instructorsSnap] = await Promise.all([
-                        getDoc(doc(db, 'users', user.uid)),
-                        getDoc(doc(db, 'instructors', user.uid))
-                    ]);
-                    isInstructor = instructorsSnap.exists();
-                    const userData = isInstructor ? instructorsSnap.data()
-                                   : usersSnap.exists() ? usersSnap.data() : null;
-                    if (userData) {
-                        if (userData.avatar_url) {
-                            navProfilePic.src = userData.avatar_url;
-                            localStorage.setItem('nav_avatar', userData.avatar_url);
-                        }
-                        if (userData.name) {
-                            currentUserName = userData.name;
-                        }
-                    }
-                    // Point "My Profile" to the right dashboard
-                    const myProfileLink = document.getElementById('myProfileLink');
-                    if (myProfileLink) {
-                        myProfileLink.href = 'learner-profile';
-                    }
-                } catch (error) {
-                    console.error('Error loading profile:', error);
-                }
-
-                // Show profile nav and hide sign in button
-                if (profileNavWrapper) {
-                    profileNavWrapper.style.cssText = 'display: flex !important;';
-                }
-                if (signInWrapper) {
-                    signInWrapper.style.display = 'none';
-                }
-
-                showStatus(`Logged in as ${user.email}`, 'success');
-
-                // Live notification badges
-                loadVCNotifications(user.uid);
-            } else {
-                showStatus('You are not logged in. You can still use video calls, but your name will be "Guest".', 'info');
-                currentUser = { email: 'Guest', uid: 'guest-' + Date.now() };
-
-                // Show sign in, hide profile
-                if (signInWrapper) {
-                    signInWrapper.style.display = 'block';
-                }
-                if (profileNavWrapper) {
-                    profileNavWrapper.style.display = 'none';
-                }
-            }
-        });
-
-        // Logout handler
-        if (logoutLink) {
-            logoutLink.addEventListener('click', async (e) => {
-                e.preventDefault();
-                try {
-                    await signOut(auth);
-                    window.location.href = 'index';
-                } catch (error) {
-                    console.error('Error signing out:', error);
-                }
-            });
-        }
-
-        // Initialize Agora Client
-        async function initializeAgora() {
-            client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-            client.on("user-published", handleUserPublished);
-            client.on("user-unpublished", handleUserUnpublished);
-            client.on("user-left", handleUserLeft);
-        }
-
-        // Write our presence to a dedicated per-channel collection so remote users can look us up
-        async function registerVideoPresence(agoraUid, channelName) {
-            if (!currentUser || currentUser.uid.startsWith('guest-')) return;
-            try {
-                currentPresenceRef = doc(db, 'video_calls', channelName, 'presence', String(agoraUid));
-                await setDoc(currentPresenceRef, {
-                    name: currentUserName,
-                    userId: currentUser.uid,
-                    joinedAt: Date.now()
-                });
-            } catch (e) {
-                console.warn('Could not register video presence:', e);
-            }
-        }
-
-        // Remove our presence doc when leaving
-        async function clearVideoPresence() {
-            if (!currentPresenceRef) return;
-            try {
-                await deleteDoc(currentPresenceRef);
-            } catch (e) { /* non-critical */ }
-            currentPresenceRef = null;
-        }
-
-        // Look up a remote participant's display name — direct doc get, no query needed
-        async function lookupRemoteUserName(agoraUid) {
-            try {
-                if (!currentChannelName) return null;
-                const snap = await getDoc(doc(db, 'video_calls', currentChannelName, 'presence', String(agoraUid)));
-                if (snap.exists()) return snap.data().name || null;
-            } catch (e) {
-                console.warn('Name lookup failed:', e);
-            }
-            return null;
-        }
-
-        // Join Channel
-        async function joinChannel() {
-            const channelName = channelNameInput.value.trim();
-
-            if (!channelName) {
-                showStatus('Please enter a channel name', 'error');
-                return;
-            }
-
-            try {
-                joinBtn.disabled = true;
-                showStatus('Joining channel...', 'info');
-
-                // Initialize client if not already done
-                if (!client) {
-                    await initializeAgora();
-                }
-
-                // Generate token from Firebase Function
-                showStatus('Generating secure token...', 'info');
-                const generateToken = httpsCallable(functions, 'generateAgoraToken');
-                const tokenResult = await generateToken({
-                    channelName: channelName,
-                    uid: currentUser.uid
-                });
-
-                if (!tokenResult.data || !tokenResult.data.token) {
-                    throw new Error('Failed to generate token from server');
-                }
-
-                const token = tokenResult.data.token;
-                const uid = tokenResult.data.uid;
-
-                showStatus('Token generated, joining channel...', 'info');
-
-                // Join the channel with the generated token; capture actual Agora UID
-                const actualUid = await client.join(APP_ID, channelName, token, uid);
-
-                // Register our presence using the actual UID Agora assigned
-                currentChannelName = channelName;
-                await registerVideoPresence(actualUid, channelName);
-
-                // Create local tracks
-                [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-
-                // Display local video with the user's real name
-                const localPlayer = createVideoPlayer(actualUid, true, currentUserName);
-                localVideoTrack.play(localPlayer.querySelector('.video-stream'));
-
-                // Publish local tracks
-                await client.publish([localAudioTrack, localVideoTrack]);
-
-                // Set up Firebase Firestore relay for whiteboard sync
-                wbMyUid = String(actualUid);
-                wbJoinTime = Date.now();
-                wbRelayRef = doc(db, 'whiteboard', channelName, 'relay', wbMyUid);
-                wbPromptRelayRef = doc(db, 'whiteboard', channelName, 'relay', 'current-prompt');
-                const wbRelayCol = collection(db, 'whiteboard', channelName, 'relay');
-                wbUnsubscribe = onSnapshot(wbRelayCol, (snap) => {
-                    snap.docChanges().forEach(change => {
-                        if (change.type !== 'added' && change.type !== 'modified') return;
-                        if (change.doc.id === wbMyUid) return; // own stroke
-                        const data = change.doc.data();
-                        // Prompts persist for the session — show regardless of join time
-                        if (data.t === 'prompt') { wbHandleRemoteAction(data); return; }
-                        if (data.ts && data.ts < wbJoinTime) return; // stale drawing stroke
-                        wbHandleRemoteAction(data);
-                    });
-                });
-
-                // Set up text board Firestore listener
-                wbTextboardCol = collection(db, 'whiteboard', channelName, 'textboard');
-                wbTextUnsubscribe = onSnapshot(wbTextboardCol, (snap) => {
-                    snap.docChanges().forEach(change => {
-                        if (change.type !== 'added') return;
-                        const data = change.doc.data();
-                        if (data.ts && data.ts < wbJoinTime) return;
-                        // Skip own messages — already rendered locally on send
-                        if (data.senderUid && data.senderUid === currentUser.uid) return;
-                        wbRenderTextMessage(data);
-                    });
-                });
-
-                whiteboardBtn.style.display = 'inline-block';
-
-                showStatus('Successfully joined the call!', 'success');
-                wasCallActive = true;
-
-                // Start call duration timer
-                callStartTime = Date.now();
-                const callTimerEl = document.getElementById('callTimer');
-                callTimerEl.style.display = 'block';
-                updateCallTimer();
-                callTimerInterval = setInterval(updateCallTimer, 1000);
-
-                joinBtn.style.display = 'none';
-                leaveBtn.style.display = 'inline-block';
-                gridExpandBtn.style.display = 'flex';
-                pipBtn.style.display = 'inline-block';
-                channelNameInput.disabled = true;
-
-            } catch (error) {
-                console.error('Error joining channel:', error);
-                let errorMsg = `Failed to join: ${error.message}`;
-
-                // Check for token authentication error
-                if (error.message && error.message.includes('CAN_NOT_GET_GATEWAY_SERVER')) {
-                    errorMsg = '❌ Token Required: Please disable App Certificate in Agora Console (see instructions above), or set up a token server for production.';
-                }
-
-                showStatus(errorMsg, 'error');
-                joinBtn.disabled = false;
-            }
-        }
-
-        // Leave Channel
-        async function leaveChannel() {
-            try {
-                // Close local tracks
-                if (localAudioTrack) {
-                    localAudioTrack.close();
-                    localAudioTrack = null;
-                }
-                if (localVideoTrack) {
-                    localVideoTrack.close();
-                    localVideoTrack = null;
-                }
-
-                // Tear down whiteboard Firebase relay
-                if (wbUnsubscribe) { wbUnsubscribe(); wbUnsubscribe = null; }
-                if (wbRelayRef) { deleteDoc(wbRelayRef).catch(() => {}); wbRelayRef = null; }
-                wbMyUid = null;
-                wbJoinTime = 0;
-
-                // Tear down text board
-                if (wbTextUnsubscribe) { wbTextUnsubscribe(); wbTextUnsubscribe = null; }
-                wbTextboardCol = null;
-                wbTextboard.style.display = 'none';
-                wbTextBtn.classList.remove('wb-tool-active');
-                wbTextMessages.innerHTML = '';
-                wbTextInput.value = '';
-
-                // Tear down prompt panel
-                wbPromptRelayRef = null;
-                wbPromptPanel.style.display = 'none';
-                wbPromptBtn.classList.remove('wb-tool-active');
-                wbPromptContent.style.display = 'none';
-                wbPromptPlaceholder.style.display = 'block';
-                wbPromptBy.textContent = '';
-                wbCurrentPromptCat = 'all';
-                document.querySelectorAll('.wb-prompt-cat-btn').forEach(b => b.classList.remove('wb-prompt-cat-active'));
-                document.querySelector('.wb-prompt-cat-btn[data-cat="all"]').classList.add('wb-prompt-cat-active');
-
-                // Reset whiteboard UI
-                whiteboardPanel.style.display = 'none';
-                whiteboardBtn.style.display = 'none';
-                whiteboardBtn.classList.remove('wb-panel-open');
-                inlineWbBtn.style.display = 'none';
-                inlineWbBtn.classList.remove('wb-panel-open');
-                wbIsDrawing = false;
-                wbInitCanvas();
-                wbTool = 'pen';
-                wbColor = '#000000';
-                wbStrokeWidth = 2;
-                wbPenBtn.classList.add('wb-tool-active');
-                wbEraserBtn.classList.remove('wb-tool-active');
-                wbCanvas.classList.remove('wb-eraser-cursor');
-                document.querySelectorAll('.wb-color-btn').forEach(b => b.classList.remove('wb-color-active'));
-                document.querySelector('.wb-color-btn[data-color="#000000"]').classList.add('wb-color-active');
-                document.querySelectorAll('.wb-stroke-btn').forEach(b => b.classList.remove('wb-stroke-active'));
-                document.querySelector('.wb-stroke-btn[data-width="2"]').classList.add('wb-stroke-active');
-
-                // Clear our video presence from Firestore
-                await clearVideoPresence();
-
-                // Remove all remote users
-                remoteUsers = {};
-
-                // Leave the channel
-                await client.leave();
-
-                // Clear video grid
-                videoGrid.innerHTML = '';
-
-                showStatus('Left the call', 'info');
-
-                // Stop call duration timer
-                if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
-                callStartTime = null;
-                document.getElementById('callTimer').style.display = 'none';
-                document.getElementById('callDuration').textContent = '00:00';
-
-                joinBtn.style.display = 'inline-block';
-                joinBtn.disabled = false;
-                isMuted = false;
-                isCameraOff = false;
-                leaveBtn.style.display = 'none';
-                pipBtn.style.display = 'none';
-                document.getElementById('call-nav-warning').style.display = 'none';
-                _closePipOverlay();
-                gridExpandBtn.style.display = 'none';
-                // Reset expand button icon in case it was left in compressed state
-                gridExpandBtn.querySelector('i').className = 'fas fa-expand';
-                channelNameInput.disabled = false;
-
-                // Offer rating popup to students after an active call
-                const _hadActiveCall = wasCallActive;
-                wasCallActive = false;
-                if (_hadActiveCall) {
-                    maybeShowRatingPopup().catch(e => console.error('Rating popup error:', e));
-                }
-
-            } catch (error) {
-                console.error('Error leaving channel:', error);
-                showStatus(`Error leaving: ${error.message}`, 'error');
-            }
-        }
-
-        // ── Post-call rating popup ──────────────────────────────────────────
-
-        async function maybeShowRatingPopup() {
-            // Only show for authenticated students, not instructors
-            if (isInstructor || !currentChannelName || !currentUser || currentUser.uid.startsWith('guest-')) return;
-
-            // Channel name is <uid1>-<uid2> (Firebase UIDs have no hyphens)
-            const parts = currentChannelName.split('-');
-            if (parts.length !== 2) return;
-
-            const otherUid = parts.find(uid => uid !== currentUser.uid);
-            if (!otherUid) return;
-
-            // Verify the other participant is an instructor
-            const instrSnap = await getDoc(doc(db, 'instructors', otherUid));
-            if (!instrSnap.exists()) return;
-
-            const instrName = instrSnap.data().name || 'Your Instructor';
-            showRatingPopup(otherUid, instrName);
-        }
-
-        function showRatingPopup(instructorUid, instructorName) {
-            const popup = document.getElementById('ratingPopup');
-            popup._instructorUid = instructorUid;
-            popup._instructorName = instructorName;
-            document.getElementById('ratingInstructorName').textContent = instructorName;
-
-            // Reset all state
-            selectedRating = 0;
-            selectedAnswers = {};
-            document.getElementById('ratingReviewText').value = '';
-            document.querySelectorAll('.rating-star').forEach(s => s.style.color = '#ddd');
-            document.getElementById('ratingLabel').textContent = '';
-            document.querySelectorAll('.rating-yn-btn').forEach(b => b.classList.remove('yn-yes', 'yn-no'));
-            document.getElementById('ratingSubmitBtn').disabled = true;
-            document.getElementById('ratingSubmitBtn').textContent = 'Submit Review';
-
-            popup.style.display = 'flex';
-        }
-
-        async function submitReview() {
-            const popup = document.getElementById('ratingPopup');
-            const instructorUid = popup._instructorUid;
-            const instructorName = popup._instructorName;
-            if (!selectedRating || !instructorUid) return;
-
-            const submitBtn = document.getElementById('ratingSubmitBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting…';
-
-            try {
-                await addDoc(collection(db, 'reviews'), {
-                    instructorId: instructorUid,
-                    instructorName: instructorName,
-                    studentId: currentUser.uid,
-                    studentName: currentUserName,
-                    channelName: currentChannelName,
-                    rating: selectedRating,
-                    lessonStructure: selectedAnswers.lessonStructure ?? null,
-                    clarity: selectedAnswers.clarity ?? null,
-                    engagement: selectedAnswers.engagement ?? null,
-                    progress: selectedAnswers.progress ?? null,
-                    wouldRecommend: selectedAnswers.wouldRecommend ?? null,
-                    review: document.getElementById('ratingReviewText').value.trim(),
-                    createdAt: new Date()
-                });
-
-                // Recompute instructor aggregate from all reviews
-                const allReviewsSnap = await getDocs(
-                    query(collection(db, 'reviews'), where('instructorId', '==', instructorUid))
-                );
-                const allRatings = allReviewsSnap.docs.map(d => d.data().rating).filter(r => typeof r === 'number');
-                const avg = allRatings.reduce((s, r) => s + r, 0) / allRatings.length;
-                await updateDoc(doc(db, 'instructors', instructorUid), {
-                    averageRating: Math.round(avg * 10) / 10,
-                    reviewCount: allRatings.length
-                });
-
-                popup.style.display = 'none';
-                showStatus('Thank you for your feedback!', 'success');
-            } catch (e) {
-                console.error('Error submitting review:', e);
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Review';
-                showStatus('Could not submit review. Please try again.', 'error');
-            }
-        }
-
-        // Handle remote user published
-        async function handleUserPublished(user, mediaType) {
-            remoteUsers[user.uid] = user;
-            await client.subscribe(user, mediaType);
-
-            if (mediaType === "video") {
-                // Look up the remote user's name from Firestore
-                let remoteName = remoteUserNames[user.uid];
-                if (!remoteName) {
-                    remoteName = await lookupRemoteUserName(user.uid) || 'Guest';
-                    remoteUserNames[user.uid] = remoteName;
-                }
-                const remotePlayer = createVideoPlayer(user.uid, false, remoteName);
-                user.videoTrack.play(remotePlayer.querySelector('.video-stream'));
-            }
-
-            if (mediaType === "audio") {
-                user.audioTrack.play();
-            }
-        }
-
-        // Handle remote user unpublished
-        function handleUserUnpublished(user, mediaType) {
-            if (mediaType === "video") {
-                const playerToRemove = document.getElementById(`player-${user.uid}`);
-                if (playerToRemove) {
-                    playerToRemove.remove();
-                }
-            }
-        }
-
-        // Handle remote user left
-        function handleUserLeft(user) {
-            delete remoteUsers[user.uid];
-            const playerToRemove = document.getElementById(`player-${user.uid}`);
-            if (playerToRemove) {
-                playerToRemove.remove();
-            }
-            showStatus(`User ${user.uid} left`, 'info');
-        }
-
-        // Create video player element
-        function createVideoPlayer(uid, isLocal, displayName) {
-            const existingPlayer = document.getElementById(`player-${uid}`);
-            if (existingPlayer) {
-                return existingPlayer;
-            }
-
-            const label = displayName || remoteUserNames[uid] || (isLocal ? currentUserName : 'Connecting...');
-
-            const playerDiv = document.createElement('div');
-            playerDiv.id = `player-${uid}`;
-            playerDiv.className = 'video-player';
-            playerDiv.innerHTML = `
-                <div class="video-stream"></div>
-                <div class="user-label">${label}</div>
-                ${isLocal ? `
-                <button class="mute-overlay-btn" title="Mute">
+    <!-- ── Video Area ─────────────────────────────────── -->
+    <div id="vc-video-area">
+
+        <!-- Remote video — fills the main area -->
+        <div id="vc-remote-container">
+            <div id="vc-remote-stream"></div>
+            <div id="vc-remote-name" class="vc-participant-label"></div>
+
+            <!-- Waiting overlay (no remote participant yet) -->
+            <div id="vc-waiting" class="vc-waiting-overlay">
+                <div class="vc-waiting-inner">
+                    <div class="vc-waiting-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <p class="vc-waiting-text">Waiting for participant…</p>
+                    <p class="vc-waiting-sub">Share the room code to invite someone</p>
+                    <button id="vc-waiting-copy" class="vc-waiting-copy-btn">
+                        <i class="fas fa-copy"></i> Copy Room Code
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Self video — draggable PiP corner -->
+        <div id="vc-local-pip" class="vc-local-pip">
+            <div id="vc-local-stream" class="vc-local-stream"></div>
+            <div class="vc-local-name" id="vc-local-name"></div>
+            <div class="vc-pip-controls">
+                <button id="pip-mute-btn" class="vc-pip-btn" title="Toggle Mute">
                     <i class="fas fa-microphone"></i>
                 </button>
-                <button class="camera-overlay-btn" title="Hide Camera">
+                <button id="pip-camera-btn" class="vc-pip-btn" title="Toggle Camera">
                     <i class="fas fa-video"></i>
-                </button>` : ''}
-            `;
-
-            videoGrid.appendChild(playerDiv);
-
-            // Wire up the in-video overlay buttons (local player only)
-            if (isLocal) {
-                playerDiv.querySelector('.mute-overlay-btn').addEventListener('click', toggleMute);
-                playerDiv.querySelector('.camera-overlay-btn').addEventListener('click', toggleCamera);
-            }
-
-            return playerDiv;
-        }
-
-        // Show status message
-        function showStatus(message, type) {
-            statusMessage.textContent = message;
-            statusMessage.className = `status-message ${type}`;
-            statusMessage.style.display = 'block';
-
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                if (statusMessage.textContent === message) {
-                    statusMessage.style.display = 'none';
-                }
-            }, 5000);
-        }
-
-        // ── Whiteboard ────────────────────────────────────────────────────────
-
-        function wbGetPos(e) {
-            const rect = wbCanvas.getBoundingClientRect();
-            const scaleX = wbCanvas.width / rect.width;
-            const scaleY = wbCanvas.height / rect.height;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
-        }
-
-        function wbDrawSegment(x1, y1, x2, y2, color, width, isErase) {
-            wbCtx.beginPath();
-            wbCtx.moveTo(x1, y1);
-            wbCtx.lineTo(x2, y2);
-            wbCtx.strokeStyle = isErase ? '#ffffff' : color;
-            wbCtx.lineWidth = width;
-            wbCtx.lineCap = 'round';
-            wbCtx.lineJoin = 'round';
-            wbCtx.stroke();
-        }
-
-        function wbSend(msgObj, toX, toY) {
-            if (!wbRelayRef) return;
-            const now = Date.now();
-            if (now - wbLastSentTime < WB_THROTTLE_MS) return;
-            wbLastSentTime = now;
-            // Advance the sent-position cursor only when a send actually fires
-            wbLastSentX = toX;
-            wbLastSentY = toY;
-            setDoc(wbRelayRef, { ...msgObj, ts: now }).catch(err => console.warn('WB send error:', err));
-        }
-
-        function wbHandleRemoteAction(msg) {
-            if (msg.t === 'd' || msg.t === 'e') {
-                wbDrawSegment(
-                    msg.x1 * wbCanvas.width,
-                    msg.y1 * wbCanvas.height,
-                    msg.x2 * wbCanvas.width,
-                    msg.y2 * wbCanvas.height,
-                    msg.c,
-                    msg.w,
-                    msg.t === 'e'
-                );
-            } else if (msg.t === 'cl') {
-                wbInitCanvas();
-            } else if (msg.t === 'prompt') {
-                wbShowPrompt({ icon: msg.icon, title: msg.title, text: msg.text }, msg.generatedBy, true);
-            }
-        }
-
-        function wbInitCanvas() {
-            wbCtx.fillStyle = '#ffffff';
-            wbCtx.fillRect(0, 0, wbCanvas.width, wbCanvas.height);
-        }
-
-        // Mouse events
-        wbCanvas.addEventListener('mousedown', (e) => {
-            wbIsDrawing = true;
-            const pos = wbGetPos(e);
-            wbLastX = pos.x;     wbLastY = pos.y;
-            wbLastSentX = pos.x; wbLastSentY = pos.y;
-        });
-
-        wbCanvas.addEventListener('mousemove', (e) => {
-            if (!wbIsDrawing) return;
-            const pos = wbGetPos(e);
-            const isErase = wbTool === 'eraser';
-            const strokeW = isErase ? wbStrokeWidth * 4 : wbStrokeWidth;
-            wbDrawSegment(wbLastX, wbLastY, pos.x, pos.y, wbColor, strokeW, isErase);
-            // x1/y1 come from wbLastSentX/Y (last *sent* point) so the remote segment
-            // always bridges the full gap since the previous send — no dashes/gaps.
-            wbSend({
-                t: isErase ? 'e' : 'd',
-                x1: parseFloat((wbLastSentX / wbCanvas.width).toFixed(4)),
-                y1: parseFloat((wbLastSentY / wbCanvas.height).toFixed(4)),
-                x2: parseFloat((pos.x / wbCanvas.width).toFixed(4)),
-                y2: parseFloat((pos.y / wbCanvas.height).toFixed(4)),
-                c: wbColor,
-                w: strokeW
-            }, pos.x, pos.y);
-            wbLastX = pos.x;
-            wbLastY = pos.y;
-        });
-
-        wbCanvas.addEventListener('mouseup', () => { wbIsDrawing = false; });
-        wbCanvas.addEventListener('mouseleave', () => { wbIsDrawing = false; });
-
-        // Touch events
-        wbCanvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            wbIsDrawing = true;
-            const pos = wbGetPos(e);
-            wbLastX = pos.x;     wbLastY = pos.y;
-            wbLastSentX = pos.x; wbLastSentY = pos.y;
-        }, { passive: false });
-
-        wbCanvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (!wbIsDrawing) return;
-            const pos = wbGetPos(e);
-            const isErase = wbTool === 'eraser';
-            const strokeW = isErase ? wbStrokeWidth * 4 : wbStrokeWidth;
-            wbDrawSegment(wbLastX, wbLastY, pos.x, pos.y, wbColor, strokeW, isErase);
-            wbSend({
-                t: isErase ? 'e' : 'd',
-                x1: parseFloat((wbLastSentX / wbCanvas.width).toFixed(4)),
-                y1: parseFloat((wbLastSentY / wbCanvas.height).toFixed(4)),
-                x2: parseFloat((pos.x / wbCanvas.width).toFixed(4)),
-                y2: parseFloat((pos.y / wbCanvas.height).toFixed(4)),
-                c: wbColor,
-                w: strokeW
-            }, pos.x, pos.y);
-            wbLastX = pos.x;
-            wbLastY = pos.y;
-        }, { passive: false });
-
-        wbCanvas.addEventListener('touchend', () => { wbIsDrawing = false; });
-        wbCanvas.addEventListener('touchcancel', () => { wbIsDrawing = false; });
-
-        // Toolbar — pen / eraser
-        wbPenBtn.addEventListener('click', () => {
-            wbTool = 'pen';
-            wbPenBtn.classList.add('wb-tool-active');
-            wbEraserBtn.classList.remove('wb-tool-active');
-            wbCanvas.classList.remove('wb-eraser-cursor');
-        });
-
-        wbEraserBtn.addEventListener('click', () => {
-            wbTool = 'eraser';
-            wbEraserBtn.classList.add('wb-tool-active');
-            wbPenBtn.classList.remove('wb-tool-active');
-            wbCanvas.classList.add('wb-eraser-cursor');
-        });
-
-        // Toolbar — color swatches (selecting a color auto-switches to pen)
-        document.querySelectorAll('.wb-color-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                wbColor = btn.dataset.color;
-                document.querySelectorAll('.wb-color-btn').forEach(b => b.classList.remove('wb-color-active'));
-                btn.classList.add('wb-color-active');
-                wbTool = 'pen';
-                wbPenBtn.classList.add('wb-tool-active');
-                wbEraserBtn.classList.remove('wb-tool-active');
-                wbCanvas.classList.remove('wb-eraser-cursor');
-            });
-        });
-
-        // Toolbar — stroke widths
-        document.querySelectorAll('.wb-stroke-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                wbStrokeWidth = parseInt(btn.dataset.width);
-                document.querySelectorAll('.wb-stroke-btn').forEach(b => b.classList.remove('wb-stroke-active'));
-                btn.classList.add('wb-stroke-active');
-            });
-        });
-
-        // Clear button — bypasses throttle, writes directly
-        wbClearBtn.addEventListener('click', () => {
-            wbInitCanvas();
-            if (wbRelayRef) {
-                setDoc(wbRelayRef, { t: 'cl', ts: Date.now() }).catch(err => console.warn('WB clear error:', err));
-            }
-        });
-
-        // Close button
-        wbCloseBtn.addEventListener('click', () => {
-            whiteboardPanel.style.display = 'none';
-            whiteboardBtn.classList.remove('wb-panel-open');
-            inlineWbBtn.classList.remove('wb-panel-open');
-        });
-
-        // External whiteboard toggle (normal view)
-        whiteboardBtn.addEventListener('click', () => {
-            const isOpen = whiteboardPanel.style.display !== 'none';
-            whiteboardPanel.style.display = isOpen ? 'none' : 'block';
-            whiteboardBtn.classList.toggle('wb-panel-open', !isOpen);
-            inlineWbBtn.classList.toggle('wb-panel-open', !isOpen);
-        });
-
-        // Inline whiteboard toggle (fullscreen/expanded view)
-        inlineWbBtn.addEventListener('click', () => {
-            const isOpen = whiteboardPanel.style.display !== 'none';
-            whiteboardPanel.style.display = isOpen ? 'none' : 'block';
-            whiteboardBtn.classList.toggle('wb-panel-open', !isOpen);
-            inlineWbBtn.classList.toggle('wb-panel-open', !isOpen);
-        });
-
-        // Initialize canvas white on page load
-        wbInitCanvas();
-
-        // ── Text Board ────────────────────────────────────────────────────────
-
-        function wbEscapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-
-        function wbRenderTextMessage(data) {
-            const isOwn = (data.sender === currentUserName);
-            const row = document.createElement('div');
-            row.className = 'wb-textboard-msg' + (isOwn ? ' wb-textboard-msg-own' : '');
-            row.innerHTML = `<span class="wb-textboard-msg-sender">${wbEscapeHtml(data.sender || 'Guest')}:</span>${wbEscapeHtml(data.text || '')}`;
-            wbTextMessages.appendChild(row);
-            wbTextMessages.scrollTop = wbTextMessages.scrollHeight;
-        }
-
-        async function wbSendText() {
-            if (!wbTextboardCol) return;
-            const text = wbTextInput.value.trim();
-            if (!text) return;
-            wbTextInput.value = '';
-            // Render locally for the sender immediately — don't wait for Firestore
-            wbRenderTextMessage({ text, sender: currentUserName, senderUid: currentUser.uid, ts: Date.now() });
-            try {
-                await addDoc(wbTextboardCol, {
-                    text,
-                    sender: currentUserName,
-                    senderUid: currentUser.uid,
-                    ts: Date.now()
-                });
-            } catch (e) {
-                console.warn('Text board send error:', e);
-            }
-        }
-
-        // Toggle text board panel
-        wbTextBtn.addEventListener('click', () => {
-            const isOpen = wbTextboard.style.display !== 'none';
-            wbTextboard.style.display = isOpen ? 'none' : 'block';
-            wbTextBtn.classList.toggle('wb-tool-active', !isOpen);
-            if (!isOpen) wbTextInput.focus();
-        });
-
-        // Send on button click
-        wbTextSendBtn.addEventListener('click', wbSendText);
-
-        // Send on Enter key
-        wbTextInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') wbSendText();
-        });
-
-        // ── End Text Board ────────────────────────────────────────────────────
-
-        // ── Prompt Panel ──────────────────────────────────────────────────────
-
-        function wbShowPrompt(prompt, generatedBy, fromRemote) {
-            wbPromptPlaceholder.style.display = 'none';
-            wbPromptContent.style.display = 'block';
-            wbPromptTitle.textContent = (prompt.icon ? prompt.icon + ' ' : '') + prompt.title;
-            wbPromptText.textContent = prompt.text;
-            wbPromptBy.textContent = generatedBy ? 'Generated by ' + generatedBy : '';
-            // Open the panel automatically for remote participants
-            if (fromRemote && wbPromptPanel.style.display === 'none') {
-                wbPromptPanel.style.display = 'block';
-                wbPromptBtn.classList.add('wb-tool-active');
-            }
-        }
-
-        function wbGeneratePrompt() {
-            const pool = wbCurrentPromptCat === 'all'
-                ? WB_PROMPTS
-                : WB_PROMPTS.filter(p => p.cat === wbCurrentPromptCat);
-            if (!pool.length) return;
-            const prompt = pool[Math.floor(Math.random() * pool.length)];
-            wbShowPrompt(prompt, currentUserName, false);
-            if (wbPromptRelayRef) {
-                setDoc(wbPromptRelayRef, {
-                    t: 'prompt',
-                    icon: prompt.icon,
-                    title: prompt.title,
-                    text: prompt.text,
-                    generatedBy: currentUserName,
-                    ts: Date.now()
-                }).catch(e => console.warn('Prompt sync error:', e));
-            }
-        }
-
-        // Toggle prompt panel
-        wbPromptBtn.addEventListener('click', () => {
-            const isOpen = wbPromptPanel.style.display !== 'none';
-            wbPromptPanel.style.display = isOpen ? 'none' : 'block';
-            wbPromptBtn.classList.toggle('wb-tool-active', !isOpen);
-        });
-
-        // Generate new prompt button
-        wbNewPromptBtn.addEventListener('click', wbGeneratePrompt);
-
-        // Category filter tabs
-        document.querySelectorAll('.wb-prompt-cat-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                wbCurrentPromptCat = btn.dataset.cat;
-                document.querySelectorAll('.wb-prompt-cat-btn').forEach(b => b.classList.remove('wb-prompt-cat-active'));
-                btn.classList.add('wb-prompt-cat-active');
-            });
-        });
-
-        // ── End Prompt Panel ──────────────────────────────────────────────────
-
-        // ── End Whiteboard ────────────────────────────────────────────────────
-
-        // Toggle microphone mute
-        function toggleMute() {
-            if (!localAudioTrack) return;
-            isMuted = !isMuted;
-            localAudioTrack.setMuted(isMuted);
-            document.querySelectorAll('.mute-overlay-btn').forEach(btn => {
-                btn.querySelector('i').className = isMuted ? 'fas fa-microphone-slash' : 'fas fa-microphone';
-                isMuted ? btn.classList.add('muted') : btn.classList.remove('muted');
-                btn.title = isMuted ? 'Unmute' : 'Mute';
-            });
-        }
-
-        // Toggle camera on/off
-        function toggleCamera() {
-            if (!localVideoTrack) return;
-            isCameraOff = !isCameraOff;
-            localVideoTrack.setMuted(isCameraOff);
-            document.querySelectorAll('.camera-overlay-btn').forEach(btn => {
-                btn.querySelector('i').className = isCameraOff ? 'fas fa-video-slash' : 'fas fa-video';
-                isCameraOff ? btn.classList.add('camera-off') : btn.classList.remove('camera-off');
-                btn.title = isCameraOff ? 'Show Camera' : 'Hide Camera';
-            });
-        }
-
-        // Grid expand button — fullscreens the whole video grid container
-        const setGridExpandIcon = (expanded) => {
-            gridExpandBtn.querySelector('i').className = expanded ? 'fas fa-compress' : 'fas fa-expand';
-            gridExpandBtn.title = expanded ? 'Exit fullscreen' : 'Expand all videos';
-        };
-
-        gridExpandBtn.addEventListener('click', async () => {
-            const isNativeFullscreen = !!(
-                document.fullscreenElement ||
-                document.webkitFullscreenElement ||
-                document.mozFullScreenElement
-            );
-            const isCSSExpanded = videoGridContainer.classList.contains('grid--expanded');
-
-            if (isNativeFullscreen) {
-                const exit = document.exitFullscreen ||
-                             document.webkitExitFullscreen ||
-                             document.mozCancelFullScreen;
-                if (exit) exit.call(document);
-                return;
-            }
-            if (isCSSExpanded) {
-                videoGridContainer.classList.remove('grid--expanded');
-                inlineWbBtn.style.display = 'none';
-                setGridExpandIcon(false);
-                return;
-            }
-
-            // Try native fullscreen first (desktop + Android Chrome)
-            const req = videoGridContainer.requestFullscreen ||
-                        videoGridContainer.webkitRequestFullscreen ||
-                        videoGridContainer.mozRequestFullScreen;
-            if (req) {
-                try {
-                    await req.call(videoGridContainer);
-                    return; // icon updated by fullscreenchange event below
-                } catch (e) {
-                    // Native fullscreen unavailable (iOS Safari) — fall through
-                }
-            }
-
-            // CSS fallback for iOS Safari
-            videoGridContainer.classList.add('grid--expanded');
-            inlineWbBtn.style.display = leaveBtn.style.display !== 'none' ? 'flex' : 'none';
-            setGridExpandIcon(true);
-        });
-
-        // Sync icon + inline whiteboard button when native fullscreen state changes
-        const onGridFullscreenChange = () => {
-            const isNativeFullscreen = !!(
-                document.fullscreenElement ||
-                document.webkitFullscreenElement ||
-                document.mozFullScreenElement
-            );
-            setGridExpandIcon(isNativeFullscreen);
-            const callActive = leaveBtn.style.display !== 'none';
-            inlineWbBtn.style.display = (isNativeFullscreen && callActive) ? 'flex' : 'none';
-        };
-        document.addEventListener('fullscreenchange', onGridFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', onGridFullscreenChange);
-        document.addEventListener('mozfullscreenchange', onGridFullscreenChange);
-
-        function loadVCNotifications(uid) {
-            let _msgCount = 0;
-            let _reqCount = 0;
-            let _bookingCount = 0;
-
-            function _updateBadges() {
-                const profileTotal = _msgCount + _reqCount + _bookingCount;
-                const badge = document.getElementById('notificationBadge');
-                if (badge) {
-                    if (profileTotal > 0) {
-                        badge.textContent = profileTotal > 9 ? '9+' : profileTotal;
-                        badge.classList.add('show');
-                    } else {
-                        badge.classList.remove('show');
-                    }
-                }
-                const bookingsEl = document.getElementById('bookingsCount');
-                if (bookingsEl) {
-                    if (_bookingCount > 0) { bookingsEl.textContent = _bookingCount; bookingsEl.classList.add('show'); }
-                    else { bookingsEl.classList.remove('show'); }
-                }
-                const friendsEl = document.getElementById('friendsCount');
-                if (friendsEl) {
-                    if (_reqCount > 0) { friendsEl.textContent = _reqCount; friendsEl.classList.add('show'); }
-                    else { friendsEl.classList.remove('show'); }
-                }
-                const msgEl = document.getElementById('unreadCount');
-                if (msgEl) {
-                    if (_msgCount > 0) { msgEl.textContent = _msgCount > 99 ? '99+' : _msgCount; msgEl.classList.add('show'); }
-                    else { msgEl.classList.remove('show'); }
-                }
-                const ml = document.getElementById('messagesLink');
-                if (ml) { if (_msgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
-            }
-
-            onSnapshot(
-                query(collection(db, 'conversations'), where('participants', 'array-contains', uid)),
-                (snap) => {
-                    _msgCount = 0;
-                    snap.forEach(d => { const c = d.data(); if (c.unreadCount?.[uid]) _msgCount += c.unreadCount[uid]; });
-                    _updateBadges();
-                }
-            );
-            onSnapshot(
-                query(collection(db, 'friendRequests'), where('toId', '==', uid)),
-                (snap) => {
-                    _reqCount = snap.docs.filter(d => d.data().status === 'pending').length;
-                    _updateBadges();
-                }
-            );
-            onSnapshot(
-                query(collection(db, 'bookings'), where('instructorId', '==', uid)),
-                (snap) => {
-                    _bookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
-                    _updateBadges();
-                }
-            );
-        }
-
-        // Event Listeners
-        joinBtn.addEventListener('click', joinChannel);
-        leaveBtn.addEventListener('click', leaveChannel);
-
-        // Allow Enter key to join
-        channelNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !joinBtn.disabled && joinBtn.style.display !== 'none') {
-                joinChannel();
-            }
-        });
-
-        // Handle page unload — warn user they will disconnect
-        window.addEventListener('beforeunload', (e) => {
-            if (client && client.connectionState === 'CONNECTED') {
-                leaveChannel();
-                e.preventDefault();
-                return (e.returnValue = 'You are still in a video call. Are you sure you want to leave?');
-            }
-        });
-
-        // Picture-in-Picture
-        let _pendingNavHref = null;
-
-        pipBtn.addEventListener('click', enterPiP);
-
-        async function enterPiP() {
-            // Already showing in-page mini-player — close it first (toggle)
-            const existingOverlay = document.getElementById('pip-overlay');
-            if (existingOverlay) {
-                _closePipOverlay();
-                return;
-            }
-
-            // 1. Document Picture-in-Picture (Chrome 116+ desktop)
-            // Moves the whole video grid into a floating OS-level mini-window
-            if ('documentPictureInPicture' in window) {
-                try {
-                    const pipW = await window.documentPictureInPicture.requestWindow({
-                        width: 480,
-                        height: 270
-                    });
-                    [...document.styleSheets].forEach(sheet => {
-                        try {
-                            const cssText = [...sheet.cssRules].map(r => r.cssText).join('');
-                            const style = pipW.document.createElement('style');
-                            style.textContent = cssText;
-                            pipW.document.head.appendChild(style);
-                        } catch (e) { /* cross-origin stylesheet */ }
-                    });
-                    pipW.document.body.style.cssText = 'margin:0;padding:0;background:#000;display:flex;align-items:center;justify-content:center;width:100%;height:100vh;overflow:hidden;';
-                    const videoGridEl = document.getElementById('video-grid');
-                    videoGridEl.style.cssText = 'width:100%;height:100%;margin:0;grid-auto-rows:1fr;';
-                    pipW.document.body.appendChild(videoGridEl);
-                    pipW.addEventListener('pagehide', () => {
-                        const container = document.getElementById('video-grid-container');
-                        if (container) {
-                            videoGridEl.style.cssText = '';
-                            container.insertBefore(videoGridEl, document.getElementById('whiteboard-panel'));
-                        }
-                    });
-                    return;
-                } catch (err) {
-                    console.log('Document PiP failed, trying next method:', err);
-                }
-            }
-
-            // 2. Video Element PiP (Safari 13.1+, Chrome 69+ on desktop)
-            // Shows remote stream in a system-level floating player — works across tabs
-            if (document.pictureInPictureEnabled) {
-                const videoEl = document.querySelector('#video-grid .video-stream video');
-                if (videoEl) {
-                    try {
-                        await videoEl.requestPictureInPicture();
-                        return;
-                    } catch (err) {
-                        console.log('Video element PiP failed, falling back to overlay:', err);
-                    }
-                }
-            }
-
-            // 3. In-page draggable floating mini-player (mobile / unsupported browsers)
-            // Works on all browsers — creates a fixed overlay within the page
-            _showPipOverlay();
-        }
-
-        function _showPipOverlay() {
-            const videoGridEl = document.getElementById('video-grid');
-            const overlay = document.createElement('div');
-            overlay.id = 'pip-overlay';
-
-            const header = document.createElement('div');
-            header.id = 'pip-overlay-header';
-            header.innerHTML = '<span><i class="fas fa-video" style="margin-right:5px;color:#20bcba;"></i>Video Call</span><button id="pip-close-btn" title="Restore">&#x26F6;</button>';
-
-            overlay.appendChild(header);
-            overlay.appendChild(videoGridEl);
-            document.body.appendChild(overlay);
-
-            document.getElementById('pip-close-btn').addEventListener('click', _closePipOverlay);
-
-            // Drag support — mouse
-            let isDragging = false, dragStartX, dragStartY, overlayStartX, overlayStartY;
-
-            function _dragStart(clientX, clientY) {
-                isDragging = true;
-                dragStartX = clientX;
-                dragStartY = clientY;
-                const rect = overlay.getBoundingClientRect();
-                overlayStartX = rect.left;
-                overlayStartY = rect.top;
-                overlay.style.right = 'auto';
-                overlay.style.bottom = 'auto';
-                overlay.style.left = rect.left + 'px';
-                overlay.style.top = rect.top + 'px';
-            }
-
-            function _dragMove(clientX, clientY) {
-                if (!isDragging) return;
-                overlay.style.left = (overlayStartX + clientX - dragStartX) + 'px';
-                overlay.style.top  = (overlayStartY + clientY - dragStartY) + 'px';
-            }
-
-            header.addEventListener('mousedown',  e => _dragStart(e.clientX, e.clientY));
-            document.addEventListener('mousemove', e => { if (isDragging) _dragMove(e.clientX, e.clientY); });
-            document.addEventListener('mouseup',   () => { isDragging = false; });
-
-            header.addEventListener('touchstart', e => { e.preventDefault(); _dragStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
-            document.addEventListener('touchmove', e => { if (isDragging) { e.preventDefault(); _dragMove(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
-            document.addEventListener('touchend',  () => { isDragging = false; });
-        }
-
-        function _closePipOverlay() {
-            const overlay = document.getElementById('pip-overlay');
-            if (!overlay) return;
-            const videoGridEl = document.getElementById('video-grid');
-            const container = document.getElementById('video-grid-container');
-            if (container && videoGridEl) {
-                container.insertBefore(videoGridEl, document.getElementById('whiteboard-panel'));
-            }
-            overlay.remove();
-        }
-
-        // Navigation warning: intercept navbar and profile dropdown link clicks during a call
-        const callNavWarning = document.getElementById('call-nav-warning');
-
-        function _interceptNavLink(link) {
-            if (link.target === '_blank') return;
-            link.addEventListener('click', e => {
-                if (client && client.connectionState === 'CONNECTED') {
-                    e.preventDefault();
-                    _pendingNavHref = link.href;
-                    callNavWarning.style.display = 'block';
-                }
-            });
-        }
-
-        document.querySelectorAll('.navbar-nav a[href], .navbar-brand[href]').forEach(_interceptNavLink);
-        document.querySelectorAll('.profile-dropdown-content a[href]').forEach(link => {
-            if (link.id === 'logoutLink') return;
-            _interceptNavLink(link);
-        });
-
-        document.getElementById('warn-stay').addEventListener('click', () => {
-            callNavWarning.style.display = 'none';
-            _pendingNavHref = null;
-        });
-
-        document.getElementById('warn-newtab').addEventListener('click', () => {
-            if (_pendingNavHref) window.open(_pendingNavHref, '_blank');
-            callNavWarning.style.display = 'none';
-            _pendingNavHref = null;
-        });
-
-        document.getElementById('warn-leave').addEventListener('click', () => {
-            const href = _pendingNavHref;
-            callNavWarning.style.display = 'none';
-            _pendingNavHref = null;
-            leaveChannel().then(() => {
-                if (href) window.location.href = href;
-            }).catch(() => {
-                if (href) window.location.href = href;
-            });
-        });
-
-        // ── Rating popup interactions ───────────────────────────────────────
-
-        function renderStars(n) {
-            document.querySelectorAll('.rating-star').forEach((s, i) => {
-                s.style.color = i < n ? '#f5a623' : '#ddd';
-            });
-            document.getElementById('ratingLabel').textContent = ratingLabels[n] || '';
-        }
-
-        const starRatingEl = document.getElementById('starRating');
-        starRatingEl.addEventListener('mouseover', e => {
-            const s = e.target.closest('.rating-star');
-            if (s) renderStars(parseInt(s.dataset.star));
-        });
-        starRatingEl.addEventListener('mouseleave', () => renderStars(selectedRating));
-        starRatingEl.addEventListener('click', e => {
-            const s = e.target.closest('.rating-star');
-            if (s) {
-                selectedRating = parseInt(s.dataset.star);
-                renderStars(selectedRating);
-                document.getElementById('ratingSubmitBtn').disabled = false;
-            }
-        });
-
-        document.querySelectorAll('.rating-yn-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const q = btn.dataset.q;
-                const val = btn.dataset.val === 'true';
-                selectedAnswers[q] = val;
-                document.querySelectorAll(`.rating-yn-btn[data-q="${q}"]`).forEach(b => b.classList.remove('yn-yes', 'yn-no'));
-                btn.classList.add(val ? 'yn-yes' : 'yn-no');
-            });
-        });
-
-        document.getElementById('ratingSubmitBtn').addEventListener('click', submitReview);
-        document.getElementById('ratingSkipBtn').addEventListener('click', () => {
-            document.getElementById('ratingPopup').style.display = 'none';
-        });
-    
-        // ── Notification counts ──────────────────────────────────────────────────
-        let _unreadMsgCount = 0, _pendingReqCount = 0, _newBookingCount = 0;
-
-        function _updateProfileBadge() {
-            const total = _unreadMsgCount + _pendingReqCount + _newBookingCount;
-            const badge = document.getElementById('notificationBadge');
-            if (badge) {
-                if (total > 0) { badge.textContent = total > 9 ? '9+' : total; badge.classList.add('show'); }
-                else { badge.classList.remove('show'); }
-            }
-        }
-
-        function loadUnreadMessageCount(uid) {
-            onSnapshot(query(collection(db, 'conversations'), where('participants', 'array-contains', uid)), (snap) => {
-                _unreadMsgCount = 0;
-                snap.forEach(d => { const c = d.data(); if (c.unreadCount && c.unreadCount[uid]) _unreadMsgCount += c.unreadCount[uid]; });
-                const ml = document.getElementById('messagesLink'), uc = document.getElementById('unreadCount');
-                if (ml) { if (_unreadMsgCount > 0) ml.classList.add('has-unread'); else ml.classList.remove('has-unread'); }
-                if (uc) { if (_unreadMsgCount > 0) { uc.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount; uc.classList.add('show'); } else uc.classList.remove('show'); }
-                _updateProfileBadge();
-            });
-        }
-
-        function loadPendingRequests(uid) {
-            function _updateActivityBadge() {
-                const bookingsEl = document.getElementById('bookingsCount');
-                if (bookingsEl) { if (_newBookingCount > 0) { bookingsEl.textContent = _newBookingCount; bookingsEl.classList.add('show'); } else bookingsEl.classList.remove('show'); }
-                const friendsEl = document.getElementById('friendsCount');
-                if (friendsEl) { if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); } else friendsEl.classList.remove('show'); }
-            }
-            onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => {
-                _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length;
-                _updateActivityBadge(); _updateProfileBadge();
-            });
-            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
-                _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
-                _updateActivityBadge(); _updateProfileBadge();
-            });
-        }
-    </script>
-
-    <!-- Post-Call Rating Popup -->
-    <style>
-        .rating-star { cursor: pointer; transition: color 0.1s; user-select: none; }
-        .rating-question {
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 0.75rem; padding: 0.55rem 0; border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9rem; color: #444;
-        }
-        .rating-question:last-child { border-bottom: none; }
-        .rating-yn-btn {
-            padding: 0.28rem 0.7rem; border: 1px solid #ddd; border-radius: 20px;
-            background: white; cursor: pointer; font-size: 0.82rem;
-            transition: all 0.15s; white-space: nowrap;
-        }
-        .rating-yn-btn.yn-yes { background: #e8f8e8; border-color: #4caf50; color: #2e7d32; }
-        .rating-yn-btn.yn-no  { background: #fde8e8; border-color: #ef5350; color: #c62828; }
-    </style>
-
-    <div id="ratingPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;align-items:center;justify-content:center;padding:1rem;">
-        <div style="background:white;border-radius:16px;padding:2rem;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-            <h3 style="text-align:center;margin-bottom:0.2rem;color:#333;">How was your lesson?</h3>
-            <p style="text-align:center;color:#666;margin-bottom:1.5rem;font-size:0.95rem;">
-                Rate your session with <strong id="ratingInstructorName"></strong>
-            </p>
-
-            <!-- Star rating -->
-            <div style="text-align:center;margin-bottom:1.5rem;">
-                <div id="starRating" style="font-size:2.6rem;cursor:pointer;line-height:1;color:#ddd;">
-                    <span class="rating-star" data-star="1">★</span>
-                    <span class="rating-star" data-star="2">★</span>
-                    <span class="rating-star" data-star="3">★</span>
-                    <span class="rating-star" data-star="4">★</span>
-                    <span class="rating-star" data-star="5">★</span>
-                </div>
-                <div id="ratingLabel" style="color:#f5a623;font-weight:600;font-size:0.9rem;margin-top:0.3rem;height:1.2em;"></div>
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /vc-video-area -->
+
+    <!-- ── Bottom Control Bar ─────────────────────────── -->
+    <div id="vc-controls">
+        <div class="vc-ctrl-pill">
+
+            <!-- Left: Participants, Chat -->
+            <div class="vc-ctrl-group vc-ctrl-left">
+                <button id="btn-participants"
+                        class="ctrl-btn"
+                        data-panel="participants"
+                        title="Participants">
+                    <i class="fas fa-users"></i>
+                    <span id="participant-badge" class="ctrl-badge hidden">0</span>
+                </button>
+                <button id="btn-chat"
+                        class="ctrl-btn"
+                        data-panel="chat"
+                        title="Chat (C)">
+                    <i class="fas fa-comment-dots"></i>
+                    <span id="chat-badge" class="ctrl-badge hidden">0</span>
+                </button>
             </div>
 
-            <!-- Follow-up questions -->
-            <p style="font-weight:600;color:#444;margin-bottom:0.5rem;font-size:0.9rem;">A few quick questions:</p>
-            <div style="margin-bottom:1.25rem;">
-                <div class="rating-question">
-                    <span>Was the lesson well-organized?</span>
-                    <div style="display:flex;gap:0.4rem;">
-                        <button class="rating-yn-btn" data-q="lessonStructure" data-val="true">👍 Yes</button>
-                        <button class="rating-yn-btn" data-q="lessonStructure" data-val="false">👎 No</button>
-                    </div>
-                </div>
-                <div class="rating-question">
-                    <span>Did the instructor explain things clearly?</span>
-                    <div style="display:flex;gap:0.4rem;">
-                        <button class="rating-yn-btn" data-q="clarity" data-val="true">👍 Yes</button>
-                        <button class="rating-yn-btn" data-q="clarity" data-val="false">👎 No</button>
-                    </div>
-                </div>
-                <div class="rating-question">
-                    <span>Was the instructor engaging and encouraging?</span>
-                    <div style="display:flex;gap:0.4rem;">
-                        <button class="rating-yn-btn" data-q="engagement" data-val="true">👍 Yes</button>
-                        <button class="rating-yn-btn" data-q="engagement" data-val="false">👎 No</button>
-                    </div>
-                </div>
-                <div class="rating-question">
-                    <span>Did you feel you made progress?</span>
-                    <div style="display:flex;gap:0.4rem;">
-                        <button class="rating-yn-btn" data-q="progress" data-val="true">👍 Yes</button>
-                        <button class="rating-yn-btn" data-q="progress" data-val="false">👎 No</button>
-                    </div>
-                </div>
-                <div class="rating-question">
-                    <span>Would you recommend this instructor?</span>
-                    <div style="display:flex;gap:0.4rem;">
-                        <button class="rating-yn-btn" data-q="wouldRecommend" data-val="true">👍 Yes</button>
-                        <button class="rating-yn-btn" data-q="wouldRecommend" data-val="false">👎 No</button>
-                    </div>
-                </div>
+            <div class="vc-ctrl-divider"></div>
+
+            <!-- Center: Mute, Camera, Leave -->
+            <div class="vc-ctrl-group vc-ctrl-center">
+                <button id="btn-mute"
+                        class="ctrl-btn ctrl-primary"
+                        title="Mute (M)">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button id="btn-camera"
+                        class="ctrl-btn ctrl-primary"
+                        title="Camera (V)">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button id="btn-leave"
+                        class="ctrl-btn ctrl-danger"
+                        title="Leave call">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
             </div>
 
-            <!-- Written review -->
-            <label style="display:block;font-weight:600;color:#444;margin-bottom:0.4rem;font-size:0.9rem;">
-                Public review <span style="color:#999;font-weight:400;">(optional)</span>
-            </label>
-            <textarea id="ratingReviewText" maxlength="500" placeholder="Share your experience with other students…"
-                style="width:100%;padding:0.7rem;border:2px solid #e0e0e0;border-radius:8px;font-size:0.875rem;resize:vertical;min-height:80px;font-family:inherit;margin-bottom:1.25rem;box-sizing:border-box;"></textarea>
+            <div class="vc-ctrl-divider"></div>
 
-            <!-- Buttons -->
-            <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
-                <button id="ratingSkipBtn" style="padding:0.55rem 1.2rem;background:none;border:1px solid #ddd;border-radius:8px;cursor:pointer;color:#666;font-size:0.9rem;">Skip</button>
-                <button id="ratingSubmitBtn" style="padding:0.55rem 1.5rem;background:#20bcba;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.9rem;" disabled>Submit Review</button>
+            <!-- Right: Dice, Whiteboard, Pop Out -->
+            <div class="vc-ctrl-group vc-ctrl-right">
+                <button id="btn-dice"
+                        class="ctrl-btn ctrl-accent"
+                        data-panel="dice"
+                        title="Conversation Challenge (D)">
+                    <i class="fas fa-dice"></i>
+                </button>
+                <button id="btn-whiteboard"
+                        class="ctrl-btn"
+                        data-panel="whiteboard"
+                        title="Whiteboard (W)">
+                    <i class="fas fa-chalkboard"></i>
+                </button>
+                <button id="btn-pip"
+                        class="ctrl-btn"
+                        title="Pop Out video">
+                    <i class="fas fa-external-link-alt"></i>
+                </button>
+            </div>
+
+        </div>
+    </div><!-- /vc-controls -->
+
+    <!-- ── Slide-In Panels ────────────────────────────── -->
+
+    <!-- Participants Panel -->
+    <div id="panel-participants" class="vc-panel" role="dialog" aria-label="Participants">
+        <div class="panel-header">
+            <h3 class="panel-title"><i class="fas fa-users"></i> Participants</h3>
+            <button class="panel-close-btn" data-panel="participants" aria-label="Close panel">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="panel-body">
+            <div id="participants-list" class="participants-list">
+                <!-- Populated by JS -->
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/jquery.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/scripts.js"></script>
+    <!-- Chat Panel -->
+    <div id="panel-chat" class="vc-panel" role="dialog" aria-label="Chat">
+        <div class="panel-header">
+            <h3 class="panel-title"><i class="fas fa-comment-dots"></i> Chat</h3>
+            <button class="panel-close-btn" data-panel="chat" aria-label="Close panel">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="panel-body panel-body--chat">
+            <div id="chat-messages" class="chat-messages">
+                <div class="chat-empty">
+                    <i class="fas fa-comment-slash"></i>
+                    <p>No messages yet. Start the conversation!</p>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <textarea id="chat-input"
+                          class="chat-input"
+                          placeholder="Type a message… (Enter to send)"
+                          rows="1"
+                          maxlength="500"></textarea>
+                <button id="chat-send-btn" class="chat-send-btn" title="Send">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dice / Conversation Challenge Panel -->
+    <div id="panel-dice" class="vc-panel" role="dialog" aria-label="Conversation Challenge">
+        <div class="panel-header">
+            <h3 class="panel-title">🎲 Conversation Challenge</h3>
+            <button class="panel-close-btn" data-panel="dice" aria-label="Close panel">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="panel-body">
+            <!-- Category filter chips -->
+            <div class="dice-categories" id="dice-categories">
+                <button class="dice-cat-btn active" data-cat="all">All</button>
+                <button class="dice-cat-btn" data-cat="speaking">⏱️ Speaking</button>
+                <button class="dice-cat-btn" data-cat="vocab">📚 Vocab</button>
+                <button class="dice-cat-btn" data-cat="stories">📖 Stories</button>
+                <button class="dice-cat-btn" data-cat="roleplay">🎭 Role Play</button>
+                <button class="dice-cat-btn" data-cat="grammar">✏️ Grammar</button>
+                <button class="dice-cat-btn" data-cat="culture">🌍 Culture</button>
+                <button class="dice-cat-btn" data-cat="pronunciation">🎤 Pronunciation</button>
+                <button class="dice-cat-btn" data-cat="games">🎮 Games</button>
+            </div>
+
+            <!-- Prompt card -->
+            <div class="dice-prompt-wrap">
+                <div id="dice-prompt-card" class="dice-prompt-card">
+                    <div class="dice-prompt-empty" id="dice-empty-state">
+                        <div class="dice-roll-icon">🎲</div>
+                        <p>Roll the dice to get a random language exercise for your session!</p>
+                    </div>
+                    <div id="dice-prompt-content" class="dice-prompt-content hidden">
+                        <div id="dice-prompt-cat-label" class="dice-prompt-cat-label"></div>
+                        <div id="dice-prompt-title" class="dice-prompt-title"></div>
+                        <div id="dice-prompt-text" class="dice-prompt-text"></div>
+                        <div id="dice-prompt-by" class="dice-prompt-by"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roll button -->
+            <div class="dice-footer">
+                <button id="dice-roll-btn" class="dice-roll-btn">
+                    <i class="fas fa-dice"></i> Roll the Dice
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Whiteboard Panel -->
+    <div id="panel-whiteboard" class="vc-panel vc-panel--wide" role="dialog" aria-label="Whiteboard">
+        <div class="panel-header">
+            <h3 class="panel-title"><i class="fas fa-chalkboard"></i> Whiteboard</h3>
+            <button class="panel-close-btn" data-panel="whiteboard" aria-label="Close panel">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="panel-body panel-body--canvas">
+            <!-- Drawing toolbar -->
+            <div id="whiteboard-toolbar" class="wb-toolbar">
+                <div class="wb-tool-group">
+                    <button id="wb-pen-btn" class="wb-tool-btn wb-tool-active" title="Pen">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button id="wb-eraser-btn" class="wb-tool-btn" title="Eraser">
+                        <i class="fas fa-eraser"></i>
+                    </button>
+                </div>
+                <div class="wb-tool-group" id="wb-color-palette">
+                    <button class="wb-color-btn wb-color-active" data-color="#000000" style="background:#000000;" title="Black"></button>
+                    <button class="wb-color-btn" data-color="#ef4444" style="background:#ef4444;" title="Red"></button>
+                    <button class="wb-color-btn" data-color="#3b82f6" style="background:#3b82f6;" title="Blue"></button>
+                    <button class="wb-color-btn" data-color="#22c55e" style="background:#22c55e;" title="Green"></button>
+                    <button class="wb-color-btn" data-color="#f59e0b" style="background:#f59e0b;" title="Yellow"></button>
+                    <button class="wb-color-btn" data-color="#a855f7" style="background:#a855f7;" title="Purple"></button>
+                    <button class="wb-color-btn" data-color="#f97316" style="background:#f97316;" title="Orange"></button>
+                    <button class="wb-color-btn" data-color="#ffffff" style="background:#ffffff;border:1.5px solid #aaa;" title="White"></button>
+                </div>
+                <div class="wb-tool-group">
+                    <button class="wb-stroke-btn wb-stroke-active" data-width="2" title="Thin">
+                        <span class="wb-stroke-preview" style="height:2px;"></span>
+                    </button>
+                    <button class="wb-stroke-btn" data-width="5" title="Medium">
+                        <span class="wb-stroke-preview" style="height:5px;"></span>
+                    </button>
+                    <button class="wb-stroke-btn" data-width="12" title="Thick">
+                        <span class="wb-stroke-preview" style="height:12px;"></span>
+                    </button>
+                </div>
+                <div class="wb-tool-group wb-tool-group--right">
+                    <button id="wb-clear-btn" class="wb-tool-btn" title="Clear All">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Drawing canvas -->
+            <div id="whiteboard-canvas-wrapper" class="wb-canvas-wrap">
+                <canvas id="whiteboard-canvas" width="1280" height="720"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel backdrop (click to close) -->
+    <div id="panel-backdrop" class="panel-backdrop hidden"></div>
+
+    <!-- Navigation warning modal (shown when clicking a link mid-call) -->
+    <div id="call-nav-warning" class="vc-modal hidden">
+        <div class="vc-modal-box">
+            <i class="fas fa-exclamation-triangle vc-modal-icon"></i>
+            <h3>You're still in a call!</h3>
+            <p>Leaving this page will disconnect you from the video call.</p>
+            <div class="vc-modal-btns">
+                <button id="warn-stay"   class="modal-btn modal-btn--primary">Stay in Call</button>
+                <button id="warn-newtab" class="modal-btn modal-btn--secondary">Open in New Tab</button>
+                <button id="warn-leave"  class="modal-btn modal-btn--danger">Leave &amp; Go</button>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /screen-call -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     POST-CALL RATING POPUP
+     (outside screens — shown after call ends)
+     ══════════════════════════════════════════════════════ -->
+<div id="ratingPopup" class="vc-modal hidden">
+    <div class="vc-modal-box vc-rating-box">
+        <h3 style="text-align:center;margin-bottom:0.25rem;color:#1a1a2e;">How was your lesson?</h3>
+        <p style="text-align:center;color:#777;margin-bottom:1.5rem;font-size:0.9rem;">
+            Rate your session with <strong id="ratingInstructorName"></strong>
+        </p>
+
+        <!-- Stars -->
+        <div style="text-align:center;margin-bottom:1.5rem;">
+            <div id="starRating" style="font-size:2.5rem;cursor:pointer;color:#ddd;line-height:1;letter-spacing:0.1em;">
+                <span class="rating-star" data-star="1">★</span>
+                <span class="rating-star" data-star="2">★</span>
+                <span class="rating-star" data-star="3">★</span>
+                <span class="rating-star" data-star="4">★</span>
+                <span class="rating-star" data-star="5">★</span>
+            </div>
+            <div id="ratingLabel" style="color:#f59e0b;font-weight:700;font-size:0.875rem;margin-top:0.3rem;height:1.3em;"></div>
+        </div>
+
+        <!-- Quick questions -->
+        <p style="font-weight:700;color:#333;margin-bottom:0.6rem;font-size:0.875rem;">A few quick questions:</p>
+        <div style="margin-bottom:1.25rem;">
+            <div class="rating-question">
+                <span>Was the lesson well-organized?</span>
+                <div style="display:flex;gap:0.35rem;">
+                    <button class="rating-yn-btn" data-q="lessonStructure" data-val="true">👍 Yes</button>
+                    <button class="rating-yn-btn" data-q="lessonStructure" data-val="false">👎 No</button>
+                </div>
+            </div>
+            <div class="rating-question">
+                <span>Did the instructor explain things clearly?</span>
+                <div style="display:flex;gap:0.35rem;">
+                    <button class="rating-yn-btn" data-q="clarity" data-val="true">👍 Yes</button>
+                    <button class="rating-yn-btn" data-q="clarity" data-val="false">👎 No</button>
+                </div>
+            </div>
+            <div class="rating-question">
+                <span>Was the instructor engaging?</span>
+                <div style="display:flex;gap:0.35rem;">
+                    <button class="rating-yn-btn" data-q="engagement" data-val="true">👍 Yes</button>
+                    <button class="rating-yn-btn" data-q="engagement" data-val="false">👎 No</button>
+                </div>
+            </div>
+            <div class="rating-question">
+                <span>Did you feel you made progress?</span>
+                <div style="display:flex;gap:0.35rem;">
+                    <button class="rating-yn-btn" data-q="progress" data-val="true">👍 Yes</button>
+                    <button class="rating-yn-btn" data-q="progress" data-val="false">👎 No</button>
+                </div>
+            </div>
+            <div class="rating-question">
+                <span>Would you recommend this instructor?</span>
+                <div style="display:flex;gap:0.35rem;">
+                    <button class="rating-yn-btn" data-q="wouldRecommend" data-val="true">👍 Yes</button>
+                    <button class="rating-yn-btn" data-q="wouldRecommend" data-val="false">👎 No</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Written review -->
+        <label style="display:block;font-weight:700;color:#333;margin-bottom:0.4rem;font-size:0.875rem;">
+            Public review <span style="color:#aaa;font-weight:400;">(optional)</span>
+        </label>
+        <textarea id="ratingReviewText" maxlength="500"
+            placeholder="Share your experience with other students…"
+            style="width:100%;padding:0.65rem 0.875rem;border:2px solid #e8e8e8;border-radius:8px;
+                   font-size:0.875rem;resize:vertical;min-height:72px;font-family:inherit;
+                   margin-bottom:1.25rem;box-sizing:border-box;outline:none;
+                   transition:border-color 0.2s;"></textarea>
+
+        <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+            <button id="ratingSkipBtn"
+                style="padding:0.55rem 1.2rem;background:none;border:1.5px solid #ddd;
+                       border-radius:8px;cursor:pointer;color:#666;font-size:0.875rem;font-family:inherit;">
+                Skip
+            </button>
+            <button id="ratingSubmitBtn"
+                style="padding:0.55rem 1.4rem;background:#20bcba;color:white;border:none;
+                       border-radius:8px;cursor:pointer;font-weight:700;font-size:0.875rem;
+                       font-family:inherit;transition:background 0.2s;" disabled>
+                Submit Review
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Toast notifications -->
+<div id="vc-toast-container" class="vc-toast-container"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     SCRIPTS
+     ══════════════════════════════════════════════════════ -->
+<!-- Agora Web SDK -->
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.21.0.js"></script>
+<!-- Video Call JS (ES Module) -->
+<script type="module" src="video-call.js"></script>
+
 </body>
 </html>
