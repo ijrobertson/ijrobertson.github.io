@@ -538,7 +538,8 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 gap: 0;
-                height: calc(100vh - 4rem);
+                height: calc(100vh - 4rem);       /* fallback */
+                height: calc(100dvh - 4rem);      /* dynamic viewport — excludes browser chrome */
                 display: flex;
                 flex-direction: column;
             }
@@ -2820,6 +2821,29 @@
                 _updateProfileBadge();
             });
         }
+
+        // ── Mobile viewport fix ──────────────────────────────────────────────────
+        // On iOS Safari and Chrome for Android, 100vh includes browser chrome
+        // (address bar, bottom bar) and does NOT shrink when the virtual keyboard
+        // opens.  We use window.visualViewport to get the true visible height and
+        // keep the messages container — and therefore the input bar — on screen.
+        (function () {
+            var NAVBAR_H = 64; // 4rem, matches body padding-top on mobile
+            function applyHeight() {
+                if (window.innerWidth > 767) return;
+                var vp = window.visualViewport;
+                var h  = vp ? vp.height : window.innerHeight;
+                var container = document.querySelector('.messages-container');
+                if (container) container.style.height = Math.max(100, h - NAVBAR_H) + 'px';
+            }
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', applyHeight);
+                window.visualViewport.addEventListener('scroll', applyHeight);
+            }
+            window.addEventListener('resize', applyHeight);
+            applyHeight();
+        }());
+        // ─────────────────────────────────────────────────────────────────────────
 
         function loadPendingRequests() {
             if (!auth.currentUser) return;
