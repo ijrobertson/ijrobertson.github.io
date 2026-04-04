@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
 
     <meta name="description" content="Find professional language instructors on Lingua Bud. Learn from experienced teachers worldwide!">
     <meta name="author" content="Lingua Bud">
@@ -1179,7 +1182,7 @@
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
+        import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
 
         // Stripe publishable key is fetched once from the backend and cached.
         // This keeps the key out of the HTML source; switching test↔live is a
@@ -1628,7 +1631,9 @@
         }
 
         async function loadInstructorAvailability(instructorId) {
-            const docSnap = await getDoc(doc(db, 'instructor_availability', instructorId));
+            // Use getDocFromServer to bypass the Firestore SDK cache — guarantees we
+            // always read the instructor's latest blocked dates and schedule.
+            const docSnap = await getDocFromServer(doc(db, 'instructor_availability', instructorId));
             instructorAvailability = docSnap.exists() ? docSnap.data() : null;
         }
 
