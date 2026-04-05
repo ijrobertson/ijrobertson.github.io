@@ -1579,6 +1579,12 @@
       if (learningLanguages.length === 0) { statusEl.textContent = 'Please add at least one language you\'re learning.'; return; }
       if (!about) { statusEl.textContent = 'Please write something in the About Me field.'; return; }
       if (!hasAvatar) { statusEl.textContent = 'Please upload a profile picture.'; return; }
+      const tzSel2 = document.getElementById('student-timezone-select');
+      if (!tzSel2 || !tzSel2.value) {
+        statusEl.textContent = 'Please select your timezone — it is required so lesson times are shown correctly when you book with instructors.';
+        if (tzSel2) tzSel2.focus();
+        return;
+      }
 
       statusEl.textContent = 'Saving...';
       statusEl.style.color = '#666';
@@ -1592,7 +1598,7 @@
         languages_spoken: spokenLanguages,
         languages_learning: learningLanguages,
         interests: selectedInterests,
-        timezone: tzSel ? (tzSel.value || Intl.DateTimeFormat().resolvedOptions().timeZone) : Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone: tzSel.value,
         emailNotifications: document.getElementById('emailNotifications').checked,
         acceptingRequests: document.getElementById('acceptingRequests').checked,
         role: 'student',

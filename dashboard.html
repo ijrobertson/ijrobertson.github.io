@@ -1599,6 +1599,11 @@
         setStatus('Please upload a profile picture before saving.', true);
         return;
       }
+      if (!document.getElementById('timezone').value) {
+        setStatus('Please select your timezone — it is required so students can book lessons at the correct local time.', true);
+        document.getElementById('timezone').focus();
+        return;
+      }
 
       const priceInput = document.getElementById('price').value;
       const parsedPrice = parseFloat(priceInput);
@@ -1636,27 +1641,24 @@
           setDoc(doc(db, 'instructors', currentUser.uid), profile, { merge: true })
         ];
 
-        // Only save availability if a timezone has been selected
+        // Save availability — timezone is required so always save it
         const timezone = document.getElementById('timezone').value;
-        if (timezone) {
-          const weekDays = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-          const weeklySchedule = {};
-          weekDays.forEach(day => {
-            const slots = [];
-            document.querySelectorAll(`#slots-${day} .time-slot`).forEach(slotEl => {
-              const start = slotEl.querySelector('.slot-start').value;
-              const end   = slotEl.querySelector('.slot-end').value;
-              if (start && end && start < end) slots.push({ start, end });
-            });
-            weeklySchedule[day] = slots;
+        const weekDays = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+        const weeklySchedule = {};
+        weekDays.forEach(day => {
+          const slots = [];
+          document.querySelectorAll(`#slots-${day} .time-slot`).forEach(slotEl => {
+            const start = slotEl.querySelector('.slot-start').value;
+            const end   = slotEl.querySelector('.slot-end').value;
+            if (start && end && start < end) slots.push({ start, end });
           });
-
-          saves.push(
-            setDoc(doc(db, 'instructor_availability', currentUser.uid),
-              { timezone, weeklySchedule, updatedAt: new Date().toISOString() },
-              { merge: true })
-          );
-        }
+          weeklySchedule[day] = slots;
+        });
+        saves.push(
+          setDoc(doc(db, 'instructor_availability', currentUser.uid),
+            { timezone, weeklySchedule, updatedAt: new Date().toISOString() },
+            { merge: true })
+        );
 
         await Promise.all(saves);
         setStatus("Profile saved successfully!", false);

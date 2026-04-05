@@ -798,13 +798,18 @@
                 return;
             }
 
+            // Block booking if student has no saved timezone
+            if (!studentStoredTZ) {
+                alert('Before booking a lesson, please set your timezone in your profile settings.\n\nGo to: Settings → My Timezone');
+                window.location.href = 'student-dashboard';
+                return;
+            }
+
             currentInstructorId   = instructorId;
             currentInstructorName = instructorName;
 
             document.getElementById('modal-instructor-name').textContent = instructorName;
-
-            const studentTZ = studentStoredTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
-            document.getElementById('student-timezone').textContent = studentTZ;
+            document.getElementById('student-timezone').textContent = studentStoredTZ;
 
             $('#bookingModal').modal('show');
 
@@ -818,7 +823,19 @@
                 await loadInstructorAvailability(instructorId);
                 await loadInstructorBookings(instructorId);
 
-                if (!instructorAvailability || !instructorAvailability.weeklySchedule) {
+                // Block booking if instructor has no saved timezone
+                if (!instructorAvailability || !instructorAvailability.timezone) {
+                    document.getElementById('booking-loading').style.display = 'none';
+                    document.getElementById('no-availability').style.display = 'block';
+                    document.getElementById('no-availability').innerHTML =
+                        '<p style="text-align:center;color:#666;padding:1rem 0;">' +
+                        'This instructor has not yet configured their availability and timezone.<br>' +
+                        '<span style="font-size:0.88rem;color:#999;">Please check back later or browse other instructors.</span>' +
+                        '</p>';
+                    return;
+                }
+
+                if (!instructorAvailability.weeklySchedule) {
                     document.getElementById('booking-loading').style.display = 'none';
                     document.getElementById('no-availability').style.display = 'block';
                     return;
