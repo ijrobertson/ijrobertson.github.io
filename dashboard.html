@@ -1718,6 +1718,16 @@
 
     // AVAILABILITY FUNCTIONS
 
+    function getGMTOffset(tz) {
+      try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz, timeZoneName: 'shortOffset'
+        }).formatToParts(new Date());
+        const tzName = parts.find(p => p.type === 'timeZoneName');
+        return tzName ? tzName.value : '';
+      } catch(e) { return ''; }
+    }
+
     function populateTimezoneSelect() {
       const select = document.getElementById('timezone');
       const detectedTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -1728,7 +1738,7 @@
       if (detectedTZ && !commonTimezones.includes(detectedTZ)) {
         const opt = document.createElement('option');
         opt.value = detectedTZ;
-        opt.textContent = `${detectedTZ} (Detected)`;
+        opt.textContent = `${detectedTZ} (${getGMTOffset(detectedTZ)}) — Detected`;
         select.appendChild(opt);
       }
 
@@ -1738,7 +1748,7 @@
         group.zones.forEach(({ value, label }) => {
           const opt = document.createElement('option');
           opt.value = value;
-          opt.textContent = label;
+          opt.textContent = `${label} (${getGMTOffset(value)})`;
           if (value === detectedTZ) opt.selected = true;
           optgroup.appendChild(opt);
         });

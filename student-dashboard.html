@@ -897,6 +897,12 @@
         <label>My Interests <span style="font-size:0.8rem;font-weight:400;color:#888;">(optional)</span></label>
         <div class="interests-grid" id="interests-grid" style="margin-bottom:1rem;"></div>
 
+        <label for="student-timezone" style="margin-top: 1.5rem;">My Timezone</label>
+        <p style="font-size: 0.82rem; color: #777; margin: 0.2rem 0 0.4rem;">Used to display lesson times correctly when you book with instructors in other time zones.</p>
+        <select id="student-timezone-select" style="margin-bottom: 1.5rem;">
+          <option value="">Select your timezone...</option>
+        </select>
+
         <div class="section-title" style="margin-top: 1.5rem; font-size: 1.1rem;">Notification Settings</div>
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
           <label for="emailNotifications" style="margin: 0; flex: 1; cursor: pointer;">
@@ -1139,6 +1145,126 @@
     let currentUser = null;
     let spokenLanguages = [];
     let learningLanguages = [];
+    let studentProfile = null; // cached profile data for use in booking cards
+
+    // ── Timezone data & helpers ───────────────────────────────────────────────
+    const timezoneGroups = [
+      { label: 'North America', zones: [
+        { value: 'America/New_York',    label: 'New York' },
+        { value: 'America/Chicago',     label: 'Chicago' },
+        { value: 'America/Denver',      label: 'Denver' },
+        { value: 'America/Los_Angeles', label: 'Los Angeles' },
+        { value: 'America/Toronto',     label: 'Toronto' },
+        { value: 'America/Vancouver',   label: 'Vancouver' },
+        { value: 'America/Mexico_City', label: 'Mexico City' },
+        { value: 'America/Phoenix',     label: 'Phoenix (No DST)' },
+        { value: 'America/Anchorage',   label: 'Anchorage' },
+        { value: 'Pacific/Honolulu',    label: 'Honolulu' },
+      ]},
+      { label: 'South America', zones: [
+        { value: 'America/Sao_Paulo',    label: 'São Paulo' },
+        { value: 'America/Buenos_Aires', label: 'Buenos Aires' },
+        { value: 'America/Lima',         label: 'Lima' },
+        { value: 'America/Bogota',       label: 'Bogotá' },
+        { value: 'America/Santiago',     label: 'Santiago' },
+        { value: 'America/Caracas',      label: 'Caracas' },
+      ]},
+      { label: 'Europe', zones: [
+        { value: 'Europe/London',    label: 'London' },
+        { value: 'Europe/Lisbon',    label: 'Lisbon' },
+        { value: 'Europe/Paris',     label: 'Paris' },
+        { value: 'Europe/Berlin',    label: 'Berlin' },
+        { value: 'Europe/Madrid',    label: 'Madrid' },
+        { value: 'Europe/Rome',      label: 'Rome' },
+        { value: 'Europe/Amsterdam', label: 'Amsterdam' },
+        { value: 'Europe/Stockholm', label: 'Stockholm' },
+        { value: 'Europe/Helsinki',  label: 'Helsinki' },
+        { value: 'Europe/Athens',    label: 'Athens' },
+        { value: 'Europe/Moscow',    label: 'Moscow' },
+      ]},
+      { label: 'Africa', zones: [
+        { value: 'Africa/Accra',         label: 'Accra' },
+        { value: 'Africa/Dakar',         label: 'Dakar' },
+        { value: 'Africa/Casablanca',    label: 'Casablanca' },
+        { value: 'Africa/Lagos',         label: 'Lagos' },
+        { value: 'Africa/Cairo',         label: 'Cairo' },
+        { value: 'Africa/Johannesburg',  label: 'Johannesburg' },
+        { value: 'Africa/Nairobi',       label: 'Nairobi' },
+        { value: 'Africa/Addis_Ababa',   label: 'Addis Ababa' },
+        { value: 'Africa/Dar_es_Salaam', label: 'Dar es Salaam' },
+        { value: 'Africa/Kampala',       label: 'Kampala' },
+      ]},
+      { label: 'Asia', zones: [
+        { value: 'Asia/Riyadh',    label: 'Riyadh' },
+        { value: 'Asia/Dubai',     label: 'Dubai' },
+        { value: 'Asia/Tehran',    label: 'Tehran' },
+        { value: 'Asia/Karachi',   label: 'Karachi' },
+        { value: 'Asia/Kolkata',   label: 'Mumbai / Kolkata' },
+        { value: 'Asia/Dhaka',     label: 'Dhaka' },
+        { value: 'Asia/Colombo',   label: 'Colombo' },
+        { value: 'Asia/Bangkok',   label: 'Bangkok' },
+        { value: 'Asia/Singapore', label: 'Singapore' },
+        { value: 'Asia/Jakarta',   label: 'Jakarta' },
+        { value: 'Asia/Hong_Kong', label: 'Hong Kong' },
+        { value: 'Asia/Shanghai',  label: 'Shanghai' },
+        { value: 'Asia/Taipei',    label: 'Taipei' },
+        { value: 'Asia/Manila',    label: 'Manila' },
+        { value: 'Asia/Seoul',     label: 'Seoul' },
+        { value: 'Asia/Tokyo',     label: 'Tokyo' },
+        { value: 'Asia/Almaty',    label: 'Almaty' },
+        { value: 'Asia/Tashkent',  label: 'Tashkent' },
+      ]},
+      { label: 'Australia & Pacific', zones: [
+        { value: 'Australia/Perth',      label: 'Perth' },
+        { value: 'Australia/Adelaide',   label: 'Adelaide' },
+        { value: 'Australia/Brisbane',   label: 'Brisbane' },
+        { value: 'Australia/Melbourne',  label: 'Melbourne' },
+        { value: 'Australia/Sydney',     label: 'Sydney' },
+        { value: 'Pacific/Port_Moresby', label: 'Port Moresby' },
+        { value: 'Pacific/Guadalcanal',  label: 'Honiara (Solomon Islands)' },
+        { value: 'Pacific/Noumea',       label: 'Noumea (New Caledonia)' },
+        { value: 'Pacific/Fiji',         label: 'Suva (Fiji)' },
+        { value: 'Pacific/Auckland',     label: 'Auckland' },
+        { value: 'Pacific/Apia',         label: 'Apia (Samoa)' },
+        { value: 'Pacific/Tongatapu',    label: "Nuku\u02BBalofa (Tonga)" },
+      ]},
+    ];
+    const allTZValues = timezoneGroups.flatMap(g => g.zones.map(z => z.value));
+
+    function getGMTOffset(tz) {
+      try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz, timeZoneName: 'shortOffset'
+        }).formatToParts(new Date());
+        const tzName = parts.find(p => p.type === 'timeZoneName');
+        return tzName ? tzName.value : '';
+      } catch(e) { return ''; }
+    }
+
+    function populateTimezoneSelect() {
+      const select = document.getElementById('student-timezone-select');
+      if (!select) return;
+      const detectedTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      select.innerHTML = '<option value="">Select your timezone...</option>';
+      if (detectedTZ && !allTZValues.includes(detectedTZ)) {
+        const opt = document.createElement('option');
+        opt.value = detectedTZ;
+        opt.textContent = `${detectedTZ} (${getGMTOffset(detectedTZ)}) — Detected`;
+        select.appendChild(opt);
+      }
+      timezoneGroups.forEach(group => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = group.label;
+        group.zones.forEach(({ value, label }) => {
+          const opt = document.createElement('option');
+          opt.value = value;
+          opt.textContent = `${label} (${getGMTOffset(value)})`;
+          if (value === detectedTZ) opt.selected = true;
+          optgroup.appendChild(opt);
+        });
+        select.appendChild(optgroup);
+      });
+    }
 
     // Utility to populate country select
     function populateCountries() {
@@ -1252,6 +1378,7 @@
 
         if (docSnap.exists()) {
           const profile = docSnap.data();
+          studentProfile = profile; // cache for booking card display
           console.log('✅ Profile data loaded:', profile);
 
           // Check role
@@ -1284,6 +1411,12 @@
           const emailNotifications = profile.emailNotifications !== false;
           document.getElementById('emailNotifications').checked = emailNotifications;
           document.getElementById('acceptingRequests').checked = profile.acceptingRequests !== false;
+
+          // Timezone preference
+          if (profile.timezone) {
+            const tzSel = document.getElementById('student-timezone-select');
+            if (tzSel) tzSel.value = profile.timezone;
+          }
 
           // Load interests
           selectedInterests = profile.interests || [];
@@ -1318,9 +1451,10 @@
         document.getElementById('navProfilePic').src = cachedAvatar;
       }
 
-      console.log('📋 Populating countries and languages...');
+      console.log('📋 Populating countries, languages, and timezones...');
       populateCountries();
       populateLanguages();
+      populateTimezoneSelect();
       console.log('✅ Dropdowns populated');
 
       // Render interests grids (setup modal + main profile)
@@ -1449,6 +1583,7 @@
       statusEl.textContent = 'Saving...';
       statusEl.style.color = '#666';
 
+      const tzSel = document.getElementById('student-timezone-select');
       const updates = {
         name: document.getElementById('name').value.trim(),
         native_country: document.getElementById('native_country').value,
@@ -1457,6 +1592,7 @@
         languages_spoken: spokenLanguages,
         languages_learning: learningLanguages,
         interests: selectedInterests,
+        timezone: tzSel ? (tzSel.value || Intl.DateTimeFormat().resolvedOptions().timeZone) : Intl.DateTimeFormat().resolvedOptions().timeZone,
         emailNotifications: document.getElementById('emailNotifications').checked,
         acceptingRequests: document.getElementById('acceptingRequests').checked,
         role: 'student',
@@ -1747,18 +1883,20 @@
       card.className = 'booking-card';
 
       const dateTime = booking.dateTime;
-      const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      // Use stored timezone preference if available, otherwise fall back to browser timezone
+      const studentTZ = (studentProfile && studentProfile.timezone)
+        || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       card.innerHTML = `
         <div class="booking-info">
           <h5>${escapeHtml(booking.instructorName)}</h5>
           <div class="booking-detail">
             <i class="fas fa-calendar"></i>
-            ${dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            ${dateTime.toLocaleDateString('en-US', { timeZone: studentTZ, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
           <div class="booking-detail">
             <i class="fas fa-clock"></i>
-            ${dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+            ${dateTime.toLocaleTimeString('en-US', { timeZone: studentTZ, hour: 'numeric', minute: '2-digit', hour12: true })}
             <span style="color: #999; font-size: 0.85rem;">(${studentTZ})</span>
           </div>
           <div class="booking-detail" style="color: var(--primary);">

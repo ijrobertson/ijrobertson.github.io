@@ -559,6 +559,23 @@
         let selectedSlot          = null;
         let stripeInstance        = null;
         let stripeElements        = null;
+        let studentStoredTZ       = null; // student's timezone preference from Firestore
+
+        // ── Timezone helper ─────────────────────────────────────────────────
+        // Converts a (hour, minute) in a given IANA timezone on a YYYY-MM-DD date to a UTC Date.
+        // This lets us correctly interpret instructor schedule hours in the instructor's timezone.
+        function makeUTCFromTZ(ymd, hour, minute, tz) {
+            const nominal = new Date(`${ymd}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00Z`);
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false
+            }).formatToParts(nominal);
+            const tzH = parseInt(parts.find(p => p.type === 'hour').value);
+            const tzM = parseInt(parts.find(p => p.type === 'minute').value);
+            let diff = (hour * 60 + minute) - (tzH * 60 + tzM);
+            if (diff > 720)  diff -= 1440;
+            if (diff < -720) diff += 1440;
+            return new Date(nominal.getTime() + diff * 60 * 1000);
+        }
 
         // ── Auth ────────────────────────────────────────────────────────────
 
@@ -584,6 +601,10 @@
                     if (uData && uData.avatar_url) {
                         navProfilePic.src = uData.avatar_url;
                         localStorage.setItem('nav_avatar', uData.avatar_url);
+                    }
+                    // Cache student's stored timezone preference
+                    if (!isInstructor && usersSnap.exists() && usersSnap.data().timezone) {
+                        studentStoredTZ = usersSnap.data().timezone;
                     }
                     const profileLink = document.getElementById('myProfileLink');
                     if (profileLink) profileLink.href = 'learner-profile';
@@ -782,7 +803,7 @@
 
             document.getElementById('modal-instructor-name').textContent = instructorName;
 
-            const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const studentTZ = studentStoredTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
             document.getElementById('student-timezone').textContent = studentTZ;
 
             $('#bookingModal').modal('show');
@@ -916,28 +937,65 @@
         function generateSlotsForDay(date, dayKey) {
             const now = new Date();
             if (date < new Date().setHours(0, 0, 0, 0)) return [];
-            // Also block slots if the date is in the instructor's blocked list
+
+            const instructorTZ = instructorAvailability && instructorAvailability.timezone;
             const blockedDates = instructorAvailability.blockedDates || [];
-            if (blockedDates.includes(localDateStr(date))) return [];
-            const daySlots = instructorAvailability.weeklySchedule[dayKey] || [];
-            const slots = [];
-            daySlots.forEach(range => {
-                const [startHour, startMin] = range.start.split(':').map(Number);
-                const [endHour, endMin]     = range.end.split(':').map(Number);
-                let current = new Date(date);
-                current.setHours(startHour, startMin, 0, 0);
-                const end = new Date(date);
-                end.setHours(endHour, endMin, 0, 0);
-                while (current < end) {
-                    const slotEnd = new Date(current.getTime() + 60 * 60 * 1000);
-                    if (slotEnd <= end && current >= now) {
-                        const isBooked = existingBookings.some(b => Math.abs(b.dateTime - current) < 60000);
-                        slots.push({ startTime: new Date(current), endTime: new Date(slotEnd), booked: isBooked });
+
+            if (instructorTZ) {
+                // ── Timezone-aware slot generation ──────────────────────────
+                // Get the calendar date (YYYY-MM-DD) in the instructor's timezone for this `date`.
+                // sv-SE locale produces YYYY-MM-DD format natively.
+                const ymdInstructorTZ = new Intl.DateTimeFormat('sv-SE', { timeZone: instructorTZ }).format(date);
+
+                // Check blocked dates using the instructor's local date
+                if (blockedDates.includes(ymdInstructorTZ)) return [];
+
+                // Determine day-of-week in the instructor's timezone (may differ from student's)
+                const instructorDayKey = new Intl.DateTimeFormat('en-US', {
+                    timeZone: instructorTZ, weekday: 'long'
+                }).format(date).toLowerCase();
+
+                const daySlots = instructorAvailability.weeklySchedule[instructorDayKey] || [];
+                const slots = [];
+                daySlots.forEach(range => {
+                    const [startHour, startMin] = range.start.split(':').map(Number);
+                    const [endHour, endMin]     = range.end.split(':').map(Number);
+                    // Convert instructor-local times to real UTC timestamps
+                    let current = makeUTCFromTZ(ymdInstructorTZ, startHour, startMin, instructorTZ);
+                    const end   = makeUTCFromTZ(ymdInstructorTZ, endHour, endMin, instructorTZ);
+                    while (current < end) {
+                        const slotEnd = new Date(current.getTime() + 60 * 60 * 1000);
+                        if (slotEnd <= end && current >= now) {
+                            const isBooked = existingBookings.some(b => Math.abs(b.dateTime - current) < 60000);
+                            slots.push({ startTime: new Date(current), endTime: new Date(slotEnd), booked: isBooked });
+                        }
+                        current = slotEnd;
                     }
-                    current = slotEnd;
-                }
-            });
-            return slots;
+                });
+                return slots;
+            } else {
+                // ── Fallback: no instructor timezone stored (legacy behaviour) ──
+                if (blockedDates.includes(localDateStr(date))) return [];
+                const daySlots = instructorAvailability.weeklySchedule[dayKey] || [];
+                const slots = [];
+                daySlots.forEach(range => {
+                    const [startHour, startMin] = range.start.split(':').map(Number);
+                    const [endHour, endMin]     = range.end.split(':').map(Number);
+                    let current = new Date(date);
+                    current.setHours(startHour, startMin, 0, 0);
+                    const end = new Date(date);
+                    end.setHours(endHour, endMin, 0, 0);
+                    while (current < end) {
+                        const slotEnd = new Date(current.getTime() + 60 * 60 * 1000);
+                        if (slotEnd <= end && current >= now) {
+                            const isBooked = existingBookings.some(b => Math.abs(b.dateTime - current) < 60000);
+                            slots.push({ startTime: new Date(current), endTime: new Date(slotEnd), booked: isBooked });
+                        }
+                        current = slotEnd;
+                    }
+                });
+                return slots;
+            }
         }
 
         function formatTime(date) {
@@ -1061,7 +1119,7 @@
                 }
 
                 if (paymentIntent && paymentIntent.status === 'succeeded') {
-                    const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    const studentTZ = studentStoredTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
                     const [instructorSnap, studentSnap] = await Promise.all([
                         getDoc(doc(db, 'instructors', currentInstructorId)),
                         getDoc(doc(db, 'users', auth.currentUser.uid))
