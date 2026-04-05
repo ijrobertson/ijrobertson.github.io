@@ -166,6 +166,152 @@
     }
     @keyframes loginSpin { to { transform: rotate(360deg); } }
 
+    /* Forgot password link */
+    .forgot-password-link {
+      display: block;
+      text-align: right;
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+      color: #20bcba;
+      cursor: pointer;
+      text-decoration: none;
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+    }
+    .forgot-password-link:hover { color: #199c9a; text-decoration: underline; }
+
+    /* Password reset modal */
+    #reset-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 1rem;
+    }
+    #reset-modal {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #reset-modal h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1.2rem;
+      color: #222;
+    }
+    #reset-modal p {
+      color: #666;
+      font-size: 0.9rem;
+      margin: 0 0 1.2rem;
+      line-height: 1.5;
+    }
+    #reset-modal label {
+      font-weight: bold;
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    #reset-modal input[type="email"] {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      margin-bottom: 0.25rem;
+    }
+    #reset-modal input[type="email"]:focus {
+      outline: none;
+      border-color: #20bcba;
+      box-shadow: 0 0 0 3px rgba(32,188,186,0.15);
+    }
+    #reset-error {
+      color: #e53e3e;
+      font-size: 0.85rem;
+      min-height: 1.2em;
+      margin-bottom: 0.75rem;
+    }
+    #reset-success {
+      display: none;
+      text-align: center;
+      padding: 0.5rem 0;
+    }
+    #reset-success .checkmark {
+      width: 48px;
+      height: 48px;
+      background: #e6faf9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.75rem;
+      font-size: 1.4rem;
+    }
+    #reset-success p {
+      color: #333;
+      font-size: 0.92rem;
+      margin: 0;
+    }
+    #reset-success strong { color: #20bcba; }
+    .reset-modal-actions {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+    .reset-btn-send {
+      flex: 1;
+      padding: 0.7rem;
+      background: #20bcba;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .reset-btn-send:hover { background: #199c9a; }
+    .reset-btn-send:disabled { background: #a0dedd; cursor: not-allowed; }
+    .reset-btn-cancel {
+      padding: 0.7rem 1.1rem;
+      background: #f0f0f0;
+      color: #555;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .reset-btn-cancel:hover { background: #e0e0e0; }
+    #reset-close-btn {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.7rem;
+      background: #20bcba;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    #reset-close-btn:hover { background: #199c9a; }
+
     @media (max-width: 500px) {
       .card { padding: 1.5rem; }
     }
@@ -186,6 +332,7 @@
 
     <label>Password</label>
     <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
+    <button class="forgot-password-link" id="forgot-password-btn" type="button">Forgot your password?</button>
 
     <div id="confirm-password-container" style="display: none;">
       <label>Confirm Password</label>
@@ -230,12 +377,39 @@
     <div class="error" id="error-message"></div>
   </div>
 
+  <!-- Password Reset Modal -->
+  <div id="reset-modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+    <div id="reset-modal">
+      <!-- Form view -->
+      <div id="reset-form-view">
+        <h3 id="reset-modal-title">Reset Your Password</h3>
+        <p>Enter the email address associated with your account and we'll send you a link to reset your password.</p>
+        <label for="reset-email">Email Address</label>
+        <input type="email" id="reset-email" placeholder="you@example.com" autocomplete="email" />
+        <div id="reset-error" role="alert"></div>
+        <div class="reset-modal-actions">
+          <button class="reset-btn-send" id="reset-send-btn" type="button">Send Reset Link</button>
+          <button class="reset-btn-cancel" id="reset-cancel-btn" type="button">Cancel</button>
+        </div>
+      </div>
+      <!-- Success view -->
+      <div id="reset-success">
+        <div class="checkmark">&#10003;</div>
+        <h3 style="text-align:center;margin:0 0 0.6rem;color:#222;">Email Sent!</h3>
+        <p>A password reset link has been sent to <strong id="reset-sent-email"></strong>. Please check your inbox and follow the instructions to reset your password.</p>
+        <p style="margin-top:0.6rem;color:#888;font-size:0.82rem;">Didn't receive it? Check your spam folder or try again in a few minutes.</p>
+        <button id="reset-close-btn" type="button">Back to Sign In</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
   import {
     auth,
     db,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
+    sendPasswordResetEmail,
     doc,
     getDoc,
     setDoc
@@ -440,12 +614,93 @@
     ageCont.style.display      = isSignup ? 'flex'  : 'none';
     termsCont.style.display    = isSignup ? 'flex'  : 'none';
     document.getElementById('instructor-cta').style.display = isSignup ? 'block' : 'none';
+    document.getElementById('forgot-password-btn').style.display = isSignup ? 'none' : 'block';
     // Reset
     ageBox.checked = false; termsBox.checked = false;
     spokenLangs = []; learningLangs = [];
     renderTags('spoken'); renderTags('learning');
     document.getElementById('name').value = '';
     errorEl.textContent = '';
+  });
+
+  // ── Password Reset Modal ──────────────────────────────────────────────────
+  const resetBackdrop   = document.getElementById('reset-modal-backdrop');
+  const resetFormView   = document.getElementById('reset-form-view');
+  const resetSuccess    = document.getElementById('reset-success');
+  const resetEmailEl    = document.getElementById('reset-email');
+  const resetErrorEl    = document.getElementById('reset-error');
+  const resetSendBtn    = document.getElementById('reset-send-btn');
+  const resetSentEmail  = document.getElementById('reset-sent-email');
+
+  function openResetModal() {
+    resetFormView.style.display = 'block';
+    resetSuccess.style.display  = 'none';
+    resetEmailEl.value = emailEl.value.trim(); // pre-fill if user already typed email
+    resetErrorEl.textContent = '';
+    resetSendBtn.disabled = false;
+    resetSendBtn.textContent = 'Send Reset Link';
+    resetBackdrop.style.display = 'flex';
+    setTimeout(() => resetEmailEl.focus(), 50);
+  }
+
+  function closeResetModal() {
+    resetBackdrop.style.display = 'none';
+  }
+
+  document.getElementById('forgot-password-btn').addEventListener('click', openResetModal);
+  document.getElementById('reset-cancel-btn').addEventListener('click', closeResetModal);
+  document.getElementById('reset-close-btn').addEventListener('click', closeResetModal);
+
+  // Close on backdrop click
+  resetBackdrop.addEventListener('click', (e) => {
+    if (e.target === resetBackdrop) closeResetModal();
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && resetBackdrop.style.display === 'flex') closeResetModal();
+  });
+
+  resetSendBtn.addEventListener('click', async () => {
+    const resetEmail = resetEmailEl.value.trim();
+    resetErrorEl.textContent = '';
+
+    if (!resetEmail) {
+      resetErrorEl.textContent = 'Please enter your email address.';
+      resetEmailEl.focus();
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
+      resetErrorEl.textContent = 'Please enter a valid email address.';
+      resetEmailEl.focus();
+      return;
+    }
+
+    resetSendBtn.disabled = true;
+    resetSendBtn.textContent = 'Sending...';
+
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      resetSentEmail.textContent = resetEmail;
+      resetFormView.style.display = 'none';
+      resetSuccess.style.display  = 'block';
+    } catch(err) {
+      const msg = err.message || '';
+      if (msg.includes('user-not-found')) {
+        // Don't reveal whether the email exists — show generic success
+        resetSentEmail.textContent = resetEmail;
+        resetFormView.style.display = 'none';
+        resetSuccess.style.display  = 'block';
+      } else if (msg.includes('network-request-failed') || msg.includes('network error')) {
+        resetErrorEl.textContent = 'Network error — please check your connection and try again.';
+        resetSendBtn.disabled = false;
+        resetSendBtn.textContent = 'Send Reset Link';
+      } else {
+        resetErrorEl.textContent = 'Something went wrong. Please try again.';
+        resetSendBtn.disabled = false;
+        resetSendBtn.textContent = 'Send Reset Link';
+      }
+    }
   });
 
   submitBtn.addEventListener('click', async () => {
