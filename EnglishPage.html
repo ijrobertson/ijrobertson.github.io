@@ -1134,7 +1134,12 @@
             try {
                 const snap = await getDocs(query(collection(db, 'instructors'), limit(40)));
                 const instructors = [];
-                snap.forEach(d => instructors.push({ id: d.id, ...d.data() }));
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (!data.status || data.status === 'approved') {
+                        instructors.push({ id: d.id, ...data });
+                    }
+                });
                 const englishInstructors = instructors.filter(i => {
                     return (i.languages_teaching || []).some(isEnglish);
                 });
