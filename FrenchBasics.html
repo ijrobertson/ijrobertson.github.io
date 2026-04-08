@@ -1034,7 +1034,7 @@
             onSnapshot(
                 query(collection(db, 'bookings'), where('instructorId', '==', uid)),
                 (snap) => {
-                    _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                    _newBookingCount = snap.docs.filter(d => { const s = d.data().status; return s !== 'completed' && s !== 'cancelled'; }).length;
                     _updateProfileBadge();
                 }
             );

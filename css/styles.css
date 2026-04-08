@@ -673,11 +673,14 @@ input[type='checkbox'] {
 	margin-bottom: 0.5rem;
 }
 
-/* Center nav links horizontally on expanded (desktop) navbar */
+/* Center nav links in the viewport on expanded (desktop) navbar.
+   The fixed navbar spans 100vw, so left:50% + translateX(-50%) perfectly
+   centers the ul regardless of logo width or screen size. */
 @media (min-width: 768px) {
 	.navbar-custom .navbar-collapse .navbar-nav {
-		margin-left: auto;
-		margin-right: auto;
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
 	}
 }
 

@@ -888,10 +888,6 @@
                 });
                 instructorSnap.forEach(d => {
                     bookings.push({ id: d.id, ...d.data(), myRole: 'instructor' });
-                    // Mark unseen bookings as seen when instructor opens Activity page
-                    if (d.data().instructorSeen === false) {
-                        updateDoc(doc(db, 'bookings', d.id), { instructorSeen: true }).catch(() => {});
-                    }
                 });
 
                 // Sort ascending by lesson time
@@ -1270,7 +1266,7 @@
             onSnapshot(
                 query(collection(db, 'bookings'), where('instructorId', '==', currentUser.uid)),
                 (snap) => {
-                    _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length;
+                    _newBookingCount = snap.docs.filter(d => { const s = d.data().status; return s !== 'completed' && s !== 'cancelled'; }).length;
                     _updateActivityBadge();
                     _updateProfileBadge();
                 }

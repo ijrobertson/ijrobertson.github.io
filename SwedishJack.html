@@ -616,7 +616,7 @@
                 const friendsEl = document.getElementById('friendsCount'); if (friendsEl) { if (_pendingReqCount > 0) { friendsEl.textContent = _pendingReqCount; friendsEl.classList.add('show'); } else friendsEl.classList.remove('show'); }
             }
             onSnapshot(query(collection(db, 'friendRequests'), where('toId', '==', uid)), (snap) => { _pendingReqCount = snap.docs.filter(d => d.data().status === 'pending').length; _updateActivityBadge(); _updateProfileBadge(); });
-            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => { _newBookingCount = snap.docs.filter(d => d.data().instructorSeen === false).length; _updateActivityBadge(); _updateProfileBadge(); });
+            onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => { _newBookingCount = snap.docs.filter(d => { const s = d.data().status; return s !== 'completed' && s !== 'cancelled'; }).length; _updateActivityBadge(); _updateProfileBadge(); });
         }
     </script>
 </body>
