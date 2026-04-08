@@ -3022,7 +3022,7 @@
             onSnapshot(
                 query(collection(db, 'bookings'), where('instructorId', '==', uid)),
                 (snap) => {
-                    _bookingCount = snap.docs.filter(d => { const s = d.data().status; return s !== 'completed' && s !== 'cancelled'; }).length;
+                    _bookingCount = snap.docs.filter(d => { const _d = d.data(); if (_d.instructorSeen !== false) return false; const _t = _d.dateTime?.toDate ? _d.dateTime.toDate() : new Date(_d.dateTime); return _t > new Date(); }).length;
                     _updateBadges();
                 }
             );
@@ -3063,7 +3063,7 @@
                 _updateActivityBadge(); _updateProfileBadge();
             });
             onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
-                _newBookingCount = snap.docs.filter(d => { const s = d.data().status; return s !== 'completed' && s !== 'cancelled'; }).length;
+                _newBookingCount = snap.docs.filter(d => { const _d = d.data(); if (_d.instructorSeen !== false) return false; const _t = _d.dateTime?.toDate ? _d.dateTime.toDate() : new Date(_d.dateTime); return _t > new Date(); }).length;
                 _updateActivityBadge(); _updateProfileBadge();
             });
         }
@@ -3209,7 +3209,7 @@
                 _updateActivityBadge(); _updateProfileBadge();
             });
             onSnapshot(query(collection(db, 'bookings'), where('instructorId', '==', uid)), (snap) => {
-                _newBookingCount = snap.docs.filter(d => { const s = d.data().status; return s !== 'completed' && s !== 'cancelled'; }).length;
+                _newBookingCount = snap.docs.filter(d => { const _d = d.data(); if (_d.instructorSeen !== false) return false; const _t = _d.dateTime?.toDate ? _d.dateTime.toDate() : new Date(_d.dateTime); return _t > new Date(); }).length;
                 _updateActivityBadge(); _updateProfileBadge();
             });
         }

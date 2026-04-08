@@ -887,6 +887,13 @@
                 });
                 instructorSnap.forEach(d => {
                     bookings.push({ id: d.id, ...d.data(), myRole: 'instructor' });
+                    const bData = d.data();
+                    const lessonTime = bData.dateTime?.toDate ? bData.dateTime.toDate() : new Date(bData.dateTime);
+                    // Clear the badge for this booking if instructor has now opened the page,
+                    // or if the lesson time has already passed (auto-expire stale notifications).
+                    if (bData.instructorSeen === false || lessonTime <= new Date()) {
+                        updateDoc(doc(db, 'bookings', d.id), { instructorSeen: true }).catch(() => {});
+                    }
                 });
 
                 // Sort ascending by lesson time
@@ -1265,7 +1272,7 @@
             onSnapshot(
                 query(collection(db, 'bookings'), where('instructorId', '==', currentUser.uid)),
                 (snap) => {
-                    _newBookingCount = snap.docs.filter(d => { const s = d.data().status; return s !== 'completed' && s !== 'cancelled'; }).length;
+                    _newBookingCount = snap.docs.filter(d => { const _d = d.data(); if (_d.instructorSeen !== false) return false; const _t = _d.dateTime?.toDate ? _d.dateTime.toDate() : new Date(_d.dateTime); return _t > new Date(); }).length;
                     _updateActivityBadge();
                     _updateProfileBadge();
                 }
