@@ -59,8 +59,12 @@
             .navbar-nav { position: absolute !important; left: 50% !important; transform: translateX(-50%) !important; }
             .profile-nav-wrapper { margin-left: auto !important; }
             #signInWrapper { margin-left: auto !important; }
+            /* Keep social icons pinned to the right regardless of login state */
+            .social-icons { margin-left: auto; flex-shrink: 0; }
         }
         @media (max-width: 767px) { .navbar-nav { margin-left: 0 !important; } }
+        /* Prevent SIGN IN/SIGN UP from wrapping onto two lines */
+        #signInWrapper .nav-link { white-space: nowrap; }
 
         /* Page layout */
         body { background: #f5f5f5; padding-top: 4.5rem; }
@@ -355,6 +359,9 @@
                         <div id="avatarStatus" style="font-size:0.85rem;margin-top:0.4rem;color:#555;"></div>
                     </div>
                 </div>
+
+                <label for="applyAboutMe">About Me <span style="color:#dc3545;">*</span></label>
+                <textarea id="applyAboutMe" rows="4" placeholder="Tell potential students a bit about yourself — your background, your passion for language teaching, and what makes your lessons unique." required></textarea>
             </div>
 
             <!-- Section 2: Teaching Details -->
@@ -709,6 +716,7 @@
         // ── Submit readiness ──────────────────────────────────────────────
         function checkSubmitReady() {
             const name       = (document.getElementById('applyName').value || '').trim();
+            const aboutMe    = (document.getElementById('applyAboutMe').value || '').trim();
             const experience = (document.getElementById('applyExperience').value || '').trim();
             const style      = (document.getElementById('applyTeachingStyle').value || '').trim();
             const avatarOk   = !!(uploadedAvatarUrl || pendingAvatarFile);
@@ -722,12 +730,12 @@
                 accountOk = !!(email && pwd.length >= 6 && pwd === confirm);
             }
 
-            const ready = name && avatarOk && teachingLangs.length > 0 && experience && style && videoOk && accountOk;
+            const ready = name && aboutMe && avatarOk && teachingLangs.length > 0 && experience && style && videoOk && accountOk;
             document.getElementById('submitBtn').disabled = !ready;
         }
 
         // Listen on form fields for readiness
-        ['applyName','applyExperience','applyTeachingStyle'].forEach(id => {
+        ['applyName','applyAboutMe','applyExperience','applyTeachingStyle'].forEach(id => {
             document.getElementById(id).addEventListener('input', checkSubmitReady);
         });
 
@@ -788,6 +796,7 @@
                 }
                 const data = {
                     name: document.getElementById('applyName').value.trim(),
+                    about_me: document.getElementById('applyAboutMe').value.trim(),
                     email: currentUser.email,
                     native_country: document.getElementById('applyCountry').value,
                     timezone: document.getElementById('applyTimezone').value,
