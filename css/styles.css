@@ -682,6 +682,14 @@ input[type='checkbox'] {
 		left: 50%;
 		transform: translateX(-50%);
 	}
+
+	/* Push profile pic / social icons to the far right whether logged in or out.
+	   navbar-nav is position:absolute (out of flow), so the only in-flow children
+	   are profile-nav-wrapper and social-icons. flex-end keeps them pinned right
+	   in both auth states without requiring JS margin changes. */
+	.navbar-custom .navbar-collapse {
+		justify-content: flex-end;
+	}
 }
 
 .navbar-custom .nav-item .nav-link {

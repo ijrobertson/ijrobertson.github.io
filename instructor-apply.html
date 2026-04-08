@@ -497,13 +497,88 @@
             "Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
             "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
         ];
-        const commonTimezones = [
-            'America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
-            'America/Toronto','America/Mexico_City','America/Sao_Paulo','America/Buenos_Aires',
-            'Europe/London','Europe/Paris','Europe/Berlin','Europe/Madrid','Europe/Rome',
-            'Asia/Tokyo','Asia/Shanghai','Asia/Seoul','Asia/Singapore','Asia/Dubai',
-            'Australia/Sydney','Australia/Melbourne','Pacific/Auckland'
+        const timezoneGroups = [
+            { label: 'North America', zones: [
+                { value: 'America/New_York',       label: 'New York' },
+                { value: 'America/Chicago',        label: 'Chicago' },
+                { value: 'America/Denver',         label: 'Denver' },
+                { value: 'America/Los_Angeles',    label: 'Los Angeles' },
+                { value: 'America/Toronto',        label: 'Toronto' },
+                { value: 'America/Vancouver',      label: 'Vancouver' },
+                { value: 'America/Mexico_City',    label: 'Mexico City' },
+                { value: 'America/Phoenix',        label: 'Phoenix (No DST)' },
+                { value: 'America/Anchorage',      label: 'Anchorage' },
+                { value: 'Pacific/Honolulu',       label: 'Honolulu' },
+            ]},
+            { label: 'South America', zones: [
+                { value: 'America/Sao_Paulo',      label: 'São Paulo' },
+                { value: 'America/Buenos_Aires',   label: 'Buenos Aires' },
+                { value: 'America/Lima',           label: 'Lima' },
+                { value: 'America/Bogota',         label: 'Bogotá' },
+                { value: 'America/Santiago',       label: 'Santiago' },
+                { value: 'America/Caracas',        label: 'Caracas' },
+            ]},
+            { label: 'Europe', zones: [
+                { value: 'Europe/London',          label: 'London' },
+                { value: 'Europe/Lisbon',          label: 'Lisbon' },
+                { value: 'Europe/Paris',           label: 'Paris' },
+                { value: 'Europe/Berlin',          label: 'Berlin' },
+                { value: 'Europe/Madrid',          label: 'Madrid' },
+                { value: 'Europe/Rome',            label: 'Rome' },
+                { value: 'Europe/Amsterdam',       label: 'Amsterdam' },
+                { value: 'Europe/Stockholm',       label: 'Stockholm' },
+                { value: 'Europe/Helsinki',        label: 'Helsinki' },
+                { value: 'Europe/Athens',          label: 'Athens' },
+                { value: 'Europe/Moscow',          label: 'Moscow' },
+            ]},
+            { label: 'Africa', zones: [
+                { value: 'Africa/Accra',           label: 'Accra' },
+                { value: 'Africa/Dakar',           label: 'Dakar' },
+                { value: 'Africa/Casablanca',      label: 'Casablanca' },
+                { value: 'Africa/Lagos',           label: 'Lagos' },
+                { value: 'Africa/Cairo',           label: 'Cairo' },
+                { value: 'Africa/Johannesburg',    label: 'Johannesburg' },
+                { value: 'Africa/Nairobi',         label: 'Nairobi' },
+                { value: 'Africa/Addis_Ababa',     label: 'Addis Ababa' },
+                { value: 'Africa/Dar_es_Salaam',   label: 'Dar es Salaam' },
+                { value: 'Africa/Kampala',         label: 'Kampala' },
+            ]},
+            { label: 'Asia', zones: [
+                { value: 'Asia/Riyadh',            label: 'Riyadh' },
+                { value: 'Asia/Dubai',             label: 'Dubai' },
+                { value: 'Asia/Tehran',            label: 'Tehran' },
+                { value: 'Asia/Karachi',           label: 'Karachi' },
+                { value: 'Asia/Kolkata',           label: 'Mumbai / Kolkata' },
+                { value: 'Asia/Dhaka',             label: 'Dhaka' },
+                { value: 'Asia/Colombo',           label: 'Colombo' },
+                { value: 'Asia/Bangkok',           label: 'Bangkok' },
+                { value: 'Asia/Singapore',         label: 'Singapore' },
+                { value: 'Asia/Jakarta',           label: 'Jakarta' },
+                { value: 'Asia/Hong_Kong',         label: 'Hong Kong' },
+                { value: 'Asia/Shanghai',          label: 'Shanghai' },
+                { value: 'Asia/Taipei',            label: 'Taipei' },
+                { value: 'Asia/Manila',            label: 'Manila' },
+                { value: 'Asia/Seoul',             label: 'Seoul' },
+                { value: 'Asia/Tokyo',             label: 'Tokyo' },
+                { value: 'Asia/Almaty',            label: 'Almaty' },
+                { value: 'Asia/Tashkent',          label: 'Tashkent' },
+            ]},
+            { label: 'Australia & Pacific', zones: [
+                { value: 'Australia/Perth',        label: 'Perth' },
+                { value: 'Australia/Adelaide',     label: 'Adelaide' },
+                { value: 'Australia/Brisbane',     label: 'Brisbane' },
+                { value: 'Australia/Melbourne',    label: 'Melbourne' },
+                { value: 'Australia/Sydney',       label: 'Sydney' },
+                { value: 'Pacific/Port_Moresby',   label: 'Port Moresby' },
+                { value: 'Pacific/Guadalcanal',    label: 'Honiara (Solomon Islands)' },
+                { value: 'Pacific/Noumea',         label: 'Noumea (New Caledonia)' },
+                { value: 'Pacific/Fiji',           label: 'Suva (Fiji)' },
+                { value: 'Pacific/Auckland',       label: 'Auckland' },
+                { value: 'Pacific/Apia',           label: 'Apia (Samoa)' },
+                { value: 'Pacific/Tongatapu',      label: 'Nuku\u02BBalofa (Tonga)' },
+            ]},
         ];
+        const commonTimezones = timezoneGroups.flatMap(g => g.zones.map(z => z.value));
 
         // ── State ─────────────────────────────────────────────────────────
         let currentUser = null;
@@ -539,25 +614,32 @@
             }
         }
 
-        function tzDisplayName(tz) {
-            const city = tz.split('/').pop().replace(/_/g, ' ');
-            const offset = getGmtOffset(tz);
-            return offset ? `${city} (${offset})` : city;
-        }
-
         function populateTimezone() {
             const sel = document.getElementById('applyTimezone');
             const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const allZones = detected && !commonTimezones.includes(detected)
-                ? [detected, ...commonTimezones]
-                : commonTimezones;
-            allZones.forEach(tz => {
+
+            sel.innerHTML = '<option value="">Select your timezone…</option>';
+
+            // If the detected timezone isn't in the list, add it first
+            if (detected && !commonTimezones.includes(detected)) {
                 const opt = document.createElement('option');
-                opt.value = tz;
-                opt.textContent = tzDisplayName(tz);
+                opt.value = detected;
+                opt.textContent = `${detected} (${getGmtOffset(detected)}) — Detected`;
                 sel.appendChild(opt);
+            }
+
+            timezoneGroups.forEach(group => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = group.label;
+                group.zones.forEach(({ value, label }) => {
+                    const opt = document.createElement('option');
+                    opt.value = value;
+                    opt.textContent = `${label} (${getGmtOffset(value)})`;
+                    if (value === detected) opt.selected = true;
+                    optgroup.appendChild(opt);
+                });
+                sel.appendChild(optgroup);
             });
-            if (detected) sel.value = detected;
         }
 
         // ── Language tags ─────────────────────────────────────────────────
