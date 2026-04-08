@@ -2860,7 +2860,7 @@
             onSnapshot(
                 query(collection(db, 'bookings'), where('instructorId', '==', uid)),
                 (snapshot) => {
-                    _newBookingCount = snapshot.docs.filter(d => d.data().instructorSeen === false).length;
+                    _newBookingCount = snapshot.docs.filter(d => { const _d = d.data(); if (_d.instructorSeen !== false) return false; const _t = _d.dateTime?.toDate ? _d.dateTime.toDate() : new Date(_d.dateTime); return _t > new Date(); }).length;
                     _updateActivityBadge();
                     _updateProfileBadge();
                 }
