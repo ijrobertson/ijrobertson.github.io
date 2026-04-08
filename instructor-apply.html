@@ -526,6 +526,25 @@
             });
         }
 
+        function getGmtOffset(tz) {
+            try {
+                const parts = new Intl.DateTimeFormat('en-US', {
+                    timeZone: tz,
+                    timeZoneName: 'shortOffset'
+                }).formatToParts(new Date());
+                const tzPart = parts.find(p => p.type === 'timeZoneName');
+                return tzPart ? tzPart.value : '';
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function tzDisplayName(tz) {
+            const city = tz.split('/').pop().replace(/_/g, ' ');
+            const offset = getGmtOffset(tz);
+            return offset ? `${city} (${offset})` : city;
+        }
+
         function populateTimezone() {
             const sel = document.getElementById('applyTimezone');
             const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -534,7 +553,8 @@
                 : commonTimezones;
             allZones.forEach(tz => {
                 const opt = document.createElement('option');
-                opt.value = tz; opt.textContent = tz;
+                opt.value = tz;
+                opt.textContent = tzDisplayName(tz);
                 sel.appendChild(opt);
             });
             if (detected) sel.value = detected;
