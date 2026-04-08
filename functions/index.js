@@ -722,27 +722,104 @@ exports.adminApproveInstructor = onCall(async (request) => {
       await resend.emails.send({
         from: 'Lingua Bud <notifications@linguabud.com>',
         to: snap.data().email,
-        subject: 'Your Lingua Bud instructor application has been approved!',
+        subject: 'Welcome to Lingua Bud — You\'re approved as an instructor!',
         html: `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#20bcba;color:white;padding:24px 32px;border-radius:4px 4px 0 0;">
-              <h2 style="margin:0;">Welcome to Lingua Bud!</h2>
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f4f7f6;">
+            <!-- Header -->
+            <div style="background:#20bcba;padding:32px;text-align:center;border-radius:8px 8px 0 0;">
+              <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:48px;margin-bottom:12px;" />
+              <h1 style="margin:0;color:white;font-size:24px;font-weight:700;">You're approved — welcome aboard!</h1>
             </div>
-            <div style="background:white;padding:32px;border:1px solid #e9ecef;border-top:none;border-radius:0 0 4px 4px;">
-              <p>Hi ${snap.data().name || 'Instructor'},</p>
-              <p>Great news — your instructor application has been <strong>approved</strong>! Your profile is now live and students can book lessons with you.</p>
-              ${foundingBadge}
-              <p style="margin-top:24px;">
-                <a href="https://linguabud.com/dashboard"
-                   style="background:#20bcba;color:white;padding:12px 28px;border-radius:4px;text-decoration:none;font-weight:bold;">
-                  Go to Your Dashboard
-                </a>
+
+            <!-- Body -->
+            <div style="background:white;padding:36px 40px;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;">
+              <p style="font-size:16px;color:#333;margin-top:0;">Hi ${snap.data().name || 'there'},</p>
+              <p style="font-size:15px;color:#444;line-height:1.6;">
+                We're thrilled to welcome you to the Lingua Bud instructor community! Your application has been reviewed and <strong style="color:#20bcba;">approved</strong>. Your profile is now live and students can start booking lessons with you.
               </p>
-              <p style="color:#999;font-size:13px;margin-top:24px;">Questions? Email us at <a href="mailto:support@linguabud.com" style="color:#20bcba;">support@linguabud.com</a></p>
+
+              ${foundingBadge}
+
+              <!-- Divider -->
+              <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
+
+              <!-- Getting Started Steps -->
+              <h2 style="font-size:17px;color:#113448;margin-bottom:16px;">Getting started — 3 simple steps</h2>
+
+              <!-- Step 1 -->
+              <div style="display:flex;align-items:flex-start;margin-bottom:20px;">
+                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">1</div>
+                <div>
+                  <strong style="color:#113448;">Complete your instructor profile</strong>
+                  <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
+                    Head to your <a href="https://linguabud.com/dashboard" style="color:#20bcba;">Dashboard</a> and make sure your bio, languages, availability, and profile photo are up to date. A complete profile helps students find and choose you with confidence.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Step 2 -->
+              <div style="display:flex;align-items:flex-start;margin-bottom:20px;">
+                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">2</div>
+                <div>
+                  <strong style="color:#113448;">Set up Stripe to accept payments</strong>
+                  <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
+                    Lingua Bud uses <strong>Stripe</strong> to process lesson payments securely. To receive payouts, you'll need to connect your Stripe account from your Dashboard. Click <strong>"Connect with Stripe"</strong> and follow the on-screen steps — it only takes a few minutes. You will not be able to receive payment for completed lessons until this is done.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Step 3 -->
+              <div style="display:flex;align-items:flex-start;margin-bottom:8px;">
+                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">3</div>
+                <div>
+                  <strong style="color:#113448;">Check your Bookings tab for upcoming lessons</strong>
+                  <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
+                    Once students start booking with you, all upcoming and past lessons will appear in the <strong>Bookings</strong> tab on your Dashboard. You'll receive an email notification each time a new lesson is booked, so keep an eye on your inbox!
+                  </p>
+                </div>
+              </div>
+
+              <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
+
+              <!-- Tips -->
+              <h2 style="font-size:17px;color:#113448;margin-bottom:12px;">A few tips for a great start</h2>
+              <ul style="color:#555;font-size:14px;line-height:1.8;padding-left:20px;margin:0;">
+                <li>Set a competitive lesson rate to attract your first students — you can always adjust it later from your Dashboard.</li>
+                <li>Write a warm, detailed bio that highlights your teaching experience and the languages you specialise in.</li>
+                <li>Respond to student messages promptly — quick responses lead to more bookings.</li>
+                <li>After each lesson, encourage students to leave a review. Reviews build trust and help your profile stand out.</li>
+              </ul>
+
+              <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
+
+              <!-- CTA Buttons -->
+              <div style="text-align:center;margin-bottom:8px;">
+                <a href="https://linguabud.com/dashboard"
+                   style="display:inline-block;background:#20bcba;color:white;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;margin:6px 8px;">
+                  Go to My Dashboard
+                </a>
+                <a href="https://linguabud.com/bookings"
+                   style="display:inline-block;background:#113448;color:white;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;margin:6px 8px;">
+                  View My Bookings
+                </a>
+              </div>
+            </div>
+
+            <!-- Footer / Signature -->
+            <div style="background:#f4f7f6;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
+              <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:32px;margin-bottom:10px;" />
+              <p style="margin:0;font-size:13px;color:#888;line-height:1.6;">
+                The Lingua Bud Team<br />
+                <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a> &nbsp;|&nbsp;
+                <a href="mailto:support@linguabud.com" style="color:#20bcba;text-decoration:none;">support@linguabud.com</a>
+              </p>
+              <p style="margin:10px 0 0;font-size:11px;color:#bbb;">
+                You're receiving this email because you applied to become an instructor on Lingua Bud.
+              </p>
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'Instructor'},\n\nYour Lingua Bud instructor application has been approved! Your profile is now live.\n\n${isFoundingInstructor ? `Founding Instructor: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson.\n\n` : `You keep ${keepPercent}% of every lesson.\n\n`}Dashboard: https://linguabud.com/dashboard\n\nQuestions? Email support@linguabud.com`
+        text: `Hi ${snap.data().name || 'there'},\n\nWelcome to Lingua Bud — your instructor application has been approved!\n\n${isFoundingInstructor ? `FOUNDING INSTRUCTOR: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson, forever.\n\n` : `You keep ${keepPercent}% of every lesson you complete on Lingua Bud.\n\n`}GETTING STARTED\n\n1. Complete your profile\nMake sure your bio, languages, availability, and profile photo are up to date on your Dashboard.\n\n2. Connect Stripe to accept payments\nGo to your Dashboard and click "Connect with Stripe". You must complete this step before you can receive payouts for completed lessons.\n\n3. Check your Bookings tab\nAll upcoming and past lessons appear in the Bookings tab. You'll get an email each time a new lesson is booked.\n\nDashboard: https://linguabud.com/dashboard\nBookings: https://linguabud.com/bookings\n\nTIPS\n- Set a competitive lesson rate to attract your first students.\n- Write a warm, detailed bio highlighting your teaching experience.\n- Respond to student messages quickly — it leads to more bookings.\n- Encourage students to leave reviews after each lesson.\n\nQuestions? Email us at support@linguabud.com\n\n— The Lingua Bud Team\nlinguabud.com`
       });
     }
   } catch (e) {
@@ -774,21 +851,65 @@ exports.adminDeclineInstructor = onCall(async (request) => {
       await resend.emails.send({
         from: 'Lingua Bud <notifications@linguabud.com>',
         to: snap.data().email,
-        subject: 'Update on your Lingua Bud instructor application',
+        subject: 'An update on your Lingua Bud instructor application',
         html: `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#113448;color:white;padding:24px 32px;border-radius:4px 4px 0 0;">
-              <h2 style="margin:0;">Lingua Bud</h2>
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f4f7f6;">
+            <!-- Header -->
+            <div style="background:#113448;padding:32px;text-align:center;border-radius:8px 8px 0 0;">
+              <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:48px;margin-bottom:12px;" />
+              <h1 style="margin:0;color:white;font-size:22px;font-weight:700;">An update on your application</h1>
             </div>
-            <div style="background:white;padding:32px;border:1px solid #e9ecef;border-top:none;border-radius:0 0 4px 4px;">
-              <p>Hi ${snap.data().name || 'there'},</p>
-              <p>Thank you for applying to become an instructor on Lingua Bud. After reviewing your application, we are unable to approve your profile at this time.</p>
-              <p>If you have questions or would like feedback, please reach out at <a href="mailto:support@linguabud.com" style="color:#20bcba;">support@linguabud.com</a>.</p>
-              <p style="color:#999;font-size:13px;margin-top:24px;">The Lingua Bud Team</p>
+
+            <!-- Body -->
+            <div style="background:white;padding:36px 40px;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;">
+              <p style="font-size:16px;color:#333;margin-top:0;">Hi ${snap.data().name || 'there'},</p>
+              <p style="font-size:15px;color:#444;line-height:1.6;">
+                Thank you for taking the time to apply to become an instructor on Lingua Bud. We genuinely appreciate your interest in joining our community and the effort you put into your application.
+              </p>
+              <p style="font-size:15px;color:#444;line-height:1.6;">
+                After carefully reviewing your application, we are unfortunately <strong>unable to approve your profile at this time</strong>. This is not a permanent decision — we review applications on a rolling basis, and our requirements may evolve as the platform grows.
+              </p>
+
+              <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
+
+              <!-- What to do next -->
+              <h2 style="font-size:17px;color:#113448;margin-bottom:12px;">What can I do next?</h2>
+              <ul style="color:#555;font-size:14px;line-height:1.8;padding-left:20px;margin:0;">
+                <li><strong>Request feedback</strong> — we're happy to give you specific guidance on what we'd like to see. Just email us at <a href="mailto:support@linguabud.com" style="color:#20bcba;">support@linguabud.com</a>.</li>
+                <li><strong>Reapply in the future</strong> — once you have addressed any feedback, you are welcome to submit a new application. We'd love to reconsider.</li>
+                <li><strong>Explore Lingua Bud as a learner</strong> — in the meantime, you're welcome to use the platform to take lessons, connect with other language enthusiasts, and access our free learning resources.</li>
+              </ul>
+
+              <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
+
+              <p style="font-size:15px;color:#444;line-height:1.6;">
+                We know this isn't the news you were hoping for, and we're sorry for that. If you have any questions at all, please don't hesitate to get in touch — we're always happy to help.
+              </p>
+
+              <!-- CTA -->
+              <div style="text-align:center;margin-top:28px;">
+                <a href="mailto:support@linguabud.com"
+                   style="display:inline-block;background:#20bcba;color:white;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;">
+                  Contact Us
+                </a>
+              </div>
+            </div>
+
+            <!-- Footer / Signature -->
+            <div style="background:#f4f7f6;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
+              <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:32px;margin-bottom:10px;" />
+              <p style="margin:0;font-size:13px;color:#888;line-height:1.6;">
+                The Lingua Bud Team<br />
+                <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a> &nbsp;|&nbsp;
+                <a href="mailto:support@linguabud.com" style="color:#20bcba;text-decoration:none;">support@linguabud.com</a>
+              </p>
+              <p style="margin:10px 0 0;font-size:11px;color:#bbb;">
+                You're receiving this email because you applied to become an instructor on Lingua Bud.
+              </p>
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'there'},\n\nThank you for applying to become a Lingua Bud instructor. After review we are unable to approve your profile at this time.\n\nQuestions? Email support@linguabud.com`
+        text: `Hi ${snap.data().name || 'there'},\n\nThank you for applying to become an instructor on Lingua Bud. We appreciate your interest and the effort you put into your application.\n\nAfter carefully reviewing your application, we are unfortunately unable to approve your profile at this time. This is not a permanent decision — we review applications on a rolling basis.\n\nWHAT CAN I DO NEXT?\n\n- Request feedback: Email us at support@linguabud.com and we'll give you specific guidance.\n- Reapply in the future: Once you've addressed any feedback, you're welcome to submit a new application.\n- Explore Lingua Bud as a learner: You can still use the platform to take lessons and access our free learning resources.\n\nWe're sorry this wasn't the news you were hoping for. Please don't hesitate to reach out with any questions.\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
       });
     }
   } catch (e) {
