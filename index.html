@@ -2298,8 +2298,7 @@
         // Load instructors from instructors collection
         async function loadInstructors() {
             try {
-                const q = query(collection(db, 'instructors'), limit(8));
-                const querySnapshot = await getDocs(q);
+                const querySnapshot = await getDocs(collection(db, 'instructors'));
 
                 allInstructors = [];
                 querySnapshot.forEach((doc) => {
@@ -2313,6 +2312,15 @@
                     // Collect languages for filters
                     const languages = instructorData.languages_teaching || [];
                     languages.forEach(lang => instructorLanguages.add(lang));
+                });
+
+                // Prioritize instructors who have uploaded an intro video
+                allInstructors.sort((a, b) => {
+                    const aHasVideo = !!a.intro_video_url;
+                    const bHasVideo = !!b.intro_video_url;
+                    if (aHasVideo && !bHasVideo) return -1;
+                    if (!aHasVideo && bHasVideo) return 1;
+                    return 0;
                 });
 
                 populateInstructorFilters();
