@@ -223,6 +223,7 @@
             background: white; border-radius: 12px; padding: 2rem;
             max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
+        .email-compose-box { max-width: 540px; }
         .confirm-box h5 { font-weight: 700; color: #113448; margin-bottom: 0.75rem; }
         .confirm-box p { color: #555; margin-bottom: 1.5rem; font-size: 0.9rem; }
         .confirm-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
@@ -752,6 +753,27 @@
         </div>
     </div>
 
+    <!-- Email Compose Modal -->
+    <div class="confirm-overlay" id="emailComposeOverlay">
+        <div class="confirm-box email-compose-box">
+            <h5 id="emailComposeTitle">Approve Instructor</h5>
+            <p id="emailComposeDesc" style="margin-bottom:1rem;font-size:0.9rem;color:#555;"></p>
+            <div style="margin-bottom:1.25rem;">
+                <label style="font-size:0.78rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">
+                    Personal Note <span style="font-weight:400;color:#aaa;">(optional — included in the email)</span>
+                </label>
+                <textarea id="emailPersonalNote" rows="4"
+                    placeholder="Add a personal note to the email, e.g. 'We were particularly impressed by your background in immersive teaching methods.'"
+                    style="width:100%;border:2px solid #e0e0e0;border-radius:8px;padding:10px 12px;font-size:0.875rem;font-family:inherit;resize:vertical;outline:none;box-sizing:border-box;"
+                    onfocus="this.style.borderColor='#20bcba'" onblur="this.style.borderColor='#e0e0e0'"></textarea>
+            </div>
+            <div class="confirm-actions">
+                <button class="confirm-cancel" onclick="closeEmailCompose()">Cancel</button>
+                <button class="confirm-ok teal" id="emailComposeSendBtn">Send Email &amp; Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirm Delete Modal -->
     <div class="confirm-overlay" id="confirmOverlay">
         <div class="confirm-box">
@@ -1175,25 +1197,58 @@
             if (e.target === this) closeAppDetail();
         });
 
+        let _emailComposeCallback = null;
+
+        function showEmailCompose(title, desc, isPositive, cb) {
+            document.getElementById('emailComposeTitle').textContent = title;
+            document.getElementById('emailComposeDesc').innerHTML = desc;
+            document.getElementById('emailPersonalNote').value = '';
+            const btn = document.getElementById('emailComposeSendBtn');
+            btn.textContent = isPositive ? 'Send Email & Approve' : 'Send Email & Decline';
+            btn.className = isPositive ? 'confirm-ok teal' : 'confirm-ok';
+            _emailComposeCallback = cb;
+            document.getElementById('emailComposeOverlay').classList.add('show');
+            setTimeout(() => document.getElementById('emailPersonalNote').focus(), 100);
+        }
+        window.closeEmailCompose = function() {
+            document.getElementById('emailComposeOverlay').classList.remove('show');
+            _emailComposeCallback = null;
+        };
+        document.getElementById('emailComposeSendBtn').addEventListener('click', async () => {
+            if (_emailComposeCallback) {
+                const btn = document.getElementById('emailComposeSendBtn');
+                const personalMessage = document.getElementById('emailPersonalNote').value.trim();
+                btn.disabled = true;
+                btn.textContent = 'Sending…';
+                try { await _emailComposeCallback(personalMessage); } catch (e) { alert('Error: ' + e.message); }
+                btn.disabled = false;
+                closeEmailCompose();
+            }
+        });
+        document.getElementById('emailComposeOverlay').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeEmailCompose();
+        });
+
         window.doApprove = function(id, name) {
-            showConfirm(
+            showEmailCompose(
                 'Approve Instructor',
-                `Approve <strong>${escHtml(name)}</strong> as an instructor? They will receive a confirmation email and their profile will go live.`,
-                async () => {
-                    await approveInstructor({ instructorId: id });
+                `<strong>${escHtml(name)}</strong> will be approved as an instructor. Their profile will go live and they will receive a confirmation email. You may add a personal note below.`,
+                true,
+                async (personalMessage) => {
+                    await approveInstructor({ instructorId: id, personalMessage: personalMessage || null });
                     await loadApplications();
                     await loadStats();
                     tabsLoaded['overview'] = false;
-                },
-                true
+                }
             );
         };
         window.doDecline = function(id, name) {
-            showConfirm(
+            showEmailCompose(
                 'Decline Application',
-                `Decline <strong>${escHtml(name)}</strong>'s instructor application? They will receive a notification email.`,
-                async () => {
-                    await declineInstructor({ instructorId: id });
+                `<strong>${escHtml(name)}</strong>'s instructor application will be declined. They will receive a notification email. You may add a personal note below.`,
+                false,
+                async (personalMessage) => {
+                    await declineInstructor({ instructorId: id, personalMessage: personalMessage || null });
                     await loadApplications();
                     await loadStats();
                     tabsLoaded['overview'] = false;

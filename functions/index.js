@@ -664,7 +664,7 @@ async function assertAdmin(request) {
  */
 exports.adminApproveInstructor = onCall(async (request) => {
   await assertAdmin(request);
-  const { instructorId } = request.data;
+  const { instructorId, personalMessage } = request.data;
   if (!instructorId) throw new HttpsError('invalid-argument', 'instructorId required');
 
   const db = admin.firestore();
@@ -719,6 +719,13 @@ exports.adminApproveInstructor = onCall(async (request) => {
            </div>`
         : `<p>You keep <strong>${keepPercent}% of every lesson</strong> you complete on Lingua Bud.</p>`;
 
+      const personalNoteHtml = personalMessage
+        ? `<div style="background:#f0fffe;border-left:4px solid #20bcba;border-radius:4px;padding:14px 18px;margin:20px 0;">
+             <p style="margin:0;font-size:15px;color:#333;line-height:1.6;">${personalMessage.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+           </div>`
+        : '';
+      const personalNoteText = personalMessage ? `\n${personalMessage}\n` : '';
+
       await resend.emails.send({
         from: 'Lingua Bud <notifications@linguabud.com>',
         to: snap.data().email,
@@ -737,6 +744,8 @@ exports.adminApproveInstructor = onCall(async (request) => {
               <p style="font-size:15px;color:#444;line-height:1.6;">
                 We're thrilled to welcome you to the Lingua Bud instructor community! Your application has been reviewed and <strong style="color:#20bcba;">approved</strong>. Your profile is now live and students can start booking lessons with you.
               </p>
+
+              ${personalNoteHtml}
 
               ${foundingBadge}
 
@@ -819,7 +828,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'there'},\n\nWelcome to Lingua Bud — your instructor application has been approved!\n\n${isFoundingInstructor ? `FOUNDING INSTRUCTOR: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson, forever.\n\n` : `You keep ${keepPercent}% of every lesson you complete on Lingua Bud.\n\n`}GETTING STARTED\n\n1. Complete your profile\nMake sure your bio, languages, availability, and profile photo are up to date on your Dashboard.\n\n2. Connect Stripe to accept payments\nGo to your Dashboard and click "Connect with Stripe". You must complete this step before you can receive payouts for completed lessons.\n\n3. Check your Bookings tab\nAll upcoming and past lessons appear in the Bookings tab. You'll get an email each time a new lesson is booked.\n\nDashboard: https://linguabud.com/dashboard\nBookings: https://linguabud.com/bookings\n\nTIPS\n- Set a competitive lesson rate to attract your first students.\n- Write a warm, detailed bio highlighting your teaching experience.\n- Respond to student messages quickly — it leads to more bookings.\n- Encourage students to leave reviews after each lesson.\n\nQuestions? Email us at support@linguabud.com\n\n— The Lingua Bud Team\nlinguabud.com`
+        text: `Hi ${snap.data().name || 'there'},\n\nWelcome to Lingua Bud — your instructor application has been approved!\n\n${isFoundingInstructor ? `FOUNDING INSTRUCTOR: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson, forever.\n\n` : `You keep ${keepPercent}% of every lesson you complete on Lingua Bud.\n\n`}${personalNoteText}GETTING STARTED\n\n1. Complete your profile\nMake sure your bio, languages, availability, and profile photo are up to date on your Dashboard.\n\n2. Connect Stripe to accept payments\nGo to your Dashboard and click "Connect with Stripe". You must complete this step before you can receive payouts for completed lessons.\n\n3. Check your Bookings tab\nAll upcoming and past lessons appear in the Bookings tab. You'll get an email each time a new lesson is booked.\n\nDashboard: https://linguabud.com/dashboard\nBookings: https://linguabud.com/bookings\n\nTIPS\n- Set a competitive lesson rate to attract your first students.\n- Write a warm, detailed bio highlighting your teaching experience.\n- Respond to student messages quickly — it leads to more bookings.\n- Encourage students to leave reviews after each lesson.\n\nQuestions? Email us at support@linguabud.com\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
       });
     }
   } catch (e) {
@@ -834,7 +843,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
  */
 exports.adminDeclineInstructor = onCall(async (request) => {
   await assertAdmin(request);
-  const { instructorId } = request.data;
+  const { instructorId, personalMessage } = request.data;
   if (!instructorId) throw new HttpsError('invalid-argument', 'instructorId required');
 
   await admin.firestore().collection('instructors').doc(instructorId).update({
@@ -848,6 +857,12 @@ exports.adminDeclineInstructor = onCall(async (request) => {
     const snap = await admin.firestore().collection('instructors').doc(instructorId).get();
     if (snap.exists && snap.data().email) {
       const resend = new Resend(process.env.RESEND_API_KEY);
+      const personalNoteHtml = personalMessage
+        ? `<div style="background:#f0fffe;border-left:4px solid #20bcba;border-radius:4px;padding:14px 18px;margin:20px 0;">
+             <p style="margin:0;font-size:15px;color:#333;line-height:1.6;">${personalMessage.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+           </div>`
+        : '';
+      const personalNoteText = personalMessage ? `\n${personalMessage}\n` : '';
       await resend.emails.send({
         from: 'Lingua Bud <notifications@linguabud.com>',
         to: snap.data().email,
@@ -869,6 +884,8 @@ exports.adminDeclineInstructor = onCall(async (request) => {
               <p style="font-size:15px;color:#444;line-height:1.6;">
                 After carefully reviewing your application, we are unfortunately <strong>unable to approve your profile at this time</strong>. This is not a permanent decision — we review applications on a rolling basis, and our requirements may evolve as the platform grows.
               </p>
+
+              ${personalNoteHtml}
 
               <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
 
@@ -909,7 +926,7 @@ exports.adminDeclineInstructor = onCall(async (request) => {
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'there'},\n\nThank you for applying to become an instructor on Lingua Bud. We appreciate your interest and the effort you put into your application.\n\nAfter carefully reviewing your application, we are unfortunately unable to approve your profile at this time. This is not a permanent decision — we review applications on a rolling basis.\n\nWHAT CAN I DO NEXT?\n\n- Request feedback: Email us at support@linguabud.com and we'll give you specific guidance.\n- Reapply in the future: Once you've addressed any feedback, you're welcome to submit a new application.\n- Explore Lingua Bud as a learner: You can still use the platform to take lessons and access our free learning resources.\n\nWe're sorry this wasn't the news you were hoping for. Please don't hesitate to reach out with any questions.\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
+        text: `Hi ${snap.data().name || 'there'},\n\nThank you for applying to become an instructor on Lingua Bud. We appreciate your interest and the effort you put into your application.\n\nAfter carefully reviewing your application, we are unfortunately unable to approve your profile at this time. This is not a permanent decision — we review applications on a rolling basis.\n${personalNoteText}\nWHAT CAN I DO NEXT?\n\n- Request feedback: Email us at support@linguabud.com and we'll give you specific guidance.\n- Reapply in the future: Once you've addressed any feedback, you're welcome to submit a new application.\n- Explore Lingua Bud as a learner: You can still use the platform to take lessons and access our free learning resources.\n\nWe're sorry this wasn't the news you were hoping for. Please don't hesitate to reach out with any questions.\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
       });
     }
   } catch (e) {
