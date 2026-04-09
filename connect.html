@@ -915,8 +915,8 @@
                     const userData = { id: doc.id, ...doc.data() };
                     console.log('User data:', userData);
 
-                    // Only show student users (not instructors) and exclude current user
-                    if (currentUser && doc.id !== currentUser.uid && userData.role === 'student') {
+                    // Only show student users — exclude instructors, pending/declined applicants, and current user
+                    if (currentUser && doc.id !== currentUser.uid && userData.role === 'student' && !userData.hasInstructorApplication) {
                         allUsers.push(userData);
                     }
                 });

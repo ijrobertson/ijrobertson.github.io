@@ -871,6 +871,7 @@
                         role: 'student',
                         name: document.getElementById('applyName').value.trim(),
                         emailNotifications: true,
+                        hasInstructorApplication: true,
                         createdAt: new Date().toISOString()
                     });
                 }
@@ -915,6 +916,8 @@
                     createdAt: new Date().toISOString()
                 };
                 await setDoc(doc(db, 'instructors', currentUser.uid), data, { merge: true });
+                // Hide applicant from Connect page until approved
+                await setDoc(doc(db, 'users', currentUser.uid), { hasInstructorApplication: true }, { merge: true });
                 showState('success');
             } catch (err) {
                 applicationJustSubmitted = false;
