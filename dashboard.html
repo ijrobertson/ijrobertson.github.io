@@ -878,6 +878,41 @@
   </div>
   <style>@keyframes authSpin{to{transform:rotate(360deg)}}</style>
 
+  <!-- ── Stripe Onboarding Blocking Overlay ─────────────────────────────── -->
+  <div id="stripe-onboarding-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:99990;overflow-y:auto;">
+    <div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:2rem;">
+      <div style="background:#fff;border-radius:12px;max-width:520px;width:100%;padding:2.5rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <!-- Icon -->
+        <div style="text-align:center;margin-bottom:1.5rem;">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:#fff3cd;border-radius:50%;">
+            <i class="fas fa-credit-card" style="font-size:1.75rem;color:#f59e0b;"></i>
+          </div>
+        </div>
+        <!-- Title -->
+        <h2 id="stripe-overlay-title" style="text-align:center;color:#113448;margin:0 0 0.75rem;font-size:1.4rem;font-weight:700;">
+          Connect Your Stripe Account
+        </h2>
+        <!-- Message -->
+        <p id="stripe-overlay-message" style="text-align:center;color:#555;font-size:0.95rem;line-height:1.65;margin:0 0 1.5rem;">
+          To start receiving students and payments, you must connect your Stripe account.
+        </p>
+        <!-- Status detail (shown for partially-complete accounts) -->
+        <div id="stripe-overlay-detail" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:0.875rem;color:#664d03;line-height:1.5;"></div>
+        <!-- CTA button -->
+        <div style="text-align:center;">
+          <button id="stripe-overlay-btn" type="button"
+            style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 2rem;background:#20bcba;color:#fff;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;transition:background 0.2s;">
+            <i class="fas fa-link"></i>
+            <span id="stripe-overlay-btn-text">Connect Stripe</span>
+          </button>
+        </div>
+        <p style="text-align:center;margin-top:1.25rem;font-size:0.8rem;color:#999;">
+          Powered by <strong>Stripe</strong> — takes 2–3 minutes
+        </p>
+      </div>
+    </div>
+  </div>
+
   <div class="container" id="profile-container">
     <label for="name">Full Name</label>
     <input type="text" id="name" />
@@ -1457,7 +1492,8 @@
             window.location.href = 'instructor-apply';
             return;
           }
-          const instrStatus = instructorSnap.data().status;
+          const instrData = instructorSnap.data();
+          const instrStatus = instrData.status;
           if (instrStatus === 'pending' || instrStatus === 'declined') {
             window.location.href = 'instructor-apply';
             return;
@@ -1473,9 +1509,9 @@
           await loadProfile();
           await loadAvailability();
 
-          // Check Stripe payment setup status
+          // Check Stripe payment setup status — auto-create account if needed
           const urlParams = new URLSearchParams(window.location.search);
-          await checkStripePaymentStatus(urlParams.get('stripe') === 'success');
+          await checkStripePaymentStatus(urlParams.get('stripe') === 'success', instrData);
 
           // Load earnings summary and upcoming lessons
           loadEarnings();
@@ -2301,16 +2337,35 @@
       }
     }
 
-    async function checkStripePaymentStatus(forceCheck = false) {
+    async function checkStripePaymentStatus(forceCheck = false, cachedData = null) {
       try {
-        const instructorSnap = await getDoc(doc(db, 'instructors', currentUser.uid));
+        let data = cachedData;
+        if (!data) {
+          const instructorSnap = await getDoc(doc(db, 'instructors', currentUser.uid));
+          data = instructorSnap.exists() ? instructorSnap.data() : null;
+        }
 
-        if (!instructorSnap.exists() || !instructorSnap.data().stripeAccountId) {
+        if (!data) {
           renderStripeSection('not-connected');
+          showStripeOverlay('not-connected');
           return;
         }
 
-        const data = instructorSnap.data();
+        // ── Auto-create Stripe account if missing ────────────────────────────
+        if (!data.stripeAccountId) {
+          try {
+            const createAccount = httpsCallable(functions, 'createStripeAccount');
+            await createAccount();
+            // Re-read to get the new stripeAccountId
+            const snap = await getDoc(doc(db, 'instructors', currentUser.uid));
+            data = snap.exists() ? snap.data() : data;
+          } catch (err) {
+            console.error('Auto-create Stripe account failed:', err);
+          }
+          renderStripeSection('not-connected');
+          showStripeOverlay('not-connected');
+          return;
+        }
 
         // Accounts with no stripeMode were created in test mode
         const storedMode = data.stripeMode || (data.stripeAccountId ? 'test' : null);
@@ -2331,27 +2386,99 @@
 
             if (needsLiveModeReconnect) {
               renderStripeSection('needs-live-reconnect');
+              showStripeOverlay('needs-live-reconnect');
               return;
             }
 
             if (chargesEnabled) {
               await setDoc(doc(db, 'instructors', currentUser.uid),
-                { stripeOnboardingComplete: true }, { merge: true });
+                { stripeOnboardingComplete: true, chargesEnabled: true }, { merge: true });
               renderStripeSection('connected');
+              hideStripeOverlay();
             } else {
               renderStripeSection('incomplete');
+              showStripeOverlay('incomplete');
             }
           } catch (err) {
             console.error('Stripe status check error:', err);
-            renderStripeSection(data.stripeOnboardingComplete ? 'connected' : 'incomplete');
+            const state = data.stripeOnboardingComplete ? 'connected' : 'incomplete';
+            renderStripeSection(state);
+            if (state !== 'connected') showStripeOverlay(state);
           }
           return;
         }
 
-        renderStripeSection('connected');
+        // chargesEnabled AND payoutsEnabled must both be true to be fully ready
+        if (data.chargesEnabled === true && data.payoutsEnabled === true) {
+          renderStripeSection('connected');
+          hideStripeOverlay();
+        } else if (data.stripeOnboardingComplete === true) {
+          // Details submitted but charges/payouts not yet enabled
+          renderStripeSection('pending-activation');
+          showStripeOverlay('pending-activation');
+        } else {
+          renderStripeSection('incomplete');
+          showStripeOverlay('incomplete');
+        }
       } catch (error) {
         console.error('Error checking Stripe status:', error);
         renderStripeSection('not-connected');
+      }
+    }
+
+    function showStripeOverlay(state) {
+      const overlay = document.getElementById('stripe-onboarding-overlay');
+      const title = document.getElementById('stripe-overlay-title');
+      const message = document.getElementById('stripe-overlay-message');
+      const detail = document.getElementById('stripe-overlay-detail');
+      const btnText = document.getElementById('stripe-overlay-btn-text');
+      const btn = document.getElementById('stripe-overlay-btn');
+
+      detail.style.display = 'none';
+
+      if (state === 'not-connected' || state === 'incomplete') {
+        title.textContent = 'Connect Your Stripe Account';
+        message.textContent = 'To start receiving students and payments, you must connect your Stripe account. This takes about 2–3 minutes.';
+        btnText.textContent = state === 'not-connected' ? 'Connect Stripe' : 'Complete Stripe Setup';
+        btn.onclick = connectStripeOverlay;
+
+      } else if (state === 'needs-live-reconnect') {
+        title.textContent = 'Live Mode Setup Required';
+        message.textContent = 'Lingua Bud has switched to live payments. Your previous test-mode Stripe account cannot receive real payments.';
+        detail.innerHTML = 'Please complete a one-time live setup with Stripe (5–10 minutes). Your booking history and profile are not affected.';
+        detail.style.display = 'block';
+        btnText.textContent = 'Set Up Live Payments';
+        btn.onclick = connectStripeOverlay;
+
+      } else if (state === 'pending-activation') {
+        title.textContent = 'Stripe Setup Incomplete';
+        message.textContent = 'Your Stripe account setup is incomplete. Please finish onboarding to activate payments.';
+        detail.innerHTML = 'Your details have been submitted but Stripe has not yet enabled charges and payouts. Click below to continue your setup.';
+        detail.style.display = 'block';
+        btnText.textContent = 'Continue Setup';
+        btn.onclick = connectStripeOverlay;
+      }
+
+      overlay.style.display = 'block';
+    }
+
+    function hideStripeOverlay() {
+      const overlay = document.getElementById('stripe-onboarding-overlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    async function connectStripeOverlay() {
+      const btn = document.getElementById('stripe-overlay-btn');
+      const btnText = document.getElementById('stripe-overlay-btn-text');
+      if (btn) { btn.disabled = true; btnText.textContent = 'Loading...'; }
+      try {
+        const createLink = httpsCallable(functions, 'createOnboardingLink');
+        const result = await createLink();
+        window.location.href = result.data.url;
+      } catch (error) {
+        console.error('Error launching Stripe onboarding:', error);
+        setStatus('Error connecting Stripe: ' + error.message, true);
+        if (btn) { btn.disabled = false; btnText.textContent = 'Connect Stripe'; }
       }
     }
 
@@ -2362,7 +2489,7 @@
         section.innerHTML = `
           <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
             Connect your Stripe account to receive payments from students.
-            Lingua Bud retains a 10% platform fee per lesson.
+            Lingua Bud retains a platform fee per lesson.
           </p>
           <button id="connect-stripe-btn" type="button">
             <i class="fas fa-link"></i> Connect with Stripe
@@ -2381,6 +2508,21 @@
           </div>
           <button id="complete-stripe-btn" type="button">
             <i class="fas fa-external-link-alt"></i> Complete Stripe Setup
+          </button>
+        `;
+        document.getElementById('complete-stripe-btn').onclick = continueStripeOnboarding;
+
+      } else if (state === 'pending-activation') {
+        section.innerHTML = `
+          <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;margin-bottom:1rem;">
+            <i class="fas fa-hourglass-half" style="color:#f59e0b;font-size:1.25rem;flex-shrink:0;"></i>
+            <div>
+              <strong>Stripe Account Setup Incomplete</strong>
+              <p style="margin:0;font-size:0.875rem;color:#666;">Your Stripe account setup is incomplete. Please finish onboarding.</p>
+            </div>
+          </div>
+          <button id="complete-stripe-btn" type="button">
+            <i class="fas fa-external-link-alt"></i> Continue Setup
           </button>
         `;
         document.getElementById('complete-stripe-btn').onclick = continueStripeOnboarding;
@@ -2412,7 +2554,7 @@
           <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;background:#d1fae5;border:1px solid #10b981;border-radius:8px;margin-bottom:1rem;">
             <i class="fas fa-check-circle" style="color:#10b981;font-size:1.5rem;flex-shrink:0;"></i>
             <div>
-              <strong style="color:#065f46;">Stripe Connected</strong>
+              <strong style="color:#065f46;">&#x2705; You are ready to receive payments</strong>
               <p style="margin:0;font-size:0.875rem;color:#666;">You are ready to receive lesson payments from students.</p>
             </div>
           </div>
@@ -2428,8 +2570,8 @@
       const btn = document.getElementById('connect-stripe-btn');
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...'; }
       try {
-        const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
-        const result = await createAccount();
+        const createLink = httpsCallable(functions, 'createOnboardingLink');
+        const result = await createLink();
         window.location.href = result.data.url;
       } catch (error) {
         console.error('Error connecting Stripe:', error);
@@ -2442,8 +2584,7 @@
       const btn = document.getElementById('live-reconnect-btn');
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up...'; }
       try {
-        // createStripeConnectAccount detects the mode mismatch server-side,
-        // archives the test account ID, and creates a fresh live Express account.
+        // createStripeConnectAccount handles live-mode reconnect server-side
         const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
         const result = await createAccount();
         window.location.href = result.data.url;
@@ -2458,9 +2599,8 @@
       const btn = document.getElementById('complete-stripe-btn');
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...'; }
       try {
-        // createStripeConnectAccount handles existing accounts — returns a fresh onboarding link
-        const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
-        const result = await createAccount();
+        const createLink = httpsCallable(functions, 'createOnboardingLink');
+        const result = await createLink();
         window.location.href = result.data.url;
       } catch (error) {
         console.error('Error resuming Stripe onboarding:', error);

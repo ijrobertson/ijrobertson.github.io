@@ -729,13 +729,14 @@
                 if (p.status !== 'approved') {
                     bookBtn.innerHTML = '<i class="fas fa-clock"></i> Not Available';
                     bookBtn.disabled = true;
-                } else if (p.stripeOnboardingComplete === true) {
+                } else if (p.chargesEnabled === true && p.payoutsEnabled === true) {
                     bookBtn.addEventListener('click', () => {
                         openBookingModal(uid, p.name || 'Instructor');
                     });
                 } else {
                     bookBtn.innerHTML = '<i class="fas fa-clock"></i> Payment Setup Pending';
                     bookBtn.disabled = true;
+                    bookBtn.title = 'This instructor is not yet able to receive payments.';
                 }
 
                 document.getElementById('msgBtn').addEventListener('click', () => {

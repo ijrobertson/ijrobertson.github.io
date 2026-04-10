@@ -690,6 +690,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
 
     tx.update(instructorRef, {
       status: 'approved',
+      isApproved: true,
       approvedAt: admin.firestore.FieldValue.serverTimestamp(),
       approvedBy: request.auth.uid,
       commissionRate,
@@ -699,6 +700,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
     tx.set(userRef, {
       role: 'instructor',
       status: 'approved',
+      isApproved: true,
       commissionRate,
       isFoundingInstructor
     }, { merge: true });
@@ -1001,8 +1003,121 @@ function getStripe() {
 }
 
 /**
+ * Creates a Stripe Express Connect account for an approved instructor.
+ * Only runs if:  role === 'instructor', isApproved === true, stripeAccountId is null.
+ * Returns { stripeAccountId }.
+ */
+exports.createStripeAccount = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const uid = request.auth.uid;
+  const stripe = getStripe();
+  const db = admin.firestore();
+
+  const instructorRef = db.collection('instructors').doc(uid);
+  const instructorSnap = await instructorRef.get();
+
+  if (!instructorSnap.exists) {
+    throw new HttpsError('not-found', 'Instructor profile not found');
+  }
+
+  const data = instructorSnap.data();
+
+  // Enforce approval gate
+  if (data.status !== 'approved' && data.isApproved !== true) {
+    throw new HttpsError('permission-denied', 'Your instructor application has not been approved yet');
+  }
+
+  const currentMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'live' : 'test';
+  const existingAccountId = data.stripeAccountId;
+  const existingMode = data.stripeMode || (existingAccountId ? 'test' : null);
+
+  // Reuse existing account if same environment
+  if (existingAccountId && existingMode === currentMode) {
+    return { stripeAccountId: existingAccountId };
+  }
+
+  // Create new Stripe Express account
+  const instructorEmail = data.email || null;
+  const country = request.data?.country || data.country || 'US';
+
+  const account = await stripe.accounts.create({
+    type: 'express',
+    country,
+    ...(instructorEmail ? { email: instructorEmail } : {}),
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true }
+    },
+    metadata: { firebaseUid: uid, mode: currentMode }
+  });
+
+  const stripeAccountId = account.id;
+
+  const updateData = {
+    stripeAccountId,
+    stripeMode: currentMode,
+    stripeOnboardingComplete: false,
+    chargesEnabled: false,
+    payoutsEnabled: false
+  };
+
+  // Preserve the old account ID under a mode-specific key
+  if (existingAccountId && existingMode && existingMode !== currentMode) {
+    updateData[`stripeAccountId_${existingMode}`] = existingAccountId;
+  }
+
+  await instructorRef.set(updateData, { merge: true });
+
+  return { stripeAccountId };
+});
+
+/**
+ * Generates a Stripe onboarding link for an instructor who already has a Stripe account.
+ * Returns { url }.
+ */
+exports.createOnboardingLink = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const uid = request.auth.uid;
+  const stripe = getStripe();
+
+  const instructorSnap = await admin.firestore().collection('instructors').doc(uid).get();
+
+  if (!instructorSnap.exists) {
+    throw new HttpsError('not-found', 'Instructor profile not found');
+  }
+
+  const data = instructorSnap.data();
+
+  // Enforce approval gate
+  if (data.status !== 'approved' && data.isApproved !== true) {
+    throw new HttpsError('permission-denied', 'Your instructor application has not been approved yet');
+  }
+
+  const stripeAccountId = data.stripeAccountId;
+  if (!stripeAccountId) {
+    throw new HttpsError('failed-precondition', 'No Stripe account found. Please create one first.');
+  }
+
+  const accountLink = await stripe.accountLinks.create({
+    account: stripeAccountId,
+    refresh_url: 'https://linguabud.com/dashboard?stripe=refresh',
+    return_url: 'https://linguabud.com/dashboard?stripe=success',
+    type: 'account_onboarding'
+  });
+
+  return { url: accountLink.url };
+});
+
+/**
  * Creates (or retrieves) a Stripe Express Connect account for an instructor
  * and returns an onboarding URL.
+ * Kept for backwards compatibility — new code should use createStripeAccount + createOnboardingLink.
  */
 exports.createStripeConnectAccount = onCall(async (request) => {
   if (!request.auth) {
@@ -1015,10 +1130,20 @@ exports.createStripeConnectAccount = onCall(async (request) => {
   const instructorRef = admin.firestore().collection('instructors').doc(uid);
   const instructorSnap = await instructorRef.get();
 
+  if (!instructorSnap.exists) {
+    throw new HttpsError('not-found', 'Instructor profile not found');
+  }
+
+  const existingData = instructorSnap.data();
+
+  // Enforce approval gate
+  if (existingData.status !== 'approved' && existingData.isApproved !== true) {
+    throw new HttpsError('permission-denied', 'Your instructor application has not been approved yet');
+  }
+
   // Determine which Stripe environment is active from the secret key prefix
   const currentMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'live' : 'test';
 
-  const existingData = instructorSnap.exists ? instructorSnap.data() : {};
   const existingAccountId = existingData.stripeAccountId;
   // Accounts created before mode tracking was added are treated as test accounts
   const existingMode = existingData.stripeMode || (existingAccountId ? 'test' : null);
@@ -1039,7 +1164,9 @@ exports.createStripeConnectAccount = onCall(async (request) => {
     const updateData = {
       stripeAccountId,
       stripeMode: currentMode,
-      stripeOnboardingComplete: false
+      stripeOnboardingComplete: false,
+      chargesEnabled: false,
+      payoutsEnabled: false
     };
 
     // Preserve the old account ID under a mode-specific key so it is never lost
@@ -1147,17 +1274,22 @@ exports.createPaymentIntent = onCall(async (request) => {
   const { price_per_lesson, currency, stripeAccountId } = instructor;
 
   if (!stripeAccountId) {
-    throw new HttpsError('failed-precondition', 'Instructor has not connected Stripe');
+    throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
+  }
+
+  // Fast Firestore check before hitting Stripe API
+  if (instructor.chargesEnabled !== true || instructor.payoutsEnabled !== true) {
+    throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
   }
 
   if (!price_per_lesson || price_per_lesson < 5) {
     throw new HttpsError('failed-precondition', 'Instructor lesson price must be at least $5');
   }
 
-  // Verify instructor can accept charges
+  // Verify instructor can accept charges via Stripe (authoritative source)
   const account = await stripe.accounts.retrieve(stripeAccountId);
-  if (!account.charges_enabled) {
-    throw new HttpsError('failed-precondition', 'Instructor payment setup is incomplete');
+  if (!account.charges_enabled || !account.payouts_enabled) {
+    throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
   }
 
   // Use instructor's individual commission rate (set at approval time)
@@ -1580,6 +1712,171 @@ exports.getStripeConfig = onCall(async (_request) => {
 });
 
 /**
+ * Sends the Stripe onboarding reminder email to all approved instructors who have
+ * not yet completed Stripe onboarding (stripeOnboardingComplete !== true).
+ * Admin-only callable.
+ */
+exports.notifyApprovedInstructorsStripe = onCall(async (request) => {
+  await assertAdmin(request);
+
+  const db = admin.firestore();
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  // Find all approved instructors without completed Stripe onboarding
+  const snap = await db.collection('instructors')
+    .where('status', '==', 'approved')
+    .get();
+
+  const targets = snap.docs.filter(d => {
+    const data = d.data();
+    return data.stripeOnboardingComplete !== true && data.email;
+  });
+
+  if (targets.length === 0) {
+    return { sent: 0, message: 'All approved instructors have completed Stripe onboarding.' };
+  }
+
+  let sent = 0;
+  const errors = [];
+
+  for (const d of targets) {
+    const data = d.data();
+    const firstName = (data.name || 'Instructor').split(' ')[0];
+
+    try {
+      await resend.emails.send({
+        from: 'Ian at Lingua Bud <ian@linguabud.com>',
+        to: data.email,
+        subject: 'Action Required: Start Receiving Students on Lingua Bud',
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f7f6;">
+              <table role="presentation" style="width:100%;border-collapse:collapse;">
+                <tr>
+                  <td align="center" style="padding:40px 0;">
+                    <table role="presentation" style="width:600px;border-collapse:collapse;background:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.1);border-radius:8px;overflow:hidden;">
+                      <!-- Header -->
+                      <tr>
+                        <td style="padding:32px;text-align:center;background:#20bcba;">
+                          <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:48px;margin-bottom:12px;" />
+                          <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">Action Required: Connect Your Stripe Account</h1>
+                        </td>
+                      </tr>
+                      <!-- Body -->
+                      <tr>
+                        <td style="padding:36px 40px;">
+                          <p style="font-size:16px;color:#333;margin-top:0;">Hi ${firstName},</p>
+                          <p style="font-size:15px;color:#444;line-height:1.7;">
+                            You're officially approved as an instructor on Lingua Bud — welcome aboard! 🎉
+                          </p>
+                          <p style="font-size:15px;color:#444;line-height:1.7;">
+                            To begin receiving students and getting paid for your lessons, there is one required step:
+                          </p>
+                          <div style="background:#f0fffe;border-left:4px solid #20bcba;border-radius:4px;padding:16px 20px;margin:20px 0;">
+                            <p style="margin:0;font-size:16px;color:#113448;font-weight:bold;">
+                              👉 You must connect your Stripe account to receive payments.
+                            </p>
+                          </div>
+                          <p style="font-size:15px;color:#444;line-height:1.7;">
+                            Stripe is our secure payment partner and ensures that you can:
+                          </p>
+                          <ul style="color:#444;font-size:15px;line-height:1.9;padding-left:20px;">
+                            <li>Get paid directly to your bank account</li>
+                            <li>Accept student bookings</li>
+                            <li>Safely manage your earnings</li>
+                          </ul>
+                          <p style="font-size:15px;color:#444;line-height:1.7;">
+                            ⏱ This process takes about <strong>2–3 minutes</strong>.
+                          </p>
+                          <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:14px 18px;margin:20px 0;">
+                            <p style="margin:0;font-size:14px;color:#664d03;line-height:1.6;">
+                              <strong>Important:</strong> Your profile will not be fully active, and students will not be able to book lessons with you until this step is completed.
+                            </p>
+                          </div>
+                          <h3 style="font-size:16px;color:#113448;margin-bottom:12px;">To get started:</h3>
+                          <ol style="color:#444;font-size:15px;line-height:1.9;padding-left:20px;">
+                            <li>Log into your <a href="https://linguabud.com/dashboard" style="color:#20bcba;">Lingua Bud dashboard</a></li>
+                            <li>Click <strong>"Connect Stripe"</strong></li>
+                            <li>Follow the quick setup instructions</li>
+                          </ol>
+                          <p style="margin:30px 0 20px 0;">
+                            <a href="https://linguabud.com/dashboard"
+                               style="display:inline-block;padding:14px 32px;background:#20bcba;color:#ffffff;text-decoration:none;border-radius:4px;font-size:16px;font-weight:bold;">
+                              Go to My Dashboard
+                            </a>
+                          </p>
+                          <p style="font-size:14px;color:#666;line-height:1.6;">
+                            If you run into any issues, feel free to reply to this email and I'll personally help you get set up.
+                          </p>
+                          <p style="font-size:15px;color:#333;margin-top:32px;">
+                            Looking forward to seeing you start teaching!<br><br>
+                            Best,<br>
+                            <strong>Ian</strong><br>
+                            Founder, Lingua Bud
+                          </p>
+                        </td>
+                      </tr>
+                      <!-- Footer -->
+                      <tr>
+                        <td style="padding:24px 40px;background:#f8f9fa;border-top:1px solid #e9ecef;text-align:center;">
+                          <p style="margin:0;color:#999;font-size:12px;">© 2026 Lingua Bud. Connect with language partners worldwide.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
+        `,
+        text: `
+Hi ${firstName},
+
+You're officially approved as an instructor on Lingua Bud — welcome aboard!
+
+To begin receiving students and getting paid for your lessons, there is one required step:
+
+👉 You must connect your Stripe account to receive payments.
+
+Stripe is our secure payment partner and ensures that you can:
+- Get paid directly to your bank account
+- Accept student bookings
+- Safely manage your earnings
+
+⏱ This process takes about 2–3 minutes.
+
+Important: Your profile will not be fully active, and students will not be able to book lessons with you until this step is completed.
+
+To get started:
+1. Log into your Lingua Bud dashboard: https://linguabud.com/dashboard
+2. Click "Connect Stripe"
+3. Follow the quick setup instructions
+
+If you run into any issues, feel free to reply to this email and I'll personally help you get set up.
+
+Looking forward to seeing you start teaching!
+
+Best,
+Ian
+Founder, Lingua Bud
+        `.trim()
+      });
+      sent++;
+    } catch (err) {
+      console.error(`Failed to send onboarding email to ${data.email}:`, err.message);
+      errors.push({ email: data.email, error: err.message });
+    }
+  }
+
+  return { sent, total: targets.length, errors };
+});
+
+/**
  * Stripe webhook endpoint — receives events from Stripe and keeps Firestore in sync.
  *
  * Register this URL in Stripe Dashboard → Developers → Webhooks:
@@ -1687,8 +1984,9 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
           .get();
         if (!instructorsSnap.empty) {
           await instructorsSnap.docs[0].ref.update({
-            stripeOnboardingComplete: account.charges_enabled === true,
-            stripePayoutsEnabled:     account.payouts_enabled === true,
+            chargesEnabled:           account.charges_enabled === true,
+            payoutsEnabled:           account.payouts_enabled === true,
+            stripeOnboardingComplete: account.details_submitted === true,
             stripeDetailsSubmitted:   account.details_submitted === true,
             stripeAccountUpdatedAt:   admin.firestore.FieldValue.serverTimestamp()
           });
