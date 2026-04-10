@@ -848,16 +848,17 @@ exports.adminDeclineInstructor = onCall(async (request) => {
   const { instructorId, personalMessage } = request.data;
   if (!instructorId) throw new HttpsError('invalid-argument', 'instructorId required');
 
-  await admin.firestore().collection('instructors').doc(instructorId).update({
-    status: 'declined',
-    declinedAt: admin.firestore.FieldValue.serverTimestamp(),
-    declinedBy: request.auth.uid
-  });
+  const db = admin.firestore();
+  const bucket = admin.storage().bucket();
 
-  // Notify instructor by email
-  try {
-    const snap = await admin.firestore().collection('instructors').doc(instructorId).get();
-    if (snap.exists && snap.data().email) {
+  // Read the document first — we need name/email for the notification before we delete it
+  const snap = await db.collection('instructors').doc(instructorId).get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Instructor document not found');
+  const instructorData = snap.data();
+
+  // ── 1. Send decline email ────────────────────────────────────────────────
+  if (instructorData.email) {
+    try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const personalNoteHtml = personalMessage
         ? `<div style="background:#f0fffe;border-left:4px solid #20bcba;border-radius:4px;padding:14px 18px;margin:20px 0;">
@@ -867,7 +868,7 @@ exports.adminDeclineInstructor = onCall(async (request) => {
       const personalNoteText = personalMessage ? `\n${personalMessage}\n` : '';
       await resend.emails.send({
         from: 'Lingua Bud <notifications@linguabud.com>',
-        to: snap.data().email,
+        to: instructorData.email,
         subject: 'An update on your Lingua Bud instructor application',
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f4f7f6;">
@@ -879,7 +880,7 @@ exports.adminDeclineInstructor = onCall(async (request) => {
 
             <!-- Body -->
             <div style="background:white;padding:36px 40px;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0;">
-              <p style="font-size:16px;color:#333;margin-top:0;">Hi ${snap.data().name || 'there'},</p>
+              <p style="font-size:16px;color:#333;margin-top:0;">Hi ${instructorData.name || 'there'},</p>
               <p style="font-size:15px;color:#444;line-height:1.6;">
                 Thank you for taking the time to apply to become an instructor on Lingua Bud. We genuinely appreciate your interest in joining our community and the effort you put into your application.
               </p>
@@ -928,12 +929,42 @@ exports.adminDeclineInstructor = onCall(async (request) => {
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'there'},\n\nThank you for applying to become an instructor on Lingua Bud. We appreciate your interest and the effort you put into your application.\n\nAfter carefully reviewing your application, we are unfortunately unable to approve your profile at this time. This is not a permanent decision — we review applications on a rolling basis.\n${personalNoteText}\nWHAT CAN I DO NEXT?\n\n- Request feedback: Email us at support@linguabud.com and we'll give you specific guidance.\n- Reapply in the future: Once you've addressed any feedback, you're welcome to submit a new application.\n- Explore Lingua Bud as a learner: You can still use the platform to take lessons and access our free learning resources.\n\nWe're sorry this wasn't the news you were hoping for. Please don't hesitate to reach out with any questions.\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
+        text: `Hi ${instructorData.name || 'there'},\n\nThank you for applying to become an instructor on Lingua Bud. We appreciate your interest and the effort you put into your application.\n\nAfter carefully reviewing your application, we are unfortunately unable to approve your profile at this time. This is not a permanent decision — we review applications on a rolling basis.\n${personalNoteText}\nWHAT CAN I DO NEXT?\n\n- Request feedback: Email us at support@linguabud.com and we'll give you specific guidance.\n- Reapply in the future: Once you've addressed any feedback, you're welcome to submit a new application.\n- Explore Lingua Bud as a learner: You can still use the platform to take lessons and access our free learning resources.\n\nWe're sorry this wasn't the news you were hoping for. Please don't hesitate to reach out with any questions.\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
       });
+    } catch (e) {
+      console.error('Failed to send decline email:', e);
+      // Continue with cleanup even if email fails
     }
-  } catch (e) {
-    console.error('Failed to send decline email:', e);
   }
+
+  // ── 2. Delete Storage files (avatar + intro video) ───────────────────────
+  // Errors here are non-fatal — the files may not exist if the applicant
+  // didn't upload them, so we log and continue rather than throwing.
+  await Promise.allSettled([
+    bucket.file(`avatars/${instructorId}`).delete(),
+    bucket.file(`instructor_videos/${instructorId}`).delete()
+  ]).then(results => {
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        const paths = [`avatars/${instructorId}`, `instructor_videos/${instructorId}`];
+        // code 404 means the file simply didn't exist — not an error worth logging as such
+        if (r.reason?.code !== 404) {
+          console.warn(`Could not delete Storage file ${paths[i]}:`, r.reason?.message);
+        }
+      }
+    });
+  });
+
+  // ── 3. Delete the instructors Firestore document ─────────────────────────
+  await db.collection('instructors').doc(instructorId).delete();
+
+  // ── 4. Clear the application flag on the users document ──────────────────
+  // This lets the Connect page show them normally again and ensures instructor-apply
+  // presents a clean blank form if they choose to reapply.
+  await db.collection('users').doc(instructorId).set(
+    { hasInstructorApplication: false },
+    { merge: true }
+  );
 
   return { success: true };
 });
