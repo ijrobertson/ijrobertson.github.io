@@ -1510,6 +1510,9 @@
                     if (videoEl.videoHeight > videoEl.videoWidth) {
                         videoEl.style.objectFit = 'cover';
                     }
+                    // Seek to first frame so mobile browsers render a thumbnail
+                    // instead of showing a black screen before the user hits play.
+                    videoEl.currentTime = 0.001;
                 });
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();

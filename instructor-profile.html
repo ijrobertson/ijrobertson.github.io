@@ -746,7 +746,13 @@
 
                 // Intro video
                 if (p.intro_video_url) {
-                    document.getElementById('introVideo').src = p.intro_video_url;
+                    const introVideo = document.getElementById('introVideo');
+                    introVideo.src = p.intro_video_url;
+                    // Seek to first frame after metadata loads so mobile browsers
+                    // show a thumbnail instead of a black screen before the user plays.
+                    introVideo.addEventListener('loadedmetadata', () => {
+                        introVideo.currentTime = 0.001;
+                    }, { once: true });
                     document.getElementById('videoSection').style.display = '';
                 }
 
