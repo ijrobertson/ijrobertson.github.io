@@ -2367,16 +2367,26 @@
           return;
         }
 
+        // ── Short-circuit: trust Firestore when instructor is fully enabled ───
+        // Avoids unnecessary Stripe API calls and false-positive "not connected"
+        // popups for instructors who have already completed onboarding.
+        if (!forceCheck && data.chargesEnabled === true && data.payoutsEnabled === true) {
+          renderStripeSection('connected');
+          hideStripeOverlay();
+          return;
+        }
+
         // Accounts with no stripeMode were created in test mode
         const storedMode = data.stripeMode || (data.stripeAccountId ? 'test' : null);
 
-        // Always verify with Stripe when:
+        // Verify with Stripe when:
         //   • explicitly requested (e.g. returning from onboarding)
-        //   • onboarding not yet confirmed
-        //   • stored mode looks like a test account (catches test→live transition)
+        //   • onboarding not yet confirmed complete
+        //   • charges or payouts are not yet enabled
         const needsVerification = forceCheck ||
                                   data.stripeOnboardingComplete !== true ||
-                                  storedMode === 'test';
+                                  data.chargesEnabled !== true ||
+                                  data.payoutsEnabled !== true;
 
         if (needsVerification) {
           try {

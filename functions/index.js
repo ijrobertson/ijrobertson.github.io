@@ -1240,25 +1240,29 @@ exports.getStripeConnectDashboard = onCall(async (request) => {
   const data = instructorSnap.data();
   const stripeAccountId = data.stripeAccountId;
 
-  // Detect test→live mode transition before hitting the Stripe API
   const currentMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ? 'live' : 'test';
   const storedMode  = data.stripeMode || 'test'; // no stripeMode = legacy test account
 
-  if (storedMode !== currentMode) {
-    // The stored account belongs to a different Stripe environment.
-    // The instructor must complete a one-time live-mode onboarding.
-    return { needsLiveModeReconnect: true, chargesEnabled: false, loginUrl: null };
-  }
-
+  // Always try to retrieve the account first.
+  // This handles cases where stripeMode in Firestore is stale or was never set
+  // (e.g. instructor connected in live mode but stripeMode field is null).
   let account;
   try {
     account = await stripe.accounts.retrieve(stripeAccountId);
   } catch (err) {
     if (err.code === 'resource_missing') {
-      // Account ID doesn't exist in the current environment — stale test-mode reference
+      // Account ID doesn't exist in the current Stripe environment.
+      // This is a genuine mode mismatch — instructor must reconnect.
       return { needsLiveModeReconnect: true, chargesEnabled: false, loginUrl: null };
     }
     throw err;
+  }
+
+  // Account was retrieved successfully. If stripeMode was stale, correct it now.
+  if (storedMode !== currentMode) {
+    await admin.firestore().collection('instructors').doc(uid).update({
+      stripeMode: currentMode
+    });
   }
 
   let loginUrl = null;
