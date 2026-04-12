@@ -961,6 +961,15 @@
     <label for="about_me">About Me</label>
     <textarea id="about_me" rows="5" placeholder="Write a short bio..."></textarea>
 
+    <label for="teaching_experience">Teaching Experience</label>
+    <textarea id="teaching_experience" rows="4" placeholder="Describe your teaching background and experience..."></textarea>
+
+    <label for="certifications">Certifications</label>
+    <textarea id="certifications" rows="3" placeholder="List any relevant teaching certificates, degrees, or language qualifications..."></textarea>
+
+    <label for="teaching_style">Teaching Style</label>
+    <textarea id="teaching_style" rows="4" placeholder="Describe your teaching approach and methodology..."></textarea>
+
     <label for="country">Native Country</label>
     <select id="country"></select>
 
@@ -1610,6 +1619,9 @@
       // ── Required field validation ──────────────────────────────
       const name = (document.getElementById('name').value || "").trim();
       const about_me = (document.getElementById('about_me').value || "").trim();
+      const teaching_experience = (document.getElementById('teaching_experience').value || "").trim();
+      const certifications = (document.getElementById('certifications').value || "").trim();
+      const teaching_style = (document.getElementById('teaching_style').value || "").trim();
 
       if (!name) {
         setStatus('Please enter your full name.', true);
@@ -1659,6 +1671,9 @@
         price_per_lesson: parsedPrice || null,
         currency: document.getElementById('currency').value,
         about_me,
+        teaching_experience,
+        certifications,
+        teaching_style,
         native_country: document.getElementById('country').value,
         email: currentUser.email,
         updatedAt: new Date().toISOString()
@@ -1721,6 +1736,9 @@
         document.getElementById('price').value = "";
         document.getElementById('currency').value = "USD";
         document.getElementById('about_me').value = "";
+        document.getElementById('teaching_experience').value = "";
+        document.getElementById('certifications').value = "";
+        document.getElementById('teaching_style').value = "";
         document.getElementById('country').value = "";
         spokenLanguages = [];
         teachingLanguages = [];
@@ -1732,6 +1750,9 @@
           document.getElementById('price').value = data.price_per_lesson || "";
           document.getElementById('currency').value = data.currency || "USD";
           document.getElementById('about_me').value = data.about_me || "";
+          document.getElementById('teaching_experience').value = data.teaching_experience || "";
+          document.getElementById('certifications').value = data.certifications || "";
+          document.getElementById('teaching_style').value = data.teaching_style || "";
           document.getElementById('country').value = data.native_country || "";
 
           spokenLanguages = Array.isArray(data.languages_spoken) ? data.languages_spoken : [];
