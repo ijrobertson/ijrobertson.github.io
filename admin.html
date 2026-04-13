@@ -377,6 +377,10 @@
                         <div class="stat-number danger" id="statFlagged">—</div>
                         <div class="stat-label">Flagged Users</div>
                     </div>
+                    <div class="col stat-card">
+                        <div class="stat-number warning" id="statWisePending">—</div>
+                        <div class="stat-label">Wise Pending</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -399,6 +403,9 @@
                     </div>
                     <div class="admin-tab" data-tab="reports">
                         User Reports <span class="tab-badge" id="reportsBadge" style="display:none;">0</span>
+                    </div>
+                    <div class="admin-tab" data-tab="wise-payouts">
+                        Wise Payouts <span class="tab-badge warning" id="wisePayoutsBadge" style="display:none;">0</span>
                     </div>
                     <div class="admin-tab" data-tab="overview">Overview</div>
                 </div>
@@ -633,6 +640,75 @@
                 </div>
 
                 <!-- ── Overview Tab ───────────────────────────────────── -->
+                <!-- ── Wise Payouts Tab ───────────────────────────────── -->
+                <div class="tab-pane" id="tab-wise-payouts">
+                    <!-- Summary cards -->
+                    <div class="overview-grid mb-3" id="wisePayoutsSummary">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-yellow"><i class="fas fa-hourglass-half"></i></div>
+                            <div><div class="mini-stat-val" id="wise-total-pending">—</div><div class="mini-stat-lbl">Total Pending (all instructors)</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-green"><i class="fas fa-check-circle"></i></div>
+                            <div><div class="mini-stat-val" id="wise-total-paid">—</div><div class="mini-stat-lbl">Total Paid Out (all time)</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-users"></i></div>
+                            <div><div class="mini-stat-val" id="wise-instructors-pending">—</div><div class="mini-stat-lbl">Instructors Awaiting Payout</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Pending payouts table -->
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-envelope" style="color:#20bcba;margin-right:8px;"></i>Pending Wise Payouts</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;" onclick="tabsLoaded['wise-payouts']=false;loadWisePayouts();">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Instructor</th>
+                                        <th>Wise Email</th>
+                                        <th>Lessons</th>
+                                        <th>Total Owed</th>
+                                        <th>Commission Rate</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wisePayoutsBody">
+                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Paid payouts history -->
+                    <div class="admin-card mt-4">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-history" style="color:#10b981;margin-right:8px;"></i>Paid Wise Payouts (History)</h5>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Instructor</th>
+                                        <th>Wise Email</th>
+                                        <th>Lessons</th>
+                                        <th>Amount Paid</th>
+                                        <th>Last Paid</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wiseHistoryBody">
+                                    <tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="tab-pane" id="tab-overview">
                     <div class="overview-grid" id="overviewGrid">
                         <div class="mini-stat">
@@ -800,11 +876,12 @@
         } from './lib/firebaseClient.js';
 
         // ── Admin Functions ──────────────────────────────────────────────
-        const approveInstructor  = httpsCallable(functions, 'adminApproveInstructor');
-        const declineInstructor  = httpsCallable(functions, 'adminDeclineInstructor');
-        const deleteUser         = httpsCallable(functions, 'adminDeleteUser');
-        const flagUser           = httpsCallable(functions, 'adminFlagUser');
-        const markMsgRead        = httpsCallable(functions, 'adminMarkMessageRead');
+        const approveInstructor   = httpsCallable(functions, 'adminApproveInstructor');
+        const declineInstructor   = httpsCallable(functions, 'adminDeclineInstructor');
+        const deleteUser          = httpsCallable(functions, 'adminDeleteUser');
+        const flagUser            = httpsCallable(functions, 'adminFlagUser');
+        const markMsgRead         = httpsCallable(functions, 'adminMarkMessageRead');
+        const markWisePaid        = httpsCallable(functions, 'markWisePayoutsPaid');
 
         // Cache
         let allUsersCache = [];
@@ -883,13 +960,14 @@
                 document.getElementById('tab-' + name).classList.add('active');
                 if (!tabsLoaded[name]) {
                     tabsLoaded[name] = true;
-                    if (name === 'instructors') loadActiveInstructors();
-                    if (name === 'flagged')     loadFlagged();
-                    if (name === 'users')       loadUsers();
-                    if (name === 'bookings')    loadBookings();
-                    if (name === 'messages')    loadMessages();
-                    if (name === 'reports')     loadReports();
-                    if (name === 'overview')    loadOverview();
+                    if (name === 'instructors')   loadActiveInstructors();
+                    if (name === 'flagged')       loadFlagged();
+                    if (name === 'users')         loadUsers();
+                    if (name === 'bookings')      loadBookings();
+                    if (name === 'messages')      loadMessages();
+                    if (name === 'reports')       loadReports();
+                    if (name === 'wise-payouts')  loadWisePayouts();
+                    if (name === 'overview')      loadOverview();
                 }
             });
         });
@@ -897,10 +975,11 @@
         // ── Stats ────────────────────────────────────────────────────────
         async function loadStats() {
             try {
-                const [usersSnap, instrSnap, bookingsSnap] = await Promise.all([
+                const [usersSnap, instrSnap, bookingsSnap, earningsSnap] = await Promise.all([
                     getDocs(collection(db, 'users')),
                     getDocs(collection(db, 'instructors')),
-                    getDocs(collection(db, 'bookings'))
+                    getDocs(collection(db, 'bookings')),
+                    getDocs(query(collection(db, 'earnings'), where('payoutStatus', '==', 'pending'), where('payoutMethod', '==', 'wise')))
                 ]);
 
                 const students    = usersSnap.size;
@@ -927,12 +1006,18 @@
                     }
                 });
 
+                // Wise pending payouts
+                const wisePendingCount = earningsSnap.size;
+                let wisePendingCents = 0;
+                earningsSnap.forEach(d => { wisePendingCents += (d.data().instructorEarningsCents || 0); });
+
                 document.getElementById('statStudents').textContent    = students;
                 document.getElementById('statInstructors').textContent = instructors;
                 document.getElementById('statPending').textContent     = pending;
                 document.getElementById('statBookings').textContent    = bookings;
                 document.getElementById('statRevenue').textContent     = revenue > 0 ? '$' + (revenue / 100).toFixed(0) : '$0';
                 document.getElementById('statFlagged').textContent     = flaggedCount;
+                document.getElementById('statWisePending').textContent = wisePendingCents > 0 ? '$' + (wisePendingCents / 100).toFixed(0) : '$0';
 
                 // Update badges
                 if (pending > 0) {
@@ -942,6 +1027,12 @@
                 if (flaggedCount > 0) {
                     const el = document.getElementById('flagBadge');
                     el.textContent = flaggedCount; el.style.display = 'inline-block';
+                }
+                if (wisePendingCount > 0) {
+                    const el = document.getElementById('wisePayoutsBadge');
+                    // Unique instructors pending
+                    const uniqueInstr = new Set(earningsSnap.docs.map(d => d.data().instructorId)).size;
+                    el.textContent = uniqueInstr; el.style.display = 'inline-block';
                 }
             } catch (err) {
                 console.error('Error loading stats:', err);
@@ -1495,6 +1586,137 @@
                 tabsLoaded['messages'] = false;
                 await loadMessages();
             } catch (e) { console.error(e); }
+        };
+
+        // ── Wise Payouts ─────────────────────────────────────────────────
+        async function loadWisePayouts() {
+            const tbody    = document.getElementById('wisePayoutsBody');
+            const histBody = document.getElementById('wiseHistoryBody');
+            tbody.innerHTML    = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            histBody.innerHTML = '<tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+
+            try {
+                const allSnap = await getDocs(
+                    query(collection(db, 'earnings'), where('payoutMethod', '==', 'wise'))
+                );
+                const allEarnings = allSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                // ── Pending payouts ───────────────────────────────────────
+                const pending = allEarnings.filter(e => e.payoutStatus === 'pending');
+
+                // Group by instructor
+                const pendingByInstructor = {};
+                pending.forEach(e => {
+                    if (!pendingByInstructor[e.instructorId]) {
+                        pendingByInstructor[e.instructorId] = {
+                            instructorId:  e.instructorId,
+                            instructorName: e.instructorName || e.instructorId,
+                            wiseEmail:     e.wiseEmail || '—',
+                            currency:      e.currency || 'USD',
+                            commissionRate: e.commissionRate,
+                            lessons:       [],
+                            totalOwedCents: 0
+                        };
+                    }
+                    pendingByInstructor[e.instructorId].lessons.push(e);
+                    pendingByInstructor[e.instructorId].totalOwedCents += (e.instructorEarningsCents || 0);
+                });
+
+                const pendingGroups = Object.values(pendingByInstructor);
+
+                // Update summary stats
+                const totalPendingCents = pendingGroups.reduce((s, g) => s + g.totalOwedCents, 0);
+                document.getElementById('wise-total-pending').textContent =
+                    '$' + (totalPendingCents / 100).toFixed(2);
+                document.getElementById('wise-instructors-pending').textContent = pendingGroups.length;
+
+                if (pendingGroups.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="padding:2rem;"><i class="fas fa-check-circle" style="color:#10b981;font-size:2rem;display:block;margin-bottom:0.75rem;"></i>No pending Wise payouts.</td></tr>';
+                } else {
+                    tbody.innerHTML = pendingGroups.map(g => {
+                        const rate = typeof g.commissionRate === 'number'
+                            ? Math.round(g.commissionRate * 100) + '%' : '—';
+                        const amt = '$' + (g.totalOwedCents / 100).toFixed(2) + ' ' + g.currency;
+                        return `<tr>
+                            <td><strong>${escHtml(g.instructorName)}</strong><br>
+                                <small style="color:#888;">${escHtml(g.instructorId)}</small></td>
+                            <td>${escHtml(g.wiseEmail)}</td>
+                            <td>${g.lessons.length}</td>
+                            <td><strong style="color:#113448;">${escHtml(amt)}</strong></td>
+                            <td>${escHtml(rate)}</td>
+                            <td>
+                                <button class="btn-approve" onclick="doMarkWisePaid('${escHtml(g.instructorId)}', '${escHtml(g.instructorName)}', '${escHtml(amt)}')">
+                                    <i class="fas fa-check"></i> Mark as Paid
+                                </button>
+                            </td>
+                        </tr>`;
+                    }).join('');
+                }
+
+                // ── Paid history ──────────────────────────────────────────
+                const paid = allEarnings.filter(e => e.payoutStatus === 'paid');
+
+                const paidByInstructor = {};
+                paid.forEach(e => {
+                    if (!paidByInstructor[e.instructorId]) {
+                        paidByInstructor[e.instructorId] = {
+                            instructorName: e.instructorName || e.instructorId,
+                            wiseEmail:     e.wiseEmail || '—',
+                            currency:      e.currency || 'USD',
+                            lessons:       [],
+                            totalPaidCents: 0,
+                            lastPaidAt:    null
+                        };
+                    }
+                    paidByInstructor[e.instructorId].lessons.push(e);
+                    paidByInstructor[e.instructorId].totalPaidCents += (e.instructorEarningsCents || 0);
+                    const paidAt = e.paidAt?.toDate ? e.paidAt.toDate() : null;
+                    if (paidAt && (!paidByInstructor[e.instructorId].lastPaidAt || paidAt > paidByInstructor[e.instructorId].lastPaidAt)) {
+                        paidByInstructor[e.instructorId].lastPaidAt = paidAt;
+                    }
+                });
+
+                const paidGroups = Object.values(paidByInstructor);
+                const totalPaidCents = paidGroups.reduce((s, g) => s + g.totalPaidCents, 0);
+                document.getElementById('wise-total-paid').textContent =
+                    '$' + (totalPaidCents / 100).toFixed(2);
+
+                if (paidGroups.length === 0) {
+                    histBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:1.5rem;">No paid history yet.</td></tr>';
+                } else {
+                    histBody.innerHTML = paidGroups.map(g => {
+                        const amt = '$' + (g.totalPaidCents / 100).toFixed(2) + ' ' + g.currency;
+                        const lastPaid = g.lastPaidAt ? g.lastPaidAt.toLocaleDateString() : '—';
+                        return `<tr>
+                            <td><strong>${escHtml(g.instructorName)}</strong></td>
+                            <td>${escHtml(g.wiseEmail)}</td>
+                            <td>${g.lessons.length}</td>
+                            <td style="color:#10b981;font-weight:600;">${escHtml(amt)}</td>
+                            <td>${escHtml(lastPaid)}</td>
+                        </tr>`;
+                    }).join('');
+                }
+
+            } catch (err) {
+                console.error('loadWisePayouts error:', err);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#dc3545;padding:1.5rem;">Error loading payouts.</td></tr>';
+                histBody.innerHTML = '';
+            }
+        }
+        window.loadWisePayouts = loadWisePayouts;
+
+        window.doMarkWisePaid = function(instructorId, name, amount) {
+            showConfirm(
+                'Mark Wise Payout as Paid?',
+                `Confirm that you have sent <strong>${escHtml(amount)}</strong> to <strong>${escHtml(name)}</strong> via Wise.<br><br>This will mark all their pending lessons as paid.`,
+                async () => {
+                    await markWisePaid({ instructorId });
+                    tabsLoaded['wise-payouts'] = false;
+                    await loadWisePayouts();
+                    await loadStats();
+                },
+                true // isPositive (teal button)
+            );
         };
 
         // ── Overview ──────────────────────────────────────────────────────

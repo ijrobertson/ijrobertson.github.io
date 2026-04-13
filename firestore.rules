@@ -167,6 +167,17 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Earnings — per-lesson earnings records written by Cloud Functions
+    match /earnings/{earningId} {
+      // Instructors can read their own earnings; admins can read all
+      allow read: if request.auth != null && (
+                    resource.data.instructorId == request.auth.uid ||
+                    exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+                  );
+      // Only Cloud Functions (Admin SDK) write earnings records
+      allow write: if false;
+    }
+
     // Platform stats — read-only for clients; written only by Cloud Functions (Admin SDK)
     match /platformStats/{docId} {
       allow read: if true;

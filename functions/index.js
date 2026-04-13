@@ -1432,19 +1432,8 @@ exports.createPaymentIntent = onCall(async (request) => {
       }
     }, stripeOptions);
 
-    // Write a pending Wise payout record for admin tracking
-    await db.collection('pendingWisePayouts').add({
-      instructorId,
-      instructorName: instructor.name || '',
-      wiseEmail,
-      lessonAmountCents,
-      commissionCents,
-      netPayoutCents: netInstructorCents,
-      currency: normalizedCurrency,
-      paymentIntentId: paymentIntent.id,
-      status: 'pending',
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    // Earnings record is created by the createEarningsRecord Firestore trigger
+    // when the booking document is confirmed in Firestore.
   }
 
   return {
@@ -2151,4 +2140,93 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
   }
 
   res.json({ received: true });
+});
+
+// ── Earnings Tracking ───────────────────────────────────────────────────────
+
+const STUDENT_FEE_CENTS = 100; // $1 flat fee stored in booking.amount
+
+/**
+ * Firestore trigger: creates an earnings record whenever a booking is confirmed.
+ * For Stripe instructors → payoutStatus = 'paid' (funds go automatically via Connect).
+ * For Wise instructors  → payoutStatus = 'pending' (admin pays manually).
+ */
+exports.createEarningsRecord = onDocumentCreated('bookings/{bookingId}', async (event) => {
+  try {
+    const booking = event.data.data();
+    const bookingId = event.params.bookingId;
+
+    if (booking.paymentStatus !== 'paid') return null;
+
+    const db = admin.firestore();
+    const instructorSnap = await db.collection('instructors').doc(booking.instructorId).get();
+    if (!instructorSnap.exists) return null;
+
+    const instructor = instructorSnap.data();
+    const commissionRate = typeof instructor.commissionRate === 'number'
+      ? instructor.commissionRate
+      : DEFAULT_COMMISSION_RATE;
+    const payoutMethod = instructor.payoutMethod || 'stripe';
+    const wiseEmail    = instructor.wiseEmail || null;
+
+    // booking.amount = lessonAmountCents + $1 student fee
+    const lessonAmountCents      = (booking.amount || 0) - STUDENT_FEE_CENTS;
+    const commissionCents        = Math.round(lessonAmountCents * commissionRate);
+    const platformFeeCents       = commissionCents + STUDENT_FEE_CENTS;
+    const instructorEarningsCents = lessonAmountCents - commissionCents;
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    // Stripe: paid immediately via Connect; Wise: pending manual payout
+    const payoutStatus = payoutMethod === 'wise' ? 'pending' : 'paid';
+
+    await db.collection('earnings').add({
+      instructorId:          booking.instructorId,
+      instructorName:        instructor.name || '',
+      bookingId,
+      studentId:             booking.studentId || '',
+      lessonAmountCents,
+      platformFeeCents,
+      instructorEarningsCents,
+      commissionRate,
+      payoutMethod,
+      payoutStatus,
+      currency:              (booking.currency || 'USD').toUpperCase(),
+      wiseEmail:             payoutMethod === 'wise' ? wiseEmail : null,
+      createdAt:             now,
+      paidAt:                payoutMethod === 'wise' ? null : now
+    });
+
+    return null;
+  } catch (err) {
+    console.error('createEarningsRecord error:', err);
+    return null;
+  }
+});
+
+/**
+ * Marks all pending Wise earnings for an instructor as paid.
+ * Admin-only callable. Called from the admin dashboard after the admin
+ * has manually sent the payout via Wise.
+ */
+exports.markWisePayoutsPaid = onCall(async (request) => {
+  await assertAdmin(request);
+
+  const { instructorId } = request.data;
+  if (!instructorId) throw new HttpsError('invalid-argument', 'instructorId is required');
+
+  const db  = admin.firestore();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  const snap = await db.collection('earnings')
+    .where('instructorId', '==', instructorId)
+    .where('payoutStatus', '==', 'pending')
+    .get();
+
+  if (snap.empty) return { count: 0 };
+
+  const batch = db.batch();
+  snap.docs.forEach(d => batch.update(d.ref, { payoutStatus: 'paid', paidAt: now }));
+  await batch.commit();
+
+  return { count: snap.size };
 });

@@ -2340,71 +2340,118 @@
     async function loadEarnings() {
       const section = document.getElementById('earnings-section');
       try {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        // Fetch instructor profile for commission rate and payout method
+        // Fetch instructor profile for payout method
         const instrSnap = await getDoc(doc(db, 'instructors', currentUser.uid));
         const instrData = instrSnap.exists() ? instrSnap.data() : {};
+        const isWise = instrData.payoutMethod === 'wise';
         const commissionRate = typeof instrData.commissionRate === 'number'
           ? instrData.commissionRate : 0.15;
-        const keepRate = 1 - commissionRate;
-        const isWise = instrData.payoutMethod === 'wise';
+        const commissionPct = Math.round(commissionRate * 100);
 
-        const bookingsSnap = await getDocs(
-          query(
-            collection(db, 'bookings'),
-            where('instructorId', '==', currentUser.uid),
-            where('paymentStatus', '==', 'paid')
-          )
+        // Read from the earnings collection
+        const earningsSnap = await getDocs(
+          query(collection(db, 'earnings'), where('instructorId', '==', currentUser.uid))
         );
 
         let totalCents = 0;
-        let monthCents = 0;
+        let pendingCents = 0;
+        let paidCents = 0;
         let totalLessons = 0;
-        let monthLessons = 0;
+        let pendingLessons = 0;
         let currency = 'USD';
-        const STUDENT_FEE_CENTS = 100; // $1 flat fee subtracted before commission
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        let monthCents = 0;
+        let monthLessons = 0;
 
-        bookingsSnap.forEach(d => {
-          const b = d.data();
-          if (!b.amount) return;
-          const bookedAt = b.bookedAt?.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
-          // b.amount = lessonAmount + $1 student fee; instructor earns on lesson amount only
-          const lessonCents = b.amount - STUDENT_FEE_CENTS;
-          totalCents += lessonCents;
+        earningsSnap.forEach(d => {
+          const e = d.data();
+          const net = e.instructorEarningsCents || 0;
+          currency = e.currency || 'USD';
+          totalCents += net;
           totalLessons++;
-          currency = (b.currency || 'USD').toUpperCase();
-          if (bookedAt >= startOfMonth) {
-            monthCents += lessonCents;
-            monthLessons++;
-          }
+          if (e.payoutStatus === 'pending') { pendingCents += net; pendingLessons++; }
+          else { paidCents += net; }
+          const createdAt = e.createdAt?.toDate ? e.createdAt.toDate() : null;
+          if (createdAt && createdAt >= startOfMonth) { monthCents += net; monthLessons++; }
         });
 
-        const fmtNet = (lessonCents) => {
-          const net = Math.round(lessonCents * keepRate);
-          return (net / 100).toLocaleString('en-US', { style: 'currency', currency });
-        };
+        const fmt = (cents) => (cents / 100).toLocaleString('en-US', { style: 'currency', currency });
 
-        const keepPct = Math.round(keepRate * 100);
-        const payoutNote = isWise
-          ? `Net earnings after ${Math.round(commissionRate * 100)}% platform fee. Paid to your Wise account within 3–5 business days per lesson.`
-          : `Net earnings after ${Math.round(commissionRate * 100)}% platform fee. For full payout details, use <button id="earnings-stripe-btn" style="background:none;border:none;color:#20bcba;cursor:pointer;font-size:0.8rem;padding:0;text-decoration:underline;">View Stripe Dashboard</button>.`;
+        const wiseNote = isWise
+          ? `<div style="margin-top:1rem;padding:0.75rem 1rem;background:#f0fffe;border:1px solid #b2dfdb;border-radius:6px;font-size:0.82rem;color:#555;">
+               <i class="fas fa-info-circle" style="color:#20bcba;margin-right:0.4rem;"></i>
+               <strong>Wise payouts</strong> are sent manually 1–2× per week after lessons complete.
+             </div>`
+          : '';
 
-        section.innerHTML = `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:0.5rem;">
-            <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
-              <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">This Month (net)</p>
-              <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmtNet(monthCents)}</p>
-              <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${monthLessons} lesson${monthLessons !== 1 ? 's' : ''}</p>
+        if (totalLessons === 0) {
+          // Fallback: no earnings records yet (e.g. pre-trigger bookings) — show zero state
+          section.innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:0.5rem;">
+              <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
+                <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">This Month</p>
+                <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmt(0)}</p>
+                <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">0 lessons</p>
+              </div>
+              <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
+                <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">All Time</p>
+                <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmt(0)}</p>
+                <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">0 lessons total</p>
+              </div>
             </div>
-            <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
-              <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">All Time (net)</p>
-              <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmtNet(totalCents)}</p>
-              <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${totalLessons} lesson${totalLessons !== 1 ? 's' : ''} total</p>
-            </div>
-          </div>
-          <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#aaa;">${payoutNote}</p>`;
+            <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#aaa;">You keep ${100 - commissionPct}% of every lesson after the ${commissionPct}% platform fee.</p>
+            ${wiseNote}`;
+          return;
+        }
+
+        // Build stat cards — Wise shows pending/paid breakdown, Stripe shows month/all-time
+        let statsHtml;
+        if (isWise) {
+          statsHtml = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:0.5rem;">
+              <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #f59e0b;">
+                <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">Pending Payout</p>
+                <p style="margin:0;font-size:1.6rem;font-weight:700;color:#b45309;">${fmt(pendingCents)}</p>
+                <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${pendingLessons} lesson${pendingLessons !== 1 ? 's' : ''}</p>
+              </div>
+              <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #10b981;">
+                <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">Paid Out</p>
+                <p style="margin:0;font-size:1.6rem;font-weight:700;color:#065f46;">${fmt(paidCents)}</p>
+                <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${totalLessons - pendingLessons} lesson${(totalLessons - pendingLessons) !== 1 ? 's' : ''}</p>
+              </div>
+              <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
+                <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">This Month</p>
+                <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmt(monthCents)}</p>
+                <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${monthLessons} lesson${monthLessons !== 1 ? 's' : ''}</p>
+              </div>
+            </div>`;
+        } else {
+          statsHtml = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:0.5rem;">
+              <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
+                <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">This Month (net)</p>
+                <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmt(monthCents)}</p>
+                <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${monthLessons} lesson${monthLessons !== 1 ? 's' : ''}</p>
+              </div>
+              <div style="background:#fff;border-radius:10px;padding:1.25rem 1.5rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;">
+                <p style="margin:0 0 4px;font-size:0.78rem;color:#888;text-transform:uppercase;letter-spacing:.04em;">All Time (net)</p>
+                <p style="margin:0;font-size:1.6rem;font-weight:700;color:#113448;">${fmt(totalCents)}</p>
+                <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${totalLessons} lesson${totalLessons !== 1 ? 's' : ''} total</p>
+              </div>
+            </div>`;
+        }
+
+        const stripeLink = !isWise
+          ? `<button id="earnings-stripe-btn" style="background:none;border:none;color:#20bcba;cursor:pointer;font-size:0.8rem;padding:0;text-decoration:underline;">View Stripe Dashboard</button>`
+          : '';
+        const footerNote = isWise
+          ? `You keep ${100 - commissionPct}% of every lesson after the ${commissionPct}% platform fee.`
+          : `Net earnings after ${commissionPct}% platform fee. ${stripeLink}`;
+
+        section.innerHTML = statsHtml + `
+          <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#aaa;">${footerNote}</p>
+          ${wiseNote}`;
 
         if (!isWise) {
           const stripeBtn = document.getElementById('earnings-stripe-btn');
