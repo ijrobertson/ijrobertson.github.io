@@ -974,12 +974,12 @@
 
         // ── Stats ────────────────────────────────────────────────────────
         async function loadStats() {
+            // ── Core stats (users / instructors / bookings) ───────────────
             try {
-                const [usersSnap, instrSnap, bookingsSnap, earningsSnap] = await Promise.all([
+                const [usersSnap, instrSnap, bookingsSnap] = await Promise.all([
                     getDocs(collection(db, 'users')),
                     getDocs(collection(db, 'instructors')),
-                    getDocs(collection(db, 'bookings')),
-                    getDocs(query(collection(db, 'earnings'), where('payoutStatus', '==', 'pending'), where('payoutMethod', '==', 'wise')))
+                    getDocs(collection(db, 'bookings'))
                 ]);
 
                 const students    = usersSnap.size;
@@ -1006,20 +1006,13 @@
                     }
                 });
 
-                // Wise pending payouts
-                const wisePendingCount = earningsSnap.size;
-                let wisePendingCents = 0;
-                earningsSnap.forEach(d => { wisePendingCents += (d.data().instructorEarningsCents || 0); });
-
                 document.getElementById('statStudents').textContent    = students;
                 document.getElementById('statInstructors').textContent = instructors;
                 document.getElementById('statPending').textContent     = pending;
                 document.getElementById('statBookings').textContent    = bookings;
                 document.getElementById('statRevenue').textContent     = revenue > 0 ? '$' + (revenue / 100).toFixed(0) : '$0';
                 document.getElementById('statFlagged').textContent     = flaggedCount;
-                document.getElementById('statWisePending').textContent = wisePendingCents > 0 ? '$' + (wisePendingCents / 100).toFixed(0) : '$0';
 
-                // Update badges
                 if (pending > 0) {
                     const el = document.getElementById('appsBadge');
                     el.textContent = pending; el.style.display = 'inline-block';
@@ -1028,14 +1021,30 @@
                     const el = document.getElementById('flagBadge');
                     el.textContent = flaggedCount; el.style.display = 'inline-block';
                 }
-                if (wisePendingCount > 0) {
+            } catch (err) {
+                console.error('Error loading core stats:', err);
+            }
+
+            // ── Wise pending payouts stat (separate — needs composite index) ──
+            try {
+                const earningsSnap = await getDocs(
+                    query(collection(db, 'earnings'), where('payoutMethod', '==', 'wise'))
+                );
+                const pendingDocs = earningsSnap.docs.filter(d => d.data().payoutStatus === 'pending');
+                let wisePendingCents = 0;
+                pendingDocs.forEach(d => { wisePendingCents += (d.data().instructorEarningsCents || 0); });
+
+                document.getElementById('statWisePending').textContent =
+                    wisePendingCents > 0 ? '$' + (wisePendingCents / 100).toFixed(0) : '$0';
+
+                if (pendingDocs.length > 0) {
                     const el = document.getElementById('wisePayoutsBadge');
-                    // Unique instructors pending
-                    const uniqueInstr = new Set(earningsSnap.docs.map(d => d.data().instructorId)).size;
+                    const uniqueInstr = new Set(pendingDocs.map(d => d.data().instructorId)).size;
                     el.textContent = uniqueInstr; el.style.display = 'inline-block';
                 }
             } catch (err) {
-                console.error('Error loading stats:', err);
+                // earnings collection may not exist yet — show $0 gracefully
+                document.getElementById('statWisePending').textContent = '$0';
             }
         }
         window.loadStats = loadStats;
