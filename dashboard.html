@@ -878,37 +878,80 @@
   </div>
   <style>@keyframes authSpin{to{transform:rotate(360deg)}}</style>
 
-  <!-- ── Stripe Onboarding Blocking Overlay ─────────────────────────────── -->
+  <!-- ── Payout Setup Overlay ──────────────────────────────────────────── -->
   <div id="stripe-onboarding-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:99990;overflow-y:auto;">
     <div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:2rem;">
       <div style="background:#fff;border-radius:12px;max-width:520px;width:100%;padding:2.5rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-        <!-- Icon -->
-        <div style="text-align:center;margin-bottom:1.5rem;">
-          <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:#fff3cd;border-radius:50%;">
-            <i class="fas fa-credit-card" style="font-size:1.75rem;color:#f59e0b;"></i>
+
+        <!-- Panel: Choice (default) -->
+        <div id="overlay-panel-choice">
+          <div style="text-align:center;margin-bottom:1.5rem;">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:#e0f7fa;border-radius:50%;">
+              <i class="fas fa-wallet" style="font-size:1.75rem;color:#20bcba;"></i>
+            </div>
+          </div>
+          <h2 style="text-align:center;color:#113448;margin:0 0 0.5rem;font-size:1.4rem;font-weight:700;">Set Up Your Payout Method</h2>
+          <p style="text-align:center;color:#555;font-size:0.95rem;line-height:1.65;margin:0 0 1.75rem;">To receive payments for your lessons, please choose how you'd like to get paid.</p>
+          <button id="choose-stripe-btn" type="button" style="display:flex;align-items:center;justify-content:center;gap:0.6rem;width:100%;padding:0.9rem 1.5rem;background:#20bcba;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:0.4rem;">
+            <i class="fas fa-link"></i> Connect with Stripe
+            <span style="background:rgba(255,255,255,0.25);font-size:0.72rem;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.03em;">Recommended</span>
+          </button>
+          <p style="text-align:center;font-size:0.8rem;color:#999;margin:0 0 1.25rem;">Automated payouts to your bank. Takes 2–3 minutes.</p>
+          <div style="text-align:center;color:#ccc;font-size:0.85rem;margin-bottom:1.25rem;">— or —</div>
+          <button id="choose-wise-btn" type="button" style="display:flex;align-items:center;justify-content:center;gap:0.6rem;width:100%;padding:0.9rem 1.5rem;background:#fff;color:#113448;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:0.4rem;">
+            <i class="fas fa-envelope" style="color:#20bcba;"></i> Use Wise instead
+          </button>
+          <p style="text-align:center;font-size:0.8rem;color:#999;margin:0;">For instructors in countries where Stripe is not available.</p>
+        </div>
+
+        <!-- Panel: Wise Email Input -->
+        <div id="overlay-panel-wise" style="display:none;">
+          <div style="text-align:center;margin-bottom:1.5rem;">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:#e8f5e9;border-radius:50%;">
+              <i class="fas fa-envelope-open-text" style="font-size:1.75rem;color:#20bcba;"></i>
+            </div>
+          </div>
+          <h2 style="text-align:center;color:#113448;margin:0 0 0.5rem;font-size:1.4rem;font-weight:700;">Enter Your Wise Email</h2>
+          <p style="text-align:center;color:#555;font-size:0.95rem;line-height:1.65;margin:0 0 1.5rem;">We'll send your lesson earnings to this Wise account after each completed lesson.</p>
+          <div style="margin-bottom:1rem;">
+            <input type="email" id="wise-email-input" placeholder="your@wise.com"
+              style="width:100%;padding:0.75rem 1rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.95rem;box-sizing:border-box;outline:none;transition:border-color 0.2s;" />
+            <div id="wise-email-error" style="display:none;color:#dc2626;font-size:0.82rem;margin-top:0.4rem;"></div>
+          </div>
+          <button id="save-wise-btn" type="button" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;width:100%;padding:0.85rem 1.5rem;background:#20bcba;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;margin-bottom:0.75rem;">
+            <i class="fas fa-check"></i> <span id="save-wise-btn-text">Save &amp; Continue</span>
+          </button>
+          <div style="text-align:center;">
+            <button id="back-to-choice-btn" type="button" style="background:none;border:none;color:#20bcba;cursor:pointer;font-size:0.85rem;text-decoration:underline;padding:0;">&#8592; Back to options</button>
+          </div>
+          <div style="margin-top:1.25rem;padding:0.75rem 1rem;background:#f0fffe;border:1px solid #b2dfdb;border-radius:6px;font-size:0.82rem;color:#555;line-height:1.5;">
+            <strong>How it works:</strong> After each completed lesson, we'll manually transfer your earnings to your Wise account within 3–5 business days.
           </div>
         </div>
-        <!-- Title -->
-        <h2 id="stripe-overlay-title" style="text-align:center;color:#113448;margin:0 0 0.75rem;font-size:1.4rem;font-weight:700;">
-          Connect Your Stripe Account
-        </h2>
-        <!-- Message -->
-        <p id="stripe-overlay-message" style="text-align:center;color:#555;font-size:0.95rem;line-height:1.65;margin:0 0 1.5rem;">
-          To start receiving students and payments, you must connect your Stripe account.
-        </p>
-        <!-- Status detail (shown for partially-complete accounts) -->
-        <div id="stripe-overlay-detail" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:0.875rem;color:#664d03;line-height:1.5;"></div>
-        <!-- CTA button -->
-        <div style="text-align:center;">
-          <button id="stripe-overlay-btn" type="button"
-            style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 2rem;background:#20bcba;color:#fff;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;transition:background 0.2s;">
-            <i class="fas fa-link"></i>
-            <span id="stripe-overlay-btn-text">Connect Stripe</span>
-          </button>
+
+        <!-- Panel: Stripe States (incomplete / pending / live-reconnect) -->
+        <div id="overlay-panel-stripe" style="display:none;">
+          <div style="text-align:center;margin-bottom:1.5rem;">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:#fff3cd;border-radius:50%;">
+              <i class="fas fa-credit-card" style="font-size:1.75rem;color:#f59e0b;"></i>
+            </div>
+          </div>
+          <h2 id="stripe-overlay-title" style="text-align:center;color:#113448;margin:0 0 0.75rem;font-size:1.4rem;font-weight:700;">Connect Your Stripe Account</h2>
+          <p id="stripe-overlay-message" style="text-align:center;color:#555;font-size:0.95rem;line-height:1.65;margin:0 0 1.5rem;">To start receiving students and payments, you must connect your Stripe account.</p>
+          <div id="stripe-overlay-detail" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:0.875rem;color:#664d03;line-height:1.5;"></div>
+          <div style="text-align:center;">
+            <button id="stripe-overlay-btn" type="button"
+              style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 2rem;background:#20bcba;color:#fff;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;">
+              <i class="fas fa-link"></i>
+              <span id="stripe-overlay-btn-text">Connect Stripe</span>
+            </button>
+          </div>
+          <p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:#999;">Powered by <strong>Stripe</strong> — takes 2–3 minutes</p>
+          <div style="text-align:center;margin-top:0.5rem;">
+            <button id="overlay-use-wise-instead" type="button" style="background:none;border:none;color:#20bcba;cursor:pointer;font-size:0.85rem;text-decoration:underline;padding:0;">Use Wise instead</button>
+          </div>
         </div>
-        <p style="text-align:center;margin-top:1.25rem;font-size:0.8rem;color:#999;">
-          Powered by <strong>Stripe</strong> — takes 2–3 minutes
-        </p>
+
       </div>
     </div>
   </div>
@@ -2300,6 +2343,14 @@
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+        // Fetch instructor profile for commission rate and payout method
+        const instrSnap = await getDoc(doc(db, 'instructors', currentUser.uid));
+        const instrData = instrSnap.exists() ? instrSnap.data() : {};
+        const commissionRate = typeof instrData.commissionRate === 'number'
+          ? instrData.commissionRate : 0.15;
+        const keepRate = 1 - commissionRate;
+        const isWise = instrData.payoutMethod === 'wise';
+
         const bookingsSnap = await getDocs(
           query(
             collection(db, 'bookings'),
@@ -2313,25 +2364,32 @@
         let totalLessons = 0;
         let monthLessons = 0;
         let currency = 'USD';
+        const STUDENT_FEE_CENTS = 100; // $1 flat fee subtracted before commission
 
         bookingsSnap.forEach(d => {
           const b = d.data();
           if (!b.amount) return;
           const bookedAt = b.bookedAt?.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
-          totalCents += b.amount;
+          // b.amount = lessonAmount + $1 student fee; instructor earns on lesson amount only
+          const lessonCents = b.amount - STUDENT_FEE_CENTS;
+          totalCents += lessonCents;
           totalLessons++;
           currency = (b.currency || 'USD').toUpperCase();
           if (bookedAt >= startOfMonth) {
-            monthCents += b.amount;
+            monthCents += lessonCents;
             monthLessons++;
           }
         });
 
-        // Platform keeps 10%; instructor receives 90%
-        const fmtNet = (cents) => {
-          const net = Math.round(cents * 0.9);
+        const fmtNet = (lessonCents) => {
+          const net = Math.round(lessonCents * keepRate);
           return (net / 100).toLocaleString('en-US', { style: 'currency', currency });
         };
+
+        const keepPct = Math.round(keepRate * 100);
+        const payoutNote = isWise
+          ? `Net earnings after ${Math.round(commissionRate * 100)}% platform fee. Paid to your Wise account within 3–5 business days per lesson.`
+          : `Net earnings after ${Math.round(commissionRate * 100)}% platform fee. For full payout details, use <button id="earnings-stripe-btn" style="background:none;border:none;color:#20bcba;cursor:pointer;font-size:0.8rem;padding:0;text-decoration:underline;">View Stripe Dashboard</button>.`;
 
         section.innerHTML = `
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:0.5rem;">
@@ -2346,12 +2404,12 @@
               <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">${totalLessons} lesson${totalLessons !== 1 ? 's' : ''} total</p>
             </div>
           </div>
-          <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#aaa;">
-            Net earnings after 10% platform fee. For full payout details, use
-            <button id="earnings-stripe-btn" style="background:none;border:none;color:#20bcba;cursor:pointer;font-size:0.8rem;padding:0;text-decoration:underline;">View Stripe Dashboard</button>.
-          </p>`;
+          <p style="margin:0.5rem 0 0;font-size:0.8rem;color:#aaa;">${payoutNote}</p>`;
 
-        document.getElementById('earnings-stripe-btn').onclick = openStripeDashboard;
+        if (!isWise) {
+          const stripeBtn = document.getElementById('earnings-stripe-btn');
+          if (stripeBtn) stripeBtn.onclick = openStripeDashboard;
+        }
       } catch (err) {
         console.error('Error loading earnings:', err);
         section.innerHTML = '<p style="color:#999;font-size:0.9rem;">Unable to load earnings.</p>';
@@ -2372,17 +2430,15 @@
           return;
         }
 
-        // ── Auto-create Stripe account if missing ────────────────────────────
+        // ── Wise payout method (bypass all Stripe checks) ────────────────────
+        if (data.payoutMethod === 'wise' && data.wiseEmail) {
+          renderStripeSection('wise-connected');
+          hideStripeOverlay();
+          return;
+        }
+
+        // ── No payout method configured yet → show choice overlay ────────────
         if (!data.stripeAccountId) {
-          try {
-            const createAccount = httpsCallable(functions, 'createStripeAccount');
-            await createAccount();
-            // Re-read to get the new stripeAccountId
-            const snap = await getDoc(doc(db, 'instructors', currentUser.uid));
-            data = snap.exists() ? snap.data() : data;
-          } catch (err) {
-            console.error('Auto-create Stripe account failed:', err);
-          }
           renderStripeSection('not-connected');
           showStripeOverlay('not-connected');
           return;
@@ -2457,40 +2513,88 @@
       }
     }
 
+    function _showOverlayPanel(panelId) {
+      ['overlay-panel-choice', 'overlay-panel-wise', 'overlay-panel-stripe'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = id === panelId ? '' : 'none';
+      });
+    }
+
     function showStripeOverlay(state) {
       const overlay = document.getElementById('stripe-onboarding-overlay');
-      const title = document.getElementById('stripe-overlay-title');
-      const message = document.getElementById('stripe-overlay-message');
-      const detail = document.getElementById('stripe-overlay-detail');
-      const btnText = document.getElementById('stripe-overlay-btn-text');
-      const btn = document.getElementById('stripe-overlay-btn');
 
-      detail.style.display = 'none';
+      if (state === 'not-connected') {
+        // Show the payout method choice
+        _showOverlayPanel('overlay-panel-choice');
 
-      if (state === 'not-connected' || state === 'incomplete') {
-        title.textContent = 'Connect Your Stripe Account';
-        message.textContent = 'To start receiving students and payments, you must connect your Stripe account. This takes about 2–3 minutes.';
-        btnText.textContent = state === 'not-connected' ? 'Connect Stripe' : 'Complete Stripe Setup';
-        btn.onclick = connectStripeOverlay;
+        document.getElementById('choose-stripe-btn').onclick = async () => {
+          const btn = document.getElementById('choose-stripe-btn');
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+          try {
+            const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
+            const result = await createAccount();
+            window.location.href = result.data.url;
+          } catch (error) {
+            console.error('Error connecting Stripe:', error);
+            setStatus('Error connecting Stripe: ' + error.message, true);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-link"></i> Connect with Stripe <span style="background:rgba(255,255,255,0.25);font-size:0.72rem;padding:2px 8px;border-radius:10px;font-weight:700;">Recommended</span>';
+          }
+        };
 
-      } else if (state === 'needs-live-reconnect') {
-        title.textContent = 'Live Mode Setup Required';
-        message.textContent = 'Lingua Bud has switched to live payments. Your previous test-mode Stripe account cannot receive real payments.';
-        detail.innerHTML = 'Please complete a one-time live setup with Stripe (5–10 minutes). Your booking history and profile are not affected.';
-        detail.style.display = 'block';
-        btnText.textContent = 'Set Up Live Payments';
-        btn.onclick = connectStripeOverlay;
+        document.getElementById('choose-wise-btn').onclick = () => {
+          _showOverlayPanel('overlay-panel-wise');
+          _wireWisePanel();
+        };
 
-      } else if (state === 'pending-activation') {
-        title.textContent = 'Stripe Setup Incomplete';
-        message.textContent = 'Your Stripe account setup is incomplete. Please finish onboarding to activate payments.';
-        detail.innerHTML = 'Your details have been submitted but Stripe has not yet enabled charges and payouts. Click below to continue your setup.';
-        detail.style.display = 'block';
-        btnText.textContent = 'Continue Setup';
-        btn.onclick = connectStripeOverlay;
+      } else {
+        // Stripe-specific states (incomplete, pending-activation, needs-live-reconnect)
+        _showOverlayPanel('overlay-panel-stripe');
+
+        const title   = document.getElementById('stripe-overlay-title');
+        const message = document.getElementById('stripe-overlay-message');
+        const detail  = document.getElementById('stripe-overlay-detail');
+        const btnText = document.getElementById('stripe-overlay-btn-text');
+        const btn     = document.getElementById('stripe-overlay-btn');
+
+        detail.style.display = 'none';
+
+        if (state === 'incomplete') {
+          title.textContent   = 'Connect Your Stripe Account';
+          message.textContent = 'To start receiving students and payments, you must connect your Stripe account. This takes about 2–3 minutes.';
+          btnText.textContent = 'Complete Stripe Setup';
+          btn.onclick = connectStripeOverlay;
+        } else if (state === 'needs-live-reconnect') {
+          title.textContent   = 'Live Mode Setup Required';
+          message.textContent = 'Lingua Bud has switched to live payments. Your previous test-mode Stripe account cannot receive real payments.';
+          detail.innerHTML    = 'Please complete a one-time live setup with Stripe (5–10 minutes). Your booking history and profile are not affected.';
+          detail.style.display = 'block';
+          btnText.textContent  = 'Set Up Live Payments';
+          btn.onclick = connectStripeOverlay;
+        } else if (state === 'pending-activation') {
+          title.textContent   = 'Stripe Setup Incomplete';
+          message.textContent = 'Your Stripe account setup is incomplete. Please finish onboarding to activate payments.';
+          detail.innerHTML    = 'Your details have been submitted but Stripe has not yet enabled charges and payouts. Click below to continue your setup.';
+          detail.style.display = 'block';
+          btnText.textContent  = 'Continue Setup';
+          btn.onclick = connectStripeOverlay;
+        }
+
+        document.getElementById('overlay-use-wise-instead').onclick = () => {
+          _showOverlayPanel('overlay-panel-wise');
+          _wireWisePanel();
+        };
       }
 
       overlay.style.display = 'block';
+    }
+
+    function _wireWisePanel() {
+      document.getElementById('back-to-choice-btn').onclick = () => {
+        _showOverlayPanel('overlay-panel-choice');
+      };
+      document.getElementById('save-wise-btn').onclick = saveWiseEmail;
     }
 
     function hideStripeOverlay() {
@@ -2499,17 +2603,56 @@
     }
 
     async function connectStripeOverlay() {
-      const btn = document.getElementById('stripe-overlay-btn');
+      const btn     = document.getElementById('stripe-overlay-btn');
       const btnText = document.getElementById('stripe-overlay-btn-text');
       if (btn) { btn.disabled = true; btnText.textContent = 'Loading...'; }
       try {
-        const createLink = httpsCallable(functions, 'createOnboardingLink');
-        const result = await createLink();
+        // createStripeConnectAccount creates account if needed + returns onboarding URL
+        const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
+        const result = await createAccount();
         window.location.href = result.data.url;
       } catch (error) {
         console.error('Error launching Stripe onboarding:', error);
         setStatus('Error connecting Stripe: ' + error.message, true);
         if (btn) { btn.disabled = false; btnText.textContent = 'Connect Stripe'; }
+      }
+    }
+
+    async function saveWiseEmail() {
+      const input   = document.getElementById('wise-email-input');
+      const errEl   = document.getElementById('wise-email-error');
+      const btn     = document.getElementById('save-wise-btn');
+      const btnText = document.getElementById('save-wise-btn-text');
+
+      const email = (input?.value || '').trim();
+      errEl.style.display = 'none';
+
+      if (!email) {
+        errEl.textContent = 'Please enter your Wise email address.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errEl.textContent = 'Please enter a valid email address.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btnText.textContent = 'Saving...';
+
+      try {
+        const saveWise = httpsCallable(functions, 'saveWisePayoutMethod');
+        await saveWise({ wiseEmail: email });
+
+        hideStripeOverlay();
+        renderStripeSection('wise-connected');
+      } catch (error) {
+        console.error('Error saving Wise email:', error);
+        errEl.textContent = error.message || 'Failed to save. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btnText.textContent = 'Save & Continue';
       }
     }
 
@@ -2585,7 +2728,7 @@
           <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;background:#d1fae5;border:1px solid #10b981;border-radius:8px;margin-bottom:1rem;">
             <i class="fas fa-check-circle" style="color:#10b981;font-size:1.5rem;flex-shrink:0;"></i>
             <div>
-              <strong style="color:#065f46;">&#x2705; You are ready to receive payments</strong>
+              <strong style="color:#065f46;">&#x2705; Stripe Connected</strong>
               <p style="margin:0;font-size:0.875rem;color:#666;">You are ready to receive lesson payments from students.</p>
             </div>
           </div>
@@ -2594,6 +2737,33 @@
           </button>
         `;
         document.getElementById('view-stripe-btn').onclick = openStripeDashboard;
+
+      } else if (state === 'wise-connected') {
+        section.innerHTML = `
+          <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;background:#d1fae5;border:1px solid #10b981;border-radius:8px;margin-bottom:1rem;">
+            <i class="fas fa-check-circle" style="color:#10b981;font-size:1.5rem;flex-shrink:0;"></i>
+            <div>
+              <strong style="color:#065f46;">&#x2705; Wise Connected (Manual payouts)</strong>
+              <p style="margin:0;font-size:0.875rem;color:#666;">Your earnings will be sent to your Wise account within 3–5 business days after each lesson.</p>
+            </div>
+          </div>
+          <button id="change-wise-btn" type="button" style="margin-bottom:0.5rem;">
+            <i class="fas fa-edit"></i> Change Wise Email
+          </button>
+          <div style="margin-top:0.75rem;">
+            <button id="switch-to-stripe-btn" type="button" style="background:#fff;color:#113448;border:1.5px solid #e2e8f0;font-size:0.875rem;padding:0.6rem 1.2rem;">
+              <i class="fas fa-link"></i> Switch to Stripe instead
+            </button>
+          </div>
+        `;
+        document.getElementById('change-wise-btn').onclick = () => {
+          showStripeOverlay('not-connected');
+          _showOverlayPanel('overlay-panel-wise');
+          _wireWisePanel();
+        };
+        document.getElementById('switch-to-stripe-btn').onclick = () => {
+          showStripeOverlay('not-connected');
+        };
       }
     }
 
@@ -2601,8 +2771,8 @@
       const btn = document.getElementById('connect-stripe-btn');
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...'; }
       try {
-        const createLink = httpsCallable(functions, 'createOnboardingLink');
-        const result = await createLink();
+        const createAccount = httpsCallable(functions, 'createStripeConnectAccount');
+        const result = await createAccount();
         window.location.href = result.data.url;
       } catch (error) {
         console.error('Error connecting Stripe:', error);

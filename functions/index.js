@@ -1280,10 +1280,60 @@ exports.getStripeConnectDashboard = onCall(async (request) => {
 });
 
 /**
+ * Saves a Wise email address as the instructor's payout method.
+ * Sets payoutMethod = 'wise', wiseEmail, and stripeOnboardingComplete = true (UI flag).
+ */
+exports.saveWisePayoutMethod = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const uid = request.auth.uid;
+  const { wiseEmail } = request.data;
+
+  if (!wiseEmail || typeof wiseEmail !== 'string') {
+    throw new HttpsError('invalid-argument', 'wiseEmail is required');
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(wiseEmail.trim())) {
+    throw new HttpsError('invalid-argument', 'Please enter a valid email address');
+  }
+
+  const db = admin.firestore();
+  const instructorRef = db.collection('instructors').doc(uid);
+  const instructorSnap = await instructorRef.get();
+
+  if (!instructorSnap.exists) {
+    throw new HttpsError('not-found', 'Instructor profile not found');
+  }
+
+  const data = instructorSnap.data();
+  if (data.status !== 'approved' && data.isApproved !== true) {
+    throw new HttpsError('permission-denied', 'Your instructor application has not been approved yet');
+  }
+
+  await instructorRef.set({
+    payoutMethod: 'wise',
+    wiseEmail: wiseEmail.trim(),
+    stripeOnboardingComplete: true  // UI flag — allows dashboard to proceed
+  }, { merge: true });
+
+  return { success: true };
+});
+
+/**
  * Creates a Stripe PaymentIntent for a student booking a lesson.
- * Directs funds to the instructor's Connect account.
- * Platform fee = instructor's commissionRate (default 15%, 10% for founding instructors)
- * plus a flat $1 student platform fee, both collected as application_fee_amount.
+ *
+ * For Stripe instructors: funds are directed to the instructor's Connect account
+ * via transfer_data. Platform fee = commissionRate + flat $1 student fee.
+ *
+ * For Wise instructors: full payment goes to the platform account. The admin
+ * manually sends the instructor's net earnings via Wise. A pendingWisePayout
+ * record is written to Firestore for admin tracking.
+ *
+ * Commission: 10% for first 50 founding instructors, 15% for all others.
+ * Student platform fee: flat $1 on every booking.
  */
 exports.createPaymentIntent = onCall(async (request) => {
   if (!request.auth) {
@@ -1298,22 +1348,24 @@ exports.createPaymentIntent = onCall(async (request) => {
   }
 
   const stripe = getStripe();
+  const db = admin.firestore();
 
-  const instructorSnap = await admin.firestore().collection('instructors').doc(instructorId).get();
+  const instructorSnap = await db.collection('instructors').doc(instructorId).get();
 
   if (!instructorSnap.exists) {
     throw new HttpsError('not-found', 'Instructor not found');
   }
 
   const instructor = instructorSnap.data();
-  const { price_per_lesson, currency, stripeAccountId } = instructor;
+  const { price_per_lesson, currency, stripeAccountId, payoutMethod, wiseEmail } = instructor;
 
-  if (!stripeAccountId) {
-    throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
-  }
+  // Determine which payout path is available
+  const stripeReady = stripeAccountId &&
+    instructor.chargesEnabled === true &&
+    instructor.payoutsEnabled === true;
+  const wiseReady = payoutMethod === 'wise' && wiseEmail;
 
-  // Fast Firestore check before hitting Stripe API
-  if (instructor.chargesEnabled !== true || instructor.payoutsEnabled !== true) {
+  if (!stripeReady && !wiseReady) {
     throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
   }
 
@@ -1321,48 +1373,79 @@ exports.createPaymentIntent = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'Instructor lesson price must be at least $5');
   }
 
-  // Verify instructor can accept charges via Stripe (authoritative source)
-  const account = await stripe.accounts.retrieve(stripeAccountId);
-  if (!account.charges_enabled || !account.payouts_enabled) {
-    throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
-  }
-
   // Use instructor's individual commission rate (set at approval time)
   const commissionRate = typeof instructor.commissionRate === 'number'
     ? instructor.commissionRate
     : DEFAULT_COMMISSION_RATE;
 
-  const lessonAmountCents = Math.round(price_per_lesson * 100); // lesson price in cents
-  const studentFeeCents   = Math.round(STUDENT_PLATFORM_FEE * 100); // flat $1 fee in cents
-  const totalChargeCents  = lessonAmountCents + studentFeeCents; // student pays lesson + $1
-
-  const commissionCents   = Math.round(lessonAmountCents * commissionRate);
-  // Platform collects commission on lesson price + the student platform fee
+  const lessonAmountCents  = Math.round(price_per_lesson * 100);
+  const studentFeeCents    = Math.round(STUDENT_PLATFORM_FEE * 100); // flat $1
+  const totalChargeCents   = lessonAmountCents + studentFeeCents;
+  const commissionCents    = Math.round(lessonAmountCents * commissionRate);
   const applicationFeeAmountCents = commissionCents + studentFeeCents;
-
   const normalizedCurrency = (currency || 'USD').toLowerCase();
+  const stripeOptions      = idempotencyKey ? { idempotencyKey } : {};
 
-  // Idempotency key prevents duplicate charges on network retries
-  const stripeOptions = idempotencyKey ? { idempotencyKey } : {};
+  let paymentIntent;
 
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: totalChargeCents,
-    currency: normalizedCurrency,
-    application_fee_amount: applicationFeeAmountCents,
-    transfer_data: {
-      destination: stripeAccountId
-    },
-    automatic_payment_methods: { enabled: true },
-    // Metadata lets the webhook reconcile bookings for redirect-based payments
-    metadata: {
-      instructorId,
-      studentId: uid,
-      lessonAmount: String(lessonAmountCents),
-      studentPlatformFee: String(studentFeeCents),
-      commissionRate: String(commissionRate),
-      isFoundingInstructor: String(!!instructor.isFoundingInstructor)
+  if (stripeReady) {
+    // Authoritative Stripe check (only for Stripe-connected instructors)
+    const account = await stripe.accounts.retrieve(stripeAccountId);
+    if (!account.charges_enabled || !account.payouts_enabled) {
+      throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
     }
-  }, stripeOptions);
+
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: totalChargeCents,
+      currency: normalizedCurrency,
+      application_fee_amount: applicationFeeAmountCents,
+      transfer_data: { destination: stripeAccountId },
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        instructorId,
+        studentId: uid,
+        payoutMethod: 'stripe',
+        lessonAmount: String(lessonAmountCents),
+        studentPlatformFee: String(studentFeeCents),
+        commissionRate: String(commissionRate),
+        isFoundingInstructor: String(!!instructor.isFoundingInstructor)
+      }
+    }, stripeOptions);
+  } else {
+    // Wise instructor: full payment collected by platform, admin pays manually via Wise
+    const netInstructorCents = lessonAmountCents - commissionCents;
+
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: totalChargeCents,
+      currency: normalizedCurrency,
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        instructorId,
+        studentId: uid,
+        payoutMethod: 'wise',
+        wiseEmail,
+        lessonAmount: String(lessonAmountCents),
+        studentPlatformFee: String(studentFeeCents),
+        commissionRate: String(commissionRate),
+        netInstructorPayoutCents: String(netInstructorCents),
+        isFoundingInstructor: String(!!instructor.isFoundingInstructor)
+      }
+    }, stripeOptions);
+
+    // Write a pending Wise payout record for admin tracking
+    await db.collection('pendingWisePayouts').add({
+      instructorId,
+      instructorName: instructor.name || '',
+      wiseEmail,
+      lessonAmountCents,
+      commissionCents,
+      netPayoutCents: netInstructorCents,
+      currency: normalizedCurrency,
+      paymentIntentId: paymentIntent.id,
+      status: 'pending',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  }
 
   return {
     clientSecret: paymentIntent.client_secret,
@@ -1371,7 +1454,8 @@ exports.createPaymentIntent = onCall(async (request) => {
     lessonAmount: lessonAmountCents,
     studentPlatformFee: studentFeeCents,
     currency: normalizedCurrency,
-    platformFee: applicationFeeAmountCents
+    platformFee: applicationFeeAmountCents,
+    payoutMethod: stripeReady ? 'stripe' : 'wise'
   };
 });
 

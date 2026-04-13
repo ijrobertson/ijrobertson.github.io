@@ -729,7 +729,10 @@
                 if (p.status !== 'approved') {
                     bookBtn.innerHTML = '<i class="fas fa-clock"></i> Not Available';
                     bookBtn.disabled = true;
-                } else if (p.chargesEnabled === true && p.payoutsEnabled === true) {
+                } else if (
+                    (p.chargesEnabled === true && p.payoutsEnabled === true) ||
+                    (p.payoutMethod === 'wise' && p.wiseEmail)
+                ) {
                     bookBtn.addEventListener('click', () => {
                         openBookingModal(uid, p.name || 'Instructor');
                     });
