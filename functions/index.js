@@ -774,9 +774,16 @@ exports.adminApproveInstructor = onCall(async (request) => {
               <div style="display:flex;align-items:flex-start;margin-bottom:20px;">
                 <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">2</div>
                 <div>
-                  <strong style="color:#113448;">Set up Stripe to accept payments</strong>
+                  <strong style="color:#113448;">Connect a payment method to receive payouts</strong>
                   <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
-                    Lingua Bud uses <strong>Stripe</strong> to process lesson payments securely. To receive payouts, you'll need to connect your Stripe account from your Dashboard. Click <strong>"Connect with Stripe"</strong> and follow the on-screen steps — it only takes a few minutes. You will not be able to receive payment for completed lessons until this is done.
+                    Lingua Bud supports two payout options — choose the one that works best for you:
+                  </p>
+                  <ul style="margin:8px 0 0;padding-left:18px;color:#555;font-size:14px;line-height:1.7;">
+                    <li><strong>Stripe Connect</strong> — Connect your Stripe account directly from your Dashboard. Payouts go straight to your linked bank account on Stripe's standard schedule. Best for instructors in the US, UK, EU, Canada, and Australia.</li>
+                    <li style="margin-top:6px;"><strong>Wise</strong> — Enter your Wise email address in your Dashboard settings. Lingua Bud will send your earnings to your Wise account in weekly batches every Sunday. Best for instructors in countries not fully supported by Stripe.</li>
+                  </ul>
+                  <p style="margin:8px 0 0;color:#555;font-size:14px;line-height:1.5;">
+                    You must complete at least one of these steps before students can book lessons with you.
                   </p>
                 </div>
               </div>
@@ -832,7 +839,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'there'},\n\nWelcome to Lingua Bud — your instructor application has been approved!\n\n${isFoundingInstructor ? `FOUNDING INSTRUCTOR: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson, forever.\n\n` : `You keep ${keepPercent}% of every lesson you complete on Lingua Bud.\n\n`}${personalNoteText}GETTING STARTED\n\n1. Complete your profile\nMake sure your bio, languages, availability, and profile photo are up to date on your Dashboard.\n\n2. Connect Stripe to accept payments\nGo to your Dashboard and click "Connect with Stripe". You must complete this step before you can receive payouts for completed lessons.\n\n3. Check your Bookings tab\nAll upcoming and past lessons appear in the Bookings tab. You'll get an email each time a new lesson is booked.\n\nDashboard: https://linguabud.com/dashboard\nBookings: https://linguabud.com/bookings\n\nTIPS\n- Set a competitive lesson rate to attract your first students.\n- Write a warm, detailed bio highlighting your teaching experience.\n- Respond to student messages quickly — it leads to more bookings.\n- Encourage students to leave reviews after each lesson.\n\nQuestions? Email us at support@linguabud.com\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
+        text: `Hi ${snap.data().name || 'there'},\n\nWelcome to Lingua Bud — your instructor application has been approved!\n\n${isFoundingInstructor ? `FOUNDING INSTRUCTOR: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson, forever.\n\n` : `You keep ${keepPercent}% of every lesson you complete on Lingua Bud.\n\n`}${personalNoteText}GETTING STARTED\n\n1. Complete your profile\nMake sure your bio, languages, availability, and profile photo are up to date on your Dashboard.\n\n2. Connect a payment method to receive payouts\nLingua Bud supports two options:\n  - Stripe Connect: Go to your Dashboard and click "Connect with Stripe". Payouts go straight to your bank account on Stripe's standard schedule.\n  - Wise: Enter your Wise email in your Dashboard settings. Earnings are paid out weekly every Sunday.\nYou must complete at least one option before students can book with you.\n\n3. Check your Bookings tab\nAll upcoming and past lessons appear in the Bookings tab. You'll get an email each time a new lesson is booked.\n\nDashboard: https://linguabud.com/dashboard\nBookings: https://linguabud.com/bookings\n\nTIPS\n- Set a competitive lesson rate to attract your first students.\n- Write a warm, detailed bio highlighting your teaching experience.\n- Respond to student messages quickly — it leads to more bookings.\n- Encourage students to leave reviews after each lesson.\n\nQuestions? Email us at support@linguabud.com\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
       });
     }
   } catch (e) {
@@ -2039,8 +2046,8 @@ exports.getStripeConfig = onCall(async (_request) => {
 });
 
 /**
- * Sends the Stripe onboarding reminder email to all approved instructors who have
- * not yet completed Stripe onboarding (stripeOnboardingComplete !== true).
+ * Sends the payment setup reminder email to all approved instructors who have
+ * not yet connected a payment method (neither Stripe nor Wise).
  * Admin-only callable.
  */
 exports.notifyApprovedInstructorsStripe = onCall(async (request) => {
@@ -2049,14 +2056,16 @@ exports.notifyApprovedInstructorsStripe = onCall(async (request) => {
   const db = admin.firestore();
   const resend = new Resend(process.env.RESEND_API_KEY);
 
-  // Find all approved instructors without completed Stripe onboarding
+  // Find all approved instructors without any connected payment method
   const snap = await db.collection('instructors')
     .where('status', '==', 'approved')
     .get();
 
   const targets = snap.docs.filter(d => {
     const data = d.data();
-    return data.stripeOnboardingComplete !== true && data.email;
+    const hasStripe = data.chargesEnabled === true && data.payoutsEnabled === true;
+    const hasWise   = data.payoutMethod === 'wise' && data.wiseEmail;
+    return !hasStripe && !hasWise && data.email;
   });
 
   if (targets.length === 0) {
@@ -2091,7 +2100,7 @@ exports.notifyApprovedInstructorsStripe = onCall(async (request) => {
                       <tr>
                         <td style="padding:32px;text-align:center;background:#20bcba;">
                           <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:48px;margin-bottom:12px;" />
-                          <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">Action Required: Connect Your Stripe Account</h1>
+                          <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">Action Required: Connect a Payment Method</h1>
                         </td>
                       </tr>
                       <!-- Body -->
@@ -2099,38 +2108,40 @@ exports.notifyApprovedInstructorsStripe = onCall(async (request) => {
                         <td style="padding:36px 40px;">
                           <p style="font-size:16px;color:#333;margin-top:0;">Hi ${firstName},</p>
                           <p style="font-size:15px;color:#444;line-height:1.7;">
-                            You're officially approved as an instructor on Lingua Bud — welcome aboard! 🎉
+                            You're officially approved as an instructor on Lingua Bud — welcome aboard!
                           </p>
                           <p style="font-size:15px;color:#444;line-height:1.7;">
-                            To begin receiving students and getting paid for your lessons, there is one required step:
+                            To begin receiving students and getting paid for your lessons, you need to connect a payment method from your Dashboard. We support two options:
                           </p>
+                          <!-- Option A: Stripe -->
                           <div style="background:#f0fffe;border-left:4px solid #20bcba;border-radius:4px;padding:16px 20px;margin:20px 0;">
-                            <p style="margin:0;font-size:16px;color:#113448;font-weight:bold;">
-                              👉 You must connect your Stripe account to receive payments.
+                            <p style="margin:0 0 6px;font-size:15px;color:#113448;font-weight:bold;">Option A — Stripe Connect</p>
+                            <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                              Connect your Stripe account directly from your Dashboard. Payouts go straight to your linked bank account on Stripe's standard schedule. Best for instructors in the US, UK, EU, Canada, and Australia.
                             </p>
+                            <ol style="margin:10px 0 0;padding-left:18px;color:#444;font-size:14px;line-height:1.8;">
+                              <li>Log into your <a href="https://linguabud.com/dashboard" style="color:#20bcba;">Dashboard</a></li>
+                              <li>Click <strong>"Connect with Stripe"</strong></li>
+                              <li>Follow the quick setup steps (~2–3 minutes)</li>
+                            </ol>
                           </div>
-                          <p style="font-size:15px;color:#444;line-height:1.7;">
-                            Stripe is our secure payment partner and ensures that you can:
-                          </p>
-                          <ul style="color:#444;font-size:15px;line-height:1.9;padding-left:20px;">
-                            <li>Get paid directly to your bank account</li>
-                            <li>Accept student bookings</li>
-                            <li>Safely manage your earnings</li>
-                          </ul>
-                          <p style="font-size:15px;color:#444;line-height:1.7;">
-                            ⏱ This process takes about <strong>2–3 minutes</strong>.
-                          </p>
+                          <!-- Option B: Wise -->
+                          <div style="background:#f0fffe;border-left:4px solid #20bcba;border-radius:4px;padding:16px 20px;margin:20px 0;">
+                            <p style="margin:0 0 6px;font-size:15px;color:#113448;font-weight:bold;">Option B — Wise</p>
+                            <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">
+                              If Stripe is not available in your country, you can receive payouts via <strong>Wise</strong>. Simply enter your Wise email address in your Dashboard settings. Lingua Bud will batch your earnings and send a single weekly transfer every Sunday.
+                            </p>
+                            <ol style="margin:10px 0 0;padding-left:18px;color:#444;font-size:14px;line-height:1.8;">
+                              <li>Log into your <a href="https://linguabud.com/dashboard" style="color:#20bcba;">Dashboard</a></li>
+                              <li>Select <strong>"Use Wise instead"</strong> in the Payments section</li>
+                              <li>Enter your Wise account email address</li>
+                            </ol>
+                          </div>
                           <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:14px 18px;margin:20px 0;">
                             <p style="margin:0;font-size:14px;color:#664d03;line-height:1.6;">
-                              <strong>Important:</strong> Your profile will not be fully active, and students will not be able to book lessons with you until this step is completed.
+                              <strong>Important:</strong> Your profile will not be fully active, and students will not be able to book lessons with you until at least one payment method is connected.
                             </p>
                           </div>
-                          <h3 style="font-size:16px;color:#113448;margin-bottom:12px;">To get started:</h3>
-                          <ol style="color:#444;font-size:15px;line-height:1.9;padding-left:20px;">
-                            <li>Log into your <a href="https://linguabud.com/dashboard" style="color:#20bcba;">Lingua Bud dashboard</a></li>
-                            <li>Click <strong>"Connect Stripe"</strong></li>
-                            <li>Follow the quick setup instructions</li>
-                          </ol>
                           <p style="margin:30px 0 20px 0;">
                             <a href="https://linguabud.com/dashboard"
                                style="display:inline-block;padding:14px 32px;background:#20bcba;color:#ffffff;text-decoration:none;border-radius:4px;font-size:16px;font-weight:bold;">
@@ -2166,23 +2177,21 @@ Hi ${firstName},
 
 You're officially approved as an instructor on Lingua Bud — welcome aboard!
 
-To begin receiving students and getting paid for your lessons, there is one required step:
+To begin receiving students and getting paid for your lessons, you need to connect a payment method from your Dashboard. We support two options:
 
-👉 You must connect your Stripe account to receive payments.
+OPTION A — Stripe Connect
+Connect your Stripe account directly from your Dashboard. Payouts go straight to your linked bank account on Stripe's standard schedule. Best for instructors in the US, UK, EU, Canada, and Australia.
+1. Log into your Dashboard: https://linguabud.com/dashboard
+2. Click "Connect with Stripe"
+3. Follow the quick setup steps (~2–3 minutes)
 
-Stripe is our secure payment partner and ensures that you can:
-- Get paid directly to your bank account
-- Accept student bookings
-- Safely manage your earnings
+OPTION B — Wise
+If Stripe is not available in your country, you can receive payouts via Wise. Simply enter your Wise email address in your Dashboard settings. Lingua Bud will batch your earnings and send a single weekly transfer every Sunday.
+1. Log into your Dashboard: https://linguabud.com/dashboard
+2. Select "Use Wise instead" in the Payments section
+3. Enter your Wise account email address
 
-⏱ This process takes about 2–3 minutes.
-
-Important: Your profile will not be fully active, and students will not be able to book lessons with you until this step is completed.
-
-To get started:
-1. Log into your Lingua Bud dashboard: https://linguabud.com/dashboard
-2. Click "Connect Stripe"
-3. Follow the quick setup instructions
+Important: Your profile will not be fully active, and students will not be able to book lessons with you until at least one payment method is connected.
 
 If you run into any issues, feel free to reply to this email and I'll personally help you get set up.
 
