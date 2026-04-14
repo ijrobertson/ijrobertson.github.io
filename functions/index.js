@@ -1034,6 +1034,127 @@ function getStripe() {
   return Stripe(process.env.STRIPE_SECRET_KEY);
 }
 
+// ── Country name → ISO 3166-1 alpha-2 code ─────────────────────────────────
+// Instructors submit their country as a full English name (e.g. "France").
+// Stripe's API requires a 2-letter ISO code (e.g. "FR").
+// This map covers every country in the app's selection list plus common aliases.
+const COUNTRY_NAME_TO_ISO = {
+  // A
+  'Afghanistan':'AF','Albania':'AL','Algeria':'DZ','Andorra':'AD','Angola':'AO',
+  'Argentina':'AR','Armenia':'AM','Australia':'AU','Austria':'AT','Azerbaijan':'AZ',
+  // B
+  'Bahamas':'BS','Bahrain':'BH','Bangladesh':'BD','Barbados':'BB','Belarus':'BY',
+  'Belgium':'BE','Belize':'BZ','Benin':'BJ','Bhutan':'BT','Bolivia':'BO',
+  'Bosnia and Herzegovina':'BA','Bosnia':'BA','Botswana':'BW','Brazil':'BR',
+  'Brunei':'BN','Bulgaria':'BG','Burkina Faso':'BF','Burundi':'BI',
+  // C
+  'Cambodia':'KH','Cameroon':'CM','Canada':'CA','Cape Verde':'CV',
+  'Central African Republic':'CF','Chad':'TD','Chile':'CL','China':'CN',
+  'Colombia':'CO','Comoros':'KM','Congo (Brazzaville)':'CG','Congo (Kinshasa)':'CD',
+  'Costa Rica':'CR','Croatia':'HR','Cuba':'CU','Cyprus':'CY','Czech Republic':'CZ',
+  'Czechia':'CZ',
+  // D
+  'Denmark':'DK','Djibouti':'DJ','Dominica':'DM','Dominican Republic':'DO',
+  // E
+  'East Timor':'TL','Timor-Leste':'TL','Ecuador':'EC','Egypt':'EG',
+  'El Salvador':'SV','Equatorial Guinea':'GQ','Eritrea':'ER','Estonia':'EE',
+  'Eswatini':'SZ','Swaziland':'SZ','Ethiopia':'ET',
+  // F
+  'Fiji':'FJ','Finland':'FI','France':'FR',
+  // G
+  'Gabon':'GA','Gambia':'GM','Georgia':'GE','Germany':'DE','Ghana':'GH',
+  'Greece':'GR','Grenada':'GD','Guatemala':'GT','Guinea':'GN',
+  'Guinea-Bissau':'GW','Guyana':'GY',
+  // H
+  'Haiti':'HT','Honduras':'HN','Hungary':'HU',
+  // I
+  'Iceland':'IS','India':'IN','Indonesia':'ID','Iran':'IR','Iraq':'IQ',
+  'Ireland':'IE','Israel':'IL','Italy':'IT','Ivory Coast':'CI',
+  "Côte d'Ivoire":'CI',
+  // J
+  'Jamaica':'JM','Japan':'JP','Jordan':'JO',
+  // K
+  'Kazakhstan':'KZ','Kenya':'KE','Kiribati':'KI','Kuwait':'KW','Kyrgyzstan':'KG',
+  // L
+  'Laos':'LA','Latvia':'LV','Lebanon':'LB','Lesotho':'LS','Liberia':'LR',
+  'Libya':'LY','Liechtenstein':'LI','Lithuania':'LT','Luxembourg':'LU',
+  // M
+  'Madagascar':'MG','Malawi':'MW','Malaysia':'MY','Maldives':'MV','Mali':'ML',
+  'Malta':'MT','Marshall Islands':'MH','Mauritania':'MR','Mauritius':'MU',
+  'Mexico':'MX','Micronesia':'FM','Moldova':'MD','Monaco':'MC','Mongolia':'MN',
+  'Montenegro':'ME','Morocco':'MA','Mozambique':'MZ','Myanmar':'MM','Burma':'MM',
+  // N
+  'Namibia':'NA','Nauru':'NR','Nepal':'NP','Netherlands':'NL','New Zealand':'NZ',
+  'Nicaragua':'NI','Niger':'NE','Nigeria':'NG','North Korea':'KP',
+  'North Macedonia':'MK','Macedonia':'MK','Norway':'NO',
+  // O
+  'Oman':'OM',
+  // P
+  'Pakistan':'PK','Palau':'PW','Palestine':'PS','Panama':'PA',
+  'Papua New Guinea':'PG','Paraguay':'PY','Peru':'PE','Philippines':'PH',
+  'Poland':'PL','Portugal':'PT','Puerto Rico':'PR',
+  // Q
+  'Qatar':'QA',
+  // R
+  'Romania':'RO','Russia':'RU','Rwanda':'RW',
+  // S
+  'Saint Kitts and Nevis':'KN','Saint Lucia':'LC','Saint Vincent':'VC',
+  'Saint Vincent and the Grenadines':'VC',
+  'Samoa':'WS','San Marino':'SM','Saudi Arabia':'SA','Senegal':'SN',
+  'Serbia':'RS','Seychelles':'SC','Sierra Leone':'SL','Singapore':'SG',
+  'Slovakia':'SK','Slovenia':'SI','Solomon Islands':'SB','Somalia':'SO',
+  'South Africa':'ZA','South Korea':'KR','Korea':'KR','South Sudan':'SS',
+  'Spain':'ES','Sri Lanka':'LK','Sudan':'SD','Suriname':'SR','Sweden':'SE',
+  'Switzerland':'CH','Syria':'SY',
+  'São Tomé and Príncipe':'ST','Sao Tome and Principe':'ST',
+  // T
+  'Taiwan':'TW','Tajikistan':'TJ','Tanzania':'TZ','Thailand':'TH','Togo':'TG',
+  'Tonga':'TO','Trinidad and Tobago':'TT','Tunisia':'TN','Turkey':'TR',
+  'Türkiye':'TR','Turkmenistan':'TM','Tuvalu':'TV',
+  // U
+  'Uganda':'UG','Ukraine':'UA','United Arab Emirates':'AE','UAE':'AE',
+  'United Kingdom':'GB','UK':'GB','United States':'US','USA':'US',
+  'Uruguay':'UY','Uzbekistan':'UZ',
+  // V
+  'Vanuatu':'VU','Vatican City':'VA','Venezuela':'VE','Vietnam':'VN',
+  // Y
+  'Yemen':'YE',
+  // Z
+  'Zambia':'ZM','Zimbabwe':'ZW'
+};
+
+/**
+ * Converts an instructor's country value to a Stripe-compatible ISO 3166-1
+ * alpha-2 code.  Handles three input forms:
+ *   - Already a 2-letter code ("FR", "US")       → returned as-is (uppercased)
+ *   - Full English country name ("France")        → looked up in map
+ *   - Null / undefined / unrecognised             → falls back to 'US' with warning
+ */
+function resolveStripeCountry(rawCountry) {
+  if (!rawCountry || typeof rawCountry !== 'string') {
+    console.warn('[Stripe] No country provided — defaulting to US');
+    return 'US';
+  }
+  const trimmed = rawCountry.trim();
+
+  // Already a 2-letter ISO code
+  if (/^[A-Za-z]{2}$/.test(trimmed)) {
+    return trimmed.toUpperCase();
+  }
+
+  const iso = COUNTRY_NAME_TO_ISO[trimmed];
+  if (iso) return iso;
+
+  // Case-insensitive fallback
+  const lower = trimmed.toLowerCase();
+  const fallback = Object.entries(COUNTRY_NAME_TO_ISO)
+    .find(([name]) => name.toLowerCase() === lower);
+  if (fallback) return fallback[1];
+
+  console.warn(`[Stripe] Unrecognised country "${trimmed}" — defaulting to US`);
+  return 'US';
+}
+
 /**
  * Creates a Stripe Express Connect account for an approved instructor.
  * Only runs if:  role === 'instructor', isApproved === true, stripeAccountId is null.
@@ -1072,18 +1193,21 @@ exports.createStripeAccount = onCall(async (request) => {
   }
 
   // Create new Stripe Express account
+  // native_country is stored as a full name ("France"); resolve to ISO code ("FR").
   const instructorEmail = data.email || null;
-  const country = request.data?.country || data.country || 'US';
+  const rawCountry = request.data?.country || data.native_country || data.country;
+  const countryCode = resolveStripeCountry(rawCountry);
+  console.log(`[Stripe] createStripeAccount: uid=${uid} rawCountry="${rawCountry}" → ISO="${countryCode}"`);
 
   const account = await stripe.accounts.create({
     type: 'express',
-    country,
+    country: countryCode,
     ...(instructorEmail ? { email: instructorEmail } : {}),
     capabilities: {
       card_payments: { requested: true },
       transfers: { requested: true }
     },
-    metadata: { firebaseUid: uid, mode: currentMode }
+    metadata: { firebaseUid: uid, mode: currentMode, nativeCountry: rawCountry || '' }
   });
 
   const stripeAccountId = account.id;
@@ -1186,10 +1310,23 @@ exports.createStripeConnectAccount = onCall(async (request) => {
     // Same mode — reuse the existing account, just generate a fresh onboarding link
     stripeAccountId = existingAccountId;
   } else {
-    // Need a new account: either first-time setup, or instructor transitioning test → live
+    // Need a new account: either first-time setup, or instructor transitioning test → live.
+    // Pass the instructor's country (as ISO code) and email so Stripe pre-fills the form
+    // and applies the correct payment methods for their region.
+    const rawCountry  = existingData.native_country || existingData.country;
+    const countryCode = resolveStripeCountry(rawCountry);
+    const email       = existingData.email || null;
+    console.log(`[Stripe] createStripeConnectAccount: uid=${uid} rawCountry="${rawCountry}" → ISO="${countryCode}"`);
+
     const account = await stripe.accounts.create({
       type: 'express',
-      metadata: { firebaseUid: uid, mode: currentMode }
+      country: countryCode,
+      ...(email ? { email } : {}),
+      capabilities: {
+        card_payments: { requested: true },
+        transfers:     { requested: true }
+      },
+      metadata: { firebaseUid: uid, mode: currentMode, nativeCountry: rawCountry || '' }
     });
     stripeAccountId = account.id;
 
