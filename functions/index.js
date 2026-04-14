@@ -2,6 +2,7 @@ const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { Resend } = require('resend');
 const Stripe = require('stripe');
+const { randomUUID } = require('crypto');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -2530,13 +2531,16 @@ async function createWiseTransfer(targetAccountId, quoteUuid, customerTransactio
     targetAccount:         targetAccountId,
     quoteUuid,
     customerTransactionId,
-    details: { reference: (reference || 'Lingua Bud lesson payout').substring(0, 140) }
+    // Wise only allows [a-zA-Z0-9- ] in the reference field
+    details: { reference: (reference || 'Lingua Bud lesson payout').replace(/[^a-zA-Z0-9\- ]/g, '').substring(0, 140) }
   });
 }
 
-/** Step 4 — Fund the transfer from the platform's Wise balance. */
+/** Step 4 — Fund the transfer from the platform's Wise balance.
+ *  v1 payments endpoint was deprecated (HTTP 410); v3 is the current standard. */
 async function fundWiseTransfer(transferId) {
-  return wiseRequest('POST', `/v1/transfers/${transferId}/payments`, { type: 'BALANCE' });
+  const profileId = getWiseProfileId();
+  return wiseRequest('POST', `/v3/profiles/${profileId}/transfers/${transferId}/payments`, { type: 'BALANCE' });
 }
 
 /**
@@ -2607,7 +2611,8 @@ async function processWisePayouts(db) {
     }
 
     const amountDecimal         = totalCents / 100;
-    const customerTransactionId = `lb-${instructorId}-${Date.now()}`;
+    // Wise requires customerTransactionId to be a valid UUID v4
+    const customerTransactionId = randomUUID();
 
     let recipientId = null;
     let quoteId     = null;
