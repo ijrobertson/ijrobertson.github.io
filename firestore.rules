@@ -184,6 +184,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Wise payout audit logs — written only by Cloud Functions; admin-read only
+    match /wise_payout_logs/{logId} {
+      allow read: if request.auth != null
+                  && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if false;
+    }
+
     // User reports — submitted when a user reports another user's profile
     match /userReports/{reportId} {
       // Any logged-in user can submit a report (cannot report themselves)

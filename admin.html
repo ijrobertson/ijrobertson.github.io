@@ -642,6 +642,21 @@
                 <!-- ── Overview Tab ───────────────────────────────────── -->
                 <!-- ── Wise Payouts Tab ───────────────────────────────── -->
                 <div class="tab-pane" id="tab-wise-payouts">
+
+                    <!-- Automated payout control -->
+                    <div class="admin-card mb-3" style="border-left:4px solid #20bcba;">
+                        <div class="admin-card-header" style="flex-wrap:wrap;gap:0.75rem;">
+                            <div>
+                                <h5 style="margin:0;"><i class="fas fa-robot" style="color:#20bcba;margin-right:8px;"></i>Automated Wise Payouts</h5>
+                                <p style="margin:4px 0 0;font-size:0.82rem;color:#666;">Payouts run automatically every day at 06:00 UTC. Use the button to trigger a manual run now.</p>
+                            </div>
+                            <button class="btn-approve" id="runWisePayoutsBtn" style="white-space:nowrap;" onclick="triggerWisePayouts()">
+                                <i class="fas fa-paper-plane"></i> Run Wise Payouts Now
+                            </button>
+                        </div>
+                        <div id="wiseRunResult" style="display:none;margin-top:1rem;padding:0.85rem 1rem;border-radius:6px;font-size:0.875rem;"></div>
+                    </div>
+
                     <!-- Summary cards -->
                     <div class="overview-grid mb-3" id="wisePayoutsSummary">
                         <div class="mini-stat">
@@ -703,6 +718,34 @@
                                 </thead>
                                 <tbody id="wiseHistoryBody">
                                     <tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Automated payout audit logs -->
+                    <div class="admin-card mt-4">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-clipboard-list" style="color:#6366f1;margin-right:8px;"></i>Payout Run Logs</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;background:#6366f1;" onclick="loadWisePayoutLogs()">
+                                <i class="fas fa-sync-alt"></i> Refresh Logs
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Instructor</th>
+                                        <th>Wise Email</th>
+                                        <th>Amount</th>
+                                        <th>Lessons</th>
+                                        <th>Status</th>
+                                        <th>Transfer ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wiseLogsBody">
+                                    <tr><td colspan="7" style="text-align:center;color:#aaa;padding:1.5rem;">Click "Refresh Logs" to load.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -882,6 +925,7 @@
         const flagUser            = httpsCallable(functions, 'adminFlagUser');
         const markMsgRead         = httpsCallable(functions, 'adminMarkMessageRead');
         const markWisePaid        = httpsCallable(functions, 'markWisePayoutsPaid');
+        const runWisePayoutsFn    = httpsCallable(functions, 'runWisePayouts');
 
         // Cache
         let allUsersCache = [];
@@ -1815,6 +1859,82 @@
                 .replace(/'/g, '&#39;');
         }
         window.escHtml = escHtml;
+
+        // ── Wise: trigger automated payout run ────────────────────────────
+        window.triggerWisePayouts = async function() {
+            const btn      = document.getElementById('runWisePayoutsBtn');
+            const resultEl = document.getElementById('wiseRunResult');
+            btn.disabled   = true;
+            btn.innerHTML  = '<i class="fas fa-spinner fa-spin"></i> Running…';
+            resultEl.style.display = 'none';
+
+            try {
+                const res = await runWisePayoutsFn();
+                const r   = res.data;
+                const isOk  = r.failed === 0;
+                const color  = isOk ? '#065f46' : '#7c3aed';
+                const bg     = isOk ? '#d1fae5'  : '#f3e8ff';
+                const border = isOk ? '#6ee7b7'  : '#a78bfa';
+                resultEl.style.cssText = `display:block;background:${bg};border:1px solid ${border};border-radius:6px;padding:0.85rem 1rem;margin-top:1rem;font-size:0.875rem;color:${color};`;
+                resultEl.innerHTML = `
+                    <strong>Payout run complete.</strong><br>
+                    ✅ Processed: <strong>${r.processed}</strong> &nbsp;
+                    ❌ Failed: <strong>${r.failed}</strong> &nbsp;
+                    ⏭ Skipped: <strong>${r.skipped}</strong>
+                    ${r.details && r.details.length ? `<details style="margin-top:0.5rem;"><summary style="cursor:pointer;font-size:0.8rem;">Details</summary><pre style="font-size:0.75rem;margin:0.5rem 0 0;white-space:pre-wrap;overflow:auto;">${escHtml(JSON.stringify(r.details, null, 2))}</pre></details>` : ''}
+                `;
+                // Refresh tables
+                tabsLoaded['wise-payouts'] = false;
+                await loadWisePayouts();
+                await loadWisePayoutLogs();
+            } catch (err) {
+                resultEl.style.cssText = 'display:block;background:#fee2e2;border:1px solid #fca5a5;border-radius:6px;padding:0.85rem 1rem;margin-top:1rem;font-size:0.875rem;color:#991b1b;';
+                resultEl.innerHTML = `<strong>Run failed:</strong> ${escHtml(err.message)}`;
+            } finally {
+                btn.disabled  = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Run Wise Payouts Now';
+            }
+        };
+
+        // ── Wise: load payout audit logs ──────────────────────────────────
+        window.loadWisePayoutLogs = async function() {
+            const tbody = document.getElementById('wiseLogsBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(
+                    query(collection(db, 'wise_payout_logs'),
+                          orderBy('createdAt', 'desc'),
+                          limit(100))
+                );
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:1.5rem;">No payout logs yet.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = snap.docs.map(d => {
+                    const log     = d.data();
+                    const dateStr = log.createdAt?.toDate ? log.createdAt.toDate().toLocaleString() : '—';
+                    const amt     = log.amountDecimal != null
+                        ? `$${Number(log.amountDecimal).toFixed(2)} ${log.currency || ''}`
+                        : (log.amountCents != null ? `$${(log.amountCents / 100).toFixed(2)}` : '—');
+                    const statusColor = log.status === 'success' ? '#065f46' : '#991b1b';
+                    const statusBg    = log.status === 'success' ? '#d1fae5' : '#fee2e2';
+                    const txnId = log.wiseTransferId ? `${String(log.wiseTransferId).substring(0, 10)}…` : '—';
+                    const errTip = log.error ? ` title="${escHtml(log.error)}"` : '';
+                    return `<tr>
+                        <td style="white-space:nowrap;">${escHtml(dateStr)}</td>
+                        <td><strong>${escHtml(log.instructorName || log.instructorId)}</strong></td>
+                        <td>${escHtml(log.wiseEmail || '—')}</td>
+                        <td><strong>${escHtml(amt)}</strong></td>
+                        <td>${log.lessonCount != null ? log.lessonCount : '—'}</td>
+                        <td><span style="padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:600;background:${statusBg};color:${statusColor};"${errTip}>${escHtml(log.status)}</span></td>
+                        <td style="font-size:0.78rem;color:#888;" title="${escHtml(String(log.wiseTransferId || ''))}">${escHtml(txnId)}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                console.error('loadWisePayoutLogs error:', err);
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#dc3545;padding:1.5rem;">Error loading logs: ${escHtml(err.message)}</td></tr>`;
+            }
+        };
     </script>
 </body>
 </html>

@@ -525,6 +525,7 @@ Questions? Email support@linguabud.com
  * Called from the client when a user wants to join a video call
  */
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { RtcTokenBuilder, RtcRole } = require('agora-token');
 const functions = require('firebase-functions');
 
@@ -1524,6 +1525,19 @@ exports.cancelBooking = onCall(async (request) => {
     refundLabel = 'No refund (cancelled less than 12 hours before lesson)';
   }
 
+  // ── Determine payout method from the earnings record (authoritative) ────
+  // Earnings are written at booking-time so they reflect the method used for
+  // that specific payment, even if the instructor has since switched methods.
+  const db = admin.firestore();
+  const earningsForBookingSnap = await db.collection('earnings')
+    .where('bookingId', '==', bookingId)
+    .limit(1)
+    .get();
+  const bookingPayoutMethod = !earningsForBookingSnap.empty
+    ? (earningsForBookingSnap.docs[0].data().payoutMethod || 'stripe')
+    : 'stripe';
+  const isWisePayout = bookingPayoutMethod === 'wise';
+
   // ── Process Stripe refund if payment was made ────────────────────────────
   let stripeRefundId = null;
   let refundAmountCents = 0;
@@ -1539,13 +1553,59 @@ exports.cancelBooking = onCall(async (request) => {
         payment_intent: booking.paymentIntentId,
         ...(refundPercent < 100 && { amount: refundAmountCents }),
         refund_application_fee: true,
-        reverse_transfer: true,
+        // Wise bookings collect into the platform account (no connected-account
+        // transfer was made), so reverse_transfer would throw an error.
+        ...(!isWisePayout && { reverse_transfer: true }),
       });
       stripeRefundId = refund.id;
       console.log(`Refund created: ${refund.id} — ${refundPercent}% of ${booking.amount} ${booking.currency}`);
     } catch (refundErr) {
       console.error('Stripe refund error:', refundErr);
       // Don't block the cancellation — refund can be issued manually if needed
+    }
+  }
+
+  // ── Cancel or adjust Wise earnings still awaiting payout ────────────────
+  // If the Wise payout has already been sent (payoutStatus = 'paid' / 'processing'),
+  // we cannot auto-reverse it — the admin must handle that manually.
+  if (isWisePayout && refundPercent > 0 && !earningsForBookingSnap.empty) {
+    try {
+      const nowTs = admin.firestore.FieldValue.serverTimestamp();
+      const pendingEarnings = earningsForBookingSnap.docs.filter(
+        d => d.data().payoutStatus === 'pending'
+      );
+      if (pendingEarnings.length > 0) {
+        const earningsBatch = db.batch();
+        pendingEarnings.forEach(docSnap => {
+          if (refundPercent === 100) {
+            // Full refund → instructor receives nothing; cancel the payout record
+            earningsBatch.update(docSnap.ref, {
+              payoutStatus: 'cancelled',
+              cancelledAt:  nowTs,
+              cancelReason: refundLabel
+            });
+          } else {
+            // Partial refund (50%) → instructor receives their share of the
+            // non-refunded portion. The $1 student platform fee is non-refundable.
+            const orig = docSnap.data().instructorEarningsCents || 0;
+            const retainFraction = (100 - refundPercent) / 100;
+            earningsBatch.update(docSnap.ref, {
+              instructorEarningsCents: Math.round(orig * retainFraction),
+              partialRefund:           true,
+              refundPercent,
+              cancelReason:            refundLabel
+            });
+          }
+        });
+        await earningsBatch.commit();
+        console.log(`Updated ${pendingEarnings.length} Wise earnings record(s) for cancelled booking ${bookingId}`);
+      } else {
+        // Earnings already paid/failed — log for admin awareness
+        console.warn(`[cancelBooking] Wise earnings for booking ${bookingId} are not in 'pending' state — manual review may be needed`);
+      }
+    } catch (earningsErr) {
+      console.error('Error updating Wise earnings on cancellation:', earningsErr);
+      // Non-fatal — booking cancellation still proceeds
     }
   }
 
@@ -2250,4 +2310,308 @@ exports.markWisePayoutsPaid = onCall(async (request) => {
   await batch.commit();
 
   return { count: snap.size };
+});
+
+// ── Wise API Automated Payouts ──────────────────────────────────────────────
+//
+// SETUP — add these two lines to functions/.env:
+//
+//   WISE_API_KEY=<your Wise API token>
+//   WISE_PROFILE_ID=<your Wise profile ID (numeric)>
+//
+// How to get them:
+//   1. Log in to wise.com → Settings → API tokens → Create a token
+//      (enable "Full access" for transfers, or at minimum: Recipient Accounts,
+//      Quotes, Transfers, Funding)
+//   2. Your profile ID: Settings → API tokens → click any token → Profile ID
+//      is shown at the top, e.g.  12345678
+//
+// LIVE API endpoint (no sandbox — real money):
+//   https://api.wise.com
+
+const WISE_API_BASE = 'https://api.wise.com';
+
+function getWiseApiKey() {
+  const key = process.env.WISE_API_KEY;
+  if (!key) throw new Error('WISE_API_KEY is not set in functions/.env');
+  return key;
+}
+
+function getWiseProfileId() {
+  const id = process.env.WISE_PROFILE_ID;
+  if (!id) throw new Error('WISE_PROFILE_ID is not set in functions/.env');
+  return id;
+}
+
+/** Low-level Wise API request helper. Throws on non-2xx responses. */
+async function wiseRequest(method, path, body) {
+  const url  = `${WISE_API_BASE}${path}`;
+  const opts = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${getWiseApiKey()}`,
+      'Content-Type':  'application/json',
+    },
+    ...(body ? { body: JSON.stringify(body) } : {})
+  };
+  const res  = await fetch(url, opts);
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); } catch { json = { raw: text }; }
+  if (!res.ok) {
+    throw new Error(`Wise ${method} ${path} → HTTP ${res.status}: ${text.substring(0, 400)}`);
+  }
+  return json;
+}
+
+/** Step 1 — Create an email-type recipient account on Wise. */
+async function createWiseRecipient(profileId, instructorName, wiseEmail, currency) {
+  return wiseRequest('POST', '/v1/accounts', {
+    profile:           parseInt(profileId, 10),
+    accountHolderName: instructorName || 'Instructor',
+    currency:          currency.toUpperCase(),
+    type:              'email',
+    details:           { email: wiseEmail }
+  });
+}
+
+/** Step 2 — Create a fixed-rate quote (same source/target currency = no FX fee). */
+async function createWiseQuote(profileId, currency, amountDecimal) {
+  return wiseRequest('POST', '/v1/quotes', {
+    profile:      parseInt(profileId, 10),
+    source:       currency.toUpperCase(),
+    target:       currency.toUpperCase(),
+    rateType:     'FIXED',
+    sourceAmount: amountDecimal,
+    type:         'BALANCE_PAYOUT'
+  });
+}
+
+/** Step 3 — Create a transfer tying the quote to the recipient. */
+async function createWiseTransfer(targetAccountId, quoteUuid, customerTransactionId, reference) {
+  return wiseRequest('POST', '/v1/transfers', {
+    targetAccount:         targetAccountId,
+    quoteUuid,
+    customerTransactionId,
+    details: { reference: (reference || 'Lingua Bud lesson payout').substring(0, 140) }
+  });
+}
+
+/** Step 4 — Fund the transfer from the platform's Wise balance. */
+async function fundWiseTransfer(transferId) {
+  return wiseRequest('POST', `/v1/transfers/${transferId}/payments`, { type: 'BALANCE' });
+}
+
+/**
+ * Core Wise payout processor.
+ * - Queries all earnings where payoutMethod='wise' and payoutStatus='pending'
+ * - Batches by instructor (one transfer per instructor per run)
+ * - Creates recipient → quote → transfer → funds it
+ * - Updates Firestore and writes an audit log to wise_payout_logs
+ *
+ * The $1 student platform fee is already deducted before earnings are stored;
+ * instructorEarningsCents reflects the instructor's net amount after commission.
+ *
+ * Refund handling: cancelBooking sets payoutStatus='cancelled' (full refund) or
+ * reduces instructorEarningsCents (partial refund) BEFORE this runs, so we
+ * never pay out for cancelled lessons.
+ */
+async function processWisePayouts(db) {
+  const profileId = getWiseProfileId();
+  const now       = admin.firestore.FieldValue.serverTimestamp();
+  const results   = { processed: 0, failed: 0, skipped: 0, details: [] };
+
+  // Query pending Wise earnings
+  const pendingSnap = await db.collection('earnings')
+    .where('payoutMethod',  '==', 'wise')
+    .where('payoutStatus', '==', 'pending')
+    .get();
+
+  if (pendingSnap.empty) {
+    console.log('[Wise] No pending earnings — nothing to do');
+    return results;
+  }
+  console.log(`[Wise] ${pendingSnap.size} pending earning(s) found`);
+
+  // Group by instructor
+  const byInstructor = {};
+  pendingSnap.docs.forEach(docSnap => {
+    const e = docSnap.data();
+    if (!byInstructor[e.instructorId]) {
+      byInstructor[e.instructorId] = {
+        instructorId:   e.instructorId,
+        instructorName: e.instructorName || e.instructorId,
+        wiseEmail:      e.wiseEmail || null,
+        currency:       (e.currency || 'USD').toUpperCase(),
+        docs:           [],
+        totalCents:     0
+      };
+    }
+    byInstructor[e.instructorId].docs.push(docSnap);
+    byInstructor[e.instructorId].totalCents += (e.instructorEarningsCents || 0);
+  });
+
+  for (const group of Object.values(byInstructor)) {
+    const { instructorId, instructorName, wiseEmail, currency, docs, totalCents } = group;
+    const earningIds = docs.map(d => d.id);
+
+    // Guard: must have an email and a non-trivial amount
+    if (!wiseEmail) {
+      console.warn(`[Wise] ${instructorId} — no wiseEmail, skipping`);
+      results.skipped++;
+      results.details.push({ instructorId, status: 'skipped', reason: 'missing wiseEmail' });
+      continue;
+    }
+    if (totalCents < 50) {
+      console.warn(`[Wise] ${instructorId} — ${totalCents} cents below minimum, skipping`);
+      results.skipped++;
+      results.details.push({ instructorId, status: 'skipped', reason: 'below $0.50 minimum', totalCents });
+      continue;
+    }
+
+    const amountDecimal         = totalCents / 100;
+    const customerTransactionId = `lb-${instructorId}-${Date.now()}`;
+
+    let recipientId = null;
+    let quoteId     = null;
+    let transferId  = null;
+
+    try {
+      // 1. Recipient
+      console.log(`[Wise] Creating recipient: ${instructorId} → ${wiseEmail}`);
+      const recipient = await createWiseRecipient(profileId, instructorName, wiseEmail, currency);
+      recipientId = recipient.id;
+
+      // 2. Quote
+      console.log(`[Wise] Quoting ${amountDecimal} ${currency}`);
+      const quote = await createWiseQuote(profileId, currency, amountDecimal);
+      quoteId = quote.uuid || String(quote.id);
+
+      // 3. Transfer
+      const lessonWord = docs.length === 1 ? 'lesson' : 'lessons';
+      console.log(`[Wise] Creating transfer ${customerTransactionId}`);
+      const transfer = await createWiseTransfer(
+        recipientId,
+        quoteId,
+        customerTransactionId,
+        `Lingua Bud earnings — ${docs.length} ${lessonWord}`
+      );
+      transferId = transfer.id;
+
+      // 4. Fund
+      console.log(`[Wise] Funding transfer ${transferId}`);
+      const payment = await fundWiseTransfer(transferId);
+      console.log(`[Wise] Transfer ${transferId} funded — Wise status: ${payment.status}`);
+
+      // 5. Mark earnings paid
+      const successBatch = db.batch();
+      docs.forEach(docSnap => {
+        successBatch.update(docSnap.ref, {
+          payoutStatus:      'paid',
+          paidAt:            now,
+          wiseTransferId:    transferId,
+          wiseRecipientId:   recipientId,
+          wiseQuoteId:       quoteId,
+          wiseCustomerTxnId: customerTransactionId,
+          wisePaymentStatus: payment.status || null,
+          payoutProcessedAt: now
+        });
+      });
+      await successBatch.commit();
+
+      // 6. Audit log
+      await db.collection('wise_payout_logs').add({
+        instructorId,
+        instructorName,
+        wiseEmail,
+        currency,
+        amountCents:       totalCents,
+        amountDecimal,
+        lessonCount:       docs.length,
+        earningIds,
+        wiseTransferId:    transferId,
+        wiseRecipientId:   recipientId,
+        wiseQuoteId:       quoteId,
+        wiseCustomerTxnId: customerTransactionId,
+        wisePaymentStatus: payment.status || null,
+        status:            'success',
+        createdAt:         now
+      });
+
+      console.log(`[Wise] ✅ ${instructorId} — ${amountDecimal} ${currency} — transfer ${transferId}`);
+      results.processed++;
+      results.details.push({ instructorId, status: 'success', wiseTransferId: transferId, amountCents: totalCents });
+
+    } catch (err) {
+      console.error(`[Wise] ❌ ${instructorId}:`, err.message);
+
+      // Mark earnings failed (don't retry automatically)
+      const failBatch = db.batch();
+      docs.forEach(docSnap => {
+        failBatch.update(docSnap.ref, {
+          payoutStatus:    'failed',
+          payoutError:     err.message.substring(0, 500),
+          payoutFailedAt:  now,
+          ...(recipientId && { wiseRecipientId: recipientId }),
+          ...(quoteId     && { wiseQuoteId:     quoteId }),
+          ...(transferId  && { wiseTransferId:  transferId })
+        });
+      });
+      await failBatch.commit();
+
+      // Audit log (failure)
+      await db.collection('wise_payout_logs').add({
+        instructorId,
+        instructorName,
+        wiseEmail:    wiseEmail || null,
+        currency,
+        amountCents:  totalCents,
+        lessonCount:  docs.length,
+        earningIds,
+        status:       'failed',
+        error:        err.message.substring(0, 500),
+        ...(recipientId && { wiseRecipientId: recipientId }),
+        ...(quoteId     && { wiseQuoteId:     quoteId }),
+        ...(transferId  && { wiseTransferId:  transferId }),
+        createdAt:    now
+      });
+
+      results.failed++;
+      results.details.push({ instructorId, status: 'failed', error: err.message });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Scheduled Cloud Function — runs daily at 06:00 UTC.
+ * Automatically processes all pending Wise earnings.
+ */
+exports.scheduledWisePayouts = onSchedule('0 6 * * *', async () => {
+  console.log('[Wise] scheduledWisePayouts: daily run starting');
+  const db = admin.firestore();
+  try {
+    const results = await processWisePayouts(db);
+    console.log('[Wise] scheduledWisePayouts complete:', JSON.stringify(results));
+  } catch (err) {
+    console.error('[Wise] scheduledWisePayouts fatal error:', err.message);
+  }
+});
+
+/**
+ * Admin callable — manually trigger Wise payouts from the admin panel.
+ * Returns the same summary object as the scheduled run.
+ */
+exports.runWisePayouts = onCall(async (request) => {
+  await assertAdmin(request);
+  console.log('[Wise] runWisePayouts: admin-triggered run');
+  const db = admin.firestore();
+  try {
+    const results = await processWisePayouts(db);
+    return results;
+  } catch (err) {
+    console.error('[Wise] runWisePayouts error:', err.message);
+    throw new HttpsError('internal', `Wise payout run failed: ${err.message}`);
+  }
 });
