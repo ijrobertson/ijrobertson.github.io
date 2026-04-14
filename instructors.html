@@ -2186,9 +2186,12 @@
             document.getElementById('profileModalCountry').textContent = country;
             document.getElementById('profileModalAbout').textContent = aboutMe;
 
-            // Guard book button based on Stripe setup status
+            // Guard book button based on unified payout readiness
             const profileBookBtn = document.getElementById('profileBookBtn');
-            if (instructor.stripeOnboardingComplete === true) {
+            const instructorReady =
+                (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) ||
+                (instructor.payoutMethod === 'wise' && instructor.wiseEmail);
+            if (instructorReady) {
                 profileBookBtn.disabled = false;
                 profileBookBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Lesson';
                 profileBookBtn.title = '';

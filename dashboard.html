@@ -2516,7 +2516,7 @@
           try {
             const getDashboard = httpsCallable(functions, 'getStripeConnectDashboard');
             const result = await getDashboard();
-            const { chargesEnabled, needsLiveModeReconnect } = result.data;
+            const { chargesEnabled, payoutsEnabled, needsLiveModeReconnect } = result.data;
 
             if (needsLiveModeReconnect) {
               renderStripeSection('needs-live-reconnect');
@@ -2525,8 +2525,15 @@
             }
 
             if (chargesEnabled) {
+              // Cloud Function already synced Firestore, but write here too for safety
+              // (guards against older function versions being cached).
               await setDoc(doc(db, 'instructors', currentUser.uid),
-                { stripeOnboardingComplete: true, chargesEnabled: true }, { merge: true });
+                {
+                  stripeOnboardingComplete: true,
+                  chargesEnabled: true,
+                  payoutsEnabled: payoutsEnabled === true,
+                  payoutMethod: 'stripe'
+                }, { merge: true });
               renderStripeSection('connected');
               hideStripeOverlay();
             } else {
@@ -2779,11 +2786,21 @@
               <p style="margin:0;font-size:0.875rem;color:#666;">You are ready to receive lesson payments from students.</p>
             </div>
           </div>
-          <button id="view-stripe-btn" type="button">
+          <button id="view-stripe-btn" type="button" style="margin-bottom:0.5rem;">
             <i class="fas fa-external-link-alt"></i> View Stripe Dashboard
           </button>
+          <div style="margin-top:0.75rem;">
+            <button id="switch-to-wise-btn" type="button" style="background:#fff;color:#113448;border:1.5px solid #e2e8f0;font-size:0.875rem;padding:0.6rem 1.2rem;">
+              <i class="fas fa-envelope" style="color:#20bcba;"></i> Switch to Wise instead
+            </button>
+          </div>
         `;
         document.getElementById('view-stripe-btn').onclick = openStripeDashboard;
+        document.getElementById('switch-to-wise-btn').onclick = () => {
+          showStripeOverlay('not-connected');
+          _showOverlayPanel('overlay-panel-wise');
+          _wireWisePanel();
+        };
 
       } else if (state === 'wise-connected') {
         section.innerHTML = `

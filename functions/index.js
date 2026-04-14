@@ -1258,12 +1258,20 @@ exports.getStripeConnectDashboard = onCall(async (request) => {
     throw err;
   }
 
-  // Account was retrieved successfully. If stripeMode was stale, correct it now.
-  if (storedMode !== currentMode) {
-    await admin.firestore().collection('instructors').doc(uid).update({
-      stripeMode: currentMode
-    });
+  // Account was retrieved successfully. Sync authoritative Stripe values to Firestore.
+  // This fixes existing instructors who may be missing payoutsEnabled or payoutMethod.
+  const syncUpdate = {
+    chargesEnabled:           account.charges_enabled === true,
+    payoutsEnabled:           account.payouts_enabled === true,
+    stripeOnboardingComplete: account.details_submitted === true,
+    ...(storedMode !== currentMode ? { stripeMode: currentMode } : {})
+  };
+  // Only set payoutMethod to 'stripe' when the account is fully ready (avoid
+  // overwriting a valid 'wise' selection if someone had both set up).
+  if (account.charges_enabled && account.payouts_enabled && data.payoutMethod !== 'wise') {
+    syncUpdate.payoutMethod = 'stripe';
   }
+  await admin.firestore().collection('instructors').doc(uid).update(syncUpdate);
 
   let loginUrl = null;
   if (account.charges_enabled) {
@@ -1274,6 +1282,7 @@ exports.getStripeConnectDashboard = onCall(async (request) => {
   return {
     loginUrl,
     chargesEnabled: account.charges_enabled,
+    payoutsEnabled: account.payouts_enabled,
     stripeAccountId,
     needsLiveModeReconnect: false
   };
@@ -1359,13 +1368,15 @@ exports.createPaymentIntent = onCall(async (request) => {
   const instructor = instructorSnap.data();
   const { price_per_lesson, currency, stripeAccountId, payoutMethod, wiseEmail } = instructor;
 
-  // Determine which payout path is available
-  const stripeReady = stripeAccountId &&
-    instructor.chargesEnabled === true &&
-    instructor.payoutsEnabled === true;
+  // Wise-ready: explicit Wise payout method with a valid email
   const wiseReady = payoutMethod === 'wise' && wiseEmail;
 
-  if (!stripeReady && !wiseReady) {
+  // Stripe candidate: has a Stripe account ID (Firestore cached flags are secondary —
+  // the authoritative check is done against the Stripe API below to handle cases where
+  // chargesEnabled / payoutsEnabled haven't been synced to Firestore yet).
+  const stripeCandidate = !!stripeAccountId && !wiseReady;
+
+  if (!stripeCandidate && !wiseReady) {
     throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
   }
 
@@ -1386,14 +1397,24 @@ exports.createPaymentIntent = onCall(async (request) => {
   const normalizedCurrency = (currency || 'USD').toLowerCase();
   const stripeOptions      = idempotencyKey ? { idempotencyKey } : {};
 
-  let paymentIntent;
+  // Determine the definitive payout path
+  let stripeReady = false;
 
-  if (stripeReady) {
-    // Authoritative Stripe check (only for Stripe-connected instructors)
+  if (stripeCandidate) {
+    // Authoritative Stripe check — never trust only the Firestore cache for payment routing
     const account = await stripe.accounts.retrieve(stripeAccountId);
-    if (!account.charges_enabled || !account.payouts_enabled) {
+    stripeReady = account.charges_enabled === true && account.payouts_enabled === true;
+
+    if (!stripeReady) {
       throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
     }
+
+    // Back-fill Firestore so the UI and future checks stay in sync
+    await db.collection('instructors').doc(instructorId).update({
+      chargesEnabled: true,
+      payoutsEnabled: true,
+      payoutMethod:   'stripe'
+    });
 
     paymentIntent = await stripe.paymentIntents.create({
       amount: totalChargeCents,
