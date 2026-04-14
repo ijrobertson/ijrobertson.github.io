@@ -2727,17 +2727,17 @@ async function processWisePayouts(db) {
 }
 
 /**
- * Scheduled Cloud Function — runs daily at 06:00 UTC.
- * Automatically processes all pending Wise earnings.
+ * Scheduled Cloud Function — runs every Sunday at 00:00 UTC.
+ * Batches all pending Wise earnings and sends one transfer per instructor.
  */
-exports.scheduledWisePayouts = onSchedule('0 6 * * *', async () => {
-  console.log('[Wise] scheduledWisePayouts: daily run starting');
+exports.runWeeklyWisePayouts = onSchedule('0 0 * * 0', async () => {
+  console.log('[Wise] runWeeklyWisePayouts: weekly run starting');
   const db = admin.firestore();
   try {
     const results = await processWisePayouts(db);
-    console.log('[Wise] scheduledWisePayouts complete:', JSON.stringify(results));
+    console.log('[Wise] runWeeklyWisePayouts complete:', JSON.stringify(results));
   } catch (err) {
-    console.error('[Wise] scheduledWisePayouts fatal error:', err.message);
+    console.error('[Wise] runWeeklyWisePayouts fatal error:', err.message);
   }
 });
 
