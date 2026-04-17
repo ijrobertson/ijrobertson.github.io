@@ -1331,6 +1331,7 @@
             where,
             orderBy,
             onSnapshot,
+            serverTimestamp,
             onAuthStateChanged,
             signOut,
             updateDoc,
@@ -1851,7 +1852,7 @@
                         text: callText,
                         type: 'video_call_request',
                         channelName: channelName,
-                        timestamp: new Date(),
+                        timestamp: serverTimestamp(),
                         read: false
                     });
 
@@ -2044,7 +2045,7 @@
                 await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
                     senderId: currentUser.uid,
                     text: text,
-                    timestamp: new Date(),
+                    timestamp: serverTimestamp(),
                     read: false
                 });
 
@@ -2586,7 +2587,7 @@
                     audioDuration: Math.round(duration),
                     audioLang: recordingLanguage,   // BCP-47, e.g. 'pt-PT'
                     transcript: transcript || '',
-                    timestamp: new Date(),
+                    timestamp: serverTimestamp(),
                     read: false
                 });
 
