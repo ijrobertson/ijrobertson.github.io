@@ -126,31 +126,7 @@
             transform: translateY(-2px);
         }
 
-        .hero-btn-secondary {
-            background: transparent;
-            color: #fff;
-            border: 2px solid rgba(255,255,255,.7);
-            padding: .875rem 2rem;
-            border-radius: 6px;
-            font-family: "Montserrat", sans-serif;
-            font-weight: 700;
-            font-size: .95rem;
-            line-height: 1.4;
-            letter-spacing: .4px;
-            text-decoration: none;
-            display: inline-block;
-            transition: all .2s;
-        }
-
-        .hero-btn-secondary:hover {
-            background: rgba(255,255,255,.15);
-            color: #fff;
-            text-decoration: none;
-            border-color: #fff;
-            transform: translateY(-2px);
-        }
-
-        .hero-btn-outline {
+.hero-btn-outline {
             background: transparent;
             color: #fff;
             border: 2px solid rgba(255,255,255,.6);
@@ -1391,7 +1367,7 @@
                         <a href="messages" id="messagesLink" class="messages-link"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
                         <a href="bookings"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
                         <a href="friends"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
-                        <a href="student-dashboard" id="dashboardLink"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        <a href="student-dashboard" id="settingsLink"><i class="fas fa-cog"></i> Settings</a>
                         <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
                 </div>
@@ -1430,7 +1406,6 @@
             <div class="hero-button-container">
                 <a class="hero-btn-primary page-scroll" href="connect">FIND A BUD</a>
                 <a class="hero-btn-primary page-scroll" href="instructors">FIND AN INSTRUCTOR</a>
-                <a class="hero-btn-secondary page-scroll" href="login" id="tutorLoginBtn">TUTOR LOGIN</a>
             </div>
         </div>
     </header> <!-- end of header -->
@@ -2261,32 +2236,19 @@
                     try { userRole = localStorage.getItem('user_role_cache'); } catch {}
                 }
 
-                // Update navbar links based on role
-                const dashboardLink = document.getElementById('dashboardLink');
+                // Update Settings navbar link to point to the correct dashboard by role
+                const settingsLink = document.getElementById('settingsLink');
                 const myProfileLink = document.getElementById('myProfileLink');
-                const tutorLoginBtn = document.getElementById('tutorLoginBtn');
                 if (userRole === 'instructor') {
-                    if (dashboardLink) dashboardLink.href = 'dashboard';
+                    if (settingsLink) settingsLink.href = 'dashboard';
                     if (myProfileLink) myProfileLink.href = 'instructor-profile';
-                    if (tutorLoginBtn) { tutorLoginBtn.textContent = 'INSTRUCTOR DASHBOARD'; tutorLoginBtn.href = 'dashboard'; }
                 } else {
-                    if (dashboardLink) dashboardLink.href = 'student-dashboard';
+                    if (settingsLink) settingsLink.href = 'student-dashboard';
                     if (myProfileLink) myProfileLink.href = 'learner-profile';
-                    if (tutorLoginBtn) tutorLoginBtn.style.display = 'none';
                 }
 
                 // Cache role for offline fallback
                 if (userRole) { try { localStorage.setItem('user_role_cache', userRole); } catch {} }
-
-                // Auto-redirect logged-in users to their dashboard
-                if (userRole === 'instructor') {
-                    window.location.href = 'dashboard';
-                    return;
-                } else if (userRole === 'student') {
-                    window.location.href = 'student-dashboard';
-                    return;
-                }
-
 
                 // Live notification badge: unread messages + friend requests + new bookings
                 loadNotifications(user.uid);
