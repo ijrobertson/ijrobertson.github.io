@@ -35,8 +35,16 @@
 	$(function() {
 		$(document).on('click', 'a.page-scroll', function(event) {
 			var $anchor = $(this);
+			var href = $anchor.attr('href') || '';
+			// Only smooth-scroll when the anchor target exists on the current page.
+			// Cross-page links (e.g. "index#header") must navigate normally.
+			var hashIndex = href.indexOf('#');
+			if (hashIndex === -1) return; // no hash — let the browser navigate
+			var hash = href.substring(hashIndex);
+			var $target = $(hash);
+			if (!$target.length) return; // target not on this page — let the browser navigate
 			$('html, body').stop().animate({
-				scrollTop: $($anchor.attr('href')).offset().top
+				scrollTop: $target.offset().top
 			}, 600, 'easeInOutExpo');
 			event.preventDefault();
 		});
