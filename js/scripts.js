@@ -41,6 +41,12 @@
 			var hashIndex = href.indexOf('#');
 			if (hashIndex === -1) return; // no hash — let the browser navigate
 			var hash = href.substring(hashIndex);
+			// Bare '#' means scroll to top
+			if (hash === '#') {
+				$('html, body').stop().animate({ scrollTop: 0 }, 600, 'easeInOutExpo');
+				event.preventDefault();
+				return;
+			}
 			var $target = $(hash);
 			if (!$target.length) return; // target not on this page — let the browser navigate
 			$('html, body').stop().animate({
@@ -341,7 +347,7 @@
 
     /* Back To Top Button */
     // create the back to top button
-    $('body').prepend('<a href="body" class="back-to-top page-scroll">Back to Top</a>');
+    $('body').prepend('<a href="#" class="back-to-top page-scroll">Back to Top</a>');
     var amountScrolled = 700;
     $(window).scroll(function() {
         if ($(window).scrollTop() > amountScrolled) {
