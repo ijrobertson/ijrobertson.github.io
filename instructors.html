@@ -1145,6 +1145,12 @@
                     </select>
                 </div>
                 <div class="filter-group">
+                    <label for="countryFilter"><i class="fas fa-globe"></i> Country</label>
+                    <select id="countryFilter">
+                        <option value="">All Countries</option>
+                    </select>
+                </div>
+                <div class="filter-group">
                     <label for="priceFilter"><i class="fas fa-dollar-sign"></i> Max Price (per hour)</label>
                     <select id="priceFilter">
                         <option value="">Any Price</option>
@@ -1200,6 +1206,7 @@
 
         const instructorGrid = document.getElementById('instructorGrid');
         const languageFilter = document.getElementById('languageFilter');
+        const countryFilter = document.getElementById('countryFilter');
         const priceFilter = document.getElementById('priceFilter');
         const nameSearch = document.getElementById('nameSearch');
         const navProfilePic = document.getElementById('navProfilePic');
@@ -1313,6 +1320,7 @@
                     }
                 });
                 populateLanguageOptions(allInstructors);
+                populateCountryOptions(allInstructors);
                 renderInstructors();
 
                 // Auto-open booking modal if arriving from home page "Book Lesson"
@@ -1348,6 +1356,22 @@
             });
         }
 
+        function populateCountryOptions(data) {
+            const countries = new Set();
+            data.forEach(instructor => {
+                const c = instructor.native_country;
+                if (c && c.trim()) countries.add(c.trim());
+            });
+
+            countryFilter.innerHTML = `<option value="">All Countries</option>`;
+            Array.from(countries).sort().forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countryFilter.appendChild(option);
+            });
+        }
+
         function renderStarsHtml(rating) {
             const r = rating || 0;
             const full = Math.floor(r);
@@ -1369,6 +1393,7 @@
 
         function renderInstructors() {
             const selectedLang = languageFilter.value;
+            const selectedCountry = countryFilter.value;
             const maxPrice = parseFloat(priceFilter.value);
             instructorGrid.innerHTML = '';
 
@@ -1376,10 +1401,12 @@
             const filtered = allInstructors.filter(instructor => {
                 const teaches = instructor.languages_teaching || [];
                 const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
+                const country = (instructor.native_country || '').trim();
+                const matchesCountry = selectedCountry ? country === selectedCountry : true;
                 const price = parseFloat(instructor.price_per_lesson) || 0;
                 const matchesPrice = maxPrice ? price <= maxPrice : true;
                 const matchesName = searchTerm ? (instructor.name || '').toLowerCase().includes(searchTerm) : true;
-                return matchesLang && matchesPrice && matchesName;
+                return matchesLang && matchesCountry && matchesPrice && matchesName;
             });
 
             if (filtered.length === 0) {
@@ -1577,6 +1604,7 @@
 
         // Event listeners for filters
         languageFilter.addEventListener('change', renderInstructors);
+        countryFilter.addEventListener('change', renderInstructors);
         priceFilter.addEventListener('change', renderInstructors);
         nameSearch.addEventListener('input', renderInstructors);
 

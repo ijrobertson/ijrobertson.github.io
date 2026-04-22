@@ -400,7 +400,7 @@
                     <div class="admin-tab" data-tab="flagged">
                         Flagged Users <span class="tab-badge" id="flagBadge" style="display:none;">0</span>
                     </div>
-                    <div class="admin-tab" data-tab="users">All Users</div>
+                    <div class="admin-tab" data-tab="users">Students</div>
                     <div class="admin-tab" data-tab="bookings">Bookings</div>
                     <div class="admin-tab" data-tab="messages">
                         Messages <span class="tab-badge info" id="msgBadge" style="display:none;">0</span>
@@ -509,11 +509,11 @@
                     </div>
                 </div>
 
-                <!-- ── All Users Tab ──────────────────────────────────── -->
+                <!-- ── Students Tab ───────────────────────────────────── -->
                 <div class="tab-pane" id="tab-users">
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h5><i class="fas fa-users" style="color:#20bcba;margin-right:8px;"></i>All Students</h5>
+                            <h5><i class="fas fa-user-graduate" style="color:#20bcba;margin-right:8px;"></i>Students</h5>
                             <input type="text" class="search-input" id="userSearch" placeholder="Search by name or email…" oninput="filterUsers()">
                         </div>
                         <div style="overflow-x:auto;">
@@ -521,8 +521,8 @@
                                 <thead>
                                     <tr>
                                         <th>Student</th>
-                                        <th>Email</th>
-                                        <th>Learning</th>
+                                        <th>Languages Spoken</th>
+                                        <th>Languages Learning</th>
                                         <th>Joined</th>
                                         <th>Actions</th>
                                     </tr>
@@ -935,6 +935,10 @@
         let allUsersCache = [];
         let tabsLoaded = {};
 
+        // Guard: once admin access is confirmed, ignore transient null events from
+        // token refresh or browser tab-switching so the page doesn't redirect on its own.
+        let adminVerified = false;
+
         // ── Auth Check ───────────────────────────────────────────────────
         onAuthStateChanged(auth, async (user) => {
             const loadingScreen = document.getElementById('loadingScreen');
@@ -942,6 +946,7 @@
             const accessDenied  = document.getElementById('accessDenied');
 
             if (!user) {
+                if (adminVerified) return; // spurious null — stay on page
                 window.location.href = 'login';
                 return;
             }
@@ -973,6 +978,7 @@
             }
 
             // Show dashboard
+            adminVerified = true;
             loadingScreen.style.display = 'none';
             adminContent.style.display  = 'block';
 
@@ -1490,17 +1496,23 @@
             }
             tbody.innerHTML = users.map(u => {
                 const avatar   = u.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+                const spoken   = (u.languages_spoken || []).join(', ') || '—';
                 const learning = (u.languages_learning || []).join(', ') || '—';
                 const joined   = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
-                const flagIcon = u.flagged ? '🚩 ' : '';
+                const flagLabel = u.flagged ? 'Unflag' : 'Flag';
+                const flagIcon  = u.flagged ? '<span style="color:#dc3545;margin-right:4px;">🚩</span>' : '';
                 return `<tr>
-                    <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${flagIcon}${escHtml(u.name || u.email || u.id)}</td>
-                    <td>${escHtml(u.email || '—')}</td>
+                    <td>
+                        <img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">
+                        ${flagIcon}${escHtml(u.name || u.email || u.id)}<br>
+                        <small style="color:#999;">${escHtml(u.email || '')}</small>
+                    </td>
+                    <td>${escHtml(spoken)}</td>
                     <td>${escHtml(learning)}</td>
                     <td>${escHtml(joined)}</td>
                     <td>
-                        <button class="btn-flag mr-1" title="Flag user" onclick="doFlagUser('${u.id}','users','${escHtml(u.name || '')}',${!u.flagged})">
-                            ${u.flagged ? 'Unflag' : 'Flag'}
+                        <button class="btn-flag mr-1" title="${flagLabel} user" onclick="doFlagUser('${u.id}','users','${escHtml(u.name || '')}',${!u.flagged})">
+                            ${flagLabel}
                         </button>
                         <button class="btn-delete" onclick="doDelete('${u.id}','${escHtml(u.name || '')}')">Delete</button>
                     </td>
