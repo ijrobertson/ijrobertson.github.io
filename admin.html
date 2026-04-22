@@ -354,6 +354,10 @@
             <div class="container-fluid px-4">
                 <div class="row text-center">
                     <div class="col stat-card">
+                        <div class="stat-number" id="statAllUsers">—</div>
+                        <div class="stat-label">All Users</div>
+                    </div>
+                    <div class="col stat-card">
                         <div class="stat-number" id="statStudents">—</div>
                         <div class="stat-label">Students</div>
                     </div>
@@ -1026,7 +1030,8 @@
                     getDocs(collection(db, 'bookings'))
                 ]);
 
-                const students    = usersSnap.size;
+                const allUsers     = usersSnap.size;
+                const students    = usersSnap.docs.filter(d => { const r = d.data().role; return !r || r === 'student'; }).length;
                 const instructors = instrSnap.docs.filter(d => {
                     const s = d.data().status;
                     return !s || s === 'approved';
@@ -1050,6 +1055,7 @@
                     }
                 });
 
+                document.getElementById('statAllUsers').textContent    = allUsers;
                 document.getElementById('statStudents').textContent    = students;
                 document.getElementById('statInstructors').textContent = instructors;
                 document.getElementById('statPending').textContent     = pending;
@@ -1225,7 +1231,8 @@
                     const actions  = status === 'pending'
                         ? `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(displayName(i))}')">Approve</button>
                            <button class="btn-decline ml-1" onclick="doDecline('${i.id}','${escHtml(displayName(i))}')">Decline</button>`
-                        : `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(displayName(i))}')">Re-approve</button>`;
+                        : `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(displayName(i))}')">Re-approve</button>
+                       <button class="btn-decline ml-1" onclick="doRemoveApplication('${i.id}','${escHtml(displayName(i))}')">Remove</button>`;
                     const dataJson = escHtml(JSON.stringify(i));
                     return `<tr>
                         <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(displayName(i))}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
@@ -1452,6 +1459,12 @@
             showConfirm('Delete Account',
                 `Permanently delete <strong>${escHtml(name)}</strong>'s account? This cannot be undone.`,
                 async () => { await deleteUser({ userId: id }); await loadFlagged(); await loadUsers(); await loadStats(); tabsLoaded['users'] = false; }
+            );
+        };
+        window.doRemoveApplication = function(id, name) {
+            showConfirm('Remove Application',
+                `Permanently remove <strong>${escHtml(name)}</strong>'s application and account from the platform? This cannot be undone.`,
+                async () => { await deleteUser({ userId: id }); await loadApplications(); await loadStats(); }
             );
         };
 
@@ -1792,7 +1805,8 @@
                     if (b.status === 'confirmed' && b.paymentStatus === 'paid' && b.amount) revenue += b.amount;
                 });
 
-                document.getElementById('ov-students').textContent    = usersSnap.size;
+                const ovStudents = usersSnap.docs.filter(d => { const r = d.data().role; return !r || r === 'student'; }).length;
+                document.getElementById('ov-students').textContent    = ovStudents;
                 document.getElementById('ov-instructors').textContent = approved;
                 document.getElementById('ov-pending').textContent     = pending;
                 document.getElementById('ov-bookings').textContent    = bookingsSnap.size;
