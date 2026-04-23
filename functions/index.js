@@ -236,6 +236,7 @@ exports.sendBookingNotification = onDocumentCreated(
     try {
       const booking = event.data.data();
       const { instructorId, studentId, dateTime, amount, currency } = booking;
+      const bookingType = booking.bookingType || 'lesson';
 
       if (!instructorId) return null;
 
@@ -262,18 +263,301 @@ exports.sendBookingNotification = onDocumentCreated(
 
       // Format lesson date and time in the instructor's timezone (stored at booking time)
       const lessonDate = dateTime?.toDate ? dateTime.toDate() : new Date(dateTime);
-      const tz = booking.instructorTimezone || 'UTC';
+      const instructorTz = booking.instructorTimezone || 'UTC';
       const formattedDate = lessonDate.toLocaleDateString('en-US', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        timeZone: tz
+        timeZone: instructorTz
       });
       const formattedTime = lessonDate.toLocaleTimeString('en-US', {
         hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
-        timeZone: tz
+        timeZone: instructorTz
       });
 
-      // Format payment amount
+      // Format student-facing date/time in the student's timezone
+      const studentTz = booking.studentTimezone || instructorTz;
+      const studentFormattedDate = lessonDate.toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        timeZone: studentTz
+      });
+      const studentFormattedTime = lessonDate.toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+        timeZone: studentTz
+      });
+
+      // Format payment amount (only relevant for paid lessons)
       const amountStr = amount ? `$${(amount / 100).toFixed(2)} ${(currency || 'USD').toUpperCase()}` : '';
+
+      // ── Free trial: send trial-specific emails and return early ──────────
+      if (bookingType === 'free_trial') {
+        const trialInstructorResult = await resend.emails.send({
+          from: 'Lingua Bud <notifications@linguabud.com>',
+          to: instructor.email,
+          subject: `Free 15-Minute Trial Booked: ${studentName} on ${formattedDate}`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Free Trial Lesson Booked</title>
+              </head>
+              <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td align="center" style="padding: 40px 0;">
+                      <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <!-- Header -->
+                        <tr>
+                          <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #20bcba;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Lingua Bud</h1>
+                            <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">Language Learning Platform</p>
+                          </td>
+                        </tr>
+
+                        <!-- Content -->
+                        <tr>
+                          <td style="padding: 40px;">
+                            <h2 style="margin: 0 0 10px 0; color: #333333; font-size: 24px;">Free Trial Lesson Scheduled</h2>
+                            <p style="margin: 0 0 24px 0; color: #666666; font-size: 16px; line-height: 1.6;">
+                              Hi ${instructor.name || 'Instructor'},<br><br>
+                              A student has scheduled a <strong>free 15-minute trial lesson</strong> with you. This is a no-obligation introduction — please join the video call at the scheduled time to give them a warm welcome and a taste of your teaching style.
+                            </p>
+
+                            <!-- Trial Details Card -->
+                            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 24px; margin: 0 0 28px 0; border-left: 4px solid #20bcba;">
+                              <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                <strong>Student:</strong> ${studentName}
+                              </p>
+                              <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                <strong>Date:</strong> ${formattedDate}
+                              </p>
+                              <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                <strong>Time:</strong> ${formattedTime}
+                              </p>
+                              <p style="margin: 0; color: #333333; font-size: 16px;">
+                                <strong>Duration:</strong> 15 minutes (Free Trial)
+                              </p>
+                            </div>
+
+                            <!-- Tips box -->
+                            <div style="background-color: #fff8e1; border-radius: 8px; padding: 20px; margin: 0 0 28px 0; border-left: 4px solid #f9a825;">
+                              <p style="margin: 0 0 8px 0; color: #5d4037; font-size: 15px; font-weight: bold;">Tips for a great free trial</p>
+                              <ul style="margin: 0; padding-left: 20px; color: #666666; font-size: 14px; line-height: 1.8;">
+                                <li>Greet the student and briefly introduce yourself.</li>
+                                <li>Ask about their language goals and current level.</li>
+                                <li>Give a short demonstration of your teaching approach.</li>
+                                <li>Let them know how to book a full lesson afterward.</li>
+                              </ul>
+                            </div>
+
+                            <p style="margin: 0 0 30px 0; text-align: center;">
+                              <a href="https://linguabud.com/bookings"
+                                 style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
+                                View Upcoming Trial
+                              </a>
+                            </p>
+
+                            <p style="margin: 0; color: #999999; font-size: 14px; line-height: 1.5;">
+                              Questions? Contact us at <a href="mailto:support@linguabud.com" style="color: #20bcba; text-decoration: none;">support@linguabud.com</a>
+                            </p>
+                          </td>
+                        </tr>
+
+                        <!-- Footer / Signature -->
+                        <tr>
+                          <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; text-align: center;">
+                            <p style="margin: 0 0 6px; color: #333333; font-size: 14px; font-weight: bold;">Lingua Bud</p>
+                            <p style="margin: 0 0 4px; color: #999999; font-size: 12px;">Connect with language partners worldwide.</p>
+                            <p style="margin: 0; color: #999999; font-size: 12px;">© 2026 Lingua Bud &nbsp;|&nbsp; <a href="https://linguabud.com" style="color: #20bcba; text-decoration: none;">linguabud.com</a></p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </body>
+            </html>
+          `,
+          text: `
+Free Trial Lesson Scheduled
+
+Hi ${instructor.name || 'Instructor'},
+
+${studentName} has scheduled a free 15-minute trial lesson with you.
+
+Student: ${studentName}
+Date: ${formattedDate}
+Time: ${formattedTime}
+Duration: 15 minutes (Free Trial)
+
+Please join the video call at the scheduled time.
+
+View the trial on your dashboard: https://linguabud.com/bookings
+
+Questions? Email support@linguabud.com
+
+Lingua Bud | linguabud.com
+© 2026 Lingua Bud
+          `.trim()
+        });
+
+        if (trialInstructorResult.error) {
+          console.error('Resend API error (trial instructor):', trialInstructorResult.error);
+        } else {
+          await admin.firestore().collection('emailLog').add({
+            type: 'freeTrialNotificationInstructor',
+            instructorId,
+            studentId,
+            bookingId: event.params.bookingId,
+            instructorEmail: instructor.email,
+            emailId: trialInstructorResult.data?.id,
+            sentAt: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'sent'
+          });
+          console.log('Free trial notification sent to instructor:', instructor.email);
+        }
+
+        // Send confirmation email to student
+        if (studentEmail) {
+          const trialStudentResult = await resend.emails.send({
+            from: 'Lingua Bud <notifications@linguabud.com>',
+            to: studentEmail,
+            subject: `Your Free 15-Minute Trial is Confirmed with ${instructor.name || 'your instructor'} on ${studentFormattedDate}`,
+            html: `
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="utf-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>Free Trial Confirmed</title>
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+                  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td align="center" style="padding: 40px 0;">
+                        <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                          <!-- Header -->
+                          <tr>
+                            <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #20bcba;">
+                              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Lingua Bud</h1>
+                              <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">Language Learning Platform</p>
+                            </td>
+                          </tr>
+
+                          <!-- Content -->
+                          <tr>
+                            <td style="padding: 40px;">
+                              <h2 style="margin: 0 0 10px 0; color: #333333; font-size: 24px;">Your Free Trial is Confirmed!</h2>
+                              <p style="margin: 0 0 24px 0; color: #666666; font-size: 16px; line-height: 1.6;">
+                                Hi ${studentName},<br><br>
+                                Great news! Your <strong>free 15-minute trial lesson</strong> with <strong>${instructor.name || 'your instructor'}</strong> has been confirmed. There is no charge for this trial — it is a complimentary session to help you decide if this instructor is the right fit for your language learning journey.
+                              </p>
+
+                              <!-- Trial Details Card -->
+                              <div style="background-color: #f8f9fa; border-radius: 8px; padding: 24px; margin: 0 0 28px 0; border-left: 4px solid #20bcba;">
+                                <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                  <strong>Instructor:</strong> ${instructor.name || 'Your Instructor'}
+                                </p>
+                                <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                  <strong>Date:</strong> ${studentFormattedDate}
+                                </p>
+                                <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                  <strong>Time:</strong> ${studentFormattedTime}
+                                </p>
+                                <p style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">
+                                  <strong>Duration:</strong> 15 minutes
+                                </p>
+                                <p style="margin: 0; color: #2e7d32; font-size: 16px; font-weight: bold;">
+                                  <strong>Cost:</strong> FREE
+                                </p>
+                              </div>
+
+                              <!-- What to expect -->
+                              <div style="background-color: #e8f8f7; border-radius: 8px; padding: 20px; margin: 0 0 28px 0;">
+                                <p style="margin: 0 0 10px 0; color: #113448; font-size: 15px; font-weight: bold;">What to expect from your free trial</p>
+                                <ul style="margin: 0; padding-left: 20px; color: #555555; font-size: 14px; line-height: 1.8;">
+                                  <li>Meet your instructor and introduce yourself.</li>
+                                  <li>Share your language learning goals and current level.</li>
+                                  <li>Experience your instructor's teaching style first-hand.</li>
+                                  <li>Decide if you'd like to continue with full lessons — no pressure!</li>
+                                </ul>
+                              </div>
+
+                              <p style="margin: 0 0 30px 0; text-align: center;">
+                                <a href="https://linguabud.com/bookings"
+                                   style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
+                                  View My Trial Booking
+                                </a>
+                              </p>
+
+                              <p style="margin: 0; color: #999999; font-size: 14px; line-height: 1.5;">
+                                Questions? Contact us at <a href="mailto:support@linguabud.com" style="color: #20bcba; text-decoration: none;">support@linguabud.com</a>
+                              </p>
+                            </td>
+                          </tr>
+
+                          <!-- Footer / Signature -->
+                          <tr>
+                            <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; text-align: center;">
+                              <p style="margin: 0 0 6px; color: #333333; font-size: 14px; font-weight: bold;">Lingua Bud</p>
+                              <p style="margin: 0 0 4px; color: #999999; font-size: 12px;">Connect with language partners worldwide.</p>
+                              <p style="margin: 0; color: #999999; font-size: 12px;">© 2026 Lingua Bud &nbsp;|&nbsp; <a href="https://linguabud.com" style="color: #20bcba; text-decoration: none;">linguabud.com</a></p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+              </html>
+            `,
+            text: `
+Your Free Trial is Confirmed!
+
+Hi ${studentName},
+
+Your free 15-minute trial lesson with ${instructor.name || 'your instructor'} has been confirmed. There is no charge for this session.
+
+Instructor: ${instructor.name || 'Your Instructor'}
+Date: ${studentFormattedDate}
+Time: ${studentFormattedTime}
+Duration: 15 minutes
+Cost: FREE
+
+What to expect:
+- Meet your instructor and share your language goals.
+- Experience their teaching style in a relaxed, no-pressure session.
+- After your trial, decide if you'd like to continue with full lessons.
+
+View your booking: https://linguabud.com/bookings
+
+Questions? Email support@linguabud.com
+
+Lingua Bud | linguabud.com
+© 2026 Lingua Bud
+            `.trim()
+          });
+
+          if (trialStudentResult.error) {
+            console.error('Resend API error (trial student):', trialStudentResult.error);
+          } else {
+            await admin.firestore().collection('emailLog').add({
+              type: 'freeTrialConfirmationStudent',
+              instructorId,
+              studentId,
+              bookingId: event.params.bookingId,
+              studentEmail,
+              emailId: trialStudentResult.data?.id,
+              sentAt: admin.firestore.FieldValue.serverTimestamp(),
+              status: 'sent'
+            });
+            console.log('Free trial confirmation sent to student:', studentEmail);
+          }
+        }
+
+        return trialInstructorResult;
+      }
+      // ── End free trial branch ────────────────────────────────────────────
 
       const emailResult = await resend.emails.send({
         from: 'Lingua Bud <notifications@linguabud.com>',
