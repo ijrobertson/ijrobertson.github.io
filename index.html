@@ -39,175 +39,322 @@
     <link rel="icon" href="images/NuevoFavicon.png">
 
     <style>
-        /* Hero Section */
-        .header {
-            background: linear-gradient(to right, rgba(17, 52, 72, 0.1) 0%, rgba(17, 52, 72, 0.7) 70%, rgba(17, 52, 72, 0.85) 100%),
-                        url('../images/brazil.jpg') center center no-repeat !important;
-            background-size: cover !important;
-            background-position: left center !important;
-            padding: 0 !important;
-            min-height: 650px !important;
-            display: flex !important;
-            align-items: center !important;
-            position: relative !important;
-        }
-
-        .header .container-fluid {
-            width: 100%;
-        }
-
-        .hero-text-section {
-            padding: 3rem;
+        /* ===== HERO SECTION ===== */
+        .hero-section {
+            background: #f9fafb;
+            padding: 110px 2rem 80px;
+            min-height: 92vh;
             display: flex;
             align-items: center;
-            justify-content: center;
         }
 
-        .hero-text-content {
-            max-width: 600px;
+        .hero-container {
+            max-width: 1200px;
             margin: 0 auto;
-            text-align: center;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
         }
 
         .hero-title {
-            font-size: 3.2rem !important;
-            font-weight: 800 !important;
-            color: #ffffff !important;
-            margin-bottom: 1.5rem !important;
-            line-height: 1.2 !important;
-            text-align: center !important;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+            font-family: 'Segoe UI', 'Montserrat', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
         }
 
         .hero-description {
-            font-size: 1.2rem !important;
-            color: #f0f0f0 !important;
-            line-height: 1.7 !important;
-            margin-bottom: 2rem !important;
-            text-align: center !important;
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+            font-size: 1.2rem;
+            color: #4b5563;
+            line-height: 1.7;
+            margin-bottom: 2rem;
         }
 
-        .hero-button-container {
-            position: absolute;
-            bottom: 6rem;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            z-index: 10;
+        .hero-cta-group {
             display: flex;
-            flex-wrap: wrap;
             gap: 1rem;
-            justify-content: center;
-            white-space: nowrap;
+            flex-wrap: wrap;
+            margin-bottom: 1.75rem;
         }
 
         .hero-btn-primary {
             background: #20bcba;
-            color: #fff;
-            padding: .875rem 2rem;
-            border-radius: 6px;
-            font-family: "Montserrat", sans-serif;
+            color: #fff !important;
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
             font-weight: 700;
-            font-size: .95rem;
-            line-height: 1.4;
-            letter-spacing: .4px;
-            text-decoration: none;
+            font-size: 1rem;
+            text-decoration: none !important;
             display: inline-block;
-            transition: all .2s;
-            box-shadow: 0 4px 14px rgba(0,0,0,.25);
-            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(32, 188, 186, 0.35);
+            border: 2px solid #20bcba;
         }
 
         .hero-btn-primary:hover {
-            background: #1a9d9b;
-            color: #fff;
-            text-decoration: none;
+            background: #1aa9a7;
+            border-color: #1aa9a7;
+            color: #fff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(32, 188, 186, 0.4);
+        }
+
+        .hero-btn-secondary {
+            background: transparent;
+            color: #20bcba !important;
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none !important;
+            display: inline-block;
+            transition: all 0.2s;
+            border: 2px solid #20bcba;
+        }
+
+        .hero-btn-secondary:hover {
+            background: #20bcba;
+            color: #fff !important;
             transform: translateY(-2px);
         }
 
-.hero-btn-outline {
-            background: transparent;
-            color: #fff;
-            border: 2px solid rgba(255,255,255,.6);
-            padding: .875rem 2rem;
-            border-radius: 6px;
-            font-family: "Montserrat", sans-serif;
-            font-weight: 700;
-            font-size: .95rem;
-            line-height: 1.4;
-            letter-spacing: .4px;
-            text-decoration: none;
+        .hero-trust-tags {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .trust-tag {
+            background: #fff;
+            color: #374151;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        /* ===== VIDEO CALL MOCKUP ===== */
+        .video-call-mockup {
+            background: #12122a;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.12);
+            max-width: 500px;
+            margin-left: auto;
+        }
+
+        .vc-topbar {
+            background: #0d0d1e;
+            padding: 0.65rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .vc-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .vc-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
             display: inline-block;
-            transition: all .2s;
         }
 
-        .hero-btn-outline:hover {
-            background: rgba(255,255,255,.15);
-            border-color: #fff;
+        .vc-dot-red    { background: #ff5f57; }
+        .vc-dot-yellow { background: #febc2e; }
+        .vc-dot-green  { background: #28c840; }
+
+        .vc-live-badge {
+            background: #20bcba;
             color: #fff;
-            text-decoration: none;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
         }
 
-        /* Mobile responsive */
+        .vc-main-video {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            background: linear-gradient(145deg, #1e2d3d 0%, #2c4562 40%, #1a252f 100%);
+        }
+
+        .vc-main-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .vc-placeholder-main {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #1e2d3d 0%, #2c4562 40%, #1a252f 100%);
+        }
+
+        .vc-person-icon { opacity: 0.35; }
+
+        .vc-name-label {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            backdrop-filter: blur(4px);
+            z-index: 2;
+        }
+
+        .vc-student-video {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            width: 26%;
+            aspect-ratio: 4 / 3;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.18);
+            background: linear-gradient(145deg, #2c3e50 0%, #34495e 100%);
+            z-index: 3;
+        }
+
+        .vc-student-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .vc-placeholder-student {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #2c3e50 0%, #34495e 100%);
+        }
+
+        .vc-student-label {
+            position: absolute;
+            bottom: 0.2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.1rem 0.45rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 2;
+        }
+
+        /* ===== NAVBAR — HOMEPAGE OVERRIDES ===== */
+        /* At top of page on desktop: transparent bg + dark text over light hero */
+        @media (min-width: 768px) {
+            .navbar-custom:not(.top-nav-collapse) {
+                background: transparent !important;
+                box-shadow: none !important;
+                transition: background 0.3s ease, box-shadow 0.3s ease;
+            }
+            .navbar-custom:not(.top-nav-collapse) .nav-item .nav-link {
+                color: #111827 !important;
+            }
+            .navbar-custom:not(.top-nav-collapse) .nav-item .nav-link:hover,
+            .navbar-custom:not(.top-nav-collapse) .nav-item .nav-link.active {
+                color: #20bcba !important;
+            }
+            .navbar-custom:not(.top-nav-collapse) .navbar-toggler {
+                color: #111827 !important;
+            }
+            .navbar-custom:not(.top-nav-collapse) .dropdown-menu {
+                background-color: #fff;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+            .navbar-custom:not(.top-nav-collapse) .dropdown-item {
+                color: #111827;
+            }
+            .navbar-custom:not(.top-nav-collapse) .dropdown-item:hover .item-text {
+                color: #20bcba;
+            }
+        }
+
+        /* Scrolled: dark blue bg + white text + shadow */
+        .navbar-custom.top-nav-collapse {
+            background-color: #113448 !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* ===== HERO MOBILE ===== */
         @media (max-width: 991px) {
-            .header {
-                background: linear-gradient(to bottom, rgba(17, 52, 72, 0.3) 0%, rgba(17, 52, 72, 0.7) 100%),
-                            url('../images/brazil.jpg') left center no-repeat !important;
-                background-size: cover !important;
-                background-position: left center !important;
-                min-height: 550px !important;
+            .hero-section {
+                padding: 100px 1.5rem 60px;
+                min-height: auto;
             }
-
-            .hero-text-section {
-                justify-content: center;
-                text-align: center;
-                padding: 2rem 1.5rem;
+            .hero-container {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
             }
-
-            .hero-text-content {
-                max-width: 100%;
-            }
-
             .hero-title {
-                font-size: 3rem !important;
-                text-align: center !important;
+                font-size: 2rem;
+                text-align: center;
             }
-
             .hero-description {
-                font-size: 1.1rem !important;
-                text-align: center !important;
+                font-size: 1.05rem;
+                text-align: center;
             }
-
-            .hero-button-container {
-                bottom: 5rem;
-                gap: .75rem;
+            .hero-cta-group {
+                justify-content: center;
             }
-
-            .hero-btn-primary,
-            .hero-btn-outline {
-                padding: .875rem 1.5rem;
-                font-size: .9rem;
+            .hero-trust-tags {
+                justify-content: center;
+            }
+            .video-call-mockup {
+                max-width: 100%;
+                margin: 0 auto;
             }
         }
 
         @media (max-width: 576px) {
-            .header {
-                min-height: 500px !important;
+            .hero-section {
+                padding: 90px 1.25rem 50px;
             }
-
             .hero-title {
-                font-size: 2.75rem !important;
+                font-size: 1.85rem;
             }
-
             .hero-description {
-                font-size: 1rem !important;
+                font-size: 1rem;
             }
-
-            .hero-button-container {
+            .hero-cta-group {
                 flex-direction: column;
-                align-items: center;
-                bottom: 4rem;
+                align-items: stretch;
+            }
+            .hero-btn-primary,
+            .hero-btn-secondary {
+                text-align: center;
+            }
+            .trust-tag {
+                font-size: 0.78rem;
+                padding: 0.35rem 0.75rem;
             }
         }
 
@@ -1393,20 +1540,61 @@
 
 
     <!-- Header -->
-    <header id="header" class="header">
-        <div class="container-fluid">
-            <div class="row align-items-center" style="min-height: 600px;">
-                <div class="col-lg-12 hero-text-section">
-                    <div class="hero-text-content">
-                        <h1 class="hero-title">Connect. Learn. Speak.</h1>
-                        <p class="hero-description">Join a global community of language learners and teachers. Practice with native speakers, book professional lessons, and access free resources—all in one place.</p>
+    <header id="header" class="hero-section">
+        <div class="hero-container">
+
+            <!-- LEFT: Text content -->
+            <div class="hero-left">
+                <h1 class="hero-title">Learn Languages with Real People</h1>
+                <p class="hero-description">Join free language exchanges or book expert instructors — start with a free 15-minute trial lesson.</p>
+                <div class="hero-cta-group">
+                    <a class="hero-btn-primary" href="connect">Start Learning for Free</a>
+                    <a class="hero-btn-secondary" href="instructors">Browse Instructors</a>
+                </div>
+                <div class="hero-trust-tags">
+                    <span class="trust-tag">🌍 Native speakers</span>
+                    <span class="trust-tag">🎓 Verified instructors</span>
+                    <span class="trust-tag">🎁 Free 15-min trial</span>
+                </div>
+            </div>
+
+            <!-- RIGHT: Video call UI mockup -->
+            <div class="hero-right">
+                <div class="video-call-mockup">
+                    <!-- macOS-style title bar -->
+                    <div class="vc-topbar">
+                        <div class="vc-dots">
+                            <span class="vc-dot vc-dot-red"></span>
+                            <span class="vc-dot vc-dot-yellow"></span>
+                            <span class="vc-dot vc-dot-green"></span>
+                        </div>
+                        <div class="vc-live-badge">&#9679; Live</div>
+                    </div>
+                    <!-- Main video (instructor) -->
+                    <div class="vc-main-video">
+                        <!-- Placeholder — replace with: <img src="images/instructor-hero.jpg" alt="Instructor" class="vc-main-img"> -->
+                        <div class="vc-placeholder-main">
+                            <svg class="vc-person-icon" width="100" height="100" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="8" r="4.5"/>
+                                <path d="M3 21c0-4.97 4.03-8 9-8s9 3.03 9 8" stroke="white" stroke-width="0" fill="white"/>
+                            </svg>
+                        </div>
+                        <div class="vc-name-label">Ana (Instructor)</div>
+                        <!-- Student picture-in-picture -->
+                        <div class="vc-student-video">
+                            <!-- Placeholder — replace with: <img src="images/student-hero.jpg" alt="You" class="vc-student-img"> -->
+                            <div class="vc-placeholder-student">
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" style="opacity:0.4">
+                                    <circle cx="12" cy="8" r="4.5"/>
+                                    <path d="M3 21c0-4.97 4.03-8 9-8s9 3.03 9 8" fill="white"/>
+                                </svg>
+                            </div>
+                            <div class="vc-student-label">You</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="hero-button-container">
-                <a class="hero-btn-primary page-scroll" href="connect">FIND A BUD</a>
-                <a class="hero-btn-primary page-scroll" href="instructors">FIND AN INSTRUCTOR</a>
-            </div>
+
         </div>
     </header> <!-- end of header -->
     <!-- end of header -->
