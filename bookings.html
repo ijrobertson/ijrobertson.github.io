@@ -640,6 +640,16 @@
             font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
         .btn-cancel-lesson:hover { background: #d97706; color: #fff; }
+
+        /* Free trial indicator badge */
+        .trial-type-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background: #e8f8f7; color: #1a9d9b;
+            border: 1px solid rgba(32,188,186,0.4);
+            padding: 3px 10px; border-radius: 10px;
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em;
+            margin-bottom: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -1043,10 +1053,10 @@
             return booking.dateTime?.toDate ? booking.dateTime.toDate() : new Date(booking.dateTime);
         }
 
-        function getLessonStatus(lessonTime) {
+        function getLessonStatus(lessonTime, durationMinutes = 60) {
             const now = new Date();
-            const earlyJoin = new Date(lessonTime.getTime() - 5 * 60 * 1000);   // 5 min early
-            const lessonEnd = new Date(lessonTime.getTime() + 60 * 60 * 1000);  // +60 min
+            const earlyJoin = new Date(lessonTime.getTime() - 5 * 60 * 1000);
+            const lessonEnd = new Date(lessonTime.getTime() + durationMinutes * 60 * 1000);
             if (now >= earlyJoin && now < lessonEnd) return 'live';
             if (now >= lessonEnd) return 'completed';
             return 'upcoming';
@@ -1072,15 +1082,29 @@
         }
 
         function createLessonCard(booking, reviewedBookingIds = new Set()) {
+            const isTrial = booking.bookingType === 'free_trial';
+            const durationMinutes = isTrial ? 15 : (booking.durationMinutes || 60);
             const lessonTime = getLessonTime(booking);
-            const status = getLessonStatus(lessonTime);
+            const status = getLessonStatus(lessonTime, durationMinutes);
             const channelName = `lesson-${booking.id}`;
             const avatar = booking.instructorAvatar || DEFAULT_AVATAR;
             const otherName = booking.myRole === 'student'
                 ? (booking.instructorName || 'Instructor')
                 : (booking.studentName || 'Student');
-            const roleLabel = booking.myRole === 'student' ? 'Lesson with' : 'Teaching';
-            const amountStr = booking.myRole === 'student' ? formatAmount(booking.amount, booking.currency) : '';
+            const roleLabel = booking.myRole === 'student'
+                ? (isTrial ? 'Free Trial with' : 'Lesson with')
+                : (isTrial ? 'Trial with' : 'Teaching');
+            const lessonTypeLabel = isTrial ? 'Free 15-Minute Trial' : `${durationMinutes}-minute lesson`;
+
+            // Amount display: free for trials, formatted amount for paid lessons
+            let amountHtml = '';
+            if (booking.myRole === 'student') {
+                if (isTrial) {
+                    amountHtml = `<div class="lesson-detail-row"><i class="fas fa-gift" style="color:#2e7d32;"></i><span style="color:#2e7d32;font-weight:700;">Cost: Free</span></div>`;
+                } else if (booking.amount) {
+                    amountHtml = `<div class="lesson-detail-row"><i class="fas fa-receipt"></i><span>Paid: ${escapeHtml(formatAmount(booking.amount, booking.currency))}</span></div>`;
+                }
+            }
 
             let statusHtml, btnClass, btnHtml, btnDisabled;
 
@@ -1101,9 +1125,9 @@
                 btnDisabled = true;
             }
 
-            // Rate Lesson button for completed student lessons
+            // Rate Lesson button — only for completed paid student lessons, not free trials
             let reviewFooterHtml = '';
-            if (status === 'completed' && booking.myRole === 'student') {
+            if (status === 'completed' && booking.myRole === 'student' && !isTrial) {
                 if (reviewedBookingIds.has(booking.id)) {
                     reviewFooterHtml = `<button class="btn-rate reviewed" disabled><i class="fas fa-star"></i> Reviewed</button>`;
                 } else {
@@ -1116,6 +1140,7 @@
             card.dataset.bookingId = booking.id;
             card.dataset.lessonTime = lessonTime.toISOString();
             card.dataset.myRole = booking.myRole;
+            card.dataset.durationMinutes = durationMinutes;
 
             card.innerHTML = `
                 <div class="lesson-card-header">
@@ -1125,20 +1150,21 @@
                          alt="${escapeAttr(otherName)}">
                     <div class="lesson-instructor-info">
                         <h4>${escapeHtml(roleLabel)} ${escapeHtml(otherName)}</h4>
-                        <span>60-minute lesson</span>
+                        <span>${escapeHtml(lessonTypeLabel)}</span>
                     </div>
                 </div>
                 <div class="lesson-card-body">
                     <div class="lesson-status-wrapper">${statusHtml}</div>
+                    ${isTrial ? `<div><span class="trial-type-badge"><i class="fas fa-gift"></i> FREE TRIAL</span></div>` : ''}
                     <div class="lesson-detail-row">
                         <i class="fas fa-calendar-alt"></i>
                         <span>${escapeHtml(formatLessonTime(lessonTime))}</span>
                     </div>
                     <div class="lesson-detail-row">
                         <i class="fas fa-clock"></i>
-                        <span>Duration: 60 minutes</span>
+                        <span>Duration: ${durationMinutes} minutes</span>
                     </div>
-                    ${amountStr ? `<div class="lesson-detail-row"><i class="fas fa-receipt"></i><span>Paid: ${escapeHtml(amountStr)}</span></div>` : ''}
+                    ${amountHtml}
                 </div>
                 <div class="lesson-card-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                     <button class="${btnClass}"
@@ -1148,7 +1174,7 @@
                         ${btnHtml}
                     </button>
                     ${reviewFooterHtml}
-                    ${status === 'upcoming' ? `<button class="btn-cancel-lesson" data-cancel-id="${escapeAttr(booking.id)}" data-cancel-name="${escapeAttr(otherName)}" data-cancel-time="${escapeAttr(lessonTime.toISOString())}" data-cancel-amount="${booking.amount || ''}" data-cancel-currency="${escapeAttr(booking.currency || '')}" data-cancel-role="${escapeAttr(booking.myRole)}"><i class="fas fa-times"></i> Cancel</button>` : ''}
+                    ${status === 'upcoming' ? `<button class="btn-cancel-lesson" data-cancel-id="${escapeAttr(booking.id)}" data-cancel-name="${escapeAttr(otherName)}" data-cancel-time="${escapeAttr(lessonTime.toISOString())}" data-cancel-amount="${booking.amount || ''}" data-cancel-currency="${escapeAttr(booking.currency || '')}" data-cancel-role="${escapeAttr(booking.myRole)}" data-booking-type="${escapeAttr(booking.bookingType || 'lesson')}"><i class="fas fa-times"></i> Cancel</button>` : ''}
                 </div>
             `;
 
@@ -1168,7 +1194,8 @@
 
                 const lessonTime = new Date(card.dataset.lessonTime);
                 const channelName = `lesson-${bookingId}`;
-                const status = getLessonStatus(lessonTime);
+                const durationMinutes = parseInt(card.dataset.durationMinutes || '60');
+                const status = getLessonStatus(lessonTime, durationMinutes);
                 const statusWrapper = card.querySelector('.lesson-status-wrapper');
 
                 if (status === 'live') {
@@ -1291,10 +1318,13 @@
             const role = btn.dataset.cancelRole;
             const amount = parseInt(btn.dataset.cancelAmount) || 0;
             const currency = btn.dataset.cancelCurrency;
+            const bookingType = btn.dataset.bookingType || 'lesson';
             const hoursUntil = (time.getTime() - Date.now()) / (1000 * 60 * 60);
 
             let refundNote = '';
-            if (role === 'instructor') {
+            if (bookingType === 'free_trial') {
+                refundNote = '<span style="color:#20bcba;"><i class="fas fa-gift" style="width:16px;"></i></span> This is a <strong>free trial</strong> — no charge will be made.';
+            } else if (role === 'instructor') {
                 refundNote = '<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> A <strong>full refund</strong> will be issued to the student.';
             } else if (amount > 0) {
                 if (hoursUntil > 24) {
