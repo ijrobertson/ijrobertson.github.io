@@ -46,6 +46,8 @@
             min-height: 92vh;
             display: flex;
             align-items: center;
+            position: relative;
+            overflow: hidden;
         }
 
         .hero-container {
@@ -56,6 +58,8 @@
             grid-template-columns: 1fr 1fr;
             gap: 4rem;
             align-items: center;
+            position: relative;
+            z-index: 1;
         }
 
         .hero-title {
@@ -267,6 +271,60 @@
             border-radius: 4px;
             white-space: nowrap;
             z-index: 2;
+        }
+
+        /* ===== FLOATING MULTILINGUAL WORDS ===== */
+        @keyframes heroFloat {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-10px); }
+        }
+
+        @keyframes heroFloatCentered {
+            0%, 100% { transform: translateX(-50%) translateY(0px); }
+            50%       { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        .hero-float-word {
+            position: absolute;
+            color: #20bcba;
+            font-weight: 700;
+            opacity: 0.28;
+            letter-spacing: 0.8px;
+            font-size: 1.1rem;
+            font-family: 'Montserrat', 'Segoe UI', sans-serif;
+            animation: heroFloat 6s ease-in-out infinite;
+            pointer-events: none;
+            user-select: none;
+            z-index: 0;
+            white-space: nowrap;
+        }
+
+        .hero-float-hola     { top: 20%;    left: 8%;   animation-delay: 0s;   }
+        .hero-float-bonjour  { bottom: 20%; left: 5%;   animation-delay: 1s;   }
+        .hero-float-ciao     { top: 30%;    right: 8%;  animation-delay: 2s;   }
+        .hero-float-ola      { bottom: 12%; right: 12%; animation-delay: 0.5s; }
+        .hero-float-hello    { top: 8%;     right: 28%; animation-delay: 1.5s; }
+        .hero-float-hallo    { bottom: 10%; left: 50%;  animation-delay: 3s;   animation-name: heroFloatCentered; }
+        .hero-float-namaste  { top: 55%;    right: 22%; animation-delay: 2.5s; }
+        .hero-float-japanese { top: 12%;    left: 40%;  animation-delay: 4s;   }
+        .hero-float-korean   { bottom: 28%; right: 35%; animation-delay: 1.8s; }
+
+        @media (max-width: 768px) {
+            .hero-float-word {
+                font-size: 0.82rem;
+                opacity: 0.20;
+            }
+
+            .hero-float-hola    { top: 8%;    left: 3%;  bottom: auto; right: auto; }
+            .hero-float-hello   { top: 8%;    right: 3%; bottom: auto; left: auto;  }
+            .hero-float-bonjour { bottom: 4%; left: 3%;  top: auto;    right: auto; }
+            .hero-float-ciao    { bottom: 4%; right: 3%; top: auto;    left: auto;  }
+
+            .hero-float-ola,
+            .hero-float-hallo,
+            .hero-float-namaste,
+            .hero-float-japanese,
+            .hero-float-korean { display: none; }
         }
 
         /* ===== NAVBAR — HOMEPAGE OVERRIDES ===== */
@@ -1522,6 +1580,18 @@
 
     <!-- Header -->
     <header id="header" class="hero-section">
+
+        <!-- Floating multilingual greetings (decorative, behind content) -->
+        <span class="hero-float-word hero-float-hola">Hola</span>
+        <span class="hero-float-word hero-float-bonjour">Bonjour</span>
+        <span class="hero-float-word hero-float-ciao">Ciao</span>
+        <span class="hero-float-word hero-float-ola">Olá</span>
+        <span class="hero-float-word hero-float-hello">Hello</span>
+        <span class="hero-float-word hero-float-hallo">Hallo</span>
+        <span class="hero-float-word hero-float-namaste">Namaste</span>
+        <span class="hero-float-word hero-float-japanese">こんにちは</span>
+        <span class="hero-float-word hero-float-korean">안녕하세요</span>
+
         <div class="hero-container">
 
             <!-- LEFT: Text content -->
