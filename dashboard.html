@@ -516,8 +516,17 @@
     }
 
     .cal-day.empty,
-    .cal-day.past,
-    .cal-day.no-slots { color: #ccc; cursor: default; }
+    .cal-day.past { color: #ccc; cursor: default; }
+
+    .cal-day.no-slots {
+      color: #bbb;
+      cursor: pointer;
+    }
+
+    .cal-day.no-slots:hover {
+      background: #f0f0f0;
+      color: #888;
+    }
 
     .cal-day.today-marker {
       box-shadow: inset 0 0 0 2px #20bcba;
@@ -547,6 +556,184 @@
       color: #fff;
       text-decoration: none;
     }
+
+    .cal-day.has-override {
+      background: #fff3e0;
+      color: #e65100;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .cal-day.has-override:hover {
+      background: #ff9800;
+      color: #fff;
+    }
+
+    /* ── Date Override Modal ─────────────────── */
+    .date-override-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .date-override-modal {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .date-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .date-modal-header h4 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .date-modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: #e0e0e0;
+      color: #555;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+    }
+
+    .date-modal-close:hover { background: #ccc; }
+
+    .date-modal-body { padding: 1.25rem 1.5rem; }
+
+    .date-modal-weekly-ref {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 0.6rem 0.9rem;
+      margin-bottom: 1rem;
+      font-size: 0.83rem;
+      color: #666;
+    }
+
+    .date-modal-option {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #333;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .date-modal-option:hover {
+      border-color: #20bcba;
+      background: #f0fffe;
+    }
+
+    .date-modal-option input[type="radio"] {
+      margin: 0;
+      accent-color: #20bcba;
+      flex-shrink: 0;
+    }
+
+    .date-modal-slots-section {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .date-modal-add-slot-btn {
+      margin-top: 0.5rem;
+      padding: 0.4rem 1rem;
+      border: 1.5px dashed #20bcba;
+      border-radius: 20px;
+      background: #fff;
+      color: #20bcba;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .date-modal-add-slot-btn:hover {
+      background: #20bcba;
+      color: #fff;
+      border-style: solid;
+    }
+
+    .date-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e0e0e0;
+      background: #f8f9fa;
+    }
+
+    .date-modal-save-indicator {
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-right: auto;
+      min-width: 80px;
+    }
+
+    .date-modal-cancel-btn {
+      padding: 0.55rem 1.2rem;
+      border: 1.5px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+      color: #555;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .date-modal-cancel-btn:hover { border-color: #999; }
+
+    .date-modal-save-btn {
+      padding: 0.55rem 1.4rem;
+      border: none;
+      border-radius: 6px;
+      background: #20bcba;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .date-modal-save-btn:hover { background: #199c9a; }
+    .date-modal-save-btn:disabled { background: #aaa; cursor: default; }
 
     .blocked-dates-legend {
       display: flex;
@@ -1037,9 +1224,9 @@
     </div>
 
     <div style="margin-bottom: 2rem;">
-      <label style="display: block; margin-bottom: 0.5rem;">Block Specific Dates</label>
+      <label style="display: block; margin-bottom: 0.5rem;">Date Availability</label>
       <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-        Click any upcoming date to block it — all slots for that day will be hidden from students even if your weekly schedule has hours. Tap a blocked date again to unblock it. Great for travel, holidays, or personal days.
+        Click any upcoming date to set custom hours for that specific day, or to block it entirely. Custom hours override your weekly schedule for that date only — perfect for days when your availability is different from usual.
       </p>
       <div class="blocked-dates-calendar">
         <div class="blocked-cal-header">
@@ -1061,15 +1248,19 @@
         <div class="blocked-dates-legend">
           <div class="legend-item">
             <div class="legend-dot" style="background:#e8faf9;border:1px solid #20bcba;"></div>
-            Available (click to block)
+            Available
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#fff3e0;border:1px solid #ff9800;"></div>
+            Custom hours
           </div>
           <div class="legend-item">
             <div class="legend-dot" style="background:#fde8e8;border:1px solid #dc3545;"></div>
-            Blocked (click to unblock)
+            Blocked
           </div>
           <div class="legend-item">
             <div class="legend-dot" style="background:#f5f5f5;border:1px solid #ccc;"></div>
-            No scheduled hours
+            No weekly hours
           </div>
           <div class="legend-item" style="margin-left:auto;">
             <span id="blocked-save-indicator" style="font-size:0.82rem;font-weight:600;min-width:80px;text-align:right;"></span>
@@ -1122,6 +1313,58 @@
       <button class="btn-delete-account" id="open-delete-modal">
         <i class="fas fa-trash-alt"></i> Delete My Account
       </button>
+    </div>
+  </div>
+
+  <!-- Date Override Modal -->
+  <div class="date-override-backdrop" id="date-override-backdrop">
+    <div class="date-override-modal">
+      <div class="date-modal-header">
+        <h4 id="date-modal-title">—</h4>
+        <button type="button" class="date-modal-close" id="date-modal-close-btn" title="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="date-modal-body">
+        <div class="date-modal-weekly-ref" id="date-modal-weekly-ref"></div>
+
+        <label class="date-modal-option" for="date-modal-weekly">
+          <input type="radio" name="date-modal-mode" value="weekly" id="date-modal-weekly">
+          <span>
+            <strong>Use weekly schedule</strong><br>
+            <small style="color:#888;font-weight:400;">Follows your regular hours for this day of the week</small>
+          </span>
+        </label>
+
+        <label class="date-modal-option" for="date-modal-custom">
+          <input type="radio" name="date-modal-mode" value="custom" id="date-modal-custom">
+          <span>
+            <strong>Set custom hours for this date</strong><br>
+            <small style="color:#888;font-weight:400;">Override your weekly schedule for this specific day only</small>
+          </span>
+        </label>
+
+        <label class="date-modal-option" for="date-modal-blocked">
+          <input type="radio" name="date-modal-mode" value="blocked" id="date-modal-blocked">
+          <span>
+            <strong>Block this date</strong><br>
+            <small style="color:#888;font-weight:400;">Mark as unavailable — no students can book this day</small>
+          </span>
+        </label>
+
+        <div class="date-modal-slots-section" id="date-modal-slots-section" style="display:none;">
+          <div style="font-size:0.85rem;font-weight:600;color:#333;margin-bottom:0.6rem;">Custom hours for this date:</div>
+          <div id="date-modal-slots-container"></div>
+          <button type="button" class="date-modal-add-slot-btn" id="date-modal-add-slot-btn">
+            <i class="fas fa-plus"></i> Add time slot
+          </button>
+        </div>
+      </div>
+      <div class="date-modal-footer">
+        <span class="date-modal-save-indicator" id="date-modal-save-indicator"></span>
+        <button type="button" class="date-modal-cancel-btn" id="date-modal-cancel-btn">Cancel</button>
+        <button type="button" class="date-modal-save-btn" id="date-modal-save-btn">Save</button>
+      </div>
     </div>
   </div>
 
@@ -1287,6 +1530,8 @@
       friday: [], saturday: [], sunday: []
     };
     let blockedDates = []; // array of 'YYYY-MM-DD' strings in instructor's timezone
+    let dateOverrides = {}; // map of 'YYYY-MM-DD' → [{start, end}] for date-specific hours
+    let currentModalDateStr = null; // date string currently open in the date modal
     const _calToday = new Date();
     let calViewYear  = _calToday.getFullYear();
     let calViewMonth = _calToday.getMonth(); // 0-indexed
@@ -1402,6 +1647,21 @@
         if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
         renderBlockedDatesCalendar();
       };
+
+      // Date override modal wiring
+      document.getElementById('date-modal-close-btn').onclick = closeDateModal;
+      document.getElementById('date-modal-cancel-btn').onclick = closeDateModal;
+      document.getElementById('date-modal-save-btn').onclick = saveDateModal;
+      document.getElementById('date-override-backdrop').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('date-override-backdrop')) closeDateModal();
+      });
+      document.getElementById('date-modal-add-slot-btn').onclick = () => renderDateModalSlot('09:00', '17:00');
+      document.querySelectorAll('input[name="date-modal-mode"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          document.getElementById('date-modal-slots-section').style.display =
+            radio.value === 'custom' ? 'block' : 'none';
+        });
+      });
 
       // Auto-add languages when selected from dropdown
       document.getElementById('spokenLanguage').addEventListener('change', () => addLanguage('spoken'));
@@ -1768,7 +2028,7 @@
         });
         saves.push(
           setDoc(doc(db, 'instructor_availability', currentUser.uid),
-            { timezone, weeklySchedule, updatedAt: new Date().toISOString() },
+            { timezone, weeklySchedule, dateOverrides, updatedAt: new Date().toISOString() },
             { merge: true })
         );
 
@@ -1974,10 +2234,15 @@
       try {
         setStatus('Saving availability...', false);
 
-        // Purge blocked dates that are now in the past (keep the list clean)
+        // Purge past entries to keep data clean
         const todayStr = calDateStr(new Date());
         const cleanedBlockedDates = blockedDates.filter(d => d >= todayStr);
         blockedDates = cleanedBlockedDates;
+        const cleanedDateOverrides = {};
+        Object.entries(dateOverrides).forEach(([d, slots]) => {
+          if (d >= todayStr) cleanedDateOverrides[d] = slots;
+        });
+        dateOverrides = cleanedDateOverrides;
 
         await setDoc(
           doc(db, 'instructor_availability', currentUser.uid),
@@ -1985,6 +2250,7 @@
             timezone,
             weeklySchedule,
             blockedDates: cleanedBlockedDates,
+            dateOverrides: cleanedDateOverrides,
             updatedAt: new Date().toISOString()
           },
           { merge: true }
@@ -2014,6 +2280,7 @@
           };
 
           blockedDates = Array.isArray(data.blockedDates) ? data.blockedDates : [];
+          dateOverrides = (data.dateOverrides && typeof data.dateOverrides === 'object') ? data.dateOverrides : {};
 
           renderWeeklyScheduleGrid();
           renderBlockedDatesCalendar();
@@ -2065,11 +2332,12 @@
       for (let d = 1; d <= daysInMonth; d++) {
         const cellDate = new Date(calViewYear, calViewMonth, d);
         cellDate.setHours(0, 0, 0, 0);
-        const dateStr   = calDateStr(cellDate);
-        const isPast    = cellDate < today;
-        const isToday   = dateStr === todayStr;
-        const isBlocked = blockedDates.includes(dateStr);
-        const hasSlots  = calDayHasSlots(cellDate.getDay());
+        const dateStr     = calDateStr(cellDate);
+        const isPast      = cellDate < today;
+        const isToday     = dateStr === todayStr;
+        const isBlocked   = blockedDates.includes(dateStr);
+        const hasOverride = !isBlocked && dateOverrides.hasOwnProperty(dateStr);
+        const hasSlots    = calDayHasSlots(cellDate.getDay());
 
         const cell = document.createElement('div');
         cell.textContent = d;
@@ -2078,45 +2346,142 @@
           cell.className = 'cal-day past';
         } else if (isBlocked) {
           cell.className = 'cal-day blocked' + (isToday ? ' today-marker' : '');
-          cell.title = 'Blocked — click to unblock';
-          cell.onclick = () => toggleBlockDate(dateStr);
+          cell.title = 'Blocked — click to edit';
+          cell.onclick = () => openDateModal(dateStr);
+        } else if (hasOverride) {
+          cell.className = 'cal-day has-override' + (isToday ? ' today-marker' : '');
+          const overrideSlots = dateOverrides[dateStr];
+          const slotsSummary = overrideSlots.map(s => `${s.start}–${s.end}`).join(', ');
+          cell.title = `Custom hours: ${slotsSummary} — click to edit`;
+          cell.onclick = () => openDateModal(dateStr);
         } else if (!hasSlots) {
           cell.className = 'cal-day no-slots' + (isToday ? ' today-marker' : '');
-          cell.title = 'No scheduled hours this day';
+          cell.title = 'No weekly hours — click to add custom hours or block';
+          cell.onclick = () => openDateModal(dateStr);
         } else {
           cell.className = 'cal-day has-slots' + (isToday ? ' today-marker' : '');
-          cell.title = 'Available — click to block';
-          cell.onclick = () => toggleBlockDate(dateStr);
+          cell.title = 'Available — click to set custom hours or block';
+          cell.onclick = () => openDateModal(dateStr);
         }
 
         grid.appendChild(cell);
       }
     }
 
-    async function toggleBlockDate(dateStr) {
-      const idx = blockedDates.indexOf(dateStr);
-      if (idx === -1) {
-        blockedDates.push(dateStr);
+    // ── DATE OVERRIDE MODAL ───────────────────────────────────
+
+    function openDateModal(dateStr) {
+      currentModalDateStr = dateStr;
+
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      const title = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      document.getElementById('date-modal-title').textContent = title;
+
+      // Show weekly schedule reference for this day-of-week
+      const dayKey = CAL_DAY_NAMES[date.getDay()];
+      const weeklySlots = weeklyScheduleData[dayKey] || [];
+      const weeklyRef = document.getElementById('date-modal-weekly-ref');
+      if (weeklySlots.length === 0) {
+        weeklyRef.textContent = `Weekly schedule for ${capitalizeFirst(dayKey)}s: no hours set`;
       } else {
-        blockedDates.splice(idx, 1);
+        const slotsText = weeklySlots.map(s => `${s.start}–${s.end}`).join(', ');
+        weeklyRef.textContent = `Weekly schedule for ${capitalizeFirst(dayKey)}s: ${slotsText}`;
       }
+
+      // Determine current state and pre-select the matching radio
+      const isBlocked = blockedDates.includes(dateStr);
+      const hasOverride = dateOverrides.hasOwnProperty(dateStr);
+      const mode = isBlocked ? 'blocked' : (hasOverride ? 'custom' : 'weekly');
+      document.querySelector(`input[name="date-modal-mode"][value="${mode}"]`).checked = true;
+
+      // Pre-populate custom slots
+      const container = document.getElementById('date-modal-slots-container');
+      container.innerHTML = '';
+      if (hasOverride && dateOverrides[dateStr].length > 0) {
+        dateOverrides[dateStr].forEach(slot => renderDateModalSlot(slot.start, slot.end));
+      } else if (weeklySlots.length > 0) {
+        // Default custom slots to the weekly schedule as a starting point
+        weeklySlots.forEach(slot => renderDateModalSlot(slot.start, slot.end));
+      } else {
+        renderDateModalSlot('09:00', '17:00');
+      }
+
+      document.getElementById('date-modal-slots-section').style.display = mode === 'custom' ? 'block' : 'none';
+      document.getElementById('date-modal-save-indicator').textContent = '';
+      document.getElementById('date-override-backdrop').style.display = 'flex';
+    }
+
+    function closeDateModal() {
+      document.getElementById('date-override-backdrop').style.display = 'none';
+      currentModalDateStr = null;
+    }
+
+    function renderDateModalSlot(start, end) {
+      const container = document.getElementById('date-modal-slots-container');
+      const slotDiv = document.createElement('div');
+      slotDiv.className = 'time-slot';
+      slotDiv.style.marginBottom = '0.4rem';
+      slotDiv.innerHTML = `
+        <input type="time" class="slot-start" value="${start}" />
+        <span style="color:#666;">to</span>
+        <input type="time" class="slot-end" value="${end}" />
+        <button class="remove-slot-btn" type="button" title="Remove slot">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      container.appendChild(slotDiv);
+      slotDiv.querySelector('.remove-slot-btn').onclick = () => slotDiv.remove();
+    }
+
+    async function saveDateModal() {
+      if (!currentModalDateStr) return;
+      const dateStr = currentModalDateStr;
+      const mode = document.querySelector('input[name="date-modal-mode"]:checked').value;
+
+      // Remove from both lists first, then re-apply based on selection
+      const blockedIdx = blockedDates.indexOf(dateStr);
+      if (blockedIdx !== -1) blockedDates.splice(blockedIdx, 1);
+      delete dateOverrides[dateStr];
+
+      if (mode === 'blocked') {
+        blockedDates.push(dateStr);
+      } else if (mode === 'custom') {
+        const slots = [];
+        document.querySelectorAll('#date-modal-slots-container .time-slot').forEach(slotEl => {
+          const start = slotEl.querySelector('.slot-start').value;
+          const end   = slotEl.querySelector('.slot-end').value;
+          if (start && end && start < end) slots.push({ start, end });
+        });
+        if (slots.length > 0) {
+          dateOverrides[dateStr] = slots;
+        }
+      }
+      // 'weekly' — already cleared, falls back to weekly schedule
+
       renderBlockedDatesCalendar();
 
-      // Persist immediately — instructors shouldn't need to remember to hit Save
-      if (!currentUser) return;
-      const saveIndicator = document.getElementById('blocked-save-indicator');
+      // Persist immediately
+      if (!currentUser) { closeDateModal(); return; }
+      const saveIndicator = document.getElementById('date-modal-save-indicator');
+      const saveBtn = document.getElementById('date-modal-save-btn');
+      saveBtn.disabled = true;
+      saveIndicator.textContent = 'Saving…';
+      saveIndicator.style.color = '#888';
       try {
-        if (saveIndicator) { saveIndicator.textContent = 'Saving…'; saveIndicator.style.color = '#888'; }
         await setDoc(
           doc(db, 'instructor_availability', currentUser.uid),
-          { blockedDates: [...blockedDates] },
+          { blockedDates: [...blockedDates], dateOverrides: { ...dateOverrides } },
           { merge: true }
         );
-        if (saveIndicator) { saveIndicator.textContent = 'Saved ✓'; saveIndicator.style.color = '#20bcba'; }
-        setTimeout(() => { if (saveIndicator) saveIndicator.textContent = ''; }, 2000);
+        saveIndicator.textContent = 'Saved ✓';
+        saveIndicator.style.color = '#20bcba';
+        setTimeout(() => closeDateModal(), 800);
       } catch (e) {
-        console.error('Failed to save blocked date:', e);
-        if (saveIndicator) { saveIndicator.textContent = 'Save failed'; saveIndicator.style.color = '#dc3545'; }
+        console.error('Failed to save date override:', e);
+        saveIndicator.textContent = 'Save failed';
+        saveIndicator.style.color = '#dc3545';
+        saveBtn.disabled = false;
       }
     }
 

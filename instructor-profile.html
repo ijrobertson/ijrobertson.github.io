@@ -1086,7 +1086,11 @@
                     timeZone: instructorTZ, weekday: 'long'
                 }).format(date).toLowerCase();
 
-                const daySlots = instructorAvailability.weeklySchedule[instructorDayKey] || [];
+                // Date-specific overrides take priority over the weekly schedule
+                const overrides = instructorAvailability.dateOverrides || {};
+                const daySlots = overrides.hasOwnProperty(ymdInstructorTZ)
+                    ? overrides[ymdInstructorTZ]
+                    : (instructorAvailability.weeklySchedule[instructorDayKey] || []);
                 const slots = [];
                 daySlots.forEach(range => {
                     const [startHour, startMin] = range.start.split(':').map(Number);
@@ -1107,7 +1111,11 @@
             } else {
                 // ── Fallback: no instructor timezone stored (legacy behaviour) ──
                 if (blockedDates.includes(localDateStr(date))) return [];
-                const daySlots = instructorAvailability.weeklySchedule[dayKey] || [];
+                const overrides = instructorAvailability.dateOverrides || {};
+                const localYMD = localDateStr(date);
+                const daySlots = overrides.hasOwnProperty(localYMD)
+                    ? overrides[localYMD]
+                    : (instructorAvailability.weeklySchedule[dayKey] || []);
                 const slots = [];
                 daySlots.forEach(range => {
                     const [startHour, startMin] = range.start.split(':').map(Number);
