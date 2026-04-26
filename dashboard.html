@@ -391,6 +391,7 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .time-slot input[type="time"] {
@@ -399,6 +400,21 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       font-size: 0.9rem;
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 520px) {
+      .schedule-day-row {
+        grid-template-columns: 75px 1fr 36px;
+        gap: 0.5rem;
+      }
+      .day-label { font-size: 0.85rem; }
+      .time-slot input[type="time"] {
+        width: auto;
+        flex: 1;
+        min-width: 80px;
+        font-size: 0.85rem;
+      }
     }
 
     .add-slot-btn, .remove-slot-btn {
@@ -570,12 +586,17 @@
     }
 
     /* ── Date Override Modal ─────────────────── */
+    @keyframes dateModalSlideUp {
+      from { transform: translateY(16px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
     .date-override-backdrop {
       display: none;
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.5);
-      z-index: 9999;
+      z-index: 10000;
       align-items: center;
       justify-content: center;
       padding: 1rem;
@@ -586,17 +607,23 @@
       border-radius: 12px;
       width: 100%;
       max-width: 480px;
+      /* flex column so header+footer stay fixed and body scrolls */
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100dvh - 2rem);
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       overflow: hidden;
+      animation: dateModalSlideUp 0.2s ease;
     }
 
     .date-modal-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 1.25rem 1.5rem;
+      padding: 1.1rem 1.25rem;
       background: #f8f9fa;
       border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+      gap: 0.75rem;
     }
 
     .date-modal-header h4 {
@@ -604,11 +631,20 @@
       font-size: 1rem;
       font-weight: 700;
       color: #333;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .date-modal-close {
+      flex-shrink: 0;
       width: 32px;
       height: 32px;
+      min-width: 32px;
+      margin: 0;
+      padding: 0;
       border: none;
       border-radius: 50%;
       background: #e0e0e0;
@@ -619,11 +655,16 @@
       justify-content: center;
       font-size: 0.9rem;
       transition: background 0.15s;
+      margin-bottom: 0;
     }
 
     .date-modal-close:hover { background: #ccc; }
 
-    .date-modal-body { padding: 1.25rem 1.5rem; }
+    .date-modal-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
 
     .date-modal-weekly-ref {
       background: #f8f9fa;
@@ -632,11 +673,13 @@
       margin-bottom: 1rem;
       font-size: 0.83rem;
       color: #666;
+      line-height: 1.4;
+      word-break: break-word;
     }
 
     .date-modal-option {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 0.75rem;
       padding: 0.75rem 1rem;
       border: 1.5px solid #e0e0e0;
@@ -657,9 +700,13 @@
     }
 
     .date-modal-option input[type="radio"] {
-      margin: 0;
+      margin: 0.2rem 0 0;
       accent-color: #20bcba;
       flex-shrink: 0;
+      width: auto;
+      padding: 0;
+      border: none;
+      min-width: 0;
     }
 
     .date-modal-slots-section {
@@ -670,8 +717,25 @@
       border: 1px solid #e0e0e0;
     }
 
+    /* Time inputs inside the modal should flex to fill available width */
+    .date-modal-slots-section .time-slot {
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .date-modal-slots-section .time-slot input[type="time"] {
+      flex: 1;
+      min-width: 90px;
+      width: auto;
+    }
+
+    .date-modal-slots-section .time-slot .remove-slot-btn {
+      margin-bottom: 0;
+    }
+
     .date-modal-add-slot-btn {
       margin-top: 0.5rem;
+      margin-bottom: 0;
       padding: 0.4rem 1rem;
       border: 1.5px dashed #20bcba;
       border-radius: 20px;
@@ -681,6 +745,8 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s;
+      min-width: 0;
+      width: auto;
     }
 
     .date-modal-add-slot-btn:hover {
@@ -694,16 +760,18 @@
       align-items: center;
       justify-content: flex-end;
       gap: 0.75rem;
-      padding: 1rem 1.5rem;
+      padding: 0.9rem 1.25rem;
       border-top: 1px solid #e0e0e0;
       background: #f8f9fa;
+      flex-shrink: 0;
+      flex-wrap: wrap;
     }
 
     .date-modal-save-indicator {
       font-size: 0.82rem;
       font-weight: 600;
       margin-right: auto;
-      min-width: 80px;
+      min-width: 0;
     }
 
     .date-modal-cancel-btn {
@@ -716,6 +784,9 @@
       font-weight: 600;
       cursor: pointer;
       transition: border-color 0.15s;
+      min-width: 0;
+      width: auto;
+      margin-bottom: 0;
     }
 
     .date-modal-cancel-btn:hover { border-color: #999; }
@@ -730,26 +801,52 @@
       font-weight: 600;
       cursor: pointer;
       transition: background 0.15s;
+      min-width: 0;
+      width: auto;
+      margin-bottom: 0;
     }
 
     .date-modal-save-btn:hover { background: #199c9a; }
     .date-modal-save-btn:disabled { background: #aaa; cursor: default; }
 
+    /* Mobile: slide up from bottom as a sheet */
+    @media (max-width: 520px) {
+      .date-override-backdrop {
+        padding: 0;
+        align-items: flex-end;
+      }
+      .date-override-modal {
+        border-radius: 16px 16px 0 0;
+        max-width: 100%;
+        max-height: 92dvh;
+      }
+    }
+
     .blocked-dates-legend {
       display: flex;
-      gap: 1.5rem;
+      gap: 1rem;
       padding: 0.75rem 1.25rem;
       border-top: 1px solid #e0e0e0;
       background: #f8f9fa;
       flex-wrap: wrap;
+      row-gap: 0.5rem;
     }
 
     .legend-item {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: #666;
+    }
+
+    @media (max-width: 420px) {
+      .blocked-dates-legend {
+        gap: 0.6rem;
+        padding: 0.6rem 0.75rem;
+      }
+      .legend-item { font-size: 0.72rem; }
+      .container { padding: 1rem; }
     }
 
     .legend-dot {
@@ -2234,8 +2331,8 @@
       try {
         setStatus('Saving availability...', false);
 
-        // Purge past entries to keep data clean
-        const todayStr = calDateStr(new Date());
+        // Purge past entries to keep data clean (use instructor TZ for today)
+        const todayStr = todayInTZ();
         const cleanedBlockedDates = blockedDates.filter(d => d >= todayStr);
         blockedDates = cleanedBlockedDates;
         const cleanedDateOverrides = {};
@@ -2299,10 +2396,31 @@
         String(date.getDate()).padStart(2, '0');
     }
 
-    function calDayHasSlots(dayOfWeek) {
-      // dayOfWeek: 0=Sun … 6=Sat
-      const key = CAL_DAY_NAMES[dayOfWeek];
-      return (weeklyScheduleData[key] || []).length > 0;
+    // Returns today's YYYY-MM-DD in the instructor's selected timezone (falls back to local)
+    function todayInTZ() {
+      const tz = document.getElementById('timezone').value;
+      if (tz) {
+        try { return new Intl.DateTimeFormat('sv-SE', { timeZone: tz }).format(new Date()); } catch(e) {}
+      }
+      return calDateStr(new Date());
+    }
+
+    // Returns day-of-week key for a date in the instructor's selected timezone
+    function dayKeyInTZ(dateStr) {
+      const tz = document.getElementById('timezone').value;
+      const [y, m, d] = dateStr.split('-').map(Number);
+      // Use noon local time so the date is unlikely to cross a day boundary in the instructor TZ
+      const dt = new Date(y, m - 1, d, 12, 0, 0);
+      if (tz) {
+        try {
+          return new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'long' }).format(dt).toLowerCase();
+        } catch(e) {}
+      }
+      return CAL_DAY_NAMES[dt.getDay()];
+    }
+
+    function calDayHasSlots(dateStr) {
+      return (weeklyScheduleData[dayKeyInTZ(dateStr)] || []).length > 0;
     }
 
     function renderBlockedDatesCalendar() {
@@ -2315,10 +2433,7 @@
 
       grid.innerHTML = '';
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayStr = calDateStr(today);
-
+      const todayStr   = todayInTZ();
       const firstDOW   = new Date(calViewYear, calViewMonth, 1).getDay();
       const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
 
@@ -2330,14 +2445,15 @@
       }
 
       for (let d = 1; d <= daysInMonth; d++) {
-        const cellDate = new Date(calViewYear, calViewMonth, d);
-        cellDate.setHours(0, 0, 0, 0);
-        const dateStr     = calDateStr(cellDate);
-        const isPast      = cellDate < today;
+        // Use literal calendar coordinates as the date key — consistent with instructor-profile.html
+        const mm      = String(calViewMonth + 1).padStart(2, '0');
+        const dd      = String(d).padStart(2, '0');
+        const dateStr = `${calViewYear}-${mm}-${dd}`;
+        const isPast      = dateStr < todayStr;
         const isToday     = dateStr === todayStr;
         const isBlocked   = blockedDates.includes(dateStr);
         const hasOverride = !isBlocked && dateOverrides.hasOwnProperty(dateStr);
-        const hasSlots    = calDayHasSlots(cellDate.getDay());
+        const hasSlots    = calDayHasSlots(dateStr);
 
         const cell = document.createElement('div');
         cell.textContent = d;
@@ -2350,8 +2466,7 @@
           cell.onclick = () => openDateModal(dateStr);
         } else if (hasOverride) {
           cell.className = 'cal-day has-override' + (isToday ? ' today-marker' : '');
-          const overrideSlots = dateOverrides[dateStr];
-          const slotsSummary = overrideSlots.map(s => `${s.start}–${s.end}`).join(', ');
+          const slotsSummary = dateOverrides[dateStr].map(s => `${s.start}–${s.end}`).join(', ');
           cell.title = `Custom hours: ${slotsSummary} — click to edit`;
           cell.onclick = () => openDateModal(dateStr);
         } else if (!hasSlots) {
@@ -2373,13 +2488,15 @@
     function openDateModal(dateStr) {
       currentModalDateStr = dateStr;
 
+      // Build the title from the dateStr so it always shows the correct calendar date
       const [year, month, day] = dateStr.split('-').map(Number);
-      const date = new Date(year, month - 1, day);
-      const title = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      const dayName = dayKeyInTZ(dateStr);  // e.g. 'tuesday'
+      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const title = `${capitalizeFirst(dayName)}, ${monthNames[month - 1]} ${day}, ${year}`;
       document.getElementById('date-modal-title').textContent = title;
 
-      // Show weekly schedule reference for this day-of-week
-      const dayKey = CAL_DAY_NAMES[date.getDay()];
+      // Show weekly schedule reference for this day-of-week (uses instructor TZ)
+      const dayKey = dayKeyInTZ(dateStr);
       const weeklySlots = weeklyScheduleData[dayKey] || [];
       const weeklyRef = document.getElementById('date-modal-weekly-ref');
       if (weeklySlots.length === 0) {
@@ -2409,6 +2526,8 @@
 
       document.getElementById('date-modal-slots-section').style.display = mode === 'custom' ? 'block' : 'none';
       document.getElementById('date-modal-save-indicator').textContent = '';
+      // Always re-enable the save button when opening (it may be disabled from a previous save)
+      document.getElementById('date-modal-save-btn').disabled = false;
       document.getElementById('date-override-backdrop').style.display = 'flex';
     }
 
