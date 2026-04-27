@@ -2161,24 +2161,23 @@
             }
 
             // ── User registration stats ───────────────────────────────────
+            // Use only the users collection (matches the "All Users" stat in the header)
+            // to avoid double-counting people who exist in both users and instructors.
             try {
-                const [usersSnap, instrSnap] = await Promise.all([
-                    getDocs(collection(db, 'users')),
-                    getDocs(collection(db, 'instructors'))
-                ]);
+                const usersSnap = await getDocs(collection(db, 'users'));
 
-                const allCreatedAt = [
-                    ...usersSnap.docs.map(d => d.data().createdAt),
-                    ...instrSnap.docs.map(d => d.data().createdAt)
-                ];
-
-                const newToday = allCreatedAt.filter(v => { const d = getDate(v); return d && d >= startOfToday; }).length;
-                const newMonth = allCreatedAt.filter(v => { const d = getDate(v); return d && d >= startOfMonth; }).length;
-                const approvedInstr = instrSnap.docs.filter(d => { const s = d.data().status; return !s || s === 'approved'; }).length;
+                const newToday = usersSnap.docs.filter(d => {
+                    const dt = getDate(d.data().createdAt);
+                    return dt && dt >= startOfToday;
+                }).length;
+                const newMonth = usersSnap.docs.filter(d => {
+                    const dt = getDate(d.data().createdAt);
+                    return dt && dt >= startOfMonth;
+                }).length;
 
                 document.getElementById('an-users-today').textContent = newToday;
                 document.getElementById('an-users-month').textContent = newMonth;
-                document.getElementById('an-users-total').textContent = usersSnap.size + approvedInstr;
+                document.getElementById('an-users-total').textContent = usersSnap.size;
             } catch(e) { console.error('Analytics: user stats error', e); }
 
             // ── Booking & revenue stats ───────────────────────────────────
