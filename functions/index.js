@@ -1017,6 +1017,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
       await resend.emails.send({
         from: 'Lingua Bud <notifications@linguabud.com>',
         to: snap.data().email,
+        bcc: 'ianjack1643@gmail.com',
         subject: 'Welcome to Lingua Bud — You\'re approved as an instructor!',
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f4f7f6;">

@@ -485,12 +485,13 @@
                                         <th>Languages</th>
                                         <th>Rate</th>
                                         <th>Joined</th>
+                                        <th>Instructor Type</th>
                                         <th>Details</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="activeInstructorsBody">
-                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                    <tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1391,7 +1392,7 @@
         // ── Active Instructors (approved / legacy) ────────────────────────
         async function loadActiveInstructors() {
             const tbody = document.getElementById('activeInstructorsBody');
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
             try {
                 const snap = await getDocs(collection(db, 'instructors'));
                 const active = snap.docs
@@ -1400,7 +1401,7 @@
                     .sort((a, b) => (a.name || a.email || '').localeCompare(b.name || b.email || ''));
 
                 if (active.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i>No active instructors yet.</div></td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-users"></i>No active instructors yet.</div></td></tr>';
                     return;
                 }
 
@@ -1410,17 +1411,21 @@
                     const joined = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : 'Legacy';
                     const avatar = i.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
                     const dataJson = escHtml(JSON.stringify(i));
+                    const instructorTypeBadge = i.isFoundingInstructor
+                        ? `<span style="background:#fff8e1;border:1px solid #ffe082;color:#b45309;border-radius:12px;padding:3px 10px;font-size:0.78rem;font-weight:600;white-space:nowrap;">&#9733; Founding (90%)</span>`
+                        : `<span style="background:#f0fffe;border:1px solid #99e6e5;color:#0f766e;border-radius:12px;padding:3px 10px;font-size:0.78rem;font-weight:600;white-space:nowrap;">Standard (85%)</span>`;
                     return `<tr>
                         <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(displayName(i))}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
                         <td>${escHtml(langs)}</td>
                         <td>${escHtml(price)}</td>
                         <td>${escHtml(joined)}</td>
+                        <td>${instructorTypeBadge}</td>
                         <td><button class="btn-detail-view" onclick="openAppDetail(this)" data-instructor="${dataJson}">View Details</button></td>
                         <td><button class="btn-decline" onclick="doDecline('${i.id}','${escHtml(displayName(i))}')">Revoke</button></td>
                     </tr>`;
                 }).join('');
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="6" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
             }
         }
         window.loadActiveInstructors = loadActiveInstructors;
