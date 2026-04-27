@@ -289,6 +289,20 @@
             font-weight: 600; cursor: pointer; transition: background 0.2s;
         }
         .btn-detail-view:hover { background: #e0e0e0; }
+
+        /* Analytics section labels */
+        .analytics-section-label {
+            font-weight: 700; color: #113448; font-size: 0.9rem;
+            margin: 1.5rem 0 0.85rem; padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .analytics-section-label:first-child { margin-top: 0; }
+        .analytics-note {
+            font-size: 0.78rem; color: #aaa; text-align: center;
+            margin: -0.25rem 0 1.5rem; padding: 0.4rem 1rem;
+            background: #fafafa; border-radius: 6px; border: 1px solid #f0f0f0;
+        }
+        .analytics-na { opacity: 0.55; }
     </style>
 </head>
 <body>
@@ -401,6 +415,7 @@
                         Flagged Users <span class="tab-badge" id="flagBadge" style="display:none;">0</span>
                     </div>
                     <div class="admin-tab" data-tab="users">Students</div>
+                    <div class="admin-tab" data-tab="all-users">All Users</div>
                     <div class="admin-tab" data-tab="bookings">Bookings</div>
                     <div class="admin-tab" data-tab="messages">
                         Messages <span class="tab-badge info" id="msgBadge" style="display:none;">0</span>
@@ -411,6 +426,7 @@
                     <div class="admin-tab" data-tab="wise-payouts">
                         Wise Payouts <span class="tab-badge warning" id="wisePayoutsBadge" style="display:none;">0</span>
                     </div>
+                    <div class="admin-tab" data-tab="analytics">Analytics</div>
                     <div class="admin-tab" data-tab="overview">Overview</div>
                 </div>
             </div>
@@ -529,6 +545,34 @@
                                 </thead>
                                 <tbody id="usersBody">
                                     <tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── All Users Tab ─────────────────────────────────── -->
+                <div class="tab-pane" id="tab-all-users">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-users" style="color:#20bcba;margin-right:8px;"></i>All Users <span id="allUsersCountBadge" style="font-size:0.8rem;font-weight:600;color:#20bcba;"></span></h5>
+                            <input type="text" class="search-input" id="allUsersSearch" placeholder="Search by name or email…" oninput="filterAllUsers()">
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Photo &amp; Name</th>
+                                        <th>Email</th>
+                                        <th>Type</th>
+                                        <th>Languages Speaking</th>
+                                        <th>Languages Learning</th>
+                                        <th>Date Joined</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allUsersBody">
+                                    <tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -756,6 +800,91 @@
                     </div>
                 </div>
 
+                <!-- ── Analytics Tab ─────────────────────────────────── -->
+                <div class="tab-pane" id="tab-analytics">
+
+                    <!-- User Registrations -->
+                    <h6 class="analytics-section-label"><i class="fas fa-user-plus" style="color:#20bcba;margin-right:6px;"></i>User Registrations</h6>
+                    <div class="overview-grid mb-4">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-user-plus"></i></div>
+                            <div><div class="mini-stat-val" id="an-users-today">—</div><div class="mini-stat-lbl">New Users Today</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-calendar-alt"></i></div>
+                            <div><div class="mini-stat-val" id="an-users-month">—</div><div class="mini-stat-lbl">New Users This Month</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-purple"><i class="fas fa-users"></i></div>
+                            <div><div class="mini-stat-val" id="an-users-total">—</div><div class="mini-stat-lbl">Total Registered Users</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Messaging -->
+                    <h6 class="analytics-section-label"><i class="fas fa-comments" style="color:#3b82f6;margin-right:6px;"></i>Messaging</h6>
+                    <div class="overview-grid mb-2">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-comment"></i></div>
+                            <div><div class="mini-stat-val" id="an-msgs-today">—</div><div class="mini-stat-lbl">Messages Sent Today</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-comments"></i></div>
+                            <div><div class="mini-stat-val" id="an-msgs-month">—</div><div class="mini-stat-lbl">Messages Sent This Month</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-green"><i class="fas fa-comment-dots"></i></div>
+                            <div><div class="mini-stat-val" id="an-convos-total">—</div><div class="mini-stat-lbl">Total Conversations</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Lessons & Revenue -->
+                    <h6 class="analytics-section-label"><i class="fas fa-calendar-check" style="color:#10b981;margin-right:6px;"></i>Lessons &amp; Revenue</h6>
+                    <div class="overview-grid mb-4">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-green"><i class="fas fa-calendar-check"></i></div>
+                            <div><div class="mini-stat-val" id="an-lessons-today">—</div><div class="mini-stat-lbl">Lessons Booked Today</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-yellow"><i class="fas fa-calendar-alt"></i></div>
+                            <div><div class="mini-stat-val" id="an-lessons-month">—</div><div class="mini-stat-lbl">Lessons Booked This Month</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-green"><i class="fas fa-dollar-sign"></i></div>
+                            <div><div class="mini-stat-val" id="an-revenue-today">—</div><div class="mini-stat-lbl">Revenue Today</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-purple"><i class="fas fa-dollar-sign"></i></div>
+                            <div><div class="mini-stat-val" id="an-revenue-month">—</div><div class="mini-stat-lbl">Revenue This Month</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Video Calls -->
+                    <h6 class="analytics-section-label"><i class="fas fa-video" style="color:#3b82f6;margin-right:6px;"></i>Video Calls</h6>
+                    <div class="overview-grid mb-2">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-video"></i></div>
+                            <div><div class="mini-stat-val" id="an-calls-today">—</div><div class="mini-stat-lbl">Lessons Scheduled Today</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-video"></i></div>
+                            <div><div class="mini-stat-val" id="an-calls-month">—</div><div class="mini-stat-lbl">Lessons Scheduled This Month</div></div>
+                        </div>
+                        <div class="mini-stat analytics-na">
+                            <div class="mini-stat-icon icon-red"><i class="fas fa-clock"></i></div>
+                            <div><div class="mini-stat-val" id="an-call-mins-today">N/A</div><div class="mini-stat-lbl">Call Minutes Today</div></div>
+                        </div>
+                        <div class="mini-stat analytics-na">
+                            <div class="mini-stat-icon icon-red"><i class="fas fa-clock"></i></div>
+                            <div><div class="mini-stat-val" id="an-call-hours-month">N/A</div><div class="mini-stat-lbl">Call Hours This Month</div></div>
+                        </div>
+                    </div>
+                    <p class="analytics-note">
+                        <i class="fas fa-info-circle"></i>
+                        Exact call duration requires Agora Cloud Recording API integration. Lesson counts are shown as a proxy for video call activity.
+                    </p>
+
+                </div>
+
                 <div class="tab-pane" id="tab-overview">
                     <div class="overview-grid" id="overviewGrid">
                         <div class="mini-stat">
@@ -918,7 +1047,7 @@
         import {
             auth, db, functions,
             onAuthStateChanged, signOut,
-            doc, getDoc, getDocs, deleteDoc, collection, query, where, orderBy, limit,
+            doc, getDoc, getDocs, deleteDoc, collection, collectionGroup, query, where, orderBy, limit,
             httpsCallable
         } from './lib/firebaseClient.js';
 
@@ -933,6 +1062,7 @@
 
         // Cache
         let allUsersCache = [];
+        let allCombinedCache = [];
         let tabsLoaded = {};
 
         // Guard: once admin access is confirmed, ignore transient null events from
@@ -1021,6 +1151,8 @@
                     if (name === 'messages')      loadMessages();
                     if (name === 'reports')       loadReports();
                     if (name === 'wise-payouts')  loadWisePayouts();
+                    if (name === 'all-users')     loadAllUsers();
+                    if (name === 'analytics')     loadAnalytics();
                     if (name === 'overview')      loadOverview();
                 }
             });
@@ -1536,8 +1668,99 @@
         window.doFlagUser = function(id, col, name, shouldFlag) {
             const action = shouldFlag ? 'Flag' : 'Unflag';
             showConfirm(`${action} User`, `${action} <strong>${escHtml(name)}</strong>?`,
-                async () => { await flagUser({ userId: id, userCollection: col, flagged: shouldFlag }); tabsLoaded['users'] = false; await loadUsers(); await loadStats(); },
+                async () => { await flagUser({ userId: id, userCollection: col, flagged: shouldFlag }); tabsLoaded['users'] = false; tabsLoaded['all-users'] = false; await loadUsers(); await loadStats(); },
                 !shouldFlag
+            );
+        };
+
+        // ── All Users (combined students + instructors) ───────────────────
+        async function loadAllUsers() {
+            const tbody = document.getElementById('allUsersBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const [usersSnap, instrSnap] = await Promise.all([
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'instructors'))
+                ]);
+
+                const instructors = instrSnap.docs.map(d => ({ id: d.id, _col: 'instructors', ...d.data() }));
+                const instrIds = new Set(instructors.map(i => i.id));
+                const students = usersSnap.docs
+                    .map(d => ({ id: d.id, _col: 'users', ...d.data() }))
+                    .filter(u => !instrIds.has(u.id));
+
+                allCombinedCache = [...instructors, ...students].sort((a, b) =>
+                    (a.name || a.email || '').localeCompare(b.name || b.email || '')
+                );
+
+                const countEl = document.getElementById('allUsersCountBadge');
+                if (countEl) countEl.textContent = `(${allCombinedCache.length})`;
+                renderAllUsersTable(allCombinedCache);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadAllUsers = loadAllUsers;
+
+        function renderAllUsersTable(users) {
+            const tbody = document.getElementById('allUsersBody');
+            const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-users"></i>No users found.</div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = users.map(u => {
+                const avatar   = u.avatar_url || defaultAvatar;
+                const isInstr  = u._col === 'instructors';
+                const spoken   = (u.languages_spoken || []).join(', ') || '—';
+                const learning = (u.languages_learning || []).join(', ') || (isInstr ? '—' : '—');
+                const joined   = u.createdAt
+                    ? (u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt)).toLocaleDateString()
+                    : '—';
+                const typeStyle = isInstr
+                    ? 'background:#e3f0ff;color:#1e40af;'
+                    : 'background:#f0f9ff;color:#0369a1;';
+                const typeLabel = isInstr ? 'Instructor' : 'Student';
+                const flagIcon  = u.flagged ? '<span style="color:#dc3545;font-size:0.85rem;margin-right:4px;">🚩</span>' : '';
+                const flagLabel = u.flagged ? 'Unflag' : 'Flag';
+                return `<tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <img src="${escHtml(avatar)}" class="table-avatar" style="width:42px;height:42px;flex-shrink:0;">
+                            <span>${flagIcon}<strong>${escHtml(u.name || '—')}</strong></span>
+                        </div>
+                    </td>
+                    <td><small style="color:#666;">${escHtml(u.email || '—')}</small></td>
+                    <td><span class="status-badge" style="${typeStyle}">${typeLabel}</span></td>
+                    <td><small>${escHtml(spoken)}</small></td>
+                    <td><small>${escHtml(learning)}</small></td>
+                    <td><small>${escHtml(joined)}</small></td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn-flag mr-1" onclick="doFlagUser('${u.id}','${u._col}','${escHtml(u.name || '')}',${!u.flagged})">${flagLabel}</button>
+                        <button class="btn-delete" onclick="doDeleteFromAllUsers('${u.id}','${escHtml(u.name || '')}')">Delete</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        window.filterAllUsers = function() {
+            const q = document.getElementById('allUsersSearch').value.toLowerCase();
+            const filtered = allCombinedCache.filter(u =>
+                (u.name || '').toLowerCase().includes(q) ||
+                (u.email || '').toLowerCase().includes(q)
+            );
+            renderAllUsersTable(filtered);
+        };
+
+        window.doDeleteFromAllUsers = function(id, name) {
+            showConfirm('Delete Account',
+                `Permanently delete <strong>${escHtml(name)}</strong>'s account? This cannot be undone.`,
+                async () => {
+                    await deleteUser({ userId: id });
+                    tabsLoaded['users'] = false; tabsLoaded['all-users'] = false;
+                    await loadAllUsers();
+                    await loadStats();
+                }
             );
         };
 
@@ -1925,6 +2148,85 @@
                 btn.innerHTML = '<i class="fas fa-paper-plane"></i> Run Wise Payouts Now';
             }
         };
+
+        // ── Analytics ────────────────────────────────────────────────────
+        async function loadAnalytics() {
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            function getDate(val) {
+                if (!val) return null;
+                return val.toDate ? val.toDate() : new Date(val);
+            }
+
+            // ── User registration stats ───────────────────────────────────
+            try {
+                const [usersSnap, instrSnap] = await Promise.all([
+                    getDocs(collection(db, 'users')),
+                    getDocs(collection(db, 'instructors'))
+                ]);
+
+                const allCreatedAt = [
+                    ...usersSnap.docs.map(d => d.data().createdAt),
+                    ...instrSnap.docs.map(d => d.data().createdAt)
+                ];
+
+                const newToday = allCreatedAt.filter(v => { const d = getDate(v); return d && d >= startOfToday; }).length;
+                const newMonth = allCreatedAt.filter(v => { const d = getDate(v); return d && d >= startOfMonth; }).length;
+                const approvedInstr = instrSnap.docs.filter(d => { const s = d.data().status; return !s || s === 'approved'; }).length;
+
+                document.getElementById('an-users-today').textContent = newToday;
+                document.getElementById('an-users-month').textContent = newMonth;
+                document.getElementById('an-users-total').textContent = usersSnap.size + approvedInstr;
+            } catch(e) { console.error('Analytics: user stats error', e); }
+
+            // ── Booking & revenue stats ───────────────────────────────────
+            try {
+                const bookingsSnap = await getDocs(collection(db, 'bookings'));
+                let lessonsToday = 0, lessonsMonth = 0, revToday = 0, revMonth = 0;
+                bookingsSnap.forEach(d => {
+                    const b = d.data();
+                    const dt = getDate(b.dateTime);
+                    if (!dt) return;
+                    if (dt >= startOfToday) lessonsToday++;
+                    if (dt >= startOfMonth) lessonsMonth++;
+                    if (b.status === 'confirmed' && b.paymentStatus === 'paid' && b.amount) {
+                        if (dt >= startOfToday) revToday += b.amount;
+                        if (dt >= startOfMonth) revMonth += b.amount;
+                    }
+                });
+                document.getElementById('an-lessons-today').textContent = lessonsToday;
+                document.getElementById('an-lessons-month').textContent = lessonsMonth;
+                document.getElementById('an-revenue-today').textContent = '$' + (revToday / 100).toFixed(2);
+                document.getElementById('an-revenue-month').textContent = '$' + (revMonth / 100).toFixed(2);
+                document.getElementById('an-calls-today').textContent   = lessonsToday;
+                document.getElementById('an-calls-month').textContent   = lessonsMonth;
+            } catch(e) { console.error('Analytics: booking stats error', e); }
+
+            // ── Conversation count ────────────────────────────────────────
+            try {
+                const convosSnap = await getDocs(collection(db, 'conversations'));
+                document.getElementById('an-convos-total').textContent = convosSnap.size;
+            } catch(e) {
+                document.getElementById('an-convos-total').textContent = 'N/A';
+            }
+
+            // ── Message stats via collection group query ──────────────────
+            try {
+                const [msgsToday, msgsMonth] = await Promise.all([
+                    getDocs(query(collectionGroup(db, 'messages'), where('createdAt', '>=', startOfToday))),
+                    getDocs(query(collectionGroup(db, 'messages'), where('createdAt', '>=', startOfMonth)))
+                ]);
+                document.getElementById('an-msgs-today').textContent = msgsToday.size;
+                document.getElementById('an-msgs-month').textContent = msgsMonth.size;
+            } catch(e) {
+                document.getElementById('an-msgs-today').textContent = 'N/A';
+                document.getElementById('an-msgs-month').textContent = 'N/A';
+                console.warn('Analytics: message query unavailable (may need Firestore index):', e.message);
+            }
+        }
+        window.loadAnalytics = loadAnalytics;
 
         // ── Wise: load payout audit logs ──────────────────────────────────
         window.loadWisePayoutLogs = async function() {

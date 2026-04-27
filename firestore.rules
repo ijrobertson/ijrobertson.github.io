@@ -23,9 +23,11 @@ service cloud.firestore {
 
     // Conversations collection
     match /conversations/{conversationId} {
-      // Users can read conversations they are a participant in
-      allow read: if request.auth != null
-                  && request.auth.uid in resource.data.participants;
+      // Participants can read their own conversations; admins can read all
+      allow read: if request.auth != null && (
+                    request.auth.uid in resource.data.participants ||
+                    exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+                  );
 
       // Users can create new conversations where they are a participant
       allow create: if request.auth != null
@@ -37,9 +39,11 @@ service cloud.firestore {
 
       // Messages subcollection
       match /messages/{messageId} {
-        // Users can read messages in conversations they're part of
-        allow read: if request.auth != null
-                    && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        // Participants can read their messages; admins can read all (for analytics)
+        allow read: if request.auth != null && (
+                      request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants ||
+                      exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+                    );
 
         // Users can create messages in conversations they're part of
         allow create: if request.auth != null
