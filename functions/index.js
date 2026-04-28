@@ -1046,7 +1046,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
 
               <!-- Step 1 -->
               <div style="display:flex;align-items:flex-start;margin-bottom:20px;">
-                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">1</div>
+                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">1</div>
                 <div>
                   <strong style="color:#113448;">Complete your instructor profile</strong>
                   <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
@@ -1057,7 +1057,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
 
               <!-- Step 2 -->
               <div style="display:flex;align-items:flex-start;margin-bottom:20px;">
-                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">2</div>
+                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">2</div>
                 <div>
                   <strong style="color:#113448;">Connect a payment method to receive payouts</strong>
                   <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
@@ -1075,7 +1075,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
 
               <!-- Step 3 -->
               <div style="display:flex;align-items:flex-start;margin-bottom:8px;">
-                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">3</div>
+                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">3</div>
                 <div>
                   <strong style="color:#113448;">Check your Bookings tab for upcoming lessons</strong>
                   <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
@@ -1111,14 +1111,14 @@ exports.adminApproveInstructor = onCall(async (request) => {
             </div>
 
             <!-- Footer / Signature -->
-            <div style="background:#f4f7f6;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
+            <div style="background:#3a3a3a;border:1px solid #222;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
               <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:32px;margin-bottom:10px;" />
-              <p style="margin:0;font-size:13px;color:#888;line-height:1.6;">
+              <p style="margin:0;font-size:13px;color:#ffffff;line-height:1.6;">
                 The Lingua Bud Team<br />
                 <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a> &nbsp;|&nbsp;
                 <a href="mailto:support@linguabud.com" style="color:#20bcba;text-decoration:none;">support@linguabud.com</a>
               </p>
-              <p style="margin:10px 0 0;font-size:11px;color:#bbb;">
+              <p style="margin:10px 0 0;font-size:11px;color:#aaaaaa;">
                 You're receiving this email because you applied to become an instructor on Lingua Bud.
               </p>
             </div>
@@ -1210,14 +1210,14 @@ exports.adminDeclineInstructor = onCall(async (request) => {
             </div>
 
             <!-- Footer / Signature -->
-            <div style="background:#f4f7f6;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
+            <div style="background:#3a3a3a;border:1px solid #222;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
               <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:32px;margin-bottom:10px;" />
-              <p style="margin:0;font-size:13px;color:#888;line-height:1.6;">
+              <p style="margin:0;font-size:13px;color:#ffffff;line-height:1.6;">
                 The Lingua Bud Team<br />
                 <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a> &nbsp;|&nbsp;
                 <a href="mailto:support@linguabud.com" style="color:#20bcba;text-decoration:none;">support@linguabud.com</a>
               </p>
-              <p style="margin:10px 0 0;font-size:11px;color:#bbb;">
+              <p style="margin:10px 0 0;font-size:11px;color:#aaaaaa;">
                 You're receiving this email because you applied to become an instructor on Lingua Bud.
               </p>
             </div>
