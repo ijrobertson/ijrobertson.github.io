@@ -78,7 +78,7 @@ function buildApprovalEmail({ name, commissionRate, isFoundingInstructor, person
           <a href="https://linguabud.com/bookings" style="display:inline-block;background:#113448;color:white;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;margin:6px 8px;">View My Bookings</a>
         </div>
       </div>
-      <div style="background:#3a3a3a;border:1px solid #222;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
+      <div style="background:#113448;border:1px solid #0a2235;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
         <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:32px;margin-bottom:10px;" />
         <p style="margin:0;font-size:13px;color:#ffffff;line-height:1.6;">
           The Lingua Bud Team<br />

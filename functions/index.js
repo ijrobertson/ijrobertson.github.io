@@ -1111,7 +1111,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
             </div>
 
             <!-- Footer / Signature -->
-            <div style="background:#3a3a3a;border:1px solid #222;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
+            <div style="background:#113448;border:1px solid #0a2235;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
               <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:32px;margin-bottom:10px;" />
               <p style="margin:0;font-size:13px;color:#ffffff;line-height:1.6;">
                 The Lingua Bud Team<br />
@@ -1210,7 +1210,7 @@ exports.adminDeclineInstructor = onCall(async (request) => {
             </div>
 
             <!-- Footer / Signature -->
-            <div style="background:#3a3a3a;border:1px solid #222;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
+            <div style="background:#113448;border:1px solid #0a2235;border-top:none;border-radius:0 0 8px 8px;padding:24px 40px;text-align:center;">
               <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:32px;margin-bottom:10px;" />
               <p style="margin:0;font-size:13px;color:#ffffff;line-height:1.6;">
                 The Lingua Bud Team<br />
