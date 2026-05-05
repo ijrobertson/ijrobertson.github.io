@@ -1572,7 +1572,7 @@
             const card = document.createElement('div');
             card.className = 'instructor-card';
 
-            const lessonsCount = instructor.lessonsCount || 0;
+            const lessonsCount = Math.max(instructor.lessonsCount || 0, instructor.reviewCount || 0);
             const avail = availabilityMap[instructor.id];
             const nextDate = getNextAvailableDate(avail);
             const nextAvailLabel = formatNextAvailable(nextDate);
@@ -2319,7 +2319,7 @@
 
             // Rating & lessons summary
             const ratingEl = document.getElementById('profileModalRating');
-            const lessonsCount = instructor.lessonsCount || 0;
+            const lessonsCount = Math.max(instructor.lessonsCount || 0, instructor.reviewCount || 0);
             if (instructor.reviewCount) {
                 ratingEl.innerHTML = `${renderStarsHtml(instructor.averageRating)}
                     <span style="margin-left:0.4rem;color:#666;font-size:0.9rem;">${instructor.averageRating.toFixed(1)} &bull; ${instructor.reviewCount} review${instructor.reviewCount !== 1 ? 's' : ''}</span>

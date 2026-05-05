@@ -2709,6 +2709,11 @@ exports.createEarningsRecord = onDocumentCreated('bookings/{bookingId}', async (
       paidAt:                payoutMethod === 'wise' ? null : now
     });
 
+    await db.collection('instructors').doc(booking.instructorId).set(
+      { lessonsCount: admin.firestore.FieldValue.increment(1) },
+      { merge: true }
+    );
+
     return null;
   } catch (err) {
     console.error('createEarningsRecord error:', err);

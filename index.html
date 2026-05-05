@@ -1684,8 +1684,7 @@
                 <div class="hero-trust-tags">
                     <span class="trust-tag">🌍 Native speakers</span>
                     <span class="trust-tag">🎓 50+ verified instructors</span>
-                    <span class="trust-tag">🗣️ 10 languages</span>
-                    <span class="trust-tag">🎁 Free 15-min trial</span>
+<span class="trust-tag">🎁 Free 15-min trial</span>
                 </div>
             </div>
 
@@ -2927,7 +2926,7 @@
                     </div>
                     ${price ? `<div class="profile-card-price">${price}</div>` : ''}
                     ${(() => {
-                        const lessonsCount = instructor.lessonsCount || 0;
+                        const lessonsCount = Math.max(instructor.lessonsCount || 0, instructor.reviewCount || 0);
                         const avail = homeAvailabilityMap[instructor.id];
                         const nextDate = getNextAvailableDate(avail);
                         const nextLabel = formatNextAvailable(nextDate);
