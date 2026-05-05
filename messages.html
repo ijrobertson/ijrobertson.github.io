@@ -1078,6 +1078,11 @@
             color: #20bcba;
         }
 
+        .message.sent .translate-btn:hover {
+            background: #20bcba;
+            color: white;
+        }
+
         .translation-panel {
             margin-top: 0.4rem;
             padding: 0.5rem 0.7rem;
@@ -1936,11 +1941,14 @@
                             senderDataPromises.set(message.senderId,
                                 (async () => {
                                     try {
-                                        let senderDoc = await getDoc(doc(db, 'users', message.senderId));
-                                        if (!senderDoc.exists()) {
-                                            senderDoc = await getDoc(doc(db, 'instructors', message.senderId));
-                                        }
-                                        return senderDoc.exists() ? senderDoc.data().avatar_url : null;
+                                        const [userDoc, instructorDoc] = await Promise.all([
+                                            getDoc(doc(db, 'users', message.senderId)),
+                                            getDoc(doc(db, 'instructors', message.senderId))
+                                        ]);
+                                        const data = instructorDoc.exists() ? instructorDoc.data()
+                                                   : userDoc.exists()       ? userDoc.data()
+                                                   : null;
+                                        return data ? (data.avatar_url || null) : null;
                                     } catch (error) {
                                         console.error('Error loading sender:', error);
                                         return null;
