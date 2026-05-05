@@ -6,6 +6,13 @@
 
     <meta name="description" content="Find language learning partners on Lingua Bud. Connect with learners worldwide and practice together!">
     <meta name="author" content="Lingua Bud">
+    <meta property="og:site_name" content="Lingua Bud" />
+    <meta property="og:site" content="https://linguabud.com" />
+    <meta property="og:title" content="Find Language Learning Partners - Lingua Bud" />
+    <meta property="og:description" content="Connect with language learners from around the world for free practice sessions. Join the Lingua Bud community today." />
+    <meta property="og:image" content="https://linguabud.com/images/NewLinguaBudFunctionPic.png" />
+    <meta property="og:url" content="https://linguabud.com/connect" />
+    <meta property="og:type" content="website" />
 
     <title>Find Language Partners - Lingua Bud</title>
 
@@ -824,48 +831,36 @@
 
                 // Load user's profile picture - check both instructors and users collections
                 try {
-                    // First check if user is an instructor
                     const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
                     if (instructorDoc.exists()) {
                         const instructorData = instructorDoc.data();
-                        if (instructorData.avatar_url) {
-                            navProfilePic.src = instructorData.avatar_url;
-                        }
+                        if (instructorData.avatar_url) navProfilePic.src = instructorData.avatar_url;
                     } else {
-                        // If not an instructor, check users collection
                         const userDoc = await getDoc(doc(db, 'users', user.uid));
                         if (userDoc.exists()) {
                             const userData = userDoc.data();
-                            if (userData.avatar_url) {
-                                navProfilePic.src = userData.avatar_url;
-                            }
+                            if (userData.avatar_url) navProfilePic.src = userData.avatar_url;
                         }
                     }
                 } catch (error) {
                     console.error('Error loading profile:', error);
                 }
 
-                // Show profile picture, hide sign in button
                 profileNavWrapper.style.display = 'block';
                 signInWrapper.style.display = 'none';
 
-                // Fetch users after authentication is confirmed
                 await fetchUsers();
 
-                // Load unread message count and pending friend requests
-                try {
-                    await loadUnreadMessageCount();
-                } catch (error) {
-                    console.error('Error loading unread messages:', error);
-                }
+                try { await loadUnreadMessageCount(); } catch (e) { console.error(e); }
                 loadPendingRequests();
             } else {
-                // Show sign in button, hide profile picture
+                // Not signed in — show nav sign-in link and allow browsing (no redirect)
+                currentUser = null;
                 profileNavWrapper.style.display = 'none';
                 signInWrapper.style.display = 'block';
 
-                // Redirect to login if not authenticated
-                window.location.href = 'login';
+                // Still fetch and display language partners for browsing
+                await fetchUsers();
             }
         });
 
@@ -915,8 +910,9 @@
                     const userData = { id: doc.id, ...doc.data() };
                     console.log('User data:', userData);
 
-                    // Only show student users — exclude instructors, pending/declined applicants, and current user
-                    if (currentUser && doc.id !== currentUser.uid && userData.role === 'student' && !userData.hasInstructorApplication) {
+                    // Show student users; exclude current user if logged in
+                    const isCurrentUser = currentUser && doc.id === currentUser.uid;
+                    if (!isCurrentUser && userData.role === 'student' && !userData.hasInstructorApplication) {
                         allUsers.push(userData);
                     }
                 });
@@ -1012,7 +1008,10 @@
 
             const card = document.createElement('div');
             card.className = 'user-card';
-            card.onclick = () => { window.location.href = `learner-profile?uid=${user.id}`; };
+            card.onclick = () => {
+                if (!currentUser) { window.location.href = 'login'; return; }
+                window.location.href = `learner-profile?uid=${user.id}`;
+            };
 
             let cardHTML = `
                 <div class="user-card-header">
