@@ -1422,7 +1422,7 @@
         .hiw-steps::before {
             content: '';
             position: absolute;
-            top: 2.25rem;
+            top: 20px;
             left: calc(16.66% + 1rem);
             right: calc(16.66% + 1rem);
             height: 2px;
@@ -1434,35 +1434,39 @@
             position: relative;
             z-index: 1;
         }
-        .hiw-icon-wrap {
-            width: 72px;
-            height: 72px;
+        .hiw-num {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 1.25rem;
-            font-size: 1.6rem;
-            color: white;
-            box-shadow: 0 6px 18px rgba(32,188,186,0.35);
             position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 14px rgba(32,188,186,0.35);
         }
-        .hiw-step-num {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: #113448;
-            color: white;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            font-size: 0.72rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .hiw-photo-wrap {
+            width: 170px;
+            height: 125px;
+            margin: 0 auto 1.25rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.12);
+            border: 3px solid rgba(32,188,186,0.15);
         }
+        .hiw-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.35s ease;
+        }
+        .hiw-photo-wrap:hover .hiw-photo { transform: scale(1.05); }
         .hiw-step h3 {
             font-size: 1.1rem;
             font-weight: 700;
@@ -1483,6 +1487,7 @@
         @media (max-width: 768px) {
             .hiw-steps { grid-template-columns: 1fr; gap: 2.5rem; }
             .hiw-steps::before { display: none; }
+            .hiw-photo-wrap { width: 200px; height: 145px; }
         }
 
         /* Home CTA (sign-up) Section */
@@ -1727,25 +1732,25 @@
             </div>
             <div class="hiw-steps">
                 <div class="hiw-step">
-                    <div class="hiw-icon-wrap">
-                        <i class="fas fa-user-plus"></i>
-                        <span class="hiw-step-num">1</span>
+                    <div class="hiw-num">1</div>
+                    <div class="hiw-photo-wrap">
+                        <img class="hiw-photo" src="images/study.jpg" alt="Student studying a new language">
                     </div>
                     <h3>Create a Free Account</h3>
                     <p>Sign up in seconds. No credit card required. Set your language goals and find partners or instructors that match.</p>
                 </div>
                 <div class="hiw-step">
-                    <div class="hiw-icon-wrap">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <span class="hiw-step-num">2</span>
+                    <div class="hiw-num">2</div>
+                    <div class="hiw-photo-wrap">
+                        <img class="hiw-photo" src="images/friendstalking2.jpg" alt="Language exchange partners connecting">
                     </div>
                     <h3>Choose How You Learn</h3>
                     <p>Practice for free with language exchange partners, or book a verified instructor for structured 1-on-1 lessons.</p>
                 </div>
                 <div class="hiw-step">
-                    <div class="hiw-icon-wrap">
-                        <i class="fas fa-video"></i>
-                        <span class="hiw-step-num">3</span>
+                    <div class="hiw-num">3</div>
+                    <div class="hiw-photo-wrap">
+                        <img class="hiw-photo" src="images/girllaptop.jpg" alt="Student enjoying an online lesson">
                     </div>
                     <h3>Start a Free Trial Lesson</h3>
                     <p>Every instructor offers a free 15-minute trial. No commitment — just meet, chat, and see if it's a good fit.</p>
