@@ -895,15 +895,14 @@
                     <div class="admin-card" style="margin-bottom:1.5rem;">
                         <div class="admin-card-header">
                             <h5><i class="fas fa-link" style="color:#20bcba;margin-right:8px;"></i>Instructor Referral Links</h5>
-                            <button id="gen-all-tokens-btn" class="btn btn-sm" style="background:#20bcba;color:#fff;border:none;">
-                                <i class="fas fa-magic"></i> Generate All Links
+                            <button id="gen-all-tokens-btn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-sync-alt"></i> Refresh
                             </button>
                         </div>
                         <p style="color:#666;font-size:0.88rem;margin:0 0 12px;">
-                            Click <strong>Generate All Links</strong> to pre-create every approved instructor's personal referral URL.
-                            Copy individual links when writing personalised emails to each instructor.
+                            Every approved instructor's personal referral URL — copy individual links when writing personalised emails.
                         </p>
-                        <div id="instructor-links-output" style="display:none;">
+                        <div id="instructor-links-output">
                             <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center;">
                                 <input id="instructor-links-search" type="text" placeholder="Search by name or email…"
                                     style="flex:1;border:1px solid #ced4da;border-radius:4px;padding:6px 10px;font-size:0.85rem;">
@@ -2176,6 +2175,8 @@
                 console.error('loadAdminReferrals error:', err);
                 body.innerHTML = `<tr><td colspan="6" style="color:#dc3545;padding:20px;">${err.message}</td></tr>`;
             }
+            // Auto-load instructor links alongside referral stats
+            loadInstructorLinks();
         }
 
         document.getElementById('refresh-referrals-btn')?.addEventListener('click', () => {
@@ -2186,28 +2187,26 @@
         // ── Generate All Instructor Referral Links ────────────────────────
         let _allInstructorLinks = []; // cache for CSV export + search
 
-        document.getElementById('gen-all-tokens-btn')?.addEventListener('click', async () => {
-            const btn    = document.getElementById('gen-all-tokens-btn');
-            const output = document.getElementById('instructor-links-output');
-            const body   = document.getElementById('instructor-links-body');
-            const count  = document.getElementById('instructor-links-count');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+        async function loadInstructorLinks() {
+            const btn   = document.getElementById('gen-all-tokens-btn');
+            const body  = document.getElementById('instructor-links-body');
+            const count = document.getElementById('instructor-links-count');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…'; }
+            if (body) body.innerHTML = '<tr class="loading-row"><td colspan="4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
             try {
                 const fn     = httpsCallable(functions, 'adminGenerateAllReferralTokens');
                 const result = await fn();
                 _allInstructorLinks = result.data.instructors || [];
-
                 renderInstructorLinksTable(_allInstructorLinks);
-                count.textContent = `${_allInstructorLinks.length} instructor${_allInstructorLinks.length !== 1 ? 's' : ''} — links ready to copy`;
-                output.style.display = 'block';
+                if (count) count.textContent = `${_allInstructorLinks.length} instructor${_allInstructorLinks.length !== 1 ? 's' : ''} — links ready to copy`;
             } catch (err) {
-                alert('Error generating links: ' + err.message);
+                if (body) body.innerHTML = `<tr><td colspan="4" style="color:#dc3545;padding:16px;">${err.message}</td></tr>`;
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-magic"></i> Generate All Links';
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh'; }
             }
-        });
+        }
+
+        document.getElementById('gen-all-tokens-btn')?.addEventListener('click', () => loadInstructorLinks());
 
         function renderInstructorLinksTable(rows) {
             const body = document.getElementById('instructor-links-body');
