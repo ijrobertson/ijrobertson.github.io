@@ -206,5 +206,26 @@ service cloud.firestore {
                          && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
       allow update: if false;
     }
+
+    // ── Referral program ────────────────────────────────────────────────────
+
+    // referralTokens: token → instructorId lookup.
+    // Public read lets the signup page verify a token without auth.
+    // All writes are performed exclusively by Cloud Functions (server-side admin SDK).
+    match /referralTokens/{token} {
+      allow read:  if true;
+      allow write: if false; // Cloud Functions only
+    }
+
+    // referrals: one document per referred student.
+    // An instructor can read their own referrals (for the dashboard).
+    // Admins can read all. All writes are Cloud Functions only.
+    match /referrals/{referralId} {
+      allow read: if request.auth != null && (
+                    resource.data.instructorId == request.auth.uid ||
+                    exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+                  );
+      allow write: if false; // Cloud Functions only
+    }
   }
 }

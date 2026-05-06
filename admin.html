@@ -426,6 +426,9 @@
                     <div class="admin-tab" data-tab="wise-payouts">
                         Wise Payouts <span class="tab-badge warning" id="wisePayoutsBadge" style="display:none;">0</span>
                     </div>
+                    <div class="admin-tab" data-tab="referrals">
+                        Referrals <span class="tab-badge info" id="referralsBadge" style="display:none;">0</span>
+                    </div>
                     <div class="admin-tab" data-tab="analytics">Analytics</div>
                     <div class="admin-tab" data-tab="overview">Overview</div>
                 </div>
@@ -886,6 +889,57 @@
 
                 </div>
 
+                <!-- ── Referrals Tab ──────────────────────────────────────── -->
+                <div class="tab-pane" id="tab-referrals">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-user-plus" style="color:#20bcba;margin-right:8px;"></i>Referral Program</h5>
+                            <button id="refresh-referrals-btn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+
+                        <!-- Summary cards -->
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1.5rem;">
+                            <div style="flex:1;min-width:110px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;text-align:center;">
+                                <div style="font-size:1.6rem;font-weight:700;color:#113448;" id="ref-total">—</div>
+                                <div style="font-size:0.78rem;color:#888;margin-top:2px;">Total Referrals</div>
+                            </div>
+                            <div style="flex:1;min-width:110px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;text-align:center;">
+                                <div style="font-size:1.6rem;font-weight:700;color:#e6a817;" id="ref-pending">—</div>
+                                <div style="font-size:0.78rem;color:#888;margin-top:2px;">Pending</div>
+                            </div>
+                            <div style="flex:1;min-width:110px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;text-align:center;">
+                                <div style="font-size:1.6rem;font-weight:700;color:#28a745;" id="ref-credited">—</div>
+                                <div style="font-size:0.78rem;color:#888;margin-top:2px;">Credited</div>
+                            </div>
+                            <div style="flex:1;min-width:110px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;text-align:center;">
+                                <div style="font-size:1.6rem;font-weight:700;color:#20bcba;" id="ref-instructors">—</div>
+                                <div style="font-size:0.78rem;color:#888;margin-top:2px;">Instructors Referring</div>
+                            </div>
+                        </div>
+
+                        <!-- Detail table -->
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" id="referrals-table">
+                                <thead>
+                                    <tr>
+                                        <th>Instructor</th>
+                                        <th>Referred Student</th>
+                                        <th>Referred Date</th>
+                                        <th>Status</th>
+                                        <th>Credit Applied</th>
+                                        <th>Credited Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="referralsBody">
+                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="tab-pane" id="tab-overview">
                     <div class="overview-grid" id="overviewGrid">
                         <div class="mini-stat">
@@ -1153,6 +1207,7 @@
                     if (name === 'reports')       loadReports();
                     if (name === 'wise-payouts')  loadWisePayouts();
                     if (name === 'all-users')     loadAllUsers();
+                    if (name === 'referrals')     loadAdminReferrals();
                     if (name === 'analytics')     loadAnalytics();
                     if (name === 'overview')      loadOverview();
                 }
@@ -2028,6 +2083,68 @@
                 true // isPositive (teal button)
             );
         };
+
+        // ── Referrals ─────────────────────────────────────────────────────
+        async function loadAdminReferrals() {
+            const body = document.getElementById('referralsBody');
+            if (!body) return;
+            body.innerHTML = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const fn = httpsCallable(functions, 'adminGetReferrals');
+                const result = await fn();
+                const { referrals } = result.data;
+
+                // Update summary cards
+                const total       = referrals.length;
+                const pending     = referrals.filter(r => r.status === 'pending' || r.status === 'locked').length;
+                const credited    = referrals.filter(r => r.status === 'credited').length;
+                const uniqueInstr = new Set(referrals.map(r => r.instructorId)).size;
+
+                document.getElementById('ref-total').textContent       = total;
+                document.getElementById('ref-pending').textContent     = pending;
+                document.getElementById('ref-credited').textContent    = credited;
+                document.getElementById('ref-instructors').textContent = uniqueInstr;
+
+                const badge = document.getElementById('referralsBadge');
+                if (badge) {
+                    badge.textContent     = pending;
+                    badge.style.display   = pending > 0 ? 'inline-block' : 'none';
+                }
+
+                if (total === 0) {
+                    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No referrals recorded yet.</td></tr>';
+                    return;
+                }
+
+                const statusBadge = (s) => {
+                    const map = { pending: ['#e6a817','Pending'], locked: ['#17a2b8','Processing'], credited: ['#28a745','Credited'], expired: ['#6c757d','Expired'] };
+                    const [color, label] = map[s] || ['#6c757d', s];
+                    return `<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${color};color:#fff;">${label}</span>`;
+                };
+                const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const fmt = iso => iso ? new Date(iso).toLocaleDateString() : '—';
+
+                body.innerHTML = referrals.map(r => `
+                    <tr>
+                        <td>${esc(r.instructorName)}</td>
+                        <td>${esc(r.studentName)}</td>
+                        <td>${fmt(r.referredAt)}</td>
+                        <td>${statusBadge(r.status)}</td>
+                        <td>${r.creditUsedOnBookingId
+                            ? `<span style="color:#28a745;font-weight:600;">✓ Applied</span>`
+                            : '<span style="color:#999;">—</span>'}</td>
+                        <td>${fmt(r.creditedAt)}</td>
+                    </tr>`).join('');
+            } catch (err) {
+                console.error('loadAdminReferrals error:', err);
+                body.innerHTML = `<tr><td colspan="6" style="color:#dc3545;padding:20px;">${err.message}</td></tr>`;
+            }
+        }
+
+        document.getElementById('refresh-referrals-btn')?.addEventListener('click', () => {
+            tabsLoaded['referrals'] = false;
+            loadAdminReferrals();
+        });
 
         // ── Overview ──────────────────────────────────────────────────────
         async function loadOverview() {

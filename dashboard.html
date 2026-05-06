@@ -1392,6 +1392,14 @@
       <p style="color: #999; font-size: 0.95rem;">Loading earnings...</p>
     </div>
 
+    <!-- REFERRALS SECTION -->
+    <h3 id="referrals-heading" style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
+      <i class="fas fa-user-plus"></i> Referral Program
+    </h3>
+    <div id="referrals-section">
+      <p style="color: #999; font-size: 0.95rem;">Loading referral info...</p>
+    </div>
+
     <!-- UPCOMING LESSONS SECTION -->
     <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
       <i class="fas fa-calendar-check"></i> Upcoming Lessons
@@ -1533,8 +1541,10 @@
       deleteDoc,
       collection,
       getDocs,
+      addDoc,
       query,
       where,
+      orderBy,
       ref,
       uploadBytes,
       uploadBytesResumable,
@@ -1937,8 +1947,9 @@
           const urlParams = new URLSearchParams(window.location.search);
           await checkStripePaymentStatus(urlParams.get('stripe') === 'success', instrData);
 
-          // Load earnings summary and upcoming lessons
+          // Load earnings summary, referrals, and upcoming lessons
           loadEarnings();
+          loadReferrals();
           loadInstructorBookings();
 
           // Load unread message count
@@ -2960,6 +2971,143 @@
         console.error('Error loading earnings:', err);
         section.innerHTML = '<p style="color:#999;font-size:0.9rem;">Unable to load earnings.</p>';
       }
+    }
+
+    async function loadReferrals() {
+      const section = document.getElementById('referrals-section');
+      if (!section) return;
+      try {
+        const getToken = httpsCallable(functions, 'getOrCreateReferralToken');
+        const tokenResult = await getToken();
+        const { referralUrl } = tokenResult.data;
+
+        // Fetch referral list for this instructor from Firestore
+        const user = auth.currentUser;
+        const snap = await getDocs(query(
+          collection(db, 'referrals'),
+          where('instructorId', '==', user.uid),
+          orderBy('referredAt', 'desc')
+        ));
+
+        const rows = snap.docs.map(d => d.data());
+        const total    = rows.length;
+        const credited = rows.filter(r => r.status === 'credited').length;
+        const pending  = rows.filter(r => r.status === 'pending' || r.status === 'locked').length;
+        const remaining = Math.max(0, 10 - credited);
+
+        const statusBadge = (s) => {
+          const map = {
+            pending:  ['#e6a817', 'Pending'],
+            locked:   ['#17a2b8', 'Processing'],
+            credited: ['#28a745', 'Credited'],
+            expired:  ['#6c757d', 'Expired']
+          };
+          const [color, label] = map[s] || ['#6c757d', s];
+          return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${color};color:#fff;">${label}</span>`;
+        };
+
+        const tableRows = rows.map(r => `
+          <tr>
+            <td style="padding:10px 12px;font-size:0.875rem;">${escHtml(r.studentId.substring(0,8))}…</td>
+            <td style="padding:10px 12px;">${r.referredAt?.toDate ? r.referredAt.toDate().toLocaleDateString() : '—'}</td>
+            <td style="padding:10px 12px;">${statusBadge(r.status)}</td>
+            <td style="padding:10px 12px;font-size:0.875rem;">${r.creditUsedOnBookingId ? '✓ Applied' : '—'}</td>
+          </tr>`).join('');
+
+        section.innerHTML = `
+          <!-- Program intro -->
+          <div style="background:#f0fffe;border:1px solid #c3eceb;border-radius:8px;padding:16px 20px;margin-bottom:1.25rem;">
+            <p style="margin:0 0 6px;font-size:0.95rem;color:#113448;font-weight:600;">
+              <i class="fas fa-gift" style="color:#20bcba;margin-right:6px;"></i>Earn commission-free lessons by referring students
+            </p>
+            <p style="margin:0;font-size:0.85rem;color:#555;line-height:1.6;">
+              Share your link below. When a student signs up through it and completes their first paid lesson with you,
+              you keep <strong>100%</strong> of that lesson — no platform commission. Up to <strong>10 credits</strong>, valid until <strong>Nov 6, 2026</strong>.
+            </p>
+          </div>
+
+          <!-- Stats row -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:1.25rem;">
+            <div style="flex:1;min-width:120px;background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;text-align:center;">
+              <div style="font-size:1.6rem;font-weight:700;color:#113448;">${total}</div>
+              <div style="font-size:0.78rem;color:#888;margin-top:2px;">Students Referred</div>
+            </div>
+            <div style="flex:1;min-width:120px;background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;text-align:center;">
+              <div style="font-size:1.6rem;font-weight:700;color:#28a745;">${credited}</div>
+              <div style="font-size:0.78rem;color:#888;margin-top:2px;">Credits Earned</div>
+            </div>
+            <div style="flex:1;min-width:120px;background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;text-align:center;">
+              <div style="font-size:1.6rem;font-weight:700;color:#20bcba;">${remaining}</div>
+              <div style="font-size:0.78rem;color:#888;margin-top:2px;">Credits Remaining</div>
+            </div>
+          </div>
+
+          <!-- Referral link -->
+          <div style="background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;margin-bottom:1.25rem;">
+            <p style="margin:0 0 8px;font-size:0.85rem;font-weight:600;color:#113448;">Your referral link</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input id="referral-link-input" type="text" value="${escHtml(referralUrl)}" readonly
+                style="flex:1;min-width:220px;border:1px solid #ced4da;border-radius:4px;padding:6px 10px;font-size:0.82rem;color:#333;background:#f8f9fa;">
+              <button onclick="copyReferralLink()" id="copy-ref-btn"
+                style="white-space:nowrap;padding:6px 14px;background:#20bcba;color:#fff;border:none;border-radius:4px;font-size:0.85rem;cursor:pointer;">
+                <i class="fas fa-copy"></i> Copy
+              </button>
+            </div>
+            <p style="margin:8px 0 0;font-size:0.78rem;color:#888;">Share this link on social media, WhatsApp, or email. The student must sign up and complete a paid lesson with <em>you</em> for the credit to apply.</p>
+          </div>
+
+          <!-- Social media caption -->
+          <div style="background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:14px 16px;margin-bottom:1.25rem;">
+            <p style="margin:0 0 8px;font-size:0.85rem;font-weight:600;color:#113448;">Ready-to-post social media caption</p>
+            <textarea id="social-caption" readonly rows="4"
+              style="width:100%;border:1px solid #ced4da;border-radius:4px;padding:8px 10px;font-size:0.82rem;color:#333;background:#f8f9fa;resize:none;"
+>I'm now taking new students on Lingua Bud — a platform I'm proud to teach on. Whether you want to improve your language skills, prep for travel, or finally commit to learning, I'd love to be your instructor. There's a free 15-minute trial with no commitment. Book here: ${escHtml(referralUrl)}</textarea>
+            <button onclick="copySocialCaption()"
+              style="margin-top:8px;padding:5px 14px;background:#113448;color:#fff;border:none;border-radius:4px;font-size:0.82rem;cursor:pointer;">
+              <i class="fas fa-copy"></i> Copy Caption
+            </button>
+          </div>
+
+          <!-- Referral table -->
+          ${total > 0 ? `
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.875rem;background:#fff;border:1px solid #dee2e6;border-radius:8px;overflow:hidden;">
+              <thead>
+                <tr style="background:#f8f9fa;">
+                  <th style="padding:10px 12px;text-align:left;font-weight:600;color:#113448;border-bottom:2px solid #dee2e6;">Student ID</th>
+                  <th style="padding:10px 12px;text-align:left;font-weight:600;color:#113448;border-bottom:2px solid #dee2e6;">Referred</th>
+                  <th style="padding:10px 12px;text-align:left;font-weight:600;color:#113448;border-bottom:2px solid #dee2e6;">Status</th>
+                  <th style="padding:10px 12px;text-align:left;font-weight:600;color:#113448;border-bottom:2px solid #dee2e6;">Credit</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </div>` : '<p style="color:#999;font-size:0.9rem;margin:0;">No referrals yet. Share your link to get started!</p>'}
+        `;
+      } catch (err) {
+        console.error('Error loading referrals:', err);
+        const section = document.getElementById('referrals-section');
+        if (section) section.innerHTML = '<p style="color:#999;font-size:0.9rem;">Unable to load referral info.</p>';
+      }
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function copyReferralLink() {
+      const input = document.getElementById('referral-link-input');
+      if (!input) return;
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById('copy-ref-btn');
+        if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; }, 2000); }
+      }).catch(() => { input.select(); document.execCommand('copy'); });
+    }
+
+    function copySocialCaption() {
+      const ta = document.getElementById('social-caption');
+      if (!ta) return;
+      navigator.clipboard.writeText(ta.value).catch(() => { ta.select(); document.execCommand('copy'); });
     }
 
     async function checkStripePaymentStatus(forceCheck = false, cachedData = null) {

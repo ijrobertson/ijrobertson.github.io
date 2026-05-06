@@ -1323,6 +1323,12 @@ const DEFAULT_COMMISSION_RATE = 0.15; // 15% commission for standard instructors
 const FOUNDING_INSTRUCTOR_RATE = 0.10; // 10% lifetime commission for first 50 instructors
 const FOUNDING_INSTRUCTOR_LIMIT = 50;
 
+// ── Referral Program ────────────────────────────────────────────────────────
+// Instructors can earn up to 10 commission-free lessons by referring students.
+// The program runs for 6 months from launch (2026-05-06 → 2026-11-06).
+const REFERRAL_PROGRAM_END_DATE = new Date('2026-11-06T00:00:00Z');
+const MAX_REFERRAL_CREDITS_PER_INSTRUCTOR = 10;
+
 function getStripe() {
   return Stripe(process.env.STRIPE_SECRET_KEY);
 }
@@ -1828,8 +1834,74 @@ exports.createPaymentIntent = onCall(async (request) => {
   const normalizedCurrency = (currency || 'USD').toLowerCase();
   const stripeOptions      = idempotencyKey ? { idempotencyKey } : {};
 
+  // ── Referral Credit Check ────────────────────────────────────────────────
+  // If the student was referred by this specific instructor, and the referral
+  // credit has not yet been used, waive the commission for this lesson
+  // (platform keeps only the flat $1 student fee).
+  let referralDocId          = null;
+  let referralCreditApplied  = false;
+
+  if (new Date() <= REFERRAL_PROGRAM_END_DATE) {
+    try {
+      const studentUserSnap = await db.collection('users').doc(uid).get();
+      const referredByInstructorId = studentUserSnap.exists
+        ? (studentUserSnap.data().referredByInstructorId || null)
+        : null;
+
+      if (referredByInstructorId === instructorId) {
+        // Find a pending referral for this student+instructor pair
+        const referralSnap = await db.collection('referrals')
+          .where('instructorId', '==', instructorId)
+          .where('studentId',    '==', uid)
+          .where('status',       '==', 'pending')
+          .limit(1)
+          .get();
+
+        if (!referralSnap.empty) {
+          // Verify instructor hasn't hit their 10-credit cap
+          const creditedSnap = await db.collection('referrals')
+            .where('instructorId', '==', instructorId)
+            .where('status',       '==', 'credited')
+            .get();
+
+          if (creditedSnap.size < MAX_REFERRAL_CREDITS_PER_INSTRUCTOR) {
+            // Atomically lock the referral to prevent double-application on
+            // concurrent payment attempts for the same student+instructor pair.
+            const referralRef = referralSnap.docs[0].ref;
+            const locked = await db.runTransaction(async (tx) => {
+              const freshSnap = await tx.get(referralRef);
+              if (!freshSnap.exists || freshSnap.data().status !== 'pending') return false;
+              tx.update(referralRef, {
+                status:   'locked',
+                lockedAt: admin.firestore.FieldValue.serverTimestamp()
+              });
+              return true;
+            });
+
+            if (locked) {
+              referralDocId         = referralSnap.docs[0].id;
+              referralCreditApplied = true;
+              console.log(`[Referral] Credit locked: referralId=${referralDocId} instructor=${instructorId} student=${uid}`);
+            }
+          }
+        }
+      }
+    } catch (referralErr) {
+      // Non-fatal — proceed with normal commission if referral check fails
+      console.error('[Referral] Check failed, using normal commission:', referralErr.message);
+      referralCreditApplied = false;
+      referralDocId         = null;
+    }
+  }
+
+  // When referral credit applies, waive commission; platform keeps only the $1 fee
+  const effectiveApplicationFeeAmountCents = referralCreditApplied
+    ? studentFeeCents
+    : applicationFeeAmountCents;
+
   // Determine the definitive payout path
-  let stripeReady = false;
+  let stripeReady   = false;
+  let paymentIntent;
 
   if (stripeCandidate) {
     // Authoritative Stripe check — never trust only the Firestore cache for payment routing
@@ -1837,6 +1909,12 @@ exports.createPaymentIntent = onCall(async (request) => {
     stripeReady = account.charges_enabled === true && account.payouts_enabled === true;
 
     if (!stripeReady) {
+      // Unlock the referral before throwing so it doesn't stay stuck in 'locked'
+      if (referralDocId) {
+        await db.collection('referrals').doc(referralDocId).update({
+          status: 'pending', lockedAt: null, lockedPaymentIntentId: null
+        }).catch(() => {});
+      }
       throw new HttpsError('failed-precondition', 'This instructor is not yet able to receive payments.');
     }
 
@@ -1850,22 +1928,26 @@ exports.createPaymentIntent = onCall(async (request) => {
     paymentIntent = await stripe.paymentIntents.create({
       amount: totalChargeCents,
       currency: normalizedCurrency,
-      application_fee_amount: applicationFeeAmountCents,
+      application_fee_amount: effectiveApplicationFeeAmountCents,
       transfer_data: { destination: stripeAccountId },
       automatic_payment_methods: { enabled: true },
       metadata: {
         instructorId,
-        studentId: uid,
-        payoutMethod: 'stripe',
-        lessonAmount: String(lessonAmountCents),
-        studentPlatformFee: String(studentFeeCents),
-        commissionRate: String(commissionRate),
-        isFoundingInstructor: String(!!instructor.isFoundingInstructor)
+        studentId:              uid,
+        payoutMethod:           'stripe',
+        lessonAmount:           String(lessonAmountCents),
+        studentPlatformFee:     String(studentFeeCents),
+        commissionRate:         String(commissionRate),
+        isFoundingInstructor:   String(!!instructor.isFoundingInstructor),
+        referralCreditApplied:  String(referralCreditApplied),
+        ...(referralDocId && { referralDocId, referralInstructorId: instructorId, referralStudentId: uid })
       }
     }, stripeOptions);
   } else {
     // Wise instructor: full payment collected by platform, admin pays manually via Wise
-    const netInstructorCents = lessonAmountCents - commissionCents;
+    const netInstructorCents = referralCreditApplied
+      ? lessonAmountCents                      // full amount — no commission waived
+      : lessonAmountCents - commissionCents;
 
     paymentIntent = await stripe.paymentIntents.create({
       amount: totalChargeCents,
@@ -1873,14 +1955,16 @@ exports.createPaymentIntent = onCall(async (request) => {
       automatic_payment_methods: { enabled: true },
       metadata: {
         instructorId,
-        studentId: uid,
-        payoutMethod: 'wise',
+        studentId:                uid,
+        payoutMethod:             'wise',
         wiseEmail,
-        lessonAmount: String(lessonAmountCents),
-        studentPlatformFee: String(studentFeeCents),
-        commissionRate: String(commissionRate),
+        lessonAmount:             String(lessonAmountCents),
+        studentPlatformFee:       String(studentFeeCents),
+        commissionRate:           String(commissionRate),
         netInstructorPayoutCents: String(netInstructorCents),
-        isFoundingInstructor: String(!!instructor.isFoundingInstructor)
+        isFoundingInstructor:     String(!!instructor.isFoundingInstructor),
+        referralCreditApplied:    String(referralCreditApplied),
+        ...(referralDocId && { referralDocId, referralInstructorId: instructorId, referralStudentId: uid })
       }
     }, stripeOptions);
 
@@ -1888,15 +1972,25 @@ exports.createPaymentIntent = onCall(async (request) => {
     // when the booking document is confirmed in Firestore.
   }
 
+  // Store the PI ID on the locked referral so the webhook can verify the match
+  if (referralDocId) {
+    await db.collection('referrals').doc(referralDocId).update({
+      lockedPaymentIntentId: paymentIntent.id,
+      lockedAt: admin.firestore.FieldValue.serverTimestamp()
+    }).catch(e => console.error('[Referral] Failed to store PI ID on referral:', e.message));
+  }
+
   return {
-    clientSecret: paymentIntent.client_secret,
-    paymentIntentId: paymentIntent.id,
-    amount: totalChargeCents,
-    lessonAmount: lessonAmountCents,
-    studentPlatformFee: studentFeeCents,
-    currency: normalizedCurrency,
-    platformFee: applicationFeeAmountCents,
-    payoutMethod: stripeReady ? 'stripe' : 'wise'
+    clientSecret:          paymentIntent.client_secret,
+    paymentIntentId:       paymentIntent.id,
+    amount:                totalChargeCents,
+    lessonAmount:          lessonAmountCents,
+    studentPlatformFee:    studentFeeCents,
+    currency:              normalizedCurrency,
+    platformFee:           effectiveApplicationFeeAmountCents,
+    payoutMethod:          stripeReady ? 'stripe' : 'wise',
+    referralCreditApplied,
+    ...(referralDocId && { referralDocId })
   };
 });
 
@@ -2575,6 +2669,30 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
           // Metadata holds instructorId + studentId for manual recovery if needed.
           console.warn(`No booking found for paymentIntentId ${pi.id}. Metadata:`, pi.metadata);
         }
+
+        // ── Mark referral as credited when the associated payment succeeds ──
+        if (pi.metadata.referralCreditApplied === 'true' && pi.metadata.referralDocId) {
+          try {
+            const referralRef = db.collection('referrals').doc(pi.metadata.referralDocId);
+            const bookingId   = bookingsSnap.empty ? null : bookingsSnap.docs[0].id;
+            await db.runTransaction(async (tx) => {
+              const snap = await tx.get(referralRef);
+              if (!snap.exists) return;
+              const currentStatus = snap.data().status;
+              // Accept 'locked' (normal path) or 'pending' (unlocked after a failed
+              // retry, then the same PI succeeded on re-attempt). Never double-credit.
+              if (currentStatus === 'credited') return;
+              tx.update(referralRef, {
+                status:                'credited',
+                creditedAt:            admin.firestore.FieldValue.serverTimestamp(),
+                creditUsedOnBookingId: bookingId
+              });
+            });
+            console.log(`[Referral] Credited: referralId=${pi.metadata.referralDocId}`);
+          } catch (refErr) {
+            console.error('[Referral] Failed to mark referral credited:', refErr);
+          }
+        }
         break;
       }
 
@@ -2591,6 +2709,25 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
             paymentStatus: 'failed',
             webhookFailedAt: admin.firestore.FieldValue.serverTimestamp()
           });
+        }
+
+        // ── Unlock referral so the student can try paying again ──────────
+        if (pi.metadata.referralCreditApplied === 'true' && pi.metadata.referralDocId) {
+          try {
+            const referralRef = db.collection('referrals').doc(pi.metadata.referralDocId);
+            await db.runTransaction(async (tx) => {
+              const snap = await tx.get(referralRef);
+              if (!snap.exists || snap.data().status !== 'locked') return;
+              tx.update(referralRef, {
+                status:               'pending',
+                lockedAt:             null,
+                lockedPaymentIntentId: null
+              });
+            });
+            console.log(`[Referral] Unlocked after payment failure: referralId=${pi.metadata.referralDocId}`);
+          } catch (refErr) {
+            console.error('[Referral] Failed to unlock referral after payment failure:', refErr);
+          }
         }
         break;
       }
@@ -2683,30 +2820,37 @@ exports.createEarningsRecord = onDocumentCreated('bookings/{bookingId}', async (
     const wiseEmail    = instructor.wiseEmail || null;
 
     // booking.amount = lessonAmountCents + $1 student fee
-    const lessonAmountCents      = (booking.amount || 0) - STUDENT_FEE_CENTS;
-    const commissionCents        = Math.round(lessonAmountCents * commissionRate);
-    const platformFeeCents       = commissionCents + STUDENT_FEE_CENTS;
-    const instructorEarningsCents = lessonAmountCents - commissionCents;
+    const lessonAmountCents = (booking.amount || 0) - STUDENT_FEE_CENTS;
+
+    // Referral credit: instructor keeps 100% of the lesson amount; platform keeps only $1
+    const referralCreditApplied  = booking.referralCreditApplied === true;
+    const effectiveCommissionCents = referralCreditApplied
+      ? 0
+      : Math.round(lessonAmountCents * commissionRate);
+    const platformFeeCents        = effectiveCommissionCents + STUDENT_FEE_CENTS;
+    const instructorEarningsCents = lessonAmountCents - effectiveCommissionCents;
+
     const now = admin.firestore.FieldValue.serverTimestamp();
 
     // Stripe: paid immediately via Connect; Wise: pending manual payout
     const payoutStatus = payoutMethod === 'wise' ? 'pending' : 'paid';
 
     await db.collection('earnings').add({
-      instructorId:          booking.instructorId,
-      instructorName:        instructor.name || '',
+      instructorId:           booking.instructorId,
+      instructorName:         instructor.name || '',
       bookingId,
-      studentId:             booking.studentId || '',
+      studentId:              booking.studentId || '',
       lessonAmountCents,
       platformFeeCents,
       instructorEarningsCents,
-      commissionRate,
+      commissionRate:         referralCreditApplied ? 0 : commissionRate,
+      referralCreditApplied,
       payoutMethod,
       payoutStatus,
-      currency:              (booking.currency || 'USD').toUpperCase(),
-      wiseEmail:             payoutMethod === 'wise' ? wiseEmail : null,
-      createdAt:             now,
-      paidAt:                payoutMethod === 'wise' ? null : now
+      currency:               (booking.currency || 'USD').toUpperCase(),
+      wiseEmail:              payoutMethod === 'wise' ? wiseEmail : null,
+      createdAt:              now,
+      paidAt:                 payoutMethod === 'wise' ? null : now
     });
 
     await db.collection('instructors').doc(booking.instructorId).set(
@@ -3055,4 +3199,184 @@ exports.runWisePayouts = onCall(async (request) => {
     console.error('[Wise] runWisePayouts error:', err.message);
     throw new HttpsError('internal', `Wise payout run failed: ${err.message}`);
   }
+});
+
+// ── Referral Program Functions ──────────────────────────────────────────────
+
+/**
+ * Returns (or creates) a unique referral token for an approved instructor.
+ * The token maps to the instructor's UID in the referralTokens collection.
+ * Referral URL: https://linguabud.com/instructor-profile?id=UID&ref=TOKEN
+ */
+exports.getOrCreateReferralToken = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+
+  const uid = request.auth.uid;
+  const db  = admin.firestore();
+
+  const instructorSnap = await db.collection('instructors').doc(uid).get();
+  if (!instructorSnap.exists) throw new HttpsError('not-found', 'Instructor profile not found');
+
+  const data = instructorSnap.data();
+  if (data.status !== 'approved' && data.isApproved !== true) {
+    throw new HttpsError('permission-denied', 'Only approved instructors can use the referral program');
+  }
+
+  // Return existing token if already generated
+  if (data.referralToken) {
+    return {
+      token: data.referralToken,
+      referralUrl: `https://linguabud.com/instructor-profile?id=${uid}&ref=${data.referralToken}`
+    };
+  }
+
+  // Generate a new 16-character hex token (collision-safe for this scale)
+  const token = randomUUID().replace(/-/g, '').substring(0, 16);
+
+  const batch = db.batch();
+  batch.update(db.collection('instructors').doc(uid), { referralToken: token });
+  batch.set(db.collection('referralTokens').doc(token), {
+    instructorId: uid,
+    createdAt:    admin.firestore.FieldValue.serverTimestamp()
+  });
+  await batch.commit();
+
+  console.log(`[Referral] Token created for instructor ${uid}: ${token}`);
+  return {
+    token,
+    referralUrl: `https://linguabud.com/instructor-profile?id=${uid}&ref=${token}`
+  };
+});
+
+/**
+ * Registers a referral when a newly signed-up student arrives via a referral link.
+ * Called from the client immediately after createUserWithEmailAndPassword succeeds.
+ *
+ * Guards:
+ *  - Token must exist in referralTokens
+ *  - Student cannot refer themselves
+ *  - Program must still be active (before REFERRAL_PROGRAM_END_DATE)
+ *  - Student can only be referred once (first referral wins)
+ *  - Instructor must have fewer than MAX_REFERRAL_CREDITS_PER_INSTRUCTOR credited referrals
+ */
+exports.registerReferral = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+
+  const { referralToken } = request.data;
+  if (!referralToken || typeof referralToken !== 'string') {
+    throw new HttpsError('invalid-argument', 'referralToken is required');
+  }
+
+  const studentId = request.auth.uid;
+  const db        = admin.firestore();
+
+  // Resolve token → instructor
+  const tokenSnap = await db.collection('referralTokens').doc(referralToken.trim()).get();
+  if (!tokenSnap.exists) {
+    console.log('[Referral] Unknown token:', referralToken);
+    return { success: false, reason: 'invalid_token' };
+  }
+  const { instructorId } = tokenSnap.data();
+
+  if (instructorId === studentId) {
+    return { success: false, reason: 'self_referral' };
+  }
+
+  if (new Date() > REFERRAL_PROGRAM_END_DATE) {
+    return { success: false, reason: 'program_ended' };
+  }
+
+  // Prevent a student from being attributed to more than one instructor
+  const existingSnap = await db.collection('referrals')
+    .where('studentId', '==', studentId)
+    .limit(1)
+    .get();
+  if (!existingSnap.empty) {
+    return { success: false, reason: 'already_referred' };
+  }
+
+  // Verify instructor hasn't hit their credit cap
+  const creditedSnap = await db.collection('referrals')
+    .where('instructorId', '==', instructorId)
+    .where('status', '==', 'credited')
+    .get();
+  if (creditedSnap.size >= MAX_REFERRAL_CREDITS_PER_INSTRUCTOR) {
+    return { success: false, reason: 'instructor_cap_reached' };
+  }
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  // Write referral document and tag the student for fast lookup at payment time
+  const batch = db.batch();
+  const referralRef = db.collection('referrals').doc();
+  batch.set(referralRef, {
+    instructorId,
+    studentId,
+    referralToken,
+    status:                 'pending',
+    referredAt:             now,
+    qualifiedAt:            null,
+    creditedAt:             null,
+    creditUsedOnBookingId:  null,
+    lockedPaymentIntentId:  null,
+    lockedAt:               null
+  });
+  // Tag the student's user doc so createPaymentIntent can look up the referral in O(1)
+  batch.set(db.collection('users').doc(studentId), {
+    referredByInstructorId: instructorId
+  }, { merge: true });
+  await batch.commit();
+
+  console.log(`[Referral] Registered: instructor=${instructorId} student=${studentId}`);
+  return { success: true, instructorId };
+});
+
+/**
+ * Returns all referral documents for the admin dashboard.
+ * Admin-only callable.
+ */
+exports.adminGetReferrals = onCall(async (request) => {
+  await assertAdmin(request);
+
+  const db   = admin.firestore();
+  const snap = await db.collection('referrals')
+    .orderBy('referredAt', 'desc')
+    .get();
+
+  if (snap.empty) return { referrals: [] };
+
+  // Collect unique instructor & student IDs for batch name lookups
+  const instructorIds = [...new Set(snap.docs.map(d => d.data().instructorId))];
+  const studentIds    = [...new Set(snap.docs.map(d => d.data().studentId))];
+
+  const [instructorSnaps, studentSnaps] = await Promise.all([
+    Promise.all(instructorIds.map(id => db.collection('instructors').doc(id).get())),
+    Promise.all(studentIds.map(id => db.collection('users').doc(id).get()))
+  ]);
+
+  const instructorNames = {};
+  instructorSnaps.forEach((s, i) => {
+    instructorNames[instructorIds[i]] = s.exists ? (s.data().name || instructorIds[i]) : instructorIds[i];
+  });
+  const studentNames = {};
+  studentSnaps.forEach((s, i) => {
+    studentNames[studentIds[i]] = s.exists ? (s.data().name || studentIds[i]) : studentIds[i];
+  });
+
+  const referrals = snap.docs.map(d => {
+    const data = d.data();
+    return {
+      id:                    d.id,
+      instructorId:          data.instructorId,
+      instructorName:        instructorNames[data.instructorId] || data.instructorId,
+      studentId:             data.studentId,
+      studentName:           studentNames[data.studentId] || data.studentId,
+      status:                data.status,
+      referredAt:            data.referredAt?.toDate?.()?.toISOString() || null,
+      creditedAt:            data.creditedAt?.toDate?.()?.toISOString() || null,
+      creditUsedOnBookingId: data.creditUsedOnBookingId || null
+    };
+  });
+
+  return { referrals };
 });

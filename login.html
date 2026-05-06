@@ -407,12 +407,14 @@
   import {
     auth,
     db,
+    functions,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
     doc,
     getDoc,
-    setDoc
+    setDoc,
+    httpsCallable
   } from './lib/firebaseClient.js';
 
   // ── Safe storage helpers (localStorage throws in Safari Private Mode) ──────
@@ -740,6 +742,23 @@
           languages_learning: learningLangs
         };
         await setDoc(doc(db, 'users', user.uid), userData);
+
+        // ── Referral registration ────────────────────────────────────────
+        // If the student arrived via an instructor's referral link, the token
+        // was stored in localStorage on instructor-profile.html. Register it
+        // now (non-fatal — never blocks account creation on failure).
+        try {
+          const refToken   = safeGetStorage('lb_referral_token');
+          const refExpiry  = parseInt(safeGetStorage('lb_referral_expires') || '0', 10);
+          if (refToken && refExpiry > Date.now()) {
+            const registerReferral = httpsCallable(functions, 'registerReferral');
+            await registerReferral({ referralToken: refToken });
+            safeSetStorage('lb_referral_token',   '');
+            safeSetStorage('lb_referral_expires', '0');
+          }
+        } catch (refErr) {
+          console.warn('[Referral] Registration failed (non-fatal):', refErr.message);
+        }
 
         alert('Account created! Please sign in.');
         submitBtn.disabled = false;

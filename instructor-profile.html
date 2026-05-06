@@ -639,6 +639,20 @@
     <script type="module">
         import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
 
+        // ── Referral token capture ──────────────────────────────────────────
+        // If a ?ref=TOKEN parameter is present, store it in localStorage for up
+        // to 30 days. The token is consumed in login.html after the student signs up.
+        (function captureReferralToken() {
+            try {
+                const params    = new URLSearchParams(window.location.search);
+                const refToken  = params.get('ref');
+                if (refToken && /^[a-f0-9]{16}$/i.test(refToken)) {
+                    localStorage.setItem('lb_referral_token',   refToken);
+                    localStorage.setItem('lb_referral_expires', String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+                }
+            } catch (e) { /* localStorage unavailable — non-fatal */ }
+        })();
+
         // ── Booking state ───────────────────────────────────────────────────
         // Stripe publishable key fetched from backend and cached (no hardcoded key in source)
         let _stripePublishableKey = null;
@@ -1190,7 +1204,13 @@
                     instructorId: currentInstructorId,
                     idempotencyKey: crypto.randomUUID()
                 });
-                const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
+                const { clientSecret, lessonAmount, studentPlatformFee, amount,
+                        referralCreditApplied: _refCredit, referralDocId: _refDocId,
+                        paymentIntentId: _piId } = piResult.data;
+                // Stash referral info for the booking doc written after payment confirms
+                window._pendingReferralCreditApplied = _refCredit === true;
+                window._pendingReferralDocId         = _refDocId || null;
+                window._pendingPaymentIntentId       = _piId || null;
 
                 // Update with server-authoritative amounts when all three are present
                 if (lessonAmount != null && studentPlatformFee != null && amount != null) {
@@ -1287,7 +1307,12 @@
                         paymentStatus:     'paid',
                         amount:            paymentIntent.amount,
                         currency:          paymentIntent.currency,
-                        instructorSeen:    false
+                        instructorSeen:    false,
+                        // Referral credit — tells createEarningsRecord to use full lesson amount
+                        ...(window._pendingReferralCreditApplied && {
+                            referralCreditApplied: true,
+                            referralDocId:         window._pendingReferralDocId
+                        })
                     });
                     selectedSlot   = null;
                     stripeElements = null;
