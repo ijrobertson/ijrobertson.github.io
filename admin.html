@@ -891,6 +891,43 @@
 
                 <!-- ── Referrals Tab ──────────────────────────────────────── -->
                 <div class="tab-pane" id="tab-referrals">
+                    <!-- Instructor referral links card (for composing personalised emails) -->
+                    <div class="admin-card" style="margin-bottom:1.5rem;">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-link" style="color:#20bcba;margin-right:8px;"></i>Instructor Referral Links</h5>
+                            <button id="gen-all-tokens-btn" class="btn btn-sm" style="background:#20bcba;color:#fff;border:none;">
+                                <i class="fas fa-magic"></i> Generate All Links
+                            </button>
+                        </div>
+                        <p style="color:#666;font-size:0.88rem;margin:0 0 12px;">
+                            Click <strong>Generate All Links</strong> to pre-create every approved instructor's personal referral URL.
+                            Copy individual links when writing personalised emails to each instructor.
+                        </p>
+                        <div id="instructor-links-output" style="display:none;">
+                            <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center;">
+                                <input id="instructor-links-search" type="text" placeholder="Search by name or email…"
+                                    style="flex:1;border:1px solid #ced4da;border-radius:4px;padding:6px 10px;font-size:0.85rem;">
+                                <button id="copy-all-links-btn" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-copy"></i> Copy all as CSV
+                                </button>
+                            </div>
+                            <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+                                <table class="admin-table" id="instructor-links-table">
+                                    <thead style="position:sticky;top:0;background:#f8f9fa;z-index:1;">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Referral URL</th>
+                                            <th style="width:80px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="instructor-links-body"></tbody>
+                                </table>
+                            </div>
+                            <p id="instructor-links-count" style="margin:8px 0 0;font-size:0.8rem;color:#888;"></p>
+                        </div>
+                    </div>
+
                     <div class="admin-card">
                         <div class="admin-card-header">
                             <h5><i class="fas fa-user-plus" style="color:#20bcba;margin-right:8px;"></i>Referral Program</h5>
@@ -2144,6 +2181,88 @@
         document.getElementById('refresh-referrals-btn')?.addEventListener('click', () => {
             tabsLoaded['referrals'] = false;
             loadAdminReferrals();
+        });
+
+        // ── Generate All Instructor Referral Links ────────────────────────
+        let _allInstructorLinks = []; // cache for CSV export + search
+
+        document.getElementById('gen-all-tokens-btn')?.addEventListener('click', async () => {
+            const btn    = document.getElementById('gen-all-tokens-btn');
+            const output = document.getElementById('instructor-links-output');
+            const body   = document.getElementById('instructor-links-body');
+            const count  = document.getElementById('instructor-links-count');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+            try {
+                const fn     = httpsCallable(functions, 'adminGenerateAllReferralTokens');
+                const result = await fn();
+                _allInstructorLinks = result.data.instructors || [];
+
+                renderInstructorLinksTable(_allInstructorLinks);
+                count.textContent = `${_allInstructorLinks.length} instructor${_allInstructorLinks.length !== 1 ? 's' : ''} — links ready to copy`;
+                output.style.display = 'block';
+            } catch (err) {
+                alert('Error generating links: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic"></i> Generate All Links';
+            }
+        });
+
+        function renderInstructorLinksTable(rows) {
+            const body = document.getElementById('instructor-links-body');
+            if (!body) return;
+            const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            if (rows.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" style="color:#999;padding:16px;text-align:center;">No approved instructors found.</td></tr>';
+                return;
+            }
+            body.innerHTML = rows.map((r, i) => `
+                <tr id="ilink-row-${i}">
+                    <td style="white-space:nowrap;">${esc(r.name)}</td>
+                    <td style="white-space:nowrap;">${esc(r.email)}</td>
+                    <td>
+                        <input type="text" value="${esc(r.referralUrl)}" readonly
+                            style="width:100%;border:1px solid #e0e0e0;border-radius:4px;padding:4px 8px;font-size:0.78rem;color:#333;background:#f8f9fa;">
+                    </td>
+                    <td>
+                        <button onclick="copyInstructorLink(${i})" id="ilink-btn-${i}"
+                            style="padding:4px 10px;background:#20bcba;color:#fff;border:none;border-radius:4px;font-size:0.78rem;cursor:pointer;white-space:nowrap;">
+                            Copy
+                        </button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        window.copyInstructorLink = function(idx) {
+            const row = _allInstructorLinks[idx];
+            if (!row) return;
+            navigator.clipboard.writeText(row.referralUrl).then(() => {
+                const btn = document.getElementById(`ilink-btn-${idx}`);
+                if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); }
+            });
+        };
+
+        document.getElementById('copy-all-links-btn')?.addEventListener('click', () => {
+            if (!_allInstructorLinks.length) return;
+            const csv = 'Name,Email,Referral URL\n' +
+                _allInstructorLinks.map(r =>
+                    `"${r.name.replace(/"/g,'""')}","${r.email.replace(/"/g,'""')}","${r.referralUrl}"`
+                ).join('\n');
+            navigator.clipboard.writeText(csv).then(() => {
+                const btn = document.getElementById('copy-all-links-btn');
+                if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> Copied!'; setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy all as CSV'; }, 2500); }
+            });
+        });
+
+        document.getElementById('instructor-links-search')?.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            const filtered = _allInstructorLinks.filter(r =>
+                r.name.toLowerCase().includes(term) || r.email.toLowerCase().includes(term)
+            );
+            renderInstructorLinksTable(filtered);
+            document.getElementById('instructor-links-count').textContent =
+                `Showing ${filtered.length} of ${_allInstructorLinks.length} instructors`;
         });
 
         // ── Overview ──────────────────────────────────────────────────────

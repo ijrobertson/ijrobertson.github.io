@@ -3380,3 +3380,55 @@ exports.adminGetReferrals = onCall(async (request) => {
 
   return { referrals };
 });
+
+/**
+ * Pre-generates referral tokens for ALL approved instructors who don't have one yet.
+ * Admin-only. Returns a list of { name, email, instructorId, referralUrl } so the
+ * admin can copy individual links when composing personalised referral emails.
+ */
+exports.adminGenerateAllReferralTokens = onCall(async (request) => {
+  await assertAdmin(request);
+
+  const db = admin.firestore();
+
+  const snap = await db.collection('instructors')
+    .where('status', '==', 'approved')
+    .get();
+
+  const results = [];
+
+  for (const docSnap of snap.docs) {
+    const data         = docSnap.data();
+    const instructorId = docSnap.id;
+
+    // Skip instructors without a name or email — can't build a useful row
+    if (!data.name && !data.email) continue;
+
+    let token = data.referralToken || null;
+
+    if (!token) {
+      // Generate a new token and persist it
+      token = randomUUID().replace(/-/g, '').substring(0, 16);
+      const batch = db.batch();
+      batch.update(db.collection('instructors').doc(instructorId), { referralToken: token });
+      batch.set(db.collection('referralTokens').doc(token), {
+        instructorId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      await batch.commit();
+      console.log(`[Referral] Admin pre-generated token for instructor ${instructorId}`);
+    }
+
+    results.push({
+      instructorId,
+      name:        data.name  || '(no name)',
+      email:       data.email || '(no email)',
+      referralUrl: `https://linguabud.com/instructor-profile?id=${instructorId}&ref=${token}`
+    });
+  }
+
+  // Sort alphabetically by name for easy scanning
+  results.sort((a, b) => a.name.localeCompare(b.name));
+
+  return { instructors: results, count: results.length };
+});
