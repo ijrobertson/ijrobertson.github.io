@@ -2719,13 +2719,14 @@
                     languages.forEach(lang => instructorLanguages.add(lang));
                 });
 
-                // Prioritize instructors who have uploaded an intro video
+                // Prioritize payment-ready instructors, then those with an intro video
                 allInstructors.sort((a, b) => {
-                    const aHasVideo = !!a.intro_video_url;
-                    const bHasVideo = !!b.intro_video_url;
-                    if (aHasVideo && !bHasVideo) return -1;
-                    if (!aHasVideo && bHasVideo) return 1;
-                    return 0;
+                    const aReady = (a.chargesEnabled === true && a.payoutsEnabled === true) || (a.payoutMethod === 'wise' && !!a.wiseEmail) ? 1 : 0;
+                    const bReady = (b.chargesEnabled === true && b.payoutsEnabled === true) || (b.payoutMethod === 'wise' && !!b.wiseEmail) ? 1 : 0;
+                    if (bReady !== aReady) return bReady - aReady;
+                    const aHasVideo = !!a.intro_video_url ? 1 : 0;
+                    const bHasVideo = !!b.intro_video_url ? 1 : 0;
+                    return bHasVideo - aHasVideo;
                 });
 
                 populateInstructorFilters();

@@ -1544,6 +1544,12 @@
                 return matchesLang && matchesCountry && matchesPrice && matchesName;
             });
 
+            filtered.sort((a, b) => {
+                const aReady = (a.chargesEnabled === true && a.payoutsEnabled === true) || (a.payoutMethod === 'wise' && !!a.wiseEmail) ? 1 : 0;
+                const bReady = (b.chargesEnabled === true && b.payoutsEnabled === true) || (b.payoutMethod === 'wise' && !!b.wiseEmail) ? 1 : 0;
+                return bReady - aReady;
+            });
+
             if (filtered.length === 0) {
                 instructorGrid.innerHTML = '<div class="no-results"><i class="fas fa-chalkboard-teacher" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No instructors found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';
                 return;
@@ -1646,14 +1652,14 @@
                 `;
             }
 
-            const stripeReady = instructor.stripeOnboardingComplete === true;
+            const paymentReady = (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) || (instructor.payoutMethod === 'wise' && !!instructor.wiseEmail);
             cardHTML += `
                 </div>
                 <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
                     <button class="view-profile-btn" data-instructor-id="${instructor.id}">
                         <i class="fas fa-external-link-alt"></i> View Full Profile
                     </button>
-                    ${!stripeReady ? `<div class="stripe-pending-badge" style="text-align:center;margin-top:0.5rem;">
+                    ${!paymentReady ? `<div class="stripe-pending-badge" style="text-align:center;margin-top:0.5rem;">
                         <i class="fas fa-clock"></i> Payment setup pending
                     </div>` : ''}
                 </div>
