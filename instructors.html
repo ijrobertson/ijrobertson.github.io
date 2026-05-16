@@ -1312,6 +1312,7 @@
         const logoutLink = document.getElementById('logoutLink');
 
         let allInstructors = [];
+        let videoObserver = null;
 
         // Booking Modal Variables
         let currentInstructorId = null;
@@ -1555,9 +1556,23 @@
                 return;
             }
 
+            if (videoObserver) videoObserver.disconnect();
+            videoObserver = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const video = entry.target;
+                    if (video.dataset.src && !video.getAttribute('src')) {
+                        video.src = video.dataset.src;
+                    }
+                    obs.unobserve(video);
+                });
+            }, { rootMargin: '200px 0px' });
+
             filtered.forEach(instructor => {
                 const card = createInstructorCard(instructor);
                 instructorGrid.appendChild(card);
+                const videoEl = card.querySelector('.card-video-el[data-src]');
+                if (videoEl) videoObserver.observe(videoEl);
             });
         }
 
@@ -1597,7 +1612,7 @@
 
             let cardHTML = hasVideo
                 ? `<div class="card-video-container">
-                       <video class="card-video-el" src="${escapeHtml(instructor.intro_video_url)}" muted loop playsinline preload="none"></video>
+                       <video class="card-video-el" data-src="${escapeHtml(instructor.intro_video_url)}" muted loop playsinline preload="metadata"></video>
                        <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
                        <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
                        <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
@@ -1693,6 +1708,9 @@
                 });
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    if (videoEl.dataset.src && !videoEl.getAttribute('src')) {
+                        videoEl.src = videoEl.dataset.src;
+                    }
                     if (videoEl.paused) {
                         videoEl.play().catch(() => {});
                         playBtn.querySelector('i').className = 'fas fa-pause';
