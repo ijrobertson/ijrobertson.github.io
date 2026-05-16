@@ -7,6 +7,33 @@ const { randomUUID } = require('crypto');
 // Initialize Firebase Admin
 admin.initializeApp();
 
+function buildCalendarData(bookingId, startDate, durationMinutes, title, description) {
+  const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+  const toIcsDate = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const startIcs = toIcsDate(startDate);
+  const endIcs = toIcsDate(endDate);
+  const location = 'https://linguabud.com/video-call';
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Lingua Bud//linguabud.com//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${bookingId}@linguabud.com`,
+    `DTSTART:${startIcs}`,
+    `DTEND:${endIcs}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    `LOCATION:${location}`,
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+  const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startIcs}/${endIcs}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
+  return { icsContent, googleCalendarUrl };
+}
+
 /**
  * Cloud Function that triggers when a new message is added to a conversation
  * Sends an email notification to the recipient if they have notifications enabled
@@ -237,6 +264,7 @@ exports.sendBookingNotification = onDocumentCreated(
       const booking = event.data.data();
       const { instructorId, studentId, dateTime, amount, currency } = booking;
       const bookingType = booking.bookingType || 'lesson';
+      const lessonDurationMinutes = booking.durationMinutes || 60;
 
       if (!instructorId) return null;
 
@@ -286,6 +314,28 @@ exports.sendBookingNotification = onDocumentCreated(
 
       // Format payment amount (only relevant for paid lessons)
       const amountStr = amount ? `$${(amount / 100).toFixed(2)} ${(currency || 'USD').toUpperCase()}` : '';
+
+      // Calendar invite data (Google Calendar URL + .ics attachment)
+      const trialInstructorCalendar = buildCalendarData(
+        event.params.bookingId, lessonDate, 15,
+        `Free Trial Lesson with ${studentName}`,
+        `Free 15-minute trial lesson with ${studentName}. Join at: https://linguabud.com/video-call`
+      );
+      const trialStudentCalendar = buildCalendarData(
+        event.params.bookingId, lessonDate, 15,
+        `Free Trial Lesson with ${instructor.name || 'Your Instructor'}`,
+        `Free 15-minute trial lesson with ${instructor.name || 'your instructor'}. Join at: https://linguabud.com/video-call`
+      );
+      const instructorCalendar = buildCalendarData(
+        event.params.bookingId, lessonDate, lessonDurationMinutes,
+        `Language Lesson with ${studentName}`,
+        `Lingua Bud language lesson with ${studentName}. Join at: https://linguabud.com/video-call`
+      );
+      const studentCalendar = buildCalendarData(
+        event.params.bookingId, lessonDate, lessonDurationMinutes,
+        `Language Lesson with ${instructor.name || 'Instructor'}`,
+        `Lingua Bud language lesson with ${instructor.name || 'your instructor'}. Join at: https://linguabud.com/video-call`
+      );
 
       // ── Free trial: send trial-specific emails and return early ──────────
       if (bookingType === 'free_trial') {
@@ -350,6 +400,16 @@ exports.sendBookingNotification = onDocumentCreated(
                               </ul>
                             </div>
 
+                            <!-- Add to Calendar -->
+                            <div style="background-color: #f0fdf9; border-radius: 8px; padding: 20px; margin: 0 0 28px 0; text-align: center; border: 1px solid #c3e6e5;">
+                              <p style="margin: 0 0 12px 0; color: #333333; font-size: 15px; font-weight: bold;">Add to your calendar</p>
+                              <a href="${trialInstructorCalendar.googleCalendarUrl}" target="_blank"
+                                 style="display: inline-block; padding: 10px 22px; background-color: #4285f4; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold;">
+                                Add to Google Calendar
+                              </a>
+                              <p style="margin: 12px 0 0; color: #777777; font-size: 13px; line-height: 1.5;">A calendar file (.ics) is also attached — open it to add to Outlook, Apple Calendar, or any other app.</p>
+                            </div>
+
                             <p style="margin: 0 0 30px 0; text-align: center;">
                               <a href="https://linguabud.com/bookings"
                                  style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
@@ -392,13 +452,22 @@ Duration: 15 minutes (Free Trial)
 
 Please join the video call at the scheduled time.
 
+Add to Google Calendar: ${trialInstructorCalendar.googleCalendarUrl}
+(A .ics calendar file is also attached — open it to add to Outlook, Apple Calendar, or any other app)
+
 View the trial on your dashboard: https://linguabud.com/bookings
 
 Questions? Email support@linguabud.com
 
 Lingua Bud | linguabud.com
 © 2026 Lingua Bud
-          `.trim()
+          `.trim(),
+          attachments: [
+            {
+              filename: 'trial-lesson.ics',
+              content: Buffer.from(trialInstructorCalendar.icsContent).toString('base64'),
+            }
+          ]
         });
 
         if (trialInstructorResult.error) {
@@ -483,6 +552,16 @@ Lingua Bud | linguabud.com
                                 </ul>
                               </div>
 
+                              <!-- Add to Calendar -->
+                              <div style="background-color: #f0fdf9; border-radius: 8px; padding: 20px; margin: 0 0 28px 0; text-align: center; border: 1px solid #c3e6e5;">
+                                <p style="margin: 0 0 12px 0; color: #333333; font-size: 15px; font-weight: bold;">Add to your calendar</p>
+                                <a href="${trialStudentCalendar.googleCalendarUrl}" target="_blank"
+                                   style="display: inline-block; padding: 10px 22px; background-color: #4285f4; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold;">
+                                  Add to Google Calendar
+                                </a>
+                                <p style="margin: 12px 0 0; color: #777777; font-size: 13px; line-height: 1.5;">A calendar file (.ics) is also attached — open it to add to Outlook, Apple Calendar, or any other app.</p>
+                              </div>
+
                               <p style="margin: 0 0 30px 0; text-align: center;">
                                 <a href="https://linguabud.com/bookings"
                                    style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
@@ -529,13 +608,22 @@ What to expect:
 - Experience their teaching style in a relaxed, no-pressure session.
 - After your trial, decide if you'd like to continue with full lessons.
 
+Add to Google Calendar: ${trialStudentCalendar.googleCalendarUrl}
+(A .ics calendar file is also attached — open it to add to Outlook, Apple Calendar, or any other app)
+
 View your booking: https://linguabud.com/bookings
 
 Questions? Email support@linguabud.com
 
 Lingua Bud | linguabud.com
 © 2026 Lingua Bud
-            `.trim()
+            `.trim(),
+            attachments: [
+              {
+                filename: 'trial-lesson.ics',
+                content: Buffer.from(trialStudentCalendar.icsContent).toString('base64'),
+              }
+            ]
           });
 
           if (trialStudentResult.error) {
@@ -612,6 +700,16 @@ Lingua Bud | linguabud.com
                             View this lesson in your Activity page and join the video call when it's time to start.
                           </p>
 
+                          <!-- Add to Calendar -->
+                          <div style="background-color: #f0fdf9; border-radius: 8px; padding: 20px; margin: 0 0 28px 0; text-align: center; border: 1px solid #c3e6e5;">
+                            <p style="margin: 0 0 12px 0; color: #333333; font-size: 15px; font-weight: bold;">Add to your calendar</p>
+                            <a href="${instructorCalendar.googleCalendarUrl}" target="_blank"
+                               style="display: inline-block; padding: 10px 22px; background-color: #4285f4; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold;">
+                              Add to Google Calendar
+                            </a>
+                            <p style="margin: 12px 0 0; color: #777777; font-size: 13px; line-height: 1.5;">A calendar file (.ics) is also attached — open it to add to Outlook, Apple Calendar, or any other app.</p>
+                          </div>
+
                           <p style="margin: 0 0 30px 0; text-align: center;">
                             <a href="https://linguabud.com/bookings"
                                style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
@@ -652,10 +750,19 @@ Date: ${formattedDate}
 Time: ${formattedTime}
 ${amountStr ? `Payment: ${amountStr} (confirmed)` : ''}
 
+Add to Google Calendar: ${instructorCalendar.googleCalendarUrl}
+(A .ics calendar file is also attached — open it to add to Outlook, Apple Calendar, or any other app)
+
 View your upcoming lesson: https://linguabud.com/bookings
 
 © 2026 Lingua Bud
-        `.trim()
+        `.trim(),
+        attachments: [
+          {
+            filename: 'lesson.ics',
+            content: Buffer.from(instructorCalendar.icsContent).toString('base64'),
+          }
+        ]
       });
 
       if (emailResult.error) {
@@ -731,6 +838,16 @@ View your upcoming lesson: https://linguabud.com/bookings
                               You can view your upcoming lesson and join the video call when it's time on your Activity page.
                             </p>
 
+                            <!-- Add to Calendar -->
+                            <div style="background-color: #f0fdf9; border-radius: 8px; padding: 20px; margin: 0 0 28px 0; text-align: center; border: 1px solid #c3e6e5;">
+                              <p style="margin: 0 0 12px 0; color: #333333; font-size: 15px; font-weight: bold;">Add to your calendar</p>
+                              <a href="${studentCalendar.googleCalendarUrl}" target="_blank"
+                                 style="display: inline-block; padding: 10px 22px; background-color: #4285f4; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold;">
+                                Add to Google Calendar
+                              </a>
+                              <p style="margin: 12px 0 0; color: #777777; font-size: 13px; line-height: 1.5;">A calendar file (.ics) is also attached — open it to add to Outlook, Apple Calendar, or any other app.</p>
+                            </div>
+
                             <p style="margin: 0 0 30px 0; text-align: center;">
                               <a href="https://linguabud.com/bookings"
                                  style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
@@ -771,12 +888,21 @@ Date: ${formattedDate}
 Time: ${formattedTime}
 ${amountStr ? `Amount Paid: ${amountStr}` : ''}
 
+Add to Google Calendar: ${studentCalendar.googleCalendarUrl}
+(A .ics calendar file is also attached — open it to add to Outlook, Apple Calendar, or any other app)
+
 View your booking: https://linguabud.com/bookings
 
 Questions? Email support@linguabud.com
 
 © 2026 Lingua Bud
-          `.trim()
+          `.trim(),
+          attachments: [
+            {
+              filename: 'lesson.ics',
+              content: Buffer.from(studentCalendar.icsContent).toString('base64'),
+            }
+          ]
         });
 
         if (studentEmailResult.error) {
