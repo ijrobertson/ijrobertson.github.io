@@ -1312,7 +1312,6 @@
         const logoutLink = document.getElementById('logoutLink');
 
         let allInstructors = [];
-        let videoObserver = null;
 
         // Booking Modal Variables
         let currentInstructorId = null;
@@ -1556,25 +1555,9 @@
                 return;
             }
 
-            if (videoObserver) videoObserver.disconnect();
-            videoObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (!entry.isIntersecting) return;
-                    const video = entry.target;
-                    const src = video.dataset.src;
-                    if (src && !video.getAttribute('src')) {
-                        video.src = src;
-                        video.load();
-                    }
-                    videoObserver.unobserve(video);
-                });
-            }, { rootMargin: '300px 0px' });
-
             filtered.forEach(instructor => {
                 const card = createInstructorCard(instructor);
                 instructorGrid.appendChild(card);
-                const videoEl = card.querySelector('.card-video-el[data-src]');
-                if (videoEl) videoObserver.observe(videoEl);
             });
         }
 
@@ -1614,7 +1597,7 @@
 
             let cardHTML = hasVideo
                 ? `<div class="card-video-container">
-                       <video class="card-video-el" data-src="${escapeHtml(instructor.intro_video_url)}" muted loop playsinline preload="none"></video>
+                       <video class="card-video-el" src="${escapeHtml(instructor.intro_video_url)}" muted loop playsinline preload="none"></video>
                        <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
                        <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
                        <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
@@ -1629,7 +1612,7 @@
                    <div class="instructor-card-body">`
                 : `<div class="instructor-card-header">
                        <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
-                       <img class="instructor-card-avatar" src="${avatar}" alt="${name}" loading="lazy" onerror="this.src='https://via.placeholder.com/100'">
+                       <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
                        <div class="instructor-card-name">${name}</div>
                        ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
                        <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>
@@ -1710,11 +1693,6 @@
                 });
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    // Trigger lazy load immediately if the observer hasn't fired yet
-                    if (videoEl.dataset.src && !videoEl.getAttribute('src')) {
-                        videoEl.src = videoEl.dataset.src;
-                        videoEl.load();
-                    }
                     if (videoEl.paused) {
                         videoEl.play().catch(() => {});
                         playBtn.querySelector('i').className = 'fas fa-pause';
