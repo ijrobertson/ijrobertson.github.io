@@ -3082,14 +3082,16 @@ async function createWiseRecipient(profileId, instructorName, wiseEmail, currenc
   });
 }
 
-/** Step 2 — Create a fixed-rate quote (same source/target currency = no FX fee). */
+/** Step 2 — Create a fixed-rate quote (same source/target currency = no FX fee).
+ *  targetAmount ensures the instructor receives exactly the promised amount;
+ *  Wise fees are charged to the platform balance on top of that. */
 async function createWiseQuote(profileId, currency, amountDecimal) {
   return wiseRequest('POST', '/v1/quotes', {
     profile:      parseInt(profileId, 10),
     source:       currency.toUpperCase(),
     target:       currency.toUpperCase(),
     rateType:     'FIXED',
-    sourceAmount: amountDecimal,
+    targetAmount: amountDecimal,
     type:         'BALANCE_PAYOUT'
   });
 }
