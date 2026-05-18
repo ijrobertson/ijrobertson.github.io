@@ -641,6 +641,20 @@
         }
         .btn-cancel-lesson:hover { background: #d97706; color: #fff; }
 
+        /* Student name link in instructor view */
+        .student-profile-link {
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px dashed rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: color 0.2s, border-bottom-color 0.2s;
+        }
+        .student-profile-link:hover {
+            color: #20bcba;
+            border-bottom-color: #20bcba;
+            text-decoration: none;
+        }
+
         /* Free trial indicator badge */
         .trial-type-badge {
             display: inline-flex; align-items: center; gap: 0.3rem;
@@ -1142,6 +1156,10 @@
             card.dataset.myRole = booking.myRole;
             card.dataset.durationMinutes = durationMinutes;
 
+            const otherNameHtml = (booking.myRole === 'instructor' && booking.studentId)
+                ? `<a href="learner-profile?uid=${escapeAttr(booking.studentId)}" class="student-profile-link" title="View ${escapeAttr(otherName)}'s profile">${escapeHtml(otherName)}</a>`
+                : escapeHtml(otherName);
+
             card.innerHTML = `
                 <div class="lesson-card-header">
                     <img class="lesson-instructor-avatar"
@@ -1149,7 +1167,7 @@
                          onerror="this.src='${DEFAULT_AVATAR}'"
                          alt="${escapeAttr(otherName)}">
                     <div class="lesson-instructor-info">
-                        <h4>${escapeHtml(roleLabel)} ${escapeHtml(otherName)}</h4>
+                        <h4>${escapeHtml(roleLabel)} ${otherNameHtml}</h4>
                         <span>${escapeHtml(lessonTypeLabel)}</span>
                     </div>
                 </div>
