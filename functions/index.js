@@ -3560,3 +3560,85 @@ exports.adminGenerateAllReferralTokens = onCall(async (request) => {
 
   return { instructors: results, count: results.length };
 });
+
+exports.sendHomeworkNotification = onDocumentCreated(
+  'homework/{homeworkId}',
+  async (event) => {
+    try {
+      const homework = event.data.data();
+      const { instructorId, studentId, title, notes, pdfUrl, pdfName, dueDate } = homework;
+
+      if (!studentId || !instructorId || !title) return null;
+
+      const resend = new Resend(process.env.RESEND_API_KEY);
+
+      const studentSnap = await admin.firestore().collection('users').doc(studentId).get();
+      if (!studentSnap.exists || !studentSnap.data().email) {
+        console.log('[Homework] Student not found or no email:', studentId);
+        return null;
+      }
+      const student = studentSnap.data();
+      const studentName = student.name || 'Student';
+      const studentEmail = student.email;
+
+      const instructorSnap = await admin.firestore().collection('instructors').doc(instructorId).get();
+      const instructorName = instructorSnap.exists
+        ? (instructorSnap.data().name || 'Your Instructor')
+        : 'Your Instructor';
+
+      const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      const dueDateHtml = dueDate
+        ? `<p style="margin:6px 0 0;color:#555;font-size:14px;"><strong>Due:</strong> ${dueDate.toDate().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>`
+        : '';
+      const notesHtml = notes?.trim()
+        ? `<div style="background:#fff;border-radius:6px;padding:16px;margin:16px 0;border:1px solid #e8e8e8;"><p style="margin:0;white-space:pre-wrap;color:#444;font-size:14px;line-height:1.6;">${esc(notes.trim())}</p></div>`
+        : '';
+      const pdfHtml = pdfUrl
+        ? `<p style="margin:20px 0 0;"><a href="${pdfUrl}" style="display:inline-block;background:#20bcba;color:#fff;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px;">Download: ${esc(pdfName || 'Attachment')}</a></p>`
+        : '';
+
+      await resend.emails.send({
+        from: 'Lingua Bud <notifications@linguabud.com>',
+        to: studentEmail,
+        subject: `New homework from ${instructorName}: ${title}`,
+        html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f4f4;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr><td align="center" style="padding:40px 0;">
+      <table role="presentation" style="width:600px;max-width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+        <tr><td style="padding:40px 40px 20px;text-align:center;background:#20bcba;">
+          <h1 style="margin:0;color:#fff;font-size:28px;font-weight:bold;">Lingua Bud</h1>
+          <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">Language Learning Platform</p>
+        </td></tr>
+        <tr><td style="padding:40px;">
+          <h2 style="margin:0 0 16px;color:#333;font-size:22px;">You have new homework!</h2>
+          <p style="color:#666;font-size:16px;line-height:1.6;margin:0 0 24px;">Hi ${studentName},<br><br>Your instructor <strong>${instructorName}</strong> has assigned you homework to help you prepare for your next lesson.</p>
+          <div style="background:#f0fffe;border-radius:8px;padding:20px 24px;border-left:4px solid #20bcba;">
+            <h3 style="margin:0 0 8px;color:#20bcba;font-size:18px;">${esc(title)}</h3>
+            ${dueDateHtml}
+          </div>
+          ${notesHtml}
+          ${pdfHtml}
+          <p style="margin:28px 0 0;"><a href="https://linguabud.com/bookings" style="display:inline-block;background:#20bcba;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;">View in My Bookings</a></p>
+        </td></tr>
+        <tr><td style="padding:20px 40px;background:#f8f9fa;text-align:center;color:#999;font-size:13px;border-top:1px solid #e9ecef;">
+          <p style="margin:0;">&copy; 2024 Lingua Bud &middot; <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+      });
+
+      console.log(`[Homework] Email sent to ${studentEmail} for homework ${event.params.homeworkId}`);
+      return null;
+    } catch (err) {
+      console.error('[Homework] Error sending notification:', err);
+      return null;
+    }
+  }
+);

@@ -989,6 +989,71 @@
       background: #d97706;
       color: #fff;
     }
+    .send-homework-btn {
+      padding: 0.55rem 1.1rem;
+      background: #20bcba;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .send-homework-btn:hover { background: #1aa6a4; }
+
+    /* ── Homework Modal ────────────────────────────────────── */
+    .hw-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 9999;
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .hw-backdrop.active { display: flex; }
+    .hw-modal {
+      background: #fff; border-radius: 16px; padding: 2rem;
+      max-width: 520px; width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      animation: cancelSlideUp 0.22s ease;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .hw-modal h3 { font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin: 0 0 1.25rem; }
+    .hw-modal label { display: block; font-size: 0.875rem; font-weight: 600; color: #444; margin-bottom: 0.3rem; }
+    .hw-modal input[type="text"],
+    .hw-modal textarea,
+    .hw-modal input[type="date"] {
+      width: 100%; border: 1.5px solid #ddd; border-radius: 7px;
+      padding: 0.6rem 0.8rem; font-size: 0.9rem; margin-bottom: 1rem;
+      box-sizing: border-box; font-family: inherit; transition: border-color 0.2s;
+    }
+    .hw-modal input[type="text"]:focus,
+    .hw-modal textarea:focus,
+    .hw-modal input[type="date"]:focus { border-color: #20bcba; outline: none; }
+    .hw-modal textarea { min-height: 100px; resize: vertical; }
+    .hw-file-label {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: #f8f9fa; border: 1.5px dashed #ccc;
+      border-radius: 7px; padding: 0.7rem 1rem; cursor: pointer;
+      font-size: 0.875rem; color: #555; margin-bottom: 1rem; transition: border-color 0.2s;
+    }
+    .hw-file-label:hover { border-color: #20bcba; color: #20bcba; }
+    .hw-file-name { font-size: 0.82rem; color: #20bcba; margin-top: -0.7rem; margin-bottom: 1rem; }
+    .hw-progress { font-size: 0.82rem; color: #666; margin-bottom: 0.75rem; display: none; }
+    .hw-send-btn {
+      width: 100%; padding: 0.75rem; background: #20bcba; color: #fff;
+      border: none; border-radius: 7px; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .hw-send-btn:hover { background: #1aa6a4; }
+    .hw-send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .hw-modal-error { font-size: 0.82rem; color: #c0392b; margin-top: 0.5rem; display: none; }
+    .hw-cancel-btn {
+      width: 100%; padding: 0.65rem; background: transparent; color: #666;
+      border: 1.5px solid #ddd; border-radius: 7px; font-size: 0.875rem;
+      font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: all 0.2s;
+    }
+    .hw-cancel-btn:hover { border-color: #bbb; color: #333; }
 
     /* ── Cancel Booking Confirmation Modal ────────────────── */
     .cancel-backdrop {
@@ -1496,6 +1561,31 @@
     </div>
   </div>
 
+  <!-- Send Homework Modal -->
+  <div class="hw-backdrop" id="hw-backdrop">
+    <div class="hw-modal">
+      <h3><i class="fas fa-book-open" style="color:#20bcba;margin-right:0.5rem;"></i> Send Homework</h3>
+      <div id="hw-student-label" style="font-size:0.875rem;color:#555;margin-bottom:1.25rem;background:#f0fffe;border-left:3px solid #20bcba;padding:0.6rem 0.8rem;border-radius:4px;"></div>
+      <label for="hw-title">Title <span style="color:#c0392b;">*</span></label>
+      <input type="text" id="hw-title" placeholder="e.g. Practice today's vocabulary" maxlength="120">
+      <label for="hw-notes">Exercises / Notes <span style="color:#888;font-weight:400;">(optional)</span></label>
+      <textarea id="hw-notes" placeholder="Write out exercises, questions, or instructions here…"></textarea>
+      <label>PDF / Image Attachment <span style="color:#888;font-weight:400;">(optional)</span></label>
+      <label class="hw-file-label" for="hw-file-input">
+        <i class="fas fa-file-pdf" style="color:#e74c3c;font-size:1.1rem;"></i>
+        <span id="hw-file-label-text">Click to attach a PDF or image</span>
+      </label>
+      <input type="file" id="hw-file-input" accept=".pdf,image/*" style="display:none;">
+      <div class="hw-file-name" id="hw-file-name" style="display:none;"></div>
+      <label for="hw-due">Due Date <span style="color:#888;font-weight:400;">(optional)</span></label>
+      <input type="date" id="hw-due">
+      <div class="hw-progress" id="hw-progress"></div>
+      <button class="hw-send-btn" id="hw-send-btn"><i class="fas fa-paper-plane"></i> Send Homework</button>
+      <div class="hw-modal-error" id="hw-modal-error"></div>
+      <button class="hw-cancel-btn" id="hw-cancel-btn">Cancel</button>
+    </div>
+  </div>
+
   <!-- Delete Account Modal -->
   <div class="del-backdrop" id="del-backdrop">
     <div class="del-modal">
@@ -1551,6 +1641,7 @@
       getDownloadURL,
       updateDoc,
       onSnapshot,
+      serverTimestamp,
       httpsCallable
     } from './lib/firebaseClient.js';
 
@@ -2670,8 +2761,14 @@
             60 minutes
           </div>
         </div>
-        <button class="cancel-lesson-btn"><i class="fas fa-times"></i> Cancel</button>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;flex-shrink:0;">
+          <button class="send-homework-btn"><i class="fas fa-book-open"></i> Homework</button>
+          <button class="cancel-lesson-btn"><i class="fas fa-times"></i> Cancel</button>
+        </div>
       `;
+      card.querySelector('.send-homework-btn').addEventListener('click', () => {
+        openHomeworkModal(booking.id, booking);
+      });
       card.querySelector('.cancel-lesson-btn').addEventListener('click', () => {
         openInstructorCancelModal(booking.id, booking);
       });
@@ -3550,6 +3647,114 @@
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-external-link-alt"></i> View Stripe Dashboard'; }
       }
     }
+
+    // ── Homework Modal ────────────────────────────────────────────
+    let _hwBookingId = null;
+    let _hwBooking = null;
+
+    function openHomeworkModal(bookingId, booking) {
+      _hwBookingId = bookingId;
+      _hwBooking = booking;
+      document.getElementById('hw-title').value = '';
+      document.getElementById('hw-notes').value = '';
+      document.getElementById('hw-due').value = '';
+      document.getElementById('hw-file-input').value = '';
+      document.getElementById('hw-file-name').style.display = 'none';
+      document.getElementById('hw-file-name').textContent = '';
+      document.getElementById('hw-file-label-text').textContent = 'Click to attach a PDF or image';
+      document.getElementById('hw-progress').style.display = 'none';
+      document.getElementById('hw-modal-error').style.display = 'none';
+      document.getElementById('hw-modal-error').textContent = '';
+      document.getElementById('hw-send-btn').disabled = false;
+      document.getElementById('hw-student-label').textContent = `To: ${escapeHtmlInst(booking.studentName || 'Student')}`;
+      document.getElementById('hw-backdrop').classList.add('active');
+    }
+
+    function closeHomeworkModal() {
+      document.getElementById('hw-backdrop').classList.remove('active');
+      _hwBookingId = null;
+      _hwBooking = null;
+    }
+
+    document.getElementById('hw-cancel-btn').addEventListener('click', closeHomeworkModal);
+    document.getElementById('hw-backdrop').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('hw-backdrop')) closeHomeworkModal();
+    });
+
+    document.getElementById('hw-file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const nameEl = document.getElementById('hw-file-name');
+      if (file) {
+        nameEl.textContent = file.name;
+        nameEl.style.display = 'block';
+        document.getElementById('hw-file-label-text').textContent = 'Change file';
+      } else {
+        nameEl.style.display = 'none';
+        document.getElementById('hw-file-label-text').textContent = 'Click to attach a PDF or image';
+      }
+    });
+
+    document.getElementById('hw-send-btn').addEventListener('click', async () => {
+      const title = document.getElementById('hw-title').value.trim();
+      const notes = document.getElementById('hw-notes').value.trim();
+      const dueInput = document.getElementById('hw-due').value;
+      const file = document.getElementById('hw-file-input').files[0] || null;
+      const errorEl = document.getElementById('hw-modal-error');
+      const progressEl = document.getElementById('hw-progress');
+      const sendBtn = document.getElementById('hw-send-btn');
+
+      errorEl.style.display = 'none';
+      if (!title) {
+        errorEl.textContent = 'Please enter a title for the homework.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (!_hwBookingId || !_hwBooking) return;
+
+      sendBtn.disabled = true;
+      progressEl.style.display = 'block';
+      progressEl.textContent = 'Preparing…';
+
+      try {
+        let pdfUrl = null;
+        let pdfName = null;
+
+        if (file) {
+          progressEl.textContent = 'Uploading file…';
+          const storageRef = ref(storage, `homework/${currentUser.uid}/${Date.now()}_${file.name}`);
+          const snapshot = await uploadBytes(storageRef, file);
+          pdfUrl = await getDownloadURL(snapshot.ref);
+          pdfName = file.name;
+        }
+
+        progressEl.textContent = 'Saving…';
+        const instructorSnap = await getDoc(doc(db, 'instructors', currentUser.uid));
+        const instructorName = instructorSnap.exists() ? (instructorSnap.data().name || '') : '';
+
+        await addDoc(collection(db, 'homework'), {
+          bookingId: _hwBookingId,
+          instructorId: currentUser.uid,
+          studentId: _hwBooking.studentId,
+          instructorName,
+          title,
+          notes: notes || '',
+          pdfUrl,
+          pdfName,
+          dueDate: dueInput ? new Date(dueInput + 'T00:00:00') : null,
+          seenByStudent: false,
+          createdAt: serverTimestamp(),
+        });
+
+        progressEl.style.display = 'none';
+        closeHomeworkModal();
+      } catch (err) {
+        console.error('Error sending homework:', err);
+        progressEl.style.display = 'none';
+        errorEl.textContent = 'Something went wrong. Please try again.';
+        errorEl.style.display = 'block';
+        sendBtn.disabled = false;
+      }
+    });
 
     // ── Account Deletion ──────────────────────────────────────────
     const delBackdrop = document.getElementById('del-backdrop');
