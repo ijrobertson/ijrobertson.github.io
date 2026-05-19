@@ -1349,6 +1349,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         if (instructorData.avatar_url) {
                             navProfilePic.src = instructorData.avatar_url;
                         }
+                        const myProfileLink = document.getElementById('myProfileLink');
+                        if (myProfileLink) myProfileLink.href = 'instructor-profile';
                     } else {
                         // If not an instructor, check users collection
                         const userDoc = await getDoc(doc(db, 'users', user.uid));

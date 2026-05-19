@@ -733,7 +733,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         studentStoredTZ = usersSnap.data().timezone;
                     }
                     const profileLink = document.getElementById('myProfileLink');
-                    if (profileLink) profileLink.href = 'learner-profile';
+                    if (profileLink) profileLink.href = isInstructor ? 'instructor-profile' : 'learner-profile';
+                    if (isInstructor && !instructorId) {
+                        loadProfile(user.uid);
+                    } else if (!isInstructor && !instructorId) {
+                        document.getElementById('pageLoading').style.display = 'none';
+                        document.getElementById('profileError').style.display = 'flex';
+                    }
                 } catch (e) { /* non-critical */ }
 
                 loadUnreadMessageCount(user.uid);
@@ -741,6 +747,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             } else {
                 profileNavWrapper.style.display = 'none';
                 signInWrapper.style.display = '';
+                if (!instructorId) {
+                    document.getElementById('pageLoading').style.display = 'none';
+                    document.getElementById('profileError').style.display = 'flex';
+                }
             }
         });
 
@@ -775,12 +785,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const params      = new URLSearchParams(window.location.search);
         const instructorId = params.get('id');
 
-        if (!instructorId) {
-            document.getElementById('pageLoading').style.display = 'none';
-            document.getElementById('profileError').style.display = 'flex';
-        } else {
+        if (instructorId) {
             loadProfile(instructorId);
         }
+        // If no ?id= param, the auth handler will load the logged-in instructor's
+        // own profile. If no auth or not an instructor, it will show the error.
 
         async function loadProfile(uid) {
             try {
