@@ -3634,6 +3634,47 @@ exports.sendHomeworkNotification = onDocumentCreated(
       });
 
       console.log(`[Homework] Email sent to ${studentEmail} for homework ${event.params.homeworkId}`);
+
+      // Confirmation email to the instructor
+      if (instructorSnap.exists && instructorSnap.data().email) {
+        const instructorEmail = instructorSnap.data().email;
+        await resend.emails.send({
+          from: 'Lingua Bud <notifications@linguabud.com>',
+          to: instructorEmail,
+          subject: `Homework sent to ${studentName}: ${title}`,
+          html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f4f4;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr><td align="center" style="padding:40px 0;">
+      <table role="presentation" style="width:600px;max-width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+        <tr><td style="padding:40px 40px 20px;text-align:center;background:#20bcba;">
+          <h1 style="margin:0;color:#fff;font-size:28px;font-weight:bold;">Lingua Bud</h1>
+        </td></tr>
+        <tr><td style="padding:40px;">
+          <h2 style="margin:0 0 16px;color:#333;font-size:22px;">Homework sent!</h2>
+          <p style="color:#666;font-size:16px;line-height:1.6;margin:0 0 24px;">Hi ${instructorName},<br><br>You've successfully sent a homework assignment to <strong>${studentName}</strong>. Here's a summary of what was sent:</p>
+          <div style="background:#f0fffe;border-radius:8px;padding:20px 24px;border-left:4px solid #20bcba;">
+            <h3 style="margin:0 0 8px;color:#20bcba;font-size:18px;">${esc(title)}</h3>
+            ${dueDateHtml}
+          </div>
+          ${notesHtml}
+          ${pdfHtml}
+          <p style="margin:28px 0 0;"><a href="https://linguabud.com/bookings" style="display:inline-block;background:#20bcba;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;">View in My Bookings</a></p>
+        </td></tr>
+        <tr><td style="padding:20px 40px;background:#f8f9fa;text-align:center;color:#999;font-size:13px;border-top:1px solid #e9ecef;">
+          <p style="margin:0;">&copy; ${new Date().getFullYear()} Lingua Bud &middot; <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+        });
+        console.log(`[Homework] Confirmation email sent to instructor ${instructorEmail}`);
+      }
+
       return null;
     } catch (err) {
       console.error('[Homework] Error sending notification:', err);

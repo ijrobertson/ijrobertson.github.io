@@ -757,6 +757,68 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: all 0.2s;
         }
         .hw-dismiss-btn:hover { border-color: #bbb; color: #333; }
+
+        /* Mark as Complete (student) */
+        .hw-complete-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.45rem 1.1rem; background: #fff; color: #20bcba;
+            border: 1.5px solid #20bcba; border-radius: 6px;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; margin-top: 0.75rem;
+        }
+        .hw-complete-btn:hover { background: #20bcba; color: #fff; }
+        .hw-complete-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .hw-completed-tag {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            color: #1a8732; font-size: 0.875rem; font-weight: 600;
+            margin-top: 0.75rem;
+        }
+
+        /* View homework modal (instructor) */
+        .hw-view-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55); z-index: 9999;
+            align-items: center; justify-content: center; padding: 1rem;
+        }
+        .hw-view-backdrop.active { display: flex; }
+        .hw-view-modal {
+            background: #fff; border-radius: 16px;
+            max-width: 520px; width: 100%;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+            animation: cslideUp 0.22s ease;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .hw-view-header {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #f0f0f0; gap: 0.75rem;
+        }
+        .hw-view-header h3 { margin: 0; color: #113448; font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+        .hw-view-x { background: none; border: none; color: #aaa; font-size: 1.1rem; cursor: pointer; padding: 0; flex-shrink: 0; }
+        .hw-view-x:hover { color: #333; }
+        .hw-view-body { padding: 1.25rem 1.5rem; }
+        .hw-status-badge {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 5px 14px; border-radius: 20px; font-size: 0.85rem;
+            font-weight: 600; margin-bottom: 1rem;
+        }
+        .hw-status-badge.completed { background: #e8f7ee; color: #1a8732; }
+        .hw-status-badge.pending { background: #f0fffe; color: #1a9d9b; }
+        .hw-view-meta { font-size: 0.875rem; color: #888; margin-bottom: 1rem; line-height: 1.7; }
+        .hw-view-notes {
+            background: #f8f9fa; border-radius: 6px; padding: 0.85rem 1rem;
+            font-size: 0.9rem; color: #555; line-height: 1.6;
+            white-space: pre-wrap; margin-bottom: 0.75rem;
+        }
+        .hw-view-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid #f0f0f0;
+            display: flex; justify-content: flex-end;
+        }
+        .hw-view-close-btn {
+            padding: 0.6rem 1.5rem; background: #f0f0f0; color: #555;
+            border: none; border-radius: 7px; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .hw-view-close-btn:hover { background: #e0e0e0; }
     </style>
 </head>
 <body>
@@ -958,6 +1020,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Load page data
             await loadLessons();
+            await updateInstructorHomeworkButtons();
             await loadHomework();
 
             // Start countdown timer (updates join buttons)
@@ -1302,7 +1365,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </button>
                     ${reviewFooterHtml}
                     ${status === 'upcoming' ? `<button class="btn-cancel-lesson" data-cancel-id="${escapeAttr(booking.id)}" data-cancel-name="${escapeAttr(otherName)}" data-cancel-time="${escapeAttr(lessonTime.toISOString())}" data-cancel-amount="${booking.amount || ''}" data-cancel-currency="${escapeAttr(booking.currency || '')}" data-cancel-role="${escapeAttr(booking.myRole)}" data-booking-type="${escapeAttr(booking.bookingType || 'lesson')}"><i class="fas fa-times"></i> Cancel</button>` : ''}
-                    ${booking.myRole === 'instructor' ? `<button class="btn-send-homework" onclick="openHomeworkModal('${escapeAttr(booking.id)}', '${escapeAttr(booking.studentId || '')}', '${escapeAttr(otherName)}')"><i class="fas fa-book-open"></i> Homework</button>` : ''}
+                    ${booking.myRole === 'instructor' ? `<button class="btn-send-homework" data-hw-booking="${escapeAttr(booking.id)}" onclick="openHomeworkModal('${escapeAttr(booking.id)}', '${escapeAttr(booking.studentId || '')}', '${escapeAttr(otherName)}')"><i class="fas fa-book-open"></i> Homework</button>` : ''}
                 </div>
             `;
 
@@ -1630,6 +1693,88 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             el.style.display = 'block';
         }
 
+        // ===== INSTRUCTOR HOMEWORK BUTTON UPDATER =====
+
+        async function updateInstructorHomeworkButtons() {
+            try {
+                const snap = await getDocs(query(
+                    collection(db, 'homework'),
+                    where('instructorId', '==', currentUser.uid)
+                ));
+                if (snap.empty) return;
+
+                const hwMap = new Map();
+                snap.forEach(d => {
+                    const hw = { id: d.id, ...d.data() };
+                    const existing = hwMap.get(hw.bookingId);
+                    const hwTime = hw.createdAt?.toMillis?.() ?? 0;
+                    const exTime = existing?.createdAt?.toMillis?.() ?? -1;
+                    if (!existing || hwTime > exTime) hwMap.set(hw.bookingId, hw);
+                });
+
+                document.querySelectorAll('[data-hw-booking]').forEach(btn => {
+                    const hw = hwMap.get(btn.dataset.hwBooking);
+                    if (!hw) return;
+                    btn.innerHTML = '<i class="fas fa-eye"></i> View Homework';
+                    btn.onclick = (e) => { e.preventDefault(); openViewHomeworkModal(hw); };
+                });
+            } catch (err) {
+                console.error('Error updating homework buttons:', err);
+            }
+        }
+
+        // ===== VIEW HOMEWORK MODAL (instructor) =====
+
+        let _viewHw = null;
+
+        window.openViewHomeworkModal = (hw) => {
+            _viewHw = hw;
+            document.getElementById('hwViewTitle').textContent = hw.title;
+
+            const statusEl = document.getElementById('hwViewStatus');
+            if (hw.completedByStudent) {
+                const dateStr = hw.completedAt?.toDate?.()
+                    ? ' · ' + hw.completedAt.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                    : '';
+                statusEl.innerHTML = `<span class="hw-status-badge completed"><i class="fas fa-check-circle"></i> Student Marked Complete${escapeHtml(dateStr)}</span>`;
+            } else {
+                statusEl.innerHTML = `<span class="hw-status-badge pending"><i class="fas fa-clock"></i> Pending</span>`;
+            }
+
+            const metaParts = [];
+            if (hw.studentName) metaParts.push(`To: ${hw.studentName}`);
+            const sentDate = hw.createdAt?.toDate?.()
+                ? hw.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                : '';
+            if (sentDate) metaParts.push(`Sent: ${sentDate}`);
+            const dueDate = hw.dueDate?.toDate?.()
+                ? hw.dueDate.toDate().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+                : '';
+            if (dueDate) metaParts.push(`Due: ${dueDate}`);
+            document.getElementById('hwViewMeta').textContent = metaParts.join(' · ');
+
+            const notesEl = document.getElementById('hwViewNotes');
+            if (hw.notes) { notesEl.textContent = hw.notes; notesEl.style.display = 'block'; }
+            else { notesEl.style.display = 'none'; }
+
+            const pdfEl = document.getElementById('hwViewPdf');
+            pdfEl.innerHTML = hw.pdfUrl
+                ? `<a class="hw-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> ${escapeHtml(hw.pdfName || 'Download')}</a>`
+                : '';
+
+            document.getElementById('hwViewBackdrop').classList.add('active');
+        };
+
+        function closeViewHwModal() {
+            document.getElementById('hwViewBackdrop').classList.remove('active');
+        }
+
+        document.getElementById('hwViewX').addEventListener('click', closeViewHwModal);
+        document.getElementById('hwViewCloseBtn').addEventListener('click', closeViewHwModal);
+        document.getElementById('hwViewBackdrop').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('hwViewBackdrop')) closeViewHwModal();
+        });
+
         // ===== HOMEWORK =====
 
         async function loadHomework() {
@@ -1670,11 +1815,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
                         ${hw.notes ? `<div class="hw-card-notes">${escapeHtml(hw.notes)}</div>` : ''}
                         ${hw.pdfUrl ? `<a class="hw-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> ${escapeHtml(hw.pdfName || 'Download')}</a>` : ''}
+                        <div>
+                            ${hw.completedByStudent
+                                ? `<span class="hw-completed-tag"><i class="fas fa-check-circle"></i> Completed</span>`
+                                : `<button class="hw-complete-btn" data-hw-id="${escapeAttr(d.id)}"><i class="fas fa-check"></i> Mark as Complete</button>`
+                            }
+                        </div>
                     `;
                     container.appendChild(card);
 
                     if (!hw.seenByStudent) {
                         updateDoc(doc(db, 'homework', d.id), { seenByStudent: true }).catch(() => {});
+                    }
+                });
+
+                container.addEventListener('click', async (e) => {
+                    const btn = e.target.closest('.hw-complete-btn');
+                    if (!btn) return;
+                    const hwId = btn.dataset.hwId;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving…';
+                    try {
+                        await updateDoc(doc(db, 'homework', hwId), {
+                            completedByStudent: true,
+                            completedAt: serverTimestamp()
+                        });
+                        btn.closest('div').innerHTML = '<span class="hw-completed-tag"><i class="fas fa-check-circle"></i> Completed</span>';
+                    } catch (err) {
+                        console.error('Error marking homework complete:', err);
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check"></i> Mark as Complete';
                     }
                 });
             } catch (err) {
@@ -1767,6 +1937,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     bookingId: _hwBookingId,
                     instructorId: currentUser.uid,
                     studentId: _hwStudentId,
+                    studentName: _hwStudentName,
                     instructorName,
                     title,
                     notes: notes || '',
@@ -1774,11 +1945,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     pdfName,
                     dueDate: dueInput ? new Date(dueInput + 'T00:00:00') : null,
                     seenByStudent: false,
+                    completedByStudent: false,
                     createdAt: serverTimestamp(),
                 });
 
                 progressEl.style.display = 'none';
                 closeHwModal();
+                await updateInstructorHomeworkButtons();
             } catch (err) {
                 console.error('Error sending homework:', err);
                 progressEl.style.display = 'none';
@@ -1811,6 +1984,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <button class="hw-submit-btn" id="hwSubmitBtn"><i class="fas fa-paper-plane"></i> Send Homework</button>
             <div class="hw-modal-error" id="hwModalError"></div>
             <button class="hw-dismiss-btn" id="hwDismissBtn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- View Homework Modal (instructor) -->
+    <div class="hw-view-backdrop" id="hwViewBackdrop">
+        <div class="hw-view-modal">
+            <div class="hw-view-header">
+                <h3 id="hwViewTitle"></h3>
+                <button class="hw-view-x" id="hwViewX"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="hw-view-body">
+                <div id="hwViewStatus"></div>
+                <div class="hw-view-meta" id="hwViewMeta"></div>
+                <div class="hw-view-notes" id="hwViewNotes" style="display:none;"></div>
+                <div id="hwViewPdf"></div>
+            </div>
+            <div class="hw-view-footer">
+                <button class="hw-view-close-btn" id="hwViewCloseBtn">Close</button>
+            </div>
         </div>
     </div>
 
