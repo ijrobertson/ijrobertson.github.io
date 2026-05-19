@@ -717,6 +717,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 profileNavWrapper.style.cssText = 'display: flex !important;';
                 signInWrapper.style.display = 'none';
 
+                // If no ?id= in URL, load the logged-in user's own instructor profile
+                if (!instructorId) loadProfile(user.uid);
+
                 try {
                     const [usersSnap, instrSnap] = await Promise.all([
                         getDoc(doc(db, 'users', user.uid)),
@@ -728,19 +731,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         navProfilePic.src = uData.avatar_url;
                         localStorage.setItem('nav_avatar', uData.avatar_url);
                     }
-                    // Cache student's stored timezone preference
                     if (!isInstructor && usersSnap.exists() && usersSnap.data().timezone) {
                         studentStoredTZ = usersSnap.data().timezone;
                     }
                     const profileLink = document.getElementById('myProfileLink');
                     if (profileLink) profileLink.href = isInstructor ? 'instructor-profile' : 'learner-profile';
-                    if (isInstructor && !instructorId) {
-                        loadProfile(user.uid);
-                    } else if (!isInstructor && !instructorId) {
-                        document.getElementById('pageLoading').style.display = 'none';
-                        document.getElementById('profileError').style.display = 'flex';
-                    }
-                } catch (e) { /* non-critical */ }
+                } catch (e) { console.error('Auth setup error:', e); }
 
                 loadUnreadMessageCount(user.uid);
                 loadPendingRequests(user.uid);
