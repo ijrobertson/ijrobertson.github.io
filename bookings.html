@@ -1636,16 +1636,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             try {
                 const snap = await getDocs(query(
                     collection(db, 'homework'),
-                    where('studentId', '==', currentUser.uid),
-                    orderBy('createdAt', 'desc')
+                    where('studentId', '==', currentUser.uid)
                 ));
                 if (snap.empty) return;
+
+                const docs = snap.docs.sort((a, b) => {
+                    const aTime = a.data().createdAt?.toDate?.() ?? new Date(0);
+                    const bTime = b.data().createdAt?.toDate?.() ?? new Date(0);
+                    return bTime - aTime;
+                });
 
                 document.getElementById('homeworkSection').style.display = 'block';
                 const container = document.getElementById('homeworkContainer');
                 container.innerHTML = '';
 
-                snap.forEach(d => {
+                docs.forEach(d => {
                     const hw = d.data();
                     const dateStr = hw.createdAt?.toDate
                         ? hw.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })

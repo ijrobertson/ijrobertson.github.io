@@ -3611,7 +3611,6 @@ exports.sendHomeworkNotification = onDocumentCreated(
       <table role="presentation" style="width:600px;max-width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
         <tr><td style="padding:40px 40px 20px;text-align:center;background:#20bcba;">
           <h1 style="margin:0;color:#fff;font-size:28px;font-weight:bold;">Lingua Bud</h1>
-          <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">Language Learning Platform</p>
         </td></tr>
         <tr><td style="padding:40px;">
           <h2 style="margin:0 0 16px;color:#333;font-size:22px;">You have new homework!</h2>
@@ -3625,7 +3624,7 @@ exports.sendHomeworkNotification = onDocumentCreated(
           <p style="margin:28px 0 0;"><a href="https://linguabud.com/bookings" style="display:inline-block;background:#20bcba;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;">View in My Bookings</a></p>
         </td></tr>
         <tr><td style="padding:20px 40px;background:#f8f9fa;text-align:center;color:#999;font-size:13px;border-top:1px solid #e9ecef;">
-          <p style="margin:0;">&copy; 2024 Lingua Bud &middot; <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a></p>
+          <p style="margin:0;">&copy; ${new Date().getFullYear()} Lingua Bud &middot; <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a></p>
         </td></tr>
       </table>
     </td></tr>
