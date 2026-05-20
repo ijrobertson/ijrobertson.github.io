@@ -440,6 +440,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="admin-tab" data-tab="referrals">
                         Referrals <span class="tab-badge info" id="referralsBadge" style="display:none;">0</span>
                     </div>
+                    <div class="admin-tab" data-tab="deleted-accounts">Deleted Accounts</div>
                     <div class="admin-tab" data-tab="analytics">Analytics</div>
                     <div class="admin-tab" data-tab="overview">Overview</div>
                 </div>
@@ -987,6 +988,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </div>
                 </div>
 
+                <!-- ── Deleted Accounts Tab ──────────────────────────────── -->
+                <div class="tab-pane" id="tab-deleted-accounts">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-user-slash" style="color:#dc3545;margin-right:8px;"></i>Deleted Accounts</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;" onclick="tabsLoaded['deleted-accounts']=false;loadDeletedAccounts();">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Deleted By</th>
+                                        <th>Date</th>
+                                        <th>User ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deletedAccountsBody">
+                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="tab-pane" id="tab-overview">
                     <div class="overview-grid" id="overviewGrid">
                         <div class="mini-stat">
@@ -1254,9 +1284,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     if (name === 'reports')       loadReports();
                     if (name === 'wise-payouts')  loadWisePayouts();
                     if (name === 'all-users')     loadAllUsers();
-                    if (name === 'referrals')     loadAdminReferrals();
-                    if (name === 'analytics')     loadAnalytics();
-                    if (name === 'overview')      loadOverview();
+                    if (name === 'referrals')        loadAdminReferrals();
+                    if (name === 'deleted-accounts') loadDeletedAccounts();
+                    if (name === 'analytics')        loadAnalytics();
+                    if (name === 'overview')         loadOverview();
                 }
             });
         });
@@ -2118,18 +2149,61 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         window.loadWisePayouts = loadWisePayouts;
 
         window.doMarkWisePaid = function(instructorId, name, amount) {
+            const noteId = 'wise-paid-note-' + Date.now();
             showConfirm(
-                'Mark Wise Payout as Paid?',
-                `Confirm that you have sent <strong>${escHtml(amount)}</strong> to <strong>${escHtml(name)}</strong> via Wise.<br><br>This will mark all their pending lessons as paid.`,
+                'Mark Payout as Paid?',
+                `Confirm that <strong>${escHtml(name)}</strong> has been paid <strong>${escHtml(amount)}</strong>. This will mark all their pending lessons as paid.<br><br>
+                <label style="font-size:0.85rem;color:#555;display:block;margin-bottom:4px;">Payment note (optional, e.g. "Paid via PayPal"):</label>
+                <input id="${noteId}" type="text" placeholder="Leave blank if paid via Wise" style="width:100%;padding:6px 10px;border:1px solid #ced4da;border-radius:6px;font-size:0.9rem;">`,
                 async () => {
-                    await markWisePaid({ instructorId });
+                    const note = document.getElementById(noteId)?.value?.trim() || undefined;
+                    await markWisePaid({ instructorId, externalPaymentNote: note });
                     tabsLoaded['wise-payouts'] = false;
                     await loadWisePayouts();
                     await loadStats();
                 },
-                true // isPositive (teal button)
+                true
             );
         };
+
+        // ── Deleted Accounts ──────────────────────────────────────────────
+        async function loadDeletedAccounts() {
+            const tbody = document.getElementById('deletedAccountsBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const fn = httpsCallable(functions, 'adminGetDeletedAccounts');
+                const { data } = await fn();
+                const accounts = data.accounts || [];
+
+                if (accounts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No deleted accounts on record.</td></tr>';
+                    return;
+                }
+
+                const roleBadge = r => ({
+                    instructor: '<span style="background:#113448;color:#fff;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Instructor</span>',
+                    student:    '<span style="background:#20bcba;color:#fff;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Student</span>',
+                    both:       '<span style="background:#6366f1;color:#fff;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Both</span>',
+                }[r] || '<span style="color:#888;">—</span>');
+
+                const byBadge = b => b === 'admin'
+                    ? '<span style="background:#dc3545;color:#fff;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Admin</span>'
+                    : '<span style="background:#6c757d;color:#fff;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Self</span>';
+
+                tbody.innerHTML = accounts.map(a => `<tr>
+                    <td><strong>${escHtml(a.name || '—')}</strong></td>
+                    <td>${escHtml(a.email || '—')}</td>
+                    <td>${roleBadge(a.role)}</td>
+                    <td>${byBadge(a.deletedBy)}</td>
+                    <td>${a.deletedAt ? new Date(a.deletedAt).toLocaleString() : '—'}</td>
+                    <td><small style="color:#888;font-family:monospace;">${escHtml(a.userId)}</small></td>
+                </tr>`).join('');
+            } catch (err) {
+                console.error('loadDeletedAccounts error:', err);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#dc3545;padding:1.5rem;">Error loading deleted accounts.</td></tr>';
+            }
+        }
+        window.loadDeletedAccounts = loadDeletedAccounts;
 
         // ── Referrals ─────────────────────────────────────────────────────
         async function loadAdminReferrals() {

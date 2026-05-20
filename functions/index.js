@@ -1397,6 +1397,24 @@ exports.adminDeleteUser = onCall(async (request) => {
   const { userId } = request.data;
   if (!userId) throw new HttpsError('invalid-argument', 'userId required');
 
+  const db = admin.firestore();
+
+  // Capture profile data before deletion for audit log
+  const [userSnap, instrSnap] = await Promise.all([
+    db.collection('users').doc(userId).get(),
+    db.collection('instructors').doc(userId).get(),
+  ]);
+  const userData  = userSnap.exists  ? userSnap.data()  : null;
+  const instrData = instrSnap.exists ? instrSnap.data() : null;
+  await db.collection('deleted_accounts').add({
+    userId,
+    name:      instrData?.name  || userData?.name  || null,
+    email:     instrData?.email || userData?.email || null,
+    role:      instrData ? (userData ? 'both' : 'instructor') : 'student',
+    deletedBy: 'admin',
+    deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
   // Delete from Firebase Auth
   try {
     await admin.auth().deleteUser(userId);
@@ -1405,13 +1423,65 @@ exports.adminDeleteUser = onCall(async (request) => {
   }
 
   // Delete Firestore profile documents
-  const batch = admin.firestore().batch();
-  batch.delete(admin.firestore().collection('users').doc(userId));
-  batch.delete(admin.firestore().collection('instructors').doc(userId));
-  batch.delete(admin.firestore().collection('instructor_availability').doc(userId));
+  const batch = db.batch();
+  batch.delete(db.collection('users').doc(userId));
+  batch.delete(db.collection('instructors').doc(userId));
+  batch.delete(db.collection('instructor_availability').doc(userId));
   await batch.commit();
 
   return { success: true };
+});
+
+/**
+ * Self-service account deletion: logs to deleted_accounts, cleans up Firestore.
+ * Client still calls deleteUser() to remove the Firebase Auth entry.
+ */
+exports.deleteOwnAccount = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Login required');
+  const uid = request.auth.uid;
+  const db  = admin.firestore();
+
+  const [userSnap, instrSnap] = await Promise.all([
+    db.collection('users').doc(uid).get(),
+    db.collection('instructors').doc(uid).get(),
+  ]);
+  const userData  = userSnap.exists  ? userSnap.data()  : null;
+  const instrData = instrSnap.exists ? instrSnap.data() : null;
+  await db.collection('deleted_accounts').add({
+    userId:    uid,
+    name:      instrData?.name  || userData?.name  || null,
+    email:     instrData?.email || userData?.email || null,
+    role:      instrData ? (userData ? 'both' : 'instructor') : 'student',
+    deletedBy: 'self',
+    deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  const batch = db.batch();
+  batch.delete(db.collection('users').doc(uid));
+  batch.delete(db.collection('instructors').doc(uid));
+  batch.delete(db.collection('instructor_availability').doc(uid));
+  await batch.commit();
+
+  return { success: true };
+});
+
+/**
+ * Returns the deleted_accounts audit log for the admin panel.
+ */
+exports.adminGetDeletedAccounts = onCall(async (request) => {
+  await assertAdmin(request);
+  const db   = admin.firestore();
+  const snap = await db.collection('deleted_accounts')
+    .orderBy('deletedAt', 'desc')
+    .limit(200)
+    .get();
+  return {
+    accounts: snap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+      deletedAt: d.data().deletedAt?.toDate?.()?.toISOString() || null,
+    })),
+  };
 });
 
 /**
@@ -2999,7 +3069,7 @@ exports.createEarningsRecord = onDocumentCreated('bookings/{bookingId}', async (
 exports.markWisePayoutsPaid = onCall(async (request) => {
   await assertAdmin(request);
 
-  const { instructorId } = request.data;
+  const { instructorId, externalPaymentNote } = request.data;
   if (!instructorId) throw new HttpsError('invalid-argument', 'instructorId is required');
 
   const db  = admin.firestore();
@@ -3012,8 +3082,11 @@ exports.markWisePayoutsPaid = onCall(async (request) => {
 
   if (snap.empty) return { count: 0 };
 
+  const update = { payoutStatus: 'paid', paidAt: now };
+  if (externalPaymentNote) update.externalPaymentNote = externalPaymentNote;
+
   const batch = db.batch();
-  snap.docs.forEach(d => batch.update(d.ref, { payoutStatus: 'paid', paidAt: now }));
+  snap.docs.forEach(d => batch.update(d.ref, update));
   await batch.commit();
 
   return { count: snap.size };

@@ -3936,7 +3936,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       delError.style.display = 'none';
 
       try {
-        await deleteDoc(doc(db, 'instructors', user.uid));
+        const deleteOwnAccountFn = httpsCallable(functions, 'deleteOwnAccount');
+        await deleteOwnAccountFn();
         await deleteUser(user);
         window.location.href = 'index';
       } catch (err) {
