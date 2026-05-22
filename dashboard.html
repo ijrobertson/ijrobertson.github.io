@@ -1537,6 +1537,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <p style="color: #999; font-size: 0.95rem;">Loading...</p>
     </div>
 
+    <!-- GOOGLE CALENDAR SYNC SECTION -->
+    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
+      <i class="fab fa-google"></i> Google Calendar Sync
+    </h3>
+    <div id="gcal-section">
+      <p style="color: #999; font-size: 0.95rem;">Loading...</p>
+    </div>
+
     <!-- Danger Zone -->
     <div class="danger-card">
       <div class="danger-header">
@@ -2121,10 +2129,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const urlParams = new URLSearchParams(window.location.search);
           await checkStripePaymentStatus(urlParams.get('stripe') === 'success', instrData);
 
-          // Load earnings summary, referrals, and upcoming lessons
+          // Load earnings summary, referrals, upcoming lessons, and calendar sync status
           loadEarnings();
           loadReferrals();
           loadInstructorBookings().then(() => updateDashboardHomeworkButtons());
+          loadGcalSection(instrData);
 
           // Load unread message count
           try {
@@ -3913,6 +3922,83 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const delConfirm  = document.getElementById('del-confirm');
     const delBtnText  = document.getElementById('del-btn-text');
     const delError    = document.getElementById('del-error');
+
+    // ── Google Calendar Sync ─────────────────────────────────────────────────
+
+    async function loadGcalSection(instrData) {
+      const section = document.getElementById('gcal-section');
+      const connected = instrData?.googleCalendar?.connected === true;
+
+      if (connected) {
+        section.innerHTML = `
+          <div style="display:flex;align-items:center;gap:0.75rem;background:#f0fdf9;border:1px solid #c3e6e5;border-radius:8px;padding:1rem 1.25rem;margin-bottom:0.75rem;">
+            <i class="fas fa-check-circle" style="color:#20bcba;font-size:1.25rem;flex-shrink:0;"></i>
+            <div>
+              <strong style="color:#113448;">Google Calendar connected</strong>
+              <p style="margin:0.2rem 0 0;color:#666;font-size:0.875rem;">New bookings will automatically appear on your Google Calendar.</p>
+            </div>
+          </div>
+          <button id="gcal-disconnect-btn" style="background:none;border:1px solid #e74c3c;color:#e74c3c;padding:0.5rem 1.1rem;border-radius:6px;font-size:0.875rem;cursor:pointer;">
+            <i class="fas fa-unlink"></i> Disconnect Google Calendar
+          </button>`;
+
+        document.getElementById('gcal-disconnect-btn').addEventListener('click', async () => {
+          const btn = document.getElementById('gcal-disconnect-btn');
+          btn.disabled = true;
+          btn.textContent = 'Disconnecting…';
+          try {
+            const disconnect = httpsCallable(functions, 'googleCalendarDisconnect');
+            await disconnect();
+            section.innerHTML = '<p style="color:#666;font-size:0.9rem;">Disconnected. Reload the page to reconnect.</p>';
+          } catch (err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-unlink"></i> Disconnect Google Calendar';
+            alert('Could not disconnect. Please try again.');
+          }
+        });
+      } else {
+        section.innerHTML = `
+          <p style="color:#555;font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
+            Connect your Google Calendar so that every new booking is automatically added as an event — no more copy-pasting dates.
+          </p>
+          <button id="gcal-connect-btn" style="display:inline-flex;align-items:center;gap:0.5rem;background:#4285f4;color:#fff;border:none;padding:0.65rem 1.4rem;border-radius:6px;font-size:0.95rem;font-weight:600;cursor:pointer;">
+            <i class="fab fa-google"></i> Connect Google Calendar
+          </button>`;
+
+        document.getElementById('gcal-connect-btn').addEventListener('click', async () => {
+          const btn = document.getElementById('gcal-connect-btn');
+          btn.disabled = true;
+          btn.textContent = 'Loading…';
+          try {
+            const getUrl = httpsCallable(functions, 'googleCalendarAuthUrl');
+            const { data } = await getUrl();
+            window.location.href = data.url;
+          } catch (err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fab fa-google"></i> Connect Google Calendar';
+            alert('Could not start Google sign-in. Please try again.');
+          }
+        });
+      }
+    }
+
+    // Handle redirect back from Google OAuth
+    (function handleGcalReturn() {
+      const params = new URLSearchParams(window.location.search);
+      const gcal = params.get('gcal');
+      if (!gcal) return;
+      // Strip the param from the URL without a reload
+      params.delete('gcal');
+      const newSearch = params.toString();
+      history.replaceState(null, '', window.location.pathname + (newSearch ? '?' + newSearch : ''));
+      if (gcal === 'connected') {
+        const el = document.getElementById('gcal-section');
+        if (el) el.innerHTML = '<p style="color:#20bcba;font-size:0.9rem;"><i class="fas fa-check-circle"></i> Google Calendar connected! New bookings will now sync automatically.</p>';
+      } else if (gcal === 'error') {
+        const el = document.getElementById('gcal-section');
+        if (el) el.innerHTML = '<p style="color:#e74c3c;font-size:0.9rem;"><i class="fas fa-times-circle"></i> Google Calendar connection failed. Please try again.</p>';
+      }
+    })();
 
     document.getElementById('open-delete-modal').addEventListener('click', () => {
       delError.style.display = 'none';

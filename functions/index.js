@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 const { Resend } = require('resend');
 const Stripe = require('stripe');
 const { randomUUID } = require('crypto');
+const { google } = require('googleapis');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -32,6 +33,69 @@ function buildCalendarData(bookingId, startDate, durationMinutes, title, descrip
   ].join('\r\n');
   const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startIcs}/${endIcs}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
   return { icsContent, googleCalendarUrl };
+}
+
+// ── Google Calendar OAuth helpers ──────────────────────────────────────────
+
+function buildGoogleOAuth2Client() {
+  return new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    // Set GOOGLE_REDIRECT_URI in Firebase env to:
+    // https://us-central1-linguabud-9a942.cloudfunctions.net/googleCalendarCallback
+    process.env.GOOGLE_REDIRECT_URI
+  );
+}
+
+/**
+ * Creates a Google Calendar event for a booking on the instructor's connected calendar.
+ * Non-fatal — logs errors rather than throwing so booking flow is never blocked.
+ */
+async function syncBookingToGoogleCalendar(instructorId, booking, bookingId) {
+  try {
+    const instructorSnap = await admin.firestore().collection('instructors').doc(instructorId).get();
+    const gcal = instructorSnap.data()?.googleCalendar;
+    if (!gcal?.connected || !gcal?.refreshToken) return;
+
+    const oauth2Client = buildGoogleOAuth2Client();
+    oauth2Client.setCredentials({
+      access_token: gcal.accessToken,
+      refresh_token: gcal.refreshToken,
+      expiry_date: gcal.tokenExpiry
+    });
+
+    // Persist any refreshed tokens back to Firestore automatically
+    oauth2Client.on('tokens', async (tokens) => {
+      const update = { 'googleCalendar.accessToken': tokens.access_token };
+      if (tokens.refresh_token) update['googleCalendar.refreshToken'] = tokens.refresh_token;
+      if (tokens.expiry_date) update['googleCalendar.tokenExpiry'] = tokens.expiry_date;
+      await admin.firestore().collection('instructors').doc(instructorId).update(update);
+    });
+
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const startDate = booking.dateTime?.toDate ? booking.dateTime.toDate() : new Date(booking.dateTime);
+    const durationMs = (booking.durationMinutes || (booking.bookingType === 'free_trial' ? 15 : 60)) * 60 * 1000;
+    const endDate = new Date(startDate.getTime() + durationMs);
+    const studentName = booking.studentName || 'Student';
+    const isFreeTrial = booking.bookingType === 'free_trial';
+
+    await calendar.events.insert({
+      calendarId: 'primary',
+      resource: {
+        summary: isFreeTrial ? `Free Trial with ${studentName}` : `Lesson with ${studentName}`,
+        description: `Lingua Bud lesson. Join at: https://linguabud.com/video-call`,
+        start: { dateTime: startDate.toISOString() },
+        end: { dateTime: endDate.toISOString() },
+        extendedProperties: {
+          private: { linguaBudBookingId: bookingId }
+        }
+      }
+    });
+
+    console.log(`[GCal] Event created for instructor ${instructorId}, booking ${bookingId}`);
+  } catch (err) {
+    console.error(`[GCal] Failed to create event for booking ${bookingId}:`, err.message);
+  }
 }
 
 /**
@@ -643,6 +707,9 @@ Lingua Bud | linguabud.com
           }
         }
 
+        // Sync to instructor's Google Calendar if connected
+        await syncBookingToGoogleCalendar(instructorId, booking, event.params.bookingId);
+
         return trialInstructorResult;
       }
       // ── End free trial branch ────────────────────────────────────────────
@@ -921,6 +988,9 @@ Questions? Email support@linguabud.com
           console.log('Booking confirmation sent to student:', studentEmail);
         }
       }
+
+      // Sync to instructor's Google Calendar if connected
+      await syncBookingToGoogleCalendar(instructorId, booking, event.params.bookingId);
 
       return emailResult;
 
@@ -3755,3 +3825,71 @@ exports.sendHomeworkNotification = onDocumentCreated(
     }
   }
 );
+
+// ── Google Calendar Sync ───────────────────────────────────────────────────
+
+/**
+ * Returns a Google OAuth URL for the instructor to authorize calendar access.
+ * The state param carries the instructor's UID so the callback can store tokens.
+ */
+exports.googleCalendarAuthUrl = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+
+  const oauth2Client = buildGoogleOAuth2Client();
+  const url = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['https://www.googleapis.com/auth/calendar.events'],
+    state: request.auth.uid,
+    prompt: 'consent'  // always get a refresh token
+  });
+
+  return { url };
+});
+
+/**
+ * OAuth redirect handler. Google redirects here after the instructor grants access.
+ * Exchanges the auth code for tokens and stores them on the instructor's Firestore doc.
+ * Redirects back to the dashboard with ?gcal=connected (or ?gcal=error on failure).
+ */
+exports.googleCalendarCallback = onRequest(async (req, res) => {
+  const { code, state: instructorId, error } = req.query;
+
+  if (error || !code || !instructorId) {
+    console.error('[GCal] OAuth callback error:', error || 'missing code/state');
+    return res.redirect('https://linguabud.com/dashboard?gcal=error');
+  }
+
+  try {
+    const oauth2Client = buildGoogleOAuth2Client();
+    const { tokens } = await oauth2Client.getToken(code);
+
+    await admin.firestore().collection('instructors').doc(instructorId).update({
+      googleCalendar: {
+        connected: true,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        tokenExpiry: tokens.expiry_date || null,
+        connectedAt: admin.firestore.FieldValue.serverTimestamp()
+      }
+    });
+
+    console.log(`[GCal] Tokens stored for instructor ${instructorId}`);
+    res.redirect('https://linguabud.com/dashboard?gcal=connected');
+  } catch (err) {
+    console.error('[GCal] Token exchange failed:', err.message);
+    res.redirect('https://linguabud.com/dashboard?gcal=error');
+  }
+});
+
+/**
+ * Disconnects Google Calendar for the calling instructor.
+ */
+exports.googleCalendarDisconnect = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+
+  await admin.firestore().collection('instructors').doc(request.auth.uid).update({
+    googleCalendar: admin.firestore.FieldValue.delete()
+  });
+
+  return { success: true };
+});
