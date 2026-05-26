@@ -34,6 +34,8 @@ const state = {
     client: null,
     localAudioTrack: null,
     localVideoTrack: null,
+    localScreenTrack: null,
+    isScreenSharing: false,
     remoteUsers: {},
     remoteUserNames: {},
 
@@ -195,6 +197,7 @@ const btnParticipants= $('btn-participants');
 const btnChat        = $('btn-chat');
 const btnDice        = $('btn-dice');
 const btnWhiteboard  = $('btn-whiteboard');
+const btnScreenShare = $('btn-screenshare');
 const btnPip         = $('btn-pip');
 
 // Panels
@@ -505,6 +508,8 @@ async function leaveChannel() {
     callDuration.textContent = '00:00';
 
     // Stop local tracks
+    if (state.localScreenTrack) { state.localScreenTrack.close(); state.localScreenTrack = null; }
+    state.isScreenSharing = false;
     if (state.localAudioTrack) { state.localAudioTrack.close(); state.localAudioTrack = null; }
     if (state.localVideoTrack) { state.localVideoTrack.close(); state.localVideoTrack = null; }
 
@@ -541,6 +546,7 @@ async function leaveChannel() {
     state.isCameraOff = false;
     updateMuteUI();
     updateCameraUI();
+    updateScreenShareUI();
     navWarning.classList.add('hidden');
     _closePipOverlay();
 
@@ -646,6 +652,81 @@ function updateCameraUI() {
         pipCam.classList.toggle('cam-off', off);
         pipCam.querySelector('i').className = off ? 'fas fa-video-slash' : 'fas fa-video';
     }
+}
+
+// ════════════════════════════════════════════════════════════
+// SCREEN SHARE
+// ════════════════════════════════════════════════════════════
+
+async function startScreenShare() {
+    if (!state.client || !state.localVideoTrack) return;
+    try {
+        // 'disable' = no screen audio track; mic audio is already published separately
+        state.localScreenTrack = await AgoraRTC.createScreenVideoTrack({}, 'disable');
+
+        // Swap camera track for screen track in the published stream
+        await state.client.unpublish(state.localVideoTrack);
+        state.localVideoTrack.stop();
+        await state.client.publish(state.localScreenTrack);
+
+        // Show screen in the local self-view PiP
+        state.localScreenTrack.play(localStream);
+
+        state.isScreenSharing = true;
+        updateScreenShareUI();
+        showToast('Screen sharing started', 'success');
+
+        // When the user clicks "Stop sharing" in the browser's native bar
+        state.localScreenTrack.on('track-ended', () => stopScreenShare());
+
+    } catch (err) {
+        state.localScreenTrack = null;
+        // NotAllowedError means the user cancelled the picker — not an error worth toasting
+        if (err.name !== 'NotAllowedError' && err.code !== 'PERMISSION_DENIED') {
+            console.error('Screen share error:', err);
+            showToast('Could not share screen', 'error');
+        }
+    }
+}
+
+async function stopScreenShare() {
+    if (!state.isScreenSharing || !state.localScreenTrack) return;
+    try {
+        await state.client.unpublish(state.localScreenTrack);
+        state.localScreenTrack.close();
+        state.localScreenTrack = null;
+
+        // Restore camera track
+        if (state.localVideoTrack) {
+            await state.client.publish(state.localVideoTrack);
+            state.localVideoTrack.play(localStream);
+        }
+
+        state.isScreenSharing = false;
+        updateScreenShareUI();
+        showToast('Screen sharing stopped');
+    } catch (err) {
+        console.error('Stop screen share error:', err);
+        state.isScreenSharing = false;
+        state.localScreenTrack = null;
+        updateScreenShareUI();
+    }
+}
+
+function toggleScreenShare() {
+    if (state.isScreenSharing) {
+        stopScreenShare();
+    } else {
+        startScreenShare();
+    }
+}
+
+function updateScreenShareUI() {
+    if (!btnScreenShare) return;
+    const sharing = state.isScreenSharing;
+    btnScreenShare.classList.toggle('btn-active', sharing);
+    btnScreenShare.title = sharing ? 'Stop Sharing (S)' : 'Share Screen (S)';
+    btnScreenShare.querySelector('i').className = sharing ? 'fas fa-stop-circle' : 'fas fa-desktop';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1198,8 +1279,9 @@ function setupKeyboardShortcuts() {
         if (!state.channelName) return;
 
         const key = e.key.toLowerCase();
-        if (key === 'm') { e.preventDefault(); toggleMute();   }
-        if (key === 'v') { e.preventDefault(); toggleCamera(); }
+        if (key === 'm') { e.preventDefault(); toggleMute();         }
+        if (key === 'v') { e.preventDefault(); toggleCamera();       }
+        if (key === 's') { e.preventDefault(); toggleScreenShare();  }
         if (key === 'd') { e.preventDefault(); togglePanel('dice'); if (state.activePanel === 'dice') generatePrompt(); }
         if (key === 'c') { e.preventDefault(); togglePanel('chat'); }
         if (key === 'w') { e.preventDefault(); togglePanel('whiteboard'); }
@@ -1475,6 +1557,7 @@ function setupEventListeners() {
     btnMute.addEventListener('click', toggleMute);
     btnCamera.addEventListener('click', toggleCamera);
     btnLeave.addEventListener('click', leaveChannel);
+    btnScreenShare?.addEventListener('click', toggleScreenShare);
     btnPip.addEventListener('click', enterPiP);
 
     // PiP self-view buttons
