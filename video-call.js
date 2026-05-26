@@ -599,15 +599,18 @@ function handleUserUnpublished(user, mediaType) {
 }
 
 function handleUserLeft(user) {
+    const leavingName = state.remoteUserNames[user.uid] || 'Participant';
     delete state.remoteUsers[user.uid];
     delete state.remoteUserNames[user.uid];
     if (Object.keys(state.remoteUsers).length === 0) {
         vcWaiting.style.display = 'flex';
         remoteName.textContent = '';
         remoteStream.innerHTML = '';
+        const badge = $('vc-screensharing-badge');
+        if (badge) badge.classList.add('hidden');
     }
     updateParticipantsList();
-    showToast(`${state.remoteUserNames[user.uid] || 'Participant'} left the call`);
+    showToast(`${leavingName} left the call`);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -676,6 +679,11 @@ async function startScreenShare() {
         updateScreenShareUI();
         showToast('Screen sharing started', 'success');
 
+        // Notify remote participant via relay
+        if (state.wbRelayRef) {
+            setDoc(state.wbRelayRef, { t: 'ss', active: true, ts: Date.now() }).catch(() => {});
+        }
+
         // When the user clicks "Stop sharing" in the browser's native bar
         state.localScreenTrack.on('track-ended', () => stopScreenShare());
 
@@ -705,6 +713,11 @@ async function stopScreenShare() {
         state.isScreenSharing = false;
         updateScreenShareUI();
         showToast('Screen sharing stopped');
+
+        // Notify remote participant via relay
+        if (state.wbRelayRef) {
+            setDoc(state.wbRelayRef, { t: 'ss', active: false, ts: Date.now() }).catch(() => {});
+        }
     } catch (err) {
         console.error('Stop screen share error:', err);
         state.isScreenSharing = false;
@@ -727,6 +740,8 @@ function updateScreenShareUI() {
     btnScreenShare.classList.toggle('btn-active', sharing);
     btnScreenShare.title = sharing ? 'Stop Sharing (S)' : 'Share Screen (S)';
     btnScreenShare.querySelector('i').className = sharing ? 'fas fa-stop-circle' : 'fas fa-desktop';
+    const banner = $('vc-presenting-banner');
+    if (banner) banner.classList.toggle('hidden', !sharing);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -978,6 +993,9 @@ function wbHandleRemoteAction(msg) {
         wbInitCanvas();
     } else if (msg.t === 'prompt') {
         showPrompt({ icon: msg.icon, title: msg.title, text: msg.text }, msg.generatedBy, true);
+    } else if (msg.t === 'ss') {
+        const badge = $('vc-screensharing-badge');
+        if (badge) badge.classList.toggle('hidden', !msg.active);
     }
 }
 
@@ -1558,6 +1576,7 @@ function setupEventListeners() {
     btnCamera.addEventListener('click', toggleCamera);
     btnLeave.addEventListener('click', leaveChannel);
     btnScreenShare?.addEventListener('click', toggleScreenShare);
+    $('vc-stop-presenting')?.addEventListener('click', stopScreenShare);
     btnPip.addEventListener('click', enterPiP);
 
     // PiP self-view buttons

@@ -673,6 +673,76 @@ body.in-call {
   background: rgba(239,68,68,0.8);
 }
 
+/* ── Screen Share Indicators ────────────────────────────── */
+
+/* Banner shown to the LOCAL user while they are presenting */
+.vc-presenting-banner {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(32, 188, 186, 0.12);
+  border: 1.5px solid rgba(32, 188, 186, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--vc-primary);
+  padding: 0.45rem 0.5rem 0.45rem 0.875rem;
+  border-radius: 24px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 30;
+  white-space: nowrap;
+  animation: bannerFadeIn 0.3s ease-out;
+  pointer-events: auto;
+}
+
+@keyframes bannerFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.vc-stop-presenting-btn {
+  background: var(--vc-danger);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+.vc-stop-presenting-btn:hover {
+  background: var(--vc-danger-dark);
+  transform: scale(1.04);
+}
+
+/* Badge shown to the REMOTE viewer when the other person is sharing */
+.vc-screensharing-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(32, 188, 186, 0.12);
+  border: 1px solid rgba(32, 188, 186, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--vc-primary);
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  z-index: 30;
+  pointer-events: none;
+}
+
 /* camera-off overlay */
 .vc-local-pip.cam-off-overlay::after {
   content: '';
