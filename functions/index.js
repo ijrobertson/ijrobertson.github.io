@@ -1627,8 +1627,7 @@ exports.adminIssueRefund = onCall(async (request) => {
   const refund = await stripe.refunds.create({
     payment_intent: booking.paymentIntentId,
     ...(refundAmountParam && { amount: refundAmountParam }),
-    refund_application_fee: true,
-    ...(!isWisePayout && { reverse_transfer: true }),
+    ...(!isWisePayout && { refund_application_fee: true, reverse_transfer: true }),
   });
 
   console.log(`[adminIssueRefund] Refund ${refund.id} issued for booking ${bookingId} by admin ${request.auth.uid}`);
@@ -2405,10 +2404,9 @@ exports.cancelBooking = onCall(async (request) => {
       const refund = await stripe.refunds.create({
         payment_intent: booking.paymentIntentId,
         ...(refundPercent < 100 && { amount: refundAmountCents }),
-        refund_application_fee: true,
-        // Wise bookings collect into the platform account (no connected-account
-        // transfer was made), so reverse_transfer would throw an error.
-        ...(!isWisePayout && { reverse_transfer: true }),
+        // Wise bookings have no application fee or connected-account transfer,
+        // so both refund_application_fee and reverse_transfer must be omitted.
+        ...(!isWisePayout && { refund_application_fee: true, reverse_transfer: true }),
       });
       stripeRefundId = refund.id;
       console.log(`Refund created: ${refund.id} — ${refundPercent}% of ${booking.amount} ${booking.currency}`);
