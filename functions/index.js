@@ -1582,6 +1582,68 @@ exports.adminMarkMessageRead = onCall(async (request) => {
   return { success: true };
 });
 
+/**
+ * Admin-only: issue (or re-issue) a Stripe refund for a cancelled booking
+ * whose automatic refund failed. Idempotent — will error if a refund already exists.
+ */
+exports.adminIssueRefund = onCall(async (request) => {
+  await assertAdmin(request);
+  const { bookingId } = request.data;
+  if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId required');
+
+  const db = admin.firestore();
+  const bookingRef = db.collection('bookings').doc(bookingId);
+  const bookingSnap = await bookingRef.get();
+  if (!bookingSnap.exists) throw new HttpsError('not-found', 'Booking not found');
+
+  const booking = bookingSnap.data();
+  if (!booking.paymentIntentId) {
+    throw new HttpsError('failed-precondition', 'No Stripe payment intent on this booking');
+  }
+  if (booking.stripeRefundId) {
+    throw new HttpsError('failed-precondition', `Refund already issued: ${booking.stripeRefundId}`);
+  }
+  if (booking.paymentStatus !== 'paid') {
+    throw new HttpsError('failed-precondition', `Payment status is "${booking.paymentStatus}", not paid`);
+  }
+
+  const earningsSnap = await db.collection('earnings')
+    .where('bookingId', '==', bookingId)
+    .limit(1)
+    .get();
+  const payoutMethod = !earningsSnap.empty
+    ? (earningsSnap.docs[0].data().payoutMethod || 'stripe')
+    : 'stripe';
+  const isWisePayout = payoutMethod === 'wise';
+
+  const stripe = getStripe();
+
+  // For full refunds pass no amount (Stripe refunds the remaining charge);
+  // for partial use the stored intended amount.
+  const refundAmountParam = booking.refundPercent === 100
+    ? undefined
+    : (booking.refundAmountCents || undefined);
+
+  const refund = await stripe.refunds.create({
+    payment_intent: booking.paymentIntentId,
+    ...(refundAmountParam && { amount: refundAmountParam }),
+    refund_application_fee: true,
+    ...(!isWisePayout && { reverse_transfer: true }),
+  });
+
+  console.log(`[adminIssueRefund] Refund ${refund.id} issued for booking ${bookingId} by admin ${request.auth.uid}`);
+
+  await bookingRef.update({
+    stripeRefundId:     refund.id,
+    refundAmountCents:  refund.amount,
+    refundError:        admin.firestore.FieldValue.delete(),
+    adminRefundedAt:    admin.firestore.FieldValue.serverTimestamp(),
+    adminRefundedBy:    request.auth.uid,
+  });
+
+  return { success: true, refundId: refund.id, amount: refund.amount };
+});
+
 // ── Stripe Connect Integration ─────────────────────────────────────────────
 
 const STUDENT_PLATFORM_FEE = 1.00; // flat $1 fee added to every transaction
@@ -2331,6 +2393,7 @@ exports.cancelBooking = onCall(async (request) => {
   // ── Process Stripe refund if payment was made ────────────────────────────
   let stripeRefundId = null;
   let refundAmountCents = 0;
+  let refundError = null;
 
   if (refundPercent > 0 && booking.paymentIntentId && booking.paymentStatus === 'paid') {
     try {
@@ -2351,7 +2414,8 @@ exports.cancelBooking = onCall(async (request) => {
       console.log(`Refund created: ${refund.id} — ${refundPercent}% of ${booking.amount} ${booking.currency}`);
     } catch (refundErr) {
       console.error('Stripe refund error:', refundErr);
-      // Don't block the cancellation — refund can be issued manually if needed
+      refundError = refundErr.message || 'Unknown Stripe error';
+      // Don't block the cancellation — admin can retry via adminIssueRefund
     }
   }
 
@@ -2414,6 +2478,7 @@ exports.cancelBooking = onCall(async (request) => {
     refundLabel,
     refundAmountCents,
     ...(stripeRefundId && { stripeRefundId }),
+    ...(refundError && { refundError }),
   });
 
   // Format lesson date/time for emails (lessonDate already declared above for refund calc)

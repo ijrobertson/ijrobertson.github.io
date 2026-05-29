@@ -623,6 +623,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             </div>
                         </div>
                     </div>
+                    <div id="bkRefundAlert" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:10px 16px;margin-bottom:12px;font-weight:600;color:#856404;"></div>
                     <div class="admin-card">
                         <div class="admin-card-header">
                             <h5><i class="fas fa-calendar-check" style="color:#20bcba;margin-right:8px;"></i>Recent Bookings</h5>
@@ -636,10 +637,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                         <th>Date &amp; Time</th>
                                         <th>Amount</th>
                                         <th>Status</th>
+                                        <th>Refund</th>
                                     </tr>
                                 </thead>
                                 <tbody id="bookingsBody">
-                                    <tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1905,7 +1907,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ── Bookings ──────────────────────────────────────────────────────
         async function loadBookings() {
             const tbody = document.getElementById('bookingsBody');
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="5"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
             try {
                 const snap = await getDocs(collection(db, 'bookings'));
                 const bookings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1915,19 +1917,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     return dtB - dtA;
                 });
 
-                let total = bookings.length, confirmed = 0, cancelled = 0, revenue = 0;
+                let total = bookings.length, confirmed = 0, cancelled = 0, revenue = 0, refundNeeded = 0;
                 bookings.forEach(b => {
                     if (b.status === 'confirmed') confirmed++;
                     if (b.status === 'cancelled') cancelled++;
                     if (b.status === 'confirmed' && b.paymentStatus === 'paid' && b.amount) revenue += b.amount;
+                    if (b.status === 'cancelled' && b.refundPercent > 0 && b.paymentIntentId && b.paymentStatus === 'paid' && !b.stripeRefundId) refundNeeded++;
                 });
                 document.getElementById('bkTotal').textContent     = total;
                 document.getElementById('bkConfirmed').textContent = confirmed;
                 document.getElementById('bkCancelled').textContent = cancelled;
                 document.getElementById('bkRevenue').textContent   = revenue > 0 ? '$' + (revenue / 100).toFixed(2) : '$0.00';
+                const refundAlertEl = document.getElementById('bkRefundAlert');
+                if (refundAlertEl) refundAlertEl.style.display = refundNeeded > 0 ? 'block' : 'none';
+                if (refundAlertEl) refundAlertEl.textContent = `⚠ ${refundNeeded} booking(s) need a manual refund`;
 
                 if (bookings.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-calendar"></i>No bookings yet.</div></td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-calendar"></i>No bookings yet.</div></td></tr>';
                     return;
                 }
                 tbody.innerHTML = bookings.slice(0, 50).map(b => {
@@ -1936,19 +1942,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const amount  = b.amount ? '$' + (b.amount / 100).toFixed(2) : '—';
                     const status  = b.status || '—';
                     const badgeCls = status === 'confirmed' ? 'badge-confirmed' : status === 'cancelled' ? 'badge-cancelled' : '';
+
+                    // Determine refund cell content
+                    let refundCell = '—';
+                    if (b.status === 'cancelled' && b.refundPercent > 0 && b.paymentIntentId && b.paymentStatus === 'paid') {
+                        if (b.stripeRefundId) {
+                            const refundedAmt = b.refundAmountCents ? '$' + (b.refundAmountCents / 100).toFixed(2) : '';
+                            refundCell = `<span style="color:#198754;font-size:0.8rem;">✓ Refunded${refundedAmt ? ' ' + refundedAmt : ''}</span>`;
+                        } else {
+                            const errTitle = b.refundError ? escHtml(b.refundError) : 'Refund was not issued automatically';
+                            refundCell = `<button class="btn-approve" style="font-size:0.75rem;padding:3px 8px;background:#dc3545;" onclick="issueRefund('${escHtml(b.id)}')" title="${errTitle}">Issue Refund</button>`;
+                        }
+                    } else if (b.status === 'cancelled' && b.refundPercent === 0) {
+                        refundCell = '<span style="color:#999;font-size:0.8rem;">No refund</span>';
+                    } else if (b.stripeRefundId) {
+                        const refundedAmt = b.refundAmountCents ? '$' + (b.refundAmountCents / 100).toFixed(2) : '';
+                        refundCell = `<span style="color:#198754;font-size:0.8rem;">✓ Refunded${refundedAmt ? ' ' + refundedAmt : ''}</span>`;
+                    }
+
                     return `<tr>
                         <td>${escHtml(b.studentName || b.studentId || '—')}</td>
                         <td>${escHtml(b.instructorName || b.instructorId || '—')}</td>
                         <td>${escHtml(dateStr)}</td>
                         <td>${escHtml(amount)}</td>
                         <td><span class="status-badge ${badgeCls}">${escHtml(status)}</span></td>
+                        <td>${refundCell}</td>
                     </tr>`;
                 }).join('');
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="5" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
             }
         }
         window.loadBookings = loadBookings;
+
+        async function issueRefund(bookingId) {
+            if (!confirm(`Issue Stripe refund for booking ${bookingId}? This will charge back the student's payment. Make sure you haven't already refunded this manually in Stripe.`)) return;
+            try {
+                const fn = httpsCallable(functions, 'adminIssueRefund');
+                const result = await fn({ bookingId });
+                const amt = result.data.amount ? ' ($' + (result.data.amount / 100).toFixed(2) + ')' : '';
+                alert(`Refund issued successfully${amt}. Stripe refund ID: ${result.data.refundId}`);
+                loadBookings();
+            } catch (err) {
+                alert('Refund failed: ' + (err.message || err));
+            }
+        }
+        window.issueRefund = issueRefund;
 
         // ── Messages ──────────────────────────────────────────────────────
         async function loadMessages() {
