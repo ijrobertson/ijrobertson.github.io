@@ -355,6 +355,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <input type="text" id="name" placeholder="Your full name" autocomplete="name" />
     </div>
 
+    <div id="country-container" style="display: none;">
+      <label>Native Country</label>
+      <select id="signup-country">
+        <option value="">Select your country...</option>
+      </select>
+    </div>
+
     <!-- Language sections (signup only) -->
     <div id="language-section" style="display: none;">
       <label id="spoken-label">I Speak</label>
@@ -528,6 +535,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   });
 
   // ── Language list ─────────────────────────────────────────────────────────
+  const countries = [
+    "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan",
+    "Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia",
+    "Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada",
+    "Cape Verde","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Brazzaville)","Congo (Kinshasa)","Costa Rica",
+    "Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","East Timor","Ecuador",
+    "Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France",
+    "Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau",
+    "Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland",
+    "Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait",
+    "Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg",
+    "Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico",
+    "Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru",
+    "Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman",
+    "Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal",
+    "Puerto Rico","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent","Samoa","San Marino",
+    "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia",
+    "South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria",
+    "São Tomé and Príncipe","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey",
+    "Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
+    "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
+  ];
+
   const languages = [
     "Afrikaans","Akan","Albanian","Amharic","Arabic","Armenian","Assamese","Aymara","Azerbaijani",
     "Bambara","Bangla","Basque","Belarusian","Bhojpuri","Bosnian","Bulgarian","Burmese",
@@ -570,6 +600,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const confirmCont    = document.getElementById('confirm-password-container');
   const nameCont       = document.getElementById('name-container');
   const langSection    = document.getElementById('language-section');
+  const countryCont    = document.getElementById('country-container');
+  const countryEl      = document.getElementById('signup-country');
   const ageCont        = document.getElementById('age-checkbox-container');
   const termsCont      = document.getElementById('terms-checkbox-container');
   const ageBox         = document.getElementById('age-checkbox');
@@ -577,6 +609,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const errorEl        = document.getElementById('error-message');
   const spokenSel      = document.getElementById('spokenLanguage');
   const learningSel    = document.getElementById('learningLanguage');
+
+  // Populate country dropdown
+  countries.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    countryEl.appendChild(o);
+  });
 
   // Populate language dropdowns
   languages.forEach(lang => {
@@ -623,6 +662,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     toggleLink.textContent   = isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up";
     confirmCont.style.display  = isSignup ? 'block' : 'none';
     nameCont.style.display     = isSignup ? 'block' : 'none';
+    countryCont.style.display  = isSignup ? 'block' : 'none';
     langSection.style.display  = isSignup ? 'block' : 'none';
     ageCont.style.display      = isSignup ? 'flex'  : 'none';
     termsCont.style.display    = isSignup ? 'flex'  : 'none';
@@ -630,6 +670,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     document.getElementById('forgot-password-btn').style.display = isSignup ? 'none' : 'block';
     // Reset
     ageBox.checked = false; termsBox.checked = false;
+    countryEl.value = '';
     spokenLangs = []; learningLangs = [];
     renderTags('spoken'); renderTags('learning');
     document.getElementById('name').value = '';
@@ -738,6 +779,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         if (!name)                    { throw new Error('Please enter your full name.'); }
         if (password !== confirmPassword) { throw new Error('Passwords do not match.'); }
+        if (!countryEl.value) { throw new Error('Please select your native country.'); }
         if (spokenLangs.length === 0)  { throw new Error('Please add at least one language you speak.'); }
         if (learningLangs.length === 0) { throw new Error("Please add at least one language you're learning."); }
         if (!ageBox.checked)   { throw new Error('You must confirm that you are 18 years old or older.'); }
@@ -749,6 +791,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const userData = {
           email, role: 'student', name, emailNotifications: true,
           createdAt: new Date().toISOString(),
+          native_country: countryEl.value,
+          country: countryEl.value,
           languages_spoken: spokenLangs,
           languages_learning: learningLangs
         };
