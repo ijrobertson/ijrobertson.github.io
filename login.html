@@ -432,6 +432,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     doc,
     getDoc,
     setDoc,
+    updateDoc,
     httpsCallable
   } from './lib/firebaseClient.js';
 
@@ -510,19 +511,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if (auth.currentUser) {
       // Try Firestore for role; fall back to cache if offline
       let role = null;
+      let userData = null;
       try {
         const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
         if (snap.exists()) {
-          role = snap.data().role;
+          userData = snap.data();
+          role = userData.role;
           if (role) safeSetStorage('user_role_cache', role);
         }
       } catch(e) {
         role = safeGetStorage('user_role_cache');
       }
-      if (role === 'instructor' || role === 'student') {
+      if (role === 'instructor') {
         clearTimeout(safetyTimer);
-        redirectByRole(role);
-        return; // stay on redirect, don't show form
+        window.location.href = '/dashboard';
+        return;
+      }
+      if (role === 'student') {
+        clearTimeout(safetyTimer);
+        if (userData && !userData.hasLoggedIn) {
+          try { await updateDoc(doc(db, 'users', auth.currentUser.uid), { hasLoggedIn: true }); } catch(e) {}
+          window.location.href = '/student-dashboard';
+        } else {
+          window.location.href = '/instructors';
+        }
+        return;
       }
     }
     // Not signed in (or role unknown) — show the login form
@@ -794,7 +807,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           native_country: countryEl.value,
           country: countryEl.value,
           languages_spoken: spokenLangs,
-          languages_learning: learningLangs
+          languages_learning: learningLangs,
+          hasLoggedIn: false
         };
         await setDoc(doc(db, 'users', user.uid), userData);
 
@@ -827,10 +841,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // Determine role — try Firestore, fall back to local cache
         let role = null;
+        let userData = null;
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
           if (snap.exists()) {
-            role = snap.data().role;
+            userData = snap.data();
+            role = userData.role;
             if (role) safeSetStorage('user_role_cache', role);
           }
         } catch(firestoreErr) {
@@ -839,8 +855,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (!role) throw firestoreErr; // re-throw only if no cache available
         }
 
-        if (role === 'instructor' || role === 'student') {
-          redirectByRole(role);
+        if (role === 'instructor') {
+          window.location.href = '/dashboard';
+          // Don't re-enable button — page is navigating away
+        } else if (role === 'student') {
+          if (userData && !userData.hasLoggedIn) {
+            try { await updateDoc(doc(db, 'users', user.uid), { hasLoggedIn: true }); } catch(e) {}
+            window.location.href = '/student-dashboard';
+          } else {
+            window.location.href = '/instructors';
+          }
           // Don't re-enable button — page is navigating away
         } else {
           errorEl.textContent = 'Profile not found. Please contact support.';
