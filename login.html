@@ -747,7 +747,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     resetSendBtn.textContent = 'Sending...';
 
     try {
-      await sendPasswordResetEmail(auth, resetEmail);
+      await sendPasswordResetEmail(auth, resetEmail, {
+        url: 'https://linguabud.com/login'
+      });
       resetSentEmail.textContent = resetEmail;
       resetFormView.style.display = 'none';
       resetSuccess.style.display  = 'block';
