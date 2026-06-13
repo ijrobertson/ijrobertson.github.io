@@ -4150,3 +4150,105 @@ exports.sendStudentWelcomeEmail = onDocumentCreated('users/{userId}', async (eve
     return null;
   }
 });
+
+// ── Custom Password Reset Email ────────────────────────────────────────────
+
+exports.sendCustomPasswordReset = onCall(async (request) => {
+  const email = (request.data.email || '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new HttpsError('invalid-argument', 'A valid email address is required.');
+  }
+
+  try {
+    const resetLink = await admin.auth().generatePasswordResetLink(email);
+    const oobCode = new URL(resetLink).searchParams.get('oobCode');
+    if (!oobCode) throw new Error('oobCode missing from generated link');
+
+    const resetUrl = `https://linguabud.com/reset-password.html?mode=resetPassword&oobCode=${encodeURIComponent(oobCode)}`;
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f7f6;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;background:#f4f7f6;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" style="width:560px;max-width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10);">
+
+        <tr>
+          <td style="background:#20bcba;padding:32px 40px;text-align:center;">
+            <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:48px;display:block;margin:0 auto 12px;" />
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">Reset Your Password</h1>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="background:#ffffff;padding:40px;">
+            <p style="font-size:15px;color:#333;margin:0 0 16px;">Hi there,</p>
+            <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 28px;">
+              We received a request to reset the password for your Lingua Bud account.
+              Click the button below to choose a new password. This link expires in 1 hour and can only be used once.
+            </p>
+            <div style="text-align:center;margin-bottom:28px;">
+              <a href="${resetUrl}"
+                 style="display:inline-block;background:#20bcba;color:#ffffff;padding:14px 36px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;">
+                Reset Password
+              </a>
+            </div>
+            <p style="font-size:13px;color:#888;line-height:1.6;margin:0 0 8px;">
+              If you didn't request a password reset, you can safely ignore this email — your password won't be changed.
+            </p>
+            <p style="font-size:13px;color:#888;line-height:1.6;margin:0;">
+              If the button above doesn't work, copy and paste this link into your browser:<br />
+              <a href="${resetUrl}" style="color:#20bcba;word-break:break-all;">${resetUrl}</a>
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="background:#113448;padding:24px 40px;text-align:center;">
+            <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:28px;display:block;margin:0 auto 10px;" />
+            <p style="margin:0;font-size:13px;color:#ffffff;line-height:1.8;">
+              <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a>
+              &nbsp;|&nbsp;
+              <a href="mailto:support@linguabud.com" style="color:#20bcba;text-decoration:none;">support@linguabud.com</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    const result = await resend.emails.send({
+      from: 'Lingua Bud <notifications@linguabud.com>',
+      to: email,
+      subject: 'Reset your Lingua Bud password',
+      html,
+    });
+
+    if (result.error) {
+      console.error('[PasswordReset] Resend error:', result.error);
+      throw new HttpsError('internal', 'Failed to send reset email.');
+    }
+
+    console.log(`[PasswordReset] Sent to ${email}, id: ${result.data?.id}`);
+    return { success: true };
+
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    // user-not-found: return success anyway to prevent email enumeration
+    if (err.code === 'auth/user-not-found') {
+      console.log(`[PasswordReset] No account for ${email}, returning success silently.`);
+      return { success: true };
+    }
+    console.error('[PasswordReset] Error:', err);
+    throw new HttpsError('internal', 'Something went wrong. Please try again.');
+  }
+});

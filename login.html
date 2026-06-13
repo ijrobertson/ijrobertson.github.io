@@ -428,7 +428,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     functions,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    sendPasswordResetEmail,
     doc,
     getDoc,
     setDoc,
@@ -747,20 +746,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     resetSendBtn.textContent = 'Sending...';
 
     try {
-      await sendPasswordResetEmail(auth, resetEmail, {
-        url: 'https://linguabud.com/login'
-      });
+      const sendCustomPasswordReset = httpsCallable(functions, 'sendCustomPasswordReset');
+      await sendCustomPasswordReset({ email: resetEmail });
       resetSentEmail.textContent = resetEmail;
       resetFormView.style.display = 'none';
       resetSuccess.style.display  = 'block';
     } catch(err) {
       const msg = err.message || '';
-      if (msg.includes('user-not-found')) {
-        // Don't reveal whether the email exists — show generic success
-        resetSentEmail.textContent = resetEmail;
-        resetFormView.style.display = 'none';
-        resetSuccess.style.display  = 'block';
-      } else if (msg.includes('network-request-failed') || msg.includes('network error')) {
+      if (msg.includes('network-request-failed') || msg.includes('network error')) {
         resetErrorEl.textContent = 'Network error — please check your connection and try again.';
         resetSendBtn.disabled = false;
         resetSendBtn.textContent = 'Send Reset Link';
