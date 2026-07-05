@@ -4252,3 +4252,73 @@ exports.sendCustomPasswordReset = onCall(async (request) => {
     throw new HttpsError('internal', 'Something went wrong. Please try again.');
   }
 });
+
+// ── Marketing unsubscribe ────────────────────────────────────────────────────
+
+/**
+ * One-click marketing unsubscribe endpoint.
+ * Sets marketingOptOut: true on the student's user document.
+ * URL: https://us-central1-linguabud-9a942.cloudfunctions.net/unsubscribeMarketing?uid=<uid>
+ *
+ * Linked from marketing emails; also handles List-Unsubscribe-Post one-click requests
+ * sent automatically by Gmail and Apple Mail.
+ */
+exports.unsubscribeMarketing = onRequest({ cors: false }, async (req, res) => {
+  const uid = (req.query.uid || req.body?.uid || '').toString().trim();
+
+  if (!uid || uid.length > 128 || !/^[A-Za-z0-9_-]+$/.test(uid)) {
+    res.status(400).send(buildUnsubPage('This unsubscribe link is invalid or has expired.', false));
+    return;
+  }
+
+  try {
+    const userRef = admin.firestore().collection('users').doc(uid);
+    const snap    = await userRef.get();
+
+    if (snap.exists) {
+      await userRef.update({
+        marketingOptOut:   true,
+        marketingOptOutAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    // Return success even if the user doc doesn't exist — prevents UID enumeration.
+    res.status(200).send(buildUnsubPage(
+      "You've been unsubscribed from Lingua Bud marketing emails. You'll still receive important account notifications.",
+      true
+    ));
+  } catch (err) {
+    console.error('[unsubscribeMarketing] Error:', err);
+    res.status(500).send(buildUnsubPage(
+      'Something went wrong. Please try again or contact support@linguabud.com.',
+      false
+    ));
+  }
+});
+
+function buildUnsubPage(message, success) {
+  const color = success ? '#20bcba' : '#e53e3e';
+  const icon  = success ? '&#10003;' : '&#33;';
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Unsubscribe &mdash; Lingua Bud</title>
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:Arial,sans-serif;background:#f4f7f6;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;}
+  </style>
+</head>
+<body>
+  <div style="background:#fff;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.10);padding:48px 40px;max-width:480px;width:100%;text-align:center;">
+    <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:44px;margin-bottom:24px;" />
+    <div style="width:56px;height:56px;border-radius:50%;background:${color};color:#fff;font-size:26px;line-height:56px;margin:0 auto 20px;">${icon}</div>
+    <p style="font-size:16px;color:#333;line-height:1.6;margin:0 0 24px;">${message}</p>
+    <a href="https://linguabud.com"
+       style="display:inline-block;background:#113448;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;">
+      Return to Lingua Bud
+    </a>
+  </div>
+</body>
+</html>`;
+}
