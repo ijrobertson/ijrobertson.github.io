@@ -43,14 +43,11 @@ function decodeEntities(str) {
 }
 
 function clean(str) {
-  // Russian's word-pair term cell nests a transliteration sub-div
-  // (e.g. <div class="word-es">Привет<div class="word-translit">Privet</div></div>) —
-  // drop it entirely rather than concatenating its text into the term.
-  let s = str.replace(/<div class="word-translit">.*?<\/div>/gs, '');
-  s = decodeEntities(s).replace(/<[^>]+>/g, '').trim();
+  let s = decodeEntities(str).replace(/<[^>]+>/g, '').trim();
   if (s.length >= 2 && s.startsWith("'") && s.endsWith("'")) s = s.slice(1, -1).trim();
   return s;
 }
+
 
 // Languages with scrapeable lesson pages (word-pair/vocab-item markup already
 // on the site). Arabic/Chinese/Greek have no lesson pages at all — they're
@@ -64,14 +61,27 @@ const LANGUAGE_FILES = {
 const LANGUAGES = [...Object.keys(LANGUAGE_FILES), 'Arabic', 'Chinese', 'Greek'];
 const TOPICS = ['Basics', 'Hotel', 'Airport', 'Restaurant'];
 
-function extractPairs(html, tag, termClass, translationClass) {
-  const re = new RegExp(
-    `<div class="${tag}">\\s*<div class="${termClass}">(.*?)<\\/div>\\s*<div class="${translationClass}">(.*?)<\\/div>\\s*<\\/div>`,
-    'gs'
-  );
+// Russian's term cell carries an optional transliteration sub-div alongside
+// the term, in one of two shapes:
+//  - "nested": inside the term's own closing tag, e.g. word-pair —
+//    <div class="word-es">Привет<div class="word-translit">Privet</div></div>
+//  - "sibling": as its own div between the term and translation cells, e.g.
+//    verb-card — <div class="verb-es">T</div><div class="verb-translit">X</div><div class="verb-en">...
+// translitClass + translitPosition make that middle group explicit in the
+// pattern (rather than relying on backtracking to lump it into the term
+// capture) so it can be pulled out as its own field.
+function extractPairs(html, tag, termClass, translationClass, translitClass, translitPosition) {
+  const translitGroup = translitClass ? `(?:<div class="${translitClass}">(.*?)<\\/div>)?` : '';
+  const pattern = translitPosition === 'sibling'
+    ? `<div class="${tag}">\\s*<div class="${termClass}">(.*?)<\\/div>${translitGroup}\\s*<div class="${translationClass}">(.*?)<\\/div>\\s*<\\/div>`
+    : `<div class="${tag}">\\s*<div class="${termClass}">(.*?)${translitGroup}<\\/div>\\s*<div class="${translationClass}">(.*?)<\\/div>\\s*<\\/div>`;
+  const re = new RegExp(pattern, 'gs');
   const out = [];
   let m;
-  while ((m = re.exec(html))) out.push([clean(m[1]), clean(m[2])]);
+  while ((m = re.exec(html))) {
+    if (translitClass) out.push([clean(m[1]), clean(m[3]), m[2] ? clean(m[2]) : null]);
+    else out.push([clean(m[1]), clean(m[2]), null]);
+  }
   return out;
 }
 
@@ -79,7 +89,7 @@ function extractVocabItems(html) {
   const re = /<div class="vocab-item">\s*<i[^>]*><\/i>\s*<div><span class="vocab-[a-z]{2}">(.*?)<\/span>\s*&mdash;\s*<span class="vocab-en">(.*?)<\/span><\/div>\s*<\/div>/gs;
   const out = [];
   let m;
-  while ((m = re.exec(html))) out.push([clean(m[1]), clean(m[2])]);
+  while ((m = re.exec(html))) out.push([clean(m[1]), clean(m[2]), null]);
   return out;
 }
 
@@ -88,7 +98,7 @@ function scrapeLanguage(language) {
   let index = 0;
   const seenTerms = new Set();
 
-  function add(term, translation, source) {
+  function add(term, translation, transliteration, source) {
     if (!term || !translation) return;
     const key = term.toLowerCase();
     if (seenTerms.has(key)) return;
@@ -100,6 +110,7 @@ function scrapeLanguage(language) {
       term,
       translation,
       example: null,
+      transliteration: transliteration || null,
       tags: [source],
       audio: null,
     });
@@ -112,14 +123,15 @@ function scrapeLanguage(language) {
     const sourceTag = topic.toLowerCase();
 
     if (topic === 'Basics') {
-      for (const [term, translation] of extractPairs(html, 'word-pair', 'word-es', 'word-en')) add(term, translation, sourceTag);
-      for (const [term, translation] of extractPairs(html, 'number-chip', 'number-es', 'number-en')) add(term, translation, sourceTag);
-      // verb-card has an extra <span class="verb-icon">...</span> before the term/translation divs
-      const verbRe = /<div class="verb-card"><span class="verb-icon">.*?<\/span><div><div class="verb-es">(.*?)<\/div><div class="verb-en">(.*?)<\/div><\/div><\/div>/gs;
+      for (const [term, translation, translit] of extractPairs(html, 'word-pair', 'word-es', 'word-en', 'word-translit', 'nested')) add(term, translation, translit, sourceTag);
+      for (const [term, translation, translit] of extractPairs(html, 'number-chip', 'number-es', 'number-en')) add(term, translation, translit, sourceTag);
+      // verb-card has an extra <span class="verb-icon">...</span> before the term/translation divs,
+      // and (for Russian) an optional sibling verb-translit div between them.
+      const verbRe = /<div class="verb-card"><span class="verb-icon">.*?<\/span><div><div class="verb-es">(.*?)<\/div>(?:<div class="verb-translit">(.*?)<\/div>)?<div class="verb-en">(.*?)<\/div><\/div><\/div>/gs;
       let vm;
-      while ((vm = verbRe.exec(html))) add(clean(vm[1]), clean(vm[2]), sourceTag);
+      while ((vm = verbRe.exec(html))) add(clean(vm[1]), clean(vm[3]), vm[2] ? clean(vm[2]) : null, sourceTag);
     } else {
-      for (const [term, translation] of extractVocabItems(html)) add(term, translation, sourceTag);
+      for (const [term, translation, translit] of extractVocabItems(html)) add(term, translation, translit, sourceTag);
     }
   }
 
