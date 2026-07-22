@@ -482,6 +482,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             `).join('');
 
             // Reset from any previous round's save on this same results screen.
+            document.getElementById('saveSelectedBtn').style.display = 'inline-flex';
             document.getElementById('goToNotebookBtn').style.display = 'none';
         }
 
@@ -517,11 +518,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     });
                 }
                 showToast(`Saved ${checked.length} word${checked.length === 1 ? '' : 's'} to your notebook!`);
+                btn.style.display = 'none';
                 document.getElementById('goToNotebookBtn').style.display = 'inline-flex';
             } catch (e) {
                 console.error('Save quiz words error:', e);
                 alert('Something went wrong saving your words. Please try again.');
-            } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
             }
