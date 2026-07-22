@@ -22,8 +22,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link href="css/magnific-popup.css" rel="stylesheet">
   <link href="css/styles.css" rel="stylesheet">
 
+  <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
+  <link href="css/tokens.css" rel="stylesheet">
+
   <!-- Favicon  -->
   <link rel="icon" href="images/NuevoFavicon.png">
+
+  <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b6664">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Lingua Bud">
 
   <style>
     :root {
@@ -41,8 +52,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       font-family: 'Segoe UI', sans-serif;
       background-color: var(--light-grey);
       color: #222;
-      padding-top: 4.5rem;
+      padding-top: 60px; /* <lb-app-shell> header height, replaces the marketing navbar's 4.5rem */
+      /* No padding-bottom here — css/styles.css sets body,html{height:100%}
+         sitewide, and with border-box sizing that pins body's box to one
+         viewport tall, so padding-bottom never reserves real trailing scroll
+         space once content exceeds one screen. Use an explicit spacer div near
+         the end of the body instead (see below). */
     }
+
+    /* The app header (see <lb-app-shell> below) replaces the marketing navbar
+       on this page — hidden, not removed, so existing avatar/badge/logout JS
+       that targets its child elements keeps working unchanged. */
+    .navbar-custom { display: none; }
 
     /* Navbar styles */
     .navbar-custom {
@@ -1022,6 +1043,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 
+  <!-- Explicit spacer, not body padding-bottom — see the comment on body's
+       style rule above for why. -->
+  <div style="height: 72px;" aria-hidden="true"></div>
+
+  <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15) — header replaces the
+       marketing navbar (hidden above via .navbar-custom). Role and active tab
+       are set once the user's role is known — see the auth handler below. -->
+  <lb-app-shell id="shell" page-title="Settings" active="none"></lb-app-shell>
+
   <!-- Scripts -->
   <script src="js/jquery.min.js"></script>
   <script src="js/popper.min.js"></script>
@@ -1058,6 +1088,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       functions,
       httpsCallable
     } from './lib/firebaseClient.js';
+    import './js/app-shell.js';
 
     // Safe localStorage helpers — localStorage throws in Safari Private Mode,
     // which would crash DOMContentLoaded and prevent auth from ever running.
@@ -1534,6 +1565,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (profileNavWrapper) profileNavWrapper.style.display = 'block';
           if (signInWrapper) signInWrapper.style.display = 'none';
 
+          // Bottom tab bar (Phase 2 pilot): none of the 5 tabs points at this page
+          // for instructors (their "Settings" tab goes to dashboard.html instead),
+          // so only students get a highlighted tab here — see docs/PWA_PRD.md §15.
+          try {
+            const shell = document.getElementById('shell');
+            if (shell) {
+              const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+              const isInstructor = instructorDoc.exists();
+              shell.setAttribute('role', isInstructor ? 'instructor' : 'student');
+              shell.setAttribute('active', isInstructor ? 'none' : 'settings');
+            }
+          } catch (error) {
+            console.error('Shell role detection error:', error);
+          }
+
           try {
             await loadProfile();
             console.log('✅ Profile loaded successfully');
@@ -1647,6 +1693,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         window.location.href = 'login';
       });
     }
+
+    // The app header's account menu (see docs/PWA_PRD.md §15) proxies Logout
+    // to the existing hidden navbar's logoutLink rather than duplicating
+    // sign-out logic.
+    document.getElementById('shell')?.addEventListener('lb-logout', () => {
+      logoutLink?.click();
+    });
 
     // Mobile dropdown toggle functionality
     const navProfilePic = document.getElementById('navProfilePic');
@@ -2159,6 +2212,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     });
 
+  </script>
+
+  <!-- PWA service worker (Phase 2, see docs/PWA_PRD.md §12) -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: '/' });
+    }
   </script>
 </body>
 </html>

@@ -234,6 +234,11 @@ const ratingLabel    = $('ratingLabel');
 const ratingSubmitBtn= $('ratingSubmitBtn');
 const ratingSkipBtn  = $('ratingSkipBtn');
 
+// Post-lesson rebooking CTA (see docs/PWA_PRD.md §4.3/§15)
+const rebookPopup     = $('rebookPopup');
+const rebookSkipBtn   = $('rebookSkipBtn');
+const rebookBookBtn   = $('rebookBookBtn');
+
 // Nav warning
 const navWarning     = $('call-nav-warning');
 
@@ -1438,11 +1443,24 @@ async function submitReview() {
 
         ratingPopup.classList.add('hidden');
         showPjStatus('Thank you for your feedback!', 'success');
+        showRebookPopup(instructorUid, instructorName);
     } catch (e) {
         console.error('Review submit error:', e);
         ratingSubmitBtn.disabled = false;
         ratingSubmitBtn.textContent = 'Submit Review';
     }
+}
+
+// Highest-intent moment to rebook is right after a lesson ends — shown whether
+// the student rated the lesson or skipped, since the CTA doesn't depend on that.
+function showRebookPopup(instructorUid, instructorName) {
+    if (!instructorUid) return;
+    rebookPopup._instructorUid = instructorUid;
+    $('rebookInstructorName').textContent = instructorName || 'your instructor';
+    rebookBookBtn.href = `instructor-profile?id=${encodeURIComponent(instructorUid)}`;
+    rebookPopup.classList.remove('hidden');
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: 'post_lesson_rebook_shown', instructorId: instructorUid });
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1708,7 +1726,18 @@ function setupEventListeners() {
     });
 
     ratingSubmitBtn.addEventListener('click', submitReview);
-    ratingSkipBtn.addEventListener('click', () => ratingPopup.classList.add('hidden'));
+    ratingSkipBtn.addEventListener('click', () => {
+        const instructorUid  = ratingPopup._instructorUid;
+        const instructorName = ratingPopup._instructorName;
+        ratingPopup.classList.add('hidden');
+        showRebookPopup(instructorUid, instructorName);
+    });
+
+    rebookSkipBtn.addEventListener('click', () => rebookPopup.classList.add('hidden'));
+    rebookBookBtn.addEventListener('click', () => {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ event: 'lesson_rebooked_immediately', instructorId: rebookPopup._instructorUid });
+    });
 }
 
 function renderStars(n) {

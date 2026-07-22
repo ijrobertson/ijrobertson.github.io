@@ -470,8 +470,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   // ── Redirect helper ───────────────────────────────────────────────────────
   function redirectByRole(role) {
-    if (role === 'instructor') window.location.href = '/dashboard';
-    else if (role === 'student') window.location.href = '/instructors';
+    if (role === 'instructor') window.location.href = '/home';
+    else if (role === 'student') window.location.href = '/home';
   }
 
   // ── Check if already signed in — redirect immediately if so ───────────────
@@ -523,7 +523,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
       if (role === 'instructor') {
         clearTimeout(safetyTimer);
-        window.location.href = '/dashboard';
+        window.location.href = '/home';
         return;
       }
       if (role === 'student') {
@@ -532,7 +532,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           try { await updateDoc(doc(db, 'users', auth.currentUser.uid), { hasLoggedIn: true }); } catch(e) {}
           window.location.href = '/student-dashboard';
         } else {
-          window.location.href = '/instructors';
+          window.location.href = '/home';
         }
         return;
       }
@@ -851,14 +851,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         if (role === 'instructor') {
-          window.location.href = '/dashboard';
+          window.location.href = '/home';
           // Don't re-enable button — page is navigating away
         } else if (role === 'student') {
           if (userData && !userData.hasLoggedIn) {
             try { await updateDoc(doc(db, 'users', user.uid), { hasLoggedIn: true }); } catch(e) {}
             window.location.href = '/student-dashboard';
           } else {
-            window.location.href = '/instructors';
+            window.location.href = '/home';
           }
           // Don't re-enable button — page is navigating away
         } else {

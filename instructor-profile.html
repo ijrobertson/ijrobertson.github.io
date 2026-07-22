@@ -32,11 +32,32 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="css/styles.css" rel="stylesheet">
     <link rel="icon" href="images/NuevoFavicon.png">
 
+    <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
+    <link href="css/tokens.css" rel="stylesheet">
+
+    <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
     <!-- Stripe.js -->
     <script src="https://js.stripe.com/v3/"></script>
 
     <style>
-        body { padding-top: 4.5rem; background: #f8f9fa; }
+        body { padding-top: 60px; background: #f8f9fa; } /* <lb-app-shell> header height, replaces marketing navbar's 4.5rem */
+        /* No body padding-bottom — css/styles.css sets body,html{height:100%}
+           sitewide, and with border-box sizing that pins body's box to one
+           viewport tall, so padding-bottom never reserves real trailing scroll
+           space once content exceeds one screen. Use an explicit spacer div
+           near the end of the body instead (see below). */
+
+        /* The app header (see <lb-app-shell> below) replaces the marketing navbar
+           on this page — hidden, not removed, so existing avatar/badge/logout JS
+           that targets its child elements keeps working unchanged. */
+        .navbar-custom { display: none; }
 
         .navbar-custom { background-color: #113448 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
@@ -642,6 +663,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </div>
 
+    <!-- Explicit spacer, not body padding-bottom — see the comment on body's
+         style rule above for why. -->
+    <div style="height: 72px;" aria-hidden="true"></div>
+
+    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15) — header replaces the
+         marketing navbar (hidden above via .navbar-custom). Role and active tab
+         are set once the user's role is known — see the auth handler below. -->
+    <lb-app-shell id="shell" page-title="Instructor Profile" active="none"></lb-app-shell>
+
     <!-- Scripts -->
     <script src="js/jquery.min.js"></script>
     <script src="js/popper.min.js"></script>
@@ -650,6 +680,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
 
         // ── Referral token capture ──────────────────────────────────────────
         // If a ?ref=TOKEN parameter is present, store it in localStorage for up
@@ -737,6 +768,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                     const profileLink = document.getElementById('myProfileLink');
                     if (profileLink) profileLink.href = isInstructor ? 'instructor-profile' : 'learner-profile';
+
+                    // Bottom tab bar (Phase 2, see docs/PWA_PRD.md §15): a student
+                    // browsing someone else's profile is mid-way through the
+                    // "Instructors" flow, so that tab highlights. Every other case
+                    // (an instructor here, or viewing your own profile) has no
+                    // clean tab match.
+                    const shell = document.getElementById('shell');
+                    if (shell) {
+                        shell.setAttribute('role', isInstructor ? 'instructor' : 'student');
+                        shell.setAttribute('active', (!isInstructor && instructorId) ? 'instructors' : 'none');
+                    }
                 } catch (e) { console.error('Auth setup error:', e); }
 
                 loadUnreadMessageCount(user.uid);
@@ -754,6 +796,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         document.getElementById('logoutLink').addEventListener('click', (e) => {
             e.preventDefault();
             signOut(auth).then(() => window.location.href = 'index');
+        });
+
+        // The app header's account menu (see docs/PWA_PRD.md §15) proxies Logout
+        // to the existing hidden navbar's logoutLink rather than duplicating
+        // sign-out logic.
+        document.getElementById('shell')?.addEventListener('lb-logout', () => {
+            document.getElementById('logoutLink').click();
         });
 
         // ── Helpers ─────────────────────────────────────────────────────────
@@ -1677,6 +1726,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 _newBookingCount = snap.docs.filter(d => { const _d = d.data(); if (_d.instructorSeen !== false) return false; const _t = _d.dateTime?.toDate ? _d.dateTime.toDate() : new Date(_d.dateTime); return _t > new Date(); }).length;
                 _updateActivityBadge(); _updateProfileBadge();
             });
+        }
+    </script>
+
+    <!-- PWA service worker (Phase 2, see docs/PWA_PRD.md §12) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
         }
     </script>
 

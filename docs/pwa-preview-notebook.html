@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!--
+  Lingua Bud PWA — Installability Preview (Phase 1), second screen.
+  Exists so pwa-preview.html has a real second document to navigate to/from,
+  proving out cross-document View Transitions and multi-page SW caching.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notebook — Lingua Bud PWA Preview</title>
+<meta name="theme-color" content="#0b6664">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="LB Preview">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  @view-transition { navigation: auto; }
+
+  html, body { margin: 0; background: var(--lb-color-surface-0); font-family: var(--lb-font-sans); color: var(--lb-color-ink-900); }
+  .content { padding: 72px var(--lb-space-4) 84px; max-width: 480px; margin: 0 auto; }
+  .folder { background: var(--lb-color-surface-100); border: 1px solid var(--lb-color-border); border-radius: var(--lb-radius-md); padding: var(--lb-space-4); margin-bottom: var(--lb-space-3); box-shadow: var(--lb-shadow-card); display: flex; justify-content: space-between; align-items: center; }
+  .folder b { display: block; }
+  .folder span { font-size: 12px; color: var(--lb-color-ink-500); }
+  .due { display: inline-block; margin-top: var(--lb-space-2); font-size: 12px; font-weight: 700; color: var(--lb-color-warning); }
+</style>
+</head>
+<body>
+
+<lb-app-shell role="student" active="notebook" page-title="Notebook" notifications="2" streak="12" id="shell"></lb-app-shell>
+
+<div class="content">
+  <div class="due">3 words due for review</div>
+  <div class="folder"><div><b>Favorites</b><span>12 words</span></div></div>
+  <div class="folder"><div><b>This week</b><span>5 words</span></div></div>
+  <div class="folder"><div><b>Airport &amp; travel</b><span>8 words</span></div></div>
+</div>
+
+<script type="module">
+  import "../js/app-shell.js";
+
+  const shell = document.getElementById("shell");
+  shell.nav = [
+    { id: "home", label: "Home", icon: "home", href: "pwa-preview.html" },
+    { id: "book", label: "Book", icon: "book", href: "../instructors.html" },
+    { id: "messages", label: "Messages", icon: "messages", href: "../messages.html" },
+    { id: "notebook", label: "Notebook", icon: "notebook", href: "pwa-preview-notebook.html" },
+    { id: "profile", label: "Profile", icon: "profile", href: "../student-dashboard.html" },
+  ];
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js", { scope: "./" });
+  }
+</script>
+</body>
+</html>

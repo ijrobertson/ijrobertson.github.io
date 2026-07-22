@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!--
+  Lingua Bud PWA — Installability Preview (Phase 1)
+  Sandbox only, scoped entirely to /docs/. See docs/PWA_PRD.md §9/§12 and the
+  manifest/service worker in this same folder. Not linked from the real site.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lingua Bud — PWA Preview</title>
+<meta name="theme-color" content="#0b6664">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="LB Preview">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  /* Opts this document into the Cross-Document View Transitions API — see
+     docs/PWA_PRD.md §7. Ignored harmlessly by browsers that don't support it. */
+  @view-transition { navigation: auto; }
+
+  html, body { margin: 0; background: var(--lb-color-surface-0); font-family: var(--lb-font-sans); color: var(--lb-color-ink-900); }
+  .content { padding: 72px var(--lb-space-4) 84px; max-width: 480px; margin: 0 auto; }
+  .card { background: var(--lb-color-surface-100); border: 1px solid var(--lb-color-border); border-radius: var(--lb-radius-md); padding: var(--lb-space-4); margin-bottom: var(--lb-space-4); box-shadow: var(--lb-shadow-card); }
+  .card b { display: block; margin-bottom: 4px; }
+  .note { font-size: 13px; color: var(--lb-color-ink-500); margin-top: var(--lb-space-6); padding-top: var(--lb-space-4); border-top: 1px solid var(--lb-color-border); }
+
+  .banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1100;
+    background: var(--lb-color-warning); color: #2a2115; text-align: center;
+    font-size: 13px; padding: 8px 12px;
+    transform: translateY(-100%);
+    transition: transform var(--lb-duration-base) var(--lb-ease-out);
+  }
+  .banner.show { transform: translateY(0); }
+  .install-btn {
+    background: var(--lb-color-action); color: #fff; border: none; border-radius: 999px;
+    padding: 4px 12px; font-size: 12px; font-weight: 700; margin-left: 8px; cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) { .banner { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="banner" id="install-banner">This browser can install the preview. <button class="install-btn" id="install-btn" type="button">Install</button></div>
+
+<lb-app-shell role="student" active="home" page-title="Home" notifications="2" streak="12" id="shell"></lb-app-shell>
+
+<div class="content">
+  <div class="card"><b>Phase 1 preview</b>This is a real installable page, not a mockup. Tap <strong>Notebook</strong> below to navigate to a second in-scope screen and watch the header/nav persist via View Transitions — then try reloading with your network disconnected.</div>
+  <div class="card"><b>Next lesson</b>Sophie · German · 3:00pm</div>
+  <div class="card">This week's goal — 3/4</div>
+  <div class="card">Continue your notebook →</div>
+  <p class="note">Everything on this page is confined to <code>/docs/</code>. Book, Messages, and Profile link out to the real site as ordinary links (nothing there was modified) — only Home and Notebook stay inside this sandbox.</p>
+</div>
+
+<script type="module">
+  import "../js/app-shell.js";
+
+  const shell = document.getElementById("shell");
+  shell.nav = [
+    { id: "home", label: "Home", icon: "home", href: "pwa-preview.html" },
+    { id: "book", label: "Book", icon: "book", href: "../instructors.html" },
+    { id: "messages", label: "Messages", icon: "messages", href: "../messages.html" },
+    { id: "notebook", label: "Notebook", icon: "notebook", href: "pwa-preview-notebook.html" },
+    { id: "profile", label: "Profile", icon: "profile", href: "../student-dashboard.html" },
+  ];
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js", { scope: "./" });
+  }
+
+  let deferredPrompt;
+  const banner = document.getElementById("install-banner");
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    banner.classList.add("show");
+  });
+  document.getElementById("install-btn").addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.classList.remove("show");
+  });
+  window.addEventListener("appinstalled", () => banner.classList.remove("show"));
+</script>
+</body>
+</html>

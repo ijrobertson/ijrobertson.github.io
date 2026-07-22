@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Your Lingua Bud learning hub — next lesson, vocabulary, and what to do next.">
+    <meta name="author" content="Lingua Bud">
+    <title>Learn - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <!-- Design prototype (see conversation 2026-07-08): playful/energetic direction,
+         scoped to this page only. Baloo 2 carries headings; body text stays on the
+         existing Open Sans/system stack for readability. -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
+    <link href="css/tokens.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        :root {
+            /* Brand palette only (2026-07-09) — teal + navy, matching css/styles.css
+               and css/tokens.css. No decorative colors outside the real brand. */
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-navy-light: #1c5470;
+            --pb-surface: #fbfbfb;
+        }
+        body {
+            padding-top: 60px; /* <lb-app-shell> header height, replaces the marketing navbar's 4.5rem */
+            background-color: var(--pb-surface);
+            /* No padding-bottom here — see the explicit spacer div near the end
+               of the body instead; body's own box can't reliably reserve
+               trailing space on this site (see that comment for why). */
+        }
+
+        /* The app header (see <lb-app-shell> below) replaces the marketing navbar
+           on this page — hidden, not removed, so existing avatar/badge/logout JS
+           that targets its child elements keeps working unchanged. */
+        .navbar-custom { display: none; }
+
+        .navbar-custom {
+            background-color: #113448 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* ===== NAVBAR PROFILE DROPDOWN (same pattern as bookings.html / student-dashboard.html) ===== */
+        .profile-nav-wrapper { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
+        .profile-pic-nav { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #20bcba; cursor: pointer; transition: transform 0.2s; }
+        .profile-pic-nav:hover { transform: scale(1.1); }
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content {
+            position: fixed; right: 1rem; top: 60px; background-color: white; min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2); border-radius: 8px; z-index: 9999;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        @media (min-width: 992px) {
+            .profile-dropdown-content { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; }
+        }
+        .profile-dropdown-content a { color: #333; padding: 12px 16px; text-decoration: none; display: block; transition: background 0.2s; }
+        .profile-dropdown-content a:hover { background-color: #f1f1f1; }
+        .profile-dropdown:hover .profile-dropdown-content,
+        .profile-dropdown-content:hover,
+        .profile-dropdown-content.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .notification-badge {
+            position: absolute; top: -2px; right: -2px; background-color: #dc3545; color: white;
+            border-radius: 50%; width: 18px; height: 18px; display: none; align-items: center;
+            justify-content: center; font-size: 10px; font-weight: bold; border: 2px solid white;
+        }
+        .notification-badge.show { display: flex; }
+        .unread-count {
+            display: none; background-color: #dc3545; color: white; border-radius: 10px;
+            padding: 2px 6px; font-size: 11px; font-weight: bold; margin-left: 8px;
+            min-width: 18px; text-align: center;
+        }
+        .unread-count.show { display: inline-block; }
+
+        @media (min-width: 768px) {
+            .navbar-nav { position: absolute !important; left: 50% !important; transform: translateX(-50%) !important; }
+            .profile-nav-wrapper { margin-left: auto !important; }
+            #signInWrapper { margin-left: auto !important; }
+        }
+        @media (max-width: 767px) {
+            .navbar-nav { margin-left: 0 !important; }
+        }
+
+        /* ===== PAGE HERO ===== */
+        .activity-hero {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, #14a29f 100%);
+            color: white; text-align: center;
+            border-radius: 28px;
+            margin: 20px 16px 0;
+            padding: 2.5rem 1.5rem 2.25rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 32px -12px rgba(11, 102, 100, 0.5);
+        }
+        /* Soft decorative blobs — purely visual, no content, aria-hidden below */
+        .activity-hero::before, .activity-hero::after {
+            content: ""; position: absolute; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .activity-hero::before { width: 160px; height: 160px; top: -70px; right: -40px; }
+        .activity-hero::after { width: 110px; height: 110px; bottom: -50px; left: -30px; background: rgba(17, 52, 72, 0.18); }
+        .activity-hero-icon {
+            width: 64px; height: 64px; background: white;
+            border-radius: 50%; position: relative; z-index: 1;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;
+            box-shadow: 0 6px 16px -4px rgba(0,0,0,0.2);
+        }
+        .activity-hero-icon i { font-size: 1.6rem; color: var(--pb-teal-deep); }
+        .activity-hero h1 {
+            font-family: 'Baloo 2', sans-serif; font-size: 2.1rem; font-weight: 800; color: white;
+            margin-bottom: 0.4rem; letter-spacing: -0.3px; position: relative; z-index: 1;
+        }
+        .activity-hero p { font-size: 1.05rem; color: rgba(255, 255, 255, 0.9); margin: 0; position: relative; z-index: 1; }
+        @media (max-width: 600px) {
+            .activity-hero h1 { font-size: 1.6rem; }
+            .activity-hero-icon { width: 52px; height: 52px; }
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .activity-container { max-width: 1100px; margin: 2rem auto 0; padding: 0 1rem; }
+        .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+        .section-icon {
+            width: 44px; height: 44px; border-radius: 14px;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep));
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 1.05rem; flex-shrink: 0;
+            box-shadow: 0 6px 14px -4px rgba(11, 102, 100, 0.4);
+        }
+        .section-icon.icon-navy { background: linear-gradient(135deg, var(--pb-teal-dark), var(--pb-navy-light)); box-shadow: 0 6px 14px -4px rgba(17, 52, 72, 0.4); }
+        .section-header h2 { font-family: 'Baloo 2', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--pb-teal-dark); margin: 0; }
+        hr.section-divider { border: none; border-top: 2px solid #e7e9e7; margin: 2.5rem 0; }
+
+        /* ===== NEXT LESSON CARD ===== */
+        .lesson-card {
+            background: white; border-radius: 24px; box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18);
+            overflow: hidden; max-width: 480px; border: 2px solid #e7e9e7;
+        }
+        .lesson-card-header {
+            background: linear-gradient(135deg, var(--pb-teal-dark) 0%, #1a5276 100%);
+            padding: 1.35rem 1.5rem; display: flex; align-items: center; gap: 1rem;
+        }
+        .lesson-instructor-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.35); flex-shrink: 0; background: #2c6e8a; }
+        .lesson-instructor-info h4 { font-family: 'Baloo 2', sans-serif; color: white; font-size: 1.1rem; font-weight: 700; margin: 0 0 0.2rem; line-height: 1.3; }
+        .lesson-instructor-info span { color: rgba(255,255,255,0.75); font-size: 0.85rem; }
+        .lesson-card-body { padding: 1.35rem 1.5rem 0.9rem; }
+        .lesson-status-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 5px 13px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem; }
+        .status-upcoming { background: #e8f4fd; color: #1565c0; }
+        .status-live { background: #e8f7ee; color: #1a8732; }
+        .lesson-detail-row { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.6rem; font-size: 0.92rem; color: #555; line-height: 1.4; }
+        .lesson-detail-row i { color: var(--pb-teal); width: 16px; text-align: center; margin-top: 2px; flex-shrink: 0; }
+        .lesson-card-footer { padding: 1.1rem 1.5rem; border-top: 1px solid #eef1f0; display: flex; justify-content: flex-end; }
+        .btn-join {
+            display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.6rem;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white; border: none;
+            border-radius: 999px; font-family: 'Baloo 2', sans-serif; font-size: 0.92rem; font-weight: 700; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s; text-decoration: none;
+            box-shadow: 0 8px 18px -6px rgba(11, 102, 100, 0.45);
+        }
+        .btn-join:hover { transform: translateY(-2px) scale(1.02); color: white; text-decoration: none; box-shadow: 0 10px 22px -6px rgba(11, 102, 100, 0.5); }
+
+        .empty-state { text-align: center; padding: 2.75rem 2rem; color: #aaa; background: white; border-radius: 24px; border: 2px solid #e7e9e7; }
+        .empty-state i { font-size: 2.75rem; color: var(--pb-teal); opacity: 0.35; display: block; margin-bottom: 1rem; }
+        .empty-state p { font-size: 1rem; margin-bottom: 0.4rem; color: #5f6b72; }
+        .empty-state a { color: var(--pb-teal-deep); font-weight: 700; text-decoration: none; }
+        .empty-state a:hover { text-decoration: underline; }
+        .loading-state { text-align: center; padding: 2.5rem; color: #aaa; }
+        .loading-state i { font-size: 2rem; color: var(--pb-teal); display: block; margin-bottom: 0.75rem; }
+
+        /* ===== THIS WEEK'S GOAL ===== */
+        .goal-card {
+            background: white; border-radius: 24px; box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18);
+            padding: 1.35rem 1.5rem; max-width: 480px; border: 2px solid #e7e9e7;
+        }
+        .goal-card-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; }
+        .goal-card-label { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); font-size: 1rem; }
+        .goal-card-count { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-deep); font-size: 1.1rem; }
+        .goal-progress-track { display: flex; gap: 5px; }
+        .goal-progress-seg { flex: 1; height: 10px; border-radius: 999px; background: #e7e9e7; }
+        .goal-progress-seg.filled { background: linear-gradient(90deg, var(--pb-teal), var(--pb-teal-deep)); }
+        .goal-card-note { margin: 0.75rem 0 0; font-size: 0.85rem; color: #5f6b72; }
+
+        /* ===== QUICK ACTIONS — bold color tiles instead of plain cards ===== */
+        .quick-actions { display: flex; flex-wrap: wrap; gap: 1rem; }
+        .quick-action-btn {
+            flex: 1; min-width: 220px; display: flex; flex-direction: column; align-items: flex-start; gap: 0.9rem;
+            justify-content: space-between; min-height: 150px;
+            border-radius: 24px;
+            padding: 1.4rem 1.35rem;
+            text-decoration: none; color: white;
+            box-shadow: 0 12px 26px -10px rgba(17,52,72,0.35);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .quick-action-btn:nth-child(1) { background: linear-gradient(135deg, var(--pb-teal) 0%, #12938f 100%); }
+        .quick-action-btn:nth-child(2) { background: linear-gradient(135deg, var(--pb-teal-dark) 0%, var(--pb-navy-light) 100%); }
+        .quick-action-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px -10px rgba(17,52,72,0.4); color: white; text-decoration: none; }
+        .quick-action-btn .qa-icon {
+            width: 48px; height: 48px; border-radius: 15px; background: rgba(255,255,255,0.22); color: white;
+            display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;
+        }
+        .quick-action-btn h4 { font-family: 'Baloo 2', sans-serif; margin: 0 0 0.2rem; font-size: 1.1rem; font-weight: 800; color: white; }
+        .quick-action-btn span { font-size: 0.85rem; color: rgba(255,255,255,0.88); }
+
+        /* ===== VOCABULARY ===== */
+        .vocab-intro { color: #5f6b72; font-size: 0.95rem; margin: 1rem 0 0; max-width: 60ch; }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand logo-image" href="index"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+                aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-awesome fas fa-bars"></span>
+            <span class="navbar-toggler-awesome fas fa-times"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index#header">HOME</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="connect">CONNECT</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="instructors">INSTRUCTORS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="Resources2">RESOURCES</a>
+                </li>
+
+                <!-- Languages Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle page-scroll" href="#about" id="navbarDropdown"
+                       role="button" aria-haspopup="true" aria-expanded="false">LANGUAGES</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="EnglishPage"><span class="item-text">ENGLISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewSpanishPage"><span class="item-text">SPANISH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewFrenchPage"><span class="item-text">FRENCH</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewPortuguesePage"><span class="item-text">PORTUGUESE</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="NewItalianPage"><span class="item-text">ITALIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="GermanPage"><span class="item-text">GERMAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="RussianPage"><span class="item-text">RUSSIAN</span></a>
+                        <div class="dropdown-items-divide-hr"></div>
+                        <a class="dropdown-item" href="SwedishPage"><span class="item-text">SWEDISH</span></a>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link page-scroll" href="index#contact">CONTACT</a>
+                </li>
+
+                <li class="nav-item" id="signInWrapper">
+                    <a class="nav-link page-scroll" href="login">SIGN IN/SIGN UP</a>
+                </li>
+            </ul>
+
+            <!-- Profile Picture Dropdown (shown when logged in) -->
+            <div class="profile-nav-wrapper" id="profileNavWrapper" style="display: none;">
+                <div class="profile-dropdown">
+                    <img id="navProfilePic" class="profile-pic-nav"
+                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E"
+                         alt="Profile">
+                    <div class="notification-badge" id="notificationBadge"></div>
+                    <div class="profile-dropdown-content">
+                        <a href="learner-profile" id="myProfileLink"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="messages" id="messagesLink"><i class="fas fa-envelope"></i> Messages <span class="unread-count" id="unreadCount"></span></a>
+                        <a href="bookings"><i class="fas fa-calendar-check"></i> Bookings <span class="unread-count" id="bookingsCount"></span></a>
+                        <a href="friends"><i class="fas fa-user-friends"></i> Friends <span class="unread-count" id="friendsCount"></span></a>
+                        <a href="student-dashboard"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            <span class="nav-item social-icons">
+                <span class="fa-stack">
+                    <a href="https://www.facebook.com/profile.php?id=61552700502857" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-facebook-f fa-stack-1x"></i>
+                    </a>
+                </span>
+                <span class="fa-stack">
+                    <a href="https://www.instagram.com/lingua_bud/" target="_blank">
+                        <span class="hexagon"></span>
+                        <i class="fab fa-instagram fa-stack-1x"></i>
+                    </a>
+                </span>
+            </span>
+        </div>
+    </nav>
+    <!-- end of navbar -->
+
+    <!-- Hero Section -->
+    <div class="activity-hero">
+        <div class="container">
+            <div class="activity-hero-icon">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <h1 id="homeGreeting">Welcome back</h1>
+            <p>Here's what's next</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="activity-container">
+
+        <!-- ===== NEXT LESSON ===== -->
+        <div class="section-header">
+            <div class="section-icon"><i class="fas fa-graduation-cap"></i></div>
+            <h2>Your Next Lesson</h2>
+        </div>
+        <div id="nextLessonContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== THIS WEEK'S GOAL (student only) ===== -->
+        <div id="weeklyGoalSection" style="display:none;">
+            <div class="section-header">
+                <div class="section-icon"><i class="fas fa-bullseye"></i></div>
+                <h2>This Week's Goal</h2>
+            </div>
+            <div class="goal-card" id="weeklyGoalContainer"></div>
+            <hr class="section-divider">
+        </div>
+
+        <!-- ===== QUICK ACTIONS ===== -->
+        <div class="section-header">
+            <div class="section-icon icon-navy"><i class="fas fa-bolt"></i></div>
+            <h2>Quick Actions</h2>
+        </div>
+        <div class="quick-actions" id="quickActions">
+            <!-- populated once role is known, see loadProfileBasics() -->
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== VOCABULARY (live notebook summary, see notebook.html) ===== -->
+        <div class="section-header">
+            <div class="section-icon icon-navy"><i class="fas fa-book-open"></i></div>
+            <h2>Vocabulary</h2>
+        </div>
+        <div id="vocabSummaryContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+        </div>
+        <p class="vocab-intro">More on the way — audio pronunciation, flashcards, and AI practice quizzes.</p>
+
+    </div>
+
+    <!-- Explicit spacer, not body padding-bottom: css/styles.css sets
+         `body, html { height: 100% }` sitewide, and with Bootstrap's global
+         border-box sizing that pins body's box to exactly one viewport tall —
+         padding-bottom never actually reserves trailing scroll space once
+         content (as here) exceeds one screen, so the fixed bottom tab bar would
+         sit on top of the last bit of content. A real flow element doesn't have
+         that problem. -->
+    <div style="height: 72px;" aria-hidden="true"></div>
+
+    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15) — header replaces
+         the marketing navbar (hidden above via .navbar-custom), bottom tab bar
+         is the primary navigation. -->
+    <lb-app-shell id="shell" page-title="Learn" active="learn"></lb-app-shell>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/scripts.js"></script>
+
+    <script type="module">
+        import {
+            auth, db,
+            onAuthStateChanged, signOut,
+            collection, query, where, getDocs, doc, getDoc
+        } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+
+        let currentUser = null;
+        let isInstructorRole = false;
+
+        // Shared across loadNextLesson() and loadVocabSummary() — both contribute
+        // "active days" (YYYY-MM-DD) toward the streak, computed in updateStreakAndGoal()
+        // once both have run. Kept honest per docs/PWA_PRD.md §302: a day counts if the
+        // user actually did something (completed a lesson or saved a word), nothing fake.
+        const activeDates = new Set();
+        let lessonsThisWeek = 0;
+        const WEEKLY_LESSON_GOAL = 3;
+
+        // ===== AUTH =====
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login';
+                return;
+            }
+            currentUser = user;
+
+            document.getElementById('profileNavWrapper').style.display = 'block';
+            document.getElementById('signInWrapper').style.display = 'none';
+
+            await loadProfileBasics(user);
+            await loadNextLesson();
+            await loadVocabSummary();
+            updateStreakAndGoal();
+        });
+
+        // ===== PROFILE / ROLE =====
+        async function loadProfileBasics(user) {
+            let isInstructor = false;
+            let name = '';
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                if (instructorDoc.exists()) {
+                    isInstructor = true;
+                    name = instructorDoc.data().name || '';
+                    if (instructorDoc.data().avatar_url) {
+                        document.getElementById('navProfilePic').src = instructorDoc.data().avatar_url;
+                    }
+                    document.getElementById('myProfileLink').href = 'instructor-profile';
+                } else {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        name = userDoc.data().name || '';
+                        if (userDoc.data().avatar_url) {
+                            document.getElementById('navProfilePic').src = userDoc.data().avatar_url;
+                        }
+                    }
+                }
+            } catch (e) { console.error('Profile load error:', e); }
+
+            isInstructorRole = isInstructor;
+
+            if (name) {
+                document.getElementById('homeGreeting').textContent = `Welcome back, ${name.split(' ')[0]}`;
+            }
+
+            // Bottom tab bar (Phase 2 pilot): role decides which 5 tabs render.
+            const shell = document.getElementById('shell');
+            if (shell) shell.setAttribute('role', isInstructor ? 'instructor' : 'student');
+
+            renderQuickActions(isInstructor);
+        }
+
+        function renderQuickActions(isInstructor) {
+            const el = document.getElementById('quickActions');
+            el.innerHTML = isInstructor
+                ? `
+                <a class="quick-action-btn" href="bookings">
+                    <span class="qa-icon"><i class="fas fa-calendar-check"></i></span>
+                    <div><h4>View my calendar</h4><span>See upcoming and past lessons</span></div>
+                </a>
+                <a class="quick-action-btn" href="dashboard">
+                    <span class="qa-icon"><i class="fas fa-user-edit"></i></span>
+                    <div><h4>Edit my profile</h4><span>Availability, rates, and bio</span></div>
+                </a>`
+                : `
+                <a class="quick-action-btn" href="instructors">
+                    <span class="qa-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+                    <div><h4>Book a lesson</h4><span>Browse instructors and see availability</span></div>
+                </a>
+                <a class="quick-action-btn" href="connect">
+                    <span class="qa-icon"><i class="fas fa-user-friends"></i></span>
+                    <div><h4>Find a language partner</h4><span>Practice for free with an exchange partner</span></div>
+                </a>`;
+        }
+
+        // ===== NEXT LESSON =====
+        function getLessonTime(booking) {
+            return booking.dateTime?.toDate ? booking.dateTime.toDate() : new Date(booking.dateTime);
+        }
+
+        function getLessonStatus(lessonTime, durationMinutes = 60) {
+            const now = new Date();
+            const earlyJoin = new Date(lessonTime.getTime() - 5 * 60 * 1000);
+            const lessonEnd = new Date(lessonTime.getTime() + durationMinutes * 60 * 1000);
+            if (now >= earlyJoin && now < lessonEnd) return 'live';
+            if (now >= lessonEnd) return 'completed';
+            return 'upcoming';
+        }
+
+        function formatLessonTime(lessonTime) {
+            return lessonTime.toLocaleString(undefined, {
+                weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        // ===== STREAK / WEEKLY GOAL (shared helpers) =====
+        function dateKey(date) {
+            return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        }
+
+        function startOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay(); // 0=Sun..6=Sat
+            d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); // back to Monday
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        async function loadNextLesson() {
+            const container = document.getElementById('nextLessonContainer');
+            try {
+                const [studentSnap, instructorSnap] = await Promise.all([
+                    getDocs(query(
+                        collection(db, 'bookings'),
+                        where('studentId', '==', currentUser.uid),
+                        where('status', '==', 'confirmed')
+                    )),
+                    getDocs(query(
+                        collection(db, 'bookings'),
+                        where('instructorId', '==', currentUser.uid),
+                        where('status', '==', 'confirmed')
+                    ))
+                ]);
+
+                const bookings = [];
+                studentSnap.forEach(d => bookings.push({ id: d.id, ...d.data(), myRole: 'student' }));
+                instructorSnap.forEach(d => bookings.push({ id: d.id, ...d.data(), myRole: 'instructor' }));
+
+                // Streak + weekly goal both count a completed lesson as "activity" —
+                // see updateStreakAndGoal(), called once this and loadVocabSummary() resolve.
+                const weekStart = startOfWeek(new Date());
+                bookings.forEach(b => {
+                    const t = getLessonTime(b);
+                    if (getLessonStatus(t) !== 'completed') return;
+                    activeDates.add(dateKey(t));
+                    if (t >= weekStart) lessonsThisWeek++;
+                });
+
+                const upcoming = bookings
+                    .filter(b => getLessonStatus(getLessonTime(b)) !== 'completed')
+                    .sort((a, b) => getLessonTime(a) - getLessonTime(b));
+
+                if (upcoming.length === 0) {
+                    container.innerHTML = isInstructorRole
+                        ? `<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>No upcoming lessons scheduled.</p></div>`
+                        : `<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>No upcoming lessons.</p><a href="instructors">Browse instructors</a> to book your next lesson!</div>`;
+                    return;
+                }
+
+                const next = upcoming[0];
+                const lessonTime = getLessonTime(next);
+                const status = getLessonStatus(lessonTime);
+                let otherName = next.myRole === 'student' ? (next.instructorName || 'Your instructor') : (next.studentName || next.studentEmail || 'Your student');
+
+                // Best-effort: fetch the other party's current display name/avatar
+                let avatar = null;
+                try {
+                    if (next.myRole === 'student' && next.instructorId) {
+                        const snap = await getDoc(doc(db, 'instructors', next.instructorId));
+                        if (snap.exists()) { avatar = snap.data().avatar_url || null; otherName = snap.data().name || otherName; }
+                    } else if (next.myRole === 'instructor' && next.studentId) {
+                        const snap = await getDoc(doc(db, 'users', next.studentId));
+                        if (snap.exists()) { otherName = snap.data().name || otherName; }
+                    }
+                } catch (e) {}
+
+                container.innerHTML = `
+                    <div class="lesson-card">
+                        <div class="lesson-card-header">
+                            <img class="lesson-instructor-avatar" src="${avatar ? escapeHtml(avatar) : DEFAULT_AVATAR}" alt="">
+                            <div class="lesson-instructor-info">
+                                <h4>${next.myRole === 'student' ? 'Learning with' : 'Teaching'} ${escapeHtml(otherName)}</h4>
+                                <span>${next.bookingType === 'trial' ? 'Free trial lesson' : 'Lesson'}</span>
+                            </div>
+                        </div>
+                        <div class="lesson-card-body">
+                            <span class="lesson-status-badge ${status === 'live' ? 'status-live' : 'status-upcoming'}">
+                                <i class="fas ${status === 'live' ? 'fa-circle' : 'fa-clock'}"></i> ${status === 'live' ? 'Live now' : 'Upcoming'}
+                            </span>
+                            <div class="lesson-detail-row"><i class="fas fa-calendar"></i> ${escapeHtml(formatLessonTime(lessonTime))}</div>
+                        </div>
+                        <div class="lesson-card-footer">
+                            <a class="btn-join" href="bookings"><i class="fas fa-calendar-check"></i> View in Bookings</a>
+                        </div>
+                    </div>`;
+            } catch (e) {
+                console.error('Next lesson load error:', e);
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load your next lesson.</p></div>`;
+            }
+        }
+
+        // ===== VOCABULARY (Learn tab notebook summary, see notebook.html) =====
+        async function loadVocabSummary() {
+            const container = document.getElementById('vocabSummaryContainer');
+            try {
+                const snap = await getDocs(query(
+                    collection(db, 'notebook'),
+                    where('userId', '==', currentUser.uid)
+                ));
+                const now = new Date();
+                let dueCount = 0;
+                snap.forEach(d => {
+                    const data = d.data();
+                    const nextReviewAt = data.nextReviewAt;
+                    const due = nextReviewAt?.toDate ? nextReviewAt.toDate() : (nextReviewAt ? new Date(nextReviewAt) : null);
+                    if (due && due <= now) dueCount++;
+
+                    // Saving/reviewing a word is "activity" for the streak too, same as a
+                    // completed lesson — see updateStreakAndGoal().
+                    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : null);
+                    if (createdAt) activeDates.add(dateKey(createdAt));
+                });
+
+                if (snap.size === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-book-open"></i>
+                            <p>Your notebook is empty.</p>
+                            <a href="notebook">Save your first word</a> to start your collection.
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="lesson-card">
+                        <div class="lesson-card-body" style="padding-top:1.35rem;">
+                            <div class="lesson-detail-row"><i class="fas fa-layer-group"></i> ${snap.size} word${snap.size === 1 ? '' : 's'} saved</div>
+                            ${dueCount > 0 ? `<div class="lesson-detail-row"><i class="fas fa-bell"></i> ${dueCount} due for review</div>` : ''}
+                        </div>
+                        <div class="lesson-card-footer">
+                            ${dueCount > 0
+                                ? `<a class="btn-join" href="notebook?review=1"><i class="fas fa-bolt"></i> Review due words</a>`
+                                : `<a class="btn-join" href="notebook"><i class="fas fa-book-open"></i> Continue your notebook</a>`}
+                        </div>
+                    </div>`;
+            } catch (e) {
+                console.error('Vocab summary load error:', e);
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load your notebook.</p></div>`;
+            }
+        }
+
+        // ===== STREAK / WEEKLY GOAL =====
+        // Runs once loadNextLesson() and loadVocabSummary() have both populated
+        // activeDates/lessonsThisWeek. Streak = consecutive days (ending today or
+        // yesterday, so it doesn't look "broken" before the user's had a chance to
+        // act today) with a completed lesson or a saved word — see docs/PWA_PRD.md
+        // §302 on why this stays a plain, honest count with no fake urgency.
+        function computeStreak() {
+            let count = 0;
+            const cursor = new Date();
+            cursor.setHours(0, 0, 0, 0);
+            if (!activeDates.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+            while (activeDates.has(dateKey(cursor))) {
+                count++;
+                cursor.setDate(cursor.getDate() - 1);
+            }
+            return count;
+        }
+
+        function updateStreakAndGoal() {
+            const streak = computeStreak();
+            const shell = document.getElementById('shell');
+            if (shell) shell.setAttribute('streak', String(streak));
+
+            const section = document.getElementById('weeklyGoalSection');
+            const container = document.getElementById('weeklyGoalContainer');
+            if (isInstructorRole) { section.style.display = 'none'; return; }
+
+            section.style.display = 'block';
+            const goal = WEEKLY_LESSON_GOAL;
+            const done = Math.min(lessonsThisWeek, goal);
+            const segments = Array.from({ length: goal }, (_, i) =>
+                `<div class="goal-progress-seg${i < done ? ' filled' : ''}"></div>`
+            ).join('');
+            const met = lessonsThisWeek >= goal;
+
+            container.innerHTML = `
+                <div class="goal-card-top">
+                    <span class="goal-card-label">Lessons this week</span>
+                    <span class="goal-card-count">${lessonsThisWeek}/${goal}</span>
+                </div>
+                <div class="goal-progress-track">${segments}</div>
+                <p class="goal-card-note">${met
+                    ? "You've hit your goal for this week — nice work."
+                    : `${goal - lessonsThisWeek} more to hit your goal this week.`}</p>`;
+        }
+
+        // ===== LOGOUT =====
+        document.getElementById('logoutLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        // The app header's account menu (see docs/PWA_PRD.md §15) proxies Logout
+        // to the existing hidden navbar's logoutLink rather than duplicating
+        // sign-out logic.
+        document.getElementById('shell').addEventListener('lb-logout', () => {
+            document.getElementById('logoutLink').click();
+        });
+
+        // ===== PWA service worker (Phase 2, see docs/PWA_PRD.md §12) =====
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>
