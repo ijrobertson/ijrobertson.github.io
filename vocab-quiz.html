@@ -120,6 +120,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             padding: 2.25rem 1.5rem; text-align: center; margin-bottom: 1.5rem;
         }
         .quiz-term { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.75rem; color: var(--pb-teal-dark); }
+        .quiz-term-translit { font-size: 0.95rem; color: #5f6b72; margin-top: 0.4rem; font-style: italic; }
         .answer-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
         .answer-btn {
             background: white; border: 2px solid #e7e9e7; border-radius: 16px; padding: 0.9rem 1.1rem;
@@ -142,6 +143,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         .results-item input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
         .results-term { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); }
+        .results-translit { font-size: 0.8rem; color: #aaa; font-style: italic; }
         .results-translation { font-size: 0.88rem; color: #5f6b72; }
         .results-item > div { flex: 1; }
         .results-badge { font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; flex-shrink: 0; }
@@ -239,12 +241,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         } from './lib/firebaseClient.js';
         import './js/app-shell.js';
 
-        const SUPPORTED_LANGUAGES = ['French', 'German', 'Italian', 'Portuguese', 'Russian', 'Spanish', 'Swedish'];
+        const SUPPORTED_LANGUAGES = ['French', 'German', 'Italian', 'Portuguese', 'Russian', 'Spanish', 'Swedish', 'Arabic', 'Chinese', 'Greek'];
+        // "Alphabet" is a separate quiz level, not a prerequisite for the others (no
+        // gating) — it's just an additional pool of term/translation pairs (letter →
+        // name) for languages with a distinct alphabet. Chinese has no alphabet as
+        // such (it's logographic); pinyin transliteration on every word serves the
+        // same "help me read this" purpose there instead — see RTL_LANGUAGES below.
         const LEVELS = [
+            { id: 'alphabet', label: 'Alphabet' },
             { id: 'beginner', label: 'Beginner' },
             { id: 'intermediate', label: 'Intermediate' },
             { id: 'advanced', label: 'Advanced' },
         ];
+        const RTL_LANGUAGES = ['Arabic'];
         const MIN_POOL_SIZE = 4; // need at least 4 words to build a 4-option question
 
         let currentUser = null;
@@ -419,7 +428,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function renderQuestion() {
             const q = questions[qIndex];
             document.getElementById('quizProgressText').textContent = `Question ${qIndex + 1} of ${questions.length}`;
-            document.getElementById('quizTermCard').innerHTML = `<div class="quiz-term">${escapeHtml(q.word.term)}</div>`;
+            const isRtl = RTL_LANGUAGES.includes(selectedLanguage);
+            document.getElementById('quizTermCard').innerHTML = `
+                <div class="quiz-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.word.term)}</div>
+                ${q.word.transliteration ? `<div class="quiz-term-translit">${escapeHtml(q.word.transliteration)}</div>` : ''}`;
             const grid = document.getElementById('answerGrid');
             grid.innerHTML = q.options.map(opt => `<button type="button" class="answer-btn" data-option="${escapeHtml(opt)}">${escapeHtml(opt)}</button>`).join('');
             grid.querySelectorAll('.answer-btn').forEach(btn => {
@@ -451,11 +463,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function showResults() {
             showScreen('results');
             document.getElementById('resultsScoreNum').textContent = `${score} / ${questions.length} correct`;
+            const isRtl = RTL_LANGUAGES.includes(selectedLanguage);
             document.getElementById('resultsList').innerHTML = answered.map((a, i) => `
                 <label class="results-item">
                     <input type="checkbox" data-index="${i}" ${a.correct ? '' : 'checked'}>
                     <div>
-                        <div class="results-term">${escapeHtml(a.word.term)}</div>
+                        <div class="results-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(a.word.term)}</div>
+                        ${a.word.transliteration ? `<div class="results-translit">${escapeHtml(a.word.transliteration)}</div>` : ''}
                         <div class="results-translation">${escapeHtml(a.word.translation)}</div>
                     </div>
                     <span class="results-badge ${a.correct ? 'badge-correct' : 'badge-missed'}">${a.correct ? 'Correct' : 'Missed'}</span>
@@ -485,7 +499,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         folder: selectedLanguage,
                         language: selectedLanguage,
                         tags: Array.isArray(word.tags) ? word.tags : [],
-                        note: word.example || '',
+                        note: word.example || (word.transliteration ? `Pronounced: ${word.transliteration}` : ''),
                         favorite: false,
                         nextReviewAt: serverTimestamp(),
                         reviewCount: 0,

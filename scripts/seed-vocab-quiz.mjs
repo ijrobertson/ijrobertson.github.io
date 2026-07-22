@@ -52,11 +52,16 @@ function clean(str) {
   return s;
 }
 
-// { language: [ [file, topic tag], ... ] }
+// Languages with scrapeable lesson pages (word-pair/vocab-item markup already
+// on the site). Arabic/Chinese/Greek have no lesson pages at all — they're
+// hand-authored directly in their data/vocab/*.json files (see LANGUAGES
+// below for the full list this script's manifest step covers).
 const LANGUAGE_FILES = {
   French: 'French', German: 'German', Italian: 'Italian',
   Portuguese: 'Portuguese', Russian: 'Russian', Spanish: 'Spanish', Swedish: 'Swedish',
 };
+// Every language the manifest (index.json) should report on, scraped or not.
+const LANGUAGES = [...Object.keys(LANGUAGE_FILES), 'Arabic', 'Chinese', 'Greek'];
 const TOPICS = ['Basics', 'Hotel', 'Airport', 'Restaurant'];
 
 function extractPairs(html, tag, termClass, translationClass) {
@@ -135,7 +140,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const manifest = { languages: {} };
 
-for (const language of Object.keys(LANGUAGE_FILES)) {
+for (const language of LANGUAGES) {
   const outFile = path.join(outDir, `${language.toLowerCase()}.json`);
   const existing = loadExisting(outFile);
   const handAuthored = existing ? existing.words.filter(w => !w.id.startsWith('scraped-')) : [];
