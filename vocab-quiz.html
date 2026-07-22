@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Quiz yourself on basic words and phrases in the language you're learning, then save them to your Lingua Bud notebook.">
+    <meta name="author" content="Lingua Bud">
+    <title>Vocabulary Quiz - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <!-- Matches the Learn tab's design direction (home.html, conversation 2026-07-08) -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
+    <link href="css/tokens.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        :root {
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-navy-light: #1c5470;
+            --pb-surface: #fbfbfb;
+        }
+        body {
+            padding-top: 60px; /* <lb-app-shell> header height, replaces the marketing navbar's 4.5rem */
+            background-color: var(--pb-surface);
+        }
+        .navbar-custom { display: none; }
+
+        /* ===== PAGE HERO ===== */
+        .activity-hero {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, #14a29f 100%);
+            color: white; text-align: center;
+            border-radius: 28px;
+            margin: 20px 16px 0;
+            padding: 2rem 1.5rem 1.85rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 32px -12px rgba(11, 102, 100, 0.5);
+        }
+        .activity-hero::before, .activity-hero::after {
+            content: ""; position: absolute; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .activity-hero::before { width: 160px; height: 160px; top: -70px; right: -40px; }
+        .activity-hero::after { width: 110px; height: 110px; bottom: -50px; left: -30px; background: rgba(17, 52, 72, 0.18); }
+        .activity-hero h1 {
+            font-family: 'Baloo 2', sans-serif; font-size: 1.9rem; font-weight: 800; color: white;
+            margin-bottom: 0.4rem; letter-spacing: -0.3px; position: relative; z-index: 1;
+        }
+        .activity-hero p { font-size: 1rem; color: rgba(255, 255, 255, 0.9); margin: 0; position: relative; z-index: 1; }
+
+        .activity-container { max-width: 640px; margin: 1.5rem auto 0; padding: 0 1rem; }
+
+        .loading-state { text-align: center; padding: 2.5rem; color: #aaa; }
+        .loading-state i { font-size: 2rem; color: var(--pb-teal); display: block; margin-bottom: 0.75rem; }
+
+        /* ===== SETUP CARD ===== */
+        .setup-card {
+            background: white; border-radius: 24px; border: 2px solid #e7e9e7;
+            box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18);
+            padding: 1.5rem 1.4rem;
+        }
+        .setup-label { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1rem; margin-bottom: 0.75rem; }
+        .picker-pills { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.5rem; }
+        .picker-pill {
+            padding: 0.55rem 1.1rem; border-radius: 999px; font-size: 0.9rem; font-weight: 700;
+            font-family: 'Baloo 2', sans-serif; background: white; color: var(--pb-teal-dark); border: 2px solid #e7e9e7;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .picker-pill:hover:not(:disabled) { border-color: var(--pb-teal); }
+        .picker-pill.active { background: var(--pb-teal-dark); border-color: var(--pb-teal-dark); color: white; }
+        .picker-pill:disabled { opacity: 0.45; cursor: not-allowed; }
+        .picker-pill .coming-soon { display: block; font-size: 0.7rem; font-weight: 600; opacity: 0.75; }
+
+        .btn-lb-pill {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1.6rem;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white; border: none;
+            border-radius: 999px; font-family: 'Baloo 2', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s; text-decoration: none; width: 100%;
+            box-shadow: 0 8px 18px -6px rgba(11, 102, 100, 0.45);
+        }
+        .btn-lb-pill:hover:not(:disabled) { transform: translateY(-2px); color: white; text-decoration: none; }
+        .btn-lb-pill:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-lb-pill-outline {
+            background: #eef1f0; color: var(--pb-teal-dark); box-shadow: none;
+        }
+
+        /* ===== QUIZ SCREEN ===== */
+        .quiz-progress-text { text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); margin-bottom: 1rem; }
+        .quiz-term-card {
+            background: white; border-radius: 24px; border: 2px solid #e7e9e7;
+            box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18);
+            padding: 2.25rem 1.5rem; text-align: center; margin-bottom: 1.5rem;
+        }
+        .quiz-term { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.75rem; color: var(--pb-teal-dark); }
+        .answer-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
+        .answer-btn {
+            background: white; border: 2px solid #e7e9e7; border-radius: 16px; padding: 0.9rem 1.1rem;
+            font-size: 1rem; font-weight: 600; color: var(--pb-teal-dark); text-align: left; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .answer-btn:hover:not(:disabled) { border-color: var(--pb-teal); background: #e8fffe; }
+        .answer-btn:disabled { cursor: default; }
+        .answer-btn.correct { background: #e3f9ec; border-color: #2f9e58; color: #1f7a41; }
+        .answer-btn.incorrect { background: #fbe4e4; border-color: #d64545; color: #a92e2e; }
+
+        /* ===== RESULTS SCREEN ===== */
+        .results-score { text-align: center; margin-bottom: 1.5rem; }
+        .results-score-num { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 2.4rem; color: var(--pb-teal-deep); }
+        .results-score-label { color: #5f6b72; font-size: 0.95rem; }
+        .results-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+        .results-item {
+            display: flex; align-items: center; gap: 0.75rem; background: white; border-radius: 16px;
+            border: 2px solid #e7e9e7; padding: 0.8rem 1rem; margin: 0; cursor: pointer;
+        }
+        .results-item input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
+        .results-term { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); }
+        .results-translation { font-size: 0.88rem; color: #5f6b72; }
+        .results-item > div { flex: 1; }
+        .results-badge { font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; flex-shrink: 0; }
+        .badge-correct { background: #e3f9ec; color: #1f7a41; }
+        .badge-missed { background: #fbe4e4; color: #a92e2e; }
+        .results-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+
+        .quiz-toast {
+            position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%);
+            background: var(--pb-teal-dark); color: #fff; padding: 10px 18px; border-radius: 999px;
+            font-size: 13px; font-weight: 700; z-index: 2100; box-shadow: 0 8px 20px -6px rgba(17,52,72,0.5);
+            opacity: 0; transition: opacity 200ms ease;
+        }
+        .quiz-toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <!-- Hero -->
+    <div class="activity-hero">
+        <div class="container">
+            <h1><i class="fas fa-graduation-cap" style="margin-right:0.5rem;"></i>Vocabulary Quiz</h1>
+            <p id="quizHeroSubtitle">Test yourself, then save words to your notebook</p>
+        </div>
+    </div>
+
+    <div class="activity-container">
+
+        <!-- ===== SETUP SCREEN ===== -->
+        <div id="setupScreen">
+            <div class="loading-state" id="setupLoading">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+            <div class="setup-card" id="setupCard" style="display:none;">
+                <div class="setup-label">Which language?</div>
+                <div class="picker-pills" id="languagePills"></div>
+
+                <div class="setup-label">Pick a difficulty</div>
+                <div class="picker-pills" id="levelPills"></div>
+
+                <button type="button" class="btn-lb-pill" id="startQuizBtn" disabled>
+                    <i class="fas fa-play"></i> Start Quiz
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== QUIZ SCREEN ===== -->
+        <div id="quizScreen" style="display:none;">
+            <div class="quiz-progress-text" id="quizProgressText"></div>
+            <div class="quiz-term-card" id="quizTermCard"></div>
+            <div class="answer-grid" id="answerGrid"></div>
+            <button type="button" class="btn-lb-pill" id="nextQuestionBtn" style="display:none;">Next question <i class="fas fa-arrow-right"></i></button>
+        </div>
+
+        <!-- ===== RESULTS SCREEN ===== -->
+        <div id="resultsScreen" style="display:none;">
+            <div class="results-score">
+                <div class="results-score-num" id="resultsScoreNum"></div>
+                <div class="results-score-label">Missed words are pre-selected below — save any you'd like to practice.</div>
+            </div>
+            <div class="results-list" id="resultsList"></div>
+            <div class="results-actions">
+                <button type="button" class="btn-lb-pill" id="saveSelectedBtn"><i class="fas fa-bookmark"></i> Save selected to Notebook</button>
+                <button type="button" class="btn-lb-pill btn-lb-pill-outline" id="tryAnotherBtn">Try another round</button>
+                <button type="button" class="btn-lb-pill btn-lb-pill-outline" id="changeLevelBtn">Change language / level</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Explicit spacer so the fixed bottom tab bar never overlaps the last card -->
+    <div style="height: 92px;" aria-hidden="true"></div>
+
+    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15). Reached directly
+         from the Learn tab (home.html)'s Vocabulary card, so active="learn"
+         (unlike notebook.html, which is a level deeper and uses active="none"). -->
+    <lb-app-shell id="shell" page-title="Vocabulary Quiz" active="learn"></lb-app-shell>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <script type="module">
+        import {
+            auth, db,
+            onAuthStateChanged, signOut,
+            doc, getDoc,
+            collection, addDoc, serverTimestamp
+        } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+
+        const SUPPORTED_LANGUAGES = ['French', 'German', 'Italian', 'Portuguese', 'Russian', 'Spanish', 'Swedish'];
+        const LEVELS = [
+            { id: 'beginner', label: 'Beginner' },
+            { id: 'intermediate', label: 'Intermediate' },
+            { id: 'advanced', label: 'Advanced' },
+        ];
+        const MIN_POOL_SIZE = 4; // need at least 4 words to build a 4-option question
+
+        let currentUser = null;
+        let manifest = null;
+        let selectedLanguage = null;
+        let selectedLevel = 'beginner';
+        let currentPool = [];
+        let questions = [];
+        let answered = [];
+        let qIndex = 0;
+        let score = 0;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login'; return; }
+            currentUser = user;
+            await setShellRole(user);
+            await init();
+        });
+
+        async function setShellRole(user) {
+            const shell = document.getElementById('shell');
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                if (shell) shell.setAttribute('role', instructorDoc.exists() ? 'instructor' : 'student');
+            } catch (e) {
+                if (shell) shell.setAttribute('role', 'student');
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        function showToast(message) {
+            const existing = document.querySelector('.quiz-toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'quiz-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 250);
+            }, 2600);
+        }
+
+        function showScreen(name) {
+            document.getElementById('setupScreen').style.display = name === 'setup' ? 'block' : 'none';
+            document.getElementById('quizScreen').style.display = name === 'quiz' ? 'block' : 'none';
+            document.getElementById('resultsScreen').style.display = name === 'results' ? 'block' : 'none';
+        }
+
+        // ===== SETUP =====
+        async function init() {
+            try {
+                const [manifestData, userSnap] = await Promise.all([
+                    fetch('data/vocab/index.json').then(r => r.json()),
+                    getDoc(doc(db, 'users', currentUser.uid)),
+                ]);
+                manifest = manifestData;
+                const learning = (userSnap.exists() ? userSnap.data().languages_learning : []) || [];
+                const overlap = SUPPORTED_LANGUAGES.filter(lang =>
+                    learning.some(l => (l || '').trim().toLowerCase() === lang.toLowerCase())
+                );
+                selectedLanguage = overlap.length > 0 ? overlap[0] : null;
+
+                document.getElementById('setupLoading').style.display = 'none';
+                document.getElementById('setupCard').style.display = 'block';
+                renderLanguagePills();
+                renderLevelPills();
+                updateStartButtonState();
+            } catch (e) {
+                console.error('Vocab quiz setup load error:', e);
+                document.getElementById('setupLoading').innerHTML =
+                    `<i class="fas fa-exclamation-triangle"></i><div>Couldn't load quiz content. Please try again.</div>`;
+            }
+        }
+
+        function renderLanguagePills() {
+            const container = document.getElementById('languagePills');
+            container.innerHTML = SUPPORTED_LANGUAGES.map(lang => `
+                <button type="button" class="picker-pill${lang === selectedLanguage ? ' active' : ''}" data-lang="${lang}">${lang}</button>
+            `).join('');
+            container.querySelectorAll('.picker-pill').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedLanguage = btn.getAttribute('data-lang');
+                    if (!levelHasContent(selectedLanguage, selectedLevel)) selectedLevel = 'beginner';
+                    renderLanguagePills();
+                    renderLevelPills();
+                    updateStartButtonState();
+                });
+            });
+        }
+
+        function levelHasContent(language, levelId) {
+            if (!language || !manifest) return false;
+            const counts = manifest.languages[language] || {};
+            return (counts[levelId] || 0) >= MIN_POOL_SIZE;
+        }
+
+        function renderLevelPills() {
+            const container = document.getElementById('levelPills');
+            container.innerHTML = LEVELS.map(level => {
+                const enabled = levelHasContent(selectedLanguage, level.id);
+                return `
+                    <button type="button" class="picker-pill${level.id === selectedLevel ? ' active' : ''}" data-level="${level.id}" ${enabled ? '' : 'disabled'}>
+                        ${level.label}${enabled ? '' : '<span class="coming-soon">Coming soon</span>'}
+                    </button>`;
+            }).join('');
+            container.querySelectorAll('.picker-pill:not(:disabled)').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedLevel = btn.getAttribute('data-level');
+                    renderLevelPills();
+                    updateStartButtonState();
+                });
+            });
+        }
+
+        function updateStartButtonState() {
+            const btn = document.getElementById('startQuizBtn');
+            btn.disabled = !selectedLanguage || !levelHasContent(selectedLanguage, selectedLevel);
+        }
+
+        document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
+        document.getElementById('changeLevelBtn').addEventListener('click', () => showScreen('setup'));
+        document.getElementById('tryAnotherBtn').addEventListener('click', startQuiz);
+
+        // ===== QUIZ =====
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        async function startQuiz() {
+            try {
+                const data = await fetch(`data/vocab/${selectedLanguage.toLowerCase()}.json`).then(r => r.json());
+                currentPool = data.words.filter(w => w.level === selectedLevel);
+                questions = buildRound(currentPool);
+                qIndex = 0;
+                score = 0;
+                answered = [];
+                showScreen('quiz');
+                renderQuestion();
+            } catch (e) {
+                console.error('Start quiz error:', e);
+                alert('Could not load quiz content. Please try again.');
+            }
+        }
+
+        function buildRound(pool) {
+            const picked = shuffle(pool.slice()).slice(0, Math.min(10, pool.length));
+            return picked.map(word => {
+                const usedTranslations = new Set([word.translation.trim().toLowerCase()]);
+                const distractors = [];
+                for (const cand of shuffle(pool.filter(w => w.id !== word.id))) {
+                    const key = cand.translation.trim().toLowerCase();
+                    if (usedTranslations.has(key)) continue;
+                    usedTranslations.add(key);
+                    distractors.push(cand.translation);
+                    if (distractors.length === 3) break;
+                }
+                return { word, options: shuffle([word.translation, ...distractors]), correct: word.translation };
+            });
+        }
+
+        function renderQuestion() {
+            const q = questions[qIndex];
+            document.getElementById('quizProgressText').textContent = `Question ${qIndex + 1} of ${questions.length}`;
+            document.getElementById('quizTermCard').innerHTML = `<div class="quiz-term">${escapeHtml(q.word.term)}</div>`;
+            const grid = document.getElementById('answerGrid');
+            grid.innerHTML = q.options.map(opt => `<button type="button" class="answer-btn" data-option="${escapeHtml(opt)}">${escapeHtml(opt)}</button>`).join('');
+            grid.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleAnswer(btn, q));
+            });
+            document.getElementById('nextQuestionBtn').style.display = 'none';
+        }
+
+        function handleAnswer(btn, q) {
+            const chosen = btn.getAttribute('data-option');
+            const isCorrect = chosen === q.correct;
+            document.getElementById('answerGrid').querySelectorAll('.answer-btn').forEach(b => {
+                b.disabled = true;
+                if (b.getAttribute('data-option') === q.correct) b.classList.add('correct');
+                else if (b === btn) b.classList.add('incorrect');
+            });
+            if (isCorrect) score++;
+            answered.push({ word: q.word, correct: isCorrect });
+            document.getElementById('nextQuestionBtn').style.display = 'inline-flex';
+        }
+
+        document.getElementById('nextQuestionBtn').addEventListener('click', () => {
+            qIndex++;
+            if (qIndex >= questions.length) showResults();
+            else renderQuestion();
+        });
+
+        // ===== RESULTS =====
+        function showResults() {
+            showScreen('results');
+            document.getElementById('resultsScoreNum').textContent = `${score} / ${questions.length} correct`;
+            document.getElementById('resultsList').innerHTML = answered.map((a, i) => `
+                <label class="results-item">
+                    <input type="checkbox" data-index="${i}" ${a.correct ? '' : 'checked'}>
+                    <div>
+                        <div class="results-term">${escapeHtml(a.word.term)}</div>
+                        <div class="results-translation">${escapeHtml(a.word.translation)}</div>
+                    </div>
+                    <span class="results-badge ${a.correct ? 'badge-correct' : 'badge-missed'}">${a.correct ? 'Correct' : 'Missed'}</span>
+                </label>
+            `).join('');
+        }
+
+        document.getElementById('saveSelectedBtn').addEventListener('click', async () => {
+            const checked = Array.from(document.querySelectorAll('#resultsList input[type="checkbox"]:checked'))
+                .map(cb => answered[parseInt(cb.getAttribute('data-index'), 10)].word);
+
+            if (checked.length === 0) {
+                showToast('Select at least one word to save.');
+                return;
+            }
+
+            const btn = document.getElementById('saveSelectedBtn');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
+            try {
+                for (const word of checked) {
+                    await addDoc(collection(db, 'notebook'), {
+                        userId: currentUser.uid,
+                        term: word.term,
+                        translation: word.translation,
+                        folder: selectedLanguage,
+                        language: selectedLanguage,
+                        tags: Array.isArray(word.tags) ? word.tags : [],
+                        note: word.example || '',
+                        favorite: false,
+                        nextReviewAt: serverTimestamp(),
+                        reviewCount: 0,
+                        source: { page: 'vocab-quiz.html', title: 'Vocabulary Quiz', context: `${selectedLanguage} · ${selectedLevel}` },
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                    });
+                }
+                showToast(`Saved ${checked.length} word${checked.length === 1 ? '' : 's'} to your notebook!`);
+            } catch (e) {
+                console.error('Save quiz words error:', e);
+                alert('Something went wrong saving your words. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        });
+
+        // The app header's account menu proxies Logout to a real Firebase
+        // sign-out, then sends the user to the marketing homepage.
+        document.getElementById('shell').addEventListener('lb-logout', async () => {
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>

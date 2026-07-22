@@ -1,10 +1,10 @@
 /*
   Lingua Bud — Site Service Worker (Phase 2, promoted from the /docs/ sandbox)
   See docs/PWA_PRD.md §12. Registered only from home.html, notebook.html,
-  bookings.html, dashboard.html, student-dashboard.html, messages.html,
-  instructors.html, instructor-profile.html, connect.html, friends.html,
-  learner-profile.html for now — other pages get no <link rel=manifest> or
-  registration script, so they can't trigger an install.
+  vocab-quiz.html, bookings.html, dashboard.html, student-dashboard.html,
+  messages.html, instructors.html, instructor-profile.html, connect.html,
+  friends.html, learner-profile.html for now — other pages get no
+  <link rel=manifest> or registration script, so they can't trigger an install.
 
   Once this SW is active (scope "/"), it intercepts navigation to every page
   on the site, including ones that never registered it. The rules below are
