@@ -23,8 +23,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/fontawesome-all.css" rel="stylesheet">
-    <link href="css/swiper.css" rel="stylesheet">
-    <link href="css/magnific-popup.css" rel="stylesheet">
+    <!-- swiper.css / magnific-popup.css intentionally not loaded here — this
+         page has no carousel or lightbox markup to style, unlike the marketing
+         pages that share this stylesheet list. -->
     <link href="css/styles.css" rel="stylesheet">
 
     <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
@@ -410,12 +411,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
          is the primary navigation. -->
     <lb-app-shell id="shell" page-title="Learn" active="learn"></lb-app-shell>
 
-    <!-- Scripts -->
-    <script src="js/jquery.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/jquery.easing.min.js"></script>
-    <script src="js/scripts.js"></script>
+    <!-- jQuery/Bootstrap-JS/Swiper/Magnific-Popup/scripts.js intentionally not
+         loaded here (unlike the marketing pages that share this navbar markup)
+         — .navbar-custom above is hidden (display:none) in favor of
+         <lb-app-shell>'s header/bottom nav, the profile dropdown is plain CSS
+         (:hover/.show), and this page has no carousel, popup, or other element
+         any of those libraries would ever touch. They were pure render-blocking
+         dead weight on the very first page users see when opening the app. -->
 
     <script type="module">
         import {
@@ -453,9 +455,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('profileNavWrapper').style.display = 'block';
             document.getElementById('signInWrapper').style.display = 'none';
 
+            // loadProfileBasics sets isInstructorRole, which loadNextLesson's
+            // empty-state copy reads — stays sequential. loadNextLesson and
+            // loadVocabSummary don't depend on each other or on anything else,
+            // so they run concurrently instead of adding a third round-trip
+            // to the critical path of the very first thing shown on launch.
             await loadProfileBasics(user);
-            await loadNextLesson();
-            await loadVocabSummary();
+            await Promise.all([loadNextLesson(), loadVocabSummary()]);
             updateStreakAndGoal();
         });
 
