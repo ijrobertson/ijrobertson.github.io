@@ -55,9 +55,19 @@ if (self.workbox) {
   // Stale-while-revalidate for ANY same-origin page navigation. Loads from the
   // network like normal on first visit, quietly caches a copy, and any later
   // edit shows up within one extra reload — no manual versioning needed.
+  //
+  // Cache name bumped to v2 on 2026-07-23: this self-heal-in-one-extra-reload
+  // behavior only applies per exact page — reopening the installed app and
+  // checking, say, Messages does nothing for vocab-quiz.html's own cached
+  // copy, which only revalidates on its own next visit. A round of testing
+  // that revisited some pages but not others left those un-revisited ones
+  // (vocab-quiz.html here) still serving a copy cached well before today's
+  // edits. Renaming the bucket forces every page's cached copy to be treated
+  // as gone, so the very next visit to any page gets the current version
+  // immediately instead of needing a second visit to that specific page.
   workbox.routing.registerRoute(
     ({ request, url }) => request.mode === "navigate" && SAME_ORIGIN({ url }),
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v2" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -111,10 +121,11 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
       self.clients.claim(),
-      // Drop orphaned asset caches left behind by the renames above — otherwise
-      // they just sit in Cache Storage unused, taking up space.
+      // Drop orphaned asset/page caches left behind by the renames above —
+      // otherwise they just sit in Cache Storage unused, taking up space.
       caches.delete("linguabud-assets"),
       caches.delete("linguabud-assets-v2"),
+      caches.delete("linguabud-pages"),
     ])
   );
 });
