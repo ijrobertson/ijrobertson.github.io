@@ -76,12 +76,19 @@ if (self.workbox) {
   // expiry would have self-healed this on its own, but renaming the cache
   // bucket here forces every client to treat all previously cached assets as
   // gone and refetch fresh immediately, rather than waiting out the window.
+  //
+  // Bumped again to v3 on 2026-07-23: js/app-shell.js (same cache bucket,
+  // "script" destination) gained the messages-unread indicator. Anyone who'd
+  // already loaded a page with the pre-change app-shell.js cached would keep
+  // getting served that stale copy — silently missing the new attribute/CSS
+  // entirely, with no visible error — for up to the 24h expiry. Same fix as
+  // above: rename the bucket so every client refetches immediately.
   workbox.routing.registerRoute(
     ({ request, url }) =>
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v2",
+      cacheName: "linguabud-assets-v3",
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -104,9 +111,10 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
       self.clients.claim(),
-      // Drop the orphaned pre-v2 asset cache left behind by the rename above —
-      // otherwise it just sits in Cache Storage unused, taking up space.
+      // Drop orphaned asset caches left behind by the renames above — otherwise
+      // they just sit in Cache Storage unused, taking up space.
       caches.delete("linguabud-assets"),
+      caches.delete("linguabud-assets-v2"),
     ])
   );
 });

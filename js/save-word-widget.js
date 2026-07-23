@@ -57,13 +57,29 @@ function injectStyles() {
   style.textContent = `
     .lb-savewd-pill {
       position: fixed; z-index: 2147483000; transform: translate(-50%, -100%);
-      background: #0b6664; color: #fff; border: none; border-radius: 999px;
-      padding: 8px 16px; font-size: 13px; font-weight: 700; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      background: #0b6664; color: #fff; border-radius: 999px;
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex; align-items: stretch;
       box-shadow: 0 8px 20px -6px rgba(11,102,100,0.55);
       animation: lb-savewd-pop 120ms ease-out;
     }
-    .lb-savewd-pill:hover { background: #094f4d; }
+    .lb-savewd-pill-save {
+      background: none; border: none; color: inherit; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 10px 8px 16px; font-size: 13px; font-weight: 700; font-family: inherit;
+    }
+    .lb-savewd-pill-save:hover { color: #d7f5f4; }
+    /* Separate, always-tappable close affordance — re-selecting text on a
+       touch device can land back on the pill itself (it sits right above the
+       word), which previously left the old pill stuck with no way to dismiss
+       it short of navigating away. This gives an explicit escape hatch that
+       doesn't depend on tapping "outside" landing correctly. */
+    .lb-savewd-pill-close {
+      background: none; border: none; border-left: 1px solid rgba(255,255,255,0.35);
+      color: inherit; opacity: 0.8; cursor: pointer; font-size: 16px; line-height: 1;
+      padding: 8px 14px 8px 10px; font-family: inherit;
+    }
+    .lb-savewd-pill-close:hover { opacity: 1; }
     @keyframes lb-savewd-pop { from { opacity: 0; transform: translate(-50%, -90%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -100%) scale(1); } }
 
     .lb-savewd-overlay {
@@ -260,27 +276,45 @@ function openSaveModal(term) {
 
 function showPill(rect, term) {
   removeExisting('.lb-savewd-pill');
-  const pill = document.createElement('button');
-  pill.type = 'button';
+  const pill = document.createElement('div');
   pill.className = 'lb-savewd-pill';
   pill.style.left = `${rect.left + rect.width / 2}px`;
   pill.style.top = `${Math.max(rect.top - 10, 48)}px`;
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'lb-savewd-pill-save';
   const icon = document.createElement('span');
   icon.setAttribute('aria-hidden', 'true');
   icon.textContent = '+';
   const label = document.createElement('span');
   label.textContent = 'Save word';
-  pill.appendChild(icon);
-  pill.appendChild(label);
+  saveBtn.appendChild(icon);
+  saveBtn.appendChild(label);
+
+  // Explicit dismiss button — see the CSS comment above for why relying on
+  // "tap outside" alone wasn't reliable enough to clear a stale pill.
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'lb-savewd-pill-close';
+  closeBtn.setAttribute('aria-label', 'Dismiss');
+  closeBtn.textContent = '×';
+
+  pill.appendChild(saveBtn);
+  pill.appendChild(closeBtn);
 
   pill.addEventListener('mousedown', (e) => e.preventDefault()); // don't clear the selection
-  pill.addEventListener('click', () => {
+  saveBtn.addEventListener('click', () => {
     removeExisting('.lb-savewd-pill');
     if (auth.currentUser) {
       openSaveModal(term);
     } else {
       showSignInTip(rect);
     }
+  });
+  closeBtn.addEventListener('click', () => {
+    removeExisting('.lb-savewd-pill');
+    window.getSelection()?.removeAllRanges();
   });
   document.body.appendChild(pill);
 }
@@ -311,9 +345,15 @@ function init() {
   document.addEventListener('mouseup', handleSelectionEnd);
   document.addEventListener('touchend', handleSelectionEnd);
   document.addEventListener('scroll', () => removeExisting('.lb-savewd-pill'), { passive: true });
-  document.addEventListener('mousedown', (e) => {
+  // touchstart alongside mousedown: on touch devices a tap elsewhere doesn't
+  // reliably synthesize a mousedown while a selection is active, which used
+  // to leave a stale pill from a previous (incomplete) selection with no way
+  // to dismiss it by tapping away.
+  const dismissIfOutside = (e) => {
     if (!e.target.closest('.lb-savewd-pill')) removeExisting('.lb-savewd-pill');
-  });
+  };
+  document.addEventListener('mousedown', dismissIfOutside);
+  document.addEventListener('touchstart', dismissIfOutside, { passive: true });
 }
 
 if (document.readyState === 'loading') {
