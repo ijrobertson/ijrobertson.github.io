@@ -4,11 +4,14 @@
 // design (see its own header comment) — pages import this module directly
 // rather than it being baked into the shared shell.
 //
-// Notification permission is NEVER requested on page load — only from
-// requestPushPermissionAndRegister(), called from an explicit user action
-// (flipping the "push notifications" toggle in Notification Settings). A
-// denied native prompt is remembered by the browser with no easy re-ask, so
-// timing matters — see docs/PWA_PRD.md §13.
+// Notification permission is NEVER requested on page load — only from a real
+// user gesture, either the "push notifications" toggle in Notification
+// Settings, or the one-time soft-ask banner below (shown automatically after
+// installing the PWA, but still gated on the user tapping "Enable" — iOS
+// Safari will not show the native permission prompt without a direct tap,
+// even right after install, so a truly silent auto-enable isn't possible).
+// A denied native prompt is remembered by the browser with no easy re-ask,
+// so timing matters — see docs/PWA_PRD.md §13.
 //
 // Foreground messages don't use Firebase's onMessage()/onBackgroundMessage()
 // API — sw.js's raw `push` handler postMessage()s a focused client directly,
@@ -16,7 +19,7 @@
 // of that bridge. See sw.js for why (avoids a second copy of firebaseConfig
 // in a different SDK flavor inside the service worker).
 
-import { app, db, doc, setDoc, serverTimestamp, getMessaging, getToken } from '../lib/firebaseClient.js';
+import { app, db, doc, getDoc, setDoc, serverTimestamp, getMessaging, getToken } from '../lib/firebaseClient.js';
 
 // Safe to hardcode client-side — same public-config convention already used
 // for the Firebase API key in lib/firebaseClient.js.
@@ -55,6 +58,92 @@ function showDefaultToast(payload) {
     toast.style.opacity = '0';
     setTimeout(() => toast.remove(), 250);
   }, 4000);
+}
+
+// ── First-launch soft ask ────────────────────────────────────────────────
+// Shown automatically the first time someone opens the app after installing
+// it to their home screen — the closest thing to "auto-enable" that iOS
+// actually allows, since Notification.requestPermission() only works from a
+// direct user gesture. Shown at most once ever per device (tracked in
+// localStorage), and only when permission hasn't already been decided either
+// way, so it never re-nags someone who granted or denied it previously.
+const SOFT_ASK_SHOWN_KEY = 'lb_push_soft_ask_shown';
+
+function isStandalonePWA() {
+  // display-mode:standalone covers installed PWAs generally; navigator.standalone
+  // is the older iOS-specific signal, kept as a fallback for older Safari versions.
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+
+function shouldShowSoftAsk() {
+  if (!isStandalonePWA()) return false;
+  if (Notification.permission !== 'default') return false;
+  try {
+    return !localStorage.getItem(SOFT_ASK_SHOWN_KEY);
+  } catch (e) {
+    return false; // e.g. Safari private mode — be conservative, don't risk re-showing every load
+  }
+}
+
+function markSoftAskShown() {
+  try { localStorage.setItem(SOFT_ASK_SHOWN_KEY, '1'); } catch (e) {}
+}
+
+// Same "check instructors first" pattern used throughout this codebase
+// (e.g. sendMessageNotification in functions/index.js) to find which
+// collection a user's preference fields actually live on.
+async function resolvePreferenceDocRef(uid) {
+  const instructorSnap = await getDoc(doc(db, 'instructors', uid));
+  return instructorSnap.exists() ? doc(db, 'instructors', uid) : doc(db, 'users', uid);
+}
+
+function showSoftAskBanner(uid) {
+  // Mark as shown immediately (not after a decision) — if the user reloads
+  // mid-thought, or navigates away without tapping either button, it still
+  // won't reappear. A missed opportunity is far less annoying than a nag.
+  markSoftAskShown();
+
+  const banner = document.createElement('div');
+  banner.className = 'lb-push-softask';
+  banner.setAttribute('style', [
+    'position:fixed', 'left:16px', 'right:16px', 'bottom:100px', 'z-index:2100',
+    'background:#fff', 'border:2px solid #e7e9e7', 'border-radius:20px', 'padding:1.1rem 1.25rem',
+    'box-shadow:0 16px 36px -14px rgba(17,52,72,0.35)',
+    'font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
+    'opacity:0', 'transition:opacity 200ms ease',
+  ].join(';'));
+  banner.innerHTML = `
+    <div style="font-weight:700;font-size:1rem;color:#113448;margin-bottom:0.3rem;">Stay in the loop</div>
+    <div style="font-size:0.88rem;color:#5f6b72;margin-bottom:0.9rem;line-height:1.4;">Get notified about new messages and daily practice reminders.</div>
+    <div style="display:flex;gap:0.6rem;">
+      <button type="button" id="lb-push-softask-enable" style="flex:1;border:none;border-radius:999px;padding:0.6rem 1rem;font-weight:700;font-size:0.9rem;cursor:pointer;background:#0b6664;color:#fff;">Enable</button>
+      <button type="button" id="lb-push-softask-dismiss" style="border:none;border-radius:999px;padding:0.6rem 1rem;font-weight:700;font-size:0.9rem;cursor:pointer;background:#eef1f0;color:#5f6b72;">Not now</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+  requestAnimationFrame(() => { banner.style.opacity = '1'; });
+
+  const removeBanner = () => {
+    banner.style.opacity = '0';
+    setTimeout(() => banner.remove(), 200);
+  };
+
+  banner.querySelector('#lb-push-softask-dismiss').addEventListener('click', removeBanner);
+  banner.querySelector('#lb-push-softask-enable').addEventListener('click', async () => {
+    const enableBtn = banner.querySelector('#lb-push-softask-enable');
+    enableBtn.disabled = true;
+    enableBtn.textContent = 'Enabling…';
+    const granted = await requestPushPermissionAndRegister(uid);
+    if (granted) {
+      try {
+        const prefDocRef = await resolvePreferenceDocRef(uid);
+        await setDoc(prefDocRef, { messagePushEnabled: true, dailyReminderEnabled: true }, { merge: true });
+      } catch (e) {
+        console.error('Error saving push preferences from soft-ask:', e);
+      }
+    }
+    removeBanner();
+  });
 }
 
 async function registerToken(uid) {
@@ -103,6 +192,8 @@ export async function initPush(uid, { onForegroundMessage } = {}) {
     } catch (e) {
       console.error('Push token refresh error:', e);
     }
+  } else if (shouldShowSoftAsk()) {
+    showSoftAskBanner(uid);
   }
 }
 
