@@ -63,12 +63,25 @@ if (self.workbox) {
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
   // tokens.css, images, webfonts) — but bounded to 1 day, so even these self-heal
   // without a manual step if one of them changes (same history as above).
+  //
+  // Cache name bumped to v2 on 2026-07-22: lib/firebaseClient.js (a shared,
+  // universally-imported script that lives in this exact cache bucket) gained
+  // new named exports (app/getMessaging/getToken) for push notifications. A
+  // client with the pre-change file still cached had every page that imports
+  // the new js/push-notifications.js fail at module-resolution time with "does
+  // not provide an export named ...", silently — since ES module import
+  // failures are atomic, that took down each page's ENTIRE inline script,
+  // including the auth listener that hides the "Loading your dashboard"
+  // overlay, leaving it stuck forever instead of erroring visibly. The 24h
+  // expiry would have self-healed this on its own, but renaming the cache
+  // bucket here forces every client to treat all previously cached assets as
+  // gone and refetch fresh immediately, rather than waiting out the window.
   workbox.routing.registerRoute(
     ({ request, url }) =>
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets",
+      cacheName: "linguabud-assets-v2",
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -87,7 +100,16 @@ if (self.workbox) {
 }
 
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    Promise.all([
+      self.clients.claim(),
+      // Drop the orphaned pre-v2 asset cache left behind by the rename above —
+      // otherwise it just sits in Cache Storage unused, taking up space.
+      caches.delete("linguabud-assets"),
+    ])
+  );
+});
 
 // ── Push notifications ───────────────────────────────────────────────────
 // Raw Push API, not the Firebase Messaging SW SDK — see js/push-notifications.js
