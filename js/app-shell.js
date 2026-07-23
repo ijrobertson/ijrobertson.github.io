@@ -116,6 +116,7 @@ const STYLE = `
     --border: var(--lb-color-border, #e7e9e7);
     --warning: var(--lb-color-warning, #d98a3d);
     --danger: var(--lb-color-danger, #d64545);
+    --accent: var(--lb-color-accent, #20bcba);
     font-family: var(--lb-font-sans, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
     display: block;
     color: var(--ink-900);
@@ -261,6 +262,12 @@ const STYLE = `
      takes precedence over aria-current so it's visible even while the
      Messages tab happens to already be the active one mid-transition. */
   a.tab.unread { color: var(--danger); }
+  /* Immediate tap feedback (see pointerdown/up wiring in _render()) — a tab is
+     a real <a href>, so the actual navigation can take a moment on a slow
+     load; this gives instant confirmation the tap registered, distinct from
+     (and taking precedence over) the steady "you are here"/unread colors
+     above. Cleared on navigation regardless, since the page unloads. */
+  a.tab.tab-tapped { color: var(--accent); }
   a.tab:focus-visible {
     outline: 2px solid var(--action);
     outline-offset: -2px;
@@ -368,6 +375,19 @@ class LbAppShell extends HTMLElement {
           .join("")}
       </nav>
     `;
+
+    // Tap feedback (see the .tab-tapped rule above) — pointerdown/up rather
+    // than relying on CSS :active, which iOS Safari doesn't reliably apply on
+    // a tap without a touch listener present. pointerup/cancel/leave all
+    // clear it so a tap that starts on a tab but doesn't complete as a real
+    // click (e.g. dragged off before release) never leaves it stuck lit.
+    this.shadowRoot.querySelectorAll("a.tab").forEach((tab) => {
+      const clear = () => tab.classList.remove("tab-tapped");
+      tab.addEventListener("pointerdown", () => tab.classList.add("tab-tapped"));
+      tab.addEventListener("pointerup", clear);
+      tab.addEventListener("pointercancel", clear);
+      tab.addEventListener("pointerleave", clear);
+    });
 
     if (!hideHeader) {
       const menuBtn = this.shadowRoot.getElementById("profileMenuBtn");
