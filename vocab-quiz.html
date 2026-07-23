@@ -281,13 +281,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         } from './lib/firebaseClient.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
+        import { watchUnreadMessages } from './js/unread-messages.js';
 
-        const SUPPORTED_LANGUAGES = ['French', 'German', 'Italian', 'Portuguese', 'Russian', 'Spanish', 'Swedish', 'Arabic', 'Chinese', 'Greek'];
+        const SUPPORTED_LANGUAGES = ['English', 'Spanish', 'French', 'Portuguese', 'German', 'Italian', 'Russian', 'Arabic', 'Chinese', 'Swedish', 'Greek'];
         // "Alphabet" is a separate quiz level, not a prerequisite for the others (no
         // gating) — it's just an additional pool of term/translation pairs (letter →
-        // name) for languages with a distinct alphabet. Chinese has no alphabet as
-        // such (it's logographic); pinyin transliteration on every word serves the
-        // same "help me read this" purpose there instead — see RTL_LANGUAGES below.
+        // name) for languages with a distinct alphabet. Chinese is logographic
+        // rather than alphabetic, so its pool under the same "alphabet" level id
+        // holds basic characters instead of letters, and the pill is relabeled
+        // "Characters" for Chinese specifically — see ALPHABET_LEVEL_LABELS below.
         const LEVELS = [
             { id: 'alphabet', label: 'Alphabet' },
             { id: 'beginner', label: 'Beginner' },
@@ -295,6 +297,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             { id: 'advanced', label: 'Advanced' },
         ];
         const RTL_LANGUAGES = ['Arabic'];
+        const ALPHABET_LEVEL_LABELS = { Chinese: 'Characters' };
         const MIN_POOL_SIZE = 4; // need at least 4 words to build a 4-option question
 
         let currentUser = null;
@@ -311,6 +314,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (!user) { window.location.href = 'login'; return; }
             currentUser = user;
             initPush(user.uid);
+            watchUnreadMessages(user.uid, document.getElementById('shell'));
             await setShellRole(user);
             await init();
         });
@@ -427,9 +431,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const container = document.getElementById('levelPills');
             container.innerHTML = LEVELS.map(level => {
                 const enabled = levelHasContent(selectedLanguage, level.id);
+                const label = (level.id === 'alphabet' && ALPHABET_LEVEL_LABELS[selectedLanguage]) || level.label;
                 return `
                     <button type="button" class="picker-pill${level.id === selectedLevel ? ' active' : ''}" data-level="${level.id}" ${enabled ? '' : 'disabled'}>
-                        ${level.label}${enabled ? '' : '<span class="coming-soon">Coming soon</span>'}
+                        ${label}${enabled ? '' : '<span class="coming-soon">Coming soon</span>'}
                     </button>`;
             }).join('');
             container.querySelectorAll('.picker-pill:not(:disabled)').forEach(btn => {
