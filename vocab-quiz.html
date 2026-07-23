@@ -112,26 +112,34 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background: #eef1f0; color: var(--pb-teal-dark); box-shadow: none;
         }
 
-        /* ===== QUIZ SCREEN ===== */
-        .quiz-progress-text { text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); margin-bottom: 1rem; }
-        /* Fixed above the bottom tab bar rather than inline in the flow — a long
-           term/translation could otherwise push this below the fold, requiring a
-           scroll to answer the "did I get it right" prompt. Always reachable now,
-           regardless of content height above it.
-           bottom here is a fallback only — JS below measures the shell's actual
-           rendered nav height at runtime and overrides this with a precise value,
-           since a hardcoded assumption about the nav's height didn't leave enough
-           clearance in practice. z-index is intentionally higher than the shell's
-           nav (var(--lb-z-shell), 1000) so this button is never visually covered
-           by it even if the measurement is ever slightly off. */
-        #nextQuestionBtn {
-            position: fixed;
-            left: 16px;
-            right: 16px;
-            width: auto;
-            bottom: calc(32px + 90px + env(safe-area-inset-bottom, 0));
-            z-index: 1100;
+        /* ===== QUIZ SCREEN =====
+           Two attempts at position:fixed (a hardcoded bottom offset, then one
+           based on a measured nav height) still didn't reliably clear the
+           bottom tab bar on a real device. Switched to a structurally
+           different, more robust pattern instead of a third offset tweak: the
+           question/answers are their own independently-scrolling region
+           (.quiz-scroll-area), and the button lives outside that region
+           entirely, in the same flex column — so it's never possible for it
+           to end up below the fold, regardless of content height. Same
+           pattern messages.html already uses successfully for its chat panel. */
+        #quizScreen {
+            flex-direction: column;
+            overflow: hidden;
+            /* Real height set precisely by JS (sizeQuizScreen) once this screen
+               is shown — measured directly from where it starts to where the
+               nav begins, so nothing here depends on assuming any header/nav/
+               safe-area constant. This is just a reasonable value for the
+               instant before that JS runs. */
+            height: calc(100dvh - 200px);
         }
+        .quiz-scroll-area {
+            flex: 1;
+            min-height: 0; /* required for a flex child to actually scroll instead of overflowing the column */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .quiz-progress-text { text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); margin-bottom: 1rem; }
+        #nextQuestionBtn { flex-shrink: 0; margin-top: 1rem; }
         .quiz-term-card {
             background: white; border-radius: 24px; border: 2px solid #e7e9e7;
             box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18);
@@ -213,14 +221,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
 
-        <!-- ===== QUIZ SCREEN ===== -->
+        <!-- ===== QUIZ SCREEN =====
+             Viewport-locked, same pattern as messages.html's chat panel: a
+             bounded-height flex column with an independently-scrolling content
+             area, and the action button OUTSIDE that scroll area entirely — so
+             it's structurally impossible for it to end up below the fold,
+             regardless of how tall the term/translation/answers are. This
+             replaces a position:fixed approach that, across two attempts, still
+             wasn't reliably clearing the bottom tab bar on a real device. -->
         <div id="quizScreen" style="display:none;">
-            <div class="quiz-progress-text" id="quizProgressText"></div>
-            <div class="quiz-term-card" id="quizTermCard"></div>
-            <div class="answer-grid" id="answerGrid"></div>
-            <!-- Clears the now-fixed Next-question button + bottom tab bar so the
-                 last answer option is never visually covered if content is tall. -->
-            <div style="height: calc(140px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
+            <div class="quiz-scroll-area" id="quizScrollArea">
+                <div class="quiz-progress-text" id="quizProgressText"></div>
+                <div class="quiz-term-card" id="quizTermCard"></div>
+                <div class="answer-grid" id="answerGrid"></div>
+            </div>
             <button type="button" class="btn-lb-pill" id="nextQuestionBtn" style="display:none;">Next question <i class="fas fa-arrow-right"></i></button>
         </div>
 
@@ -333,27 +347,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function showScreen(name) {
             document.getElementById('setupScreen').style.display = name === 'setup' ? 'block' : 'none';
-            document.getElementById('quizScreen').style.display = name === 'quiz' ? 'block' : 'none';
+            document.getElementById('quizScreen').style.display = name === 'quiz' ? 'flex' : 'none';
             document.getElementById('resultsScreen').style.display = name === 'results' ? 'block' : 'none';
-            if (name === 'quiz') positionNextQuestionBtn();
-        }
-
-        // Measures the shell's actual rendered bottom-nav height at runtime,
-        // rather than assuming a fixed value in CSS — a hardcoded guess didn't
-        // leave enough real clearance on-device (nav height varies with the
-        // iOS home-indicator safe area, which this environment can't simulate
-        // to verify precisely). Re-measured on resize/orientation change too.
-        function positionNextQuestionBtn() {
-            const shell = document.getElementById('shell');
-            const nav = shell?.shadowRoot?.querySelector('nav');
-            const btn = document.getElementById('nextQuestionBtn');
-            if (!nav || !btn) return;
-            const navHeight = nav.getBoundingClientRect().height;
-            if (navHeight > 0) {
-                btn.style.bottom = `${navHeight + 24}px`;
+            if (name === 'quiz') {
+                // Two elements need to be laid out (display set) before their
+                // real positions can be measured — defer one frame.
+                requestAnimationFrame(sizeQuizScreen);
             }
         }
-        window.addEventListener('resize', positionNextQuestionBtn);
+
+        // Measures exactly where the quiz screen starts and exactly where the
+        // shell's nav begins, right now, on this device — and sizes the screen
+        // to fill precisely the space between them. No assumption about
+        // header/nav/safe-area height is baked in anywhere; whatever those
+        // actually render as, this fills the real gap. If the question content
+        // is taller than that, .quiz-scroll-area (not the whole page) scrolls,
+        // and the button — outside that scroll area — never moves.
+        function sizeQuizScreen() {
+            const shell = document.getElementById('shell');
+            const nav = shell?.shadowRoot?.querySelector('nav');
+            const quizScreen = document.getElementById('quizScreen');
+            if (!nav || !quizScreen || quizScreen.style.display === 'none') return;
+            const screenTop = quizScreen.getBoundingClientRect().top;
+            const navTop = nav.getBoundingClientRect().top;
+            const height = navTop - screenTop - 16; // 16px breathing room above the nav
+            if (height > 0) quizScreen.style.height = `${height}px`;
+        }
+        window.addEventListener('resize', sizeQuizScreen);
 
         // ===== SETUP =====
         async function init() {
