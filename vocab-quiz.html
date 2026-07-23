@@ -117,14 +117,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         /* Fixed above the bottom tab bar rather than inline in the flow — a long
            term/translation could otherwise push this below the fold, requiring a
            scroll to answer the "did I get it right" prompt. Always reachable now,
-           regardless of content height above it. */
+           regardless of content height above it.
+           bottom here is a fallback only — JS below measures the shell's actual
+           rendered nav height at runtime and overrides this with a precise value,
+           since a hardcoded assumption about the nav's height didn't leave enough
+           clearance in practice. z-index is intentionally higher than the shell's
+           nav (var(--lb-z-shell), 1000) so this button is never visually covered
+           by it even if the measurement is ever slightly off. */
         #nextQuestionBtn {
             position: fixed;
             left: 16px;
             right: 16px;
             width: auto;
-            bottom: calc(16px + 72px + env(safe-area-inset-bottom, 0));
-            z-index: 900;
+            bottom: calc(32px + 90px + env(safe-area-inset-bottom, 0));
+            z-index: 1100;
         }
         .quiz-term-card {
             background: white; border-radius: 24px; border: 2px solid #e7e9e7;
@@ -329,7 +335,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('setupScreen').style.display = name === 'setup' ? 'block' : 'none';
             document.getElementById('quizScreen').style.display = name === 'quiz' ? 'block' : 'none';
             document.getElementById('resultsScreen').style.display = name === 'results' ? 'block' : 'none';
+            if (name === 'quiz') positionNextQuestionBtn();
         }
+
+        // Measures the shell's actual rendered bottom-nav height at runtime,
+        // rather than assuming a fixed value in CSS — a hardcoded guess didn't
+        // leave enough real clearance on-device (nav height varies with the
+        // iOS home-indicator safe area, which this environment can't simulate
+        // to verify precisely). Re-measured on resize/orientation change too.
+        function positionNextQuestionBtn() {
+            const shell = document.getElementById('shell');
+            const nav = shell?.shadowRoot?.querySelector('nav');
+            const btn = document.getElementById('nextQuestionBtn');
+            if (!nav || !btn) return;
+            const navHeight = nav.getBoundingClientRect().height;
+            if (navHeight > 0) {
+                btn.style.bottom = `${navHeight + 24}px`;
+            }
+        }
+        window.addEventListener('resize', positionNextQuestionBtn);
 
         // ===== SETUP =====
         async function init() {
