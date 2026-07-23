@@ -1381,7 +1381,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             where,
             orderBy,
             onSnapshot,
-            serverTimestamp,
             onAuthStateChanged,
             signOut,
             updateDoc,
@@ -1411,6 +1410,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let currentUserName = '';
         let activeConversationId = null;
         let unsubscribeMessages = null;
+
+        // senderId -> avatar_url (or null). Populated once per sender and reused
+        // across every snapshot for the lifetime of this page view — avatars
+        // essentially never change mid-conversation, and re-fetching both
+        // `users` and `instructors` docs for every sender on every single
+        // message (see loadMessages()) was adding a real, avoidable network
+        // round-trip before a just-sent message could even render.
+        const senderAvatarCache = new Map();
 
         // Audio messaging state
         const audioPlayers = new Map(); // msgId -> HTMLAudioElement
@@ -1967,7 +1974,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         text: callText,
                         type: 'video_call_request',
                         channelName: channelName,
-                        timestamp: serverTimestamp(),
+                        // Client timestamp, not serverTimestamp() — this field is used in
+                        // orderBy() on a live listener, and a pending (unresolved)
+                        // serverTimestamp() write can be excluded from an ordered
+                        // query's results until the server acknowledges it, which is
+                        // exactly why a just-sent message could intermittently not
+                        // show up until leaving and reopening the conversation
+                        // reattached the listener after the write had long since
+                        // resolved. Same reasoning lastMessageTime below already
+                        // follows.
+                        timestamp: new Date(),
                         read: false
                     });
 
@@ -2053,32 +2069,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         const message = { id: docSnap.id, ...docSnap.data() };
                         messages.push(message);
 
-                        // Queue up user data fetch if not already fetching
-                        if (!senderDataPromises.has(message.senderId)) {
-                            senderDataPromises.set(message.senderId,
-                                (async () => {
-                                    try {
-                                        const [userDoc, instructorDoc] = await Promise.all([
-                                            getDoc(doc(db, 'users', message.senderId)),
-                                            getDoc(doc(db, 'instructors', message.senderId))
-                                        ]);
-                                        const data = instructorDoc.exists() ? instructorDoc.data()
-                                                   : userDoc.exists()       ? userDoc.data()
-                                                   : null;
-                                        return data ? (data.avatar_url || null) : null;
-                                    } catch (error) {
-                                        console.error('Error loading sender:', error);
-                                        return null;
-                                    }
-                                })()
-                            );
-                        }
+                        // Already have this sender's avatar from an earlier snapshot
+                        // (or already fetching it in this same pass) — nothing to do.
+                        if (senderAvatarCache.has(message.senderId) || senderDataPromises.has(message.senderId)) return;
+
+                        senderDataPromises.set(message.senderId,
+                            (async () => {
+                                try {
+                                    const [userDoc, instructorDoc] = await Promise.all([
+                                        getDoc(doc(db, 'users', message.senderId)),
+                                        getDoc(doc(db, 'instructors', message.senderId))
+                                    ]);
+                                    const data = instructorDoc.exists() ? instructorDoc.data()
+                                               : userDoc.exists()       ? userDoc.data()
+                                               : null;
+                                    return data ? (data.avatar_url || null) : null;
+                                } catch (error) {
+                                    console.error('Error loading sender:', error);
+                                    return null;
+                                }
+                            })()
+                        );
                     });
 
-                    // Fetch all sender data in parallel
-                    const senderDataMap = new Map();
+                    // Fetch only newly-seen senders' data in parallel, and cache it —
+                    // on every subsequent snapshot (e.g. the one right after you send
+                    // a message) this loop has nothing left to do, so rendering isn't
+                    // gated on a network round-trip anymore.
                     for (const [senderId, promise] of senderDataPromises) {
-                        senderDataMap.set(senderId, await promise);
+                        senderAvatarCache.set(senderId, await promise);
                     }
 
                     // Clear and render all messages at once
@@ -2087,7 +2106,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                     messages.forEach((message) => {
                         const isSent = message.senderId === currentUser.uid;
-                        const senderAvatar = senderDataMap.get(message.senderId) || DEFAULT_AVATAR;
+                        const senderAvatar = senderAvatarCache.get(message.senderId) || DEFAULT_AVATAR;
 
                         const messageEl = document.createElement('div');
                         messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
@@ -2163,7 +2182,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
                     senderId: currentUser.uid,
                     text: text,
-                    timestamp: serverTimestamp(),
+                    // Client timestamp, not serverTimestamp() — see the comment on
+                    // the video-call-request send above for why.
+                    timestamp: new Date(),
                     read: false
                 });
 
@@ -2705,7 +2726,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     audioDuration: Math.round(duration),
                     audioLang: recordingLanguage,   // BCP-47, e.g. 'pt-PT'
                     transcript: transcript || '',
-                    timestamp: serverTimestamp(),
+                    // Client timestamp, not serverTimestamp() — see the comment on
+                    // the video-call-request send above for why.
+                    timestamp: new Date(),
                     read: false
                 });
 
