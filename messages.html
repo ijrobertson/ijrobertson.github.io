@@ -1541,17 +1541,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Set up the singleton emoji picker (safe to call multiple times)
                 setupEmojiPicker();
 
-                // Load conversations
-                await loadConversations();
-
-                // Load unread message count and pending friend requests
-                try {
-                    await loadUnreadMessageCount();
-                } catch (error) {
-                    console.error('Error loading unread messages:', error);
-                }
-                loadPendingRequests();
-
                 // Check for new conversation from sessionStorage or URL parameter
                 console.log('🔍 Checking for recipient...');
                 let recipientId = sessionStorage.getItem('messageRecipientId');
@@ -1569,33 +1558,56 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     console.log('📧 Recipient ID from URL:', recipientId);
                 }
 
-                if (recipientId) {
-                    console.log('🚀 Starting new conversation with:', recipientId);
-                    try {
-                        await startNewConversation(recipientId);
-                        console.log('✅ Conversation started successfully');
-                    } catch (error) {
-                        console.error('❌ Error starting conversation:', error);
-                        alert('Error starting conversation: ' + error.message);
-                    }
-                }
-
                 // Deep-link from a message push notification (see sw.js's
                 // notificationclick + js/push-notifications.js's showDefaultToast,
                 // which both fold conversationId onto the url as a query param) —
                 // opens that specific conversation instead of just the list.
                 const notifConversationId = new URLSearchParams(window.location.search).get('conversationId');
-                if (notifConversationId) {
-                    try {
-                        const convSnap = await getDoc(doc(db, 'conversations', notifConversationId));
-                        if (convSnap.exists()) {
-                            const otherUserId = (convSnap.data().participants || []).find(id => id !== currentUser.uid);
-                            if (otherUserId) openConversation(notifConversationId, otherUserId);
+
+                // Kick off opening the deep-linked conversation (if any) right away,
+                // concurrently with loading the conversation list below, rather than
+                // behind it. A notification tap is a full cold page load (unlike
+                // clicking a conversation while already on this page), so gating
+                // openConversation()/startNewConversation() — which is the thing that
+                // actually loads the messages you tapped the notification to read —
+                // behind loadConversations() + loadUnreadMessageCount() first meant
+                // it had to wait for the *entire* conversation list before it even
+                // started on the one conversation you actually wanted.
+                const deepLinkPromise = (async () => {
+                    if (recipientId) {
+                        console.log('🚀 Starting new conversation with:', recipientId);
+                        try {
+                            await startNewConversation(recipientId);
+                            console.log('✅ Conversation started successfully');
+                        } catch (error) {
+                            console.error('❌ Error starting conversation:', error);
+                            alert('Error starting conversation: ' + error.message);
                         }
-                    } catch (error) {
-                        console.error('Error opening conversation from notification:', error);
+                    } else if (notifConversationId) {
+                        try {
+                            const convSnap = await getDoc(doc(db, 'conversations', notifConversationId));
+                            if (convSnap.exists()) {
+                                const otherUserId = (convSnap.data().participants || []).find(id => id !== currentUser.uid);
+                                if (otherUserId) openConversation(notifConversationId, otherUserId);
+                            }
+                        } catch (error) {
+                            console.error('Error opening conversation from notification:', error);
+                        }
                     }
+                })();
+
+                // Load conversations
+                await loadConversations();
+
+                // Load unread message count and pending friend requests
+                try {
+                    await loadUnreadMessageCount();
+                } catch (error) {
+                    console.error('Error loading unread messages:', error);
                 }
+                loadPendingRequests();
+
+                await deepLinkPromise;
             } else {
                 window.location.href = 'login';
             }
@@ -1919,22 +1931,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
             }
 
-            // Check if the other user is blocking new messages
-            try {
-                const blocked = await checkMessagingBlocked(otherUserId);
-                if (blocked) {
-                    document.getElementById('notAcceptingNotice').style.display = 'block';
-                    document.getElementById('messageInput').disabled = true;
-                    document.querySelector('#messageForm .send-btn').disabled = true;
-                    const micBtnEl = document.getElementById('micBtn');
-                    if (micBtnEl) micBtnEl.disabled = true;
-                }
-            } catch (e) {
-                console.error('Error checking messaging blocked status:', e);
-            }
-
-            // Load messages
+            // Load messages right away — this is the thing the user actually
+            // came here to see, so it must not wait on the blocked-user check
+            // below (which only disables the input / shows a banner, and used
+            // to run first). That extra sequential round-trip, stacked on top
+            // of the other-user profile fetch above, was exactly why messages
+            // sometimes weren't visible yet right after opening a conversation
+            // (worse on a notification tap, which is a cold page load with no
+            // warm connection) until leaving and reopening gave everything
+            // time to resolve.
             loadMessages(conversationId);
+
+            // Check if the other user is blocking new messages — runs
+            // concurrently with the messages above, not before them.
+            (async () => {
+                try {
+                    const blocked = await checkMessagingBlocked(otherUserId);
+                    if (blocked) {
+                        document.getElementById('notAcceptingNotice').style.display = 'block';
+                        document.getElementById('messageInput').disabled = true;
+                        document.querySelector('#messageForm .send-btn').disabled = true;
+                        const micBtnEl = document.getElementById('micBtn');
+                        if (micBtnEl) micBtnEl.disabled = true;
+                    }
+                } catch (e) {
+                    console.error('Error checking messaging blocked status:', e);
+                }
+            })();
 
             // Setup send message
             document.getElementById('messageForm').addEventListener('submit', (e) => {
