@@ -26,6 +26,37 @@ function pushSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
+// Default foreground display for any page that doesn't pass its own
+// onForegroundMessage — without this, a push that arrives while the app is
+// open on, say, home.html or the dashboard would vanish silently: the
+// service worker routes foreground pushes to postMessage() rather than a
+// native notification (see sw.js), and if nothing on the page is listening
+// for that message, nothing is ever shown. Visual style matches the toast
+// pattern already used in js/save-word-widget.js / vocab-quiz.html.
+function showDefaultToast(payload) {
+  const existing = document.querySelector('.lb-push-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'lb-push-toast';
+  toast.setAttribute('style', [
+    'position:fixed', 'left:50%', 'bottom:96px', 'transform:translateX(-50%)',
+    'background:#113448', 'color:#fff', 'padding:12px 20px', 'border-radius:999px',
+    'font-size:14px', 'font-weight:600', 'font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
+    'z-index:2000', 'box-shadow:0 8px 20px -6px rgba(17,52,72,0.5)',
+    'opacity:0', 'transition:opacity 200ms ease', 'cursor:pointer', 'max-width:90vw',
+  ].join(';'));
+  toast.textContent = payload.body ? `${payload.title}: ${payload.body}` : payload.title;
+  toast.addEventListener('click', () => {
+    if (payload.url) window.location.href = payload.url;
+  });
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => { toast.style.opacity = '1'; });
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 250);
+  }, 4000);
+}
+
 async function registerToken(uid) {
   const swReg = await navigator.serviceWorker.ready;
   const messaging = getMessaging(app);
@@ -51,20 +82,20 @@ async function registerToken(uid) {
 /**
  * Call on every page load for a signed-in user. Silently refreshes the
  * stored FCM token if permission is already granted — a no-op otherwise,
- * never prompts. Pass onForegroundMessage to also wire the service worker's
- * foreground-push bridge (only needed where a page wants to show a toast for
- * a push that arrives while it's open, e.g. messages.html).
+ * never prompts. Also wires the service worker's foreground-push bridge so
+ * a push that arrives while this page is open shows *something* — pass
+ * onForegroundMessage for page-specific handling (e.g. messages.html
+ * suppresses the toast for whichever conversation is already open); every
+ * other page gets a generic toast by default rather than showing nothing.
  */
 export async function initPush(uid, { onForegroundMessage } = {}) {
   if (!pushSupported() || !uid) return;
 
-  if (onForegroundMessage) {
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      if (event.data?.type === 'lb-push-foreground') {
-        onForegroundMessage(event.data.payload);
-      }
-    });
-  }
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data?.type === 'lb-push-foreground') {
+      (onForegroundMessage || showDefaultToast)(event.data.payload);
+    }
+  });
 
   if (Notification.permission === 'granted') {
     try {

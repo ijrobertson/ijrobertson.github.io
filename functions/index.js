@@ -113,15 +113,23 @@ async function syncBookingToGoogleCalendar(instructorId, booking, bookingId) {
  */
 async function sendPushToUser(db, uid, data) {
   const tokenDoc = await db.collection('fcmTokens').doc(uid).get();
-  if (!tokenDoc.exists) return { sent: false, reason: 'no-token-doc' };
+  if (!tokenDoc.exists) {
+    console.log(`[Push] No fcmTokens doc for ${uid} — device never registered a token.`);
+    return { sent: false, reason: 'no-token-doc' };
+  }
 
   const tokens = Object.keys(tokenDoc.data().tokens || {});
-  if (tokens.length === 0) return { sent: false, reason: 'no-tokens' };
+  if (tokens.length === 0) {
+    console.log(`[Push] fcmTokens doc for ${uid} exists but has zero tokens.`);
+    return { sent: false, reason: 'no-tokens' };
+  }
 
   const response = await admin.messaging().sendEachForMulticast({
     tokens,
     data,
   });
+  console.log(`[Push] Sent to ${uid}: ${response.successCount}/${tokens.length} succeeded.`,
+    response.failureCount > 0 ? response.responses.map(r => r.error?.code).filter(Boolean) : '');
 
   // Prune any token FCM reports as no-longer-valid, so the map doesn't
   // accumulate dead entries (device replaced, browser data cleared, etc).
