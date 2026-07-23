@@ -228,6 +228,25 @@ service cloud.firestore {
       allow write: if false; // Cloud Functions only
     }
 
+    // Vocabulary notebook — personal word/phrase collection (Learn tab)
+    match /notebook/{entryId} {
+      // Only the owner can read, create, update, or delete their own entries
+      allow read, delete: if request.auth != null
+                         && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null
+                   && request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth != null
+                   && request.auth.uid == resource.data.userId
+                   && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Push notification device tokens — one doc per user, keyed by uid, holding
+    // a map of active FCM tokens. No public read (unlike users/instructors):
+    // device tokens are more sensitive than a display email.
+    match /fcmTokens/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Homework assignments — sent by instructors to students
     match /homework/{homeworkId} {
       allow read: if request.auth != null && (

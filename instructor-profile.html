@@ -681,6 +681,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script type="module">
         import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
         import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
 
         // ── Referral token capture ──────────────────────────────────────────
         // If a ?ref=TOKEN parameter is present, store it in localStorage for up
@@ -746,6 +747,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                initPush(user.uid);
                 profileNavWrapper.style.cssText = 'display: flex !important;';
                 signInWrapper.style.display = 'none';
 

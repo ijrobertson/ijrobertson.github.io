@@ -1330,6 +1330,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script type="module">
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
         import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
 
         // Stripe publishable key is fetched once from the backend and cached.
         // This keeps the key out of the HTML source; switching test↔live is a
@@ -1371,6 +1372,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Check authentication and load profile picture (optional for this page)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                initPush(user.uid);
                 // Load user's profile picture - check both instructors and users collections
                 try {
                     // First check if user is an instructor

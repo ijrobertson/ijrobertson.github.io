@@ -1206,6 +1206,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 font-size: 0.75rem;
             }
         }
+
+        /* New-message push toast — shown only while this page is open and the
+           incoming message isn't for the conversation already on screen. */
+        .push-toast {
+            position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(0);
+            background: #113448; color: #fff; padding: 12px 20px; border-radius: 999px;
+            font-size: 14px; font-weight: 600; z-index: 2000; box-shadow: 0 8px 20px -6px rgba(17,52,72,0.5);
+            opacity: 0; transition: opacity 200ms ease; cursor: pointer; max-width: 90vw;
+        }
+        .push-toast.show { opacity: 1; }
     </style>
 </head>
 <body>
@@ -1378,6 +1388,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             getDownloadURL
         } from './lib/firebaseClient.js';
         import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
 
         const conversationsList = document.getElementById('conversationsList');
         const chatPanel = document.getElementById('chatPanel');
@@ -1432,10 +1443,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         })();
 
         // Check authentication
+        function showPushToast(payload) {
+            const existing = document.querySelector('.push-toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'push-toast';
+            toast.textContent = payload.body ? `${payload.title}: ${payload.body}` : payload.title;
+            toast.addEventListener('click', async () => {
+                if (!payload.conversationId) return;
+                const convSnap = await getDoc(doc(db, 'conversations', payload.conversationId));
+                if (!convSnap.exists()) return;
+                const otherUserId = (convSnap.data().participants || []).find(id => id !== currentUser.uid);
+                if (otherUserId) openConversation(payload.conversationId, otherUserId);
+            });
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 250);
+            }, 4000);
+        }
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 console.log('🔐 User authenticated:', user.uid);
+
+                // A message for the conversation already open on screen already
+                // showed up via the existing onSnapshot listener — no need to
+                // also toast about it. Anything else gets a toast.
+                initPush(user.uid, {
+                    onForegroundMessage: (payload) => {
+                        if (payload.conversationId && payload.conversationId === activeConversationId) return;
+                        showPushToast(payload);
+                    },
+                });
 
                 // Load profile picture — check both collections in parallel; prefer instructors
                 try {

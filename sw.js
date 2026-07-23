@@ -88,3 +88,61 @@ if (self.workbox) {
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+// ── Push notifications ───────────────────────────────────────────────────
+// Raw Push API, not the Firebase Messaging SW SDK — see js/push-notifications.js
+// for why (avoids a second copy of firebaseConfig in a different SDK flavor,
+// and known foreground/background double-notification pitfalls when mixing
+// `notification`+`data` payloads). The server always sends data-only FCM
+// messages, so this handler is always the one in control of what's shown.
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let raw;
+  try {
+    raw = event.data.json();
+  } catch {
+    return;
+  }
+  // Defensive: handle both "payload fields at top level" (the expected shape
+  // for a data-only admin-SDK send) and "payload nested under .data" in case
+  // that assumption is ever wrong for a given browser/FCM delivery path.
+  // Kept as the whole object (not destructured to a fixed field list) so any
+  // extra fields a sender adds later (e.g. conversationId) pass through to
+  // the page without needing another service worker edit.
+  const payload = raw.data || raw;
+  if (!payload.title) return;
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const focused = clients.find((c) => c.focused);
+      if (focused) {
+        // Foreground: let the open page show its own in-app toast instead of
+        // a redundant OS-level notification — see js/push-notifications.js.
+        focused.postMessage({ type: "lb-push-foreground", payload });
+        return null;
+      }
+      return self.registration.showNotification(payload.title, {
+        body: payload.body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        data: { url: payload.url || "/" },
+      });
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.startsWith(self.location.origin) && "focus" in client) {
+          if ("navigate" in client) client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});

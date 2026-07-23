@@ -958,6 +958,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.4rem;">
+          <label for="messagePushEnabled" style="margin: 0; flex: 1; cursor: pointer;">
+            <i class="fas fa-bell" style="margin-right: 0.5rem; color: #3b5998;"></i>
+            Push notifications for new messages
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="messagePushEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p id="messagePushStatus" class="status" style="display:none; margin: 0 0 1rem;"></p>
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.4rem;">
+          <label for="dailyReminderEnabled" style="margin: 0; flex: 1; cursor: pointer;">
+            <i class="fas fa-graduation-cap" style="margin-right: 0.5rem; color: #20bcba;"></i>
+            Daily practice reminder
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="dailyReminderEnabled" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p id="dailyReminderStatus" class="status" style="display:none; margin: 0 0 1rem;"></p>
 
         <button class="save-btn" id="save-profile">Save Profile</button>
         <div class="status" id="status-msg"></div>
@@ -1089,6 +1111,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       httpsCallable
     } from './lib/firebaseClient.js';
     import './js/app-shell.js';
+    import { initPush, requestPushPermissionAndRegister } from './js/push-notifications.js';
 
     // Safe localStorage helpers — localStorage throws in Safari Private Mode,
     // which would crash DOMContentLoaded and prevent auth from ever running.
@@ -1456,6 +1479,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           document.getElementById('emailNotifications').checked = emailNotifications;
           document.getElementById('acceptingRequests').checked = profile.acceptingRequests !== false;
 
+          // Push notification preferences — default OFF (can only become true
+          // via a real browser permission grant, see js/push-notifications.js)
+          document.getElementById('messagePushEnabled').checked = profile.messagePushEnabled === true;
+          document.getElementById('dailyReminderEnabled').checked = profile.dailyReminderEnabled === true;
+          initPush(currentUser.uid);
+
           // Timezone preference
           if (profile.timezone) {
             const tzSel = document.getElementById('student-timezone-select');
@@ -1611,6 +1640,43 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
       });
     });
+
+    // Push notification toggles — self-save immediately on flip, separate
+    // from the batched "Save Profile" button below. This matters specifically
+    // here (unlike the other toggles) because turning one on triggers a
+    // one-shot native permission prompt tied to this exact click; deferring
+    // the Firestore write to a later, possibly-never-clicked Save risks a
+    // real granted permission + registered device token with no persisted
+    // preference to match, which would leave the toggle looking "on" this
+    // session but silently reverting to off (unsent) on next page load.
+    function wirePushToggle(checkboxId, statusId, fieldName) {
+      const checkbox = document.getElementById(checkboxId);
+      const status = document.getElementById(statusId);
+      checkbox.addEventListener('change', async () => {
+        status.style.display = 'none';
+        if (checkbox.checked) {
+          checkbox.disabled = true;
+          const granted = await requestPushPermissionAndRegister(currentUser.uid);
+          checkbox.disabled = false;
+          if (!granted) {
+            checkbox.checked = false;
+            status.textContent = Notification.permission === 'denied'
+              ? 'Notifications are blocked — enable them in your browser\'s site settings to turn this on.'
+              : 'Could not enable notifications. Please try again.';
+            status.style.color = '#c0392b';
+            status.style.display = 'block';
+            return;
+          }
+        }
+        try {
+          await setDoc(doc(db, 'users', currentUser.uid), { [fieldName]: checkbox.checked }, { merge: true });
+        } catch (e) {
+          console.error(`Error saving ${fieldName}:`, e);
+        }
+      });
+    }
+    wirePushToggle('messagePushEnabled', 'messagePushStatus', 'messagePushEnabled');
+    wirePushToggle('dailyReminderEnabled', 'dailyReminderStatus', 'dailyReminderEnabled');
 
     // Save profile
     document.getElementById('save-profile').addEventListener('click', async () => {
@@ -1866,6 +1932,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           role: 'student',
           email: currentUser.email,
           emailNotifications: true,
+          messagePushEnabled: false,
+          dailyReminderEnabled: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

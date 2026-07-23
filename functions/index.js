@@ -99,6 +99,57 @@ async function syncBookingToGoogleCalendar(instructorId, booking, bookingId) {
 }
 
 /**
+ * Sends a data-only FCM push to every device registered for a user, and
+ * prunes any token the send reports as dead. Data-only (no top-level
+ * `notification` block) so the service worker's own `push` handler is
+ * always the one in control — see sw.js.
+ *
+ * Used by both the message-push branch below and the daily reminder
+ * scheduled function. Never throws — a push failure should never break
+ * whatever triggered it. `data` values must all be strings (FCM requirement)
+ * — extra fields beyond title/body/url (e.g. conversationId, so the client
+ * can suppress a foreground toast for a conversation already open) pass
+ * straight through without needing a service worker change.
+ */
+async function sendPushToUser(db, uid, data) {
+  const tokenDoc = await db.collection('fcmTokens').doc(uid).get();
+  if (!tokenDoc.exists) return { sent: false, reason: 'no-token-doc' };
+
+  const tokens = Object.keys(tokenDoc.data().tokens || {});
+  if (tokens.length === 0) return { sent: false, reason: 'no-tokens' };
+
+  const response = await admin.messaging().sendEachForMulticast({
+    tokens,
+    data,
+  });
+
+  // Prune any token FCM reports as no-longer-valid, so the map doesn't
+  // accumulate dead entries (device replaced, browser data cleared, etc).
+  // Dot-notation string field path (not a FieldPath object — that constructor
+  // threw under the Functions emulator's runtime for reasons that didn't
+  // reproduce in a plain node script, and importing firebase-admin/firestore
+  // to get a fresh FieldPath turned out to conflict with the emulator's own
+  // admin.firestore patching, breaking unrelated serverTimestamp() calls
+  // elsewhere in this file). Safe here specifically because FCM web push
+  // registration tokens are base64url (A-Z a-z 0-9 - _) and never contain a
+  // literal "." that would be misread as a path separator.
+  const deletions = [];
+  response.responses.forEach((res, i) => {
+    const code = res.error?.code;
+    if (code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-argument') {
+      deletions.push(
+        db.collection('fcmTokens').doc(uid).update({
+          [`tokens.${tokens[i]}`]: admin.firestore.FieldValue.delete(),
+        })
+      );
+    }
+  });
+  if (deletions.length > 0) await Promise.all(deletions);
+
+  return { sent: response.successCount > 0, successCount: response.successCount, failureCount: response.failureCount };
+}
+
+/**
  * Cloud Function that triggers when a new message is added to a conversation
  * Sends an email notification to the recipient if they have notifications enabled
  */
@@ -162,6 +213,51 @@ exports.sendMessageNotification = onDocumentCreated(
         return null;
       }
 
+      // Get sender's name from conversation participant details
+      const senderName = conversation.participantDetails?.[message.senderId]?.name || 'A Lingua Bud user';
+
+      // Truncate message for preview (max 100 characters) — shared by both
+      // the email body and the push notification body below.
+      const messagePreview = message.text.length > 100
+        ? message.text.substring(0, 100) + '...'
+        : message.text;
+
+      // ── Push notification ─────────────────────────────────────────────────
+      // Independent of the email branch below: gated on its own preference
+      // field, in its own try/catch, so neither channel's failure (or a
+      // recipient having one channel disabled) affects the other, or the
+      // message write itself.
+      try {
+        const pushEnabled = recipient.messagePushEnabled === true;
+        if (pushEnabled) {
+          const debounceMs = 5 * 60 * 1000; // "one push per thread per few minutes" — see docs/PWA_PRD.md §13
+          const lastPushSentAt = conversation.lastPushSentAt?.[recipientId];
+          const debounced = lastPushSentAt && (Date.now() - lastPushSentAt.toMillis()) < debounceMs;
+          if (!debounced) {
+            await sendPushToUser(admin.firestore(), recipientId, {
+              title: `${senderName} sent you a message`,
+              body: messagePreview,
+              url: '/messages',
+              conversationId,
+            });
+            await conversationRef.update({
+              // Plain Date, not FieldValue.serverTimestamp() — that sentinel
+              // proved unreliable in this exact function's emulator context
+              // (see sendPushToUser's token-pruning comment for the same
+              // issue). Firestore stores a Date as its own Timestamp type
+              // either way, and reads it back with .toMillis() same as
+              // above, so the debounce check itself needed no change.
+              [`lastPushSentAt.${recipientId}`]: new Date(),
+            });
+          } else {
+            console.log('Push debounced for recipient:', recipientId);
+          }
+        }
+      } catch (pushError) {
+        console.error('Error sending push notification:', pushError);
+        // Don't throw — a push failure must not affect the email branch or the message write.
+      }
+
       // Check if recipient has email notifications enabled (default to true)
       const emailNotificationsEnabled = recipient.emailNotifications !== false;
 
@@ -174,14 +270,6 @@ exports.sendMessageNotification = onDocumentCreated(
         console.log('Recipient has no email address:', recipientId);
         return null;
       }
-
-      // Get sender's name from conversation participant details
-      const senderName = conversation.participantDetails?.[message.senderId]?.name || 'A Lingua Bud user';
-
-      // Truncate message for preview (max 100 characters)
-      const messagePreview = message.text.length > 100
-        ? message.text.substring(0, 100) + '...'
-        : message.text;
 
       // Send email via Resend
       const emailResult = await resend.emails.send({
@@ -3532,6 +3620,68 @@ exports.runWisePayouts = onCall(async (request) => {
   } catch (err) {
     console.error('[Wise] runWisePayouts error:', err.message);
     throw new HttpsError('internal', `Wise payout run failed: ${err.message}`);
+  }
+});
+
+// ── Daily Practice Reminder ──────────────────────────────────────────────────
+
+/**
+ * Sends a "time to practice" push to every user opted into daily reminders.
+ * Single fixed send time for all users (no per-user timezone handling —
+ * see docs/PWA_PRD.md §13, flagged as a known v1 limitation).
+ */
+async function processDailyReminders(db) {
+  const results = { processed: 0, skipped: 0, failed: 0, details: [] };
+  const snap = await db.collection('users').where('dailyReminderEnabled', '==', true).get();
+
+  for (const docSnap of snap.docs) {
+    const uid = docSnap.id;
+    try {
+      const result = await sendPushToUser(db, uid, {
+        title: 'Time to practice!',
+        body: 'A few words are waiting for review in your notebook.',
+        url: '/notebook?review=1',
+      });
+      if (result.sent) results.processed++;
+      else results.skipped++;
+      results.details.push({ uid, ...result });
+    } catch (err) {
+      results.failed++;
+      results.details.push({ uid, status: 'failed', error: err.message });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Scheduled Cloud Function — runs daily at 15:00 UTC.
+ */
+exports.sendDailyReminders = onSchedule('0 15 * * *', async () => {
+  console.log('[Push] sendDailyReminders: daily run starting');
+  const db = admin.firestore();
+  try {
+    const results = await processDailyReminders(db);
+    console.log('[Push] sendDailyReminders complete:', JSON.stringify(results));
+  } catch (err) {
+    console.error('[Push] sendDailyReminders fatal error:', err.message);
+  }
+});
+
+/**
+ * Admin callable — manually trigger daily reminders (the Functions emulator
+ * never fires onSchedule on a wall clock, so this is also how it gets tested
+ * locally). Returns the same summary object as the scheduled run.
+ */
+exports.runDailyRemindersNow = onCall(async (request) => {
+  await assertAdmin(request);
+  console.log('[Push] runDailyRemindersNow: admin-triggered run');
+  const db = admin.firestore();
+  try {
+    return await processDailyReminders(db);
+  } catch (err) {
+    console.error('[Push] runDailyRemindersNow error:', err.message);
+    throw new HttpsError('internal', `Daily reminder run failed: ${err.message}`);
   }
 });
 

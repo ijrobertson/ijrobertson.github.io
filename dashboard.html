@@ -1200,6 +1200,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .cancel-confirm-btn:hover { background: #b45309; }
     .cancel-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .cancel-error { font-size: 0.82rem; color: #c0392b; margin-top: 0.75rem; min-height: 1em; }
+
+    /* Toggle Switch — copied from student-dashboard.html for the Notification
+       Settings section below, which doesn't exist elsewhere on this page. */
+    .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: 0.3s; border-radius: 26px;
+    }
+    .toggle-slider:before {
+      position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
+      background-color: white; transition: 0.3s; border-radius: 50%;
+    }
+    .toggle-switch input:checked + .toggle-slider { background-color: #3b5998; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(24px); }
   </style>
 </head>
 <body>
@@ -1448,6 +1463,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <label for="country">Native Country</label>
     <select id="country"></select>
+
+    <!-- NOTIFICATION SETTINGS -->
+    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
+      <i class="fas fa-bell"></i> Notification Settings
+    </h3>
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.4rem;">
+      <label for="messagePushEnabled" style="margin: 0; flex: 1; cursor: pointer;">
+        Push notifications for new messages
+      </label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="messagePushEnabled" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <p id="messagePushStatus" style="display:none; margin: 0 0 1.5rem; font-size: 0.85rem;"></p>
 
     <!-- AVAILABILITY SECTION -->
     <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
@@ -1765,6 +1795,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       httpsCallable
     } from './lib/firebaseClient.js';
     import './js/app-shell.js';
+    import { initPush, requestPushPermissionAndRegister } from './js/push-notifications.js';
 
     // Safe localStorage helpers — localStorage throws in Safari Private Mode,
     // which would crash DOMContentLoaded and prevent auth from ever running.
@@ -1987,6 +2018,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       document.getElementById('teachingLanguage').addEventListener('change', () => addLanguage('teaching'));
       document.getElementById('save-btn').onclick = saveProfile;
       document.getElementById('save-availability-btn').onclick = saveAvailability;
+
+      // Self-saves immediately on flip, separate from the batched Save
+      // Profile button — see the matching comment in student-dashboard.html
+      // for why (a granted permission needs its preference persisted right
+      // away, not deferred to a possibly-never-clicked Save).
+      const pushToggle = document.getElementById('messagePushEnabled');
+      const pushStatus = document.getElementById('messagePushStatus');
+      pushToggle.addEventListener('change', async () => {
+        pushStatus.style.display = 'none';
+        if (pushToggle.checked) {
+          pushToggle.disabled = true;
+          const granted = await requestPushPermissionAndRegister(currentUser.uid);
+          pushToggle.disabled = false;
+          if (!granted) {
+            pushToggle.checked = false;
+            pushStatus.textContent = Notification.permission === 'denied'
+              ? 'Notifications are blocked — enable them in your browser\'s site settings to turn this on.'
+              : 'Could not enable notifications. Please try again.';
+            pushStatus.style.color = '#c0392b';
+            pushStatus.style.display = 'block';
+            return;
+          }
+        }
+        try {
+          await setDoc(doc(db, 'instructors', currentUser.uid), { messagePushEnabled: pushToggle.checked }, { merge: true });
+        } catch (e) {
+          console.error('Error saving messagePushEnabled:', e);
+        }
+      });
 
       // Logout from navbar
       const logoutLink = document.getElementById('logoutLink');
@@ -2429,7 +2489,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             videoEl.src = data.intro_video_url;
             videoEl.style.display = 'block';
           }
+
+          document.getElementById('messagePushEnabled').checked = data.messagePushEnabled === true;
         }
+        initPush(currentUser.uid);
         setStatus("");
       } catch (error) {
         setStatus("Error loading profile: " + error.message, true);
