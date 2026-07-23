@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="Your Lingua Bud vocabulary notebook — words and phrases you're learning, organized your way.">
+    <meta name="author" content="Lingua Bud">
+    <title>Notebook - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <!-- Matches the Learn tab's design direction (home.html, conversation 2026-07-08) -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/swiper.css" rel="stylesheet">
+    <link href="css/magnific-popup.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
+    <link href="css/tokens.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        :root {
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-navy-light: #1c5470;
+            --pb-surface: #fbfbfb;
+        }
+        body {
+            padding-top: calc(60px + env(safe-area-inset-top, 0)); /* <lb-app-shell> header height + iOS notch/status-bar clearance, replaces the marketing navbar's 4.5rem */
+            background-color: var(--pb-surface);
+        }
+        .navbar-custom { display: none; }
+
+        /* ===== PAGE HERO ===== */
+        .activity-hero {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, #14a29f 100%);
+            color: white; text-align: center;
+            border-radius: 28px;
+            margin: 20px 16px 0;
+            padding: 2rem 1.5rem 1.85rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 32px -12px rgba(11, 102, 100, 0.5);
+        }
+        .activity-hero::before, .activity-hero::after {
+            content: ""; position: absolute; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .activity-hero::before { width: 160px; height: 160px; top: -70px; right: -40px; }
+        .activity-hero::after { width: 110px; height: 110px; bottom: -50px; left: -30px; background: rgba(17, 52, 72, 0.18); }
+        .activity-hero h1 {
+            font-family: 'Baloo 2', sans-serif; font-size: 1.9rem; font-weight: 800; color: white;
+            margin-bottom: 0.4rem; letter-spacing: -0.3px; position: relative; z-index: 1;
+        }
+        .activity-hero p { font-size: 1rem; color: rgba(255, 255, 255, 0.9); margin: 0; position: relative; z-index: 1; }
+
+        .activity-container { max-width: 900px; margin: 1.5rem auto 0; padding: 0 1rem; }
+
+        /* ===== FOLDER / FILTER PILLS ===== */
+        .folder-pills { display: flex; gap: 0.6rem; overflow-x: auto; padding-bottom: 0.35rem; margin-bottom: 1.25rem; -webkit-overflow-scrolling: touch; }
+        .folder-pill {
+            flex-shrink: 0; padding: 0.5rem 1.1rem; border-radius: 999px; font-size: 0.88rem; font-weight: 700;
+            font-family: 'Baloo 2', sans-serif; background: white; color: var(--pb-teal-dark); border: 2px solid #e7e9e7;
+            cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        }
+        .folder-pill:hover { border-color: var(--pb-teal); }
+        .folder-pill.active { background: var(--pb-teal-dark); border-color: var(--pb-teal-dark); color: white; }
+
+        /* ===== WORD CARDS ===== */
+        .word-list { display: flex; flex-direction: column; gap: 0.9rem; }
+        .word-card {
+            background: white; border-radius: 20px; border: 2px solid #e7e9e7;
+            box-shadow: 0 8px 20px -12px rgba(17,52,72,0.15);
+            padding: 1.1rem 1.25rem;
+        }
+        .word-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
+        .word-term { font-family: 'Baloo 2', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--pb-teal-dark); margin: 0; }
+        .word-translation { color: #5f6b72; font-size: 0.95rem; margin: 0.15rem 0 0; }
+        .word-card-actions { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+        .icon-btn {
+            width: 34px; height: 34px; border-radius: 50%; border: none; background: #eef1f0; color: #5f6b72;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s;
+        }
+        .icon-btn:hover { background: #e3f5f3; }
+        .icon-btn.fav.is-favorite { background: #e3f5f3; color: var(--pb-teal-deep); }
+        .icon-btn.delete:hover { background: #fbe4e4; color: #c93636; }
+        .word-meta-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; align-items: center; }
+        .tag-chip { background: var(--pb-teal-deep); color: white; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+        .folder-chip { background: #e3f5f3; color: var(--pb-teal-dark); font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+        .due-chip { background: var(--pb-teal-deep); color: white; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; }
+        .word-note { margin: 0.65rem 0 0; font-size: 0.86rem; color: #5f6b72; font-style: italic; }
+
+        .empty-state { text-align: center; padding: 3rem 2rem; color: #aaa; background: white; border-radius: 24px; border: 2px solid #e7e9e7; }
+        .empty-state i { font-size: 2.75rem; color: var(--pb-teal); opacity: 0.35; display: block; margin-bottom: 1rem; }
+        .empty-state p { font-size: 1rem; margin-bottom: 0.4rem; color: #5f6b72; }
+        .loading-state { text-align: center; padding: 2.5rem; color: #aaa; }
+        .loading-state i { font-size: 2rem; color: var(--pb-teal); display: block; margin-bottom: 0.75rem; }
+
+        /* ===== REVIEW BANNER ===== */
+        .review-banner {
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white;
+            border-radius: 20px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+            box-shadow: 0 10px 24px -8px rgba(11,102,100,0.5);
+        }
+        .review-banner-text { display: flex; align-items: center; gap: 0.7rem; font-family: 'Baloo 2', sans-serif; font-weight: 700; }
+        .review-banner-btn {
+            background: white; color: var(--pb-teal-deep); border: none; border-radius: 999px;
+            padding: 0.5rem 1.1rem; font-weight: 800; font-family: 'Baloo 2', sans-serif; font-size: 0.9rem;
+            cursor: pointer; white-space: nowrap; flex-shrink: 0;
+        }
+
+        /* ===== REVIEW OVERLAY (flashcards) ===== */
+        .review-overlay {
+            position: fixed; inset: 0; z-index: 2000; background: var(--pb-surface);
+            display: flex; flex-direction: column;
+        }
+        .review-overlay-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 1.25rem; flex-shrink: 0;
+        }
+        .review-close-btn {
+            width: 38px; height: 38px; border-radius: 50%; border: none; background: white;
+            color: var(--pb-teal-dark); display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px -4px rgba(17,52,72,0.25); cursor: pointer;
+        }
+        .review-progress-text { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); }
+        .review-card-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem 1.5rem 2rem; }
+        .flashcard {
+            width: 100%; max-width: 380px; min-height: 220px; background: white; border-radius: 24px;
+            border: 2px solid #e7e9e7; box-shadow: 0 16px 36px -14px rgba(17,52,72,0.25);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 2rem 1.5rem; text-align: center; cursor: pointer; gap: 0.75rem;
+        }
+        .flashcard-term { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.6rem; color: var(--pb-teal-dark); }
+        .flashcard-translation { font-size: 1.15rem; color: var(--pb-teal-deep); font-weight: 700; }
+        .flashcard-note { font-size: 0.88rem; color: #5f6b72; font-style: italic; margin-top: 0.5rem; }
+        .flashcard-hint { font-size: 0.8rem; color: #aaa; margin-top: 0.5rem; }
+        .review-actions { display: flex; gap: 0.9rem; margin-top: 1.5rem; width: 100%; max-width: 380px; }
+        .review-actions button {
+            flex: 1; border: none; border-radius: 999px; padding: 0.8rem 1rem; font-weight: 700;
+            font-family: 'Baloo 2', sans-serif; font-size: 0.95rem; cursor: pointer;
+        }
+        .btn-still-learning { background: #eef1f0; color: var(--pb-teal-dark); }
+        .btn-got-it { background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white; }
+        .review-complete { text-align: center; }
+        .review-complete i { font-size: 3rem; color: var(--pb-teal); margin-bottom: 1rem; }
+        .review-complete h3 { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); }
+
+        /* ===== FLOATING ADD BUTTON ===== */
+        .fab-add {
+            position: fixed; right: 20px; bottom: 92px; z-index: 1050;
+            width: 58px; height: 58px; border-radius: 50%; border: none;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white;
+            font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 24px -6px rgba(11, 102, 100, 0.5); cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .fab-add:hover { transform: scale(1.06); color: white; }
+
+        /* ===== MODAL ===== */
+        #wordModal .modal-content { border-radius: 20px; border: none; }
+        #wordModal .modal-header { border-bottom: 1px solid #e7e9e7; }
+        #wordModal .modal-title { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); }
+        #wordModal label { font-weight: 700; font-size: 0.85rem; color: var(--pb-teal-dark); }
+        #wordModal .form-control { border-radius: 10px; border: 2px solid #e7e9e7; }
+        #wordModal .form-control:focus { border-color: var(--pb-teal); box-shadow: none; }
+        .fav-toggle-row { display: flex; align-items: center; gap: 0.5rem; }
+        .btn-lb-primary {
+            background: var(--pb-teal-deep); border-color: var(--pb-teal-deep); color: white; font-weight: 700;
+        }
+        .btn-lb-primary:hover { background: var(--pb-teal-dark); border-color: var(--pb-teal-dark); color: white; }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <!-- Hero -->
+    <div class="activity-hero">
+        <div class="container">
+            <h1><i class="fas fa-book-open" style="margin-right:0.5rem;"></i>Notebook</h1>
+            <p id="notebookSubtitle">Loading your words&hellip;</p>
+        </div>
+    </div>
+
+    <div class="activity-container">
+        <div class="review-banner" id="reviewBanner" style="display:none;">
+            <div class="review-banner-text"><i class="fas fa-bolt"></i> <span id="reviewBannerText"></span></div>
+            <button type="button" class="review-banner-btn" id="startReviewBtn">Start Review</button>
+        </div>
+
+        <div class="folder-pills" id="folderPills">
+            <button type="button" class="folder-pill active" data-folder="all">All</button>
+            <button type="button" class="folder-pill" data-folder="favorites"><i class="fas fa-star"></i> Favorites</button>
+            <button type="button" class="folder-pill" data-folder="thisweek">This week</button>
+        </div>
+
+        <div id="wordListContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading your notebook...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explicit spacer so the fixed bottom tab bar never overlaps the last card -->
+    <div style="height: calc(92px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
+
+    <button type="button" class="fab-add" id="addWordBtn" title="Add a word" aria-label="Add a word">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Flashcard review mode — full-screen, replaces the list temporarily rather
+         than being a separate page, since it's a focused single-task flow (see
+         renderReviewCard()/completeReview() below). -->
+    <div class="review-overlay" id="reviewOverlay" style="display:none;">
+        <div class="review-overlay-header">
+            <button type="button" class="review-close-btn" id="reviewCloseBtn" aria-label="Close review"><i class="fas fa-times"></i></button>
+            <div class="review-progress-text" id="reviewProgressText"></div>
+            <div style="width:38px;"></div>
+        </div>
+        <div class="review-card-stage" id="reviewCardStage"></div>
+    </div>
+
+    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15). Notebook is reached
+         from the Learn tab (home.html) rather than being a tab destination
+         itself, so active stays "none" here — same convention bookings.html
+         uses for students, who reach it the same way. -->
+    <lb-app-shell id="shell" page-title="Notebook" active="none"></lb-app-shell>
+
+    <!-- Add / Edit Word Modal -->
+    <div class="modal fade" id="wordModal" tabindex="-1" role="dialog" aria-labelledby="wordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="wordModalLabel">Add a word</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="wordForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="wordEntryId" value="">
+                        <div class="form-group">
+                            <label for="wordTerm">Word or phrase *</label>
+                            <input type="text" class="form-control" id="wordTerm" required maxlength="200" placeholder="e.g. la boulangerie">
+                        </div>
+                        <div class="form-group">
+                            <label for="wordTranslation">Translation *</label>
+                            <input type="text" class="form-control" id="wordTranslation" required maxlength="200" placeholder="e.g. the bakery">
+                        </div>
+                        <div class="form-group">
+                            <label for="wordFolder">Folder</label>
+                            <input type="text" class="form-control" id="wordFolder" list="folderSuggestions" maxlength="60" placeholder="General">
+                            <datalist id="folderSuggestions"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="wordTags">Tags</label>
+                            <input type="text" class="form-control" id="wordTags" maxlength="200" placeholder="comma separated, e.g. food, travel">
+                        </div>
+                        <div class="form-group">
+                            <label for="wordNote">Note</label>
+                            <textarea class="form-control" id="wordNote" rows="2" maxlength="500" placeholder="Example sentence, memory trick, context..."></textarea>
+                        </div>
+                        <div class="form-group fav-toggle-row">
+                            <input type="checkbox" id="wordFavorite" style="width:18px;height:18px;">
+                            <label for="wordFavorite" style="margin:0;"><i class="fas fa-star" style="color: var(--pb-teal-deep);"></i> Mark as favorite</label>
+                        </div>
+                        <div id="wordFormError" class="text-danger small" style="display:none;"></div>
+                    </div>
+                    <div class="modal-footer" style="justify-content: space-between;">
+                        <button type="button" class="btn btn-outline-danger" id="deleteWordBtn" style="display:none;">Delete</button>
+                        <div>
+                            <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-lb-primary" id="saveWordBtn">Save</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <script type="module">
+        import {
+            auth, db,
+            onAuthStateChanged, signOut,
+            collection, query, where, onSnapshot,
+            addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp
+        } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
+        import { watchUnreadMessages } from './js/unread-messages.js';
+
+        let currentUser = null;
+        let entries = [];
+        let activeFilter = 'all';
+        let unsubscribeEntries = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login';
+                return;
+            }
+            currentUser = user;
+            initPush(user.uid);
+            watchUnreadMessages(user.uid, document.getElementById('shell'));
+            await setShellRole(user);
+            subscribeToNotebook(user.uid);
+        });
+
+        async function setShellRole(user) {
+            const shell = document.getElementById('shell');
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                if (shell) shell.setAttribute('role', instructorDoc.exists() ? 'instructor' : 'student');
+            } catch (e) {
+                if (shell) shell.setAttribute('role', 'student');
+            }
+        }
+
+        function subscribeToNotebook(uid) {
+            const q = query(collection(db, 'notebook'), where('userId', '==', uid));
+            unsubscribeEntries = onSnapshot(q, (snap) => {
+                entries = [];
+                snap.forEach(d => entries.push({ id: d.id, ...d.data() }));
+                render();
+            }, (err) => {
+                console.error('Notebook load error:', err);
+                document.getElementById('wordListContainer').innerHTML =
+                    `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load your notebook.</p></div>`;
+            });
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        function toDate(ts) {
+            return ts && typeof ts.toDate === 'function' ? ts.toDate() : (ts ? new Date(ts) : null);
+        }
+
+        function customFolders() {
+            const names = new Set();
+            entries.forEach(e => {
+                const f = (e.folder || '').trim();
+                if (f && f.toLowerCase() !== 'general') names.add(f);
+            });
+            return Array.from(names).sort((a, b) => a.localeCompare(b));
+        }
+
+        function renderFolderPills() {
+            const container = document.getElementById('folderPills');
+            const built = customFolders();
+            const builtInHtml = `
+                <button type="button" class="folder-pill${activeFilter === 'all' ? ' active' : ''}" data-folder="all">All</button>
+                <button type="button" class="folder-pill${activeFilter === 'favorites' ? ' active' : ''}" data-folder="favorites"><i class="fas fa-star"></i> Favorites</button>
+                <button type="button" class="folder-pill${activeFilter === 'thisweek' ? ' active' : ''}" data-folder="thisweek">This week</button>
+            `;
+            const customHtml = built.map(name => `
+                <button type="button" class="folder-pill${activeFilter === name ? ' active' : ''}" data-folder="${escapeHtml(name)}">${escapeHtml(name)}</button>
+            `).join('');
+            container.innerHTML = builtInHtml + customHtml;
+
+            container.querySelectorAll('.folder-pill').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeFilter = btn.getAttribute('data-folder');
+                    render();
+                });
+            });
+
+            const datalist = document.getElementById('folderSuggestions');
+            datalist.innerHTML = built.map(name => `<option value="${escapeHtml(name)}">`).join('');
+        }
+
+        function filteredEntries() {
+            const now = new Date();
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            let list = entries.slice();
+            if (activeFilter === 'favorites') {
+                list = list.filter(e => e.favorite === true);
+            } else if (activeFilter === 'thisweek') {
+                list = list.filter(e => { const c = toDate(e.createdAt); return c && c >= weekAgo; });
+            } else if (activeFilter !== 'all') {
+                list = list.filter(e => (e.folder || '').trim() === activeFilter);
+            }
+            list.sort((a, b) => (toDate(b.createdAt) || 0) - (toDate(a.createdAt) || 0));
+            return list;
+        }
+
+        function renderWordList() {
+            const container = document.getElementById('wordListContainer');
+            const list = filteredEntries();
+
+            if (entries.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-book-open"></i>
+                        <p>Your notebook is empty.</p>
+                        <p style="font-size:0.85rem;">Tap the <strong>+</strong> button to save your first word or phrase.</p>
+                    </div>`;
+                return;
+            }
+            if (list.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-filter"></i><p>No words in this view yet.</p></div>`;
+                return;
+            }
+
+            const now = new Date();
+            container.innerHTML = `<div class="word-list">${list.map(e => {
+                const due = toDate(e.nextReviewAt);
+                const isDue = due && due <= now;
+                const tags = Array.isArray(e.tags) ? e.tags : [];
+                return `
+                <div class="word-card" data-id="${e.id}">
+                    <div class="word-card-top">
+                        <div>
+                            <p class="word-term">${escapeHtml(e.term)}</p>
+                            <p class="word-translation">${escapeHtml(e.translation)}</p>
+                        </div>
+                        <div class="word-card-actions">
+                            <button type="button" class="icon-btn fav${e.favorite ? ' is-favorite' : ''}" data-action="fav" title="Toggle favorite">
+                                <i class="fa${e.favorite ? 's' : 'r'} fa-star"></i>
+                            </button>
+                            <button type="button" class="icon-btn edit" data-action="edit" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="icon-btn delete" data-action="delete" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="word-meta-row">
+                        <span class="folder-chip"><i class="fas fa-folder" style="margin-right:4px;"></i>${escapeHtml(e.folder || 'General')}</span>
+                        ${tags.map(t => `<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}
+                        ${isDue ? `<span class="due-chip">Due for review</span>` : ''}
+                    </div>
+                    ${e.note ? `<p class="word-note">${escapeHtml(e.note)}</p>` : ''}
+                </div>`;
+            }).join('')}</div>`;
+
+            container.querySelectorAll('.word-card').forEach(card => {
+                const id = card.getAttribute('data-id');
+                const entry = entries.find(e => e.id === id);
+                card.querySelector('[data-action="fav"]').addEventListener('click', () => toggleFavorite(entry));
+                card.querySelector('[data-action="edit"]').addEventListener('click', () => openEditModal(entry));
+                card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteEntry(entry));
+            });
+        }
+
+        function dueEntries() {
+            const now = new Date();
+            return entries
+                .filter(e => { const d = toDate(e.nextReviewAt); return d && d <= now; })
+                .sort((a, b) => (toDate(a.nextReviewAt) || 0) - (toDate(b.nextReviewAt) || 0));
+        }
+
+        let autoReviewChecked = false;
+
+        function render() {
+            const due = dueEntries();
+            document.getElementById('notebookSubtitle').textContent = entries.length === 0
+                ? 'Start building your personal word collection'
+                : `${entries.length} word${entries.length === 1 ? '' : 's'} saved${due.length > 0 ? ` · ${due.length} due for review` : ''}`;
+
+            const banner = document.getElementById('reviewBanner');
+            if (due.length > 0) {
+                banner.style.display = 'flex';
+                document.getElementById('reviewBannerText').textContent =
+                    `${due.length} word${due.length === 1 ? '' : 's'} due for review`;
+            } else {
+                banner.style.display = 'none';
+            }
+
+            renderFolderPills();
+            renderWordList();
+
+            // Auto-launch review once, on first load, if linked here with ?review=1
+            // (see home.html's vocab summary CTA) and there's actually something due.
+            if (!autoReviewChecked) {
+                autoReviewChecked = true;
+                if (new URLSearchParams(location.search).get('review') === '1' && due.length > 0) {
+                    startReview();
+                }
+            }
+        }
+
+        async function toggleFavorite(entry) {
+            try {
+                await updateDoc(doc(db, 'notebook', entry.id), {
+                    favorite: !entry.favorite,
+                    userId: currentUser.uid,
+                    updatedAt: serverTimestamp()
+                });
+            } catch (e) {
+                console.error('Toggle favorite error:', e);
+            }
+        }
+
+        async function deleteEntry(entry) {
+            if (!confirm(`Delete "${entry.term}" from your notebook?`)) return;
+            try {
+                await deleteDoc(doc(db, 'notebook', entry.id));
+            } catch (e) {
+                console.error('Delete error:', e);
+                alert('Could not delete this word. Please try again.');
+            }
+        }
+
+        // ===== FLASHCARD REVIEW =====
+        // Simple, honest spaced-repetition-lite: each successful review pushes the
+        // next one further out along this ladder (indexed by reviewCount before the
+        // increment); a "Still learning" tap resets to the start of the ladder and
+        // comes back tomorrow. Full SM-2-style scheduling is a stated future PRD
+        // phase — this is the first real slice now that nextReviewAt/reviewCount
+        // are actually populated (see the word-save handler above).
+        const REVIEW_INTERVALS_DAYS = [1, 3, 7, 14, 30];
+
+        let reviewQueue = [];
+        let reviewIndex = 0;
+        let reviewFlipped = false;
+        let reviewedCount = 0;
+
+        function startReview() {
+            reviewQueue = dueEntries();
+            if (reviewQueue.length === 0) return;
+            reviewIndex = 0;
+            reviewedCount = 0;
+            document.getElementById('reviewOverlay').style.display = 'flex';
+            renderReviewCard();
+        }
+
+        function closeReview() {
+            document.getElementById('reviewOverlay').style.display = 'none';
+        }
+
+        function renderReviewCard() {
+            const stage = document.getElementById('reviewCardStage');
+            const progress = document.getElementById('reviewProgressText');
+
+            if (reviewIndex >= reviewQueue.length) {
+                progress.textContent = '';
+                stage.innerHTML = `
+                    <div class="review-complete">
+                        <i class="fas fa-circle-check"></i>
+                        <h3>Nice work!</h3>
+                        <p>You reviewed ${reviewedCount} word${reviewedCount === 1 ? '' : 's'}.</p>
+                        <button type="button" class="review-banner-btn" style="background:var(--pb-teal-deep);color:white;margin-top:0.5rem;" id="reviewDoneBtn">Done</button>
+                    </div>`;
+                document.getElementById('reviewDoneBtn').addEventListener('click', closeReview);
+                return;
+            }
+
+            reviewFlipped = false;
+            const entry = reviewQueue[reviewIndex];
+            progress.textContent = `${reviewIndex + 1} of ${reviewQueue.length}`;
+            renderFlashcardFace(entry, false);
+        }
+
+        function renderFlashcardFace(entry, flipped) {
+            const stage = document.getElementById('reviewCardStage');
+            stage.innerHTML = `
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-term">${escapeHtml(entry.term)}</div>
+                    ${flipped ? `
+                        <div class="flashcard-translation">${escapeHtml(entry.translation)}</div>
+                        ${entry.note ? `<div class="flashcard-note">${escapeHtml(entry.note)}</div>` : ''}
+                    ` : `<div class="flashcard-hint">Tap to reveal translation</div>`}
+                </div>
+                <div class="review-actions" id="reviewActions" style="visibility:${flipped ? 'visible' : 'hidden'};">
+                    <button type="button" class="btn-still-learning" id="stillLearningBtn">Still learning</button>
+                    <button type="button" class="btn-got-it" id="gotItBtn">Got it</button>
+                </div>`;
+
+            document.getElementById('flashcard').addEventListener('click', () => {
+                if (reviewFlipped) return;
+                reviewFlipped = true;
+                renderFlashcardFace(entry, true);
+            });
+            document.getElementById('stillLearningBtn').addEventListener('click', () => handleReviewAnswer(false));
+            document.getElementById('gotItBtn').addEventListener('click', () => handleReviewAnswer(true));
+        }
+
+        async function handleReviewAnswer(remembered) {
+            const entry = reviewQueue[reviewIndex];
+            const now = new Date();
+            let nextReviewAt, reviewCount;
+            if (remembered) {
+                reviewCount = (entry.reviewCount || 0) + 1;
+                const days = REVIEW_INTERVALS_DAYS[Math.min(entry.reviewCount || 0, REVIEW_INTERVALS_DAYS.length - 1)];
+                nextReviewAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+            } else {
+                reviewCount = 0;
+                nextReviewAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            }
+
+            try {
+                await updateDoc(doc(db, 'notebook', entry.id), {
+                    reviewCount, nextReviewAt, updatedAt: serverTimestamp()
+                });
+            } catch (e) {
+                console.error('Review update error:', e);
+            }
+
+            reviewedCount++;
+            reviewIndex++;
+            renderReviewCard();
+        }
+
+        document.getElementById('startReviewBtn').addEventListener('click', startReview);
+        document.getElementById('reviewCloseBtn').addEventListener('click', closeReview);
+
+        // ===== Add / Edit Modal =====
+        const wordModalEl = $('#wordModal');
+        const wordForm = document.getElementById('wordForm');
+        const wordFormError = document.getElementById('wordFormError');
+
+        function resetForm() {
+            wordForm.reset();
+            document.getElementById('wordEntryId').value = '';
+            document.getElementById('deleteWordBtn').style.display = 'none';
+            wordFormError.style.display = 'none';
+            document.getElementById('wordModalLabel').textContent = 'Add a word';
+        }
+
+        document.getElementById('addWordBtn').addEventListener('click', () => {
+            resetForm();
+            wordModalEl.modal('show');
+        });
+
+        function openEditModal(entry) {
+            resetForm();
+            document.getElementById('wordModalLabel').textContent = 'Edit word';
+            document.getElementById('wordEntryId').value = entry.id;
+            document.getElementById('wordTerm').value = entry.term || '';
+            document.getElementById('wordTranslation').value = entry.translation || '';
+            document.getElementById('wordFolder').value = entry.folder || '';
+            document.getElementById('wordTags').value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+            document.getElementById('wordNote').value = entry.note || '';
+            document.getElementById('wordFavorite').checked = !!entry.favorite;
+            document.getElementById('deleteWordBtn').style.display = 'inline-block';
+            wordModalEl.modal('show');
+        }
+
+        document.getElementById('deleteWordBtn').addEventListener('click', async () => {
+            const id = document.getElementById('wordEntryId').value;
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            wordModalEl.modal('hide');
+            await deleteEntry(entry);
+        });
+
+        wordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const term = document.getElementById('wordTerm').value.trim();
+            const translation = document.getElementById('wordTranslation').value.trim();
+            const folder = document.getElementById('wordFolder').value.trim() || 'General';
+            const tags = document.getElementById('wordTags').value.split(',').map(t => t.trim()).filter(Boolean);
+            const note = document.getElementById('wordNote').value.trim();
+            const favorite = document.getElementById('wordFavorite').checked;
+            const entryId = document.getElementById('wordEntryId').value;
+
+            if (!term || !translation) {
+                wordFormError.textContent = 'Please fill in both the word and its translation.';
+                wordFormError.style.display = 'block';
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveWordBtn');
+            saveBtn.disabled = true;
+            try {
+                if (entryId) {
+                    await updateDoc(doc(db, 'notebook', entryId), {
+                        userId: currentUser.uid,
+                        term, translation, folder, tags, note, favorite,
+                        updatedAt: serverTimestamp()
+                    });
+                } else {
+                    await addDoc(collection(db, 'notebook'), {
+                        userId: currentUser.uid,
+                        term, translation, folder, tags, note, favorite,
+                        nextReviewAt: serverTimestamp(), // due immediately — see reviewWord() for the schedule after that
+                        reviewCount: 0,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    });
+                }
+                wordModalEl.modal('hide');
+            } catch (err) {
+                console.error('Save word error:', err);
+                wordFormError.textContent = 'Something went wrong saving this word. Please try again.';
+                wordFormError.style.display = 'block';
+            } finally {
+                saveBtn.disabled = false;
+            }
+        });
+
+        // The app header's account menu proxies Logout to a real Firebase
+        // sign-out, then sends the user to the marketing homepage.
+        document.getElementById('shell').addEventListener('lb-logout', async () => {
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>

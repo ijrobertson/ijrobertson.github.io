@@ -17,6 +17,7 @@
       page-title="Home"
       notifications="2"
       streak="12"
+      messages-unread="true"
     ></lb-app-shell>
 
   Header and nav are fixed to the viewport top/bottom (not sticky), so this
@@ -256,6 +257,10 @@ const STYLE = `
   }
   a.tab svg { width: 22px; height: 22px; }
   a.tab[aria-current="page"] { color: var(--action); }
+  /* Set via the messages-unread attribute (see js/unread-messages.js) —
+     takes precedence over aria-current so it's visible even while the
+     Messages tab happens to already be the active one mid-transition. */
+  a.tab.unread { color: var(--danger); }
   a.tab:focus-visible {
     outline: 2px solid var(--action);
     outline-offset: -2px;
@@ -276,7 +281,7 @@ const STYLE = `
 
 class LbAppShell extends HTMLElement {
   static get observedAttributes() {
-    return ["role", "active", "page-title", "notifications", "streak", "hide-header"];
+    return ["role", "active", "page-title", "notifications", "streak", "hide-header", "messages-unread"];
   }
 
   connectedCallback() {
@@ -321,6 +326,7 @@ class LbAppShell extends HTMLElement {
     const notifications = parseInt(this.getAttribute("notifications") || "0", 10);
     const streak = parseInt(this.getAttribute("streak") || "0", 10);
     const hideHeader = this.hasAttribute("hide-header");
+    const messagesUnread = this.getAttribute("messages-unread") === "true";
     const items = this._nav || NAV_BY_ROLE[role];
     const menuItems = this._profileMenu || PROFILE_MENU_BY_ROLE[role];
 
@@ -354,7 +360,7 @@ class LbAppShell extends HTMLElement {
         ${items
           .map(
             (item) => `
-          <a class="tab" href="${item.href}" data-id="${item.id}" ${item.id === active ? 'aria-current="page"' : ""}>
+          <a class="tab${item.id === "messages" && messagesUnread ? " unread" : ""}" href="${item.href}" data-id="${item.id}" ${item.id === active ? 'aria-current="page"' : ""}>
             ${icon(item.icon)}
             <span>${item.label}</span>
           </a>`

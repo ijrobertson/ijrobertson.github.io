@@ -50,7 +50,15 @@ function showDefaultToast(payload) {
   ].join(';'));
   toast.textContent = payload.body ? `${payload.title}: ${payload.body}` : payload.title;
   toast.addEventListener('click', () => {
-    if (payload.url) window.location.href = payload.url;
+    if (!payload.url) return;
+    // Same conversationId-as-query-param convention as sw.js's
+    // notificationclick handler, so messages.html can deep-link to the
+    // right thread instead of just opening the generic messages list.
+    let url = payload.url;
+    if (payload.conversationId) {
+      url += (url.includes('?') ? '&' : '?') + 'conversationId=' + encodeURIComponent(payload.conversationId);
+    }
+    window.location.href = url;
   });
   document.body.appendChild(toast);
   requestAnimationFrame(() => { toast.style.opacity = '1'; });

@@ -1796,6 +1796,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     } from './lib/firebaseClient.js';
     import './js/app-shell.js';
     import { initPush, requestPushPermissionAndRegister } from './js/push-notifications.js';
+    import { watchUnreadMessages } from './js/unread-messages.js';
 
     // Safe localStorage helpers — localStorage throws in Safari Private Mode,
     // which would crash DOMContentLoaded and prevent auth from ever running.
@@ -2493,6 +2494,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           document.getElementById('messagePushEnabled').checked = data.messagePushEnabled === true;
         }
         initPush(currentUser.uid);
+        watchUnreadMessages(currentUser.uid, document.getElementById('shell'));
         setStatus("");
       } catch (error) {
         setStatus("Error loading profile: " + error.message, true);

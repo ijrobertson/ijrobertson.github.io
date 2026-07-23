@@ -1572,6 +1572,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         alert('Error starting conversation: ' + error.message);
                     }
                 }
+
+                // Deep-link from a message push notification (see sw.js's
+                // notificationclick + js/push-notifications.js's showDefaultToast,
+                // which both fold conversationId onto the url as a query param) —
+                // opens that specific conversation instead of just the list.
+                const notifConversationId = new URLSearchParams(window.location.search).get('conversationId');
+                if (notifConversationId) {
+                    try {
+                        const convSnap = await getDoc(doc(db, 'conversations', notifConversationId));
+                        if (convSnap.exists()) {
+                            const otherUserId = (convSnap.data().participants || []).find(id => id !== currentUser.uid);
+                            if (otherUserId) openConversation(notifConversationId, otherUserId);
+                        }
+                    } catch (error) {
+                        console.error('Error opening conversation from notification:', error);
+                    }
+                }
             } else {
                 window.location.href = 'login';
             }
@@ -2910,6 +2927,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 const messagesLink = document.getElementById('messagesLink');
                 const unreadCount = document.getElementById('unreadCount');
+
+                // Same query/count this listener already computes — reused here
+                // rather than a second subscription via js/unread-messages.js.
+                const shellEl = document.getElementById('shell');
+                if (shellEl) shellEl.setAttribute('messages-unread', _unreadMsgCount > 0 ? 'true' : 'false');
 
                 if (messagesLink) {
                     if (_unreadMsgCount > 0) {

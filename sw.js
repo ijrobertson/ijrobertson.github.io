@@ -147,7 +147,10 @@ self.addEventListener("push", (event) => {
         body: payload.body,
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-192.png",
-        data: { url: payload.url || "/" },
+        // Keep the whole payload (not just .url) — conversationId etc. need
+        // to survive into notificationclick below so it can deep-link
+        // instead of just landing on the generic page.
+        data: payload,
       });
     })
   );
@@ -155,7 +158,14 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/";
+  const data = event.notification.data || {};
+  let url = data.url || "/";
+  // Message pushes carry a conversationId alongside url:'/messages' — fold it
+  // in as a query param so the destination page knows which thread to open,
+  // instead of just landing on the generic messages list.
+  if (data.conversationId) {
+    url += (url.includes("?") ? "&" : "?") + "conversationId=" + encodeURIComponent(data.conversationId);
+  }
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
