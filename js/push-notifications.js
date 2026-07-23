@@ -18,11 +18,9 @@
 
 import { app, db, doc, setDoc, serverTimestamp, getMessaging, getToken } from '../lib/firebaseClient.js';
 
-// TODO(Ian): replace with the real key from Firebase Console → Project
-// Settings → Cloud Messaging tab → Web configuration → "Generate key pair".
 // Safe to hardcode client-side — same public-config convention already used
 // for the Firebase API key in lib/firebaseClient.js.
-const VAPID_PUBLIC_KEY = 'REPLACE_WITH_REAL_VAPID_KEY';
+const VAPID_PUBLIC_KEY = 'BNYRoqKS4FFGg9dBniIWrCALI7r5bK8-6l0_qQMn5P7D38Fakb86lul93eqnsGo7klnZ-EuG65V1mMN2lz4VdEU';
 
 function pushSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
