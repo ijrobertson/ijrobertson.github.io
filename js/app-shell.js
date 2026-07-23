@@ -134,7 +134,14 @@ const STYLE = `
     padding-top: calc(12px + env(safe-area-inset-top, 0));
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    view-transition-name: lb-shell-header;
+    /* Forces its own compositing layer — the standard, long-documented fix
+       for a real WebKit bug where fixed-position elements can detach and
+       start scrolling with page content after enough scroll interaction,
+       especially in iOS PWA/standalone contexts. Without this, header/nav
+       positioning is left to WebKit's normal (buggy) fixed-position
+       recalculation on scroll. */
+    transform: translateZ(0);
+    will-change: transform;
   }
   .title {
     font-size: var(--lb-text-lg-size, 18px);
@@ -228,7 +235,11 @@ const STYLE = `
     background: var(--surface);
     border-top: 1px solid var(--border);
     padding-bottom: env(safe-area-inset-bottom, 0);
-    view-transition-name: lb-shell-nav;
+    /* Same compositing-layer fix as header above — see that comment. This is
+       the element reported to drift/scroll away from the bottom after
+       extended scrolling on a real device. */
+    transform: translateZ(0);
+    will-change: transform;
   }
   a.tab {
     flex: 1;
