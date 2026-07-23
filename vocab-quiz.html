@@ -9,7 +9,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
 <!-- End Google Tag Manager -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
     <meta name="description" content="Quiz yourself on basic words and phrases in the language you're learning, then save them to your Lingua Bud notebook.">
     <meta name="author" content="Lingua Bud">
     <title>Vocabulary Quiz - Lingua Bud</title>
@@ -48,7 +48,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             --pb-surface: #fbfbfb;
         }
         body {
-            padding-top: 60px; /* <lb-app-shell> header height, replaces the marketing navbar's 4.5rem */
+            padding-top: calc(60px + env(safe-area-inset-top, 0)); /* <lb-app-shell> header height + iOS notch/status-bar clearance, replaces the marketing navbar's 4.5rem */
             background-color: var(--pb-surface);
         }
         .navbar-custom { display: none; }
@@ -225,7 +225,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <!-- Explicit spacer so the fixed bottom tab bar never overlaps the last card -->
-    <div style="height: 92px;" aria-hidden="true"></div>
+    <div style="height: calc(92px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
 
     <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15). Reached directly
          from the Learn tab (home.html)'s Vocabulary card, so active="learn"
@@ -502,23 +502,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
             try {
-                for (const word of checked) {
-                    await addDoc(collection(db, 'notebook'), {
-                        userId: currentUser.uid,
-                        term: word.term,
-                        translation: word.translation,
-                        folder: selectedLanguage,
-                        language: selectedLanguage,
-                        tags: Array.isArray(word.tags) ? word.tags : [],
-                        note: word.example || (word.transliteration ? `Pronounced: ${word.transliteration}` : ''),
-                        favorite: false,
-                        nextReviewAt: serverTimestamp(),
-                        reviewCount: 0,
-                        source: { page: 'vocab-quiz.html', title: 'Vocabulary Quiz', context: `${selectedLanguage} · ${selectedLevel}` },
-                        createdAt: serverTimestamp(),
-                        updatedAt: serverTimestamp(),
-                    });
-                }
+                // Parallel, not sequential — a quiz round can have up to 10 missed
+                // words to save, and awaiting each addDoc one at a time (the
+                // previous approach) meant the button's "Saving..." spinner could
+                // sit for several round-trips in a row on a slow connection.
+                await Promise.all(checked.map(word => addDoc(collection(db, 'notebook'), {
+                    userId: currentUser.uid,
+                    term: word.term,
+                    translation: word.translation,
+                    folder: selectedLanguage,
+                    language: selectedLanguage,
+                    tags: Array.isArray(word.tags) ? word.tags : [],
+                    note: word.example || (word.transliteration ? `Pronounced: ${word.transliteration}` : ''),
+                    favorite: false,
+                    nextReviewAt: serverTimestamp(),
+                    reviewCount: 0,
+                    source: { page: 'vocab-quiz.html', title: 'Vocabulary Quiz', context: `${selectedLanguage} · ${selectedLevel}` },
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                })));
                 showToast(`Saved ${checked.length} word${checked.length === 1 ? '' : 's'} to your notebook!`);
                 btn.style.display = 'none';
                 document.getElementById('goToNotebookBtn').style.display = 'inline-flex';

@@ -146,6 +146,25 @@ function showSoftAskBanner(uid) {
   });
 }
 
+// FCM web tokens are long-lived and don't need re-verifying every single
+// page load — doing so anyway (an earlier version of this file did) meant a
+// real network round-trip to Google's messaging servers on every navigation,
+// competing for bandwidth/CPU with whatever else that page was doing (e.g.
+// messages.html's own live listeners, or a notebook save mid-flight), which
+// showed up as real, reported lag switching tabs and sending messages.
+// Once a day is plenty.
+const TOKEN_REFRESH_KEY = 'lb_push_token_refreshed_at';
+const TOKEN_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+function shouldRefreshToken() {
+  try {
+    const last = localStorage.getItem(TOKEN_REFRESH_KEY);
+    return !last || (Date.now() - parseInt(last, 10)) > TOKEN_REFRESH_INTERVAL_MS;
+  } catch (e) {
+    return true; // be safe — still allow a refresh if localStorage is unavailable
+  }
+}
+
 async function registerToken(uid) {
   const swReg = await navigator.serviceWorker.ready;
   const messaging = getMessaging(app);
@@ -165,17 +184,19 @@ async function registerToken(uid) {
     updatedAt: serverTimestamp(),
   }, { merge: true });
 
+  try { localStorage.setItem(TOKEN_REFRESH_KEY, String(Date.now())); } catch (e) {}
   return token;
 }
 
 /**
- * Call on every page load for a signed-in user. Silently refreshes the
- * stored FCM token if permission is already granted — a no-op otherwise,
- * never prompts. Also wires the service worker's foreground-push bridge so
- * a push that arrives while this page is open shows *something* — pass
- * onForegroundMessage for page-specific handling (e.g. messages.html
- * suppresses the toast for whichever conversation is already open); every
- * other page gets a generic toast by default rather than showing nothing.
+ * Call on every page load for a signed-in user. Refreshes the stored FCM
+ * token if permission is already granted — but at most once a day (see
+ * shouldRefreshToken above), and never prompts. Also wires the service
+ * worker's foreground-push bridge so a push that arrives while this page is
+ * open shows *something* — pass onForegroundMessage for page-specific
+ * handling (e.g. messages.html suppresses the toast for whichever
+ * conversation is already open); every other page gets a generic toast by
+ * default rather than showing nothing.
  */
 export async function initPush(uid, { onForegroundMessage } = {}) {
   if (!pushSupported() || !uid) return;
@@ -187,10 +208,12 @@ export async function initPush(uid, { onForegroundMessage } = {}) {
   });
 
   if (Notification.permission === 'granted') {
-    try {
-      await registerToken(uid);
-    } catch (e) {
-      console.error('Push token refresh error:', e);
+    if (shouldRefreshToken()) {
+      try {
+        await registerToken(uid);
+      } catch (e) {
+        console.error('Push token refresh error:', e);
+      }
     }
   } else if (shouldShowSoftAsk()) {
     showSoftAskBanner(uid);

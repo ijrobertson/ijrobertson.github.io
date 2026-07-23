@@ -10,7 +10,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
   <title>Student Dashboard - Lingua Bud</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 
   <!-- Styles -->
   <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
@@ -52,7 +52,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       font-family: 'Segoe UI', sans-serif;
       background-color: var(--light-grey);
       color: #222;
-      padding-top: 60px; /* <lb-app-shell> header height, replaces the marketing navbar's 4.5rem */
+      padding-top: calc(60px + env(safe-area-inset-top, 0)); /* <lb-app-shell> header height + iOS notch/status-bar clearance, replaces the marketing navbar's 4.5rem */
       /* No padding-bottom here — css/styles.css sets body,html{height:100%}
          sitewide, and with border-box sizing that pins body's box to one
          viewport tall, so padding-bottom never reserves real trailing scroll
@@ -1067,7 +1067,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- Explicit spacer, not body padding-bottom — see the comment on body's
        style rule above for why. -->
-  <div style="height: 72px;" aria-hidden="true"></div>
+  <div style="height: calc(72px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
 
   <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15) — header replaces the
        marketing navbar (hidden above via .navbar-custom). Role and active tab

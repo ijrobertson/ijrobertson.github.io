@@ -9,7 +9,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
 <!-- End Google Tag Manager -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
 
     <meta name="description" content="Messages - Connect with language learners and instructors on Lingua Bud">
     <meta name="author" content="Lingua Bud">
@@ -41,7 +41,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <style>
         body {
-            padding-top: 60px; /* <lb-app-shell> header height, replaces the marketing navbar's 4.5rem */
+            padding-top: calc(60px + env(safe-area-inset-top, 0)); /* <lb-app-shell> header height + iOS notch/status-bar clearance, replaces the marketing navbar's 4.5rem */
             padding-bottom: 72px; /* room for <lb-app-shell>'s fixed bottom tab bar, visible at all sizes */
             background-color: #f8f9fa;
         }
@@ -234,8 +234,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             /* Accounts for body's header/nav padding (60px/72px, see below) plus
                this container's own 2rem top+bottom margins — the bottom tab bar
                is now visible at every viewport size, not just mobile, so desktop
-               needs the same clearance mobile always did. */
-            height: calc(100vh - 60px - 72px - 4rem);
+               needs the same clearance mobile always did. The env() terms are 0
+               on desktop and correctly non-zero on notched iOS if this rule ever
+               applies there. */
+            height: calc(100vh - 60px - env(safe-area-inset-top, 0) - 72px - env(safe-area-inset-bottom, 0) - 4rem);
         }
 
         /* Conversation List */
@@ -565,18 +567,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             body {
                 height: 100%;
                 overflow: hidden;
-                padding-top: 60px;
+                padding-top: calc(60px + env(safe-area-inset-top, 0));
             }
 
             /* This layout is viewport-locked (overflow:hidden), so <lb-app-shell>'s
                fixed header/bottom tab bar have to be subtracted from the container
-               height directly — a body padding-top/bottom would have no effect here. */
+               height directly — a body padding-top/bottom would have no effect here.
+               The env() terms account for the iOS notch/status-bar and home-indicator
+               safe areas, now that viewport-fit=cover makes them non-zero. */
             .messages-container {
                 margin: 0 !important;
                 padding: 0 !important;
                 gap: 0;
-                height: calc(100vh - 60px - 72px);        /* fallback */
-                height: calc(100dvh - 60px - 72px);       /* shrinks with keyboard on modern browsers */
+                height: calc(100vh - 60px - env(safe-area-inset-top, 0) - 72px - env(safe-area-inset-bottom, 0));        /* fallback */
+                height: calc(100dvh - 60px - env(safe-area-inset-top, 0) - 72px - env(safe-area-inset-bottom, 0));       /* shrinks with keyboard on modern browsers */
                 display: flex;
                 flex-direction: column;
             }

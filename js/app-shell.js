@@ -131,6 +131,7 @@ const STYLE = `
     justify-content: space-between;
     gap: 12px;
     padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0));
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     view-transition-name: lb-shell-header;
