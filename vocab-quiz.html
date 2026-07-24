@@ -299,6 +299,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const RTL_LANGUAGES = ['Arabic'];
         const ALPHABET_LEVEL_LABELS = { Chinese: 'Characters' };
         const MIN_POOL_SIZE = 4; // need at least 4 words to build a 4-option question
+        const SAVE_SELECTED_BTN_DEFAULT_HTML = '<i class="fas fa-bookmark"></i> Save selected to Notebook';
 
         let currentUser = null;
         let manifest = null;
@@ -547,8 +548,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </label>
             `).join('');
 
-            // Reset from any previous round's save on this same results screen.
-            document.getElementById('saveSelectedBtn').style.display = 'inline-flex';
+            // Reset from any previous round's save on this same results screen —
+            // a successful save leaves saveSelectedBtn disabled with a "Saving..."
+            // spinner (just hidden, not restored, since goToNotebookBtn takes its
+            // place for that round), so a fresh round must explicitly restore
+            // disabled/innerHTML too, not just visibility, or the button comes
+            // back on the next round still stuck mid-"save".
+            const saveBtn = document.getElementById('saveSelectedBtn');
+            saveBtn.style.display = 'inline-flex';
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = SAVE_SELECTED_BTN_DEFAULT_HTML;
             document.getElementById('goToNotebookBtn').style.display = 'none';
         }
 
@@ -562,7 +571,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
 
             const btn = document.getElementById('saveSelectedBtn');
-            const originalHtml = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
             try {
@@ -586,13 +594,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     updatedAt: serverTimestamp(),
                 })));
                 showToast(`Saved ${checked.length} word${checked.length === 1 ? '' : 's'} to your notebook!`);
+                // Restored even though the button is about to be hidden — showResults()
+                // also does this defensively for the next round, but leaving it correct
+                // here too means it's never left mid-"Saving..." for any other reason
+                // (e.g. code elsewhere toggling display back on).
+                btn.disabled = false;
+                btn.innerHTML = SAVE_SELECTED_BTN_DEFAULT_HTML;
                 btn.style.display = 'none';
                 document.getElementById('goToNotebookBtn').style.display = 'inline-flex';
             } catch (e) {
                 console.error('Save quiz words error:', e);
                 alert('Something went wrong saving your words. Please try again.');
                 btn.disabled = false;
-                btn.innerHTML = originalHtml;
+                btn.innerHTML = SAVE_SELECTED_BTN_DEFAULT_HTML;
             }
         });
 
