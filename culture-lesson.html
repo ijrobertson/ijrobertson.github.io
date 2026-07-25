@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="A short, modular culture lesson — intro, cultural fact, useful phrase, common tourist mistake, and a quick quiz.">
+    <meta name="author" content="Lingua Bud">
+    <title>Culture Lesson - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <!-- Matches the Learn tab's design direction (home.html, conversation 2026-07-08) -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
+    <link href="css/tokens.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        :root {
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-navy-light: #1c5470;
+            --pb-surface: #fbfbfb;
+        }
+        body {
+            padding-top: calc(60px + env(safe-area-inset-top, 0));
+            background-color: var(--pb-surface);
+        }
+        .navbar-custom { display: none; }
+
+        /* ===== PAGE HERO ===== */
+        .activity-hero {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, #14a29f 100%);
+            color: white; text-align: center;
+            border-radius: 28px;
+            margin: 20px 16px 0;
+            padding: 1.85rem 1.5rem 1.6rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 32px -12px rgba(11, 102, 100, 0.5);
+        }
+        .activity-hero::before, .activity-hero::after {
+            content: ""; position: absolute; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .activity-hero::before { width: 160px; height: 160px; top: -70px; right: -40px; }
+        .activity-hero::after { width: 110px; height: 110px; bottom: -50px; left: -30px; background: rgba(17, 52, 72, 0.18); }
+        .activity-hero-eyebrow { font-size: 0.85rem; color: rgba(255,255,255,0.85); position: relative; z-index: 1; font-weight: 600; }
+        .activity-hero h1 {
+            font-family: 'Baloo 2', sans-serif; font-size: 1.7rem; font-weight: 800; color: white;
+            margin: 0.3rem 0 0.2rem; letter-spacing: -0.3px; position: relative; z-index: 1;
+        }
+        .activity-hero p { font-size: 0.92rem; color: rgba(255, 255, 255, 0.9); margin: 0; position: relative; z-index: 1; }
+
+        .activity-container { max-width: 640px; margin: 1.5rem auto 0; padding: 0 1rem; }
+
+        .loading-state { text-align: center; padding: 2.5rem; color: #aaa; }
+        .loading-state i { font-size: 2rem; color: var(--pb-teal); display: block; margin-bottom: 0.75rem; }
+        .empty-state { text-align: center; padding: 2.75rem 2rem; color: #aaa; background: white; border-radius: 24px; border: 2px solid #e7e9e7; }
+        .empty-state i { font-size: 2.75rem; color: var(--pb-teal); opacity: 0.35; display: block; margin-bottom: 1rem; }
+        .empty-state p { font-size: 1rem; margin: 0; color: #5f6b72; }
+
+        /* ===== LESSON SECTIONS (shared card look, distinct accent per kind) ===== */
+        .lesson-section { border-radius: 22px; border: 2px solid #e7e9e7; background: white; padding: 1.25rem 1.4rem; margin-bottom: 1rem; }
+        .lesson-section-label { display: flex; align-items: center; gap: 0.6rem; font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 0.98rem; margin-bottom: 0.6rem; }
+        .lesson-section-label i { color: var(--pb-teal-deep); }
+        .lesson-section p { margin: 0; color: #444; line-height: 1.55; font-size: 0.95rem; }
+
+        .lesson-intro { font-size: 1.02rem; }
+
+        .did-you-know { background: #e8fffe; border-color: #bdeeec; }
+        .did-you-know .lesson-section-label i { color: var(--pb-teal-deep); }
+
+        .phrase-card { text-align: center; background: linear-gradient(135deg, var(--pb-teal-dark) 0%, #1a5276 100%); border: none; color: white; }
+        .phrase-card .lesson-section-label { color: rgba(255,255,255,0.85); justify-content: center; }
+        .phrase-card .lesson-section-label i { color: rgba(255,255,255,0.85); }
+        .phrase-text { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.5rem; }
+        .phrase-translation { font-size: 0.95rem; color: rgba(255,255,255,0.85); margin-top: 0.3rem; }
+        .phrase-pronunciation { font-size: 0.85rem; color: rgba(255,255,255,0.7); font-style: italic; margin-top: 0.3rem; }
+
+        .tourist-mistake { background: #fbe4e4; border-color: #f3c6c6; }
+        .tourist-mistake .lesson-section-label { color: #a92e2e; }
+        .tourist-mistake .lesson-section-label i { color: #a92e2e; }
+        .tourist-mistake p { color: #7a2a2a; }
+
+        /* ===== MINI QUIZ ===== */
+        .quiz-progress-text { text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); margin-bottom: 0.9rem; }
+        .quiz-question-text { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); font-size: 1.05rem; margin-bottom: 1rem; text-align: center; }
+        .answer-grid { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1.1rem; }
+        .answer-btn {
+            background: white; border: 2px solid #e7e9e7; border-radius: 16px; padding: 0.85rem 1.05rem;
+            font-size: 0.95rem; font-weight: 600; color: var(--pb-teal-dark); text-align: left; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .answer-btn:hover:not(:disabled) { border-color: var(--pb-teal); background: #e8fffe; }
+        .answer-btn:disabled { cursor: default; }
+        .answer-btn.correct { background: #e3f9ec; border-color: #2f9e58; color: #1f7a41; }
+        .answer-btn.incorrect { background: #fbe4e4; border-color: #d64545; color: #a92e2e; }
+
+        .btn-lb-pill {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1.6rem;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white; border: none;
+            border-radius: 999px; font-family: 'Baloo 2', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s; text-decoration: none; width: 100%;
+            box-shadow: 0 8px 18px -6px rgba(11, 102, 100, 0.45);
+        }
+        .btn-lb-pill:hover:not(:disabled) { transform: translateY(-2px); color: white; text-decoration: none; }
+        .btn-lb-pill:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-lb-pill-outline { background: #eef1f0; color: var(--pb-teal-dark); box-shadow: none; }
+
+        /* ===== CTA / COMPLETION ===== */
+        .cta-card { text-align: center; }
+        .cta-card p { margin-bottom: 0.9rem; }
+        .completion-card { text-align: center; padding: 1.75rem 1.4rem; }
+        .completion-card i { font-size: 2.75rem; color: #2f9e58; display: block; margin-bottom: 0.75rem; }
+        .completion-card h3 { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); margin-bottom: 0.4rem; }
+        .completion-card p { color: #5f6b72; margin-bottom: 1.1rem; }
+        .completion-actions { display: flex; flex-direction: column; gap: 0.7rem; }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <!-- Hero -->
+    <div class="activity-hero">
+        <div class="container">
+            <div class="activity-hero-eyebrow" id="lessonEyebrow">Culture Guide</div>
+            <h1 id="lessonTitle">Lesson</h1>
+            <p id="lessonMeta"></p>
+        </div>
+    </div>
+
+    <div class="activity-container">
+        <div id="lessonContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explicit spacer so the fixed bottom tab bar never overlaps the last card -->
+    <div style="height: calc(92px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
+
+    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15). Reached from
+         culture-guide.html, one level deeper than the Learn tab, so
+         active="none" (same convention as notebook.html). -->
+    <lb-app-shell id="shell" page-title="Culture Lesson" active="none"></lb-app-shell>
+
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
+        import { watchUnreadMessages } from './js/unread-messages.js';
+        import { markLessonComplete, getCultureProgress, completedLessonsFor } from './js/culture-progress.js';
+
+        const params = new URLSearchParams(location.search);
+        const countryId = params.get('country');
+        const lessonId = params.get('lesson');
+
+        let currentUser = null;
+        let guide = null;
+        let lesson = null;
+        let qIndex = 0;
+        let quizScore = 0;
+        let alreadyDone = false;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login'; return; }
+            currentUser = user;
+            initPush(user.uid);
+            watchUnreadMessages(user.uid, document.getElementById('shell'));
+            await setShellRole(user);
+            await loadLesson();
+        });
+
+        async function setShellRole(user) {
+            const shell = document.getElementById('shell');
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                if (shell) shell.setAttribute('role', instructorDoc.exists() ? 'instructor' : 'student');
+            } catch (e) {
+                if (shell) shell.setAttribute('role', 'student');
+            }
+        }
+
+        async function loadLesson() {
+            const container = document.getElementById('lessonContainer');
+            if (!countryId || !lessonId) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-book-open"></i><p>No lesson selected.</p></div>`;
+                return;
+            }
+            try {
+                const [guideData, progress] = await Promise.all([
+                    fetch(`data/culture/${encodeURIComponent(countryId)}.json`).then(r => {
+                        if (!r.ok) throw new Error('not found');
+                        return r.json();
+                    }),
+                    getCultureProgress(currentUser.uid),
+                ]);
+                guide = guideData;
+                lesson = (guide.lessons || []).find(l => l.id === lessonId);
+                if (!lesson) {
+                    container.innerHTML = `<div class="empty-state"><i class="fas fa-book-open"></i><p>Couldn't find this lesson.</p></div>`;
+                    return;
+                }
+                alreadyDone = completedLessonsFor(progress, countryId).includes(lessonId);
+
+                document.getElementById('lessonEyebrow').textContent = `${guide.flag || ''} ${guide.name} Culture Guide`;
+                document.getElementById('lessonTitle').textContent = lesson.title;
+                document.getElementById('lessonMeta').textContent = `${lesson.estMinutes || 3} min lesson`;
+                document.title = `${lesson.title} - ${guide.name} - Lingua Bud`;
+
+                renderLessonContent();
+            } catch (e) {
+                console.error('Culture lesson load error:', e);
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load this lesson.</p></div>`;
+            }
+        }
+
+        function renderLessonContent() {
+            const container = document.getElementById('lessonContainer');
+            container.innerHTML = `
+                <div class="lesson-section lesson-intro"><p>${escapeHtml(lesson.intro)}</p></div>
+
+                <div class="lesson-section did-you-know">
+                    <div class="lesson-section-label"><i class="fas fa-lightbulb"></i> Did You Know?</div>
+                    <p>${escapeHtml(lesson.didYouKnow)}</p>
+                </div>
+
+                <div class="lesson-section phrase-card">
+                    <div class="lesson-section-label"><i class="fas fa-quote-left"></i> Useful Phrase</div>
+                    <div class="phrase-text">${escapeHtml(lesson.phrase.text)}</div>
+                    <div class="phrase-translation">${escapeHtml(lesson.phrase.translation)}</div>
+                    ${lesson.phrase.pronunciation ? `<div class="phrase-pronunciation">${escapeHtml(lesson.phrase.pronunciation)}</div>` : ''}
+                </div>
+
+                <div class="lesson-section tourist-mistake">
+                    <div class="lesson-section-label"><i class="fas fa-exclamation-triangle"></i> Common Tourist Mistake</div>
+                    <p>${escapeHtml(lesson.touristMistake)}</p>
+                </div>
+
+                <div id="quizArea"></div>
+            `;
+            renderQuizIntro();
+        }
+
+        function renderQuizIntro() {
+            const area = document.getElementById('quizArea');
+            if (alreadyDone) {
+                renderCompletion(true);
+                return;
+            }
+            area.innerHTML = `
+                <div class="lesson-section" style="text-align:center;">
+                    <div class="lesson-section-label" style="justify-content:center;"><i class="fas fa-graduation-cap"></i> Quick Check</div>
+                    <p style="margin-bottom:1rem;">A couple of quick questions to lock it in.</p>
+                    <button type="button" class="btn-lb-pill" id="startQuizBtn">Start quiz</button>
+                </div>`;
+            document.getElementById('startQuizBtn').addEventListener('click', () => {
+                qIndex = 0;
+                quizScore = 0;
+                renderQuizQuestion();
+            });
+        }
+
+        function renderQuizQuestion() {
+            const area = document.getElementById('quizArea');
+            const q = lesson.quiz[qIndex];
+            area.innerHTML = `
+                <div class="lesson-section">
+                    <div class="quiz-progress-text">Question ${qIndex + 1} of ${lesson.quiz.length}</div>
+                    <div class="quiz-question-text">${escapeHtml(q.question)}</div>
+                    <div class="answer-grid" id="answerGrid">
+                        ${q.options.map((opt, i) => `<button type="button" class="answer-btn" data-index="${i}">${escapeHtml(opt)}</button>`).join('')}
+                    </div>
+                    <button type="button" class="btn-lb-pill" id="nextQuestionBtn" style="display:none;">Continue <i class="fas fa-arrow-right"></i></button>
+                </div>`;
+            document.getElementById('answerGrid').querySelectorAll('.answer-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleAnswer(btn, q));
+            });
+        }
+
+        function handleAnswer(btn, q) {
+            const chosen = parseInt(btn.getAttribute('data-index'), 10);
+            const isCorrect = chosen === q.correctIndex;
+            document.getElementById('answerGrid').querySelectorAll('.answer-btn').forEach(b => {
+                b.disabled = true;
+                const i = parseInt(b.getAttribute('data-index'), 10);
+                if (i === q.correctIndex) b.classList.add('correct');
+                else if (b === btn) b.classList.add('incorrect');
+            });
+            if (isCorrect) quizScore++;
+            document.getElementById('nextQuestionBtn').style.display = 'inline-flex';
+            document.getElementById('nextQuestionBtn').addEventListener('click', () => {
+                qIndex++;
+                if (qIndex >= lesson.quiz.length) finishQuiz();
+                else renderQuizQuestion();
+            }, { once: true });
+        }
+
+        async function finishQuiz() {
+            try {
+                await markLessonComplete(currentUser.uid, countryId, lessonId);
+            } catch (e) {
+                console.error('Mark lesson complete error:', e);
+            }
+            renderCompletion(false);
+        }
+
+        function renderCompletion(wasAlreadyDone) {
+            const area = document.getElementById('quizArea');
+            const scoreLine = !wasAlreadyDone && lesson.quiz && lesson.quiz.length
+                ? `<p>You scored ${quizScore} of ${lesson.quiz.length} on the quick check.</p>` : '';
+            area.innerHTML = `
+                <div class="lesson-section completion-card">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>${wasAlreadyDone ? 'Already completed' : 'Lesson complete!'}</h3>
+                    ${scoreLine}
+                    <div class="completion-actions">
+                        ${lesson.cta ? `<a class="btn-lb-pill" href="${escapeHtml(lesson.cta.href)}"><i class="fas fa-chalkboard-teacher"></i> ${escapeHtml(lesson.cta.label)}</a>` : ''}
+                        <a class="btn-lb-pill btn-lb-pill-outline" href="culture-guide?country=${encodeURIComponent(countryId)}">Back to ${escapeHtml(guide.name)} guide</a>
+                    </div>
+                </div>`;
+        }
+
+        document.getElementById('shell').addEventListener('lb-logout', async () => {
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>

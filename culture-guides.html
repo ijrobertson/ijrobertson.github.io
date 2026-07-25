@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="Learn a country's culture, not just its language — short guided lessons on greetings, food, transport, and more.">
+    <meta name="author" content="Lingua Bud">
+    <title>Culture Guides - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <!-- Matches the Learn tab's design direction (home.html, conversation 2026-07-08) -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
+    <link href="css/tokens.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        :root {
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-navy-light: #1c5470;
+            --pb-surface: #fbfbfb;
+        }
+        body {
+            padding-top: calc(60px + env(safe-area-inset-top, 0));
+            background-color: var(--pb-surface);
+        }
+        .navbar-custom { display: none; }
+
+        /* ===== PAGE HERO ===== */
+        .activity-hero {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, #14a29f 100%);
+            color: white; text-align: center;
+            border-radius: 28px;
+            margin: 20px 16px 0;
+            padding: 2rem 1.5rem 1.85rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 32px -12px rgba(11, 102, 100, 0.5);
+        }
+        .activity-hero::before, .activity-hero::after {
+            content: ""; position: absolute; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .activity-hero::before { width: 160px; height: 160px; top: -70px; right: -40px; }
+        .activity-hero::after { width: 110px; height: 110px; bottom: -50px; left: -30px; background: rgba(17, 52, 72, 0.18); }
+        .activity-hero h1 {
+            font-family: 'Baloo 2', sans-serif; font-size: 1.9rem; font-weight: 800; color: white;
+            margin-bottom: 0.4rem; letter-spacing: -0.3px; position: relative; z-index: 1;
+        }
+        .activity-hero p { font-size: 1rem; color: rgba(255, 255, 255, 0.9); margin: 0; position: relative; z-index: 1; }
+
+        .activity-container { max-width: 900px; margin: 1.5rem auto 0; padding: 0 1rem; }
+
+        .loading-state { text-align: center; padding: 2.5rem; color: #aaa; }
+        .loading-state i { font-size: 2rem; color: var(--pb-teal); display: block; margin-bottom: 0.75rem; }
+        .empty-state { text-align: center; padding: 2.75rem 2rem; color: #aaa; background: white; border-radius: 24px; border: 2px solid #e7e9e7; }
+        .empty-state i { font-size: 2.75rem; color: var(--pb-teal); opacity: 0.35; display: block; margin-bottom: 1rem; }
+        .empty-state p { font-size: 1rem; margin: 0; color: #5f6b72; }
+
+        /* ===== GUIDE GRID ===== */
+        .guide-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+        .guide-card {
+            flex: 1; min-width: 260px; max-width: 360px;
+            background: white; border-radius: 24px; border: 2px solid #e7e9e7;
+            box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18);
+            padding: 1.35rem 1.4rem; text-decoration: none; color: inherit;
+            display: block; transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .guide-card:hover {
+            transform: translateY(-3px); text-decoration: none; color: inherit;
+            box-shadow: 0 14px 32px -10px rgba(17,52,72,0.24);
+        }
+        .guide-card-top { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; }
+        .guide-flag { font-size: 2.2rem; line-height: 1; }
+        .guide-name { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.15rem; margin: 0; }
+        .guide-language { font-size: 0.82rem; color: #5f6b72; }
+        .guide-progress-track { height: 10px; border-radius: 999px; background: #e7e9e7; overflow: hidden; margin-bottom: 0.6rem; }
+        .guide-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--pb-teal), var(--pb-teal-deep)); }
+        .guide-progress-label { font-size: 0.85rem; color: #5f6b72; font-weight: 600; }
+        .guide-complete-badge {
+            display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem;
+            padding: 4px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+            background: #e3f9ec; color: #1f7a41;
+        }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <!-- Hero -->
+    <div class="activity-hero">
+        <div class="container">
+            <h1><i class="fas fa-globe" style="margin-right:0.5rem;"></i>Culture Guides</h1>
+            <p>Learn the culture, not just the language</p>
+        </div>
+    </div>
+
+    <div class="activity-container">
+        <div id="guidesContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explicit spacer so the fixed bottom tab bar never overlaps the last card -->
+    <div style="height: calc(92px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
+
+    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15). Reached directly
+         from the Learn tab (home.html)'s Culture Guides section, so
+         active="learn" (same convention as vocab-quiz.html). -->
+    <lb-app-shell id="shell" page-title="Culture Guides" active="learn"></lb-app-shell>
+
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
+        import { watchUnreadMessages } from './js/unread-messages.js';
+        import { getCultureProgress, completedLessonsFor } from './js/culture-progress.js';
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login'; return; }
+            initPush(user.uid);
+            watchUnreadMessages(user.uid, document.getElementById('shell'));
+            await setShellRole(user);
+            await renderGuides(user.uid);
+        });
+
+        async function setShellRole(user) {
+            const shell = document.getElementById('shell');
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                if (shell) shell.setAttribute('role', instructorDoc.exists() ? 'instructor' : 'student');
+            } catch (e) {
+                if (shell) shell.setAttribute('role', 'student');
+            }
+        }
+
+        async function renderGuides(uid) {
+            const container = document.getElementById('guidesContainer');
+            try {
+                const [index, progress] = await Promise.all([
+                    fetch('data/culture/index.json').then(r => r.json()),
+                    getCultureProgress(uid),
+                ]);
+                const guides = index.guides || [];
+
+                if (guides.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="fas fa-globe"></i><p>No culture guides yet — check back soon.</p></div>`;
+                    return;
+                }
+
+                container.innerHTML = `<div class="guide-grid">${guides.map(g => {
+                    const completed = completedLessonsFor(progress, g.id).length;
+                    const total = g.lessonCount || 0;
+                    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                    const done = total > 0 && completed >= total;
+                    return `
+                        <a class="guide-card" href="culture-guide?country=${encodeURIComponent(g.id)}">
+                            <div class="guide-card-top">
+                                <div class="guide-flag">${g.flag || '🌎'}</div>
+                                <div>
+                                    <p class="guide-name">${escapeHtml(g.name)}</p>
+                                    <div class="guide-language">${escapeHtml(g.language)}</div>
+                                </div>
+                            </div>
+                            <div class="guide-progress-track"><div class="guide-progress-fill" style="width:${pct}%;"></div></div>
+                            <div class="guide-progress-label">${completed} of ${total} lessons completed</div>
+                            ${done ? `<div class="guide-complete-badge"><i class="fas fa-check-circle"></i> Guide complete</div>` : ''}
+                        </a>`;
+                }).join('')}</div>`;
+            } catch (e) {
+                console.error('Culture guides load error:', e);
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load culture guides.</p></div>`;
+            }
+        }
+
+        document.getElementById('shell').addEventListener('lb-logout', async () => {
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>

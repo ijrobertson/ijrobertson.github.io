@@ -231,6 +231,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         /* ===== VOCABULARY ===== */
         .vocab-intro { color: #5f6b72; font-size: 0.95rem; margin: 1rem 0 0; max-width: 60ch; }
+
+        /* ===== CULTURE GUIDES (mini row) ===== */
+        .culture-guide-row { display: flex; gap: 0.9rem; overflow-x: auto; padding-bottom: 0.35rem; -webkit-overflow-scrolling: touch; }
+        .culture-mini-card {
+            flex-shrink: 0; width: 148px; background: white; border-radius: 20px; border: 2px solid #e7e9e7;
+            box-shadow: 0 8px 20px -12px rgba(17,52,72,0.15); padding: 1rem; text-decoration: none; color: inherit;
+            transition: transform 0.15s;
+        }
+        .culture-mini-card:hover { transform: translateY(-2px); text-decoration: none; color: inherit; }
+        .culture-mini-flag { font-size: 1.75rem; margin-bottom: 0.4rem; }
+        .culture-mini-name { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 0.95rem; margin-bottom: 0.55rem; }
+        .culture-mini-progress-track { height: 7px; border-radius: 999px; background: #e7e9e7; overflow: hidden; margin-bottom: 0.35rem; }
+        .culture-mini-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--pb-teal), var(--pb-teal-deep)); }
+        .culture-mini-progress-label { font-size: 0.78rem; color: #5f6b72; font-weight: 600; }
+        .see-all-link { display: inline-block; margin-top: 0.9rem; color: var(--pb-teal-deep); font-weight: 700; text-decoration: none; font-size: 0.92rem; }
+        .see-all-link:hover { text-decoration: underline; color: var(--pb-teal-deep); }
     </style>
 </head>
 <body>
@@ -346,10 +362,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- Main Content -->
     <div class="activity-container">
 
-        <!-- ===== NEXT LESSON ===== -->
+        <!-- ===== CONTINUE LEARNING (next booked lesson) ===== -->
         <div class="section-header">
             <div class="section-icon"><i class="fas fa-graduation-cap"></i></div>
-            <h2>Your Next Lesson</h2>
+            <h2>Continue Learning</h2>
         </div>
         <div id="nextLessonContainer">
             <div class="loading-state">
@@ -360,10 +376,48 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         <hr class="section-divider">
 
-        <!-- ===== VOCABULARY (live notebook summary, see notebook.html) ===== -->
+        <!-- ===== LANGUAGE QUIZZES (existing vocab-quiz.html) ===== -->
         <div class="section-header">
-            <div class="section-icon icon-navy"><i class="fas fa-book-open"></i></div>
-            <h2>Vocabulary</h2>
+            <div class="section-icon icon-navy"><i class="fas fa-graduation-cap"></i></div>
+            <h2>Language Quizzes</h2>
+        </div>
+        <p class="vocab-intro" style="margin-top:0;">Test yourself on vocabulary and save what you miss to your notebook.</p>
+        <a class="btn-join" href="vocab-quiz" style="margin-top:0.75rem;"><i class="fas fa-graduation-cap"></i> Take a vocabulary quiz</a>
+
+        <hr class="section-divider">
+
+        <!-- ===== CULTURE GUIDES (new — see data/culture/*.json) ===== -->
+        <div class="section-header">
+            <div class="section-icon"><i class="fas fa-globe"></i></div>
+            <h2>Culture Guides</h2>
+        </div>
+        <div id="cultureGuidesContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== CHALLENGES (new — next suggested culture lesson) ===== -->
+        <div class="section-header">
+            <div class="section-icon icon-navy"><i class="fas fa-flag-checkered"></i></div>
+            <h2>Challenges</h2>
+        </div>
+        <div id="challengesContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- ===== NOTEBOOK (live summary, see notebook.html) ===== -->
+        <div class="section-header">
+            <div class="section-icon"><i class="fas fa-book-open"></i></div>
+            <h2>Notebook</h2>
         </div>
         <div id="vocabSummaryContainer">
             <div class="loading-state">
@@ -371,8 +425,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div>Loading...</div>
             </div>
         </div>
-        <a class="btn-join" href="vocab-quiz" style="margin-top:1rem;"><i class="fas fa-graduation-cap"></i> Take a vocabulary quiz</a>
-        <p class="vocab-intro">More on the way — audio pronunciation and AI practice quizzes.</p>
 
         <hr class="section-divider">
 
@@ -428,6 +480,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
+        import { getCultureProgress, completedLessonsFor } from './js/culture-progress.js';
 
         const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
 
@@ -461,7 +514,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // so they run concurrently instead of adding a third round-trip
             // to the critical path of the very first thing shown on launch.
             await loadProfileBasics(user);
-            await Promise.all([loadNextLesson(), loadVocabSummary()]);
+            await Promise.all([loadNextLesson(), loadVocabSummary(), loadCultureSummary()]);
             updateStreakAndGoal();
         });
 
@@ -695,6 +748,67 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             } catch (e) {
                 console.error('Vocab summary load error:', e);
                 container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load your notebook.</p></div>`;
+            }
+        }
+
+        // ===== CULTURE GUIDES (Learn tab summary + Challenges, see culture-guides.html) =====
+        async function loadCultureSummary() {
+            const guidesContainer = document.getElementById('cultureGuidesContainer');
+            const challengesContainer = document.getElementById('challengesContainer');
+            try {
+                const index = await fetch('data/culture/index.json').then(r => r.json());
+                const guideList = index.guides || [];
+
+                if (guideList.length === 0) {
+                    guidesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-globe"></i><p>Culture guides are coming soon.</p></div>`;
+                    challengesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-flag-checkered"></i><p>Check back once culture guides launch.</p></div>`;
+                    return;
+                }
+
+                const [progress, ...guideDetails] = await Promise.all([
+                    getCultureProgress(currentUser.uid),
+                    ...guideList.map(g => fetch(`data/culture/${encodeURIComponent(g.id)}.json`).then(r => r.json()))
+                ]);
+
+                guidesContainer.innerHTML = `
+                    <div class="culture-guide-row">${guideList.map((g, i) => {
+                        const total = (guideDetails[i].lessons || []).length;
+                        const completed = completedLessonsFor(progress, g.id).length;
+                        const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                        return `
+                            <a class="culture-mini-card" href="culture-guide?country=${encodeURIComponent(g.id)}">
+                                <div class="culture-mini-flag">${g.flag || '🌎'}</div>
+                                <div class="culture-mini-name">${escapeHtml(g.name)}</div>
+                                <div class="culture-mini-progress-track"><div class="culture-mini-progress-fill" style="width:${pct}%;"></div></div>
+                                <div class="culture-mini-progress-label">${completed}/${total} lessons</div>
+                            </a>`;
+                    }).join('')}</div>
+                    <a class="see-all-link" href="culture-guides">See all culture guides <i class="fas fa-arrow-right"></i></a>`;
+
+                // Challenges: surface the first not-yet-completed lesson across guides,
+                // in guide order — a light, honest suggestion, not a scoring system
+                // (per the "don't worry about rewards yet" scope for this prototype).
+                let suggestion = null;
+                for (let i = 0; i < guideList.length && !suggestion; i++) {
+                    const done = new Set(completedLessonsFor(progress, guideList[i].id));
+                    const next = (guideDetails[i].lessons || []).find(l => !done.has(l.id));
+                    if (next) suggestion = { guide: guideList[i], lesson: next };
+                }
+
+                challengesContainer.innerHTML = suggestion
+                    ? `
+                        <a class="lesson-card" href="culture-lesson?country=${encodeURIComponent(suggestion.guide.id)}&lesson=${encodeURIComponent(suggestion.lesson.id)}" style="display:block;text-decoration:none;color:inherit;">
+                            <div class="lesson-card-body" style="padding-top:1.35rem;">
+                                <div class="lesson-detail-row"><i class="fas ${escapeHtml(suggestion.lesson.icon || 'fa-book-open')}"></i> ${escapeHtml(suggestion.lesson.title)} · ${suggestion.guide.flag || ''} ${escapeHtml(suggestion.guide.name)}</div>
+                                <div class="lesson-detail-row"><i class="fas fa-clock"></i> ${suggestion.lesson.estMinutes || 3} min</div>
+                            </div>
+                            <div class="lesson-card-footer"><span class="btn-join"><i class="fas fa-play"></i> Start this lesson</span></div>
+                        </a>`
+                    : `<div class="empty-state"><i class="fas fa-trophy"></i><p>All caught up — every culture guide lesson is complete!</p></div>`;
+            } catch (e) {
+                console.error('Culture summary load error:', e);
+                guidesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load culture guides.</p></div>`;
+                challengesContainer.innerHTML = '';
             }
         }
 
