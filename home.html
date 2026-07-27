@@ -232,6 +232,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         /* ===== VOCABULARY ===== */
         .vocab-intro { color: #5f6b72; font-size: 0.95rem; margin: 1rem 0 0; max-width: 60ch; }
 
+        /* ===== TRAVEL JOURNEY (featured card) ===== */
+        .journey-feature-card {
+            display: flex; align-items: center; gap: 1rem;
+            background: linear-gradient(135deg, var(--pb-teal-dark) 0%, var(--pb-navy-light) 100%);
+            border-radius: 24px; padding: 1.25rem 1.4rem; color: white;
+            box-shadow: 0 14px 30px -10px rgba(17,52,72,0.45);
+            text-decoration: none; transition: transform 0.15s;
+        }
+        .journey-feature-card:hover { transform: translateY(-2px); text-decoration: none; color: white; }
+        .journey-feature-icon { font-size: 2rem; flex-shrink: 0; }
+        .journey-feature-text { flex: 1; min-width: 0; }
+        .journey-feature-text h3 { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.1rem; margin: 0 0 0.2rem; color: white; }
+        .journey-feature-text p { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.85); }
+        .journey-feature-btn { flex-shrink: 0; white-space: nowrap; width: auto !important; padding: 0.6rem 1.1rem !important; font-size: 0.85rem !important; }
+
         /* ===== CULTURE GUIDES (mini row) ===== */
         .culture-guide-row { display: flex; gap: 0.9rem; overflow-x: auto; padding-bottom: 0.35rem; -webkit-overflow-scrolling: touch; }
         .culture-mini-card {
@@ -361,6 +376,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- Main Content -->
     <div class="activity-container">
+
+        <!-- ===== TRAVEL JOURNEY (featured, new — see travel-journey.html) ===== -->
+        <div id="travelJourneyCard">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
 
         <!-- ===== CONTINUE LEARNING (next booked lesson) ===== -->
         <div class="section-header">
@@ -514,7 +539,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // so they run concurrently instead of adding a third round-trip
             // to the critical path of the very first thing shown on launch.
             await loadProfileBasics(user);
-            await Promise.all([loadNextLesson(), loadVocabSummary(), loadCultureSummary()]);
+            await Promise.all([loadNextLesson(), loadVocabSummary(), loadCultureSummary(), loadTravelJourneySummary()]);
             updateStreakAndGoal();
         });
 
@@ -809,6 +834,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 console.error('Culture summary load error:', e);
                 guidesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load culture guides.</p></div>`;
                 challengesContainer.innerHTML = '';
+            }
+        }
+
+        // ===== TRAVEL JOURNEY (featured card, see travel-journey.html) =====
+        async function loadTravelJourneySummary() {
+            const card = document.getElementById('travelJourneyCard');
+            try {
+                const snap = await getDoc(doc(db, 'travelJourneys', currentUser.uid));
+                if (!snap.exists() || !snap.data().itinerary) {
+                    card.innerHTML = `
+                        <a class="journey-feature-card" href="travel-journey">
+                            <div class="journey-feature-icon">✈️</div>
+                            <div class="journey-feature-text">
+                                <h3>Create Travel Journey</h3>
+                                <p>Get a personalized culture &amp; language plan for your next trip.</p>
+                            </div>
+                            <span class="btn-join journey-feature-btn">Get started</span>
+                        </a>`;
+                    return;
+                }
+
+                const data = snap.data();
+                const { itinerary, countryName, flag, countryId, completedSpecialDays } = data;
+                const progress = await getCultureProgress(currentUser.uid);
+                const doneModuleIds = new Set(completedLessonsFor(progress, countryId));
+                const doneSpecialDays = new Set(completedSpecialDays || []);
+                const totalDays = itinerary.days.length;
+                const isDayDone = d => d.type === 'module' ? doneModuleIds.has(d.moduleId) : doneSpecialDays.has(d.dayNumber);
+                const completedDays = itinerary.days.filter(isDayDone).length;
+                const nextDay = itinerary.days.find(d => !isDayDone(d));
+                const statusText = completedDays === totalDays
+                    ? 'Journey complete — nice work!'
+                    : `Day ${nextDay.dayNumber} of ${totalDays}`;
+
+                card.innerHTML = `
+                    <a class="journey-feature-card" href="travel-journey">
+                        <div class="journey-feature-icon">${flag || '✈️'}</div>
+                        <div class="journey-feature-text">
+                            <h3>Continue Your ${escapeHtml(countryName)} Journey</h3>
+                            <p>${escapeHtml(statusText)}</p>
+                        </div>
+                        <span class="btn-join journey-feature-btn"><i class="fas fa-arrow-right"></i></span>
+                    </a>`;
+            } catch (e) {
+                console.error('Travel journey summary load error:', e);
+                card.innerHTML = '';
             }
         }
 

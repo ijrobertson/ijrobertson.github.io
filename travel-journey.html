@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="Build a personalized culture and language journey for your next trip.">
+    <meta name="author" content="Lingua Bud">
+    <title>Travel Journey - Lingua Bud</title>
+
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <!-- Matches the Learn tab's design direction (home.html, conversation 2026-07-08) -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
+    <link href="css/tokens.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        :root {
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-navy-light: #1c5470;
+            --pb-surface: #fbfbfb;
+        }
+        body {
+            padding-top: calc(60px + env(safe-area-inset-top, 0));
+            background-color: var(--pb-surface);
+        }
+        .navbar-custom { display: none; }
+
+        /* ===== PAGE HERO ===== */
+        .activity-hero {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, #14a29f 100%);
+            color: white; text-align: center;
+            border-radius: 28px;
+            margin: 20px 16px 0;
+            padding: 1.85rem 1.5rem 1.6rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 32px -12px rgba(11, 102, 100, 0.5);
+        }
+        .activity-hero::before, .activity-hero::after {
+            content: ""; position: absolute; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .activity-hero::before { width: 160px; height: 160px; top: -70px; right: -40px; }
+        .activity-hero::after { width: 110px; height: 110px; bottom: -50px; left: -30px; background: rgba(17, 52, 72, 0.18); }
+        .activity-hero-flag { font-size: 2.2rem; line-height: 1; margin-bottom: 0.3rem; position: relative; z-index: 1; }
+        .activity-hero h1 {
+            font-family: 'Baloo 2', sans-serif; font-size: 1.7rem; font-weight: 800; color: white;
+            margin: 0 0 0.2rem; letter-spacing: -0.3px; position: relative; z-index: 1;
+        }
+        .activity-hero p { font-size: 0.92rem; color: rgba(255, 255, 255, 0.9); margin: 0; position: relative; z-index: 1; }
+
+        .activity-container { max-width: 640px; margin: 1.5rem auto 0; padding: 0 1rem; }
+
+        .loading-state { text-align: center; padding: 2.5rem; color: #aaa; }
+        .loading-state i { font-size: 2rem; color: var(--pb-teal); display: block; margin-bottom: 0.75rem; }
+        .empty-state { text-align: center; padding: 2.75rem 2rem; color: #aaa; background: white; border-radius: 24px; border: 2px solid #e7e9e7; }
+        .empty-state i { font-size: 2.75rem; color: var(--pb-teal); opacity: 0.35; display: block; margin-bottom: 1rem; }
+        .empty-state p { font-size: 1rem; margin: 0; color: #5f6b72; }
+
+        /* ===== WIZARD ===== */
+        .wizard-progress-text { text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); margin-bottom: 1rem; }
+        .wizard-card { background: white; border-radius: 24px; border: 2px solid #e7e9e7; box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18); padding: 1.5rem 1.4rem; }
+        .wizard-step-title { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.15rem; margin-bottom: 1.1rem; text-align: center; }
+        .picker-pills { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+        .picker-pill {
+            padding: 0.6rem 1.15rem; border-radius: 999px; font-size: 0.92rem; font-weight: 700;
+            font-family: 'Baloo 2', sans-serif; background: white; color: var(--pb-teal-dark); border: 2px solid #e7e9e7;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .picker-pill:hover { border-color: var(--pb-teal); }
+        .picker-pill.active { background: var(--pb-teal-dark); border-color: var(--pb-teal-dark); color: white; }
+        .wizard-text-input { width: 100%; border: 2px solid #e7e9e7; border-radius: 14px; padding: 0.85rem 1.05rem; font-size: 0.95rem; }
+        .wizard-text-input:focus { outline: none; border-color: var(--pb-teal); }
+        .wizard-hint { text-align: center; color: #5f6b72; font-size: 0.85rem; margin-top: 0.9rem; }
+        .wizard-nav { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+
+        .btn-lb-pill {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1.6rem;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white; border: none;
+            border-radius: 999px; font-family: 'Baloo 2', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s; text-decoration: none; width: 100%;
+            box-shadow: 0 8px 18px -6px rgba(11, 102, 100, 0.45);
+        }
+        .btn-lb-pill:hover:not(:disabled) { transform: translateY(-2px); color: white; text-decoration: none; }
+        .btn-lb-pill:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-lb-pill-outline { background: #eef1f0; color: var(--pb-teal-dark); box-shadow: none; }
+
+        /* ===== ITINERARY ===== */
+        .progress-card {
+            background: white; border-radius: 24px; border: 2px solid #e7e9e7;
+            box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18);
+            padding: 1.35rem 1.5rem; margin-bottom: 1.5rem;
+        }
+        .progress-card-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; }
+        .progress-card-label { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); font-size: 1rem; }
+        .progress-card-count { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-deep); font-size: 1.1rem; }
+        .progress-track { height: 10px; border-radius: 999px; background: #e7e9e7; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--pb-teal), var(--pb-teal-deep)); transition: width 0.3s; }
+        .progress-complete-note { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.9rem; font-weight: 700; color: #1f7a41; font-size: 0.92rem; }
+
+        .itinerary-section-label {
+            font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 0.95rem;
+            text-transform: uppercase; letter-spacing: 0.03em; margin: 1.5rem 0 0.75rem;
+        }
+        .itinerary-section-label:first-child { margin-top: 0; }
+
+        .lesson-list { display: flex; flex-direction: column; gap: 0.85rem; }
+        .lesson-list-item {
+            display: flex; align-items: center; gap: 1rem;
+            background: white; border-radius: 20px; border: 2px solid #e7e9e7;
+            box-shadow: 0 8px 20px -12px rgba(17,52,72,0.15);
+            padding: 1rem 1.15rem; text-decoration: none; color: inherit; transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .lesson-list-item:hover { transform: translateY(-2px); text-decoration: none; color: inherit; box-shadow: 0 12px 26px -12px rgba(17,52,72,0.22); }
+        .lesson-icon {
+            width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+        }
+        .lesson-icon.is-done { background: linear-gradient(135deg, #2f9e58, #1f7a41); }
+        .lesson-info { flex: 1; min-width: 0; }
+        .lesson-day-tag { font-size: 0.72rem; font-weight: 800; color: var(--pb-teal-deep); text-transform: uppercase; letter-spacing: 0.03em; }
+        .lesson-title { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); margin: 0; font-size: 1.02rem; }
+        .lesson-meta { font-size: 0.82rem; color: #5f6b72; margin-top: 0.15rem; }
+        .lesson-arrow { color: #c7cdd0; font-size: 0.95rem; flex-shrink: 0; }
+
+        .special-day-card { background: white; border-radius: 20px; border: 2px solid #e7e9e7; box-shadow: 0 8px 20px -12px rgba(17,52,72,0.15); padding: 1.1rem 1.15rem; }
+        .special-day-card ul { margin: 0.6rem 0 0.9rem; padding-left: 1.2rem; color: #5f6b72; font-size: 0.9rem; }
+        .special-day-card li { margin-bottom: 0.3rem; }
+        .special-day-actions { display: flex; gap: 0.6rem; margin-top: 0.9rem; }
+        .special-day-actions .btn-lb-pill { width: auto; flex: 1; padding: 0.65rem 1rem; font-size: 0.88rem; }
+        .special-day-done-badge { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.7rem; padding: 4px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; background: #e3f9ec; color: #1f7a41; }
+
+        .journey-footer-actions { margin-top: 1.75rem; }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <!-- Hero -->
+    <div class="activity-hero">
+        <div class="container">
+            <div class="activity-hero-flag" id="journeyFlag">✈️</div>
+            <h1 id="journeyHeroTitle">Travel Journey</h1>
+            <p id="journeyHeroSubtitle">A personalized culture &amp; language plan for your trip</p>
+        </div>
+    </div>
+
+    <div class="activity-container">
+        <div id="journeyContainer">
+            <div class="loading-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                <div>Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explicit spacer so the fixed bottom tab bar never overlaps the last card -->
+    <div style="height: calc(92px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
+
+    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15). Reached directly
+         from the Learn tab (home.html)'s featured Travel Journey card, so
+         active="learn" (same convention as vocab-quiz.html/culture-guides.html). -->
+    <lb-app-shell id="shell" page-title="Travel Journey" active="learn"></lb-app-shell>
+
+    <script type="module">
+        import {
+            auth, db, onAuthStateChanged, signOut,
+            doc, getDoc, setDoc, serverTimestamp
+        } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
+        import { watchUnreadMessages } from './js/unread-messages.js';
+        import { getCultureProgress, completedLessonsFor } from './js/culture-progress.js';
+        import { generateJourney, DEFAULT_CHECKLIST_ITEMS } from './js/travel-planner.js';
+
+        let currentUser = null;
+        let guides = [];       // data/culture/index.json guides
+        let journeyDoc = null; // travelJourneys/{uid} data, or null if none saved yet
+
+        // Wizard state
+        let stepIndex = 0;
+        const answers = { countryId: null, cities: '', days: null, level: null, purpose: null, interests: [] };
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login'; return; }
+            currentUser = user;
+            initPush(user.uid);
+            watchUnreadMessages(user.uid, document.getElementById('shell'));
+            await setShellRole(user);
+            await init();
+        });
+
+        async function setShellRole(user) {
+            const shell = document.getElementById('shell');
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                if (shell) shell.setAttribute('role', instructorDoc.exists() ? 'instructor' : 'student');
+            } catch (e) {
+                if (shell) shell.setAttribute('role', 'student');
+            }
+        }
+
+        async function init() {
+            const container = document.getElementById('journeyContainer');
+            try {
+                const [index, journeySnap] = await Promise.all([
+                    fetch('data/culture/index.json').then(r => r.json()),
+                    getDoc(doc(db, 'travelJourneys', currentUser.uid)),
+                ]);
+                guides = index.guides || [];
+                journeyDoc = journeySnap.exists() ? journeySnap.data() : null;
+
+                if (journeyDoc && journeyDoc.itinerary) {
+                    await renderItinerary();
+                } else {
+                    renderWizardStep();
+                }
+            } catch (e) {
+                console.error('Travel journey load error:', e);
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load Travel Journey.</p></div>`;
+            }
+        }
+
+        // ===== WIZARD =====
+        const STEPS = [
+            {
+                key: 'countryId', title: 'Where are you headed?', type: 'single', required: true,
+                options: () => guides.map(g => ({ value: g.id, label: `${g.flag} ${g.name}` })),
+            },
+            {
+                key: 'cities', title: 'Any specific cities? (optional)', type: 'text', required: false,
+                placeholder: 'e.g. Rome, Florence, Venice',
+            },
+            {
+                key: 'days', title: 'How long is your trip?', type: 'single', required: true,
+                options: () => [3, 5, 7, 9, 14].map(d => ({ value: d, label: `${d} days` })),
+            },
+            {
+                key: 'level', title: 'Your current language level?', type: 'single', required: true,
+                options: () => [
+                    { value: 'beginner', label: 'Beginner' },
+                    { value: 'intermediate', label: 'Intermediate' },
+                    { value: 'advanced', label: 'Advanced' },
+                ],
+            },
+            {
+                key: 'purpose', title: "What's the purpose of your trip?", type: 'single', required: true,
+                options: () => [
+                    { value: 'vacation', label: 'Vacation' },
+                    { value: 'business', label: 'Business' },
+                    { value: 'study', label: 'Study' },
+                    { value: 'family', label: 'Visiting family' },
+                    { value: 'moving', label: 'Moving' },
+                ],
+            },
+            {
+                key: 'interests', title: "What are you interested in?", type: 'multi', required: true,
+                options: () => [
+                    { value: 'food', label: 'Food' },
+                    { value: 'culture', label: 'Culture' },
+                    { value: 'museums', label: 'Museums' },
+                    { value: 'nightlife', label: 'Nightlife' },
+                    { value: 'shopping', label: 'Shopping' },
+                    { value: 'nature', label: 'Nature' },
+                ],
+            },
+        ];
+
+        function stepIsValid(step) {
+            if (!step.required) return true;
+            const val = answers[step.key];
+            if (step.type === 'multi') return Array.isArray(val) && val.length > 0;
+            return val !== null && val !== undefined && val !== '';
+        }
+
+        function renderWizardStep() {
+            document.getElementById('journeyHeroTitle').textContent = 'Create Travel Journey';
+            document.getElementById('journeyHeroSubtitle').textContent = 'A few quick questions to build your plan';
+            document.getElementById('journeyFlag').textContent = '✈️';
+
+            const step = STEPS[stepIndex];
+            const container = document.getElementById('journeyContainer');
+            const isLast = stepIndex === STEPS.length - 1;
+
+            let fieldHtml = '';
+            if (step.type === 'text') {
+                fieldHtml = `<input type="text" class="wizard-text-input" id="wizardTextInput" placeholder="${escapeHtml(step.placeholder || '')}" value="${escapeHtml(answers[step.key] || '')}">`;
+            } else {
+                const opts = step.options();
+                const isMulti = step.type === 'multi';
+                fieldHtml = `<div class="picker-pills" id="wizardPills">${opts.map(o => {
+                    const active = isMulti ? (answers[step.key] || []).includes(o.value) : answers[step.key] === o.value;
+                    return `<button type="button" class="picker-pill${active ? ' active' : ''}" data-value="${escapeHtml(String(o.value))}">${escapeHtml(o.label)}</button>`;
+                }).join('')}</div>`;
+            }
+
+            container.innerHTML = `
+                <div class="wizard-progress-text">Step ${stepIndex + 1} of ${STEPS.length}</div>
+                <div class="wizard-card">
+                    <div class="wizard-step-title">${escapeHtml(step.title)}</div>
+                    ${fieldHtml}
+                    ${!step.required ? `<div class="wizard-hint">You can skip this one.</div>` : ''}
+                </div>
+                <div class="wizard-nav">
+                    ${stepIndex > 0 ? `<button type="button" class="btn-lb-pill btn-lb-pill-outline" id="wizardBackBtn">Back</button>` : ''}
+                    <button type="button" class="btn-lb-pill" id="wizardNextBtn">${isLast ? '<i class="fas fa-magic"></i> Generate My Journey' : 'Next'}</button>
+                </div>`;
+
+            if (step.type === 'text') {
+                const input = document.getElementById('wizardTextInput');
+                input.addEventListener('input', () => { answers[step.key] = input.value; });
+            } else {
+                container.querySelectorAll('.picker-pill').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const raw = btn.getAttribute('data-value');
+                        const val = step.key === 'days' ? Number(raw) : raw;
+                        if (step.type === 'multi') {
+                            const list = answers[step.key] || [];
+                            const idx = list.indexOf(val);
+                            if (idx === -1) list.push(val); else list.splice(idx, 1);
+                            answers[step.key] = list;
+                        } else {
+                            answers[step.key] = val;
+                        }
+                        renderWizardStep();
+                    });
+                });
+            }
+
+            const nextBtn = document.getElementById('wizardNextBtn');
+            nextBtn.disabled = !stepIsValid(step);
+            nextBtn.addEventListener('click', () => {
+                if (isLast) { submitWizard(); return; }
+                stepIndex++;
+                renderWizardStep();
+            });
+
+            const backBtn = document.getElementById('wizardBackBtn');
+            if (backBtn) backBtn.addEventListener('click', () => { stepIndex--; renderWizardStep(); });
+        }
+
+        async function submitWizard() {
+            const nextBtn = document.getElementById('wizardNextBtn');
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Generating...';
+            try {
+                const guideMeta = guides.find(g => g.id === answers.countryId);
+                const guideData = await fetch(`data/culture/${encodeURIComponent(answers.countryId)}.json`).then(r => r.json());
+                const itinerary = generateJourney(guideData, {
+                    days: answers.days,
+                    interests: answers.interests,
+                    purpose: answers.purpose,
+                });
+
+                const docData = {
+                    countryId: answers.countryId,
+                    countryName: guideMeta.name,
+                    flag: guideMeta.flag,
+                    cities: answers.cities || '',
+                    days: answers.days,
+                    level: answers.level,
+                    purpose: answers.purpose,
+                    interests: answers.interests,
+                    itinerary,
+                    completedSpecialDays: [],
+                    createdAt: serverTimestamp(),
+                };
+                await setDoc(doc(db, 'travelJourneys', currentUser.uid), docData);
+                journeyDoc = docData;
+                await renderItinerary();
+            } catch (e) {
+                console.error('Generate journey error:', e);
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = '<i class="fas fa-magic"></i> Generate My Journey';
+                alert('Something went wrong generating your journey. Please try again.');
+            }
+        }
+
+        // ===== ITINERARY =====
+        async function renderItinerary() {
+            const container = document.getElementById('journeyContainer');
+            const { countryId, countryName, flag, cities, itinerary } = journeyDoc;
+
+            let guideData, progress;
+            try {
+                [guideData, progress] = await Promise.all([
+                    fetch(`data/culture/${encodeURIComponent(countryId)}.json`).then(r => r.json()),
+                    getCultureProgress(currentUser.uid),
+                ]);
+            } catch (e) {
+                console.error('Itinerary content load error:', e);
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load your journey content.</p></div>`;
+                return;
+            }
+
+            const moduleById = {};
+            (guideData.lessons || []).forEach(m => { moduleById[m.id] = m; });
+            const doneModuleIds = new Set(completedLessonsFor(progress, countryId));
+            const doneSpecialDays = new Set(journeyDoc.completedSpecialDays || []);
+
+            document.getElementById('journeyFlag').textContent = flag || '✈️';
+            document.getElementById('journeyHeroTitle').textContent = `Your ${countryName} Journey`;
+            document.getElementById('journeyHeroSubtitle').textContent = cities ? cities : `${itinerary.days.length}-day plan`;
+            document.title = `${countryName} Journey - Lingua Bud`;
+
+            const totalDays = itinerary.days.length;
+            const completedDays = itinerary.days.filter(d =>
+                d.type === 'module' ? doneModuleIds.has(d.moduleId) : doneSpecialDays.has(d.dayNumber)
+            ).length;
+            const pct = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
+            const allDone = totalDays > 0 && completedDays === totalDays;
+
+            const beforeYouLeaveHtml = itinerary.beforeYouLeave.length > 0 ? `
+                <div class="itinerary-section-label">Before You Leave</div>
+                <div class="lesson-list">${itinerary.beforeYouLeave.map(moduleId => renderModuleRow(moduleById[moduleId], countryId, doneModuleIds, null)).join('')}</div>
+            ` : '';
+
+            const dayCardsHtml = itinerary.days.map(d => {
+                if (d.type === 'module') {
+                    return `<div class="itinerary-section-label">Day ${d.dayNumber}</div><div class="lesson-list">${renderModuleRow(moduleById[d.moduleId], countryId, doneModuleIds, d.dayNumber)}</div>`;
+                }
+                if (d.type === 'instructor') {
+                    const done = doneSpecialDays.has(d.dayNumber);
+                    return `
+                        <div class="itinerary-section-label">Day ${d.dayNumber}</div>
+                        <div class="special-day-card">
+                            <div class="lesson-title"><i class="fas fa-chalkboard-teacher" style="color:var(--pb-teal-deep);margin-right:0.5rem;"></i>Practice lesson with an instructor</div>
+                            <p class="lesson-meta" style="margin-top:0.4rem;">Book a short lesson to put what you've learned into practice before you go.</p>
+                            ${done
+                                ? `<div class="special-day-done-badge"><i class="fas fa-check-circle"></i> Done</div>`
+                                : `<div class="special-day-actions">
+                                       <a class="btn-lb-pill" href="instructors">Browse instructors</a>
+                                       <button type="button" class="btn-lb-pill btn-lb-pill-outline" data-mark-day="${d.dayNumber}">Mark as done</button>
+                                   </div>`}
+                        </div>`;
+                }
+                // checklist
+                const done = doneSpecialDays.has(d.dayNumber);
+                return `
+                    <div class="itinerary-section-label">Day ${d.dayNumber}</div>
+                    <div class="special-day-card">
+                        <div class="lesson-title"><i class="fas fa-clipboard-check" style="color:var(--pb-teal-deep);margin-right:0.5rem;"></i>Final travel checklist</div>
+                        <ul>${DEFAULT_CHECKLIST_ITEMS.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+                        ${done
+                            ? `<div class="special-day-done-badge"><i class="fas fa-check-circle"></i> Done</div>`
+                            : `<div class="special-day-actions"><button type="button" class="btn-lb-pill" data-mark-day="${d.dayNumber}">Mark as done</button></div>`}
+                    </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="progress-card">
+                    <div class="progress-card-top">
+                        <span class="progress-card-label">Journey progress</span>
+                        <span class="progress-card-count">${completedDays} of ${totalDays} days</span>
+                    </div>
+                    <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
+                    ${allDone ? `<div class="progress-complete-note"><i class="fas fa-check-circle"></i> Journey complete — buon viaggio!</div>` : ''}
+                </div>
+                ${beforeYouLeaveHtml}
+                ${dayCardsHtml}
+                <div class="journey-footer-actions">
+                    <button type="button" class="btn-lb-pill btn-lb-pill-outline" id="newJourneyBtn">Plan a new journey</button>
+                </div>`;
+
+            container.querySelectorAll('[data-mark-day]').forEach(btn => {
+                btn.addEventListener('click', () => markSpecialDayDone(parseInt(btn.getAttribute('data-mark-day'), 10)));
+            });
+            document.getElementById('newJourneyBtn').addEventListener('click', () => {
+                stepIndex = 0;
+                renderWizardStep();
+            });
+        }
+
+        function renderModuleRow(module, countryId, doneModuleIds, dayNumber) {
+            if (!module) return '';
+            const isDone = doneModuleIds.has(module.id);
+            return `
+                <a class="lesson-list-item" href="culture-lesson?country=${encodeURIComponent(countryId)}&lesson=${encodeURIComponent(module.id)}&from=journey">
+                    <div class="lesson-icon${isDone ? ' is-done' : ''}"><i class="fas ${isDone ? 'fa-check' : escapeHtml(module.icon || 'fa-book-open')}"></i></div>
+                    <div class="lesson-info">
+                        <p class="lesson-title">${escapeHtml(module.title)}</p>
+                        <div class="lesson-meta">${module.estMinutes || 3} min${isDone ? ' · Completed' : ''}</div>
+                    </div>
+                    <i class="fas fa-chevron-right lesson-arrow"></i>
+                </a>`;
+        }
+
+        async function markSpecialDayDone(dayNumber) {
+            try {
+                const completed = new Set(journeyDoc.completedSpecialDays || []);
+                completed.add(dayNumber);
+                const updated = Array.from(completed);
+                await setDoc(doc(db, 'travelJourneys', currentUser.uid), { completedSpecialDays: updated }, { merge: true });
+                journeyDoc.completedSpecialDays = updated;
+                await renderItinerary();
+            } catch (e) {
+                console.error('Mark special day complete error:', e);
+                alert('Something went wrong. Please try again.');
+            }
+        }
+
+        document.getElementById('shell').addEventListener('lb-logout', async () => {
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>

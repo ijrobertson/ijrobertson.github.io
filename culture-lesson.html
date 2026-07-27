@@ -104,7 +104,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .tourist-mistake { background: #fbe4e4; border-color: #f3c6c6; }
         .tourist-mistake .lesson-section-label { color: #a92e2e; }
         .tourist-mistake .lesson-section-label i { color: #a92e2e; }
-        .tourist-mistake p { color: #7a2a2a; }
+        .tourist-mistake p { color: #7a2a2a; margin-bottom: 0.5rem; }
+        .tourist-mistake p:last-child { margin-bottom: 0; }
+
+        .phrase-row + .phrase-row { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.15); }
 
         /* ===== MINI QUIZ ===== */
         .quiz-progress-text { text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); margin-bottom: 0.9rem; }
@@ -183,6 +186,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const params = new URLSearchParams(location.search);
         const countryId = params.get('country');
         const lessonId = params.get('lesson');
+        // Reached either from culture-guide.html (browsing a full guide) or from
+        // travel-journey.html (a journey day pointing at this same module) — the
+        // "back" link below returns wherever the user actually came from.
+        const fromJourney = params.get('from') === 'journey';
+        const backHref = fromJourney ? 'travel-journey' : `culture-guide?country=${encodeURIComponent(countryId)}`;
 
         let currentUser = null;
         let guide = null;
@@ -261,15 +269,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
 
                 <div class="lesson-section phrase-card">
-                    <div class="lesson-section-label"><i class="fas fa-quote-left"></i> Useful Phrase</div>
-                    <div class="phrase-text">${escapeHtml(lesson.phrase.text)}</div>
-                    <div class="phrase-translation">${escapeHtml(lesson.phrase.translation)}</div>
-                    ${lesson.phrase.pronunciation ? `<div class="phrase-pronunciation">${escapeHtml(lesson.phrase.pronunciation)}</div>` : ''}
+                    <div class="lesson-section-label"><i class="fas fa-quote-left"></i> ${lesson.phrases.length > 1 ? 'Useful Phrases' : 'Useful Phrase'}</div>
+                    ${lesson.phrases.map(p => `
+                        <div class="phrase-row">
+                            <div class="phrase-text">${escapeHtml(p.text)}</div>
+                            <div class="phrase-translation">${escapeHtml(p.translation)}</div>
+                            ${p.pronunciation ? `<div class="phrase-pronunciation">${escapeHtml(p.pronunciation)}</div>` : ''}
+                        </div>`).join('')}
                 </div>
 
                 <div class="lesson-section tourist-mistake">
-                    <div class="lesson-section-label"><i class="fas fa-exclamation-triangle"></i> Common Tourist Mistake</div>
-                    <p>${escapeHtml(lesson.touristMistake)}</p>
+                    <div class="lesson-section-label"><i class="fas fa-exclamation-triangle"></i> ${lesson.commonMistakes.length > 1 ? 'Common Tourist Mistakes' : 'Common Tourist Mistake'}</div>
+                    ${lesson.commonMistakes.map(m => `<p>${escapeHtml(m)}</p>`).join('')}
                 </div>
 
                 <div id="quizArea"></div>
@@ -281,6 +292,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const area = document.getElementById('quizArea');
             if (alreadyDone) {
                 renderCompletion(true);
+                return;
+            }
+            const hasQuiz = Array.isArray(lesson.quiz) && lesson.quiz.length > 0;
+            if (!hasQuiz) {
+                area.innerHTML = `
+                    <div class="lesson-section" style="text-align:center;">
+                        <button type="button" class="btn-lb-pill" id="markCompleteBtn"><i class="fas fa-check"></i> Mark this lesson complete</button>
+                    </div>`;
+                document.getElementById('markCompleteBtn').addEventListener('click', finishQuiz);
                 return;
             }
             area.innerHTML = `
@@ -351,7 +371,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     ${scoreLine}
                     <div class="completion-actions">
                         ${lesson.cta ? `<a class="btn-lb-pill" href="${escapeHtml(lesson.cta.href)}"><i class="fas fa-chalkboard-teacher"></i> ${escapeHtml(lesson.cta.label)}</a>` : ''}
-                        <a class="btn-lb-pill btn-lb-pill-outline" href="culture-guide?country=${encodeURIComponent(countryId)}">Back to ${escapeHtml(guide.name)} guide</a>
+                        <a class="btn-lb-pill btn-lb-pill-outline" href="${backHref}">${fromJourney ? 'Back to your journey' : `Back to ${escapeHtml(guide.name)} guide`}</a>
                     </div>
                 </div>`;
         }
