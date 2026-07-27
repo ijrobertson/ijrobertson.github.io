@@ -5,15 +5,15 @@
 // itinerary shape it returns is what travel-journey.html renders.
 
 // Maps a user-selected interest to the closest module `category` this
-// prototype's content actually has. A couple of interests (museums,
-// nightlife, nature) don't have a dedicated category yet, so they fall back
-// to the nearest existing bucket rather than silently doing nothing.
+// prototype's content actually has. A couple of interests (museums, nature)
+// don't have a dedicated category yet, so they fall back to the nearest
+// existing bucket rather than silently doing nothing.
 const INTEREST_CATEGORY_MAP = {
   food: 'food',
   culture: 'culture',
   shopping: 'shopping',
   museums: 'culture',
-  nightlife: 'food',
+  nightlife: 'nightlife',
   nature: 'transportation',
 };
 

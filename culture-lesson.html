@@ -191,6 +191,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // "back" link below returns wherever the user actually came from.
         const fromJourney = params.get('from') === 'journey';
         const backHref = fromJourney ? 'travel-journey' : `culture-guide?country=${encodeURIComponent(countryId)}`;
+        document.getElementById('shell').setAttribute('back-href', backHref);
 
         let currentUser = null;
         let guide = null;

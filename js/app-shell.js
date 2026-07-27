@@ -60,6 +60,7 @@ const ICONS = {
   instructors: '<path d="M12 5 3 9.5 12 14l9-4.5L12 5Z" /><path d="M7 11.5V16c0 1.5 2.5 3 5 3s5-1.5 5-3v-4.5" /><path d="M20 9.5v5" />',
   // Two overlapping circles — the "Connect" tab (language exchange)
   connect: '<circle cx="9" cy="12" r="5.5" /><circle cx="15" cy="12" r="5.5" />',
+  back: '<path d="M15 5l-7 7 7 7" />',
 };
 
 function icon(name) {
@@ -145,6 +146,25 @@ const STYLE = `
     transform: translateZ(0);
     will-change: transform;
   }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    margin-left: -4px;
+    color: var(--ink-900);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .back-btn svg { width: 22px; height: 22px; }
   .title {
     font-size: var(--lb-text-lg-size, 18px);
     font-weight: 700;
@@ -288,7 +308,7 @@ const STYLE = `
 
 class LbAppShell extends HTMLElement {
   static get observedAttributes() {
-    return ["role", "active", "page-title", "notifications", "streak", "hide-header", "messages-unread"];
+    return ["role", "active", "page-title", "notifications", "streak", "hide-header", "messages-unread", "back-href"];
   }
 
   connectedCallback() {
@@ -334,6 +354,11 @@ class LbAppShell extends HTMLElement {
     const streak = parseInt(this.getAttribute("streak") || "0", 10);
     const hideHeader = this.hasAttribute("hide-header");
     const messagesUnread = this.getAttribute("messages-unread") === "true";
+    // Opt-in: absent on every existing page until that page's script sets it,
+    // so this can't change behavior anywhere it isn't explicitly wired up.
+    // An explicit URL rather than history.back() — pages reached via a deep
+    // link (push notification, bookmark) may have no history entry to pop.
+    const backHref = this.getAttribute("back-href");
     const items = this._nav || NAV_BY_ROLE[role];
     const menuItems = this._profileMenu || PROFILE_MENU_BY_ROLE[role];
 
@@ -341,7 +366,10 @@ class LbAppShell extends HTMLElement {
       <style>${STYLE}</style>
       ${hideHeader ? "" : `
       <header>
-        <p class="title">${pageTitle}</p>
+        <div class="header-left">
+          ${backHref ? `<a class="back-btn" href="${backHref}" aria-label="Back">${icon("back")}</a>` : ""}
+          <p class="title">${pageTitle}</p>
+        </div>
         <div class="header-right">
           ${role === "student" && streak > 0
             ? `<span class="streak">${icon("flame")}${streak}</span>`
