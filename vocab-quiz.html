@@ -282,6 +282,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
+        import { startPresenceHeartbeat } from './js/presence.js';
 
         const SUPPORTED_LANGUAGES = ['English', 'Spanish', 'French', 'Portuguese', 'German', 'Italian', 'Russian', 'Arabic', 'Chinese', 'Swedish', 'Greek'];
         // "Alphabet" is a separate quiz level, not a prerequisite for the others (no
@@ -315,6 +316,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (!user) { window.location.href = 'login'; return; }
             currentUser = user;
             initPush(user.uid);
+            startPresenceHeartbeat(user.uid);
             watchUnreadMessages(user.uid, document.getElementById('shell'));
             await setShellRole(user);
             await init();

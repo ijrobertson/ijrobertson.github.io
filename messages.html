@@ -383,6 +383,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             color: white;
         }
 
+        .chat-status {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.75);
+            margin-top: 1px;
+            min-height: 1em;
+        }
+
+        .chat-status.online {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: rgba(255,255,255,0.95);
+            font-weight: 600;
+        }
+
+        .chat-status.online::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
+        }
+
         .chat-header-name-link {
             color: white;
             text-decoration: none;
@@ -506,6 +530,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .message-status-failed:hover {
             text-decoration: underline;
+        }
+
+        .message-read-icon {
+            color: var(--pb-teal);
         }
 
         .message-input-area {
@@ -1475,6 +1503,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { setAppBadgeCount } from './js/unread-messages.js';
+        import { startPresenceHeartbeat, watchPresence, formatPresenceLabel, isEffectivelyOnline } from './js/presence.js';
 
         const conversationsList = document.getElementById('conversationsList');
         const chatPanel = document.getElementById('chatPanel');
@@ -1493,6 +1522,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let currentUserName = '';
         let activeConversationId = null;
         let unsubscribeMessages = null;
+
+        // Presence for whoever's chat header is currently showing — re-created
+        // each time openConversation runs. latestPresenceData feeds the
+        // periodic re-render timer below, which exists because staleness (see
+        // js/presence.js) needs to be re-evaluated against the current time
+        // even when the underlying doc hasn't changed (e.g. a heartbeat that
+        // silently stopped).
+        let unsubscribePresence = null;
+        let presenceRefreshTimer = null;
+        let latestPresenceData = null;
+
+        function renderChatStatus() {
+            const el = document.getElementById('chatStatus');
+            if (!el) return;
+            const online = isEffectivelyOnline(latestPresenceData);
+            el.textContent = formatPresenceLabel(latestPresenceData);
+            el.classList.toggle('online', online);
+        }
 
         // Optimistic send (Phase 1 of the messaging redesign): a message appears
         // in the thread the instant you hit send, before the network round-trip
@@ -1619,6 +1666,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         showPushToast(payload);
                     },
                 });
+                startPresenceHeartbeat(user.uid);
 
                 // Load profile picture — check both collections in parallel; prefer instructors
                 try {
@@ -1926,6 +1974,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             activeConversationId = conversationId;
 
+            // Tear down the previous conversation's presence subscription/timer
+            // before starting a new one — otherwise switching conversations
+            // repeatedly would leak a listener + interval per switch.
+            if (unsubscribePresence) { unsubscribePresence(); unsubscribePresence = null; }
+            if (presenceRefreshTimer) { clearInterval(presenceRefreshTimer); presenceRefreshTimer = null; }
+            latestPresenceData = null;
+
             // Update active state
             document.querySelectorAll('.conversation-item').forEach(item => {
                 item.classList.remove('active');
@@ -2000,6 +2055,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <img class="chat-header-avatar" src="${otherUser.avatar_url || DEFAULT_AVATAR}" onerror="this.src=DEFAULT_AVATAR" alt="${otherUser.name}">
                     <div class="chat-header-info">
                         <h3><a href="${profileUrl}" class="chat-header-name-link" title="View profile">${otherUser.name || 'Unknown User'}</a></h3>
+                        <div class="chat-status" id="chatStatus"></div>
                     </div>
                 </div>
                 <div class="messages-area" id="messagesArea"></div>
@@ -2050,6 +2106,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             console.log('✅ Chat interface rendered');
             console.log('📝 Message input element:', document.getElementById('messageInput'));
+
+            // Presence: live-updates on every doc change, plus a 30s timer so
+            // staleness (see js/presence.js) gets caught even when the other
+            // person's heartbeat just stops without a final "offline" write.
+            unsubscribePresence = watchPresence(otherUserId, (data) => {
+                latestPresenceData = data;
+                renderChatStatus();
+            });
+            presenceRefreshTimer = setInterval(renderChatStatus, 30000);
 
             // Back button: return to conversations list on mobile
             const chatBackBtn = document.getElementById('chatBackBtn');
@@ -2205,14 +2270,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // audio/video-call messages degrade to identical prior behavior
         // (they never carry _status, since only sendMessage's text-message
         // path creates optimistic entries in this first phase).
-        function renderMessageStatus(message) {
+        function renderMessageStatus(message, isSent) {
             if (message._status === 'pending') {
                 return `<div class="message-time message-status-pending"><i class="fas fa-clock"></i> Sending...</div>`;
             }
             if (message._status === 'failed') {
                 return `<div class="message-time message-status-failed" data-retry-client-id="${escapeHtml(message.clientId)}"><i class="fas fa-exclamation-circle"></i> Failed to send &middot; Tap to retry</div>`;
             }
-            return `<div class="message-time">${formatTime(message.timestamp)}</div>`;
+            // Read receipts only make sense on my own confirmed-sent messages —
+            // a single check once it's really on the server, a double colored
+            // check once the recipient has actually opened the conversation
+            // (see markIncomingMessagesRead, called from loadMessages'
+            // onSnapshot). Received messages just show the plain time, same as
+            // before this feature existed.
+            const readReceipt = isSent
+                ? ` <i class="fas ${message.read ? 'fa-check-double message-read-icon' : 'fa-check'}"></i>`
+                : '';
+            return `<div class="message-time">${formatTime(message.timestamp)}${readReceipt}</div>`;
         }
 
         // Renders the full message list for a conversation from cached state —
@@ -2278,7 +2352,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <div class="video-call-request-icon"><i class="fas fa-video"></i></div>
                                 <p class="message-text" style="margin:0;">${escapeHtml(message.text)}</p>
                                 <a href="video-call?channel=${safeChannel}" target="_blank" class="join-call-btn">Join Now</a>
-                                ${renderMessageStatus(message)}
+                                ${renderMessageStatus(message, isSent)}
                             </div>
                             <div class="message-reactions">${reactionChips}</div>
                         </div>
@@ -2290,7 +2364,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div class="msg-col">
                             <div class="message-content">
                                 <p class="message-text">${linkifyMessageText(message.text)}</p>
-                                ${renderMessageStatus(message)}
+                                ${renderMessageStatus(message, isSent)}
                             </div>
                             <div class="message-reactions">${reactionChips}</div>
                         </div>
@@ -2302,6 +2376,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             messagesArea.appendChild(fragment);
             messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        // Read receipts: flips `read` to true on every message NOT sent by the
+        // current user, now that they're actually looking at this
+        // conversation. Called from loadMessages' onSnapshot rather than only
+        // once on open, so messages that arrive *while* the conversation is
+        // already open get marked read live too — not just the ones that were
+        // already there when it was opened. Independent updateDoc calls
+        // rather than a real atomic batch — each is idempotent, and the only
+        // failure mode is a message staying on a single checkmark until the
+        // next snapshot, not any real data corruption.
+        async function markIncomingMessagesRead(conversationId, messages) {
+            const unread = messages.filter(m => m.senderId !== currentUser.uid && m.read === false);
+            if (unread.length === 0) return;
+            try {
+                await Promise.all(unread.map(m =>
+                    updateDoc(doc(db, 'conversations', conversationId, 'messages', m.id), { read: true })
+                ));
+            } catch (error) {
+                console.error('Error marking messages read:', error);
+            }
         }
 
         async function loadMessages(conversationId) {
@@ -2357,6 +2452,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
 
                     lastServerMessagesByConv.set(conversationId, messages);
+
+                    // Non-blocking — only actually writes anything if this
+                    // conversation has unread incoming messages, see above.
+                    markIncomingMessagesRead(conversationId, messages);
 
                     // Any optimistic message whose real doc has now landed (matched
                     // by the clientId written into it at send time — see

@@ -1332,6 +1332,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
+        import { startPresenceHeartbeat } from './js/presence.js';
 
         // Stripe publishable key is fetched once from the backend and cached.
         // This keeps the key out of the HTML source; switching test↔live is a
@@ -1374,6 +1375,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 initPush(user.uid);
+                startPresenceHeartbeat(user.uid);
                 watchUnreadMessages(user.uid, document.getElementById('shell'));
                 // Load user's profile picture - check both instructors and users collections
                 try {

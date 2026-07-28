@@ -683,6 +683,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
+        import { startPresenceHeartbeat } from './js/presence.js';
 
         // ── Referral token capture ──────────────────────────────────────────
         // If a ?ref=TOKEN parameter is present, store it in localStorage for up
@@ -749,6 +750,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 initPush(user.uid);
+                startPresenceHeartbeat(user.uid);
                 watchUnreadMessages(user.uid, document.getElementById('shell'));
                 profileNavWrapper.style.cssText = 'display: flex !important;';
                 signInWrapper.style.display = 'none';

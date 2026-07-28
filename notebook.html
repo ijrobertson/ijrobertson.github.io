@@ -320,6 +320,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
+        import { startPresenceHeartbeat } from './js/presence.js';
 
         let currentUser = null;
         let entries = [];
@@ -333,6 +334,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
             currentUser = user;
             initPush(user.uid);
+            startPresenceHeartbeat(user.uid);
             watchUnreadMessages(user.uid, document.getElementById('shell'));
             await setShellRole(user);
             subscribeToNotebook(user.uid);
