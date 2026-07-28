@@ -697,9 +697,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .message-input {
             flex: 1;
-            padding: 0.75rem 1.1rem;
+            min-width: 0; /* lets a flex child actually shrink to fit instead of overflowing its row */
+            padding: 0.7rem 1.1rem;
             border: 2px solid #e7e9e7;
-            border-radius: 999px;
+            /* A rounded rectangle, not a full 999px pill — at a pill radius
+               the box reads as a stretched oval rather than a proper wide
+               text field, especially once other buttons in the row (mic,
+               attach, send) are competing for width. Matches WhatsApp's own
+               input shape. */
+            border-radius: 22px;
             font-size: 1rem;
             transition: border-color 0.2s;
             resize: none;
@@ -744,31 +750,32 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             cursor: not-allowed;
         }
 
-        .video-call-btn {
-            width: 44px;
-            height: 44px;
+        /* Video call now lives in the chat header (matching WhatsApp's own
+           convention — call buttons sit next to the contact name, not in the
+           compose row) rather than competing with the message input for
+           space on narrow screens. */
+        .chat-header-call-btn {
+            width: 40px;
+            height: 40px;
             padding: 0;
-            background: linear-gradient(135deg, var(--pb-teal-dark), var(--pb-navy-light));
+            margin-left: auto;
+            background: rgba(255,255,255,0.18);
             color: white;
             border: none;
             border-radius: 50%;
             cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
+            transition: background 0.15s;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-decoration: none;
             flex-shrink: 0;
-            box-shadow: 0 8px 18px -6px rgba(17,52,72,0.45);
         }
 
-        .video-call-btn:hover {
-            transform: translateY(-2px);
-            color: white;
-            text-decoration: none;
+        .chat-header-call-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
-        .video-call-btn i {
+        .chat-header-call-btn i {
             font-size: 1.05rem;
         }
 
@@ -961,11 +968,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
             .send-btn {
                 padding: 0.65rem 0.85rem;
-            }
-
-            .video-call-btn {
-                width: 40px;
-                height: 40px;
             }
         }
 
@@ -2330,6 +2332,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <h3><a href="${profileUrl}" class="chat-header-name-link" title="View profile">${otherUser.name || 'Unknown User'}</a></h3>
                         <div class="chat-status" id="chatStatus"></div>
                     </div>
+                    <button type="button" class="chat-header-call-btn" id="videoCallBtn" title="Start video call with this user">
+                        <i class="fas fa-video"></i>
+                    </button>
                 </div>
                 <div class="messages-area" id="messagesArea"></div>
                 <div id="notAcceptingNotice" style="display:none; margin: 0 1rem 0.75rem; padding: 0.75rem 1rem; background: #fff3cd; color: #856404; border-radius: 8px; font-size: 0.9rem;">
@@ -2343,6 +2348,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <span class="rec-timer" id="recTimer">0:00</span>
                             <span class="rec-label">Recording...</span>
                         </div>
+                        <select class="lang-select" id="langSelect" title="Language you're speaking in this audio message">
+                            <option value="en-US">EN</option>
+                            <option value="es-ES">ES</option>
+                            <option value="fr-FR">FR</option>
+                            <option value="pt-PT">PT</option>
+                            <option value="it-IT">IT</option>
+                            <option value="de-DE">DE</option>
+                            <option value="ru-RU">RU</option>
+                            <option value="sv-SE">SV</option>
+                        </select>
                         <div class="recording-actions">
                             <button type="button" class="rec-cancel-btn" id="recCancelBtn" title="Cancel recording">
                                 <i class="fas fa-times"></i>
@@ -2353,16 +2368,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
                     </div>
                     <form class="message-input-form" id="messageForm">
-                        <select class="lang-select" id="langSelect" title="Language you will speak in the audio message">
-                            <option value="en-US">EN</option>
-                            <option value="es-ES">ES</option>
-                            <option value="fr-FR">FR</option>
-                            <option value="pt-PT">PT</option>
-                            <option value="it-IT">IT</option>
-                            <option value="de-DE">DE</option>
-                            <option value="ru-RU">RU</option>
-                            <option value="sv-SE">SV</option>
-                        </select>
                         <button type="button" class="mic-btn" id="micBtn" title="Send audio message">
                             <i class="fas fa-microphone"></i>
                         </button>
@@ -2371,9 +2376,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <i class="fas fa-image"></i>
                         </button>
                         <textarea class="message-input" id="messageInput" placeholder="Type a message..." rows="1"></textarea>
-                        <button type="button" class="video-call-btn" id="videoCallBtn" title="Start video call with this user">
-                            <i class="fas fa-video"></i>
-                        </button>
                         <button type="submit" class="send-btn">
                             <i class="fas fa-paper-plane"></i><span class="btn-text"> Send</span>
                         </button>
@@ -2401,17 +2403,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
             presenceRefreshTimer = setInterval(renderChatStatus, 2000);
 
-            // Back button: return to conversations list on mobile
+            // Back button: return to conversations list on mobile.
+            //
+            // Listens on BOTH pointerdown and click, guarded against firing
+            // twice for the same interaction — a well-documented iOS Safari
+            // quirk: when a text input is focused, the *first* tap on another
+            // element only blurs it (dismissing the keyboard) without the
+            // click event ever firing, requiring a second tap to actually
+            // activate the button. pointerdown fires immediately on touch,
+            // before that blur-swallow has a chance to eat the interaction,
+            // so it's the one that reliably gets this working in one tap;
+            // click stays wired too for mouse/keyboard/accessibility
+            // activation, where pointerdown isn't the natural model.
             const chatBackBtn = document.getElementById('chatBackBtn');
             if (chatBackBtn) {
-                chatBackBtn.addEventListener('click', () => {
+                let backBtnHandled = false;
+                const goBackToConversationList = () => {
+                    if (backBtnHandled) return;
+                    backBtnHandled = true;
+                    setTimeout(() => { backBtnHandled = false; }, 400);
                     // Dismiss the keyboard explicitly rather than leaving it
                     // open over a now-hidden chat panel.
                     document.getElementById('messageInput')?.blur();
                     const container = document.querySelector('.messages-container');
                     container.classList.remove('chat-open');
                     container.classList.add('conversations-open');
-                });
+                };
+                chatBackBtn.addEventListener('pointerdown', goBackToConversationList);
+                chatBackBtn.addEventListener('click', goBackToConversationList);
             }
 
             // Load messages right away — this is the thing the user actually
