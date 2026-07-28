@@ -65,9 +65,21 @@ if (self.workbox) {
   // edits. Renaming the bucket forces every page's cached copy to be treated
   // as gone, so the very next visit to any page gets the current version
   // immediately instead of needing a second visit to that specific page.
+  //
+  // Bumped again to v3 on 2026-07-29: several rounds of messages.html edits
+  // landed in a row, and this "self-heals on the *next* visit" model doesn't
+  // help at all when there never is a next *fetch* — an installed iOS PWA
+  // that's merely backgrounded (not force-quit) is typically suspended and
+  // resumed by the OS rather than actually reloaded, so no navigation (and
+  // therefore no revalidation) happens for as long as iOS keeps it alive in
+  // the background — which can be a long time. Renaming the bucket at least
+  // guarantees the very next *real* fetch (fresh launch, hard refresh, or
+  // whenever iOS eventually does suspend-and-relaunch it) gets the current
+  // version immediately rather than needing yet another round-trip on top of
+  // that wait.
   workbox.routing.registerRoute(
     ({ request, url }) => request.mode === "navigate" && SAME_ORIGIN({ url }),
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v2" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v3" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -126,10 +138,13 @@ self.addEventListener("activate", (event) => {
       self.clients.claim(),
       // Drop orphaned asset/page caches left behind by the renames above —
       // otherwise they just sit in Cache Storage unused, taking up space.
+      // (linguabud-pages-v2 was missing from this list until 2026-07-29 —
+      // add any future superseded bucket name here too.)
       caches.delete("linguabud-assets"),
       caches.delete("linguabud-assets-v2"),
       caches.delete("linguabud-assets-v3"),
       caches.delete("linguabud-pages"),
+      caches.delete("linguabud-pages-v2"),
     ])
   );
 });
