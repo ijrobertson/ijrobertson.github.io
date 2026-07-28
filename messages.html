@@ -538,6 +538,90 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             color: var(--pb-teal-deep);
         }
 
+        /* ===== IMAGE MESSAGES (Phase 5) ===== */
+        .message-image-content {
+            padding: 0.4rem;
+            max-width: 260px;
+        }
+
+        .message-image-wrap {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            line-height: 0;
+        }
+
+        .message-image {
+            width: 100%;
+            max-height: 320px;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+        }
+
+        .message-image-wrap.is-pending .message-image,
+        .message-image-wrap.is-failed .message-image {
+            filter: brightness(0.6);
+            cursor: default;
+        }
+
+        .image-upload-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .image-caption {
+            padding: 0.5rem 0.4rem 0;
+        }
+
+        .message-image-content .message-time {
+            padding: 0.3rem 0.4rem 0;
+        }
+
+        /* ===== IMAGE LIGHTBOX ===== */
+        .image-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background: rgba(10, 20, 26, 0.92);
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .image-lightbox-img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.6);
+        }
+
+        .image-lightbox-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        .image-lightbox-close:hover {
+            background: rgba(255,255,255,0.28);
+        }
+
         .message-time {
             font-size: 0.72rem;
             color: #9aa5a9;
@@ -2205,6 +2289,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <button type="button" class="mic-btn" id="micBtn" title="Send audio message">
                             <i class="fas fa-microphone"></i>
                         </button>
+                        <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
+                        <button type="button" class="mic-btn" id="attachImageBtn" title="Send a photo">
+                            <i class="fas fa-image"></i>
+                        </button>
                         <textarea class="message-input" id="messageInput" placeholder="Type a message..." rows="1"></textarea>
                         <button type="button" class="video-call-btn" id="videoCallBtn" title="Start video call with this user">
                             <i class="fas fa-video"></i>
@@ -2361,6 +2449,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 startRecording(conversationId);
             });
 
+            // Setup image attach button — click proxies to the hidden native
+            // file picker, same as any other "attach a photo" UI.
+            const imageFileInput = document.getElementById('imageFileInput');
+            document.getElementById('attachImageBtn').addEventListener('click', () => {
+                imageFileInput.click();
+            });
+            imageFileInput.addEventListener('change', () => {
+                const file = imageFileInput.files && imageFileInput.files[0];
+                imageFileInput.value = ''; // reset so choosing the same file again still fires 'change'
+                if (file) startImageSend(conversationId, file);
+            });
+
             // Event delegation for audio player controls (persists across message re-renders)
             const messagesAreaEl = document.getElementById('messagesArea');
             messagesAreaEl.addEventListener('click', handleAudioClick);
@@ -2398,19 +2498,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // path creates optimistic entries in this first phase).
         function renderMessageStatus(message, isSent) {
             if (message._status === 'pending') {
-                return `<div class="message-time message-status-pending"><i class="fas fa-clock"></i> Sending...</div>`;
+                const label = message.type === 'image' ? 'Uploading...' : 'Sending...';
+                return `<div class="message-time message-status-pending"><i class="fas fa-clock"></i> ${label}</div>`;
             }
             if (message._status === 'failed') {
-                return `<div class="message-time message-status-failed" data-retry-client-id="${escapeHtml(message.clientId)}"><i class="fas fa-exclamation-circle"></i> Failed to send &middot; Tap to retry</div>`;
+                const label = message.type === 'image' ? 'Failed to upload' : 'Failed to send';
+                return `<div class="message-time message-status-failed" data-retry-client-id="${escapeHtml(message.clientId)}"><i class="fas fa-exclamation-circle"></i> ${label} &middot; Tap to retry</div>`;
             }
             // Read receipts only make sense on my own confirmed-sent messages —
-            // a single check once it's really on the server, a double colored
+            // a plain check once it's really on the server, a filled colored
             // check once the recipient has actually opened the conversation
             // (see markIncomingMessagesRead, called from loadMessages'
             // onSnapshot). Received messages just show the plain time, same as
             // before this feature existed.
+            // fa-check-circle, not fa-check-double — this project's bundled
+            // FontAwesome is FA5-era and doesn't have a double-check glyph at
+            // all (confirmed against css/fontawesome-all.css); a filled vs.
+            // outline check communicates the same two states without a
+            // missing icon.
             const readReceipt = isSent
-                ? ` <i class="fas ${message.read ? 'fa-check-double message-read-icon' : 'fa-check'}"></i>`
+                ? ` <i class="fas ${message.read ? 'fa-check-circle message-read-icon' : 'fa-check'}"></i>`
                 : '';
             return `<div class="message-time">${formatTime(message.timestamp)}${readReceipt}</div>`;
         }
@@ -2469,6 +2576,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 if (message.type === 'audio') {
                     messageEl.innerHTML = renderAudioMessage(message, senderAvatar, conversationId);
+                } else if (message.type === 'image') {
+                    const isPending = message._status === 'pending';
+                    const isFailed = message._status === 'failed';
+                    // While pending/failed, the only thing to show is the
+                    // local blob preview (message.imageUrl doesn't exist yet
+                    // — the real upload hasn't landed).
+                    const imgSrc = message.imageUrl || message._previewUrl;
+                    messageEl.innerHTML = `
+                        <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                        <div class="msg-col">
+                            <div class="message-content message-image-content">
+                                <div class="message-image-wrap${isPending ? ' is-pending' : ''}${isFailed ? ' is-failed' : ''}">
+                                    <img class="message-image" src="${imgSrc}" alt="Shared image" loading="lazy">
+                                    ${isPending ? `<div class="image-upload-overlay"><i class="fas fa-circle-notch fa-spin"></i>${message._uploadProgress ? ' ' + message._uploadProgress + '%' : ''}</div>` : ''}
+                                </div>
+                                ${message.text ? `<p class="message-text image-caption">${linkifyMessageText(message.text)}</p>` : ''}
+                                ${renderMessageStatus(message, isSent)}
+                            </div>
+                            <div class="message-reactions">${reactionChips}</div>
+                        </div>
+                        ${reactBtn}
+                    `;
                 } else if (message.type === 'video_call_request') {
                     const safeChannel = escapeHtml(message.channelName || '');
                     messageEl.innerHTML = `
@@ -2678,12 +2807,125 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             await attemptSend(conversationId, optimisticMessage);
         }
 
-        function retrySendMessage(conversationId, clientId) {
+        // Unified retry for any failed optimistic message (text or image) —
+        // dispatches on the pending entry's own type rather than needing two
+        // different retry UI elements, since both render the same
+        // .message-status-failed caption via renderMessageStatus.
+        function retryMessage(conversationId, clientId) {
             const optimisticMessage = getPendingMessages(conversationId).find(m => m.clientId === clientId);
             if (!optimisticMessage) return;
             optimisticMessage._status = 'pending';
             renderMessageList(conversationId);
-            attemptSend(conversationId, optimisticMessage);
+            if (optimisticMessage.type === 'image') attemptImageSend(conversationId, optimisticMessage);
+            else attemptSend(conversationId, optimisticMessage);
+        }
+
+        // ===== IMAGE MESSAGES (Phase 5 of the messaging redesign) =====
+        // Same optimistic-first shape as text sending (Phase 1): an entry
+        // appears in the thread immediately with a local blob-URL preview,
+        // upload progress updates it in place, and the real message (once
+        // confirmed) is matched back to it by clientId — see loadMessages'
+        // onSnapshot, which already handles retiring any pending entry that
+        // way regardless of message type.
+        const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // matches storage.rules' cap for this path
+
+        function startImageSend(conversationId, file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please choose an image file.');
+                return;
+            }
+            if (file.size > MAX_IMAGE_BYTES) {
+                alert('That image is too large (max 10MB). Please choose a smaller one.');
+                return;
+            }
+
+            const clientId = generateClientId();
+            const optimisticMessage = {
+                id: `pending-${clientId}`,
+                clientId,
+                senderId: currentUser.uid,
+                type: 'image',
+                text: '',
+                timestamp: new Date(),
+                read: false,
+                _status: 'pending',
+                _uploadProgress: 0,
+                _previewUrl: URL.createObjectURL(file),
+                _file: file, // retained for retryMessage — a failed upload needs the original bytes again, not just the preview
+            };
+            getPendingMessages(conversationId).push(optimisticMessage);
+            renderMessageList(conversationId);
+            attemptImageSend(conversationId, optimisticMessage);
+        }
+
+        async function attemptImageSend(conversationId, optimisticMessage) {
+            try {
+                const ext = (optimisticMessage._file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+                const storageRef = ref(storage, `conversations/${conversationId}/images/${currentUser.uid}_${Date.now()}_${optimisticMessage.clientId}.${ext}`);
+                const uploadTask = uploadBytesResumable(storageRef, optimisticMessage._file);
+
+                await new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed', (snapshot) => {
+                        optimisticMessage._uploadProgress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        renderMessageList(conversationId);
+                    }, reject, resolve);
+                });
+                const downloadURL = await getDownloadURL(storageRef);
+
+                const convDoc = await getDoc(doc(db, 'conversations', conversationId));
+                const convData = convDoc.data();
+                const otherParticipants = (convData.participants || []).filter(id => id !== currentUser.uid);
+
+                await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
+                    senderId: currentUser.uid,
+                    type: 'image',
+                    imageUrl: downloadURL,
+                    text: '',
+                    timestamp: new Date(),
+                    read: false,
+                    clientId: optimisticMessage.clientId,
+                });
+
+                const newUnreadCount = convData.unreadCount || {};
+                otherParticipants.forEach(id => { newUnreadCount[id] = (newUnreadCount[id] || 0) + 1; });
+                await setDoc(doc(db, 'conversations', conversationId), {
+                    lastMessage: '📷 Photo',
+                    lastMessageTime: new Date(),
+                    unreadCount: newUnreadCount
+                }, { merge: true });
+
+                URL.revokeObjectURL(optimisticMessage._previewUrl);
+            } catch (error) {
+                console.error('Error sending image message:', error);
+                optimisticMessage._status = 'failed';
+                renderMessageList(conversationId);
+            }
+        }
+
+        // Lazily-created singleton overlay, same pattern as the emoji picker
+        // below — one element reused for whichever image was last tapped,
+        // rather than one per message.
+        let lightboxEl = null;
+
+        function openImageLightbox(src) {
+            if (!lightboxEl) {
+                lightboxEl = document.createElement('div');
+                lightboxEl.className = 'image-lightbox';
+                lightboxEl.innerHTML = `
+                    <button type="button" class="image-lightbox-close" aria-label="Close"><i class="fas fa-times"></i></button>
+                    <img class="image-lightbox-img" alt="Shared image">
+                `;
+                document.body.appendChild(lightboxEl);
+                lightboxEl.addEventListener('click', (e) => {
+                    if (e.target === lightboxEl || e.target.closest('.image-lightbox-close')) closeImageLightbox();
+                });
+            }
+            lightboxEl.querySelector('.image-lightbox-img').src = src;
+            lightboxEl.style.display = 'flex';
+        }
+
+        function closeImageLightbox() {
+            if (lightboxEl) lightboxEl.style.display = 'none';
         }
 
         function escapeHtml(text) {
@@ -2904,11 +3146,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         function handleAudioClick(e) {
-            // Failed optimistic send — tap to retry (see attemptSend/sendMessage)
+            // Failed optimistic send — tap to retry (see attemptSend/attemptImageSend)
             const retryEl = e.target.closest('.message-status-failed');
             if (retryEl) {
                 const msgEl = retryEl.closest('[data-conv-id]');
-                if (msgEl) retrySendMessage(msgEl.dataset.convId, retryEl.dataset.retryClientId);
+                if (msgEl) retryMessage(msgEl.dataset.convId, retryEl.dataset.retryClientId);
+                return;
+            }
+
+            // Confirmed image — tap to view full-size. Guarded to skip a
+            // still-uploading or failed one, whose thumbnail is just the
+            // local blob preview, not worth "opening" full-size.
+            const imageEl = e.target.closest('.message-image');
+            if (imageEl && !imageEl.closest('.is-pending') && !imageEl.closest('.is-failed')) {
+                openImageLightbox(imageEl.src);
                 return;
             }
 
