@@ -93,12 +93,15 @@ if (self.workbox) {
   // getting served that stale copy — silently missing the new attribute/CSS
   // entirely, with no visible error — for up to the 24h expiry. Same fix as
   // above: rename the bucket so every client refetches immediately.
+  //
+  // Bumped again to v4 on 2026-07-27: js/unread-messages.js (same bucket)
+  // gained the app-icon Badging API calls — same staleness risk as above.
   workbox.routing.registerRoute(
     ({ request, url }) =>
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v3",
+      cacheName: "linguabud-assets-v4",
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -125,6 +128,7 @@ self.addEventListener("activate", (event) => {
       // otherwise they just sit in Cache Storage unused, taking up space.
       caches.delete("linguabud-assets"),
       caches.delete("linguabud-assets-v2"),
+      caches.delete("linguabud-assets-v3"),
       caches.delete("linguabud-pages"),
     ])
   );
@@ -152,6 +156,22 @@ self.addEventListener("push", (event) => {
   // the page without needing another service worker edit.
   const payload = raw.data || raw;
   if (!payload.title) return;
+
+  // Home-screen icon badge (Badging API) — updates the OS-level number badge
+  // on the installed PWA's icon even while the app is fully closed, using
+  // the count the server already computed (see computeUnreadBadgeCount in
+  // functions/index.js). The foreground/app-open equivalent lives in
+  // js/unread-messages.js, driven by a live Firestore listener instead.
+  // registration.setAppBadge (not navigator.setAppBadge) is the service-
+  // worker-context form of the same API. Not every browser supports it
+  // (e.g. Firefox) — feature-detected, silently a no-op otherwise.
+  if (payload.badgeCount !== undefined && "setAppBadge" in self.registration) {
+    const n = parseInt(payload.badgeCount, 10);
+    if (!isNaN(n)) {
+      const p = n > 0 ? self.registration.setAppBadge(n) : self.registration.clearAppBadge();
+      p?.catch(() => {});
+    }
+  }
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {

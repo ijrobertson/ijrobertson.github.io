@@ -158,6 +158,36 @@ async function sendPushToUser(db, uid, data) {
 }
 
 /**
+ * Total unread-message count across every conversation a user is in, for the
+ * PWA's home-screen icon badge (see js/unread-messages.js for the live,
+ * app-open version of this same count; this is the app-closed version, sent
+ * alongside the push payload so sw.js can badge the icon without the app
+ * needing to be open — see sw.js's push handler).
+ *
+ * `unreadCount` is incremented by the client in a second write *after* the
+ * message document is created (see messages.html's sendMessage), so this
+ * Cloud Function — triggered by the message doc's creation — can race ahead
+ * of that second write. Rather than trust a fresh read of the current
+ * conversation's unreadCount (which might not include this message yet),
+ * the caller passes in the pre-message count for the current conversation
+ * and this function adds exactly 1 for the message that triggered it, then
+ * sums every *other* conversation's count fresh from Firestore. That makes
+ * the total exact regardless of which write has landed first.
+ */
+async function computeUnreadBadgeCount(db, recipientId, currentConversationId, currentConversationUnreadBefore) {
+  const snap = await db.collection('conversations')
+    .where('participants', 'array-contains', recipientId)
+    .get();
+  let total = currentConversationUnreadBefore + 1;
+  snap.forEach((docSnap) => {
+    if (docSnap.id === currentConversationId) return; // accounted for above
+    const c = docSnap.data();
+    total += (c.unreadCount && c.unreadCount[recipientId]) || 0;
+  });
+  return total;
+}
+
+/**
  * Cloud Function that triggers when a new message is added to a conversation
  * Sends an email notification to the recipient if they have notifications enabled
  */
@@ -242,11 +272,14 @@ exports.sendMessageNotification = onDocumentCreated(
           const lastPushSentAt = conversation.lastPushSentAt?.[recipientId];
           const debounced = lastPushSentAt && (Date.now() - lastPushSentAt.toMillis()) < debounceMs;
           if (!debounced) {
+            const currentConversationUnreadBefore = (conversation.unreadCount && conversation.unreadCount[recipientId]) || 0;
+            const badgeCount = await computeUnreadBadgeCount(admin.firestore(), recipientId, conversationId, currentConversationUnreadBefore);
             await sendPushToUser(admin.firestore(), recipientId, {
               title: `${senderName} sent you a message`,
               body: messagePreview,
               url: '/messages',
               conversationId,
+              badgeCount: String(badgeCount), // FCM data values must be strings
             });
             await conversationRef.update({
               // Plain Date, not FieldValue.serverTimestamp() — that sentinel
