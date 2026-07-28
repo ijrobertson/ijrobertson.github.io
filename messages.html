@@ -1658,12 +1658,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             query,
             where,
             orderBy,
+            limit,
             onSnapshot,
             onAuthStateChanged,
             signOut,
             updateDoc,
             arrayUnion,
             arrayRemove,
+            writeBatch,
             ref,
             uploadBytesResumable,
             getDownloadURL
@@ -1948,12 +1950,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }
 
                 // Show profile nav and hide sign in button
-                console.log('👁️ Showing profile nav wrapper');
                 if (profileNavWrapper) {
                     profileNavWrapper.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
-                    console.log('✅ Profile nav display set with inline styles');
-                    console.log('📊 Profile wrapper computed styles:', window.getComputedStyle(profileNavWrapper).display);
-                    console.log('📊 Profile wrapper visibility:', window.getComputedStyle(profileNavWrapper).visibility);
                 } else {
                     console.error('❌ profileNavWrapper element not found!');
                 }
@@ -2020,15 +2018,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                 })();
 
-                // Load conversations
+                // Load conversations (its own listener also drives the unread
+                // badges now — see updateUnreadMessageBadges)
                 await loadConversations();
-
-                // Load unread message count and pending friend requests
-                try {
-                    await loadUnreadMessageCount();
-                } catch (error) {
-                    console.error('Error loading unread messages:', error);
-                }
                 loadPendingRequests();
 
                 await deepLinkPromise;
@@ -2088,11 +2080,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 onSnapshot(q, (snapshot) => {
                     const conversations = [];
+                    // Was a second, separate onSnapshot listener over this
+                    // exact same query (see the old loadUnreadMessageCount,
+                    // now folded in here) — that meant every single
+                    // conversation-list change (a new message, a read receipt,
+                    // anything) fired two live listeners and fetched the same
+                    // docs twice. Computed once, right here, instead.
+                    _unreadMsgCount = 0;
                     snapshot.forEach((doc) => {
-                        conversations.push({ id: doc.id, ...doc.data() });
+                        const conv = { id: doc.id, ...doc.data() };
+                        conversations.push(conv);
+                        if (conv.unreadCount && conv.unreadCount[currentUser.uid]) {
+                            _unreadMsgCount += conv.unreadCount[currentUser.uid];
+                        }
                     });
 
                     renderConversations(conversations);
+                    updateUnreadMessageBadges();
                 });
             } catch (error) {
                 console.error('Error loading conversations:', error);
@@ -2112,8 +2116,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                            : userDoc.exists()       ? userDoc.data()
                            : null;
                 const result = data
-                    ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '' }
-                    : { name: 'Unknown User', avatar_url: '' };
+                    ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '', isInstructor: instructorDoc.exists() }
+                    : { name: 'Unknown User', avatar_url: '', isInstructor: false };
                 userCache.set(userId, result);
                 return result;
             } catch {
@@ -2231,11 +2235,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         async function openConversation(conversationId, otherUserId, event = null) {
-            console.log('🎨 openConversation called');
-            console.log('  - conversationId:', conversationId);
-            console.log('  - otherUserId:', otherUserId);
-            console.log('  - chatPanel element:', chatPanel);
-
             // Leaving whatever conversation was open before — stop showing
             // ourselves as typing there rather than lingering until the
             // debounce timeout catches up.
@@ -2261,52 +2260,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 event.currentTarget.classList.add('active');
             }
 
-            // Fetch user data from BOTH collections and prefer instructors
-            console.log('🔄 Fetching fresh user data for:', otherUserId);
-            let otherUser = { name: 'Unknown User', avatar_url: '' };
-            try {
-                console.log('🔍 Fetching from BOTH users AND instructors collections...');
-
-                // Fetch from both collections in parallel
-                const [userDoc, instructorDoc] = await Promise.all([
-                    getDoc(doc(db, 'users', otherUserId)),
-                    getDoc(doc(db, 'instructors', otherUserId))
-                ]);
-
-                console.log('👤 Users collection exists:', userDoc.exists());
-                console.log('👨‍🏫 Instructors collection exists:', instructorDoc.exists());
-
-                // Prefer instructor data if it exists, otherwise use user data
-                let userData = null;
-                let source = '';
-
-                if (instructorDoc.exists()) {
-                    userData = instructorDoc.data();
-                    source = 'instructors';
-                } else if (userDoc.exists()) {
-                    userData = userDoc.data();
-                    source = 'users';
-                }
-
-                if (userData) {
-                    console.log('📋 Using data from:', source);
-                    console.log('📋 User data retrieved:', userData);
-                    console.log('📋 userData.name =', userData.name);
-
-                    otherUser = {
-                        name: userData.name || 'Unknown User',
-                        avatar_url: userData.avatar_url || '',
-                        isInstructor: source === 'instructors'
-                    };
-                    console.log('✅ Final otherUser object:', otherUser);
-                } else {
-                    console.error('❌ User not found in either collection!');
-                }
-            } catch (error) {
-                console.error('❌ Error loading user data:', error);
-            }
-
-            console.log('🖼️ Rendering chat interface...');
+            // Reuses the exact same cache renderConversations() already
+            // populated for every conversation currently in the list — this
+            // used to always re-fetch both `users` and `instructors` docs for
+            // this person from the network on every single tap, even though
+            // that data (in the overwhelmingly common case of opening a
+            // conversation you can already see in the list) was already
+            // fetched moments earlier. That redundant, synchronously-awaited
+            // round-trip was blocking the entire chat panel from rendering —
+            // getCachedUser only hits the network the first time a given
+            // user's data is needed (e.g. a fresh deep link).
+            const otherUser = await getCachedUser(otherUserId);
 
             // Mobile: switch to chat panel view
             const messagesContainer = document.querySelector('.messages-container');
@@ -2742,9 +2706,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const unread = messages.filter(m => m.senderId !== currentUser.uid && m.read === false);
             if (unread.length === 0) return;
             try {
-                await Promise.all(unread.map(m =>
-                    updateDoc(doc(db, 'conversations', conversationId, 'messages', m.id), { read: true })
-                ));
+                // A single batched commit instead of N independent updateDoc
+                // calls — opening a conversation with, say, 20 unread messages
+                // used to fire 20 separate writes, each of which could trigger
+                // its own onSnapshot event on loadMessages' listener (i.e. up
+                // to 20 full message-list re-renders just from catching up on
+                // read receipts). One batch write is one commit, so it's at
+                // most one extra re-render instead of a cascade of them.
+                const batch = writeBatch(db);
+                unread.forEach(m => {
+                    batch.update(doc(db, 'conversations', conversationId, 'messages', m.id), { read: true });
+                });
+                await batch.commit();
             } catch (error) {
                 console.error('Error marking messages read:', error);
             }
@@ -2757,9 +2730,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
 
             try {
+                // desc + limit(50) rather than the old unbounded asc query — a
+                // long-running conversation was fetching (and, on every single
+                // snapshot, fully re-rendering) its ENTIRE message history just
+                // to open the chat. Firestore keeps a live limit() query's
+                // window correctly updated as new messages arrive (drops the
+                // oldest, adds the newest), so this still stays fully live —
+                // it just never has to look further back than the most recent
+                // 50. Reversed right after the snapshot so the rest of this
+                // function can keep working with ascending order as before.
                 const q = query(
                     collection(db, 'conversations', conversationId, 'messages'),
-                    orderBy('timestamp', 'asc')
+                    orderBy('timestamp', 'desc'),
+                    limit(50)
                 );
 
                 unsubscribeMessages = onSnapshot(q, async (snapshot) => {
@@ -2801,6 +2784,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     for (const [senderId, promise] of senderDataPromises) {
                         senderAvatarCache.set(senderId, await promise);
                     }
+
+                    // The query above is desc (newest-first) so limit() keeps
+                    // the most RECENT 50, not the first 50 — flip back to
+                    // ascending to match what the rest of this file expects.
+                    messages.reverse();
 
                     lastServerMessagesByConv.set(conversationId, messages);
 
@@ -3803,51 +3791,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
-        async function loadUnreadMessageCount() {
-            if (!auth.currentUser) return;
+        // Reflects _unreadMsgCount (kept current by loadConversations' own
+        // listener — see above, that's the single live subscription this data
+        // comes from now) into the shell attribute / app-icon badge / nav
+        // link / profile badge. Not a listener itself anymore.
+        function updateUnreadMessageBadges() {
+            const messagesLink = document.getElementById('messagesLink');
+            const unreadCount = document.getElementById('unreadCount');
 
-            const q = query(
-                collection(db, 'conversations'),
-                where('participants', 'array-contains', auth.currentUser.uid)
-            );
+            const shellEl = document.getElementById('shell');
+            if (shellEl) shellEl.setAttribute('messages-unread', _unreadMsgCount > 0 ? 'true' : 'false');
+            setAppBadgeCount(_unreadMsgCount);
 
-            onSnapshot(q, (snapshot) => {
-                _unreadMsgCount = 0;
-                snapshot.forEach((doc) => {
-                    const conv = doc.data();
-                    if (conv.unreadCount && conv.unreadCount[auth.currentUser.uid]) {
-                        _unreadMsgCount += conv.unreadCount[auth.currentUser.uid];
-                    }
-                });
-
-                const messagesLink = document.getElementById('messagesLink');
-                const unreadCount = document.getElementById('unreadCount');
-
-                // Same query/count this listener already computes — reused here
-                // rather than a second subscription via js/unread-messages.js.
-                const shellEl = document.getElementById('shell');
-                if (shellEl) shellEl.setAttribute('messages-unread', _unreadMsgCount > 0 ? 'true' : 'false');
-                setAppBadgeCount(_unreadMsgCount);
-
-                if (messagesLink) {
-                    if (_unreadMsgCount > 0) {
-                        messagesLink.classList.add('has-unread');
-                    } else {
-                        messagesLink.classList.remove('has-unread');
-                    }
+            if (messagesLink) {
+                if (_unreadMsgCount > 0) {
+                    messagesLink.classList.add('has-unread');
+                } else {
+                    messagesLink.classList.remove('has-unread');
                 }
+            }
 
-                if (unreadCount) {
-                    if (_unreadMsgCount > 0) {
-                        unreadCount.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount;
-                        unreadCount.classList.add('show');
-                    } else {
-                        unreadCount.classList.remove('show');
-                    }
+            if (unreadCount) {
+                if (_unreadMsgCount > 0) {
+                    unreadCount.textContent = _unreadMsgCount > 99 ? '99+' : _unreadMsgCount;
+                    unreadCount.classList.add('show');
+                } else {
+                    unreadCount.classList.remove('show');
                 }
+            }
 
-                _updateProfileBadge();
-            });
+            _updateProfileBadge();
         }
 
         function loadPendingRequests() {

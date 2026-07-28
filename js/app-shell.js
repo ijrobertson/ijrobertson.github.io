@@ -263,7 +263,25 @@ const STYLE = `
     transform: translateZ(0);
     will-change: transform;
   }
+  /* Slides between tabs to show which one is active — see
+     _positionTabIndicator() in _render() below. Positioned/sized entirely in
+     JS (measured column width, like vocab-quiz.html's sizeQuizScreen()
+     pattern) rather than CSS calc(), since it needs a real pixel value to
+     animate the transform between two tabs, not just a static position. */
+  .tab-indicator {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 0;
+    border-radius: 14px;
+    background: rgba(11, 102, 100, 0.10);
+    pointer-events: none;
+    transition: transform var(--lb-duration-base, 280ms) var(--lb-ease-out, cubic-bezier(.4, 0, .2, 1));
+    z-index: 0;
+  }
   a.tab {
+    position: relative;
+    z-index: 1;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -273,11 +291,14 @@ const STYLE = `
     text-decoration: none;
     color: var(--ink-500);
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     transition: color var(--lb-duration-fast, 150ms) var(--lb-ease-out, ease-out);
   }
   a.tab svg { width: 22px; height: 22px; }
-  a.tab[aria-current="page"] { color: var(--action); }
+  /* font-weight jump (500 -> 800) is the actual "bold the active tab" signal —
+     previously both states shared the same weight, so the only difference was
+     a subtle color shift, which read as barely-there. */
+  a.tab[aria-current="page"] { color: var(--action); font-weight: 800; }
   /* Set via the messages-unread attribute (see js/unread-messages.js) —
      takes precedence over aria-current so it's visible even while the
      Messages tab happens to already be the active one mid-transition. */
@@ -392,6 +413,7 @@ class LbAppShell extends HTMLElement {
         </div>
       </header>`}
       <nav aria-label="Primary">
+        <div class="tab-indicator"></div>
         ${items
           .map(
             (item) => `
@@ -403,6 +425,8 @@ class LbAppShell extends HTMLElement {
           .join("")}
       </nav>
     `;
+
+    this._positionTabIndicator(active, items);
 
     // Tap feedback (see the .tab-tapped rule above) — pointerdown/up rather
     // than relying on CSS :active, which iOS Safari doesn't reliably apply on
@@ -435,6 +459,52 @@ class LbAppShell extends HTMLElement {
         this.dispatchEvent(new CustomEvent("lb-logout", { bubbles: true, composed: true }));
       });
     }
+  }
+
+  // Slides the .tab-indicator pill to sit behind the active tab. Each page is
+  // a full navigation (no client-side routing here), so there's no single
+  // persisted <lb-app-shell> instance to animate across page loads the way a
+  // real app would — this fakes that same "persistent tab bar" feel by
+  // stashing the active tab id in sessionStorage, then on the NEXT page's
+  // first render, starting the indicator at the OLD tab's position (no
+  // transition) before immediately animating it over to the new one. Re-
+  // renders within the same page load (e.g. a `messages-unread` attribute
+  // flip) skip straight to the current position — nothing to slide from
+  // there, since the active tab itself hasn't changed.
+  _positionTabIndicator(active, items) {
+    const nav = this.shadowRoot.querySelector("nav");
+    const indicator = this.shadowRoot.querySelector(".tab-indicator");
+    if (!nav || !indicator) return;
+    const index = items.findIndex((item) => item.id === active);
+    if (index === -1) {
+      indicator.style.opacity = "0";
+      return;
+    }
+    indicator.style.opacity = "1";
+    const columnWidth = nav.getBoundingClientRect().width / items.length;
+    indicator.style.width = `${columnWidth}px`;
+    const targetX = index * columnWidth;
+
+    const prevTabId = this._indicatorInitialized ? null : sessionStorage.getItem("lb-active-tab-id");
+    const prevIndex = prevTabId ? items.findIndex((item) => item.id === prevTabId) : -1;
+
+    if (!this._indicatorInitialized && prevIndex !== -1 && prevIndex !== index) {
+      indicator.style.transition = "none";
+      indicator.style.transform = `translateX(${prevIndex * columnWidth}px)`;
+      indicator.getBoundingClientRect(); // force the "none" transition to commit before re-enabling it below
+      indicator.style.transition = "";
+      requestAnimationFrame(() => {
+        indicator.style.transform = `translateX(${targetX}px)`;
+      });
+    } else {
+      indicator.style.transition = "none";
+      indicator.style.transform = `translateX(${targetX}px)`;
+      indicator.getBoundingClientRect();
+      indicator.style.transition = "";
+    }
+
+    this._indicatorInitialized = true;
+    sessionStorage.setItem("lb-active-tab-id", active);
   }
 }
 
