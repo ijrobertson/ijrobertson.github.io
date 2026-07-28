@@ -838,18 +838,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             /* position:fixed so iOS has no scrollable ancestor to drag around
                when a text input is focused (a real, long-documented WebKit
                behavior — focusing an input can scroll the *page* to bring it
-               into view, even with body{overflow:hidden}). top/bottom here
-               are only a same-frame fallback for the instant before JS runs —
-               syncMobileMessagesContainer() below overrides them with the
-               shell's actual *measured* header/nav positions on load and on
-               every visualViewport change. That JS-measured approach exists
-               because calc()'d top/bottom (this fallback) is anchored to the
-               LAYOUT viewport, not the VISUAL one — it doesn't track where
-               iOS actually puts things once the keyboard opens, which is
-               what was leaving the chat header (and its back button)
-               rendered off the top of the visible area entirely. The env()
-               terms account for the iOS notch/status-bar and home-indicator
-               safe areas, now that viewport-fit=cover makes them non-zero. */
+               into view, even with body{overflow:hidden}).
+               A JS-measured version of this (reading the shell's real header/
+               nav positions instead of calc()'ing them) was tried and made
+               things actively worse on a real device — a bad/stale measurement
+               during the keyboard's open animation left the container far
+               taller than the visible area, with a big blank gap where
+               content should be. Reverted back to this simpler calc()-only
+               version, which is at least not broken, even though the back
+               button still isn't reliably reachable with the keyboard open —
+               see docs/PWA_PRD.md notes / memory for the ongoing back-button
+               issue. The env() terms account for the iOS notch/status-bar and
+               home-indicator safe areas, now that viewport-fit=cover makes
+               them non-zero. */
             .messages-container {
                 margin: 0 !important;
                 padding: 0 !important;
@@ -1675,55 +1676,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const conversationsList = document.getElementById('conversationsList');
         const chatPanel = document.getElementById('chatPanel');
 
-        // Mobile only: position/size .messages-container to exactly fill the
-        // gap between the shell's *actual, currently-rendered* header and
-        // nav, rather than trusting position:fixed's own top/bottom (see the
-        // CSS comment on .messages-container for why that alone wasn't
-        // reliable — it's anchored to the layout viewport, not the visual
-        // one, so it doesn't track where iOS actually puts things once the
-        // keyboard opens). The shell's nav, by contrast, is a plain
-        // position:fixed;bottom:0 with no calc() involved, and iOS *does*
-        // correctly keep that floating just above the keyboard — so
-        // measuring its real current position sidesteps the whole problem
-        // instead of trying to predict it. Same technique vocab-quiz.html's
-        // sizeQuizScreen() already uses successfully for an identical class
-        // of "fit exactly between the shell's header and nav" layout.
-        function syncMobileMessagesContainer() {
-            const container = document.querySelector('.messages-container');
-            if (!container) return;
-            if (window.innerWidth > 767) {
-                // Resized back up to desktop — clear the inline styles set
-                // below rather than just skipping, or they'd linger and
-                // override the desktop CSS rules (position:static etc.)
-                // indefinitely, since setting an inline style once and then
-                // merely "not updating it again" doesn't remove it.
-                container.style.position = '';
-                container.style.top = '';
-                container.style.bottom = '';
-                container.style.height = '';
-                return;
-            }
-            const shell = document.getElementById('shell');
-            const header = shell?.shadowRoot?.querySelector('header');
-            const nav = shell?.shadowRoot?.querySelector('nav');
-            if (!header || !nav) return;
-            const top = header.getBoundingClientRect().bottom;
-            const height = nav.getBoundingClientRect().top - top;
-            if (height <= 0) return;
-            container.style.position = 'fixed';
-            container.style.top = `${top}px`;
-            container.style.bottom = 'auto';
-            container.style.height = `${height}px`;
-        }
-        window.addEventListener('resize', syncMobileMessagesContainer);
-        // The keyboard-aware events — window's own 'resize' doesn't reliably
-        // fire for keyboard open/close on iOS, only actual viewport/orientation
-        // changes. visualViewport's resize/scroll fire for both the keyboard
-        // and any Safari browser-chrome show/hide.
-        window.visualViewport?.addEventListener('resize', syncMobileMessagesContainer);
-        window.visualViewport?.addEventListener('scroll', syncMobileMessagesContainer);
-        requestAnimationFrame(syncMobileMessagesContainer);
-
         // Static element, set up once — jump to the first unread conversation
         // (top of the list, since it's already sorted newest-first).
         document.getElementById('unreadJumpBadge')?.addEventListener('click', () => {
@@ -2514,13 +2466,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Auto-resize textarea and submit on Enter (Shift+Enter for newline)
             const messageInput = document.getElementById('messageInput');
-            // React the instant the keyboard starts opening, rather than
-            // waiting purely on the visualViewport event (which fires once
-            // the keyboard animation is already underway/settled).
-            messageInput.addEventListener('focus', () => {
-                requestAnimationFrame(syncMobileMessagesContainer);
-                setTimeout(syncMobileMessagesContainer, 350); // catch up once the keyboard animation actually finishes
-            });
             messageInput.addEventListener('input', () => {
                 messageInput.style.height = 'auto';
                 messageInput.style.height = Math.min(messageInput.scrollHeight, 160) + 'px';
