@@ -253,6 +253,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         /* Conversation List */
         .conversations-panel {
+            position: relative;
             background: white;
             border-radius: 20px;
             border: 2px solid #e7e9e7;
@@ -260,6 +261,36 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             overflow: hidden;
             display: flex;
             flex-direction: column;
+        }
+
+        /* WhatsApp-style "N unread" floating jump button — only shown when
+           at least one conversation has unread messages (see
+           updateUnreadJumpBadge in the script below), tapping it scrolls to
+           the first unread conversation in the list. */
+        .unread-jump-badge {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep));
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 8px 20px -6px rgba(11,102,100,0.55);
+            z-index: 5;
+            transition: transform 0.15s;
+        }
+
+        .unread-jump-badge:hover {
+            transform: translateX(-50%) translateY(-2px);
         }
 
         .conversations-header {
@@ -311,7 +342,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
 
         .conversation-name {
-            font-family: 'Baloo 2', sans-serif;
             font-weight: 700;
             color: var(--pb-teal-dark);
             margin-bottom: 0.2rem;
@@ -377,7 +407,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .chat-header-info h3 {
             margin: 0;
-            font-family: 'Baloo 2', sans-serif;
             font-size: 1.15rem;
             font-weight: 700;
             color: white;
@@ -800,19 +829,39 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 padding-top: calc(60px + env(safe-area-inset-top, 0));
             }
 
-            /* This layout is viewport-locked (overflow:hidden), so <lb-app-shell>'s
-               fixed header/bottom tab bar have to be subtracted from the container
-               height directly — a body padding-top/bottom would have no effect here.
-               The env() terms account for the iOS notch/status-bar and home-indicator
-               safe areas, now that viewport-fit=cover makes them non-zero. */
+            /* position:fixed, pinned directly between <lb-app-shell>'s fixed
+               header and bottom tab bar, rather than a dvh-calculated height
+               on a normally-flowed element. This is the same class of fix
+               already applied to the app-shell's own header/nav (see
+               js/app-shell.js's translateZ(0) comment) for a real, long-
+               documented WebKit behavior: focusing a text input near the
+               bottom of the screen can make iOS Safari scroll the *page*
+               to bring it into view, even with body{overflow:hidden} —
+               which was dragging this container's own header (and its back
+               button) up out of the visible viewport, so the only way back
+               to the conversation list was to first dismiss the keyboard.
+               A position:fixed container has no scrollable ancestor for iOS
+               to scroll in the first place, which is a more robust guarantee
+               than dvh + overflow:hidden alone turned out to be. Only
+               .messages-area (a child, not this container) scrolls.
+               The env() terms account for the iOS notch/status-bar and
+               home-indicator safe areas, now that viewport-fit=cover makes
+               them non-zero. */
             .messages-container {
                 margin: 0 !important;
                 padding: 0 !important;
                 gap: 0;
-                height: calc(100vh - 60px - env(safe-area-inset-top, 0) - 72px - env(safe-area-inset-bottom, 0));        /* fallback */
-                height: calc(100dvh - 60px - env(safe-area-inset-top, 0) - 72px - env(safe-area-inset-bottom, 0));       /* shrinks with keyboard on modern browsers */
+                position: fixed;
+                top: calc(60px + env(safe-area-inset-top, 0));
+                left: 0;
+                right: 0;
+                bottom: calc(72px + env(safe-area-inset-bottom, 0));
+                height: auto;
+                z-index: 10; /* below <lb-app-shell>'s header/nav (1000) and the image lightbox (3000) */
                 display: flex;
                 flex-direction: column;
+                transform: translateZ(0);
+                will-change: transform;
             }
 
             .conversations-panel {
@@ -1562,6 +1611,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <p>Start chatting with language partners!</p>
                 </div>
             </div>
+            <button type="button" class="unread-jump-badge" id="unreadJumpBadge" style="display:none;" aria-label="Jump to unread conversations">
+                <i class="fas fa-chevron-up"></i> <span id="unreadJumpCount">0</span>
+            </button>
         </div>
 
         <!-- Chat Panel -->
@@ -1624,6 +1676,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         const conversationsList = document.getElementById('conversationsList');
         const chatPanel = document.getElementById('chatPanel');
+
+        // Static element, set up once — jump to the first unread conversation
+        // (top of the list, since it's already sorted newest-first).
+        document.getElementById('unreadJumpBadge')?.addEventListener('click', () => {
+            const firstUnread = conversationsList.querySelector('.conversation-item:has(.unread-badge)');
+            if (firstUnread) firstUnread.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         const navProfilePic = document.getElementById('navProfilePic');
         const profileNavWrapper = document.getElementById('profileNavWrapper');
         const signInWrapper = document.getElementById('signInWrapper');
@@ -2140,6 +2199,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             Object.values(existing).forEach(el => el.remove());
             // Remove any lingering empty-state placeholder
             conversationsList.querySelectorAll('.empty-state').forEach(el => el.remove());
+
+            updateUnreadJumpBadge(conversations);
+        }
+
+        // WhatsApp-style floating "N unread" badge — counts CONVERSATIONS with
+        // at least one unread message (not total unread message count, which
+        // is what the app icon badge / bottom-nav dot already show — see
+        // js/unread-messages.js). Tapping it jumps to the first one.
+        function updateUnreadJumpBadge(conversations) {
+            const badge = document.getElementById('unreadJumpBadge');
+            if (!badge) return;
+            const unreadCount = conversations.filter(c => c.unreadCount && c.unreadCount[currentUser.uid] > 0).length;
+            if (unreadCount === 0) {
+                badge.style.display = 'none';
+                return;
+            }
+            document.getElementById('unreadJumpCount').textContent = unreadCount;
+            badge.style.display = 'flex';
         }
 
         async function checkMessagingBlocked(otherUserId) {
@@ -2328,6 +2405,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const chatBackBtn = document.getElementById('chatBackBtn');
             if (chatBackBtn) {
                 chatBackBtn.addEventListener('click', () => {
+                    // Dismiss the keyboard explicitly rather than leaving it
+                    // open over a now-hidden chat panel.
+                    document.getElementById('messageInput')?.blur();
                     const container = document.querySelector('.messages-container');
                     container.classList.remove('chat-open');
                     container.classList.add('conversations-open');
@@ -2788,6 +2868,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             input.value = '';
             input.style.height = 'auto';
             stopTyping();
+            // Tapping the Send button blurs the (previously-focused) input
+            // the instant the tap registers, before this handler even runs —
+            // normal mobile browser behavior for any button that isn't the
+            // element already focused, and it's what closes the on-screen
+            // keyboard and causes the jarring layout jump. Re-focusing here,
+            // synchronously within the same user-gesture-triggered handler,
+            // reopens it — the keyboard now stays put across a send exactly
+            // like it does in a native chat app, closing only when the user
+            // deliberately taps away.
+            input.focus();
 
             const clientId = generateClientId();
             const optimisticMessage = {
