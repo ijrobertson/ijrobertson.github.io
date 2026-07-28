@@ -449,6 +449,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             color: rgba(10,31,48,0.65);
         }
 
+        .message-status-pending {
+            font-style: italic;
+        }
+
+        .message-status-failed {
+            color: #d64545;
+            cursor: pointer;
+        }
+
+        .message.sent .message-status-failed {
+            color: #d64545;
+        }
+
+        .message-status-failed:hover {
+            text-decoration: underline;
+        }
+
         .message-input-area {
             padding: 1.5rem;
             border-top: 1px solid #e0e0e0;
@@ -1422,6 +1439,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let activeConversationId = null;
         let unsubscribeMessages = null;
 
+        // Optimistic send (Phase 1 of the messaging redesign): a message appears
+        // in the thread the instant you hit send, before the network round-trip
+        // completes, instead of waiting for Firestore to echo it back through the
+        // live listener. Both maps are keyed by conversationId so switching away
+        // and back preserves a still-pending or failed send exactly as WhatsApp
+        // would, rather than discarding it.
+        //   lastServerMessagesByConv: the most recent onSnapshot's real messages —
+        //     cached so a pending-state change (send/retry/fail) can re-render
+        //     immediately without re-querying Firestore.
+        //   pendingMessagesByConv: client-only messages not yet confirmed by
+        //     Firestore, each carrying a clientId written into the real doc too
+        //     (see attemptSend) so the onSnapshot handler can recognize its own
+        //     optimistic message once it comes back and retire it.
+        const lastServerMessagesByConv = new Map();
+        const pendingMessagesByConv = new Map();
+
+        function getPendingMessages(conversationId) {
+            if (!pendingMessagesByConv.has(conversationId)) pendingMessagesByConv.set(conversationId, []);
+            return pendingMessagesByConv.get(conversationId);
+        }
+
+        function generateClientId() {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') return crypto.randomUUID();
+            return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        }
+
+        function toMillis(timestamp) {
+            if (!timestamp) return 0;
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.getTime();
+        }
+
         // senderId -> avatar_url (or null). Populated once per sender and reused
         // across every snapshot for the lifetime of this page view — avatars
         // essentially never change mid-conversation, and re-fetching both
@@ -2080,9 +2129,95 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
-        async function loadMessages(conversationId) {
-            const messagesArea = document.getElementById('messagesArea');
+        // message-time area for a pending/failed optimistic message, or the
+        // normal formatted timestamp for a real (or already-confirmed) one.
+        // Applied uniformly across all three message-type branches below so
+        // audio/video-call messages degrade to identical prior behavior
+        // (they never carry _status, since only sendMessage's text-message
+        // path creates optimistic entries in this first phase).
+        function renderMessageStatus(message) {
+            if (message._status === 'pending') {
+                return `<div class="message-time message-status-pending"><i class="fas fa-clock"></i> Sending...</div>`;
+            }
+            if (message._status === 'failed') {
+                return `<div class="message-time message-status-failed" data-retry-client-id="${escapeHtml(message.clientId)}"><i class="fas fa-exclamation-circle"></i> Failed to send &middot; Tap to retry</div>`;
+            }
+            return `<div class="message-time">${formatTime(message.timestamp)}</div>`;
+        }
 
+        // Renders the full message list for a conversation from cached state —
+        // the real messages from the most recent onSnapshot plus any still-
+        // pending/failed optimistic ones — rather than requiring a fresh
+        // Firestore read. Called both by loadMessages' live listener and by
+        // sendMessage/retrySendMessage so a locally-queued message appears
+        // instantly, before the network round-trip that would otherwise be
+        // the only thing making it show up.
+        function renderMessageList(conversationId) {
+            // A send/retry that resolves after the user has switched to a
+            // different conversation shouldn't repaint whatever they're looking
+            // at now.
+            if (conversationId !== activeConversationId) return;
+
+            const messagesArea = document.getElementById('messagesArea');
+            if (!messagesArea) return;
+
+            const serverMessages = lastServerMessagesByConv.get(conversationId) || [];
+            const pending = getPendingMessages(conversationId);
+            const messages = [...serverMessages, ...pending].sort((a, b) => toMillis(a.timestamp) - toMillis(b.timestamp));
+
+            messagesArea.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            messages.forEach((message) => {
+                const isSent = message.senderId === currentUser.uid;
+                const senderAvatar = senderAvatarCache.get(message.senderId) || DEFAULT_AVATAR;
+
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
+                messageEl.dataset.msgId  = message.id;
+                messageEl.dataset.convId = conversationId;
+
+                const reactBtn = `<button class="react-trigger" data-msg-id="${message.id}" data-conv-id="${conversationId}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
+                const reactionChips = renderReactions(message.reactions, currentUser.uid);
+
+                if (message.type === 'audio') {
+                    messageEl.innerHTML = renderAudioMessage(message, senderAvatar, conversationId);
+                } else if (message.type === 'video_call_request') {
+                    const safeChannel = escapeHtml(message.channelName || '');
+                    messageEl.innerHTML = `
+                        <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                        <div class="msg-col">
+                            <div class="message-content video-call-request-card">
+                                <div class="video-call-request-icon"><i class="fas fa-video"></i></div>
+                                <p class="message-text" style="margin:0;">${escapeHtml(message.text)}</p>
+                                <a href="video-call?channel=${safeChannel}" target="_blank" class="join-call-btn">Join Now</a>
+                                ${renderMessageStatus(message)}
+                            </div>
+                            <div class="message-reactions">${reactionChips}</div>
+                        </div>
+                        ${reactBtn}
+                    `;
+                } else {
+                    messageEl.innerHTML = `
+                        <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                        <div class="msg-col">
+                            <div class="message-content">
+                                <p class="message-text">${linkifyMessageText(message.text)}</p>
+                                ${renderMessageStatus(message)}
+                            </div>
+                            <div class="message-reactions">${reactionChips}</div>
+                        </div>
+                        ${reactBtn}
+                    `;
+                }
+                fragment.appendChild(messageEl);
+            });
+
+            messagesArea.appendChild(fragment);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        async function loadMessages(conversationId) {
             // Unsubscribe from previous conversation
             if (unsubscribeMessages) {
                 unsubscribeMessages();
@@ -2134,119 +2269,108 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         senderAvatarCache.set(senderId, await promise);
                     }
 
-                    // Clear and render all messages at once
-                    messagesArea.innerHTML = '';
-                    const fragment = document.createDocumentFragment();
+                    lastServerMessagesByConv.set(conversationId, messages);
 
-                    messages.forEach((message) => {
-                        const isSent = message.senderId === currentUser.uid;
-                        const senderAvatar = senderAvatarCache.get(message.senderId) || DEFAULT_AVATAR;
+                    // Any optimistic message whose real doc has now landed (matched
+                    // by the clientId written into it at send time — see
+                    // attemptSend) is retired, so it isn't rendered twice.
+                    const confirmedClientIds = new Set(messages.map(m => m.clientId).filter(Boolean));
+                    if (confirmedClientIds.size > 0) {
+                        const pending = getPendingMessages(conversationId);
+                        const stillPending = pending.filter(p => !confirmedClientIds.has(p.clientId));
+                        if (stillPending.length !== pending.length) pendingMessagesByConv.set(conversationId, stillPending);
+                    }
 
-                        const messageEl = document.createElement('div');
-                        messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
-                        messageEl.dataset.msgId  = message.id;
-                        messageEl.dataset.convId = conversationId;
-
-                        const reactBtn = `<button class="react-trigger" data-msg-id="${message.id}" data-conv-id="${conversationId}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
-                        const reactionChips = renderReactions(message.reactions, currentUser.uid);
-
-                        if (message.type === 'audio') {
-                            messageEl.innerHTML = renderAudioMessage(message, senderAvatar, conversationId);
-                        } else if (message.type === 'video_call_request') {
-                            const safeChannel = escapeHtml(message.channelName || '');
-                            messageEl.innerHTML = `
-                                <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
-                                <div class="msg-col">
-                                    <div class="message-content video-call-request-card">
-                                        <div class="video-call-request-icon"><i class="fas fa-video"></i></div>
-                                        <p class="message-text" style="margin:0;">${escapeHtml(message.text)}</p>
-                                        <a href="video-call?channel=${safeChannel}" target="_blank" class="join-call-btn">Join Now</a>
-                                        <div class="message-time">${formatTime(message.timestamp)}</div>
-                                    </div>
-                                    <div class="message-reactions">${reactionChips}</div>
-                                </div>
-                                ${reactBtn}
-                            `;
-                        } else {
-                            messageEl.innerHTML = `
-                                <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
-                                <div class="msg-col">
-                                    <div class="message-content">
-                                        <p class="message-text">${linkifyMessageText(message.text)}</p>
-                                        <div class="message-time">${formatTime(message.timestamp)}</div>
-                                    </div>
-                                    <div class="message-reactions">${reactionChips}</div>
-                                </div>
-                                ${reactBtn}
-                            `;
-                        }
-                        fragment.appendChild(messageEl);
-                    });
-
-                    messagesArea.appendChild(fragment);
-
-                    // Scroll to bottom
-                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                    renderMessageList(conversationId);
                 });
             } catch (error) {
                 console.error('Error loading messages:', error);
             }
         }
 
-        let _isSendingMessage = false;
-        async function sendMessage(conversationId) {
-            if (_isSendingMessage) return;
-            _isSendingMessage = true;
-
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-
-            if (!text) { _isSendingMessage = false; return; }
-
+        async function attemptSend(conversationId, optimisticMessage) {
             try {
-                // Get conversation to find other participant(s)
                 const convDoc = await getDoc(doc(db, 'conversations', conversationId));
                 const convData = convDoc.data();
                 const participants = convData.participants || [];
-
-                // Find other participants (everyone except current user)
                 const otherParticipants = participants.filter(id => id !== currentUser.uid);
 
-                // Add message to subcollection
                 await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
                     senderId: currentUser.uid,
-                    text: text,
+                    text: optimisticMessage.text,
                     // Client timestamp, not serverTimestamp() — see the comment on
                     // the video-call-request send above for why.
                     timestamp: new Date(),
-                    read: false
+                    read: false,
+                    // Correlates this real doc back to the optimistic bubble already
+                    // on screen once the live listener in loadMessages sees it, so
+                    // it can retire the pending entry instead of showing both.
+                    clientId: optimisticMessage.clientId,
                 });
 
-                // Build unreadCount update object
                 const newUnreadCount = convData.unreadCount || {};
                 otherParticipants.forEach(participantId => {
                     const currentCount = newUnreadCount[participantId] || 0;
                     newUnreadCount[participantId] = currentCount + 1;
                 });
 
-                // Update conversation with last message and increment unread count for recipients
                 await setDoc(doc(db, 'conversations', conversationId), {
-                    lastMessage: text,
+                    lastMessage: optimisticMessage.text,
                     lastMessageTime: new Date(),
                     unreadCount: newUnreadCount
                 }, { merge: true });
 
-                // Email notifications are now handled automatically by Cloud Function
-                // when the message document is created in Firestore
-
-                input.value = '';
-                input.style.height = 'auto';
+                // No further action on success — the real message arrives through
+                // the live listener above, which retires this pending entry.
             } catch (error) {
                 console.error('Error sending message:', error);
-                alert('Failed to send message. Please try again.');
-            } finally {
-                _isSendingMessage = false;
+                // Marked as failed in place, rather than a blocking alert() — the
+                // bubble itself shows a tap-to-retry affordance, closer to how a
+                // native chat app surfaces a failed send than a modal dialog is.
+                optimisticMessage._status = 'failed';
+                renderMessageList(conversationId);
             }
+        }
+
+        async function sendMessage(conversationId) {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Cleared immediately, before any network call — the message is
+            // about to appear in the thread right away (see below), matching
+            // the instant-send feel of a native chat app rather than waiting on
+            // a round-trip. Deliberately no longer guarded by a single-flight
+            // flag: each send gets its own independent optimistic entry now, so
+            // firing off several messages in a row (before earlier ones are
+            // confirmed) works the same way it does in WhatsApp.
+            input.value = '';
+            input.style.height = 'auto';
+
+            const clientId = generateClientId();
+            const optimisticMessage = {
+                id: `pending-${clientId}`,
+                clientId,
+                senderId: currentUser.uid,
+                text,
+                timestamp: new Date(),
+                read: false,
+                _status: 'pending',
+            };
+            getPendingMessages(conversationId).push(optimisticMessage);
+            renderMessageList(conversationId);
+
+            // Email notifications are handled automatically by Cloud Function
+            // when the message document is created in Firestore.
+            await attemptSend(conversationId, optimisticMessage);
+        }
+
+        function retrySendMessage(conversationId, clientId) {
+            const optimisticMessage = getPendingMessages(conversationId).find(m => m.clientId === clientId);
+            if (!optimisticMessage) return;
+            optimisticMessage._status = 'pending';
+            renderMessageList(conversationId);
+            attemptSend(conversationId, optimisticMessage);
         }
 
         function escapeHtml(text) {
@@ -2467,6 +2591,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         function handleAudioClick(e) {
+            // Failed optimistic send — tap to retry (see attemptSend/sendMessage)
+            const retryEl = e.target.closest('.message-status-failed');
+            if (retryEl) {
+                const msgEl = retryEl.closest('[data-conv-id]');
+                if (msgEl) retrySendMessage(msgEl.dataset.convId, retryEl.dataset.retryClientId);
+                return;
+            }
+
             // React trigger — show emoji picker
             const reactTrigger = e.target.closest('.react-trigger');
             if (reactTrigger) {
