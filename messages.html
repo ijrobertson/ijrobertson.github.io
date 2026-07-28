@@ -407,6 +407,39 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
         }
 
+        .chat-status.typing {
+            color: rgba(255,255,255,0.95);
+            font-weight: 600;
+            font-style: italic;
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 2px;
+            margin-left: 3px;
+            vertical-align: middle;
+        }
+
+        .typing-dots span {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.95);
+            animation: typing-bounce 1.2s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes typing-bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+            30% { transform: translateY(-3px); opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .typing-dots span { animation: none; }
+        }
+
         .chat-header-name-link {
             color: white;
             text-decoration: none;
@@ -1533,12 +1566,83 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let presenceRefreshTimer = null;
         let latestPresenceData = null;
 
+        // Typing indicators (Phase 4): typingUsers.{uid} lives as a nested
+        // field directly on the conversation doc, written with dot-notation
+        // updateDoc rather than setDoc+merge — merge would replace the whole
+        // typingUsers map and clobber the other participant's own entry;
+        // dot-notation touches only that one key. Reuses the existing
+        // conversations/{id} update rule already in place for unreadCount, so
+        // no firestore.rules change is needed for this phase.
+        const TYPING_STALE_MS = 6000;    // treat as stopped if no fresh write in this long, even if "false" never arrived (tab closed mid-type)
+        const TYPING_DEBOUNCE_MS = 3000; // how long after the last keystroke before writing "stopped typing"
+
+        let unsubscribeTyping = null;
+        let latestTypingEntry = null; // { typing, updatedAt } for the OTHER participant in the open conversation, or null
+
+        let typingConversationId = null; // which conversation my own "typing: true" write currently applies to
+        let isCurrentlyMarkedTyping = false;
+        let typingDebounceHandle = null;
+
+        function computeOtherIsTyping() {
+            if (!latestTypingEntry || latestTypingEntry.typing !== true) return false;
+            return (Date.now() - toMillis(latestTypingEntry.updatedAt)) < TYPING_STALE_MS;
+        }
+
         function renderChatStatus() {
             const el = document.getElementById('chatStatus');
             if (!el) return;
+            if (computeOtherIsTyping()) {
+                el.innerHTML = 'Typing<span class="typing-dots"><span></span><span></span><span></span></span>';
+                el.classList.remove('online');
+                el.classList.add('typing');
+                return;
+            }
+            el.classList.remove('typing');
             const online = isEffectivelyOnline(latestPresenceData);
             el.textContent = formatPresenceLabel(latestPresenceData);
             el.classList.toggle('online', online);
+        }
+
+        async function setTypingState(conversationId, typing) {
+            if (!conversationId || !currentUser) return;
+            try {
+                await updateDoc(doc(db, 'conversations', conversationId), {
+                    [`typingUsers.${currentUser.uid}`]: { typing, updatedAt: new Date() },
+                });
+            } catch (e) {
+                console.error('Typing state write error:', e);
+            }
+        }
+
+        function clearTypingDebounce() {
+            if (typingDebounceHandle) { clearTimeout(typingDebounceHandle); typingDebounceHandle = null; }
+        }
+
+        // Called on every 'input' event in the message textarea. Writes
+        // "typing: true" once at the start of a burst of keystrokes (not on
+        // every keystroke), and (re)schedules "typing: false" for
+        // TYPING_DEBOUNCE_MS after whatever the latest keystroke turns out
+        // to be.
+        function handleTypingInput(conversationId) {
+            if (!isCurrentlyMarkedTyping) {
+                isCurrentlyMarkedTyping = true;
+                typingConversationId = conversationId;
+                setTypingState(conversationId, true);
+            }
+            clearTypingDebounce();
+            typingDebounceHandle = setTimeout(stopTyping, TYPING_DEBOUNCE_MS);
+        }
+
+        // Also called immediately on send and when switching away from a
+        // conversation, so the indicator doesn't linger for the full debounce
+        // window in either case.
+        function stopTyping() {
+            clearTypingDebounce();
+            if (!isCurrentlyMarkedTyping) return;
+            isCurrentlyMarkedTyping = false;
+            const conversationId = typingConversationId;
+            typingConversationId = null;
+            setTypingState(conversationId, false);
         }
 
         // Optimistic send (Phase 1 of the messaging redesign): a message appears
@@ -1972,14 +2076,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             console.log('  - otherUserId:', otherUserId);
             console.log('  - chatPanel element:', chatPanel);
 
+            // Leaving whatever conversation was open before — stop showing
+            // ourselves as typing there rather than lingering until the
+            // debounce timeout catches up.
+            if (isCurrentlyMarkedTyping) stopTyping();
+
             activeConversationId = conversationId;
 
-            // Tear down the previous conversation's presence subscription/timer
-            // before starting a new one — otherwise switching conversations
-            // repeatedly would leak a listener + interval per switch.
+            // Tear down the previous conversation's presence/typing
+            // subscriptions and timer before starting new ones — otherwise
+            // switching conversations repeatedly would leak a listener +
+            // interval per switch.
             if (unsubscribePresence) { unsubscribePresence(); unsubscribePresence = null; }
+            if (unsubscribeTyping) { unsubscribeTyping(); unsubscribeTyping = null; }
             if (presenceRefreshTimer) { clearInterval(presenceRefreshTimer); presenceRefreshTimer = null; }
             latestPresenceData = null;
+            latestTypingEntry = null;
 
             // Update active state
             document.querySelectorAll('.conversation-item').forEach(item => {
@@ -2107,14 +2219,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             console.log('✅ Chat interface rendered');
             console.log('📝 Message input element:', document.getElementById('messageInput'));
 
-            // Presence: live-updates on every doc change, plus a 30s timer so
-            // staleness (see js/presence.js) gets caught even when the other
-            // person's heartbeat just stops without a final "offline" write.
+            // Presence + typing: live-updates on every doc change, plus a
+            // periodic timer so staleness gets caught even when the other
+            // person's heartbeat/typing state just stops without a final
+            // "offline"/"stopped typing" write (e.g. the tab closes mid-type
+            // or mid-session). 2s so a stopped-typing indicator clears
+            // reasonably promptly (TYPING_STALE_MS is 6s) — cheap since it's
+            // just a local timestamp comparison + text update, no network call.
             unsubscribePresence = watchPresence(otherUserId, (data) => {
                 latestPresenceData = data;
                 renderChatStatus();
             });
-            presenceRefreshTimer = setInterval(renderChatStatus, 30000);
+            unsubscribeTyping = onSnapshot(doc(db, 'conversations', conversationId), (snap) => {
+                latestTypingEntry = snap.exists() ? (snap.data().typingUsers || {})[otherUserId] || null : null;
+                renderChatStatus();
+            });
+            presenceRefreshTimer = setInterval(renderChatStatus, 2000);
 
             // Back button: return to conversations list on mobile
             const chatBackBtn = document.getElementById('chatBackBtn');
@@ -2165,6 +2285,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             messageInput.addEventListener('input', () => {
                 messageInput.style.height = 'auto';
                 messageInput.style.height = Math.min(messageInput.scrollHeight, 160) + 'px';
+                // Clearing the box back to empty stops the indicator right
+                // away rather than waiting out the debounce — matches typing
+                // indicators disappearing the moment you erase everything you
+                // typed in most chat apps.
+                if (messageInput.value.trim().length > 0) handleTypingInput(conversationId);
+                else stopTyping();
             });
             messageInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -2532,6 +2658,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // confirmed) works the same way it does in WhatsApp.
             input.value = '';
             input.style.height = 'auto';
+            stopTyping();
 
             const clientId = generateClientId();
             const optimisticMessage = {
