@@ -406,6 +406,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             color: #0a1f30;
         }
 
+        .message-link {
+            color: #0b6664;
+            text-decoration: underline;
+            word-break: break-word;
+        }
+
+        .message.sent .message-link {
+            color: #0b6664;
+        }
+
         .message-time {
             font-size: 0.75rem;
             color: #999;
@@ -2013,7 +2023,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                                 <div class="msg-col">
                                     <div class="message-content">
-                                        <p class="message-text">${escapeHtml(message.text)}</p>
+                                        <p class="message-text">${linkifyMessageText(message.text)}</p>
                                         <div class="message-time">${formatTime(message.timestamp)}</div>
                                     </div>
                                     <div class="message-reactions">${reactionChips}</div>
@@ -2092,6 +2102,42 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // Matches http(s):// URLs and bare www.-prefixed domains (incl. links to
+        // Lingua Bud's own pages, e.g. someone pasting an instructor-profile URL).
+        // Escaping happens per-segment below (not on the whole string first, then
+        // re-inserting markup) so a URL containing "&" or similar doesn't get
+        // mangled by escaping running twice or matching against already-escaped
+        // entities.
+        const MESSAGE_URL_REGEX = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+\.[a-z]{2,}[^\s<>"']*)/gi;
+
+        function linkifyMessageText(text) {
+            const str = text == null ? '' : String(text);
+            let html = '';
+            let lastIndex = 0;
+            MESSAGE_URL_REGEX.lastIndex = 0;
+            let match;
+            while ((match = MESSAGE_URL_REGEX.exec(str)) !== null) {
+                html += escapeHtml(str.slice(lastIndex, match.index));
+
+                // Trailing punctuation (a period ending the sentence, a closing
+                // paren, etc.) is very unlikely to be part of the URL itself.
+                let url = match[0];
+                let trailing = '';
+                const trailingPunct = url.match(/[).,!?;:'"]+$/);
+                if (trailingPunct) {
+                    trailing = trailingPunct[0];
+                    url = url.slice(0, url.length - trailing.length);
+                }
+
+                const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+                html += `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="message-link">${escapeHtml(url)}</a>`;
+                html += escapeHtml(trailing);
+                lastIndex = match.index + match[0].length;
+            }
+            html += escapeHtml(str.slice(lastIndex));
+            return html;
         }
 
         // ===== EMOJI REACTIONS =====
