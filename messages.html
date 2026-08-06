@@ -811,16 +811,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         @media (max-width: 992px) {
             .messages-container {
-                grid-template-columns: 1fr;
-                height: auto;
+                display: flex;
+                flex-direction: column;
+                /* Fills the real available viewport height instead of a fixed
+                   400px+600px stack — on a split-screen or short window that
+                   sum can exceed what's visible, pushing the chat input below
+                   the fold until some unrelated scroll/focus nudges it into
+                   view. Matches the calc() used above 992px. */
+                height: calc(100vh - 60px - env(safe-area-inset-top, 0) - 72px - env(safe-area-inset-bottom, 0) - 4rem);
             }
 
             .conversations-panel {
-                height: 400px;
+                flex: 0 0 40%;
+                min-height: 0;
             }
 
             .chat-panel {
-                height: 600px;
+                flex: 1;
+                min-height: 0;
             }
         }
 
