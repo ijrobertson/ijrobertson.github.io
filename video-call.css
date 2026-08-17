@@ -536,6 +536,14 @@ body.in-call {
   object-fit: cover !important;
 }
 
+/* Screen share: show the whole screen — cropping with "cover" cuts off
+   content (e.g. chat messages) at the top/bottom of the shared window. */
+#vc-remote-container.vc-screensharing #vc-remote-stream video,
+.vc-local-pip.vc-screensharing #vc-local-stream video {
+  object-fit: contain !important;
+  background: #000;
+}
+
 .vc-participant-label {
   position: absolute;
   bottom: 1rem;
