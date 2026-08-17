@@ -491,34 +491,47 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
 
         .user-card-header {
-            background: linear-gradient(135deg, var(--pb-teal) 0%, var(--pb-teal-deep) 100%);
-            padding: 1.75rem 1.5rem 1.1rem;
+            background: white;
+            padding: 2.15rem 1.5rem 1.1rem;
             text-align: center;
             position: relative;
+            border-bottom: 1px solid #f0f2f1;
+        }
+
+        /* A thin brand-color accent instead of a full gradient block behind
+           the photo — keeps a touch of "fun" without fighting the photo for
+           attention. Clips to the card's own rounded top corners since
+           .user-card has overflow:hidden. */
+        .user-card-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--pb-teal) 0%, var(--pb-teal-dark) 100%);
         }
 
         .avatar-wrap {
             position: relative;
             display: inline-block;
-            margin-bottom: 0.85rem;
+            margin-bottom: 0.9rem;
         }
 
         .user-card-avatar {
-            width: 92px;
-            height: 92px;
+            width: 128px;
+            height: 128px;
             border-radius: 50%;
             object-fit: cover;
-            border: 4px solid white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px var(--pb-teal), 0 6px 16px rgba(17,52,72,0.14);
             display: block;
         }
 
         .status-dot {
             position: absolute;
-            right: 4px;
-            bottom: 4px;
-            width: 16px;
-            height: 16px;
+            right: 6px;
+            bottom: 6px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #b0b7b5;
             border: 3px solid white;
@@ -533,20 +546,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .user-card-name {
             /* Deliberately NOT Baloo 2 — names stay on the inherited body font,
                same call Ian made on messages.html's conversation names. */
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            color: white;
+            color: var(--pb-teal-dark);
             margin: 0 0 0.35rem;
         }
 
         .user-card-country {
-            color: rgba(255,255,255,0.92);
+            color: #6b7573;
             font-size: 0.9rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.35rem;
         }
+
+        .user-card-country i { color: var(--pb-teal); }
 
         .country-flag { font-size: 1.05rem; line-height: 1; }
 
