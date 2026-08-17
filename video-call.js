@@ -181,6 +181,7 @@ const callDuration   = $('callDuration');
 const vcQuality      = $('vc-quality');
 const vcQualityLabel = $('vc-quality-label');
 const remoteStream   = $('vc-remote-stream');
+const remoteContainer= $('vc-remote-container');
 const remoteName     = $('vc-remote-name');
 const vcWaiting      = $('vc-waiting');
 const localPip       = $('vc-local-pip');
@@ -613,6 +614,7 @@ function handleUserLeft(user) {
         remoteStream.innerHTML = '';
         const badge = $('vc-screensharing-badge');
         if (badge) badge.classList.add('hidden');
+        remoteContainer.classList.remove('vc-screensharing');
     }
     updateParticipantsList();
     showToast(`${leavingName} left the call`);
@@ -747,6 +749,8 @@ function updateScreenShareUI() {
     btnScreenShare.querySelector('i').className = sharing ? 'fas fa-stop-circle' : 'fas fa-desktop';
     const banner = $('vc-presenting-banner');
     if (banner) banner.classList.toggle('hidden', !sharing);
+    // Show the full shared screen (no cropping) instead of the camera "fill" framing
+    localPip.classList.toggle('vc-screensharing', sharing);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1001,6 +1005,8 @@ function wbHandleRemoteAction(msg) {
     } else if (msg.t === 'ss') {
         const badge = $('vc-screensharing-badge');
         if (badge) badge.classList.toggle('hidden', !msg.active);
+        // Show the full shared screen (no cropping) instead of the camera "fill" framing
+        remoteContainer.classList.toggle('vc-screensharing', !!msg.active);
     }
 }
 
