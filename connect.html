@@ -26,6 +26,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <!-- Baloo 2 carries headings/buttons only on this redesigned page — same
+         pattern as home.html/notebook.html/messages.html. Names stay on the
+         inherited body font per Ian's explicit call on messages.html. -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/fontawesome-all.css" rel="stylesheet">
     <link href="css/swiper.css" rel="stylesheet">
@@ -47,9 +51,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="apple-mobile-web-app-title" content="Lingua Bud">
 
     <style>
+        :root {
+            /* Same brand-only palette used on home.html/messages.html/notebook.html
+               — teal + navy, no coral/gold/cream accents. */
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-navy-light: #1c5470;
+            --pb-surface: #fbfbfb;
+        }
+
         body {
             padding-top: calc(60px + env(safe-area-inset-top, 0)); /* <lb-app-shell> header height + iOS notch/status-bar clearance, replaces the marketing navbar's 4.5rem */
-            background-color: #f8f9fa;
+            background-color: var(--pb-surface);
             /* No padding-bottom here — css/styles.css sets body,html{height:100%}
                sitewide, and with border-box sizing that pins body's box to one
                viewport tall, so padding-bottom never reserves real trailing
@@ -237,43 +251,144 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             }
         }
 
-        /* Hero Section */
+        /* ===================== Hero ===================== */
         .connect-hero {
-            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+            background: linear-gradient(135deg, var(--pb-teal) 0%, var(--pb-teal-deep) 100%);
             color: white;
-            padding: 4.5rem 0 2rem;
+            padding: 2.25rem 0 2.75rem;
             margin-top: -1px;
         }
 
         .connect-hero h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 800;
+            margin-bottom: 0.4rem;
             color: white;
         }
 
         .connect-hero p {
-            font-size: 1.2rem;
+            font-size: 1.05rem;
             opacity: 0.95;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .connect-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.16);
+            border: 1px solid rgba(255,255,255,0.35);
+            padding: 0.5rem 1.1rem;
+            border-radius: 999px;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
             color: white;
         }
 
-        /* Filters Section */
-        .filters-section {
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            padding: 2rem;
-            margin: -2rem auto 2rem;
-            border-radius: 12px;
-            max-width: 1200px;
-            position: relative;
-            z-index: 10;
+        /* ===================== Discover toolbar (sticky search + filters) ===================== */
+        .discover-toolbar-wrap {
+            position: sticky;
+            top: calc(60px + env(safe-area-inset-top, 0));
+            z-index: 40;
+            background: var(--pb-surface);
+            padding: 0.85rem 1rem 0.6rem;
+            margin-top: -1.5rem;
         }
 
-        .filter-row {
+        .discover-toolbar {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0.75rem;
+            align-items: stretch;
+        }
+
+        .search-pill {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: white;
+            border-radius: 999px;
+            padding: 0.7rem 1.1rem;
+            box-shadow: 0 2px 10px rgba(17,52,72,0.1);
+        }
+
+        .search-pill i { color: var(--pb-teal-deep); }
+
+        .search-pill input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 0.95rem;
+            background: transparent;
+        }
+
+        .filter-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: white;
+            border: none;
+            border-radius: 999px;
+            padding: 0.7rem 1.2rem;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--pb-teal-dark);
+            box-shadow: 0 2px 10px rgba(17,52,72,0.1);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .filter-toggle-btn.active {
+            background: var(--pb-teal-dark);
+            color: white;
+        }
+
+        .filter-count-badge {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 999px;
+            background: var(--pb-teal);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 800;
+        }
+
+        .filter-toggle-btn.active .filter-count-badge {
+            background: white;
+            color: var(--pb-teal-dark);
+        }
+
+        .filter-panel {
+            max-width: 1200px;
+            margin: 0 auto;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease;
+        }
+
+        .filter-panel.open {
+            max-height: 320px;
+        }
+
+        .filter-panel-inner {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(17,52,72,0.08);
+            padding: 1.25rem;
+            margin-top: 0.75rem;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
         }
 
         .filter-group {
@@ -282,60 +397,88 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
 
         .filter-group label {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--pb-teal-dark);
+            margin-bottom: 0.45rem;
+            font-size: 0.85rem;
         }
 
+        .filter-group label i { color: var(--pb-teal); margin-right: 0.3rem; }
+
         .filter-group select {
-            padding: 0.75rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 0.65rem 0.75rem;
+            border: 2px solid #e7e9e7;
+            border-radius: 10px;
+            font-size: 0.95rem;
             transition: border-color 0.2s;
             background: white;
         }
 
         .filter-group select:focus {
             outline: none;
-            border-color: #20bcba;
+            border-color: var(--pb-teal);
         }
 
-        .filter-group input[type="text"] {
-            padding: 0.75rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-            background: white;
+        @media (min-width: 768px) {
+            .filter-toggle-btn { display: none; }
+            .filter-panel, .filter-panel.open { max-height: none; overflow: visible; }
         }
 
-        .filter-group input[type="text"]:focus {
-            outline: none;
-            border-color: #20bcba;
+        .active-chips-row {
+            max-width: 1200px;
+            margin: 0.75rem auto 0;
+            display: none;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
         }
 
-        /* User Grid */
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #e8f8f7;
+            color: var(--pb-teal-deep);
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .filter-chip i { font-size: 0.7rem; }
+        .filter-chip:hover { background: #d5f0ef; }
+
+        .clear-all-chip {
+            background: none;
+            border: none;
+            color: var(--pb-teal-dark);
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* ===================== User Grid ===================== */
         .user-grid-container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem 1rem;
+            padding: 1.25rem 1rem 2rem;
         }
 
         .user-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
         }
 
-        /* User Cards */
+        /* ===================== User Cards ===================== */
         .user-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
+            box-shadow: 0 2px 12px rgba(17,52,72,0.08);
+            transition: all 0.25s ease;
             cursor: pointer;
             height: 100%;
             display: flex;
@@ -343,76 +486,112 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
 
         .user-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 26px rgba(17,52,72,0.16);
         }
 
         .user-card-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 2rem 1.5rem 1rem;
+            background: linear-gradient(135deg, var(--pb-teal) 0%, var(--pb-teal-deep) 100%);
+            padding: 1.75rem 1.5rem 1.1rem;
             text-align: center;
             position: relative;
         }
 
+        .avatar-wrap {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 0.85rem;
+        }
+
         .user-card-avatar {
-            width: 100px;
-            height: 100px;
+            width: 92px;
+            height: 92px;
             border-radius: 50%;
             object-fit: cover;
             border: 4px solid white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin: 0 auto 1rem;
             display: block;
         }
 
+        .status-dot {
+            position: absolute;
+            right: 4px;
+            bottom: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #b0b7b5;
+            border: 3px solid white;
+            display: none;
+        }
+
+        .status-dot.online {
+            display: block;
+            background: #2ecc71;
+        }
+
         .user-card-name {
-            font-size: 1.3rem;
+            /* Deliberately NOT Baloo 2 — names stay on the inherited body font,
+               same call Ian made on messages.html's conversation names. */
+            font-size: 1.2rem;
             font-weight: 700;
-            color: #333;
-            margin: 0 0 0.5rem;
+            color: white;
+            margin: 0 0 0.35rem;
         }
 
         .user-card-country {
-            color: #666;
-            font-size: 0.95rem;
+            color: rgba(255,255,255,0.92);
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.3rem;
+            gap: 0.35rem;
         }
 
+        .country-flag { font-size: 1.05rem; line-height: 1; }
+
         .user-card-body {
-            padding: 1.5rem;
+            padding: 1.35rem 1.5rem;
             flex-grow: 1;
         }
 
         .language-section {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.1rem;
         }
 
         .language-section-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #666;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #6b7573;
             margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
+        .language-section-title i { margin-right: 0.3rem; color: var(--pb-teal); }
+
         .language-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.45rem;
         }
 
         .language-tag {
-            background: #e8f8f7;
-            color: #20bcba;
-            padding: 0.4rem 0.9rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
             display: inline-block;
+        }
+
+        .language-tag.speaks {
+            background: #e8f8f7;
+            color: var(--pb-teal-deep);
+        }
+
+        .language-tag.learning {
+            background: #e9eef2;
+            color: var(--pb-teal-dark);
         }
 
         .incomplete-profile {
@@ -422,14 +601,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
 
         .bio-section {
-            margin-top: 1.25rem;
+            margin-top: 1.1rem;
         }
 
         .bio-section-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 0.5rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #6b7573;
+            margin-bottom: 0.4rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -447,6 +626,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .user-card-footer {
             padding: 0 1.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
         }
 
         .not-accepting-badge {
@@ -455,186 +637,102 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background: #fff3cd;
             border-radius: 6px;
             padding: 0.3rem 0.6rem;
-            margin-bottom: 0.5rem;
             text-align: center;
         }
 
-        .view-profile-btn {
+        .btn-connect {
             width: 100%;
-            padding: 0.85rem;
-            background: #20bcba;
-            color: white;
+            padding: 0.75rem;
             border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
+            border-radius: 999px;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .view-profile-btn:hover {
-            background: #1a9d9b;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.6);
-            overflow-y: auto;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal.show {
+            transition: filter 0.2s, background 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            gap: 0.5rem;
         }
 
-        .modal-content {
-            background-color: white;
-            border-radius: 16px;
-            max-width: 650px;
-            width: 100%;
-            position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: slideUp 0.3s;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-            background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
+        .btn-connect.state-none {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, var(--pb-teal-deep) 100%);
             color: white;
-            padding: 2.5rem 2rem 2rem;
-            border-radius: 16px 16px 0 0;
+        }
+
+        .btn-connect.state-none:hover { filter: brightness(1.05); }
+
+        .btn-connect.state-pending {
+            background: #e9eef2;
+            color: var(--pb-teal-dark);
+            cursor: default;
+        }
+
+        .btn-connect.state-partners {
+            background: linear-gradient(135deg, var(--pb-teal-dark) 0%, var(--pb-navy-light) 100%);
+            color: white;
+        }
+
+        .btn-connect.state-incoming {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .btn-connect.state-disabled,
+        .btn-connect:disabled {
+            background: #f1f1f1;
+            color: #999;
+            cursor: default;
+        }
+
+        .view-profile-link {
             text-align: center;
-            position: relative;
-        }
-
-        .close {
-            position: absolute;
-            right: 1.5rem;
-            top: 1rem;
-            font-size: 2rem;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            line-height: 1;
-            transition: transform 0.2s;
-            background: rgba(255,255,255,0.2);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .close:hover {
-            transform: rotate(90deg);
-            background: rgba(255,255,255,0.3);
-        }
-
-        .modal-avatar {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 5px solid white;
-            margin-bottom: 1rem;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-        }
-
-        .modal-name {
-            margin: 0;
-            font-size: 2rem;
+            font-size: 0.85rem;
             font-weight: 700;
-            color: white;
+            color: var(--pb-teal-deep);
+            text-decoration: none;
         }
 
-        .modal-body {
-            padding: 2rem;
+        .view-profile-link:hover {
+            color: var(--pb-teal-dark);
+            text-decoration: underline;
         }
 
-        .info-section {
-            margin-bottom: 2rem;
-        }
+        /* ===================== Skeleton loading ===================== */
+        .skeleton-card { cursor: default; }
+        .skeleton-card:hover { transform: none; box-shadow: 0 2px 12px rgba(17,52,72,0.08); }
 
-        .info-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .info-section h4 {
-            color: #20bcba;
-            margin-bottom: 0.75rem;
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .info-section p {
-            margin: 0;
-            color: #555;
-            line-height: 1.7;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 1rem;
-            padding: 0 2rem 2rem;
-        }
-
-        .btn-primary-modal {
-            flex: 1;
-            padding: 1rem 2rem;
-            background-color: #20bcba;
-            color: white;
-            border: none;
+        .skeleton {
+            background: linear-gradient(90deg, #eceff1 25%, #f4f6f7 37%, #eceff1 63%);
+            background-size: 400% 100%;
+            animation: skeleton-shimmer 1.4s ease infinite;
             border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background 0.2s;
         }
 
-        .btn-primary-modal:hover {
-            background-color: #1a9d9b;
+        @keyframes skeleton-shimmer {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
         }
 
-        .btn-secondary-modal {
-            flex: 1;
-            padding: 1rem 2rem;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background 0.2s;
+        .skeleton-avatar {
+            width: 92px;
+            height: 92px;
+            border-radius: 50%;
+            margin: 0 auto 0.85rem;
         }
 
-        .btn-secondary-modal:hover {
-            background-color: #5a6268;
-        }
+        .skeleton-line { height: 12px; margin: 0 auto 0.5rem; }
 
-        .loading, .no-results {
+        .skeleton-pill-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .skeleton-pill { display: inline-block; width: 70px; height: 24px; border-radius: 999px; }
+
+        .skeleton-card .user-card-header { background: #f4f6f7; }
+
+        /* Pre-JS fallback only — renderSkeletons() replaces this within one
+           script tick on every real load; kept styled for the brief instant
+           before that (or if JS is unusually slow to start). */
+        .loading {
             text-align: center;
             padding: 4rem 2rem;
             color: #666;
@@ -643,36 +741,59 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .loading i {
             font-size: 3rem;
-            color: #20bcba;
+            color: var(--pb-teal);
             margin-bottom: 1rem;
+        }
+
+        /* ===================== Empty / no-results state ===================== */
+        .no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+        }
+
+        .empty-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #e8f8f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+        }
+
+        .empty-icon i { font-size: 1.8rem; color: var(--pb-teal); }
+
+        .no-results h3 {
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 800;
+            color: var(--pb-teal-dark);
+            font-size: 1.3rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .no-results p { margin-bottom: 1.25rem; }
+
+        .clear-filters-btn {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, var(--pb-teal-deep) 100%);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 999px;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
         }
 
         @media (max-width: 768px) {
             .connect-hero h1 {
-                font-size: 2rem;
-            }
-
-            .filters-section {
-                margin: -1rem 1rem 2rem;
-                padding: 1.5rem;
-            }
-
-            .filter-row {
-                grid-template-columns: 1fr;
-                gap: 1rem;
+                font-size: 1.55rem;
             }
 
             .user-grid {
                 grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-
-            .modal-content {
-                margin: 1rem;
-            }
-
-            .modal-actions {
-                flex-direction: column;
+                gap: 1.25rem;
             }
         }
     </style>
@@ -778,29 +899,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- Hero Section -->
     <div class="connect-hero">
         <div class="container text-center">
-            <h1>Find Your Language Learning Partner</h1>
+            <h1>Find Your Language Partner</h1>
             <p>Connect with learners worldwide and practice together!</p>
+            <div class="connect-hero-badge" id="partnerCountBadge" style="display:none;">
+                <i class="fas fa-users"></i> <span id="partnerCountNum">0</span> language partners ready to connect
+            </div>
         </div>
     </div>
 
-    <!-- Filters Section -->
-    <div class="container">
-        <div class="filters-section">
-            <div class="filter-row" style="margin-bottom: 1rem;">
-                <div class="filter-group" style="grid-column: 1 / -1;">
-                    <label for="nameSearch"><i class="fas fa-search"></i> Search by Name</label>
-                    <input type="text" id="nameSearch" placeholder="Search partners by name...">
-                </div>
+    <!-- Discover toolbar: sticky search + collapsible filters (mobile) -->
+    <div class="discover-toolbar-wrap">
+        <div class="discover-toolbar">
+            <div class="search-pill">
+                <i class="fas fa-search"></i>
+                <input type="text" id="nameSearch" placeholder="Search partners by name...">
             </div>
-            <div class="filter-row">
+            <button type="button" class="filter-toggle-btn" id="filterToggleBtn">
+                <i class="fas fa-sliders-h"></i> Filters
+                <span class="filter-count-badge" id="filterCountBadge">0</span>
+            </button>
+        </div>
+
+        <div class="filter-panel" id="filterPanel">
+            <div class="filter-panel-inner">
                 <div class="filter-group">
-                    <label for="learningFilter"><i class="fas fa-graduation-cap"></i> I want to learn</label>
+                    <label for="learningFilter"><i class="fas fa-comment-dots"></i> I want to learn</label>
                     <select id="learningFilter">
                         <option value="">All Languages</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="speakingFilter"><i class="fas fa-graduation-cap"></i> They want to learn</label>
+                    <label for="speakingFilter"><i class="fas fa-book-open"></i> They want to learn</label>
                     <select id="speakingFilter">
                         <option value="">All Languages</option>
                     </select>
@@ -813,6 +942,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
             </div>
         </div>
+
+        <div class="active-chips-row" id="activeChipsRow"></div>
     </div>
 
     <!-- User Grid -->
@@ -851,10 +982,50 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
-        import { startPresenceHeartbeat } from './js/presence.js';
+        import { startPresenceHeartbeat, isEffectivelyOnline } from './js/presence.js';
 
         const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
         window.DEFAULT_AVATAR = DEFAULT_AVATAR;
+
+        // Country name → ISO 3166-1 alpha-2, matching student-dashboard.html's
+        // country picklist exactly (that select is where user.country is set).
+        // Used only to render a flag emoji next to each card's country — a nice,
+        // low-risk "app-like" touch since country is a single controlled field
+        // (unlike languages_spoken/learning, which are freeform picks from a
+        // ~150-entry list with no reliable 1:1 flag, e.g. Arabic/Swahili/Latin —
+        // deliberately not attempting flags for those).
+        const COUNTRY_ISO = {
+            "Afghanistan":"AF","Albania":"AL","Algeria":"DZ","Andorra":"AD","Angola":"AO","Argentina":"AR","Armenia":"AM","Australia":"AU","Austria":"AT","Azerbaijan":"AZ",
+            "Bahamas":"BS","Bahrain":"BH","Bangladesh":"BD","Barbados":"BB","Belarus":"BY","Belgium":"BE","Belize":"BZ","Benin":"BJ","Bhutan":"BT","Bolivia":"BO",
+            "Bosnia and Herzegovina":"BA","Botswana":"BW","Brazil":"BR","Brunei":"BN","Bulgaria":"BG","Burkina Faso":"BF","Burundi":"BI","Cambodia":"KH","Cameroon":"CM","Canada":"CA",
+            "Cape Verde":"CV","Central African Republic":"CF","Chad":"TD","Chile":"CL","China":"CN","Colombia":"CO","Comoros":"KM","Congo (Brazzaville)":"CG","Congo (Kinshasa)":"CD","Costa Rica":"CR",
+            "Croatia":"HR","Cuba":"CU","Cyprus":"CY","Czech Republic":"CZ","Denmark":"DK","Djibouti":"DJ","Dominica":"DM","Dominican Republic":"DO","East Timor":"TL","Ecuador":"EC",
+            "Egypt":"EG","El Salvador":"SV","Equatorial Guinea":"GQ","Eritrea":"ER","Estonia":"EE","Eswatini":"SZ","Ethiopia":"ET","Fiji":"FJ","Finland":"FI","France":"FR",
+            "Gabon":"GA","Gambia":"GM","Georgia":"GE","Germany":"DE","Ghana":"GH","Greece":"GR","Grenada":"GD","Guatemala":"GT","Guinea":"GN","Guinea-Bissau":"GW",
+            "Guyana":"GY","Haiti":"HT","Honduras":"HN","Hungary":"HU","Iceland":"IS","India":"IN","Indonesia":"ID","Iran":"IR","Iraq":"IQ","Ireland":"IE",
+            "Israel":"IL","Italy":"IT","Ivory Coast":"CI","Jamaica":"JM","Japan":"JP","Jordan":"JO","Kazakhstan":"KZ","Kenya":"KE","Kiribati":"KI","Kuwait":"KW",
+            "Kyrgyzstan":"KG","Laos":"LA","Latvia":"LV","Lebanon":"LB","Lesotho":"LS","Liberia":"LR","Libya":"LY","Liechtenstein":"LI","Lithuania":"LT","Luxembourg":"LU",
+            "Madagascar":"MG","Malawi":"MW","Malaysia":"MY","Maldives":"MV","Mali":"ML","Malta":"MT","Marshall Islands":"MH","Mauritania":"MR","Mauritius":"MU","Mexico":"MX",
+            "Micronesia":"FM","Moldova":"MD","Monaco":"MC","Mongolia":"MN","Montenegro":"ME","Morocco":"MA","Mozambique":"MZ","Myanmar":"MM","Namibia":"NA","Nauru":"NR",
+            "Nepal":"NP","Netherlands":"NL","New Zealand":"NZ","Nicaragua":"NI","Niger":"NE","Nigeria":"NG","North Korea":"KP","North Macedonia":"MK","Norway":"NO","Oman":"OM",
+            "Pakistan":"PK","Palau":"PW","Palestine":"PS","Panama":"PA","Papua New Guinea":"PG","Paraguay":"PY","Peru":"PE","Philippines":"PH","Poland":"PL","Portugal":"PT",
+            "Puerto Rico":"PR","Qatar":"QA","Romania":"RO","Russia":"RU","Rwanda":"RW","Saint Kitts and Nevis":"KN","Saint Lucia":"LC","Saint Vincent":"VC","Samoa":"WS","San Marino":"SM",
+            "Saudi Arabia":"SA","Senegal":"SN","Serbia":"RS","Seychelles":"SC","Sierra Leone":"SL","Singapore":"SG","Slovakia":"SK","Slovenia":"SI","Solomon Islands":"SB","Somalia":"SO",
+            "South Africa":"ZA","South Korea":"KR","South Sudan":"SS","Spain":"ES","Sri Lanka":"LK","Sudan":"SD","Suriname":"SR","Sweden":"SE","Switzerland":"CH","Syria":"SY",
+            "São Tomé and Príncipe":"ST","Taiwan":"TW","Tajikistan":"TJ","Tanzania":"TZ","Thailand":"TH","Togo":"TG","Tonga":"TO","Trinidad and Tobago":"TT","Tunisia":"TN","Turkey":"TR",
+            "Turkmenistan":"TM","Tuvalu":"TV","Uganda":"UG","Ukraine":"UA","United Arab Emirates":"AE","United Kingdom":"GB","United States":"US","Uruguay":"UY","Uzbekistan":"UZ","Vanuatu":"VU",
+            "Vatican City":"VA","Venezuela":"VE","Vietnam":"VN","Yemen":"YE","Zambia":"ZM","Zimbabwe":"ZW"
+        };
+
+        function flagEmoji(iso2) {
+            if (!iso2 || iso2.length !== 2) return '';
+            const points = [...iso2.toUpperCase()].map(c => 127397 + c.charCodeAt(0));
+            return String.fromCodePoint(...points);
+        }
+
+        function countryFlag(countryName) {
+            return flagEmoji(COUNTRY_ISO[countryName]);
+        }
 
         const userGrid = document.getElementById('userGrid');
         const learningFilter = document.getElementById('learningFilter');
@@ -865,9 +1036,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const profileNavWrapper = document.getElementById('profileNavWrapper');
         const signInWrapper = document.getElementById('signInWrapper');
         const logoutLink = document.getElementById('logoutLink');
+        const filterToggleBtn = document.getElementById('filterToggleBtn');
+        const filterPanel = document.getElementById('filterPanel');
+        const filterCountBadge = document.getElementById('filterCountBadge');
+        const activeChipsRow = document.getElementById('activeChipsRow');
+        const partnerCountBadge = document.getElementById('partnerCountBadge');
+        const partnerCountNum = document.getElementById('partnerCountNum');
 
         let allUsers = [];
         let currentUser = null;
+        let myName = '';
+        let myAvatar = '';
+
+        // One-time (not live) presence/friend-request lookups for whatever's
+        // currently in allUsers — deliberately NOT a per-card onSnapshot
+        // listener. messages.html's conversation list made the same call for
+        // presence (batch read + a slow poll, not a listener per row) to avoid
+        // a listener-per-row blowup; the same reasoning applies here with a
+        // grid of user cards.
+        const presenceMap = new Map();   // uid -> effectively-online boolean
+        const sentReqMap = new Map();    // toId -> 'pending' | 'accepted'
+        const receivedReqMap = new Map(); // fromId -> 'pending' | 'accepted'
+        let presenceRefreshTimer = null;
+
+        renderSkeletons();
 
         // Check authentication and load profile picture
         onAuthStateChanged(auth, async (user) => {
@@ -884,11 +1076,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     if (isInstructor) {
                         const instructorData = instructorDoc.data();
                         if (instructorData.avatar_url) navProfilePic.src = instructorData.avatar_url;
+                        myName = instructorData.name || user.displayName || user.email || '';
+                        myAvatar = instructorData.avatar_url || '';
                     } else {
                         const userDoc = await getDoc(doc(db, 'users', user.uid));
                         if (userDoc.exists()) {
                             const userData = userDoc.data();
                             if (userData.avatar_url) navProfilePic.src = userData.avatar_url;
+                            myName = userData.name || user.displayName || user.email || '';
+                            myAvatar = userData.avatar_url || '';
                         }
                     }
 
@@ -908,6 +1104,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 signInWrapper.style.display = 'none';
 
                 await fetchUsers();
+                startPresenceRefreshTimer();
 
                 try { await loadUnreadMessageCount(); } catch (e) { console.error(e); }
                 loadPendingRequests();
@@ -963,32 +1160,130 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
         }
 
+        // Filter panel toggle (mobile only — CSS forces it open on desktop)
+        filterToggleBtn.addEventListener('click', () => {
+            filterPanel.classList.toggle('open');
+            filterToggleBtn.classList.toggle('active');
+        });
+
         async function fetchUsers() {
             try {
-                console.log('Starting to fetch users...');
-
                 const querySnapshot = await getDocs(collection(db, 'users'));
-                console.log('Query snapshot received, docs count:', querySnapshot.size);
 
                 allUsers = [];
-                querySnapshot.forEach((doc) => {
-                    const userData = { id: doc.id, ...doc.data() };
-                    console.log('User data:', userData);
+                querySnapshot.forEach((docSnap) => {
+                    const userData = { id: docSnap.id, ...docSnap.data() };
 
                     // Show student users; exclude current user if logged in
-                    const isCurrentUser = currentUser && doc.id === currentUser.uid;
+                    const isCurrentUser = currentUser && docSnap.id === currentUser.uid;
                     if (!isCurrentUser && userData.role === 'student' && !userData.hasInstructorApplication) {
                         allUsers.push(userData);
                     }
                 });
 
-                console.log('Fetched users after filtering:', allUsers.length);
-
+                updatePartnerCountBadge(allUsers.length);
                 populateFilterOptions(allUsers);
+
+                if (currentUser) {
+                    await Promise.all([loadPresenceMap(allUsers), loadFriendRequestState()]);
+                }
+
                 renderUsers();
             } catch (error) {
-                console.error('Error fetching users - Full error:', error);
-                userGrid.innerHTML = `<div class="loading">Error loading users: ${error.message}<br><br>Please check the console for details.</div>`;
+                console.error('Error fetching users:', error);
+                userGrid.innerHTML = `<div class="no-results"><div>Error loading users: ${escapeHtml(error.message)}</div><div style="margin-top:0.5rem;color:#999;">Please check the console for details.</div></div>`;
+            }
+        }
+
+        function updatePartnerCountBadge(count) {
+            if (count > 0) {
+                partnerCountNum.textContent = count;
+                partnerCountBadge.style.display = 'inline-flex';
+            } else {
+                partnerCountBadge.style.display = 'none';
+            }
+        }
+
+        async function loadPresenceMap(users) {
+            if (!currentUser) return;
+            const results = await Promise.all(users.map(u =>
+                getDoc(doc(db, 'presence', u.id))
+                    .then(snap => [u.id, snap.exists() ? snap.data() : null])
+                    .catch(() => [u.id, null])
+            ));
+            presenceMap.clear();
+            results.forEach(([uid, data]) => presenceMap.set(uid, isEffectivelyOnline(data)));
+        }
+
+        function updateStatusDots() {
+            document.querySelectorAll('.user-card').forEach(card => {
+                const uid = card.dataset.uid;
+                const dot = card.querySelector('.status-dot');
+                if (!dot || !uid) return;
+                dot.classList.toggle('online', presenceMap.get(uid) === true);
+            });
+        }
+
+        function startPresenceRefreshTimer() {
+            if (presenceRefreshTimer) clearInterval(presenceRefreshTimer);
+            presenceRefreshTimer = setInterval(async () => {
+                if (!currentUser || document.visibilityState !== 'visible') return;
+                await loadPresenceMap(allUsers);
+                updateStatusDots();
+            }, 60000);
+        }
+
+        async function loadFriendRequestState() {
+            if (!currentUser) return;
+            try {
+                const [sentSnap, recvSnap] = await Promise.all([
+                    getDocs(query(collection(db, 'friendRequests'), where('fromId', '==', currentUser.uid))),
+                    getDocs(query(collection(db, 'friendRequests'), where('toId', '==', currentUser.uid)))
+                ]);
+
+                sentReqMap.clear();
+                // Accepted always wins over pending, regardless of doc order.
+                sentSnap.docs.forEach(d => { if (d.data().status === 'accepted') sentReqMap.set(d.data().toId, 'accepted'); });
+                sentSnap.docs.forEach(d => { if (!sentReqMap.has(d.data().toId)) sentReqMap.set(d.data().toId, d.data().status); });
+
+                receivedReqMap.clear();
+                recvSnap.docs.forEach(d => { if (d.data().status === 'accepted') receivedReqMap.set(d.data().fromId, 'accepted'); });
+                recvSnap.docs.forEach(d => { if (!receivedReqMap.has(d.data().fromId)) receivedReqMap.set(d.data().fromId, d.data().status); });
+            } catch (e) {
+                console.error('Error loading friend request state:', e);
+            }
+        }
+
+        function connectState(uid) {
+            if (sentReqMap.get(uid) === 'accepted' || receivedReqMap.get(uid) === 'accepted') return 'partners';
+            if (sentReqMap.get(uid) === 'pending') return 'pending';
+            if (receivedReqMap.get(uid) === 'pending') return 'incoming';
+            return 'none';
+        }
+
+        async function sendQuickConnect(user, btn) {
+            if (!currentUser) { window.location.href = 'login'; return; }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+            try {
+                await addDoc(collection(db, 'friendRequests'), {
+                    fromId: currentUser.uid,
+                    toId: user.id,
+                    fromName: myName,
+                    fromAvatar: myAvatar,
+                    status: 'pending',
+                    createdAt: serverTimestamp()
+                });
+                sentReqMap.set(user.id, 'pending');
+                btn.className = 'btn-connect state-pending';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-check"></i> Request Sent';
+            } catch (e) {
+                console.error('Error sending request:', e);
+                btn.disabled = false;
+                btn.className = 'btn-connect state-none';
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
+                alert('Failed to send request. Please try again.');
             }
         }
 
@@ -1006,6 +1301,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 if (user.country) countries.add(user.country);
             });
 
+            const prevLearning = learningFilter.value;
+            const prevSpeaking = speakingFilter.value;
+            const prevCountry = countryFilter.value;
+
             // "I want to learn X" → show users who speak X
             learningFilter.innerHTML = `<option value="">All Languages</option>`;
             Array.from(spokenLanguages).sort().forEach(lang => {
@@ -1022,6 +1321,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             Array.from(countries).sort().forEach(country => {
                 countryFilter.innerHTML += `<option value="${country}">${country}</option>`;
             });
+
+            learningFilter.value = prevLearning;
+            speakingFilter.value = prevSpeaking;
+            countryFilter.value = prevCountry;
         }
 
         function escapeHtml(text) {
@@ -1030,10 +1333,82 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return div.innerHTML;
         }
 
+        function renderSkeletons(count = 6) {
+            userGrid.innerHTML = Array.from({ length: count }).map(() => `
+                <div class="user-card skeleton-card">
+                    <div class="user-card-header">
+                        <div class="skeleton skeleton-avatar"></div>
+                        <div class="skeleton skeleton-line" style="width:55%;"></div>
+                        <div class="skeleton skeleton-line" style="width:35%;"></div>
+                    </div>
+                    <div class="user-card-body">
+                        <div class="skeleton skeleton-line" style="width:28%;margin:0 0 0.5rem;"></div>
+                        <div class="skeleton-pill-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+                        <div class="skeleton skeleton-line" style="width:28%;margin:1rem 0 0.5rem;"></div>
+                        <div class="skeleton-pill-row"><span class="skeleton skeleton-pill"></span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getActiveFilterChips() {
+            const chips = [];
+            if (nameSearch.value.trim()) {
+                chips.push({ label: `"${nameSearch.value.trim()}"`, clear: () => { nameSearch.value = ''; } });
+            }
+            if (learningFilter.value) {
+                chips.push({ label: `Learn: ${learningFilter.value}`, clear: () => { learningFilter.value = ''; } });
+            }
+            if (speakingFilter.value) {
+                chips.push({ label: `Partner learns: ${speakingFilter.value}`, clear: () => { speakingFilter.value = ''; } });
+            }
+            if (countryFilter.value) {
+                chips.push({ label: `From: ${countryFilter.value}`, clear: () => { countryFilter.value = ''; } });
+            }
+            return chips;
+        }
+
+        function renderChipsAndBadge() {
+            const selectCount = [learningFilter.value, speakingFilter.value, countryFilter.value].filter(Boolean).length;
+            filterCountBadge.textContent = selectCount;
+            filterCountBadge.style.display = selectCount > 0 ? 'inline-flex' : 'none';
+            filterToggleBtn.classList.toggle('active', selectCount > 0);
+
+            const chips = getActiveFilterChips();
+            if (chips.length === 0) {
+                activeChipsRow.style.display = 'none';
+                activeChipsRow.innerHTML = '';
+                return;
+            }
+
+            activeChipsRow.style.display = 'flex';
+            activeChipsRow.innerHTML = chips.map((c, i) =>
+                `<span class="filter-chip" data-idx="${i}">${escapeHtml(c.label)} <i class="fas fa-times"></i></span>`
+            ).join('') + `<button type="button" class="clear-all-chip" id="clearAllChip">Clear all</button>`;
+
+            activeChipsRow.querySelectorAll('.filter-chip').forEach((el, i) => {
+                el.addEventListener('click', () => { chips[i].clear(); renderUsers(); });
+            });
+            document.getElementById('clearAllChip').addEventListener('click', () => {
+                nameSearch.value = ''; learningFilter.value = ''; speakingFilter.value = ''; countryFilter.value = '';
+                renderUsers();
+            });
+        }
+
+        function clearAllFilters() {
+            nameSearch.value = '';
+            learningFilter.value = '';
+            speakingFilter.value = '';
+            countryFilter.value = '';
+            renderUsers();
+        }
+
         function renderUsers() {
             const selectedLearning = learningFilter.value;
             const selectedSpeaking = speakingFilter.value;
             const selectedCountry = countryFilter.value;
+
+            renderChipsAndBadge();
 
             userGrid.innerHTML = '';
 
@@ -1053,7 +1428,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
 
             if (filtered.length === 0) {
-                userGrid.innerHTML = '<div class="no-results"><i class="fas fa-user-friends" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No language partners found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';
+                userGrid.innerHTML = `
+                    <div class="no-results">
+                        <div class="empty-icon"><i class="fas fa-user-friends"></i></div>
+                        <h3>No matches yet</h3>
+                        <p>Try adjusting your search or filters.</p>
+                        <button type="button" class="clear-filters-btn" id="clearFiltersBtn">Clear all filters</button>
+                    </div>
+                `;
+                document.getElementById('clearFiltersBtn')?.addEventListener('click', clearAllFilters);
                 return;
             }
 
@@ -1063,16 +1446,71 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
         }
 
+        function renderCardFooter(footer, user) {
+            footer.innerHTML = '';
+
+            if (user.acceptingRequests === false) {
+                const badge = document.createElement('div');
+                badge.className = 'not-accepting-badge';
+                badge.innerHTML = '<i class="fas fa-user-slash" style="margin-right:0.3rem;"></i>Not accepting requests';
+                footer.appendChild(badge);
+            }
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+
+            if (!currentUser) {
+                btn.className = 'btn-connect state-none';
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
+                btn.onclick = (e) => { e.stopPropagation(); window.location.href = 'login'; };
+            } else if (user.acceptingRequests === false) {
+                btn.className = 'btn-connect state-disabled';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-user-slash"></i> Not Accepting';
+            } else {
+                const state = connectState(user.id);
+                if (state === 'partners') {
+                    btn.className = 'btn-connect state-partners';
+                    btn.innerHTML = '<i class="fas fa-comment"></i> Message';
+                    btn.onclick = (e) => { e.stopPropagation(); window.location.href = `messages?with=${user.id}`; };
+                } else if (state === 'pending') {
+                    btn.className = 'btn-connect state-pending';
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Request Sent';
+                } else if (state === 'incoming') {
+                    btn.className = 'btn-connect state-incoming';
+                    btn.innerHTML = '<i class="fas fa-user-check"></i> Respond';
+                    btn.onclick = (e) => { e.stopPropagation(); window.location.href = 'friends'; };
+                } else {
+                    btn.className = 'btn-connect state-none';
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
+                    btn.onclick = (e) => { e.stopPropagation(); sendQuickConnect(user, btn); };
+                }
+            }
+
+            footer.appendChild(btn);
+
+            const link = document.createElement('a');
+            link.className = 'view-profile-link';
+            link.href = currentUser ? `learner-profile?uid=${user.id}` : 'login';
+            link.textContent = 'View Profile';
+            link.onclick = (e) => { e.stopPropagation(); };
+            footer.appendChild(link);
+        }
+
         function createUserCard(user) {
             const spoken = user.languages_spoken || [];
             const learning = user.languages_learning || [];
             const avatar = user.avatar_url || user.avatar || DEFAULT_AVATAR;
             const name = escapeHtml(user.name || user.display_name || 'Anonymous User');
             const country = escapeHtml(user.country || 'Not specified');
+            const flag = countryFlag(user.country);
             const bio = escapeHtml(user.about_me || '');
+            const online = presenceMap.get(user.id) === true;
 
             const card = document.createElement('div');
             card.className = 'user-card';
+            card.dataset.uid = user.id;
             card.onclick = () => {
                 if (!currentUser) { window.location.href = 'login'; return; }
                 window.location.href = `learner-profile?uid=${user.id}`;
@@ -1080,9 +1518,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             let cardHTML = `
                 <div class="user-card-header">
-                    <img class="user-card-avatar" src="${avatar}" alt="${name}" onerror="this.src=window.DEFAULT_AVATAR">
+                    <div class="avatar-wrap">
+                        <img class="user-card-avatar" src="${avatar}" alt="${name}" onerror="this.src=window.DEFAULT_AVATAR">
+                        <span class="status-dot ${online ? 'online' : ''}"></span>
+                    </div>
                     <div class="user-card-name">${name}</div>
-                    <div class="user-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>
+                    <div class="user-card-country">${flag ? `<span class="country-flag">${flag}</span>` : '<i class="fas fa-map-marker-alt"></i>'} ${country}</div>
                 </div>
                 <div class="user-card-body">
             `;
@@ -1090,9 +1531,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (spoken.length > 0) {
                 cardHTML += `
                     <div class="language-section">
-                        <div class="language-section-title">Speaks</div>
+                        <div class="language-section-title"><i class="fas fa-comment-dots"></i>Speaks</div>
                         <div class="language-tags">
-                            ${spoken.map(lang => `<span class="language-tag">${escapeHtml(lang)}</span>`).join('')}
+                            ${spoken.map(lang => `<span class="language-tag speaks">${escapeHtml(lang)}</span>`).join('')}
                         </div>
                     </div>
                 `;
@@ -1101,9 +1542,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (learning.length > 0) {
                 cardHTML += `
                     <div class="language-section">
-                        <div class="language-section-title">Learning</div>
+                        <div class="language-section-title"><i class="fas fa-book-open"></i>Learning</div>
                         <div class="language-tags">
-                            ${learning.map(lang => `<span class="language-tag">${escapeHtml(lang)}</span>`).join('')}
+                            ${learning.map(lang => `<span class="language-tag learning">${escapeHtml(lang)}</span>`).join('')}
                         </div>
                     </div>
                 `;
@@ -1122,19 +1563,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 `;
             }
 
-            const notAcceptingHTML = user.acceptingRequests === false
-                ? `<div class="not-accepting-badge"><i class="fas fa-user-slash" style="margin-right:0.3rem;"></i>Not accepting requests</div>`
-                : '';
-
-            cardHTML += `
-                </div>
-                <div class="user-card-footer">
-                    ${notAcceptingHTML}
-                    <button class="view-profile-btn">View Profile</button>
-                </div>
-            `;
+            cardHTML += `</div><div class="user-card-footer"></div>`;
 
             card.innerHTML = cardHTML;
+            renderCardFooter(card.querySelector('.user-card-footer'), user);
             return card;
         }
 
