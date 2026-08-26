@@ -258,7 +258,9 @@ body.in-call {
   border: 1.5px solid var(--vc-border);
   border-radius: var(--vc-radius-sm);
   color: white;
-  font-size: 0.95rem;
+  /* 16px, not smaller — see the comment on .chat-input for why (avoids the
+     mobile browser auto-zoom-on-focus behavior). */
+  font-size: 16px;
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
@@ -878,12 +880,22 @@ body.in-call {
   height: var(--vc-ctrl-h);
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* flex-start (not center) + auto margins on .vc-ctrl-pill below — a
+     centered flex item that's wider than its container clips equally off
+     both edges with no way to scroll to the clipped part in most browsers.
+     Flush-left plus horizontal scroll means the pill still visually centers
+     itself on screens wide enough to fit it, but on a narrow phone every
+     button stays reachable by scrolling instead of some being cut off. */
+  justify-content: flex-start;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   padding: 0 1rem;
   background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
   flex-shrink: 0;
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
+#vc-controls::-webkit-scrollbar { display: none; }
 
 #vc-controls.controls-hidden {
   opacity: 0;
@@ -902,6 +914,14 @@ body.in-call {
   border-radius: 50px;
   padding: 0.4rem 0.8rem;
   box-shadow: var(--vc-shadow);
+  /* Auto margins center the pill when #vc-controls has slack, same as the
+     old justify-content: center — but unlike that, they collapse to 0
+     instead of clipping once the pill is wider than the screen, so it
+     starts flush left and scrolls into view instead of losing buttons
+     off both edges. flex-shrink: 0 keeps every button at its real size
+     rather than being squashed to fit. */
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 .vc-ctrl-group {
@@ -1263,7 +1283,10 @@ body.in-call {
   border-radius: 20px;
   padding: 0.55rem 0.875rem;
   color: white;
-  font-size: 0.875rem;
+  /* 16px, not smaller — iOS/Android auto-zoom the page on focusing any
+     input/textarea under 16px, which is why opening chat mid-call zoomed
+     in and stayed zoomed until manually zooming back out after sending. */
+  font-size: 16px;
   font-family: inherit;
   outline: none;
   resize: none;
@@ -1794,8 +1817,13 @@ body.in-call {
 }
 
 @media (max-width: 480px) {
-  :root { --ctrl-btn-size: 40px; --ctrl-btn-lg: 46px; }
+  :root { --ctrl-btn-size: 38px; --ctrl-btn-lg: 44px; }
   .vc-ctrl-divider { margin: 0 0.1rem; }
+  /* Trim the pill's own padding/gaps and the bar's outer padding too —
+     on the narrowest phones this is most of what stands between the full
+     9-button row fitting without any scrolling at all. */
+  #vc-controls { padding: 0 0.5rem; }
+  .vc-ctrl-pill { gap: 0.2rem; padding: 0.3rem 0.5rem; }
 }
 
 /* Tablet: panels don't overlay full width */
