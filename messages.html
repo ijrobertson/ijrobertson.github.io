@@ -1674,7 +1674,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             arrayRemove,
             ref,
             uploadBytesResumable,
-            getDownloadURL
+            getDownloadURL,
+            reconnectFirestore
         } from './lib/firebaseClient.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
@@ -2834,6 +2835,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         async function attemptSend(conversationId, optimisticMessage) {
+            // If this send is taking far longer than a normal round-trip, nudge
+            // Firestore's connection (see reconnectFirestore in firebaseClient.js) —
+            // on mobile the underlying connection can go stale without the SDK
+            // noticing, leaving a write silently stuck "Sending..." until something
+            // forces a reconnect. This used to only happen when the user left and
+            // reopened the conversation; now it self-heals in the background.
+            const stuckTimer = setTimeout(() => reconnectFirestore(), 7000);
             try {
                 const convDoc = await getDoc(doc(db, 'conversations', conversationId));
                 const convData = convDoc.data();
@@ -2874,6 +2882,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // native chat app surfaces a failed send than a modal dialog is.
                 optimisticMessage._status = 'failed';
                 renderMessageList(conversationId);
+            } finally {
+                clearTimeout(stuckTimer);
             }
         }
 
