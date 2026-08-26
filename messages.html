@@ -1356,7 +1356,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             where,
             orderBy,
             onSnapshot,
-            serverTimestamp,
             onAuthStateChanged,
             signOut,
             updateDoc,
@@ -1364,7 +1363,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             arrayRemove,
             ref,
             uploadBytesResumable,
-            getDownloadURL
+            getDownloadURL,
+            reconnectFirestore
         } from './lib/firebaseClient.js';
 
         const conversationsList = document.getElementById('conversationsList');
@@ -1879,7 +1879,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         text: callText,
                         type: 'video_call_request',
                         channelName: channelName,
-                        timestamp: serverTimestamp(),
+                        // Client timestamp, not serverTimestamp() — this field is used in
+                        // orderBy() on a live listener, and a pending (unresolved)
+                        // serverTimestamp() write is excluded from an ordered query's
+                        // results until the server acknowledges it. That's why a just-sent
+                        // message could sit invisible until leaving and reopening the
+                        // conversation reattached the listener after the write had long
+                        // since resolved.
+                        timestamp: new Date(),
                         read: false
                     });
 
@@ -2062,6 +2069,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             if (!text) { _isSendingMessage = false; return; }
 
+            const sendBtn = document.querySelector('#messageForm .send-btn');
+            if (sendBtn) sendBtn.disabled = true;
+
+            // If this send is taking far longer than a normal round-trip, nudge
+            // Firestore's connection (see reconnectFirestore in firebaseClient.js) —
+            // on mobile the underlying connection can go stale without the SDK
+            // noticing, leaving a write silently stuck with no visible feedback
+            // (looking "frozen") until something forces a reconnect. This used to
+            // only resolve when the user left and reopened the conversation.
+            const stuckTimer = setTimeout(() => reconnectFirestore(), 7000);
+
             try {
                 // Get conversation to find other participant(s)
                 const convDoc = await getDoc(doc(db, 'conversations', conversationId));
@@ -2075,7 +2093,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
                     senderId: currentUser.uid,
                     text: text,
-                    timestamp: serverTimestamp(),
+                    // Client timestamp, not serverTimestamp() — this field is used in
+                    // orderBy() on a live listener, and a pending (unresolved)
+                    // serverTimestamp() write is excluded from an ordered query's
+                    // results until the server acknowledges it. That's why a just-sent
+                    // message could sit invisible (looking "frozen"/unsent) until
+                    // leaving and reopening the conversation reattached the listener
+                    // after the write had long since resolved.
+                    timestamp: new Date(),
                     read: false
                 });
 
@@ -2102,7 +2127,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 console.error('Error sending message:', error);
                 alert('Failed to send message. Please try again.');
             } finally {
+                clearTimeout(stuckTimer);
                 _isSendingMessage = false;
+                if (sendBtn) sendBtn.disabled = false;
             }
         }
 
@@ -2653,7 +2680,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     audioDuration: Math.round(duration),
                     audioLang: recordingLanguage,   // BCP-47, e.g. 'pt-PT'
                     transcript: transcript || '',
-                    timestamp: serverTimestamp(),
+                    // Client timestamp, not serverTimestamp() — see the comment on
+                    // the text-message send above for why.
+                    timestamp: new Date(),
                     read: false
                 });
 
