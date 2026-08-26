@@ -437,6 +437,29 @@ async function initAgora() {
     state.client.on('user-left',        handleUserLeft);
 }
 
+/**
+ * Acquire mic + camera independently so a missing/blocked device on one
+ * side (e.g. a desktop with no webcam) doesn't block the whole call —
+ * AgoraRTC.createMicrophoneAndCameraTracks() fails outright if either
+ * device can't be found, even when the other one works fine.
+ */
+async function acquireLocalTracks() {
+    const [audioResult, videoResult] = await Promise.allSettled([
+        AgoraRTC.createMicrophoneAudioTrack(),
+        AgoraRTC.createCameraVideoTrack()
+    ]);
+    return {
+        audioTrack: audioResult.status === 'fulfilled' ? audioResult.value : null,
+        videoTrack: videoResult.status === 'fulfilled' ? videoResult.value : null,
+        audioError: audioResult.status === 'rejected' ? audioResult.reason : null,
+        videoError: videoResult.status === 'rejected' ? videoResult.reason : null,
+    };
+}
+
+function isDeviceMissing(err) {
+    return err?.code === 'DEVICE_NOT_FOUND' || err?.message?.includes('NotFoundError');
+}
+
 async function joinChannel() {
     const channel = channelInput.value.trim();
     if (!channel) { showPjStatus('Please enter a room code.', 'error'); return; }
@@ -461,14 +484,32 @@ async function joinChannel() {
         state.wbJoinTime     = Date.now();
 
         setLoadingMsg('Starting camera & microphone…');
-        [state.localAudioTrack, state.localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        const { audioTrack, videoTrack, audioError, videoError } = await acquireLocalTracks();
 
-        // Play local video in self-PiP
-        state.localVideoTrack.play(localStream);
+        if (!audioTrack && !videoTrack) {
+            await state.client.leave();
+            const bothMissing = isDeviceMissing(audioError) && isDeviceMissing(videoError);
+            throw new Error(bothMissing
+                ? 'No camera or microphone was found. Connect a webcam/mic (or check your OS camera & microphone privacy settings) and try again.'
+                : 'Camera and microphone access was blocked. Check your browser and OS permissions for this site and try again.');
+        }
+
+        state.localAudioTrack = audioTrack;
+        state.localVideoTrack = videoTrack;
+
+        // Play local video in self-PiP, or show a placeholder if no camera was found
+        if (videoTrack) {
+            videoTrack.play(localStream);
+        }
+        setLocalCameraUnavailable(!videoTrack);
+        setLocalMicUnavailable(!audioTrack);
         localName.textContent = state.currentUserName;
 
-        // Publish to channel
-        await state.client.publish([state.localAudioTrack, state.localVideoTrack]);
+        // Publish whatever tracks are actually available
+        await state.client.publish([audioTrack, videoTrack].filter(Boolean));
+
+        if (videoError) showToast(isDeviceMissing(videoError) ? 'No camera detected — joined audio-only' : 'Camera access blocked — joined audio-only', 'error', 6000);
+        if (audioError) showToast(isDeviceMissing(audioError) ? 'No microphone detected — joined video-only' : 'Microphone access blocked — joined video-only', 'error', 6000);
 
         // Register presence & whiteboard relay
         await registerPresence(actualUid, channel);
@@ -547,6 +588,8 @@ async function leaveChannel() {
     state.isCameraOff = false;
     updateMuteUI();
     updateCameraUI();
+    setLocalCameraUnavailable(false);
+    setLocalMicUnavailable(false);
     updateScreenShareUI();
     navWarning.classList.add('hidden');
     _closePipOverlay();
@@ -657,6 +700,36 @@ function updateCameraUI() {
         pipCam.classList.toggle('cam-off', off);
         pipCam.querySelector('i').className = off ? 'fas fa-video-slash' : 'fas fa-video';
     }
+}
+
+/** Reflect a missing/blocked camera: disable the toggle and show a placeholder in the self-view PiP */
+function setLocalCameraUnavailable(unavailable) {
+    btnCamera.disabled = unavailable;
+    btnCamera.title = unavailable ? 'No camera detected' : 'Camera (V)';
+    const pipCam = $('pip-camera-btn');
+    if (pipCam) pipCam.disabled = unavailable;
+
+    localPip.classList.toggle('cam-off-overlay', unavailable);
+    let placeholder = $('vc-local-nocam');
+    if (unavailable) {
+        if (!placeholder) {
+            placeholder = document.createElement('div');
+            placeholder.id = 'vc-local-nocam';
+            placeholder.className = 'vc-local-nocam';
+            placeholder.innerHTML = '<i class="fas fa-video-slash"></i>';
+            localStream.appendChild(placeholder);
+        }
+    } else if (placeholder) {
+        placeholder.remove();
+    }
+}
+
+/** Reflect a missing/blocked microphone: disable the toggle */
+function setLocalMicUnavailable(unavailable) {
+    btnMute.disabled = unavailable;
+    btnMute.title = unavailable ? 'No microphone detected' : 'Mute (M)';
+    const pipMute = $('pip-mute-btn');
+    if (pipMute) pipMute.disabled = unavailable;
 }
 
 // ════════════════════════════════════════════════════════════
