@@ -159,6 +159,97 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .section-header h2 { font-family: 'Baloo 2', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--pb-teal-dark); margin: 0; }
         hr.section-divider { border: none; border-top: 2px solid #e7e9e7; margin: 2.5rem 0; }
 
+        /* ===== LANGUAGE QUIZZES (primary action — see docs/PWA_PRD.md Learn-tab
+           redesign, 2026-09-03: this is now the first thing below the hero,
+           deliberately the boldest card on the page so it reads as THE main
+           action, with Continue Learning below staying in its existing quieter
+           white-card style so the two don't visually compete). ===== */
+        .quiz-primary-card {
+            background: linear-gradient(135deg, var(--pb-teal-dark) 0%, var(--pb-navy-light) 100%);
+            border-radius: 28px; padding: 2rem 1.75rem; color: white; position: relative; overflow: hidden;
+            box-shadow: 0 16px 34px -12px rgba(17,52,72,0.5);
+        }
+        .quiz-primary-card::before {
+            content: ""; position: absolute; width: 190px; height: 190px; border-radius: 50%;
+            background: rgba(255,255,255,0.08); top: -70px; right: -60px;
+        }
+        .quiz-primary-icon {
+            width: 56px; height: 56px; border-radius: 16px; background: rgba(255,255,255,0.18);
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.1rem;
+            position: relative; z-index: 1;
+        }
+        .quiz-primary-card h2 { font-family: 'Baloo 2', sans-serif; font-size: 1.55rem; font-weight: 800; margin: 0 0 0.5rem; color: white; position: relative; z-index: 1; }
+        .quiz-primary-card p { font-size: 0.98rem; color: rgba(255,255,255,0.85); margin: 0 0 1.5rem; max-width: 46ch; position: relative; z-index: 1; }
+        .quiz-primary-cta {
+            display: inline-flex; align-items: center; gap: 0.55rem; background: white; color: var(--pb-teal-dark);
+            padding: 0.85rem 1.6rem; border-radius: 999px; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 0.98rem;
+            text-decoration: none; position: relative; z-index: 1; box-shadow: 0 10px 22px -8px rgba(0,0,0,0.35);
+            transition: transform 0.15s;
+        }
+        .quiz-primary-cta:hover { transform: translateY(-2px); color: var(--pb-teal-dark); text-decoration: none; }
+
+        /* ===== RESOURCES DRAWER (Learn-tab redesign, 2026-09-03) =====
+           Page-scoped to home.html only — deliberately NOT added to the shared
+           <lb-app-shell> header (js/app-shell.js), since that component is used
+           by 10 other pages and this drawer is Learn-tab-specific. Sits above
+           the shell's header/nav z-index (var(--lb-z-shell, 1000)) while open;
+           zero footprint when closed. */
+        .resources-trigger {
+            position: absolute; top: 1.25rem; left: 1.25rem; z-index: 2;
+            width: 44px; height: 44px; border-radius: 14px;
+            background: rgba(255,255,255,0.18); border: none; color: white;
+            display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .resources-trigger:hover, .resources-trigger:focus-visible { background: rgba(255,255,255,0.32); outline: none; }
+
+        .resources-backdrop {
+            position: fixed; inset: 0; background: rgba(17,52,72,0.45);
+            opacity: 0; visibility: hidden; z-index: 1090;
+            transition: opacity var(--lb-duration-base, 200ms) var(--lb-ease-out, ease-out), visibility var(--lb-duration-base, 200ms);
+        }
+        .resources-backdrop.open { opacity: 1; visibility: visible; }
+        .resources-drawer {
+            position: fixed; top: 0; bottom: 0; left: 0; width: min(85vw, 340px);
+            background: var(--pb-surface); z-index: 1100;
+            box-shadow: 12px 0 32px -8px rgba(17,52,72,0.3);
+            transform: translateX(-100%);
+            transition: transform var(--lb-duration-base, 200ms) var(--lb-ease-out, ease-out);
+            display: flex; flex-direction: column;
+        }
+        .resources-drawer.open { transform: translateX(0); }
+        .resources-drawer-header {
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+            padding: calc(1.25rem + env(safe-area-inset-top, 0)) 1.25rem 1rem;
+            border-bottom: 1px solid #e7e9e7;
+        }
+        .resources-drawer-header h2 { font-family: 'Baloo 2', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--pb-teal-dark); margin: 0; }
+        .resources-drawer-close {
+            width: 36px; height: 36px; border-radius: 50%; border: none; background: #f1f3f2;
+            color: #5f6b72; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem;
+        }
+        .resources-drawer-close:hover { background: #e7e9e7; }
+        .resources-drawer-body { padding: 1.1rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0)); overflow-y: auto; flex: 1; }
+        .resources-group { margin-bottom: 1.5rem; }
+        .resources-group:last-child { margin-bottom: 0; }
+        .resources-group-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #9aa4a1; margin: 0 0 0.6rem; }
+        .resource-row {
+            display: flex; align-items: center; gap: 0.85rem; padding: 0.85rem;
+            border-radius: 16px; border: 2px solid #e7e9e7; background: white;
+            text-decoration: none; color: inherit; transition: transform 0.15s, border-color 0.15s;
+        }
+        .resource-row:hover { transform: translateY(-1px); border-color: var(--pb-teal); text-decoration: none; color: inherit; }
+        .resource-row-icon {
+            width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white;
+            display: flex; align-items: center; justify-content: center; font-size: 1.05rem;
+        }
+        .resource-row-icon.icon-navy { background: linear-gradient(135deg, var(--pb-teal-dark), var(--pb-navy-light)); }
+        .resource-row-text { min-width: 0; flex: 1; }
+        .resource-row-text h4 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 0.95rem; margin: 0 0 0.15rem; color: var(--pb-teal-dark); }
+        .resource-row-text p { margin: 0; font-size: 0.8rem; color: #5f6b72; line-height: 1.3; }
+        .resource-row-arrow { color: #c3cac8; font-size: 0.9rem; flex-shrink: 0; }
+
         /* ===== NEXT LESSON CARD ===== */
         .lesson-card {
             background: white; border-radius: 24px; box-shadow: 0 10px 28px -10px rgba(17,52,72,0.18);
@@ -207,61 +298,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .goal-progress-seg { flex: 1; height: 10px; border-radius: 999px; background: #e7e9e7; }
         .goal-progress-seg.filled { background: linear-gradient(90deg, var(--pb-teal), var(--pb-teal-deep)); }
         .goal-card-note { margin: 0.75rem 0 0; font-size: 0.85rem; color: #5f6b72; }
-
-        /* ===== QUICK ACTIONS — bold color tiles instead of plain cards ===== */
-        .quick-actions { display: flex; flex-wrap: wrap; gap: 1rem; }
-        .quick-action-btn {
-            flex: 1; min-width: 220px; display: flex; flex-direction: column; align-items: flex-start; gap: 0.9rem;
-            justify-content: space-between; min-height: 150px;
-            border-radius: 24px;
-            padding: 1.4rem 1.35rem;
-            text-decoration: none; color: white;
-            box-shadow: 0 12px 26px -10px rgba(17,52,72,0.35);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .quick-action-btn:nth-child(1) { background: linear-gradient(135deg, var(--pb-teal) 0%, #12938f 100%); }
-        .quick-action-btn:nth-child(2) { background: linear-gradient(135deg, var(--pb-teal-dark) 0%, var(--pb-navy-light) 100%); }
-        .quick-action-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px -10px rgba(17,52,72,0.4); color: white; text-decoration: none; }
-        .quick-action-btn .qa-icon {
-            width: 48px; height: 48px; border-radius: 15px; background: rgba(255,255,255,0.22); color: white;
-            display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;
-        }
-        .quick-action-btn h4 { font-family: 'Baloo 2', sans-serif; margin: 0 0 0.2rem; font-size: 1.1rem; font-weight: 800; color: white; }
-        .quick-action-btn span { font-size: 0.85rem; color: rgba(255,255,255,0.88); }
-
-        /* ===== VOCABULARY ===== */
-        .vocab-intro { color: #5f6b72; font-size: 0.95rem; margin: 1rem 0 0; max-width: 60ch; }
-
-        /* ===== TRAVEL JOURNEY (featured card) ===== */
-        .journey-feature-card {
-            display: flex; align-items: center; gap: 1rem;
-            background: linear-gradient(135deg, var(--pb-teal-dark) 0%, var(--pb-navy-light) 100%);
-            border-radius: 24px; padding: 1.25rem 1.4rem; color: white;
-            box-shadow: 0 14px 30px -10px rgba(17,52,72,0.45);
-            text-decoration: none; transition: transform 0.15s;
-        }
-        .journey-feature-card:hover { transform: translateY(-2px); text-decoration: none; color: white; }
-        .journey-feature-icon { font-size: 2rem; flex-shrink: 0; }
-        .journey-feature-text { flex: 1; min-width: 0; }
-        .journey-feature-text h3 { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.1rem; margin: 0 0 0.2rem; color: white; }
-        .journey-feature-text p { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.85); }
-        .journey-feature-btn { flex-shrink: 0; white-space: nowrap; width: auto !important; padding: 0.6rem 1.1rem !important; font-size: 0.85rem !important; }
-
-        /* ===== CULTURE GUIDES (mini row) ===== */
-        .culture-guide-row { display: flex; gap: 0.9rem; overflow-x: auto; padding-bottom: 0.35rem; -webkit-overflow-scrolling: touch; }
-        .culture-mini-card {
-            flex-shrink: 0; width: 148px; background: white; border-radius: 20px; border: 2px solid #e7e9e7;
-            box-shadow: 0 8px 20px -12px rgba(17,52,72,0.15); padding: 1rem; text-decoration: none; color: inherit;
-            transition: transform 0.15s;
-        }
-        .culture-mini-card:hover { transform: translateY(-2px); text-decoration: none; color: inherit; }
-        .culture-mini-flag { font-size: 1.75rem; margin-bottom: 0.4rem; }
-        .culture-mini-name { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 0.95rem; margin-bottom: 0.55rem; }
-        .culture-mini-progress-track { height: 7px; border-radius: 999px; background: #e7e9e7; overflow: hidden; margin-bottom: 0.35rem; }
-        .culture-mini-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--pb-teal), var(--pb-teal-deep)); }
-        .culture-mini-progress-label { font-size: 0.78rem; color: #5f6b72; font-weight: 600; }
-        .see-all-link { display: inline-block; margin-top: 0.9rem; color: var(--pb-teal-deep); font-weight: 700; text-decoration: none; font-size: 0.92rem; }
-        .see-all-link:hover { text-decoration: underline; color: var(--pb-teal-deep); }
     </style>
 </head>
 <body>
@@ -365,6 +401,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- Hero Section -->
     <div class="activity-hero">
+        <button type="button" class="resources-trigger" id="resourcesTrigger"
+                aria-label="Open learning resources menu" aria-haspopup="true"
+                aria-expanded="false" aria-controls="resourcesDrawer">
+            <i class="fas fa-th-large" aria-hidden="true"></i>
+        </button>
         <div class="container">
             <div class="activity-hero-icon">
                 <i class="fas fa-seedling"></i>
@@ -374,15 +415,72 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- ===== RESOURCES DRAWER (Learn-tab redesign, 2026-09-03) =====
+         Secondary learning resources (Culture Guides, Travel Journey), plus
+         the Notebook link and This Week's Goal — relocated here so the main
+         page stays to Welcome → Quiz → Continue Learning. Page-scoped to
+         home.html, not the shared <lb-app-shell>. -->
+    <div class="resources-backdrop" id="resourcesBackdrop"></div>
+    <aside class="resources-drawer" id="resourcesDrawer" aria-hidden="true" aria-label="Learning resources">
+        <div class="resources-drawer-header">
+            <h2>Learning Resources</h2>
+            <button type="button" class="resources-drawer-close" id="resourcesDrawerClose" aria-label="Close menu">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="resources-drawer-body">
+            <div class="resources-group">
+                <p class="resources-group-label">Your Progress</p>
+                <a class="resource-row" href="notebook" id="notebookResourceRow">
+                    <span class="resource-row-icon"><i class="fas fa-book-open"></i></span>
+                    <span class="resource-row-text">
+                        <h4>My Notebook</h4>
+                        <p id="notebookResourceSubtitle">Loading…</p>
+                    </span>
+                    <i class="fas fa-chevron-right resource-row-arrow" aria-hidden="true"></i>
+                </a>
+                <!-- Student only, see updateStreakAndGoal() — same ids/logic as
+                     before this redesign, just relocated into the drawer. -->
+                <div id="weeklyGoalSection" style="display:none; margin-top:0.65rem;">
+                    <div class="goal-card" id="weeklyGoalContainer"></div>
+                </div>
+            </div>
+
+            <div class="resources-group">
+                <p class="resources-group-label">Explore</p>
+                <a class="resource-row" href="culture-guides">
+                    <span class="resource-row-icon icon-navy"><i class="fas fa-globe"></i></span>
+                    <span class="resource-row-text">
+                        <h4>Culture Guides</h4>
+                        <p id="cultureResourceSubtitle">Loading…</p>
+                    </span>
+                    <i class="fas fa-chevron-right resource-row-arrow" aria-hidden="true"></i>
+                </a>
+                <a class="resource-row" href="travel-journey" id="travelResourceRow" style="margin-top:0.65rem;">
+                    <span class="resource-row-icon icon-navy"><i class="fas fa-plane"></i></span>
+                    <span class="resource-row-text">
+                        <h4>Travel Journey</h4>
+                        <p id="travelResourceSubtitle">Loading…</p>
+                    </span>
+                    <i class="fas fa-chevron-right resource-row-arrow" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content — deliberately just Quiz → Continue Learning, per the
+         Learn-tab redesign: everything else lives in the resources drawer
+         above, or was removed outright (Challenges — a redundant second
+         presentation of Culture Guides progress; Quick Actions — every one
+         of its links duplicated an existing bottom-nav tab). -->
     <div class="activity-container">
 
-        <!-- ===== TRAVEL JOURNEY (featured, new — see travel-journey.html) ===== -->
-        <div id="travelJourneyCard">
-            <div class="loading-state">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                <div>Loading...</div>
-            </div>
+        <!-- ===== LANGUAGE QUIZZES (existing vocab-quiz.html) — primary action ===== -->
+        <div class="quiz-primary-card">
+            <div class="quiz-primary-icon"><i class="fas fa-graduation-cap"></i></div>
+            <h2>Language Quizzes</h2>
+            <p>Test yourself on vocabulary and save what you miss straight to your Notebook.</p>
+            <a class="quiz-primary-cta" href="vocab-quiz"><i class="fas fa-play"></i> Take a quiz</a>
         </div>
 
         <hr class="section-divider">
@@ -397,79 +495,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <i class="fas fa-circle-notch fa-spin"></i>
                 <div>Loading...</div>
             </div>
-        </div>
-
-        <hr class="section-divider">
-
-        <!-- ===== LANGUAGE QUIZZES (existing vocab-quiz.html) ===== -->
-        <div class="section-header">
-            <div class="section-icon icon-navy"><i class="fas fa-graduation-cap"></i></div>
-            <h2>Language Quizzes</h2>
-        </div>
-        <p class="vocab-intro" style="margin-top:0;">Test yourself on vocabulary and save what you miss to your notebook.</p>
-        <a class="btn-join" href="vocab-quiz" style="margin-top:0.75rem;"><i class="fas fa-graduation-cap"></i> Take a vocabulary quiz</a>
-
-        <hr class="section-divider">
-
-        <!-- ===== CULTURE GUIDES (new — see data/culture/*.json) ===== -->
-        <div class="section-header">
-            <div class="section-icon"><i class="fas fa-globe"></i></div>
-            <h2>Culture Guides</h2>
-        </div>
-        <div id="cultureGuidesContainer">
-            <div class="loading-state">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                <div>Loading...</div>
-            </div>
-        </div>
-
-        <hr class="section-divider">
-
-        <!-- ===== CHALLENGES (new — next suggested culture lesson) ===== -->
-        <div class="section-header">
-            <div class="section-icon icon-navy"><i class="fas fa-flag-checkered"></i></div>
-            <h2>Challenges</h2>
-        </div>
-        <div id="challengesContainer">
-            <div class="loading-state">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                <div>Loading...</div>
-            </div>
-        </div>
-
-        <hr class="section-divider">
-
-        <!-- ===== NOTEBOOK (live summary, see notebook.html) ===== -->
-        <div class="section-header">
-            <div class="section-icon"><i class="fas fa-book-open"></i></div>
-            <h2>Notebook</h2>
-        </div>
-        <div id="vocabSummaryContainer">
-            <div class="loading-state">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                <div>Loading...</div>
-            </div>
-        </div>
-
-        <hr class="section-divider">
-
-        <!-- ===== THIS WEEK'S GOAL (student only) ===== -->
-        <div id="weeklyGoalSection" style="display:none;">
-            <div class="section-header">
-                <div class="section-icon"><i class="fas fa-bullseye"></i></div>
-                <h2>This Week's Goal</h2>
-            </div>
-            <div class="goal-card" id="weeklyGoalContainer"></div>
-            <hr class="section-divider">
-        </div>
-
-        <!-- ===== QUICK ACTIONS ===== -->
-        <div class="section-header">
-            <div class="section-icon icon-navy"><i class="fas fa-bolt"></i></div>
-            <h2>Quick Actions</h2>
-        </div>
-        <div class="quick-actions" id="quickActions">
-            <!-- populated once role is known, see loadProfileBasics() -->
         </div>
 
     </div>
@@ -579,30 +604,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const shell = document.getElementById('shell');
             if (shell) shell.setAttribute('role', isInstructor ? 'instructor' : 'student');
 
-            renderQuickActions(isInstructor);
-        }
-
-        function renderQuickActions(isInstructor) {
-            const el = document.getElementById('quickActions');
-            el.innerHTML = isInstructor
-                ? `
-                <a class="quick-action-btn" href="bookings">
-                    <span class="qa-icon"><i class="fas fa-calendar-check"></i></span>
-                    <div><h4>View my calendar</h4><span>See upcoming and past lessons</span></div>
-                </a>
-                <a class="quick-action-btn" href="dashboard">
-                    <span class="qa-icon"><i class="fas fa-user-edit"></i></span>
-                    <div><h4>Edit my profile</h4><span>Availability, rates, and bio</span></div>
-                </a>`
-                : `
-                <a class="quick-action-btn" href="instructors">
-                    <span class="qa-icon"><i class="fas fa-chalkboard-teacher"></i></span>
-                    <div><h4>Book a lesson</h4><span>Browse instructors and see availability</span></div>
-                </a>
-                <a class="quick-action-btn" href="connect">
-                    <span class="qa-icon"><i class="fas fa-user-friends"></i></span>
-                    <div><h4>Find a language partner</h4><span>Practice for free with an exchange partner</span></div>
-                </a>`;
+            // Quick Actions (removed in the 2026-09-03 Learn-tab redesign) used
+            // to link to bookings/dashboard/instructors/connect — every one of
+            // those is already a bottom-nav tab destination for the matching
+            // role, so the section was pure duplication rather than a distinct
+            // capability worth preserving.
         }
 
         // ===== NEXT LESSON =====
@@ -728,9 +734,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
-        // ===== VOCABULARY (Learn tab notebook summary, see notebook.html) =====
+        // ===== NOTEBOOK (drawer resource row, see notebook.html) =====
+        // Still computes the same activeDates/streak contribution and due-count
+        // as before this redesign — only the render target changed (a single
+        // subtitle line in the drawer's resource row instead of a full card on
+        // the main page).
         async function loadVocabSummary() {
-            const container = document.getElementById('vocabSummaryContainer');
+            const row = document.getElementById('notebookResourceRow');
+            const subtitle = document.getElementById('notebookResourceSubtitle');
             try {
                 const snap = await getDocs(query(
                     collection(db, 'notebook'),
@@ -751,44 +762,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
 
                 if (snap.size === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-book-open"></i>
-                            <p>Your notebook is empty.</p>
-                            <a href="notebook">Save your first word</a> to start your collection.
-                        </div>`;
+                    subtitle.textContent = 'Save your first word to start your collection';
                     return;
                 }
 
-                container.innerHTML = `
-                    <div class="lesson-card">
-                        <div class="lesson-card-body" style="padding-top:1.35rem;">
-                            <div class="lesson-detail-row"><i class="fas fa-layer-group"></i> ${snap.size} word${snap.size === 1 ? '' : 's'} saved</div>
-                            ${dueCount > 0 ? `<div class="lesson-detail-row"><i class="fas fa-bell"></i> ${dueCount} due for review</div>` : ''}
-                        </div>
-                        <div class="lesson-card-footer">
-                            ${dueCount > 0
-                                ? `<a class="btn-join" href="notebook?review=1"><i class="fas fa-bolt"></i> Review due words</a>`
-                                : `<a class="btn-join" href="notebook"><i class="fas fa-book-open"></i> Continue your notebook</a>`}
-                        </div>
-                    </div>`;
+                subtitle.textContent = dueCount > 0
+                    ? `${snap.size} word${snap.size === 1 ? '' : 's'} saved · ${dueCount} due for review`
+                    : `${snap.size} word${snap.size === 1 ? '' : 's'} saved`;
+                if (dueCount > 0) row.href = 'notebook?review=1';
             } catch (e) {
                 console.error('Vocab summary load error:', e);
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load your notebook.</p></div>`;
+                subtitle.textContent = "Couldn't load your notebook";
             }
         }
 
-        // ===== CULTURE GUIDES (Learn tab summary + Challenges, see culture-guides.html) =====
+        // ===== CULTURE GUIDES (drawer resource row, see culture-guides.html) =====
+        // The old "Challenges" section here (a "first not-yet-completed lesson"
+        // suggestion computed from this same guideList+progress) was removed in
+        // the 2026-09-03 Learn-tab redesign as a redundant second presentation
+        // of this exact progress data — getCultureProgress/completedLessonsFor
+        // are still used below, just no longer to build that second suggestion.
         async function loadCultureSummary() {
-            const guidesContainer = document.getElementById('cultureGuidesContainer');
-            const challengesContainer = document.getElementById('challengesContainer');
+            const subtitle = document.getElementById('cultureResourceSubtitle');
             try {
                 const index = await fetch('data/culture/index.json').then(r => r.json());
                 const guideList = index.guides || [];
 
                 if (guideList.length === 0) {
-                    guidesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-globe"></i><p>Culture guides are coming soon.</p></div>`;
-                    challengesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-flag-checkered"></i><p>Check back once culture guides launch.</p></div>`;
+                    subtitle.textContent = 'Coming soon';
                     return;
                 }
 
@@ -797,63 +798,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     ...guideList.map(g => fetch(`data/culture/${encodeURIComponent(g.id)}.json`).then(r => r.json()))
                 ]);
 
-                guidesContainer.innerHTML = `
-                    <div class="culture-guide-row">${guideList.map((g, i) => {
-                        const total = (guideDetails[i].lessons || []).length;
-                        const completed = completedLessonsFor(progress, g.id).length;
-                        const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-                        return `
-                            <a class="culture-mini-card" href="culture-guide?country=${encodeURIComponent(g.id)}">
-                                <div class="culture-mini-flag">${g.flag || '🌎'}</div>
-                                <div class="culture-mini-name">${escapeHtml(g.name)}</div>
-                                <div class="culture-mini-progress-track"><div class="culture-mini-progress-fill" style="width:${pct}%;"></div></div>
-                                <div class="culture-mini-progress-label">${completed}/${total} lessons</div>
-                            </a>`;
-                    }).join('')}</div>
-                    <a class="see-all-link" href="culture-guides">See all culture guides <i class="fas fa-arrow-right"></i></a>`;
+                let totalLessons = 0, totalCompleted = 0;
+                guideList.forEach((g, i) => {
+                    totalLessons += (guideDetails[i].lessons || []).length;
+                    totalCompleted += completedLessonsFor(progress, g.id).length;
+                });
 
-                // Challenges: surface the first not-yet-completed lesson across guides,
-                // in guide order — a light, honest suggestion, not a scoring system
-                // (per the "don't worry about rewards yet" scope for this prototype).
-                let suggestion = null;
-                for (let i = 0; i < guideList.length && !suggestion; i++) {
-                    const done = new Set(completedLessonsFor(progress, guideList[i].id));
-                    const next = (guideDetails[i].lessons || []).find(l => !done.has(l.id));
-                    if (next) suggestion = { guide: guideList[i], lesson: next };
-                }
-
-                challengesContainer.innerHTML = suggestion
-                    ? `
-                        <a class="lesson-card" href="culture-lesson?country=${encodeURIComponent(suggestion.guide.id)}&lesson=${encodeURIComponent(suggestion.lesson.id)}" style="display:block;text-decoration:none;color:inherit;">
-                            <div class="lesson-card-body" style="padding-top:1.35rem;">
-                                <div class="lesson-detail-row"><i class="fas ${escapeHtml(suggestion.lesson.icon || 'fa-book-open')}"></i> ${escapeHtml(suggestion.lesson.title)} · ${suggestion.guide.flag || ''} ${escapeHtml(suggestion.guide.name)}</div>
-                                <div class="lesson-detail-row"><i class="fas fa-clock"></i> ${suggestion.lesson.estMinutes || 3} min</div>
-                            </div>
-                            <div class="lesson-card-footer"><span class="btn-join"><i class="fas fa-play"></i> Start this lesson</span></div>
-                        </a>`
-                    : `<div class="empty-state"><i class="fas fa-trophy"></i><p>All caught up — every culture guide lesson is complete!</p></div>`;
+                subtitle.textContent = totalCompleted > 0
+                    ? `${totalCompleted}/${totalLessons} lessons complete`
+                    : `Explore guides for ${guideList.length} countr${guideList.length === 1 ? 'y' : 'ies'}`;
             } catch (e) {
                 console.error('Culture summary load error:', e);
-                guidesContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Couldn't load culture guides.</p></div>`;
-                challengesContainer.innerHTML = '';
+                subtitle.textContent = "Couldn't load culture guides";
             }
         }
 
-        // ===== TRAVEL JOURNEY (featured card, see travel-journey.html) =====
+        // ===== TRAVEL JOURNEY (drawer resource row, see travel-journey.html) =====
         async function loadTravelJourneySummary() {
-            const card = document.getElementById('travelJourneyCard');
+            const subtitle = document.getElementById('travelResourceSubtitle');
             try {
                 const snap = await getDoc(doc(db, 'travelJourneys', currentUser.uid));
                 if (!snap.exists() || !snap.data().itinerary) {
-                    card.innerHTML = `
-                        <a class="journey-feature-card" href="travel-journey">
-                            <div class="journey-feature-icon">✈️</div>
-                            <div class="journey-feature-text">
-                                <h3>Create Travel Journey</h3>
-                                <p>Get a personalized culture &amp; language plan for your next trip.</p>
-                            </div>
-                            <span class="btn-join journey-feature-btn">Get started</span>
-                        </a>`;
+                    subtitle.textContent = 'Get a personalized culture & language plan for your next trip';
                     return;
                 }
 
@@ -866,22 +832,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const isDayDone = d => d.type === 'module' ? doneModuleIds.has(d.moduleId) : doneSpecialDays.has(d.dayNumber);
                 const completedDays = itinerary.days.filter(isDayDone).length;
                 const nextDay = itinerary.days.find(d => !isDayDone(d));
-                const statusText = completedDays === totalDays
-                    ? 'Journey complete — nice work!'
-                    : `Day ${nextDay.dayNumber} of ${totalDays}`;
 
-                card.innerHTML = `
-                    <a class="journey-feature-card" href="travel-journey">
-                        <div class="journey-feature-icon">${flag || '✈️'}</div>
-                        <div class="journey-feature-text">
-                            <h3>Continue Your ${escapeHtml(countryName)} Journey</h3>
-                            <p>${escapeHtml(statusText)}</p>
-                        </div>
-                        <span class="btn-join journey-feature-btn"><i class="fas fa-arrow-right"></i></span>
-                    </a>`;
+                subtitle.textContent = completedDays === totalDays
+                    ? `${flag || ''} ${countryName} · Journey complete!`
+                    : `${flag || ''} ${countryName} · Day ${nextDay.dayNumber} of ${totalDays}`;
             } catch (e) {
                 console.error('Travel journey summary load error:', e);
-                card.innerHTML = '';
+                subtitle.textContent = "Couldn't load your travel journey";
             }
         }
 
@@ -930,6 +887,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     ? "You've hit your goal for this week — nice work."
                     : `${goal - lessonsThisWeek} more to hit your goal this week.`}</p>`;
         }
+
+        // ===== RESOURCES DRAWER (Learn-tab redesign, 2026-09-03) =====
+        const resourcesTrigger = document.getElementById('resourcesTrigger');
+        const resourcesDrawer = document.getElementById('resourcesDrawer');
+        const resourcesBackdrop = document.getElementById('resourcesBackdrop');
+        const resourcesDrawerClose = document.getElementById('resourcesDrawerClose');
+
+        function openResourcesDrawer() {
+            resourcesDrawer.classList.add('open');
+            resourcesBackdrop.classList.add('open');
+            resourcesDrawer.setAttribute('aria-hidden', 'false');
+            resourcesTrigger.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden'; // lock background scroll while open
+        }
+        function closeResourcesDrawer() {
+            resourcesDrawer.classList.remove('open');
+            resourcesBackdrop.classList.remove('open');
+            resourcesDrawer.setAttribute('aria-hidden', 'true');
+            resourcesTrigger.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+        }
+        resourcesTrigger.addEventListener('click', openResourcesDrawer);
+        resourcesDrawerClose.addEventListener('click', closeResourcesDrawer);
+        resourcesBackdrop.addEventListener('click', closeResourcesDrawer);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && resourcesDrawer.classList.contains('open')) closeResourcesDrawer();
+        });
 
         // ===== LOGOUT =====
         document.getElementById('logoutLink').addEventListener('click', async (e) => {
