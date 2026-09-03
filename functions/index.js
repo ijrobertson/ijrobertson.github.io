@@ -1219,6 +1219,205 @@ exports.generateAgoraToken = onCall(async (request) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════
+// PERSONALIZED AI QUIZ GENERATION (Phase 2 of the quiz-personalization
+// project — Phase 1 was the quizProfiles/{uid} data model + Quiz
+// Preferences UI on vocab-quiz.html). Takes the learner's quizProfiles
+// entry for the language they picked (level/interests/goals) and generates
+// a fresh 10-question quiz via the Anthropic API, forced into a strict
+// JSON schema via tool use so there's never prose to parse. Validated
+// server-side before being handed back; on any failure this returns
+// { ok: false } rather than throwing, so the client can fall back to the
+// existing static word-pool quiz instead of showing anything broken. The
+// API key never leaves this Cloud Function — the client only ever calls
+// this callable, matching the ANTHROPIC_API_KEY-in-functions/.env
+// convention already used for RESEND_API_KEY/STRIPE_SECRET_KEY/etc.
+// ═══════════════════════════════════════════════════════════════════════
+const Anthropic = require('@anthropic-ai/sdk');
+
+const QUIZ_QUESTION_TYPES = ['multiple_choice', 'translation', 'vocabulary', 'fill_in_blank', 'grammar'];
+const QUIZ_DIFFICULTIES = ['beginner', 'intermediate', 'advanced'];
+const QUIZ_QUESTION_COUNT = 10;
+// Cost guardrail (Step 14 of the plan: avoid generating quizzes nobody
+// takes) — a generous daily cap per user, cheap to check via the composite
+// index on quizzes' (userId, createdAt).
+const MAX_AI_QUIZZES_PER_USER_PER_DAY = 15;
+
+const QUIZ_TOOL = {
+  name: 'generate_quiz',
+  description: 'Return a personalized language-learning quiz as strict structured data.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      questions: {
+        type: 'array',
+        minItems: QUIZ_QUESTION_COUNT,
+        maxItems: QUIZ_QUESTION_COUNT,
+        items: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', enum: QUIZ_QUESTION_TYPES },
+            prompt: { type: 'string', description: 'The question text shown to the learner (in English, except the target-language term/sentence being tested).' },
+            options: { type: 'array', items: { type: 'string' }, minItems: 3, maxItems: 4, description: 'Answer choices. Exactly one must exactly equal correctAnswer.' },
+            correctAnswer: { type: 'string', description: 'Must exactly equal one of the strings in options.' },
+            explanation: { type: 'string', description: 'One or two sentences explaining the correct answer — shown to the learner after they answer, right or wrong.' },
+            difficulty: { type: 'string', enum: QUIZ_DIFFICULTIES },
+            targetVocabulary: { type: 'array', items: { type: 'string' }, description: 'The specific target-language word(s)/phrase(s) this question tests.' },
+            topic: { type: 'string', description: 'A short topic label, e.g. "travel", "food", "everyday conversation".' },
+          },
+          required: ['type', 'prompt', 'options', 'correctAnswer', 'explanation', 'difficulty', 'targetVocabulary', 'topic'],
+        },
+      },
+    },
+    required: ['questions'],
+  },
+};
+
+function buildQuizSystemPrompt(language) {
+  return `You are an expert ${language} language teacher writing a short practice quiz for one specific learner.
+
+Question types you may use, always as multiple choice (3-4 options, exactly one correct) so every question is gradable automatically without any free-form judgment:
+- multiple_choice: a general question about the language with several answer choices.
+- translation: show a word or short phrase and ask the learner to pick its correct translation.
+- vocabulary: show a ${language} word or phrase and ask what it means.
+- fill_in_blank: a natural ${language} sentence with one word replaced by "___", asking which option correctly completes it.
+- grammar: present a sentence or phrase with a grammar choice, asking the learner to pick the grammatically correct option.
+
+Quality bar for every question:
+- Grammatically correct and natural for a native ${language} speaker — never stilted or literally translated.
+- Genuinely useful in real-world situations, not obscure or trivia-like.
+- Distractor options must be plausible, not silly or obviously wrong.
+- Vary the topics and question types across the quiz — do not repeat the same word or pattern twice within one quiz.
+- Match the learner's level: for beginners, prioritize high-frequency vocabulary and simple, practical phrases; for intermediate/advanced learners, use more natural, idiomatic, and grammatically complex language.
+
+Call the generate_quiz tool exactly once with exactly ${QUIZ_QUESTION_COUNT} questions. Do not include any text outside the tool call.`;
+}
+
+function buildQuizUserPrompt({ language, level, interests, goals, recentTopics }) {
+  const lines = [
+    `Target language: ${language}`,
+    `Learner's level: ${level}`,
+    `Learner's interests: ${interests}`,
+    `Learner's goals: ${goals}`,
+  ];
+  if (recentTopics.length > 0) {
+    lines.push(`Topics recently covered — vary away from these where reasonable: ${recentTopics.join(', ')}`);
+  }
+  lines.push(`Generate a ${QUIZ_QUESTION_COUNT}-question quiz personalized to this learner.`);
+  return lines.join('\n');
+}
+
+// Server-side validation of the AI's tool-use output — every field checked,
+// including that correctAnswer is genuinely one of the offered options (the
+// single most important gradability guarantee). Never trust this blindly.
+function isValidQuizQuestions(questions) {
+  if (!Array.isArray(questions) || questions.length !== QUIZ_QUESTION_COUNT) return false;
+  return questions.every((q) => {
+    if (!q || typeof q !== 'object') return false;
+    if (!QUIZ_QUESTION_TYPES.includes(q.type)) return false;
+    if (typeof q.prompt !== 'string' || !q.prompt.trim()) return false;
+    if (!Array.isArray(q.options) || q.options.length < 3 || q.options.length > 4) return false;
+    if (!q.options.every((o) => typeof o === 'string' && o.trim())) return false;
+    if (typeof q.correctAnswer !== 'string' || !q.options.includes(q.correctAnswer)) return false;
+    if (typeof q.explanation !== 'string' || !q.explanation.trim()) return false;
+    if (!QUIZ_DIFFICULTIES.includes(q.difficulty)) return false;
+    if (!Array.isArray(q.targetVocabulary) || !q.targetVocabulary.every((v) => typeof v === 'string')) return false;
+    if (typeof q.topic !== 'string' || !q.topic.trim()) return false;
+    return true;
+  });
+}
+
+async function callAnthropicForQuiz(systemPrompt, userPrompt) {
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  // Cost-efficient tier by default for this well-scoped structured-JSON task;
+  // overridable without a code change if quality ever needs a stronger model.
+  const model = process.env.ANTHROPIC_QUIZ_MODEL || 'claude-haiku-4-5-20251001';
+  const response = await anthropic.messages.create({
+    model,
+    max_tokens: 4096,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+    tools: [QUIZ_TOOL],
+    tool_choice: { type: 'tool', name: 'generate_quiz' },
+  });
+  const toolUse = response.content.find((c) => c.type === 'tool_use' && c.name === 'generate_quiz');
+  return toolUse?.input?.questions || null;
+}
+
+exports.generatePersonalizedQuiz = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+  const uid = request.auth.uid;
+  const language = (request.data?.language || '').trim();
+  if (!language) throw new HttpsError('invalid-argument', 'language is required');
+
+  const db = admin.firestore();
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const todaysQuizzesSnap = await db.collection('quizzes')
+    .where('userId', '==', uid)
+    .where('createdAt', '>=', startOfToday)
+    .get();
+  if (todaysQuizzesSnap.size >= MAX_AI_QUIZZES_PER_USER_PER_DAY) {
+    return { ok: false, reason: 'rate_limited' };
+  }
+
+  const profileDocSnap = await db.collection('quizProfiles').doc(uid).get();
+  const profile = (profileDocSnap.exists ? profileDocSnap.data() : {})[language] || null;
+
+  const level = profile?.effectiveLevel || profile?.selfAssessedLevel || 'beginner';
+  const interests = (profile?.interests && profile.interests.length) ? profile.interests.join(', ') : 'general everyday topics';
+  const goalsList = [...(profile?.goals || []), profile?.goalsOther].filter(Boolean);
+  const goals = goalsList.length ? goalsList.join(', ') : 'general fluency';
+
+  const systemPrompt = buildQuizSystemPrompt(language);
+  // recentTopics stays empty until Phase 3 adds quizAttempts history — the
+  // prompt already supports it so that phase is a data-plumbing change only,
+  // not a prompt redesign.
+  const userPrompt = buildQuizUserPrompt({ language, level, interests, goals, recentTopics: [] });
+
+  let questions = null;
+  try {
+    questions = await callAnthropicForQuiz(systemPrompt, userPrompt);
+    if (!isValidQuizQuestions(questions)) {
+      console.warn('[AI Quiz] First attempt failed validation, retrying once for', uid, language);
+      questions = await callAnthropicForQuiz(
+        systemPrompt + '\n\nIMPORTANT: Your previous response did not exactly match the required schema. Follow it precisely this time — exactly 10 questions, each with every required field, and correctAnswer must exactly equal one of the strings in options.',
+        userPrompt
+      );
+    }
+  } catch (e) {
+    console.error('[AI Quiz] Generation error for', uid, language, ':', e);
+    return { ok: false, reason: 'generation_error' };
+  }
+
+  if (!isValidQuizQuestions(questions)) {
+    console.error('[AI Quiz] Invalid quiz structure after retry for', uid, language);
+    return { ok: false, reason: 'invalid_structure' };
+  }
+
+  const quizRef = await db.collection('quizzes').add({
+    userId: uid,
+    language,
+    questions,
+    status: 'ready',
+    source: 'on-demand',
+    profileSnapshot: profile ? {
+      selfAssessedLevel: profile.selfAssessedLevel || null,
+      effectiveLevel: profile.effectiveLevel || null,
+      interests: profile.interests || [],
+      goals: profile.goals || [],
+    } : null,
+    // Plain Date, not FieldValue.serverTimestamp() — see sendMessageNotification's
+    // push-timestamp comment for why that sentinel is best avoided in this
+    // codebase's emulator/runtime, and this doc's createdAt is also queried
+    // (the rate-limit check above), so it needs to be reliably present.
+    createdAt: new Date(),
+  });
+
+  return { ok: true, quizId: quizRef.id, questions };
+});
+
 /**
  * Handles contact form submissions from the home page
  * Sends an email via Resend to the site owner

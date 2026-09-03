@@ -273,6 +273,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
+    // AI-generated quizzes (Phase 2, see functions/index.js's
+    // generatePersonalizedQuiz) — owner-read only. Always created by the
+    // Cloud Function via the Admin SDK (which bypasses these rules entirely),
+    // never directly by the client, so no create/update/delete rule is needed.
+    match /quizzes/{quizId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
     // Presence (online / last-seen) — one doc per user, keyed by uid, holding
     // { online: bool, lastSeenAt }. Any signed-in user can read it (needed to
     // show a conversation partner's status in messages.html), but only the

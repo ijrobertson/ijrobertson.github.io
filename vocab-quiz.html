@@ -147,6 +147,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         .quiz-term { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.75rem; color: var(--pb-teal-dark); }
         .quiz-term-translit { font-size: 0.95rem; color: #5f6b72; margin-top: 0.4rem; font-style: italic; }
+        /* AI-generated questions carry a full sentence/prompt rather than a
+           single flashcard word — same card, smaller/left-aligned text so it
+           reads as a question rather than a term to memorize. */
+        .quiz-term-prompt { font-size: 1.15rem; font-weight: 700; text-align: left; line-height: 1.4; }
         .answer-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
         .answer-btn {
             background: white; border: 2px solid #e7e9e7; border-radius: 16px; padding: 0.9rem 1.1rem;
@@ -157,6 +161,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .answer-btn:disabled { cursor: default; }
         .answer-btn.correct { background: #e3f9ec; border-color: #2f9e58; color: #1f7a41; }
         .answer-btn.incorrect { background: #fbe4e4; border-color: #d64545; color: #a92e2e; }
+        /* Revealed after answering an AI question — the "explanation" field
+           from the generated quiz, shown whether the learner got it right or
+           not (it's useful either way). Static/practice-pool questions have
+           no explanation field, so this stays hidden for those. */
+        .quiz-explanation {
+            background: #eef8f7; border: 2px solid #cdeceb; border-radius: 16px;
+            padding: 0.9rem 1.1rem; font-size: 0.9rem; color: var(--pb-teal-dark);
+            margin-bottom: 1.25rem; line-height: 1.4;
+        }
+        .quiz-explanation i { color: var(--pb-teal-deep); margin-right: 0.4rem; }
+        .quiz-personalized-note {
+            display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem;
+            color: var(--pb-teal-deep); font-weight: 600; margin: -0.75rem 0 1.25rem;
+        }
 
         /* ===== RESULTS SCREEN ===== */
         .results-score { text-align: center; margin-bottom: 1.5rem; }
@@ -267,6 +285,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <i class="fas fa-sliders-h"></i> Quiz Preferences
                 </button>
 
+                <!-- Shown only once Quiz Preferences has real answers saved for the
+                     selected language — see updatePersonalizedNote(). -->
+                <div class="quiz-personalized-note" id="personalizedNote" style="display:none;">
+                    <i class="fas fa-magic"></i> This quiz will be personalized to your profile
+                </div>
+
                 <button type="button" class="btn-lb-pill" id="startQuizBtn" disabled>
                     <i class="fas fa-play"></i> Start Quiz
                 </button>
@@ -327,6 +351,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="quiz-progress-text" id="quizProgressText"></div>
                 <div class="quiz-term-card" id="quizTermCard"></div>
                 <div class="answer-grid" id="answerGrid"></div>
+                <div class="quiz-explanation" id="quizExplanation" style="display:none;"></div>
             </div>
             <button type="button" class="btn-lb-pill" id="nextQuestionBtn" style="display:none;">Next question <i class="fas fa-arrow-right"></i></button>
         </div>
@@ -367,10 +392,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import {
-            auth, db,
+            auth, db, functions,
             onAuthStateChanged, signOut,
             doc, getDoc, setDoc,
-            collection, addDoc, serverTimestamp
+            collection, addDoc, serverTimestamp,
+            httpsCallable
         } from './lib/firebaseClient.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
@@ -446,6 +472,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let qpSelectedLevel = null;
         let qpSelectedInterests = new Set();
         let qpSelectedGoals = new Set();
+
+        // ===== PHASE 2: AI-GENERATED QUIZZES =====
+        // Whether the round currently in progress came from generatePersonalizedQuiz
+        // (true) or the existing static word-pool (false) — controls how
+        // renderQuestion/showResults/save-to-notebook interpret each entry in
+        // `questions`/`answered`, since the two sources carry different shapes.
+        let isAIQuiz = false;
+        let currentQuizId = null; // quizzes/{id}, only set for AI rounds
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login'; return; }
@@ -591,6 +625,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function updateStartButtonState() {
             const btn = document.getElementById('startQuizBtn');
             btn.disabled = !selectedLanguage || !levelHasContent(selectedLanguage, selectedLevel);
+            const hasRealProfile = !!(selectedLanguage && quizProfiles[selectedLanguage] && quizProfiles[selectedLanguage].selfAssessedLevel);
+            document.getElementById('personalizedNote').style.display = hasRealProfile ? 'flex' : 'none';
         }
 
         // ===== QUIZ PREFERENCES (Phase 1 personalization) =====
@@ -710,6 +746,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 await setDoc(doc(db, 'quizProfiles', currentUser.uid), { [language]: profileData }, { merge: true });
                 quizProfiles[language] = { ...quizProfiles[language], ...profileData };
                 closeQuizProfileModal();
+                updateStartButtonState();
                 showToast('Quiz preferences saved!');
             } catch (e) {
                 console.error('Save quiz profile error:', e);
@@ -733,19 +770,72 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return arr;
         }
 
+        // A real (non-skipped) Quiz Preferences profile for the selected language
+        // triggers an AI-personalized round via generatePersonalizedQuiz; anyone
+        // without one (never set up, or explicitly skipped) gets the exact same
+        // static word-pool quiz this page has always had — zero behavior change
+        // for them. AI failures (network, rate limit, bad output) fall back to
+        // the static pool too, with a toast, rather than showing anything broken.
         async function startQuiz() {
+            const profile = quizProfiles[selectedLanguage];
+            const hasRealProfile = !!(profile && profile.selfAssessedLevel);
+            isAIQuiz = false;
+            currentQuizId = null;
+
+            if (hasRealProfile) {
+                const btn = document.getElementById('startQuizBtn');
+                const defaultHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Generating your personalized quiz...';
+                try {
+                    const generate = httpsCallable(functions, 'generatePersonalizedQuiz');
+                    const result = await generate({ language: selectedLanguage });
+                    if (result.data?.ok && Array.isArray(result.data.questions) && result.data.questions.length === 10) {
+                        isAIQuiz = true;
+                        currentQuizId = result.data.quizId;
+                        questions = result.data.questions.map(q => ({
+                            isAI: true,
+                            prompt: q.prompt,
+                            options: q.options,
+                            correct: q.correctAnswer,
+                            explanation: q.explanation,
+                            targetVocabulary: Array.isArray(q.targetVocabulary) ? q.targetVocabulary : [],
+                            topic: q.topic || '',
+                        }));
+                    } else {
+                        showToast("Couldn't generate a personalized quiz — here's a practice round instead.");
+                        if (!(await startStaticQuiz())) return;
+                    }
+                } catch (e) {
+                    console.error('AI quiz generation error:', e);
+                    showToast("Couldn't generate a personalized quiz — here's a practice round instead.");
+                    if (!(await startStaticQuiz())) return;
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = defaultHtml;
+                }
+            } else {
+                if (!(await startStaticQuiz())) return;
+            }
+
+            qIndex = 0;
+            score = 0;
+            answered = [];
+            showScreen('quiz');
+            renderQuestion();
+        }
+
+        // Returns true on success, false on failure (already alerted the user).
+        async function startStaticQuiz() {
             try {
                 const data = await fetch(`data/vocab/${selectedLanguage.toLowerCase()}.json`).then(r => r.json());
                 currentPool = data.words.filter(w => w.level === selectedLevel);
-                questions = buildRound(currentPool);
-                qIndex = 0;
-                score = 0;
-                answered = [];
-                showScreen('quiz');
-                renderQuestion();
+                questions = buildRound(currentPool).map(q => ({ isAI: false, word: q.word, options: q.options, correct: q.correct }));
+                return true;
             } catch (e) {
                 console.error('Start quiz error:', e);
                 alert('Could not load quiz content. Please try again.');
+                return false;
             }
         }
 
@@ -769,14 +859,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const q = questions[qIndex];
             document.getElementById('quizProgressText').textContent = `Question ${qIndex + 1} of ${questions.length}`;
             const isRtl = RTL_LANGUAGES.includes(selectedLanguage);
-            document.getElementById('quizTermCard').innerHTML = `
-                <div class="quiz-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.word.term)}</div>
-                ${q.word.transliteration ? `<div class="quiz-term-translit">${escapeHtml(q.word.transliteration)}</div>` : ''}`;
+            if (q.isAI) {
+                document.getElementById('quizTermCard').innerHTML =
+                    `<div class="quiz-term quiz-term-prompt"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.prompt)}</div>`;
+            } else {
+                document.getElementById('quizTermCard').innerHTML = `
+                    <div class="quiz-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.word.term)}</div>
+                    ${q.word.transliteration ? `<div class="quiz-term-translit">${escapeHtml(q.word.transliteration)}</div>` : ''}`;
+            }
             const grid = document.getElementById('answerGrid');
             grid.innerHTML = q.options.map(opt => `<button type="button" class="answer-btn" data-option="${escapeHtml(opt)}">${escapeHtml(opt)}</button>`).join('');
             grid.querySelectorAll('.answer-btn').forEach(btn => {
                 btn.addEventListener('click', () => handleAnswer(btn, q));
             });
+            const explanationEl = document.getElementById('quizExplanation');
+            explanationEl.style.display = 'none';
+            explanationEl.textContent = '';
             document.getElementById('nextQuestionBtn').style.display = 'none';
         }
 
@@ -789,7 +887,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 else if (b === btn) b.classList.add('incorrect');
             });
             if (isCorrect) score++;
-            answered.push({ word: q.word, correct: isCorrect });
+            answered.push(q.isAI
+                ? { isAI: true, prompt: q.prompt, correctAnswer: q.correct, explanation: q.explanation, targetVocabulary: q.targetVocabulary, topic: q.topic, correct: isCorrect }
+                : { isAI: false, word: q.word, correct: isCorrect });
+            if (q.isAI && q.explanation) {
+                const explanationEl = document.getElementById('quizExplanation');
+                explanationEl.innerHTML = `<i class="fas fa-lightbulb"></i>${escapeHtml(q.explanation)}`;
+                explanationEl.style.display = 'block';
+            }
             document.getElementById('nextQuestionBtn').style.display = 'inline-flex';
         }
 
@@ -804,17 +909,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             showScreen('results');
             document.getElementById('resultsScoreNum').textContent = `${score} / ${questions.length} correct`;
             const isRtl = RTL_LANGUAGES.includes(selectedLanguage);
-            document.getElementById('resultsList').innerHTML = answered.map((a, i) => `
-                <label class="results-item">
-                    <input type="checkbox" data-index="${i}" ${a.correct ? '' : 'checked'}>
-                    <div>
-                        <div class="results-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(a.word.term)}</div>
-                        ${a.word.transliteration ? `<div class="results-translit">${escapeHtml(a.word.transliteration)}</div>` : ''}
-                        <div class="results-translation">${escapeHtml(a.word.translation)}</div>
-                    </div>
-                    <span class="results-badge ${a.correct ? 'badge-correct' : 'badge-missed'}">${a.correct ? 'Correct' : 'Missed'}</span>
-                </label>
-            `).join('');
+            document.getElementById('resultsList').innerHTML = answered.map((a, i) => {
+                if (a.isAI) {
+                    const term = (a.targetVocabulary && a.targetVocabulary.length) ? a.targetVocabulary.join(', ') : a.prompt;
+                    return `
+                        <label class="results-item">
+                            <input type="checkbox" data-index="${i}" ${a.correct ? '' : 'checked'}>
+                            <div>
+                                <div class="results-term">${escapeHtml(term)}</div>
+                                <div class="results-translation">${escapeHtml(a.correctAnswer)}</div>
+                            </div>
+                            <span class="results-badge ${a.correct ? 'badge-correct' : 'badge-missed'}">${a.correct ? 'Correct' : 'Missed'}</span>
+                        </label>`;
+                }
+                return `
+                    <label class="results-item">
+                        <input type="checkbox" data-index="${i}" ${a.correct ? '' : 'checked'}>
+                        <div>
+                            <div class="results-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(a.word.term)}</div>
+                            ${a.word.transliteration ? `<div class="results-translit">${escapeHtml(a.word.transliteration)}</div>` : ''}
+                            <div class="results-translation">${escapeHtml(a.word.translation)}</div>
+                        </div>
+                        <span class="results-badge ${a.correct ? 'badge-correct' : 'badge-missed'}">${a.correct ? 'Correct' : 'Missed'}</span>
+                    </label>`;
+            }).join('');
 
             // Reset from any previous round's save on this same results screen —
             // a successful save leaves saveSelectedBtn disabled with a "Saving..."
@@ -831,7 +949,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         document.getElementById('saveSelectedBtn').addEventListener('click', async () => {
             const checked = Array.from(document.querySelectorAll('#resultsList input[type="checkbox"]:checked'))
-                .map(cb => answered[parseInt(cb.getAttribute('data-index'), 10)].word);
+                .map(cb => answered[parseInt(cb.getAttribute('data-index'), 10)]);
 
             if (checked.length === 0) {
                 showToast('Select at least one word to save.');
@@ -846,14 +964,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // words to save, and awaiting each addDoc one at a time (the
                 // previous approach) meant the button's "Saving..." spinner could
                 // sit for several round-trips in a row on a slow connection.
-                await Promise.all(checked.map(word => addDoc(collection(db, 'notebook'), {
+                // Same notebook doc shape either way — AI rounds just derive
+                // term/translation/note from the question's targetVocabulary/
+                // explanation/prompt instead of the static pool's word fields.
+                await Promise.all(checked.map(a => addDoc(collection(db, 'notebook'), a.isAI ? {
                     userId: currentUser.uid,
-                    term: word.term,
-                    translation: word.translation,
+                    term: (a.targetVocabulary && a.targetVocabulary.length) ? a.targetVocabulary.join(', ') : a.prompt,
+                    translation: a.correctAnswer,
                     folder: selectedLanguage,
                     language: selectedLanguage,
-                    tags: Array.isArray(word.tags) ? word.tags : [],
-                    note: word.example || (word.transliteration ? `Pronounced: ${word.transliteration}` : ''),
+                    tags: a.topic ? [a.topic] : [],
+                    note: a.explanation || a.prompt,
+                    favorite: false,
+                    nextReviewAt: serverTimestamp(),
+                    reviewCount: 0,
+                    source: { page: 'vocab-quiz.html', title: 'Personalized Quiz', context: `${selectedLanguage} · AI${a.topic ? ' · ' + a.topic : ''}` },
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                } : {
+                    userId: currentUser.uid,
+                    term: a.word.term,
+                    translation: a.word.translation,
+                    folder: selectedLanguage,
+                    language: selectedLanguage,
+                    tags: Array.isArray(a.word.tags) ? a.word.tags : [],
+                    note: a.word.example || (a.word.transliteration ? `Pronounced: ${a.word.transliteration}` : ''),
                     favorite: false,
                     nextReviewAt: serverTimestamp(),
                     reviewCount: 0,
