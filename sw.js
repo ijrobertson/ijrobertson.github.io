@@ -108,12 +108,15 @@ if (self.workbox) {
   //
   // Bumped again to v4 on 2026-07-27: js/unread-messages.js (same bucket)
   // gained the app-icon Badging API calls — same staleness risk as above.
+  //
+  // Bumped again to v5 on 2026-09-03: lib/firebaseClient.js (same bucket)
+  // gained the badge-clearing signOut() wrapper — same staleness risk again.
   workbox.routing.registerRoute(
     ({ request, url }) =>
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v4",
+      cacheName: "linguabud-assets-v5",
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -143,6 +146,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets"),
       caches.delete("linguabud-assets-v2"),
       caches.delete("linguabud-assets-v3"),
+      caches.delete("linguabud-assets-v4"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
     ])
@@ -170,34 +174,55 @@ self.addEventListener("push", (event) => {
   // extra fields a sender adds later (e.g. conversationId) pass through to
   // the page without needing another service worker edit.
   const payload = raw.data || raw;
-  if (!payload.title) return;
 
-  // Home-screen icon badge (Badging API) — updates the OS-level number badge
-  // on the installed PWA's icon even while the app is fully closed, using
-  // the count the server already computed (see computeUnreadBadgeCount in
-  // functions/index.js). The foreground/app-open equivalent lives in
-  // js/unread-messages.js, driven by a live Firestore listener instead.
-  // registration.setAppBadge (not navigator.setAppBadge) is the service-
-  // worker-context form of the same API. Not every browser supports it
-  // (e.g. Firefox) — feature-detected, silently a no-op otherwise.
-  if (payload.badgeCount !== undefined && "setAppBadge" in self.registration) {
-    const n = parseInt(payload.badgeCount, 10);
-    if (!isNaN(n)) {
-      const p = n > 0 ? self.registration.setAppBadge(n) : self.registration.clearAppBadge();
-      p?.catch(() => {});
-    }
-  }
-
+  // Everything below — including the Badging API call — must run inside
+  // waitUntil. Without it, the browser is free to kill this service worker
+  // the instant the handler returns, which can happen before an async
+  // setAppBadge() call actually resolves, silently dropping the badge
+  // update. This used to be a fire-and-forget call outside waitUntil, which
+  // is why the icon badge only reliably updated once something *else* (e.g.
+  // opening then leaving the app, which runs the foreground listener in
+  // js/unread-messages.js) kept the page/worker alive long enough for it to
+  // land.
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+    (async () => {
+      // Home-screen icon badge (Badging API) — updates the OS-level number
+      // badge on the installed PWA's icon even while the app is fully
+      // closed, using the count the server already computed (see
+      // computeUnreadBadgeCount in functions/index.js). Applied unconditionally,
+      // even for a title-less "badge-only" push sent while the *visible*
+      // notification itself is debounced (see functions/index.js's
+      // sendMessageNotification) — otherwise several messages arriving in a
+      // row within the debounce window would leave the badge stuck showing
+      // a stale, too-low count. The foreground/app-open equivalent lives in
+      // js/unread-messages.js, driven by a live Firestore listener instead.
+      // registration.setAppBadge (not navigator.setAppBadge) is the
+      // service-worker-context form of the same API. Not every browser
+      // supports it (e.g. Firefox) — feature-detected, silently a no-op
+      // otherwise.
+      if (payload.badgeCount !== undefined && "setAppBadge" in self.registration) {
+        const n = parseInt(payload.badgeCount, 10);
+        if (!isNaN(n)) {
+          try {
+            if (n > 0) await self.registration.setAppBadge(n);
+            else await self.registration.clearAppBadge();
+          } catch {
+            // Badge failures are cosmetic — never worth surfacing to the user.
+          }
+        }
+      }
+
+      if (!payload.title) return; // badge-only push — nothing to show
+
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       const focused = clients.find((c) => c.focused);
       if (focused) {
         // Foreground: let the open page show its own in-app toast instead of
         // a redundant OS-level notification — see js/push-notifications.js.
         focused.postMessage({ type: "lb-push-foreground", payload });
-        return null;
+        return;
       }
-      return self.registration.showNotification(payload.title, {
+      await self.registration.showNotification(payload.title, {
         body: payload.body,
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-192.png",
@@ -206,7 +231,7 @@ self.addEventListener("push", (event) => {
         // instead of just landing on the generic page.
         data: payload,
       });
-    })
+    })()
   );
 });
 

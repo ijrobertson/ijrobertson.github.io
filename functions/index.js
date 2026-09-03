@@ -271,16 +271,28 @@ exports.sendMessageNotification = onDocumentCreated(
           const debounceMs = 5 * 60 * 1000; // "one push per thread per few minutes" — see docs/PWA_PRD.md §13
           const lastPushSentAt = conversation.lastPushSentAt?.[recipientId];
           const debounced = lastPushSentAt && (Date.now() - lastPushSentAt.toMillis()) < debounceMs;
+          // The badge count must stay accurate even when the *visible*
+          // notification is debounced — otherwise several messages arriving
+          // in a row within the debounce window would leave the home-screen
+          // icon showing a stale (too-low) count until the window expires.
+          // So this always sends a data push carrying the fresh badgeCount;
+          // only the title/body (which make sw.js show an actual OS
+          // notification) are gated on the debounce.
+          const currentConversationUnreadBefore = (conversation.unreadCount && conversation.unreadCount[recipientId]) || 0;
+          const badgeCount = await computeUnreadBadgeCount(admin.firestore(), recipientId, conversationId, currentConversationUnreadBefore);
+          const pushData = {
+            url: '/messages',
+            conversationId,
+            badgeCount: String(badgeCount), // FCM data values must be strings
+          };
           if (!debounced) {
-            const currentConversationUnreadBefore = (conversation.unreadCount && conversation.unreadCount[recipientId]) || 0;
-            const badgeCount = await computeUnreadBadgeCount(admin.firestore(), recipientId, conversationId, currentConversationUnreadBefore);
-            await sendPushToUser(admin.firestore(), recipientId, {
-              title: `${senderName} sent you a message`,
-              body: messagePreview,
-              url: '/messages',
-              conversationId,
-              badgeCount: String(badgeCount), // FCM data values must be strings
-            });
+            pushData.title = `${senderName} sent you a message`;
+            pushData.body = messagePreview;
+          } else {
+            console.log('Visible notification debounced for recipient (badge still updated):', recipientId);
+          }
+          await sendPushToUser(admin.firestore(), recipientId, pushData);
+          if (!debounced) {
             await conversationRef.update({
               // Plain Date, not FieldValue.serverTimestamp() — that sentinel
               // proved unreliable in this exact function's emulator context
@@ -290,8 +302,6 @@ exports.sendMessageNotification = onDocumentCreated(
               // above, so the debounce check itself needed no change.
               [`lastPushSentAt.${recipientId}`]: new Date(),
             });
-          } else {
-            console.log('Push debounced for recipient:', recipientId);
           }
         }
       } catch (pushError) {
@@ -409,7 +419,14 @@ Don't want to receive these emails? Turn off notifications in your dashboard: ht
           messageId: event.params.messageId,
           error: emailResult.error.message,
           errorCode: emailResult.error.statusCode,
-          sentAt: admin.firestore.FieldValue.serverTimestamp(),
+          // Plain Date, not FieldValue.serverTimestamp() — see the push-code
+          // comment above for why that sentinel is unreliable specifically in
+          // this function's emulator context. Discovered here because a
+          // Resend validation error (e.g. a test @example.com recipient)
+          // used to hit this exact line and throw, which crashed the whole
+          // function invocation instead of just failing the email — killing
+          // that message's badge/push update too, not just its email.
+          sentAt: new Date(),
           status: 'failed'
         });
 
@@ -424,7 +441,7 @@ Don't want to receive these emails? Turn off notifications in your dashboard: ht
         conversationId: conversationId,
         messageId: event.params.messageId,
         emailId: emailResult.data?.id,
-        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+        sentAt: new Date(),
         status: 'sent'
       });
 
@@ -438,7 +455,7 @@ Don't want to receive these emails? Turn off notifications in your dashboard: ht
         error: error.message,
         conversationId: event.params.conversationId,
         messageId: event.params.messageId,
-        sentAt: admin.firestore.FieldValue.serverTimestamp(),
+        sentAt: new Date(),
         status: 'failed'
       });
 
