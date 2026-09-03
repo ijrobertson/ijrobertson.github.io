@@ -184,6 +184,54 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             opacity: 0; transition: opacity 200ms ease;
         }
         .quiz-toast.show { opacity: 1; }
+
+        /* ===== QUIZ PREFERENCES (Phase 1 personalization, 2026-09-03) =====
+           Purely additive on top of the existing language/level pickers above —
+           they keep working exactly as before. This is an optional, skippable
+           per-language profile (previous experience, self-assessed level,
+           interests, goals) captured now so Phase 2's AI quiz generation has
+           something to personalize with; it doesn't affect quiz content yet. */
+        .quiz-profile-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: #eef1f0; color: var(--pb-teal-dark); border: none;
+            border-radius: 999px; padding: 0.55rem 1.05rem; font-family: 'Baloo 2', sans-serif;
+            font-weight: 700; font-size: 0.85rem; cursor: pointer; margin-bottom: 1.5rem;
+        }
+        .quiz-profile-btn:hover { background: #e2e6e4; }
+
+        #quizProfileBackdrop {
+            display: none; position: fixed; inset: 0; background: rgba(17,52,72,0.5);
+            z-index: 2200; align-items: center; justify-content: center; padding: 1rem;
+        }
+        #quizProfileModal {
+            background: white; border-radius: 24px; width: 100%; max-width: 480px;
+            max-height: min(88vh, 720px); display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 24px 60px -12px rgba(17,52,72,0.4);
+            animation: qpModalIn 0.2s ease;
+        }
+        @keyframes qpModalIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .qp-header { padding: 1.35rem 1.5rem 1rem; border-bottom: 1px solid #eef1f0; flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+        .qp-header h3 { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.25rem; margin: 0 0 0.25rem; }
+        .qp-header p { margin: 0; color: #5f6b72; font-size: 0.88rem; }
+        .qp-close { background: none; border: none; color: #9aa4a1; font-size: 1.1rem; cursor: pointer; padding: 4px; flex-shrink: 0; }
+        .qp-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1.25rem 1.5rem; }
+        .qp-question { margin-bottom: 1.6rem; }
+        .qp-question:last-child { margin-bottom: 0; }
+        .qp-question-label { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); font-size: 0.95rem; margin-bottom: 0.75rem; }
+        .qp-question-label .qp-hint { font-weight: 400; color: #9aa4a1; font-family: 'Open Sans', sans-serif; }
+        .qp-options { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+        .qp-option {
+            padding: 0.5rem 0.95rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+            background: white; color: var(--pb-teal-dark); border: 2px solid #e7e9e7; cursor: pointer; transition: all 0.15s;
+        }
+        .qp-option:hover { border-color: var(--pb-teal); }
+        .qp-option.active { background: var(--pb-teal-dark); border-color: var(--pb-teal-dark); color: white; }
+        .qp-other-input {
+            width: 100%; margin-top: 0.75rem; padding: 0.65rem 0.9rem; border-radius: 12px;
+            border: 2px solid #e7e9e7; font-size: 0.9rem; font-family: inherit;
+        }
+        .qp-other-input:focus { outline: none; border-color: var(--pb-teal); }
+        .qp-footer { padding: 1rem 1.5rem; border-top: 1px solid #eef1f0; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.6rem; }
     </style>
 </head>
 <body>
@@ -215,9 +263,54 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="setup-label">Pick a difficulty</div>
                 <div class="picker-pills" id="levelPills"></div>
 
+                <button type="button" class="quiz-profile-btn" id="quizPreferencesBtn">
+                    <i class="fas fa-sliders-h"></i> Quiz Preferences
+                </button>
+
                 <button type="button" class="btn-lb-pill" id="startQuizBtn" disabled>
                     <i class="fas fa-play"></i> Start Quiz
                 </button>
+            </div>
+        </div>
+
+        <!-- ===== QUIZ PREFERENCES MODAL (Phase 1 personalization) =====
+             Optional, skippable, per-language. Auto-offered once per language
+             the first time it's picked and has no saved/skipped profile yet
+             (see maybeAutoPromptProfile below); always reachable afterward via
+             the button above. Doesn't gate or replace the language/level
+             pickers — Start Quiz keeps working exactly as it did before this. -->
+        <div id="quizProfileBackdrop" role="dialog" aria-modal="true" aria-labelledby="qpTitle">
+            <div id="quizProfileModal">
+                <div class="qp-header">
+                    <div>
+                        <h3 id="qpTitle">Quiz Preferences</h3>
+                        <p>Help us personalize your <strong id="qpLanguageName"></strong> quizzes.</p>
+                    </div>
+                    <button type="button" class="qp-close" id="qpCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="qp-body">
+                    <div class="qp-question">
+                        <div class="qp-question-label">Have you studied this language before?</div>
+                        <div class="qp-options" id="qpExperience"></div>
+                    </div>
+                    <div class="qp-question">
+                        <div class="qp-question-label">What level would you say you are?</div>
+                        <div class="qp-options" id="qpLevel"></div>
+                    </div>
+                    <div class="qp-question">
+                        <div class="qp-question-label">What are you interested in? <span class="qp-hint">(pick any)</span></div>
+                        <div class="qp-options" id="qpInterests"></div>
+                    </div>
+                    <div class="qp-question">
+                        <div class="qp-question-label">What are your goals with this language? <span class="qp-hint">(pick any)</span></div>
+                        <div class="qp-options" id="qpGoals"></div>
+                        <input type="text" class="qp-other-input" id="qpGoalsOther" placeholder="Anything else? (optional)" maxlength="140">
+                    </div>
+                </div>
+                <div class="qp-footer">
+                    <button type="button" class="btn-lb-pill" id="qpSaveBtn"><i class="fas fa-check"></i> Save preferences</button>
+                    <button type="button" class="btn-lb-pill btn-lb-pill-outline" id="qpSkipBtn">Skip for now</button>
+                </div>
             </div>
         </div>
 
@@ -276,7 +369,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import {
             auth, db,
             onAuthStateChanged, signOut,
-            doc, getDoc,
+            doc, getDoc, setDoc,
             collection, addDoc, serverTimestamp
         } from './lib/firebaseClient.js';
         import './js/app-shell.js';
@@ -302,6 +395,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const MIN_POOL_SIZE = 4; // need at least 4 words to build a 4-option question
         const SAVE_SELECTED_BTN_DEFAULT_HTML = '<i class="fas fa-bookmark"></i> Save selected to Notebook';
 
+        // ===== QUIZ PREFERENCES (Phase 1 personalization) =====
+        // Option lists match the spec exactly. `selfAssessedLevel` is a
+        // separate, coarser concept from the existing `selectedLevel` pill
+        // (alphabet/beginner/intermediate/advanced, which filters the current
+        // static word pool) — it's the learner's own broader self-assessment,
+        // captured for Phase 2's AI generation to use later. The two aren't
+        // synced; both keep working independently.
+        const EXPERIENCE_OPTIONS = [
+            { id: 'never', label: 'Never' },
+            { id: 'a_little', label: 'A little' },
+            { id: 'a_while', label: "Yes, but it's been a while" },
+            { id: 'current', label: 'Yes, I currently study it' },
+        ];
+        const SELF_LEVEL_OPTIONS = [
+            { id: 'absolute_beginner', label: 'Absolute Beginner' },
+            { id: 'beginner', label: 'Beginner' },
+            { id: 'intermediate', label: 'Intermediate' },
+            { id: 'advanced_intermediate', label: 'Advanced Intermediate' },
+            { id: 'advanced', label: 'Advanced' },
+        ];
+        const INTEREST_OPTIONS = [
+            'General Knowledge', 'Travel', 'Food', 'Sports', 'Music', 'Movies & TV', 'Culture',
+            'History', 'Science', 'Business', 'Medicine', 'Technology', 'Current Events',
+            'Everyday Conversation', 'Other',
+        ];
+        const GOAL_OPTIONS = [
+            'Prepare for a trip', 'Speak with family', 'Work', 'School', 'General Fluency',
+            'Conversation', 'Reading', 'Writing', 'Understanding native speakers', 'Other',
+        ];
+
         let currentUser = null;
         let manifest = null;
         let selectedLanguage = null;
@@ -311,6 +434,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let answered = [];
         let qIndex = 0;
         let score = 0;
+
+        // quizProfiles/{uid} document data, fetched once in init() — { [language]: {...} }.
+        let quizProfiles = {};
+        // Session-only guard so browsing several language pills in a row doesn't
+        // re-open the prompt for a language the user already dismissed just now
+        // (a real skip is separately persisted — see maybeAutoPromptProfile).
+        const promptedLanguages = new Set();
+        let qpActiveLanguage = null;
+        let qpSelectedExperience = null;
+        let qpSelectedLevel = null;
+        let qpSelectedInterests = new Set();
+        let qpSelectedGoals = new Set();
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login'; return; }
@@ -385,11 +520,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ===== SETUP =====
         async function init() {
             try {
-                const [manifestData, userSnap] = await Promise.all([
+                const [manifestData, userSnap, quizProfileSnap] = await Promise.all([
                     fetch('data/vocab/index.json').then(r => r.json()),
                     getDoc(doc(db, 'users', currentUser.uid)),
+                    getDoc(doc(db, 'quizProfiles', currentUser.uid)),
                 ]);
                 manifest = manifestData;
+                quizProfiles = quizProfileSnap.exists() ? quizProfileSnap.data() : {};
                 const learning = (userSnap.exists() ? userSnap.data().languages_learning : []) || [];
                 const overlap = SUPPORTED_LANGUAGES.filter(lang =>
                     learning.some(l => (l || '').trim().toLowerCase() === lang.toLowerCase())
@@ -401,6 +538,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 renderLanguagePills();
                 renderLevelPills();
                 updateStartButtonState();
+                maybeAutoPromptProfile(selectedLanguage);
             } catch (e) {
                 console.error('Vocab quiz setup load error:', e);
                 document.getElementById('setupLoading').innerHTML =
@@ -420,6 +558,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     renderLanguagePills();
                     renderLevelPills();
                     updateStartButtonState();
+                    maybeAutoPromptProfile(selectedLanguage);
                 });
             });
         }
@@ -453,6 +592,133 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const btn = document.getElementById('startQuizBtn');
             btn.disabled = !selectedLanguage || !levelHasContent(selectedLanguage, selectedLevel);
         }
+
+        // ===== QUIZ PREFERENCES (Phase 1 personalization) =====
+        // A profile "exists" (for the purposes of not re-prompting) once the
+        // learner has either completed it (selfAssessedLevel set) or
+        // explicitly skipped it (setupSkippedAt set) — both are written to the
+        // same quizProfiles/{uid}.{language} map entry.
+        function shouldAutoPromptProfile(language) {
+            if (!language || promptedLanguages.has(language)) return false;
+            const p = quizProfiles[language];
+            return !p || (!p.selfAssessedLevel && !p.setupSkippedAt);
+        }
+
+        function maybeAutoPromptProfile(language) {
+            if (!shouldAutoPromptProfile(language)) return;
+            promptedLanguages.add(language);
+            openQuizProfileModal(language);
+        }
+
+        function renderSingleSelect(containerId, options, selectedId, onSelect) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = options.map(o => `
+                <button type="button" class="qp-option${o.id === selectedId ? ' active' : ''}" data-id="${o.id}">${escapeHtml(o.label)}</button>
+            `).join('');
+            container.querySelectorAll('.qp-option').forEach(btn => {
+                btn.addEventListener('click', () => onSelect(btn.getAttribute('data-id')));
+            });
+        }
+
+        function renderMultiSelect(containerId, options, selectedSet) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = options.map(label => `
+                <button type="button" class="qp-option${selectedSet.has(label) ? ' active' : ''}" data-id="${escapeHtml(label)}">${escapeHtml(label)}</button>
+            `).join('');
+            container.querySelectorAll('.qp-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    if (selectedSet.has(id)) selectedSet.delete(id); else selectedSet.add(id);
+                    btn.classList.toggle('active');
+                });
+            });
+        }
+
+        function renderQuizProfileForm() {
+            renderSingleSelect('qpExperience', EXPERIENCE_OPTIONS, qpSelectedExperience, (id) => { qpSelectedExperience = id; renderQuizProfileForm(); });
+            renderSingleSelect('qpLevel', SELF_LEVEL_OPTIONS, qpSelectedLevel, (id) => { qpSelectedLevel = id; renderQuizProfileForm(); });
+            renderMultiSelect('qpInterests', INTEREST_OPTIONS, qpSelectedInterests);
+            renderMultiSelect('qpGoals', GOAL_OPTIONS, qpSelectedGoals);
+        }
+
+        function openQuizProfileModal(language) {
+            qpActiveLanguage = language;
+            const existing = quizProfiles[language] || {};
+            qpSelectedExperience = existing.previousExperience || null;
+            qpSelectedLevel = existing.selfAssessedLevel || null;
+            qpSelectedInterests = new Set(existing.interests || []);
+            qpSelectedGoals = new Set(existing.goals || []);
+            document.getElementById('qpGoalsOther').value = existing.goalsOther || '';
+            document.getElementById('qpLanguageName').textContent = language;
+            renderQuizProfileForm();
+            document.getElementById('quizProfileBackdrop').style.display = 'flex';
+        }
+
+        function closeQuizProfileModal() {
+            document.getElementById('quizProfileBackdrop').style.display = 'none';
+        }
+
+        document.getElementById('quizPreferencesBtn').addEventListener('click', () => {
+            if (!selectedLanguage) { showToast('Choose a language first.'); return; }
+            openQuizProfileModal(selectedLanguage);
+        });
+        document.getElementById('qpCloseBtn').addEventListener('click', closeQuizProfileModal);
+        document.getElementById('quizProfileBackdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'quizProfileBackdrop') closeQuizProfileModal();
+        });
+
+        document.getElementById('qpSkipBtn').addEventListener('click', async () => {
+            const language = qpActiveLanguage;
+            closeQuizProfileModal();
+            // Persisted (not just in-memory) so this doesn't keep auto-prompting on
+            // future visits either — still reachable anytime via the Quiz
+            // Preferences button, which always opens with whatever was saved so far.
+            try {
+                await setDoc(doc(db, 'quizProfiles', currentUser.uid), {
+                    [language]: { setupSkippedAt: serverTimestamp() }
+                }, { merge: true });
+                quizProfiles[language] = { ...quizProfiles[language], setupSkippedAt: true };
+            } catch (e) {
+                console.error('Skip quiz profile error:', e);
+            }
+        });
+
+        document.getElementById('qpSaveBtn').addEventListener('click', async () => {
+            if (!qpSelectedExperience || !qpSelectedLevel) {
+                showToast('Please answer the first two questions.');
+                return;
+            }
+            const language = qpActiveLanguage;
+            const btn = document.getElementById('qpSaveBtn');
+            const defaultHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
+            const isFirstSave = !quizProfiles[language] || !quizProfiles[language].selfAssessedLevel;
+            const profileData = {
+                previousExperience: qpSelectedExperience,
+                selfAssessedLevel: qpSelectedLevel,
+                // System-adjustable later from real quiz performance (Phase 3) —
+                // starts out equal to the learner's own self-assessment.
+                effectiveLevel: qpSelectedLevel,
+                interests: Array.from(qpSelectedInterests),
+                goals: Array.from(qpSelectedGoals),
+                goalsOther: document.getElementById('qpGoalsOther').value.trim(),
+                updatedAt: serverTimestamp(),
+                ...(isFirstSave ? { createdAt: serverTimestamp() } : {}),
+            };
+            try {
+                await setDoc(doc(db, 'quizProfiles', currentUser.uid), { [language]: profileData }, { merge: true });
+                quizProfiles[language] = { ...quizProfiles[language], ...profileData };
+                closeQuizProfileModal();
+                showToast('Quiz preferences saved!');
+            } catch (e) {
+                console.error('Save quiz profile error:', e);
+                alert('Something went wrong saving your preferences. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = defaultHtml;
+            }
+        });
 
         document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
         document.getElementById('changeLevelBtn').addEventListener('click', () => showScreen('setup'));

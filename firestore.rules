@@ -263,6 +263,16 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Personalized quiz profile (vocab-quiz.html "Quiz Preferences") — one doc
+    // per user holding a map of { [language]: { previousExperience,
+    // selfAssessedLevel, effectiveLevel, interests, goals, goalsOther,
+    // setupSkippedAt?, createdAt, updatedAt } }, one entry per language the
+    // learner has configured/skipped setup for. Same single-owner-doc shape as
+    // fcmTokens/cultureProgress/travelJourneys.
+    match /quizProfiles/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Presence (online / last-seen) — one doc per user, keyed by uid, holding
     // { online: bool, lastSeenAt }. Any signed-in user can read it (needed to
     // show a conversation partner's status in messages.html), but only the
