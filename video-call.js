@@ -36,6 +36,9 @@ const state = {
     localVideoTrack: null,
     localScreenTrack: null,
     isScreenSharing: false,
+    screenClient: null,      // secondary Agora connection used to publish the screen while sharing
+    screenUid: null,         // uid of our own screen-share connection
+    remoteScreenUid: null,   // uid the remote peer's screen-share connection is using (learned via relay)
     remoteUsers: {},
     remoteUserNames: {},
 
@@ -47,6 +50,7 @@ const state = {
     // Call state
     isMuted: false,
     isCameraOff: false,
+    cameraFacingMode: 'user', // 'user' (front) or 'environment' (back) — mobile only
     channelName: '',
     wasCallActive: false,
     callStartTime: null,
@@ -187,6 +191,8 @@ const vcWaiting      = $('vc-waiting');
 const localPip       = $('vc-local-pip');
 const localStream    = $('vc-local-stream');
 const localName      = $('vc-local-name');
+const remoteFacePip    = $('vc-remote-face-pip');
+const remoteFaceStream = $('vc-remote-face-stream');
 const vcControls     = $('vc-controls');
 const vcTopBar       = $('vc-top-bar');
 
@@ -199,6 +205,8 @@ const btnChat        = $('btn-chat');
 const btnDice        = $('btn-dice');
 const btnWhiteboard  = $('btn-whiteboard');
 const btnScreenShare = $('btn-screenshare');
+const btnSwitchCamera = $('btn-switch-camera');
+const pipSwitchCameraBtn = $('pip-switch-camera-btn');
 const btnPip         = $('btn-pip');
 
 // Panels
@@ -503,6 +511,7 @@ async function joinChannel() {
         }
         setLocalCameraUnavailable(!videoTrack);
         setLocalMicUnavailable(!audioTrack);
+        updateSwitchCameraAvailability();
         localName.textContent = state.currentUserName;
 
         // Publish whatever tracks are actually available
@@ -551,7 +560,10 @@ async function leaveChannel() {
 
     // Stop local tracks
     if (state.localScreenTrack) { state.localScreenTrack.close(); state.localScreenTrack = null; }
+    if (state.screenClient) { state.screenClient.leave().catch(() => {}); state.screenClient = null; }
     state.isScreenSharing = false;
+    state.screenUid = null;
+    state.remoteScreenUid = null;
     if (state.localAudioTrack) { state.localAudioTrack.close(); state.localAudioTrack = null; }
     if (state.localVideoTrack) { state.localVideoTrack.close(); state.localVideoTrack = null; }
 
@@ -581,6 +593,10 @@ async function leaveChannel() {
     localName.textContent = '';
     remoteStream.innerHTML = '';
     localStream.innerHTML = '';
+    if (remoteFaceStream) remoteFaceStream.innerHTML = '';
+    remoteFacePip?.classList.add('hidden');
+    remoteContainer.classList.remove('vc-screensharing');
+    $('vc-screensharing-badge')?.classList.add('hidden');
     chatMessages.innerHTML = `<div class="chat-empty"><i class="fas fa-comment-slash"></i><p>No messages yet. Start the conversation!</p></div>`;
     chatInput.value = '';
     wbInitCanvas();
@@ -590,6 +606,8 @@ async function leaveChannel() {
     updateCameraUI();
     setLocalCameraUnavailable(false);
     setLocalMicUnavailable(false);
+    state.cameraFacingMode = 'user';
+    setSwitchCameraVisible(false);
     updateScreenShareUI();
     navWarning.classList.add('hidden');
     _closePipOverlay();
@@ -610,20 +628,74 @@ async function leaveChannel() {
 // AGORA EVENT HANDLERS
 // ════════════════════════════════════════════════════════════
 
+/** True while `uid` belongs to the remote peer's dedicated screen-share connection, not a real participant. */
+function isRemoteScreenUid(uid) {
+    return state.remoteScreenUid != null && String(uid) === String(state.remoteScreenUid);
+}
+
+/** Count of remote uids that represent an actual participant (excludes the screen-share connection). */
+function realRemoteUidCount() {
+    return Object.keys(state.remoteUsers).filter(uid => !isRemoteScreenUid(uid)).length;
+}
+
+/**
+ * Renders the main remote area from current state: if the peer's screen
+ * connection has a live video track, show the screen full-size and overlay
+ * their face (from their normal camera connection) in a small PiP; otherwise
+ * just show their camera as usual.
+ */
+function renderRemoteMainView() {
+    const screenUser = state.remoteScreenUid != null ? state.remoteUsers[state.remoteScreenUid] : null;
+    const screenActive = !!(screenUser && screenUser.videoTrack);
+
+    const badge = $('vc-screensharing-badge');
+    if (badge) badge.classList.toggle('hidden', !screenActive);
+    remoteContainer.classList.toggle('vc-screensharing', screenActive);
+
+    const faceUid = Object.keys(state.remoteUsers).find(uid =>
+        !isRemoteScreenUid(uid) && state.remoteUsers[uid].videoTrack
+    );
+
+    if (screenActive) {
+        remoteStream.innerHTML = '';
+        screenUser.videoTrack.play(remoteStream);
+
+        if (faceUid && remoteFaceStream) {
+            remoteFaceStream.innerHTML = '';
+            state.remoteUsers[faceUid].videoTrack.play(remoteFaceStream);
+            remoteFacePip?.classList.remove('hidden');
+        } else {
+            remoteFacePip?.classList.add('hidden');
+        }
+    } else {
+        remoteFacePip?.classList.add('hidden');
+        if (remoteFaceStream) remoteFaceStream.innerHTML = '';
+        if (faceUid) {
+            remoteStream.innerHTML = '';
+            state.remoteUsers[faceUid].videoTrack.play(remoteStream);
+        }
+    }
+}
+
 async function handleUserPublished(user, mediaType) {
     state.remoteUsers[user.uid] = user;
     await state.client.subscribe(user, mediaType);
+
+    if (isRemoteScreenUid(user.uid)) {
+        // Secondary connection the remote peer opened just to publish their
+        // screen — not a real participant, just re-render the main view.
+        if (mediaType === 'video') renderRemoteMainView();
+        return;
+    }
 
     if (mediaType === 'video') {
         // Look up display name
         if (!state.remoteUserNames[user.uid]) {
             state.remoteUserNames[user.uid] = await lookupRemoteName(user.uid) || 'Guest';
         }
-        // Show remote video in main area
         vcWaiting.style.display = 'none';
-        remoteStream.innerHTML = '';
-        user.videoTrack.play(remoteStream);
         remoteName.textContent = state.remoteUserNames[user.uid];
+        renderRemoteMainView();
     }
     if (mediaType === 'audio') {
         user.audioTrack.play();
@@ -633,26 +705,41 @@ async function handleUserPublished(user, mediaType) {
 }
 
 function handleUserUnpublished(user, mediaType) {
-    if (mediaType === 'video') {
-        // If this was our main remote user, show waiting overlay
-        if (!Object.values(state.remoteUsers).some(u => u.uid !== user.uid && u.videoTrack)) {
-            vcWaiting.style.display = 'flex';
-            remoteName.textContent = '';
-        }
+    if (mediaType !== 'video') return;
+
+    if (isRemoteScreenUid(user.uid)) {
+        renderRemoteMainView();
+        return;
     }
+
+    // If this was our main remote user, show waiting overlay
+    if (!Object.values(state.remoteUsers).some(u => u.uid !== user.uid && !isRemoteScreenUid(u.uid) && u.videoTrack)) {
+        vcWaiting.style.display = 'flex';
+        remoteName.textContent = '';
+    }
+    renderRemoteMainView();
 }
 
 function handleUserLeft(user) {
+    if (isRemoteScreenUid(user.uid)) {
+        // Their screen-share connection closed — not a real participant leaving.
+        delete state.remoteUsers[user.uid];
+        state.remoteScreenUid = null;
+        renderRemoteMainView();
+        return;
+    }
+
     const leavingName = state.remoteUserNames[user.uid] || 'Participant';
     delete state.remoteUsers[user.uid];
     delete state.remoteUserNames[user.uid];
-    if (Object.keys(state.remoteUsers).length === 0) {
+    if (realRemoteUidCount() === 0) {
         vcWaiting.style.display = 'flex';
         remoteName.textContent = '';
         remoteStream.innerHTML = '';
         const badge = $('vc-screensharing-badge');
         if (badge) badge.classList.add('hidden');
         remoteContainer.classList.remove('vc-screensharing');
+        remoteFacePip?.classList.add('hidden');
     }
     updateParticipantsList();
     showToast(`${leavingName} left the call`);
@@ -733,6 +820,64 @@ function setLocalMicUnavailable(unavailable) {
 }
 
 // ════════════════════════════════════════════════════════════
+// SWITCH CAMERA (mobile front/back only — desktops don't have a back camera)
+// ════════════════════════════════════════════════════════════
+
+function isMobilePhone() {
+    return /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry|IEMobile/i.test(navigator.userAgent);
+}
+
+function setSwitchCameraVisible(visible) {
+    btnSwitchCamera?.classList.toggle('hidden', !visible);
+    pipSwitchCameraBtn?.classList.toggle('hidden', !visible);
+}
+
+/** Show the switch-camera button only on a phone that actually reports 2+ cameras. */
+async function updateSwitchCameraAvailability() {
+    if (!isMobilePhone() || !state.localVideoTrack) {
+        setSwitchCameraVisible(false);
+        return;
+    }
+    try {
+        const cameras = await AgoraRTC.getCameras();
+        setSwitchCameraVisible(cameras.length > 1);
+    } catch {
+        setSwitchCameraVisible(false);
+    }
+}
+
+async function switchCamera() {
+    if (!state.localVideoTrack || !state.client) return;
+    btnSwitchCamera && (btnSwitchCamera.disabled = true);
+    pipSwitchCameraBtn && (pipSwitchCameraBtn.disabled = true);
+    try {
+        const newFacing = state.cameraFacingMode === 'user' ? 'environment' : 'user';
+        // Acquire the new-facing camera first so a failure (e.g. device busy)
+        // doesn't leave the user with no camera track at all.
+        const newTrack = await AgoraRTC.createCameraVideoTrack({ facingMode: newFacing });
+        newTrack.setMuted(state.isCameraOff);
+
+        const oldTrack = state.localVideoTrack;
+        await state.client.unpublish(oldTrack);
+        oldTrack.close();
+
+        state.localVideoTrack = newTrack;
+        state.cameraFacingMode = newFacing;
+        localStream.innerHTML = '';
+        newTrack.play(localStream);
+        await state.client.publish(newTrack);
+
+        showToast(newFacing === 'environment' ? 'Switched to back camera' : 'Switched to front camera', 'success');
+    } catch (err) {
+        console.error('Switch camera error:', err);
+        showToast('Could not switch camera', 'error');
+    } finally {
+        btnSwitchCamera && (btnSwitchCamera.disabled = false);
+        pipSwitchCameraBtn && (pipSwitchCameraBtn.disabled = false);
+    }
+}
+
+// ════════════════════════════════════════════════════════════
 // SCREEN SHARE
 // ════════════════════════════════════════════════════════════
 
@@ -742,28 +887,38 @@ async function startScreenShare() {
         // 'disable' = no screen audio track; mic audio is already published separately
         state.localScreenTrack = await AgoraRTC.createScreenVideoTrack({}, 'disable');
 
-        // Swap camera track for screen track in the published stream
-        await state.client.unpublish(state.localVideoTrack);
-        state.localVideoTrack.stop();
-        await state.client.publish(state.localScreenTrack);
+        // Publish the screen on a SEPARATE Agora connection (its own uid) instead
+        // of swapping out the camera track. This keeps the camera published the
+        // whole time, so both sides keep seeing the sharer's face — the local
+        // self-view PiP is untouched, and the remote peer gets a small face PiP
+        // overlaid on the shared screen (see renderRemoteMainView).
+        state.screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        const generateToken = httpsCallable(functions, 'generateAgoraToken');
+        const result = await generateToken({ channelName: state.channelName });
+        if (!result.data?.token) throw new Error('Failed to get a screen-share token from server');
 
-        // Show screen in the local self-view PiP
-        state.localScreenTrack.play(localStream);
+        state.screenUid = await state.screenClient.join(APP_ID, state.channelName, result.data.token, result.data.uid || 0);
+
+        // Tell the remote peer which uid is our screen connection BEFORE
+        // publishing, so it's very likely to arrive before the corresponding
+        // Agora user-published event (which requires slower SFU negotiation).
+        if (state.wbRelayRef) {
+            setDoc(state.wbRelayRef, { t: 'ss', active: true, uid: state.screenUid, ts: Date.now() }).catch(() => {});
+        }
+
+        await state.screenClient.publish(state.localScreenTrack);
 
         state.isScreenSharing = true;
         updateScreenShareUI();
         showToast('Screen sharing started', 'success');
 
-        // Notify remote participant via relay
-        if (state.wbRelayRef) {
-            setDoc(state.wbRelayRef, { t: 'ss', active: true, ts: Date.now() }).catch(() => {});
-        }
-
         // When the user clicks "Stop sharing" in the browser's native bar
         state.localScreenTrack.on('track-ended', () => stopScreenShare());
 
     } catch (err) {
-        state.localScreenTrack = null;
+        if (state.screenClient) { state.screenClient.leave().catch(() => {}); state.screenClient = null; }
+        if (state.localScreenTrack) { state.localScreenTrack.close(); state.localScreenTrack = null; }
+        state.screenUid = null;
         // NotAllowedError means the user cancelled the picker — not an error worth toasting
         if (err.name !== 'NotAllowedError' && err.code !== 'PERMISSION_DENIED') {
             console.error('Screen share error:', err);
@@ -775,15 +930,14 @@ async function startScreenShare() {
 async function stopScreenShare() {
     if (!state.isScreenSharing || !state.localScreenTrack) return;
     try {
-        await state.client.unpublish(state.localScreenTrack);
+        if (state.screenClient) {
+            await state.screenClient.unpublish(state.localScreenTrack);
+            await state.screenClient.leave();
+            state.screenClient = null;
+        }
         state.localScreenTrack.close();
         state.localScreenTrack = null;
-
-        // Restore camera track
-        if (state.localVideoTrack) {
-            await state.client.publish(state.localVideoTrack);
-            state.localVideoTrack.play(localStream);
-        }
+        state.screenUid = null;
 
         state.isScreenSharing = false;
         updateScreenShareUI();
@@ -791,12 +945,14 @@ async function stopScreenShare() {
 
         // Notify remote participant via relay
         if (state.wbRelayRef) {
-            setDoc(state.wbRelayRef, { t: 'ss', active: false, ts: Date.now() }).catch(() => {});
+            setDoc(state.wbRelayRef, { t: 'ss', active: false, uid: null, ts: Date.now() }).catch(() => {});
         }
     } catch (err) {
         console.error('Stop screen share error:', err);
         state.isScreenSharing = false;
         state.localScreenTrack = null;
+        state.screenClient = null;
+        state.screenUid = null;
         updateScreenShareUI();
     }
 }
@@ -817,8 +973,6 @@ function updateScreenShareUI() {
     btnScreenShare.querySelector('i').className = sharing ? 'fas fa-stop-circle' : 'fas fa-desktop';
     const banner = $('vc-presenting-banner');
     if (banner) banner.classList.toggle('hidden', !sharing);
-    // Show the full shared screen (no cropping) instead of the camera "fill" framing
-    localPip.classList.toggle('vc-screensharing', sharing);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -834,14 +988,14 @@ function updateParticipantsList() {
     // Local user
     list.appendChild(createParticipantItem(state.currentUserName, true, state.isMuted, state.isCameraOff));
 
-    // Remote users
-    Object.values(state.remoteUsers).forEach(user => {
+    // Remote users (excluding the peer's screen-share connection, if any)
+    Object.values(state.remoteUsers).filter(user => !isRemoteScreenUid(user.uid)).forEach(user => {
         const name = state.remoteUserNames[user.uid] || 'Guest';
         list.appendChild(createParticipantItem(name, false, false, false));
     });
 
     // Update count badge on button
-    const total = 1 + Object.keys(state.remoteUsers).length;
+    const total = 1 + realRemoteUidCount();
     participantBadge.textContent = total;
     participantBadge.classList.toggle('hidden', total <= 1);
 }
@@ -1071,10 +1225,8 @@ function wbHandleRemoteAction(msg) {
     } else if (msg.t === 'prompt') {
         showPrompt({ icon: msg.icon, title: msg.title, text: msg.text }, msg.generatedBy, true);
     } else if (msg.t === 'ss') {
-        const badge = $('vc-screensharing-badge');
-        if (badge) badge.classList.toggle('hidden', !msg.active);
-        // Show the full shared screen (no cropping) instead of the camera "fill" framing
-        remoteContainer.classList.toggle('vc-screensharing', !!msg.active);
+        state.remoteScreenUid = msg.active ? msg.uid : null;
+        renderRemoteMainView();
     }
 }
 
@@ -1657,10 +1809,12 @@ function setupEventListeners() {
     btnScreenShare?.addEventListener('click', toggleScreenShare);
     $('vc-stop-presenting')?.addEventListener('click', stopScreenShare);
     btnPip.addEventListener('click', enterPiP);
+    btnSwitchCamera?.addEventListener('click', switchCamera);
 
     // PiP self-view buttons
     $('pip-mute-btn')?.addEventListener('click', e => { e.stopPropagation(); toggleMute(); });
     $('pip-camera-btn')?.addEventListener('click', e => { e.stopPropagation(); toggleCamera(); });
+    pipSwitchCameraBtn?.addEventListener('click', e => { e.stopPropagation(); switchCamera(); });
 
     // Profile dropdown toggle (avatar click on mobile)
     $('pj-avatar-wrap')?.addEventListener('click', () => {
