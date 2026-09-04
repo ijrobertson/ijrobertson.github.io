@@ -1175,8 +1175,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('quizProgressText').textContent = `Question ${qIndex + 1} of ${questions.length}`;
             const isRtl = RTL_LANGUAGES.includes(selectedLanguage);
             if (q.isAI) {
+                // AI-generated prompts are English by contract (see buildQuizSystemPrompt
+                // server-side), with only an embedded target-language word/phrase — never
+                // force dir="rtl" here even for Arabic. Forcing RTL base direction on a
+                // paragraph that's predominantly English moves neutral characters (the
+                // trailing "?", punctuation) to the paragraph-start side per the Unicode
+                // bidi algorithm, which is exactly the "question mark after the first word"
+                // bug reported live. Let it inherit the page's normal LTR direction — the
+                // embedded Arabic run still renders correctly right-to-left on its own via
+                // ordinary bidi embedding, same as any other mixed-script sentence.
                 document.getElementById('quizTermCard').innerHTML =
-                    `<div class="quiz-term quiz-term-prompt"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.prompt)}</div>`;
+                    `<div class="quiz-term quiz-term-prompt">${escapeHtml(q.prompt)}</div>`;
             } else {
                 document.getElementById('quizTermCard').innerHTML = `
                     <div class="quiz-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.word.term)}</div>

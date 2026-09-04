@@ -1273,6 +1273,19 @@ const LEVEL_GUIDANCE = {
 // index on quizzes' (userId, createdAt).
 const MAX_AI_QUIZZES_PER_USER_PER_DAY = 15;
 
+// Pilot allowlist for PWA quiz push notifications — per Ian's 2026-09-04
+// direction, only a small fraction of students currently have access to the
+// PWA at all (pwa-ios-test is a preview channel, not linked from the live
+// site), so everyone else should not have daily quiz notifications sent to
+// them for now. Gates both quiz-notification paths (sendScheduledQuizNotifications
+// and the older sendDailyReminders, now also quiz-copy per that same session)
+// — does NOT restrict on-demand quiz-taking for anyone who does reach the
+// PWA, only the automatic daily push. Remove this gate (and the two checks
+// that reference it) once the PWA is generally available.
+const PWA_QUIZ_NOTIFICATION_ALLOWLIST = new Set([
+  '24RtkWWM0NfDjIwGncFiclltJw93', // Ian Robertson
+]);
+
 const QUIZ_TOOL = {
   name: 'generate_quiz',
   description: 'Return a personalized language-learning quiz as strict structured data.',
@@ -3970,6 +3983,12 @@ async function processDailyReminders(db) {
   for (const docSnap of snap.docs) {
     const uid = docSnap.id;
     try {
+      if (!PWA_QUIZ_NOTIFICATION_ALLOWLIST.has(uid)) {
+        results.skipped++;
+        results.details.push({ uid, status: 'skipped', reason: 'not_in_pwa_pilot_allowlist' });
+        continue;
+      }
+
       // Points at the quiz (not notebook review) per Ian's 2026-09-04
       // direction. Note this is a separate, simpler mechanism from
       // quizSchedules/sendScheduledQuizNotifications (fixed 15:00 UTC for
@@ -4140,6 +4159,12 @@ async function processScheduledQuizNotifications(db) {
     const uid = scheduleDoc.id;
     const schedule = scheduleDoc.data();
     try {
+      if (!PWA_QUIZ_NOTIFICATION_ALLOWLIST.has(uid)) {
+        results.skipped++;
+        results.details.push({ uid, status: 'skipped', reason: 'not_in_pwa_pilot_allowlist' });
+        continue;
+      }
+
       const userSnap = await db.collection('users').doc(uid).get();
       const rawTimezone = userSnap.exists ? userSnap.data().timezone : null;
       const timezone = rawTimezone || 'UTC';
