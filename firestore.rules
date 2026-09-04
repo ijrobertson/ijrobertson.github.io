@@ -281,6 +281,17 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
+    // Quiz attempt history (Phase 3, written by the client in vocab-quiz.html's
+    // recordQuizAttempt() right after a round is scored) — one doc per
+    // completed quiz, flat like notebook. Immutable history: create + read
+    // only, no update/delete. generatePersonalizedQuiz (Cloud Function, Admin
+    // SDK) reads recent attempts to avoid repeating topics and to naturally
+    // reinforce vocabulary/grammar the learner has struggled with.
+    match /quizAttempts/{attemptId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
     // Presence (online / last-seen) — one doc per user, keyed by uid, holding
     // { online: bool, lastSeenAt }. Any signed-in user can read it (needed to
     // show a conversation partner's status in messages.html), but only the

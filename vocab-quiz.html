@@ -362,6 +362,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="results-score-num" id="resultsScoreNum"></div>
                 <div class="results-score-label">Missed words are pre-selected below — save any you'd like to practice.</div>
             </div>
+            <div class="setup-label" style="margin-bottom:0.75rem;"><i class="fas fa-book-open" style="margin-right:0.4rem;"></i>Words to Review</div>
             <div class="results-list" id="resultsList"></div>
             <div class="results-actions">
                 <button type="button" class="btn-lb-pill" id="saveSelectedBtn"><i class="fas fa-bookmark"></i> Save selected to Notebook</button>
@@ -795,10 +796,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         currentQuizId = result.data.quizId;
                         questions = result.data.questions.map(q => ({
                             isAI: true,
+                            type: q.type || '',
                             prompt: q.prompt,
                             options: q.options,
                             correct: q.correctAnswer,
                             explanation: q.explanation,
+                            difficulty: q.difficulty || '',
                             targetVocabulary: Array.isArray(q.targetVocabulary) ? q.targetVocabulary : [],
                             topic: q.topic || '',
                         }));
@@ -888,7 +891,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
             if (isCorrect) score++;
             answered.push(q.isAI
-                ? { isAI: true, prompt: q.prompt, correctAnswer: q.correct, explanation: q.explanation, targetVocabulary: q.targetVocabulary, topic: q.topic, correct: isCorrect }
+                ? { isAI: true, type: q.type, prompt: q.prompt, correctAnswer: q.correct, explanation: q.explanation, difficulty: q.difficulty, targetVocabulary: q.targetVocabulary, topic: q.topic, correct: isCorrect }
                 : { isAI: false, word: q.word, correct: isCorrect });
             if (q.isAI && q.explanation) {
                 const explanationEl = document.getElementById('quizExplanation');
@@ -905,8 +908,51 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         });
 
         // ===== RESULTS =====
+        // Phase 3: records a lightweight history doc for this completed round —
+        // never blocks or delays showing results (fire-and-forget, own
+        // try/catch). generatePersonalizedQuiz reads recent attempts back to
+        // avoid repeating topics and to naturally reinforce struggled-with
+        // vocab/grammar in future AI quizzes. Recorded for static rounds too
+        // (missedVocab only — no topics/grammar concept there), so history
+        // isn't blind to practice done before a learner ever sets up a profile.
+        async function recordQuizAttempt() {
+            try {
+                const missedVocab = new Set();
+                const missedGrammarTopics = new Set();
+                const topics = new Set();
+                answered.forEach(a => {
+                    if (a.isAI) {
+                        if (a.topic) topics.add(a.topic);
+                        if (!a.correct) {
+                            (a.targetVocabulary || []).forEach(v => missedVocab.add(v));
+                            if (a.type === 'grammar' && a.topic) missedGrammarTopics.add(a.topic);
+                        }
+                    } else if (!a.correct) {
+                        missedVocab.add(a.word.term);
+                    }
+                });
+                await addDoc(collection(db, 'quizAttempts'), {
+                    userId: currentUser.uid,
+                    language: selectedLanguage,
+                    source: isAIQuiz ? 'ai' : 'static',
+                    quizId: currentQuizId || null,
+                    score,
+                    totalQuestions: questions.length,
+                    missedVocab: [...missedVocab],
+                    missedGrammarTopics: [...missedGrammarTopics],
+                    topics: [...topics],
+                    difficulty: isAIQuiz ? (quizProfiles[selectedLanguage]?.effectiveLevel || null) : selectedLevel,
+                    completedAt: serverTimestamp(),
+                });
+            } catch (e) {
+                console.error('Record quiz attempt error:', e);
+                // Non-fatal — history tracking must never block showing results.
+            }
+        }
+
         function showResults() {
             showScreen('results');
+            recordQuizAttempt();
             document.getElementById('resultsScoreNum').textContent = `${score} / ${questions.length} correct`;
             const isRtl = RTL_LANGUAGES.includes(selectedLanguage);
             document.getElementById('resultsList').innerHTML = answered.map((a, i) => {

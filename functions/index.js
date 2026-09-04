@@ -1289,11 +1289,12 @@ Quality bar for every question:
 - Distractor options must be plausible, not silly or obviously wrong.
 - Vary the topics and question types across the quiz — do not repeat the same word or pattern twice within one quiz.
 - Match the learner's level: for beginners, prioritize high-frequency vocabulary and simple, practical phrases; for intermediate/advanced learners, use more natural, idiomatic, and grammatically complex language.
+- If the learner's recent history below lists topics they've already covered, favor different ones today. If it lists vocabulary or grammar they've struggled with, weave a couple of those back in naturally (spaced review), but the quiz should still feel fresh overall — not a retest.
 
 Call the generate_quiz tool exactly once with exactly ${QUIZ_QUESTION_COUNT} questions. Do not include any text outside the tool call.`;
 }
 
-function buildQuizUserPrompt({ language, level, interests, goals, recentTopics }) {
+function buildQuizUserPrompt({ language, level, interests, goals, recentTopics, recentMissedVocab, recentMissedGrammarTopics }) {
   const lines = [
     `Target language: ${language}`,
     `Learner's level: ${level}`,
@@ -1301,7 +1302,13 @@ function buildQuizUserPrompt({ language, level, interests, goals, recentTopics }
     `Learner's goals: ${goals}`,
   ];
   if (recentTopics.length > 0) {
-    lines.push(`Topics recently covered — vary away from these where reasonable: ${recentTopics.join(', ')}`);
+    lines.push(`Topics recently covered — vary away from these where reasonable, don't just repeat the same ones again: ${recentTopics.join(', ')}`);
+  }
+  if (recentMissedVocab.length > 0) {
+    lines.push(`Vocabulary/phrases this learner has gotten wrong recently — naturally work a few of these back in for review where it fits (don't force all of them, and don't make the whole quiz about them): ${recentMissedVocab.join(', ')}`);
+  }
+  if (recentMissedGrammarTopics.length > 0) {
+    lines.push(`Grammar points this learner has struggled with recently — consider revisiting one with a fresh example: ${recentMissedGrammarTopics.join(', ')}`);
   }
   lines.push(`Generate a ${QUIZ_QUESTION_COUNT}-question quiz personalized to this learner.`);
   return lines.join('\n');
@@ -1370,11 +1377,34 @@ exports.generatePersonalizedQuiz = onCall(async (request) => {
   const goalsList = [...(profile?.goals || []), profile?.goalsOther].filter(Boolean);
   const goals = goalsList.length ? goalsList.join(', ') : 'general fluency';
 
+  // Phase 3: recent attempt history feeds naturally back into generation —
+  // avoid repeating recently-covered topics, and re-surface vocab/grammar the
+  // learner has struggled with. Capped small (last 5 attempts, capped list
+  // lengths) to keep the prompt compact; this is context for the AI to weave
+  // in tastefully, not a mandatory checklist.
+  const recentAttemptsSnap = await db.collection('quizAttempts')
+    .where('userId', '==', uid)
+    .where('language', '==', language)
+    .orderBy('completedAt', 'desc')
+    .limit(5)
+    .get();
+  const recentTopics = new Set();
+  const recentMissedVocab = new Set();
+  const recentMissedGrammarTopics = new Set();
+  recentAttemptsSnap.forEach((d) => {
+    const a = d.data();
+    (a.topics || []).forEach((t) => recentTopics.add(t));
+    (a.missedVocab || []).forEach((v) => recentMissedVocab.add(v));
+    (a.missedGrammarTopics || []).forEach((t) => recentMissedGrammarTopics.add(t));
+  });
+
   const systemPrompt = buildQuizSystemPrompt(language);
-  // recentTopics stays empty until Phase 3 adds quizAttempts history — the
-  // prompt already supports it so that phase is a data-plumbing change only,
-  // not a prompt redesign.
-  const userPrompt = buildQuizUserPrompt({ language, level, interests, goals, recentTopics: [] });
+  const userPrompt = buildQuizUserPrompt({
+    language, level, interests, goals,
+    recentTopics: [...recentTopics].slice(0, 10),
+    recentMissedVocab: [...recentMissedVocab].slice(0, 15),
+    recentMissedGrammarTopics: [...recentMissedGrammarTopics].slice(0, 5),
+  });
 
   let questions = null;
   try {
