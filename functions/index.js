@@ -4061,8 +4061,12 @@ async function processScheduledQuizNotifications(db) {
 
       if (readyLanguages.length === 0) { results.failed++; results.details.push({ uid, status: 'generation_failed' }); continue; }
 
-      const title = 'Daily Challenge from Lingua Bud';
-      const body = `Take a practice quiz in ${readyLanguages.join(' & ')} to improve!`;
+      const title = readyLanguages.length === 1
+        ? `Your ${readyLanguages[0]} quiz is ready!`
+        : `${readyLanguages.length} quizzes ready today!`;
+      const body = readyLanguages.length === 1
+        ? `Tap to start your personalized ${readyLanguages[0]} practice.`
+        : `${readyLanguages.join(' & ')} — tap to choose which to start with.`;
 
       await sendPushToUser(db, uid, {
         title,
