@@ -965,6 +965,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // static word-pool quiz this page has always had — zero behavior change
         // for them. AI failures (network, rate limit, bad output) fall back to
         // the static pool too, with a toast, rather than showing anything broken.
+        // Flips a quizzes/{id} doc from 'ready' to 'completed' so findReadyQuiz()
+        // never hands it back again — used for BOTH a cache-hit (a quiz that was
+        // already sitting ready, from a scheduled tick or a prefetch) and a
+        // fresh on-demand generation (which is stored server-side as 'ready'
+        // too, exactly like a cached one, and needs the same consumption marker
+        // or it would linger and could resurface later). A failed write here is
+        // non-fatal — worst case a harmless chance of reuse, never a broken quiz
+        // — so it's always its own try/catch, never allowed to fail the round.
+        async function markQuizConsumed(quizId) {
+            try {
+                await updateDoc(doc(db, 'quizzes', quizId), { status: 'completed' });
+            } catch (e) {
+                console.error('Mark quiz consumed error:', e);
+            }
+        }
+
         function mapAIQuestions(rawQuestions) {
             return rawQuestions.map(q => ({
                 isAI: true,
@@ -1043,15 +1059,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         // Awaited (not fire-and-forget) — this must land before the
                         // user can possibly click "Try another round" again, or a
                         // fast click could beat the write and findReadyQuiz would
-                        // hand back this exact same quiz a second time. A failed
-                        // write is still non-fatal (just a harmless chance of
-                        // reuse), so it's wrapped in its own try/catch rather than
-                        // failing the whole round.
-                        try {
-                            await updateDoc(doc(db, 'quizzes', ready.quizId), { status: 'completed' });
-                        } catch (e) {
-                            console.error('Mark quiz consumed error:', e);
-                        }
+                        // hand back this exact same quiz a second time.
+                        await markQuizConsumed(ready.quizId);
                     } else {
                         const generate = httpsCallable(functions, 'generatePersonalizedQuiz');
                         const result = await generate({ language: selectedLanguage });
@@ -1059,6 +1068,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             isAIQuiz = true;
                             currentQuizId = result.data.quizId;
                             questions = mapAIQuestions(result.data.questions);
+                            // A freshly-generated quiz is stored server-side as
+                            // status:'ready' too (same as a scheduled/prefetched
+                            // one) — without marking it consumed here, it would
+                            // stay 'ready' forever and could resurface via
+                            // findReadyQuiz() on a later click, effectively
+                            // repeating this exact quiz (the same bug class fixed
+                            // above, via a different path that was missed the
+                            // first time).
+                            await markQuizConsumed(result.data.quizId);
                         } else {
                             showToast("Couldn't generate a personalized quiz — here's a practice round instead.");
                             if (!(await startStaticQuiz())) return;
@@ -1076,6 +1094,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 if (!(await startStaticQuiz())) return;
             }
 
+            // Speed fix: a fresh AI generation takes ~10-15s, which is fine for
+            // the very first quiz (nothing to hide it behind) but felt slow on
+            // every "Try another round" after that. Since a 10-question round
+            // takes a user a minute or more to actually work through, that's
+            // easily enough time to have the NEXT quiz already generated and
+            // cached by the time they click through — so kick that off now, in
+            // the background, right as this round starts. Zero extra AI cost
+            // in aggregate (still one generation per quiz actually taken,
+            // same as before) — just shifted earlier so the wait happens while
+            // they're busy instead of blocking their next click. No-op for
+            // static/no-profile rounds, and any failure (including hitting the
+            // daily cap) is silently swallowed — this is a pure background
+            // nicety, never something the learner should see or be blocked by.
+            if (isAIQuiz) prefetchNextQuiz(selectedLanguage);
+
             qIndex = 0;
             score = 0;
             answered = [];
@@ -1086,6 +1119,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 tryAnotherBtn.disabled = false;
                 tryAnotherBtn.innerHTML = tryAnotherDefaultHtml;
             }
+        }
+
+        function prefetchNextQuiz(language) {
+            const generate = httpsCallable(functions, 'generatePersonalizedQuiz');
+            generate({ language }).catch(e => console.error('Prefetch next quiz error (non-fatal):', e));
         }
 
         // Returns true on success, false on failure (already alerted the user).
