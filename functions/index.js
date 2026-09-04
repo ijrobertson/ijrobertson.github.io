@@ -1290,7 +1290,7 @@ const QUIZ_TOOL = {
             prompt: { type: 'string', description: 'The question text shown to the learner (in English, except the target-language term/sentence being tested).' },
             options: { type: 'array', items: { type: 'string' }, minItems: 3, maxItems: 4, description: 'Answer choices. Exactly one must exactly equal correctAnswer.' },
             correctAnswer: { type: 'string', description: 'Must exactly equal one of the strings in options.' },
-            explanation: { type: 'string', description: 'One or two sentences explaining the correct answer — shown to the learner after they answer, right or wrong.' },
+            explanation: { type: 'string', description: 'ONE short sentence (aim for under 15 words) explaining the correct answer — shown to the learner after they answer, right or wrong. Output cost matters here, so be concise; do not restate the question.' },
             difficulty: { type: 'string', enum: QUIZ_DIFFICULTIES },
             targetVocabulary: { type: 'array', items: { type: 'string' }, description: 'The specific target-language word(s)/phrase(s) this question tests.' },
             topic: { type: 'string', description: 'A short topic label, e.g. "travel", "food", "everyday conversation".' },
@@ -1325,6 +1325,7 @@ Quality bar for every question:
 - Genuinely useful in real-world situations, not obscure or trivia-like.
 - Distractor options must be plausible, not silly or obviously wrong.
 - Vary the topics and question types across the quiz — do not repeat the same word or pattern twice within one quiz.
+- Keep every explanation to ONE short sentence, under 15 words. This is a real cost constraint, not just a style preference — do not write two-sentence or restate-the-question explanations.
 - If the learner's recent history below lists topics they've already covered, favor different ones today. If it lists vocabulary or grammar they've struggled with, weave a couple of those back in naturally (spaced review), but the quiz should still feel fresh overall — not a retest.
 
 Call the generate_quiz tool exactly once with exactly ${QUIZ_QUESTION_COUNT} questions. Do not include any text outside the tool call.`;

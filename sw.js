@@ -77,9 +77,15 @@ if (self.workbox) {
   // whenever iOS eventually does suspend-and-relaunch it) gets the current
   // version immediately rather than needing yet another round-trip on top of
   // that wait.
+  //
+  // Bumped again to v4 on 2026-09-04: vocab-quiz.html's qsSaveBtn handler
+  // was fixed (commit 3498b4f), but a report of the exact same bug persisting
+  // after that fix/deploy was tracked to this same stale-copy behavior — an
+  // already-installed PWA kept serving its pre-fix cached copy of
+  // vocab-quiz.html indefinitely with no second visit to force revalidation.
   workbox.routing.registerRoute(
     ({ request, url }) => request.mode === "navigate" && SAME_ORIGIN({ url }),
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v3" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v4" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -149,6 +155,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v4"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
+      caches.delete("linguabud-pages-v3"),
     ])
   );
 });

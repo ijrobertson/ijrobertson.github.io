@@ -531,6 +531,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let answered = [];
         let qIndex = 0;
         let score = 0;
+        let prefetchFiredForRound = false;
 
         // quizProfiles/{uid} document data, fetched once in init() — { [language]: {...} }.
         let quizProfiles = {};
@@ -1108,18 +1109,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Speed fix: a fresh AI generation takes ~10-15s, which is fine for
             // the very first quiz (nothing to hide it behind) but felt slow on
-            // every "Try another round" after that. Since a 10-question round
-            // takes a user a minute or more to actually work through, that's
-            // easily enough time to have the NEXT quiz already generated and
-            // cached by the time they click through — so kick that off now, in
-            // the background, right as this round starts. Zero extra AI cost
-            // in aggregate (still one generation per quiz actually taken,
-            // same as before) — just shifted earlier so the wait happens while
-            // they're busy instead of blocking their next click. No-op for
-            // static/no-profile rounds, and any failure (including hitting the
-            // daily cap) is silently swallowed — this is a pure background
-            // nicety, never something the learner should see or be blocked by.
-            if (isAIQuiz) prefetchNextQuiz(selectedLanguage);
+            // every "Try another round" after that. Prefetching used to fire
+            // right here, at the start of every round — but that meant every
+            // single quiz taken generated a SECOND real AI quiz in the
+            // background, even for the (very common, especially for someone
+            // arriving from a daily notification) case of a learner who takes
+            // one round and leaves. That silently doubled real AI spend across
+            // the whole default-on notification user base. Prefetching now
+            // fires from handleAnswer() instead, only once a learner is a
+            // couple of questions from finishing this round — real evidence
+            // they're likely to continue, while still leaving enough time
+            // (a question or two, well over the ~10-15s generation time) for
+            // the next quiz to be ready before they'd click "Try another".
+            prefetchFiredForRound = false;
 
             qIndex = 0;
             score = 0;
@@ -1209,6 +1211,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 explanationEl.style.display = 'block';
             }
             document.getElementById('nextQuestionBtn').style.display = 'inline-flex';
+
+            // Fire the background prefetch once this round is a couple of
+            // questions from done (see the comment at the old call site in
+            // startQuiz for why this moved here) — only for real AI rounds,
+            // only once per round.
+            if (isAIQuiz && !prefetchFiredForRound && questions.length - 1 - qIndex <= 2) {
+                prefetchFiredForRound = true;
+                prefetchNextQuiz(selectedLanguage);
+            }
         }
 
         document.getElementById('nextQuestionBtn').addEventListener('click', () => {
