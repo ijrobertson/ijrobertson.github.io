@@ -4036,20 +4036,34 @@ async function processScheduledQuizNotifications(db) {
     const schedule = scheduleDoc.data();
     try {
       const userSnap = await db.collection('users').doc(uid).get();
-      const timezone = userSnap.exists ? (userSnap.data().timezone || 'UTC') : 'UTC';
+      const rawTimezone = userSnap.exists ? userSnap.data().timezone : null;
+      const timezone = rawTimezone || 'UTC';
       const local = getLocalTimeParts(timezone);
-      if (!local) { results.skipped++; continue; }
+      if (!local) {
+        results.skipped++;
+        results.details.push({ uid, status: 'skipped', reason: 'invalid_timezone', timezone });
+        continue;
+      }
 
-      if (schedule.lastSentDateKey === local.dateKey) { results.skipped++; continue; } // already sent today
+      if (schedule.lastSentDateKey === local.dateKey) {
+        results.skipped++;
+        results.details.push({ uid, status: 'skipped', reason: 'already_sent_today', lastSentDateKey: schedule.lastSentDateKey, localDateKey: local.dateKey });
+        continue;
+      }
 
       const languagesToday = (schedule.days || {})[local.weekday] || [];
-      if (languagesToday.length === 0) { results.skipped++; continue; }
+      if (languagesToday.length === 0) {
+        results.skipped++;
+        results.details.push({ uid, status: 'skipped', reason: 'no_languages_today', localWeekday: local.weekday, days: schedule.days || {}, timezoneUsed: timezone, timezoneWasSet: !!rawTimezone });
+        continue;
+      }
 
       const [prefHour, prefMinute] = (schedule.preferredTime || '08:00').split(':').map((n) => parseInt(n, 10));
       const nowMinutes = local.hour * 60 + local.minute;
       const prefMinutes = (prefHour || 0) * 60 + (prefMinute || 0);
       if (nowMinutes < prefMinutes || nowMinutes >= prefMinutes + QUIZ_SCHEDULE_TICK_MINUTES) {
         results.skipped++;
+        results.details.push({ uid, status: 'skipped', reason: 'outside_time_window', preferredTime: schedule.preferredTime, localHour: local.hour, localMinute: local.minute, timezoneUsed: timezone, timezoneWasSet: !!rawTimezone });
         continue;
       }
 
