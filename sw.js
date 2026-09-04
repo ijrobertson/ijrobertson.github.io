@@ -245,6 +245,13 @@ self.addEventListener("notificationclick", (event) => {
   if (data.conversationId) {
     url += (url.includes("?") ? "&" : "?") + "conversationId=" + encodeURIComponent(data.conversationId);
   }
+  // Scheduled quiz pushes (Phase 4) carry the first ready language alongside
+  // url:'/vocab-quiz' — same folding pattern, so vocab-quiz.html can
+  // pre-select it instead of landing on whatever language happened to be
+  // selected last time.
+  if (data.language) {
+    url += (url.includes("?") ? "&" : "?") + "language=" + encodeURIComponent(data.language);
+  }
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {

@@ -1351,14 +1351,14 @@ async function callAnthropicForQuiz(systemPrompt, userPrompt) {
   return toolUse?.input?.questions || null;
 }
 
-exports.generatePersonalizedQuiz = onCall(async (request) => {
-  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
-  const uid = request.auth.uid;
-  const language = (request.data?.language || '').trim();
-  if (!language) throw new HttpsError('invalid-argument', 'language is required');
-
-  const db = admin.firestore();
-
+/**
+ * Core generation logic, shared by the on-demand callable (generatePersonalizedQuiz)
+ * and the scheduled pre-generation function (Phase 4, sendScheduledQuizNotifications)
+ * — same rate limit, same profile/history lookup, same AI call+validate+retry,
+ * same quizzes/{id} write, just parameterized by `source` so each caller's docs
+ * are distinguishable. Never throws — always returns { ok, ... }.
+ */
+async function generateAndStoreQuiz(db, uid, language, source) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const todaysQuizzesSnap = await db.collection('quizzes')
@@ -1431,7 +1431,7 @@ exports.generatePersonalizedQuiz = onCall(async (request) => {
     language,
     questions,
     status: 'ready',
-    source: 'on-demand',
+    source,
     profileSnapshot: profile ? {
       selfAssessedLevel: profile.selfAssessedLevel || null,
       effectiveLevel: profile.effectiveLevel || null,
@@ -1446,6 +1446,15 @@ exports.generatePersonalizedQuiz = onCall(async (request) => {
   });
 
   return { ok: true, quizId: quizRef.id, questions };
+}
+
+exports.generatePersonalizedQuiz = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+  const uid = request.auth.uid;
+  const language = (request.data?.language || '').trim();
+  if (!language) throw new HttpsError('invalid-argument', 'language is required');
+
+  return generateAndStoreQuiz(admin.firestore(), uid, language, 'on-demand');
 });
 
 /**
@@ -3969,6 +3978,136 @@ exports.runDailyRemindersNow = onCall(async (request) => {
   } catch (err) {
     console.error('[Push] runDailyRemindersNow error:', err.message);
     throw new HttpsError('internal', `Daily reminder run failed: ${err.message}`);
+  }
+});
+
+// ── Scheduled Personalized Quiz Notifications (Phase 4) ─────────────────────
+//
+// Design (agreed with Ian before building):
+//  - Runs every 20 minutes (not once a day like sendDailyReminders above),
+//    since each user has their own preferred local time via quizSchedules —
+//    a single fixed UTC cron can't hit everyone's local time. Each tick,
+//    every enabled schedule is checked against its owner's CURRENT local
+//    time (via users/{uid}.timezone, already used elsewhere for lesson
+//    display) and only fires when "now" falls inside that user's next
+//    20-minute window after their preferredTime — a "digest tick" pattern.
+//  - Quizzes are generated HERE, right before the notification is sent —
+//    not far in advance (staleness/wasted-cost risk if never opened) and
+//    not on-tap (adds latency at the exact moment a notification promised
+//    something ready). generateAndStoreQuiz writes source:'scheduled'
+//    quizzes/{id} docs the same way generatePersonalizedQuiz's on-demand
+//    ones do; vocab-quiz.html's findReadyQuiz() picks these up instead of
+//    generating a duplicate when the learner actually taps through.
+//  - Multiple languages scheduled for the same day/user → ONE consolidated
+//    notification listing all of them, not one push per language (agreed
+//    UX reasoning: avoids notification spam, cheaper, still fully
+//    actionable via the language picker already on vocab-quiz.html).
+//  - lastSentDateKey (the user's own local YYYY-MM-DD) guards against
+//    double-sends across overlapping ticks or a retried run.
+
+function getLocalTimeParts(timezone) {
+  try {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone || 'UTC',
+      hour12: false, hour: '2-digit', minute: '2-digit', weekday: 'long',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    });
+    const parts = fmt.formatToParts(new Date());
+    const get = (type) => parts.find((p) => p.type === type)?.value;
+    return {
+      hour: parseInt(get('hour'), 10),
+      minute: parseInt(get('minute'), 10),
+      weekday: (get('weekday') || '').toLowerCase(),
+      dateKey: `${get('year')}-${get('month')}-${get('day')}`,
+    };
+  } catch (e) {
+    return null; // unknown/invalid IANA timezone string
+  }
+}
+
+const QUIZ_SCHEDULE_TICK_MINUTES = 20;
+
+async function processScheduledQuizNotifications(db) {
+  const results = { sent: 0, skipped: 0, failed: 0, details: [] };
+  const schedulesSnap = await db.collection('quizSchedules').where('enabled', '==', true).get();
+
+  for (const scheduleDoc of schedulesSnap.docs) {
+    const uid = scheduleDoc.id;
+    const schedule = scheduleDoc.data();
+    try {
+      const userSnap = await db.collection('users').doc(uid).get();
+      const timezone = userSnap.exists ? (userSnap.data().timezone || 'UTC') : 'UTC';
+      const local = getLocalTimeParts(timezone);
+      if (!local) { results.skipped++; continue; }
+
+      if (schedule.lastSentDateKey === local.dateKey) { results.skipped++; continue; } // already sent today
+
+      const languagesToday = (schedule.days || {})[local.weekday] || [];
+      if (languagesToday.length === 0) { results.skipped++; continue; }
+
+      const [prefHour, prefMinute] = (schedule.preferredTime || '08:00').split(':').map((n) => parseInt(n, 10));
+      const nowMinutes = local.hour * 60 + local.minute;
+      const prefMinutes = (prefHour || 0) * 60 + (prefMinute || 0);
+      if (nowMinutes < prefMinutes || nowMinutes >= prefMinutes + QUIZ_SCHEDULE_TICK_MINUTES) {
+        results.skipped++;
+        continue;
+      }
+
+      const readyLanguages = [];
+      for (const language of languagesToday) {
+        const result = await generateAndStoreQuiz(db, uid, language, 'scheduled');
+        if (result.ok) readyLanguages.push(language);
+      }
+
+      if (readyLanguages.length === 0) { results.failed++; results.details.push({ uid, status: 'generation_failed' }); continue; }
+
+      const title = 'Daily Challenge from Lingua Bud';
+      const body = `Take a practice quiz in ${readyLanguages.join(' & ')} to improve!`;
+
+      await sendPushToUser(db, uid, {
+        title,
+        body,
+        url: '/vocab-quiz',
+        language: readyLanguages[0], // for sw.js's notificationclick deep-link — see the conversationId-folding pattern it already uses
+      });
+
+      await scheduleDoc.ref.update({ lastSentDateKey: local.dateKey, lastSentAt: new Date() });
+      results.sent++;
+      results.details.push({ uid, status: 'sent', languages: readyLanguages });
+    } catch (err) {
+      results.failed++;
+      results.details.push({ uid, status: 'failed', error: err.message });
+    }
+  }
+
+  return results;
+}
+
+exports.sendScheduledQuizNotifications = onSchedule('*/20 * * * *', async () => {
+  console.log('[Quiz Schedule] sendScheduledQuizNotifications: tick starting');
+  const db = admin.firestore();
+  try {
+    const results = await processScheduledQuizNotifications(db);
+    console.log('[Quiz Schedule] tick complete:', JSON.stringify(results));
+  } catch (err) {
+    console.error('[Quiz Schedule] tick fatal error:', err.message);
+  }
+});
+
+/**
+ * Admin callable — manually trigger a scheduled-quiz-notification tick (the
+ * Functions emulator never fires onSchedule on a wall clock, so this is also
+ * how it gets tested locally, same pattern as runDailyRemindersNow above).
+ */
+exports.runScheduledQuizNotificationsNow = onCall(async (request) => {
+  await assertAdmin(request);
+  console.log('[Quiz Schedule] runScheduledQuizNotificationsNow: admin-triggered tick');
+  const db = admin.firestore();
+  try {
+    return await processScheduledQuizNotifications(db);
+  } catch (err) {
+    console.error('[Quiz Schedule] runScheduledQuizNotificationsNow error:', err.message);
+    throw new HttpsError('internal', `Scheduled quiz notification run failed: ${err.message}`);
   }
 });
 

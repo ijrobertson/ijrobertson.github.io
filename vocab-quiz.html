@@ -217,11 +217,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         .quiz-profile-btn:hover { background: #e2e6e4; }
 
-        #quizProfileBackdrop {
+        #quizProfileBackdrop, #quizScheduleBackdrop {
             display: none; position: fixed; inset: 0; background: rgba(17,52,72,0.5);
             z-index: 2200; align-items: center; justify-content: center; padding: 1rem;
         }
-        #quizProfileModal {
+        #quizProfileModal, #quizScheduleModal {
             background: white; border-radius: 24px; width: 100%; max-width: 480px;
             max-height: min(88vh, 720px); display: flex; flex-direction: column; overflow: hidden;
             box-shadow: 0 24px 60px -12px rgba(17,52,72,0.4);
@@ -250,6 +250,34 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         .qp-other-input:focus { outline: none; border-color: var(--pb-teal); }
         .qp-footer { padding: 1rem 1.5rem; border-top: 1px solid #eef1f0; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+
+        /* ===== MY QUIZ SCHEDULE (Phase 4, 2026-09-03) =====
+           Reuses the Quiz Preferences modal's structural classes (.qp-header/
+           .qp-body/.qp-footer/.qp-close/.qp-option) for the backdrop+card shell
+           and pill styling — only day-row/toggle/time-input pieces are new. */
+        .qs-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.1rem; background: #f8f9fa; border-radius: 16px; margin-bottom: 1.25rem; }
+        .qs-toggle-row span { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); font-size: 0.95rem; }
+        .qs-switch { position: relative; display: inline-block; width: 44px; height: 26px; flex-shrink: 0; }
+        .qs-switch input { opacity: 0; width: 0; height: 0; }
+        .qs-switch-slider { position: absolute; inset: 0; background: #d7dbd9; border-radius: 999px; cursor: pointer; transition: background 0.15s; }
+        .qs-switch-slider::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .qs-switch input:checked + .qs-switch-slider { background: var(--pb-teal); }
+        .qs-switch input:checked + .qs-switch-slider::before { transform: translateX(18px); }
+        .qs-time-row { margin-bottom: 1.5rem; }
+        .qs-time-input { width: 100%; padding: 0.65rem 0.9rem; border-radius: 12px; border: 2px solid #e7e9e7; font-size: 0.95rem; font-family: inherit; color: var(--pb-teal-dark); }
+        .qs-time-input:focus { outline: none; border-color: var(--pb-teal); }
+        .qs-day-row { margin-bottom: 1.1rem; }
+        .qs-day-row:last-child { margin-bottom: 0; }
+        .qs-day-label { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .qs-day-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .qs-day-pill {
+            padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+            background: white; color: var(--pb-teal-dark); border: 2px solid #e7e9e7; cursor: pointer; transition: all 0.15s;
+        }
+        .qs-day-pill:hover { border-color: var(--pb-teal); }
+        .qs-day-pill.active { background: var(--pb-teal-dark); border-color: var(--pb-teal-dark); color: white; }
+        .qs-day-empty { font-size: 0.78rem; color: #aaa; font-style: italic; }
+        .qs-no-languages { text-align: center; color: #5f6b72; font-size: 0.9rem; padding: 1rem; }
     </style>
 </head>
 <body>
@@ -281,9 +309,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="setup-label">Pick a difficulty</div>
                 <div class="picker-pills" id="levelPills"></div>
 
-                <button type="button" class="quiz-profile-btn" id="quizPreferencesBtn">
-                    <i class="fas fa-sliders-h"></i> Quiz Preferences
-                </button>
+                <div style="display:flex; flex-wrap:wrap; gap:0.6rem;">
+                    <button type="button" class="quiz-profile-btn" id="quizPreferencesBtn">
+                        <i class="fas fa-sliders-h"></i> Quiz Preferences
+                    </button>
+                    <button type="button" class="quiz-profile-btn" id="quizScheduleBtn">
+                        <i class="fas fa-calendar-alt"></i> My Quiz Schedule
+                    </button>
+                </div>
 
                 <!-- Shown only once Quiz Preferences has real answers saved for the
                      selected language — see updatePersonalizedNote(). -->
@@ -334,6 +367,42 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="qp-footer">
                     <button type="button" class="btn-lb-pill" id="qpSaveBtn"><i class="fas fa-check"></i> Save preferences</button>
                     <button type="button" class="btn-lb-pill btn-lb-pill-outline" id="qpSkipBtn">Skip for now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== MY QUIZ SCHEDULE MODAL (Phase 4) =====
+             Optional per-user notification schedule: on/off, a preferred local
+             time, and which of the learner's languages (from languages_learning)
+             get a quiz ready on each day of the week. Reuses the Quiz
+             Preferences modal's shell classes (.qp-header/.qp-body/.qp-footer/
+             .qp-close). Not auto-opened like Quiz Preferences — purely
+             opt-in, reached only via the button above. -->
+        <div id="quizScheduleBackdrop" role="dialog" aria-modal="true" aria-labelledby="qsTitle">
+            <div id="quizScheduleModal">
+                <div class="qp-header">
+                    <div>
+                        <h3 id="qsTitle">My Quiz Schedule</h3>
+                        <p>Get a reminder when a personalized quiz is ready.</p>
+                    </div>
+                    <button type="button" class="qp-close" id="qsCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="qp-body">
+                    <div class="qs-toggle-row">
+                        <span>Quiz reminders</span>
+                        <label class="qs-switch">
+                            <input type="checkbox" id="qsEnabled">
+                            <span class="qs-switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="qs-time-row">
+                        <div class="qp-question-label">Preferred time</div>
+                        <input type="time" class="qs-time-input" id="qsPreferredTime" value="08:00">
+                    </div>
+                    <div id="qsDaysContainer"><!-- populated by renderScheduleDays() --></div>
+                </div>
+                <div class="qp-footer">
+                    <button type="button" class="btn-lb-pill" id="qsSaveBtn"><i class="fas fa-check"></i> Save schedule</button>
                 </div>
             </div>
         </div>
@@ -395,8 +464,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import {
             auth, db, functions,
             onAuthStateChanged, signOut,
-            doc, getDoc, setDoc,
+            doc, getDoc, setDoc, updateDoc,
             collection, addDoc, serverTimestamp,
+            query, where, orderBy, limit, getDocs,
             httpsCallable
         } from './lib/firebaseClient.js';
         import './js/app-shell.js';
@@ -482,6 +552,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let isAIQuiz = false;
         let currentQuizId = null; // quizzes/{id}, only set for AI rounds
 
+        // ===== PHASE 4: SCHEDULED QUIZ NOTIFICATIONS =====
+        const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const DAY_LABELS = { monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday' };
+        let learnerLanguages = []; // this user's languages_learning, restricted to SUPPORTED_LANGUAGES — populated in init()
+        let quizSchedule = { enabled: false, preferredTime: '08:00', days: {} };
+
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login'; return; }
             currentUser = user;
@@ -555,18 +631,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ===== SETUP =====
         async function init() {
             try {
-                const [manifestData, userSnap, quizProfileSnap] = await Promise.all([
+                const [manifestData, userSnap, quizProfileSnap, quizScheduleSnap] = await Promise.all([
                     fetch('data/vocab/index.json').then(r => r.json()),
                     getDoc(doc(db, 'users', currentUser.uid)),
                     getDoc(doc(db, 'quizProfiles', currentUser.uid)),
+                    getDoc(doc(db, 'quizSchedules', currentUser.uid)),
                 ]);
                 manifest = manifestData;
                 quizProfiles = quizProfileSnap.exists() ? quizProfileSnap.data() : {};
+                if (quizScheduleSnap.exists()) {
+                    quizSchedule = { enabled: false, preferredTime: '08:00', days: {}, ...quizScheduleSnap.data() };
+                }
                 const learning = (userSnap.exists() ? userSnap.data().languages_learning : []) || [];
                 const overlap = SUPPORTED_LANGUAGES.filter(lang =>
                     learning.some(l => (l || '').trim().toLowerCase() === lang.toLowerCase())
                 );
+                learnerLanguages = overlap;
                 selectedLanguage = overlap.length > 0 ? overlap[0] : null;
+
+                // Phase 4: a scheduled quiz-reminder notification deep-links here
+                // with ?language=X (see sw.js's notificationclick folding) — honor
+                // it over the default languages_learning-overlap pick so tapping
+                // the notification lands directly on the language it was about.
+                const requestedLanguage = new URLSearchParams(window.location.search).get('language');
+                if (requestedLanguage && SUPPORTED_LANGUAGES.includes(requestedLanguage)) {
+                    selectedLanguage = requestedLanguage;
+                }
 
                 document.getElementById('setupLoading').style.display = 'none';
                 document.getElementById('setupCard').style.display = 'block';
@@ -758,6 +848,81 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         });
 
+        // ===== MY QUIZ SCHEDULE (Phase 4) =====
+        function renderScheduleDays() {
+            const container = document.getElementById('qsDaysContainer');
+            if (learnerLanguages.length === 0) {
+                container.innerHTML = `<div class="qs-no-languages">Add languages you're learning in your profile to set up a schedule.</div>`;
+                return;
+            }
+            container.innerHTML = DAYS_OF_WEEK.map(day => {
+                const dayLanguages = quizSchedule.days?.[day] || [];
+                return `
+                    <div class="qs-day-row">
+                        <div class="qs-day-label">${DAY_LABELS[day]}</div>
+                        <div class="qs-day-pills">
+                            ${learnerLanguages.map(lang => `
+                                <button type="button" class="qs-day-pill${dayLanguages.includes(lang) ? ' active' : ''}" data-day="${day}" data-lang="${lang}">${lang}</button>
+                            `).join('')}
+                        </div>
+                    </div>`;
+            }).join('');
+            container.querySelectorAll('.qs-day-pill').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const day = btn.getAttribute('data-day');
+                    const lang = btn.getAttribute('data-lang');
+                    if (!quizSchedule.days) quizSchedule.days = {};
+                    const current = quizSchedule.days[day] || [];
+                    quizSchedule.days[day] = current.includes(lang)
+                        ? current.filter(l => l !== lang)
+                        : [...current, lang];
+                    btn.classList.toggle('active');
+                });
+            });
+        }
+
+        function openQuizScheduleModal() {
+            document.getElementById('qsEnabled').checked = !!quizSchedule.enabled;
+            document.getElementById('qsPreferredTime').value = quizSchedule.preferredTime || '08:00';
+            renderScheduleDays();
+            document.getElementById('quizScheduleBackdrop').style.display = 'flex';
+        }
+
+        function closeQuizScheduleModal() {
+            document.getElementById('quizScheduleBackdrop').style.display = 'none';
+        }
+
+        document.getElementById('quizScheduleBtn').addEventListener('click', openQuizScheduleModal);
+        document.getElementById('qsCloseBtn').addEventListener('click', closeQuizScheduleModal);
+        document.getElementById('quizScheduleBackdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'quizScheduleBackdrop') closeQuizScheduleModal();
+        });
+
+        document.getElementById('qsSaveBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('qsSaveBtn');
+            const defaultHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
+            quizSchedule.enabled = document.getElementById('qsEnabled').checked;
+            quizSchedule.preferredTime = document.getElementById('qsPreferredTime').value || '08:00';
+            try {
+                await setDoc(doc(db, 'quizSchedules', currentUser.uid), {
+                    enabled: quizSchedule.enabled,
+                    preferredTime: quizSchedule.preferredTime,
+                    days: quizSchedule.days || {},
+                    updatedAt: serverTimestamp(),
+                }, { merge: true });
+                closeQuizScheduleModal();
+                showToast('Quiz schedule saved!');
+            } catch (e) {
+                console.error('Save quiz schedule error:', e);
+                alert('Something went wrong saving your schedule. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = defaultHtml;
+            }
+        });
+
         document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
         document.getElementById('changeLevelBtn').addEventListener('click', () => showScreen('setup'));
         document.getElementById('tryAnotherBtn').addEventListener('click', startQuiz);
@@ -777,6 +942,55 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // static word-pool quiz this page has always had — zero behavior change
         // for them. AI failures (network, rate limit, bad output) fall back to
         // the static pool too, with a toast, rather than showing anything broken.
+        function mapAIQuestions(rawQuestions) {
+            return rawQuestions.map(q => ({
+                isAI: true,
+                type: q.type || '',
+                prompt: q.prompt,
+                options: q.options,
+                correct: q.correctAnswer,
+                explanation: q.explanation,
+                difficulty: q.difficulty || '',
+                targetVocabulary: Array.isArray(q.targetVocabulary) ? q.targetVocabulary : [],
+                topic: q.topic || '',
+            }));
+        }
+
+        // Phase 4: a scheduled-notification tick may have already generated and
+        // cached a quiz for this language earlier today (see
+        // sendScheduledQuizNotifications in functions/index.js) — reused here
+        // instead of generating a duplicate, so tapping the notification (or
+        // just hitting Start Quiz after it fired) is instant rather than
+        // waiting through another AI call. Queried client-side (Firestore rules
+        // already allow owner-read on quizzes/{id}) rather than through a
+        // Cloud Function; the last 10 ready quizzes is a small result set,
+        // filtered to today+language in JS to avoid a fourth composite-index field.
+        async function findReadyQuiz(language) {
+            try {
+                const startOfToday = new Date();
+                startOfToday.setHours(0, 0, 0, 0);
+                const q = query(
+                    collection(db, 'quizzes'),
+                    where('userId', '==', currentUser.uid),
+                    where('status', '==', 'ready'),
+                    orderBy('createdAt', 'desc'),
+                    limit(10)
+                );
+                const snap = await getDocs(q);
+                for (const docSnap of snap.docs) {
+                    const data = docSnap.data();
+                    if (data.language !== language) continue;
+                    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                    if (createdAt >= startOfToday) {
+                        return { quizId: docSnap.id, questions: data.questions };
+                    }
+                }
+            } catch (e) {
+                console.error('Find ready quiz error:', e);
+            }
+            return null;
+        }
+
         async function startQuiz() {
             const profile = quizProfiles[selectedLanguage];
             const hasRealProfile = !!(profile && profile.selfAssessedLevel);
@@ -789,25 +1003,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Generating your personalized quiz...';
                 try {
-                    const generate = httpsCallable(functions, 'generatePersonalizedQuiz');
-                    const result = await generate({ language: selectedLanguage });
-                    if (result.data?.ok && Array.isArray(result.data.questions) && result.data.questions.length === 10) {
+                    const ready = await findReadyQuiz(selectedLanguage);
+                    if (ready) {
                         isAIQuiz = true;
-                        currentQuizId = result.data.quizId;
-                        questions = result.data.questions.map(q => ({
-                            isAI: true,
-                            type: q.type || '',
-                            prompt: q.prompt,
-                            options: q.options,
-                            correct: q.correctAnswer,
-                            explanation: q.explanation,
-                            difficulty: q.difficulty || '',
-                            targetVocabulary: Array.isArray(q.targetVocabulary) ? q.targetVocabulary : [],
-                            topic: q.topic || '',
-                        }));
+                        currentQuizId = ready.quizId;
+                        questions = mapAIQuestions(ready.questions);
+                        // Marked used so it isn't picked up again by a later Start
+                        // Quiz click today — non-blocking, a failed write here just
+                        // means a (harmless) chance of reuse, not a broken quiz.
+                        updateDoc(doc(db, 'quizzes', ready.quizId), { status: 'completed' }).catch(() => {});
                     } else {
-                        showToast("Couldn't generate a personalized quiz — here's a practice round instead.");
-                        if (!(await startStaticQuiz())) return;
+                        const generate = httpsCallable(functions, 'generatePersonalizedQuiz');
+                        const result = await generate({ language: selectedLanguage });
+                        if (result.data?.ok && Array.isArray(result.data.questions) && result.data.questions.length === 10) {
+                            isAIQuiz = true;
+                            currentQuizId = result.data.quizId;
+                            questions = mapAIQuestions(result.data.questions);
+                        } else {
+                            showToast("Couldn't generate a personalized quiz — here's a practice round instead.");
+                            if (!(await startStaticQuiz())) return;
+                        }
                     }
                 } catch (e) {
                     console.error('AI quiz generation error:', e);
