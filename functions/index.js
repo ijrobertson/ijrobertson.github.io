@@ -3969,10 +3969,19 @@ async function processDailyReminders(db) {
   for (const docSnap of snap.docs) {
     const uid = docSnap.id;
     try {
+      // Points at the quiz (not notebook review) per Ian's 2026-09-04
+      // direction. Note this is a separate, simpler mechanism from
+      // quizSchedules/sendScheduledQuizNotifications (fixed 15:00 UTC for
+      // everyone, no personalization/timezone-awareness, its own
+      // dailyReminderEnabled toggle) — a user with both enabled could get two
+      // similar-in-spirit pings on the same day. Left as-is rather than
+      // deduping against the newer system, since that wasn't asked for and
+      // risks silently suppressing a notification someone explicitly opted
+      // into via this toggle.
       const result = await sendPushToUser(db, uid, {
         title: 'Time to practice!',
-        body: 'A few words are waiting for review in your notebook.',
-        url: '/notebook?review=1',
+        body: 'Take a quick language quiz to keep your streak going.',
+        url: '/vocab-quiz',
       });
       if (result.sent) results.processed++;
       else results.skipped++;
@@ -4045,7 +4054,15 @@ function getLocalTimeParts(timezone) {
   try {
     const fmt = new Intl.DateTimeFormat('en-US', {
       timeZone: timezone || 'UTC',
-      hour12: false, hour: '2-digit', minute: '2-digit', weekday: 'long',
+      // hourCycle explicitly forced to 'h23' (strict 0-23) — and hour12 is
+      // deliberately NOT set alongside it. When both are present, hour12
+      // silently overrides hourCycle (a real Intl API footgun, confirmed by
+      // testing directly), so hour12:false alone still let en-US's default
+      // hourCycle report the hour right after midnight as "24" instead of
+      // "0" — which silently broke the time-window match for anyone whose
+      // preferred time fell near midnight in their own timezone (found via
+      // a real production account tracing this exact symptom, 2026-09-04).
+      hourCycle: 'h23', hour: '2-digit', minute: '2-digit', weekday: 'long',
       year: 'numeric', month: '2-digit', day: '2-digit',
     });
     const parts = fmt.formatToParts(new Date());

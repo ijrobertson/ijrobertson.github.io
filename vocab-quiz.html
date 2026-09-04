@@ -926,15 +926,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const defaultHtml = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
+            const oldPreferredTime = quizSchedule.preferredTime;
+            const oldDaysJSON = JSON.stringify(quizSchedule.days || {});
             quizSchedule.enabled = document.getElementById('qsEnabled').checked;
             quizSchedule.preferredTime = document.getElementById('qsPreferredTime').value || DEFAULT_QUIZ_SCHEDULE_TIME;
             try {
-                await setDoc(doc(db, 'quizSchedules', currentUser.uid), {
+                const update = {
                     enabled: quizSchedule.enabled,
                     preferredTime: quizSchedule.preferredTime,
                     days: quizSchedule.days || {},
                     updatedAt: serverTimestamp(),
-                }, { merge: true });
+                };
+                // If the learner actually changed *when* or *what* they get
+                // reminded about, today's already-sent guard (see
+                // processScheduledQuizNotifications) shouldn't silently hold
+                // the new settings hostage until tomorrow — a deliberate edit
+                // should be able to fire today. Left alone (no reset) on a
+                // save that didn't actually change anything, e.g. just
+                // toggling enabled off and back on.
+                const changed = oldPreferredTime !== quizSchedule.preferredTime || oldDaysJSON !== JSON.stringify(quizSchedule.days || {});
+                if (changed) update.lastSentDateKey = null;
+                await setDoc(doc(db, 'quizSchedules', currentUser.uid), update, { merge: true });
                 closeQuizScheduleModal();
                 showToast('Quiz schedule saved!');
             } catch (e) {
