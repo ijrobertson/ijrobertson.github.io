@@ -397,7 +397,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </div>
                     <div class="qs-time-row">
                         <div class="qp-question-label">Preferred time</div>
-                        <input type="time" class="qs-time-input" id="qsPreferredTime" value="08:00">
+                        <input type="time" class="qs-time-input" id="qsPreferredTime">
                     </div>
                     <div id="qsDaysContainer"><!-- populated by renderScheduleDays() --></div>
                 </div>
@@ -555,8 +555,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ===== PHASE 4: SCHEDULED QUIZ NOTIFICATIONS =====
         const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         const DAY_LABELS = { monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday' };
+        // Matches DEFAULT_QUIZ_SCHEDULE_TIME in functions/index.js — same default
+        // used whether the schedule was auto-created server-side (existing users,
+        // one-time backfill) or client-side here (new/returning users).
+        const DEFAULT_QUIZ_SCHEDULE_TIME = '09:00';
         let learnerLanguages = []; // this user's languages_learning, restricted to SUPPORTED_LANGUAGES — populated in init()
-        let quizSchedule = { enabled: false, preferredTime: '08:00', days: {} };
+        let quizSchedule = { enabled: false, preferredTime: DEFAULT_QUIZ_SCHEDULE_TIME, days: {} };
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = 'login'; return; }
@@ -639,15 +643,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 ]);
                 manifest = manifestData;
                 quizProfiles = quizProfileSnap.exists() ? quizProfileSnap.data() : {};
-                if (quizScheduleSnap.exists()) {
-                    quizSchedule = { enabled: false, preferredTime: '08:00', days: {}, ...quizScheduleSnap.data() };
-                }
                 const learning = (userSnap.exists() ? userSnap.data().languages_learning : []) || [];
                 const overlap = SUPPORTED_LANGUAGES.filter(lang =>
                     learning.some(l => (l || '').trim().toLowerCase() === lang.toLowerCase())
                 );
                 learnerLanguages = overlap;
                 selectedLanguage = overlap.length > 0 ? overlap[0] : null;
+
+                if (quizScheduleSnap.exists()) {
+                    quizSchedule = { enabled: false, preferredTime: DEFAULT_QUIZ_SCHEDULE_TIME, days: {}, ...quizScheduleSnap.data() };
+                } else if (learnerLanguages.length > 0) {
+                    // Daily quiz reminders are opt-OUT by default, not opt-in (Ian's
+                    // call, 2026-09-04) — anyone who's never touched My Quiz Schedule
+                    // gets a sensible default (every day, all their languages,
+                    // 09:00 local) created right here, the first time they open this
+                    // page. Existing users as of this change got the same default
+                    // via a one-time server-side backfill (see
+                    // ensureDefaultQuizSchedulesBackfillOnce in functions/index.js);
+                    // this covers everyone after that point — new signups and
+                    // anyone adding a language later — without needing another
+                    // backfill. Never runs if a doc already exists, even a disabled
+                    // one, so an explicit opt-out is always respected.
+                    const days = {};
+                    DAYS_OF_WEEK.forEach(d => { days[d] = [...learnerLanguages]; });
+                    quizSchedule = { enabled: true, preferredTime: DEFAULT_QUIZ_SCHEDULE_TIME, days };
+                    setDoc(doc(db, 'quizSchedules', currentUser.uid), {
+                        ...quizSchedule, autoCreated: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+                    }).catch(e => console.error('Auto-create default quiz schedule error:', e));
+                }
 
                 // Phase 4: a scheduled quiz-reminder notification deep-links here
                 // with ?language=X (see sw.js's notificationclick folding) — honor
@@ -883,7 +906,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function openQuizScheduleModal() {
             document.getElementById('qsEnabled').checked = !!quizSchedule.enabled;
-            document.getElementById('qsPreferredTime').value = quizSchedule.preferredTime || '08:00';
+            document.getElementById('qsPreferredTime').value = quizSchedule.preferredTime || DEFAULT_QUIZ_SCHEDULE_TIME;
             renderScheduleDays();
             document.getElementById('quizScheduleBackdrop').style.display = 'flex';
         }
@@ -904,7 +927,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
             quizSchedule.enabled = document.getElementById('qsEnabled').checked;
-            quizSchedule.preferredTime = document.getElementById('qsPreferredTime').value || '08:00';
+            quizSchedule.preferredTime = document.getElementById('qsPreferredTime').value || DEFAULT_QUIZ_SCHEDULE_TIME;
             try {
                 await setDoc(doc(db, 'quizSchedules', currentUser.uid), {
                     enabled: quizSchedule.enabled,
@@ -997,6 +1020,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             isAIQuiz = false;
             currentQuizId = null;
 
+            // Both buttons that can call startQuiz() (Start Quiz on setup, Try
+            // another round on results) are disabled for the duration — defends
+            // against a rapid double-click racing the cached-quiz consumption
+            // write above with a second findReadyQuiz() call.
+            const tryAnotherBtn = document.getElementById('tryAnotherBtn');
+            const tryAnotherDefaultHtml = tryAnotherBtn.innerHTML;
+            tryAnotherBtn.disabled = true;
+            try {
+
             if (hasRealProfile) {
                 const btn = document.getElementById('startQuizBtn');
                 const defaultHtml = btn.innerHTML;
@@ -1008,10 +1040,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         isAIQuiz = true;
                         currentQuizId = ready.quizId;
                         questions = mapAIQuestions(ready.questions);
-                        // Marked used so it isn't picked up again by a later Start
-                        // Quiz click today — non-blocking, a failed write here just
-                        // means a (harmless) chance of reuse, not a broken quiz.
-                        updateDoc(doc(db, 'quizzes', ready.quizId), { status: 'completed' }).catch(() => {});
+                        // Awaited (not fire-and-forget) — this must land before the
+                        // user can possibly click "Try another round" again, or a
+                        // fast click could beat the write and findReadyQuiz would
+                        // hand back this exact same quiz a second time. A failed
+                        // write is still non-fatal (just a harmless chance of
+                        // reuse), so it's wrapped in its own try/catch rather than
+                        // failing the whole round.
+                        try {
+                            await updateDoc(doc(db, 'quizzes', ready.quizId), { status: 'completed' });
+                        } catch (e) {
+                            console.error('Mark quiz consumed error:', e);
+                        }
                     } else {
                         const generate = httpsCallable(functions, 'generatePersonalizedQuiz');
                         const result = await generate({ language: selectedLanguage });
@@ -1041,6 +1081,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             answered = [];
             showScreen('quiz');
             renderQuestion();
+
+            } finally {
+                tryAnotherBtn.disabled = false;
+                tryAnotherBtn.innerHTML = tryAnotherDefaultHtml;
+            }
         }
 
         // Returns true on success, false on failure (already alerted the user).

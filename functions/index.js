@@ -1236,8 +1236,38 @@ exports.generateAgoraToken = onCall(async (request) => {
 const Anthropic = require('@anthropic-ai/sdk');
 
 const QUIZ_QUESTION_TYPES = ['multiple_choice', 'translation', 'vocabulary', 'fill_in_blank', 'grammar'];
-const QUIZ_DIFFICULTIES = ['beginner', 'intermediate', 'advanced'];
+// Matches quizProfiles' SELF_LEVEL_OPTIONS scale exactly (vocab-quiz.html) —
+// kept as one shared 5-tier scale end to end (learner self-assessment →
+// prompt → per-question difficulty → quizAttempts history) rather than
+// collapsing to a coarser 3-tier scale partway through, which is what
+// silently threw away "absolute_beginner" as a distinct, much stricter tier
+// before this fix (see LEVEL_GUIDANCE below).
+const QUIZ_DIFFICULTIES = ['absolute_beginner', 'beginner', 'intermediate', 'advanced_intermediate', 'advanced'];
 const QUIZ_QUESTION_COUNT = 10;
+// Languages whose native script isn't Latin — an absolute-beginner learner of
+// one of these can plausibly not read the script AT ALL yet, which a generic
+// "keep it simple" instruction doesn't capture (see LEVEL_GUIDANCE.absolute_beginner).
+const NON_LATIN_SCRIPT_LANGUAGES = ['Russian', 'Arabic', 'Chinese', 'Greek'];
+// Concrete, non-negotiable calibration per level — deliberately spelled out
+// rather than trusting a single adjective like "beginner" to carry enough
+// meaning on its own. Found via real feedback: an "absolute beginner" Arabic
+// quiz was asking the learner to read/complete full Arabic sentences, which
+// is not usable for someone who can't yet read the alphabet.
+const LEVEL_GUIDANCE = {
+  absolute_beginner: (language) => `This learner is an ABSOLUTE BEGINNER in ${language} — assume they know close to nothing yet.
+- Use ONLY single high-frequency words or very short 2-3 word phrases. NEVER a full sentence to read, translate, or complete.
+- Do not use the fill_in_blank or grammar question types for this learner — both require reading a full sentence, which is not appropriate here. Use only multiple_choice, translation, and vocabulary.
+- Every answer option must also be short (a word or a few words), never a full sentence.`,
+  beginner: (language) => `This learner is a BEGINNER in ${language} with some prior exposure.
+- Prioritize high-frequency, everyday vocabulary and short, simple phrases.
+- fill_in_blank and grammar questions are fine if they use short, simple sentences with common, everyday structure — nothing complex or literary.`,
+  intermediate: (language) => `This learner is INTERMEDIATE in ${language}.
+- Use a wider range of everyday vocabulary and moderately varied grammar. Natural short sentences are appropriate for every question type.`,
+  advanced_intermediate: (language) => `This learner is ADVANCED INTERMEDIATE in ${language}.
+- Use natural, idiomatic phrasing and moderately complex grammar. Full, natural sentences are expected.`,
+  advanced: (language) => `This learner is ADVANCED in ${language}.
+- Use natural, idiomatic, near-native phrasing, nuanced vocabulary, and more complex grammar structures.`,
+};
 // Cost guardrail (Step 14 of the plan: avoid generating quizzes nobody
 // takes) — a generous daily cap per user, cheap to check via the composite
 // index on quizzes' (userId, createdAt).
@@ -1273,22 +1303,28 @@ const QUIZ_TOOL = {
   },
 };
 
-function buildQuizSystemPrompt(language) {
+function buildQuizSystemPrompt(language, level) {
+  const isNonLatinScript = NON_LATIN_SCRIPT_LANGUAGES.includes(language);
+  const levelGuidance = (LEVEL_GUIDANCE[level] || LEVEL_GUIDANCE.beginner)(language);
+
   return `You are an expert ${language} language teacher writing a short practice quiz for one specific learner.
 
+LEARNER LEVEL — read this closely, it is the most important calibration in this whole prompt:
+${levelGuidance}
+${isNonLatinScript ? `\n${language} does not use the Latin alphabet. Unless the learner is intermediate level or higher, always pair any ${language}-script text in a prompt or option with its Latin-script transliteration in parentheses, e.g. "مرحبا (marhaban)" — never require the learner to read unfamiliar script completely unaided.\n` : ''}
 Question types you may use, always as multiple choice (3-4 options, exactly one correct) so every question is gradable automatically without any free-form judgment:
 - multiple_choice: a general question about the language with several answer choices.
 - translation: show a word or short phrase and ask the learner to pick its correct translation.
 - vocabulary: show a ${language} word or phrase and ask what it means.
 - fill_in_blank: a natural ${language} sentence with one word replaced by "___", asking which option correctly completes it.
 - grammar: present a sentence or phrase with a grammar choice, asking the learner to pick the grammatically correct option.
+(The level guidance above may restrict which of these types are appropriate — follow it.)
 
 Quality bar for every question:
 - Grammatically correct and natural for a native ${language} speaker — never stilted or literally translated.
 - Genuinely useful in real-world situations, not obscure or trivia-like.
 - Distractor options must be plausible, not silly or obviously wrong.
 - Vary the topics and question types across the quiz — do not repeat the same word or pattern twice within one quiz.
-- Match the learner's level: for beginners, prioritize high-frequency vocabulary and simple, practical phrases; for intermediate/advanced learners, use more natural, idiomatic, and grammatically complex language.
 - If the learner's recent history below lists topics they've already covered, favor different ones today. If it lists vocabulary or grammar they've struggled with, weave a couple of those back in naturally (spaced review), but the quiz should still feel fresh overall — not a retest.
 
 Call the generate_quiz tool exactly once with exactly ${QUIZ_QUESTION_COUNT} questions. Do not include any text outside the tool call.`;
@@ -1398,7 +1434,7 @@ async function generateAndStoreQuiz(db, uid, language, source) {
     (a.missedGrammarTopics || []).forEach((t) => recentMissedGrammarTopics.add(t));
   });
 
-  const systemPrompt = buildQuizSystemPrompt(language);
+  const systemPrompt = buildQuizSystemPrompt(language, level);
   const userPrompt = buildQuizUserPrompt({
     language, level, interests, goals,
     recentTopics: [...recentTopics].slice(0, 10),
@@ -4026,8 +4062,59 @@ function getLocalTimeParts(timezone) {
 }
 
 const QUIZ_SCHEDULE_TICK_MINUTES = 20;
+const QUIZ_SCHEDULE_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const DEFAULT_QUIZ_SCHEDULE_TIME = '09:00';
+
+/**
+ * Daily quiz reminders are opt-OUT by default (Ian's call, 2026-09-04) rather
+ * than opt-in — every learner with at least one language set gets a default
+ * schedule (every day, all their languages, 09:00 local) unless they've
+ * explicitly customized or disabled it via My Quiz Schedule, in which case
+ * this never touches their doc again.
+ *
+ * Runs once, guarded by systemFlags/quizScheduleDefaultBackfill — cheap after
+ * the first real tick ever runs it (a single doc read short-circuits every
+ * later tick), so this doesn't turn into a full users-collection scan every
+ * 20 minutes forever. Existing users get covered by this one-time pass;
+ * users who sign up (or add a language) afterward get a default schedule
+ * lazily the first time they open vocab-quiz.html (see its init()) — so
+ * between the two, nobody needs this backfill to run again.
+ */
+async function ensureDefaultQuizSchedulesBackfillOnce(db) {
+  const flagRef = db.collection('systemFlags').doc('quizScheduleDefaultBackfill');
+  const flagSnap = await flagRef.get();
+  if (flagSnap.exists) return;
+
+  const usersSnap = await db.collection('users').get();
+  let created = 0;
+  for (const userDoc of usersSnap.docs) {
+    const languages = (userDoc.data().languages_learning || []).filter(Boolean);
+    if (languages.length === 0) continue;
+
+    const scheduleRef = db.collection('quizSchedules').doc(userDoc.id);
+    const scheduleSnap = await scheduleRef.get();
+    if (scheduleSnap.exists) continue; // never override an existing doc, even a disabled one
+
+    const days = {};
+    QUIZ_SCHEDULE_DAYS.forEach((d) => { days[d] = [...languages]; });
+    await scheduleRef.set({
+      enabled: true,
+      preferredTime: DEFAULT_QUIZ_SCHEDULE_TIME,
+      days,
+      autoCreated: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    created++;
+  }
+
+  await flagRef.set({ completedAt: new Date(), usersScanned: usersSnap.size, schedulesCreated: created });
+  console.log('[Quiz Schedule] One-time default backfill complete:', JSON.stringify({ usersScanned: usersSnap.size, schedulesCreated: created }));
+}
 
 async function processScheduledQuizNotifications(db) {
+  await ensureDefaultQuizSchedulesBackfillOnce(db);
+
   const results = { sent: 0, skipped: 0, failed: 0, details: [] };
   const schedulesSnap = await db.collection('quizSchedules').where('enabled', '==', true).get();
 
