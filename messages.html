@@ -886,6 +886,79 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             cursor: not-allowed;
         }
 
+        /* ===== IMAGE MESSAGING ===== */
+
+        .image-btn {
+            padding: 0.75rem 1rem;
+            background: #f0f0f0;
+            color: #555;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1rem;
+        }
+
+        .image-btn:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .image-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .message-image-content {
+            padding: 0.35rem;
+            background: white;
+        }
+
+        .message.sent .message-image-content {
+            background: #e8f8f7;
+        }
+
+        .message-image {
+            display: block;
+            max-width: 220px;
+            max-height: 280px;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            object-fit: cover;
+        }
+
+        .image-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .image-lightbox-img {
+            max-width: 92vw;
+            max-height: 92vh;
+            border-radius: 4px;
+        }
+
+        .image-lightbox-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.25rem;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.75rem;
+            cursor: pointer;
+        }
+
         .recording-ui {
             display: none;
             align-items: center;
@@ -1800,6 +1873,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <button type="button" class="mic-btn" id="micBtn" title="Send audio message">
                             <i class="fas fa-microphone"></i>
                         </button>
+                        <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
+                        <button type="button" class="image-btn" id="imageBtn" title="Send a photo">
+                            <i class="fas fa-image"></i>
+                        </button>
                         <textarea class="message-input" id="messageInput" placeholder="Type a message..." rows="1"></textarea>
                         <button type="button" class="video-call-btn" id="videoCallBtn" title="Start video call with this user">
                             <i class="fas fa-video"></i>
@@ -1833,6 +1910,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     document.querySelector('#messageForm .send-btn').disabled = true;
                     const micBtnEl = document.getElementById('micBtn');
                     if (micBtnEl) micBtnEl.disabled = true;
+                    const imageBtnEl = document.getElementById('imageBtn');
+                    if (imageBtnEl) imageBtnEl.disabled = true;
                 }
             } catch (e) {
                 console.error('Error checking messaging blocked status:', e);
@@ -1920,9 +1999,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 startRecording(conversationId);
             });
 
+            // Setup image attach button — click proxies to the hidden native file picker.
+            const imageFileInput = document.getElementById('imageFileInput');
+            document.getElementById('imageBtn').addEventListener('click', () => {
+                imageFileInput.click();
+            });
+            imageFileInput.addEventListener('change', () => {
+                const file = imageFileInput.files && imageFileInput.files[0];
+                imageFileInput.value = ''; // reset so choosing the same file again still fires 'change'
+                if (file) sendImageMessage(conversationId, file);
+            });
+
             // Event delegation for audio player controls (persists across message re-renders)
             const messagesAreaEl = document.getElementById('messagesArea');
             messagesAreaEl.addEventListener('click', handleAudioClick);
+            messagesAreaEl.addEventListener('click', handleImageClick);
 
             // Clear audio players from previous conversation
             audioPlayers.forEach(a => a.pause());
@@ -2018,6 +2109,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                         if (message.type === 'audio') {
                             messageEl.innerHTML = renderAudioMessage(message, senderAvatar, conversationId);
+                        } else if (message.type === 'image') {
+                            messageEl.innerHTML = `
+                                <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                                <div class="msg-col">
+                                    <div class="message-content message-image-content">
+                                        <img class="message-image" src="${escapeHtml(message.imageUrl)}" alt="Shared image" loading="lazy">
+                                        <div class="message-time">${formatTime(message.timestamp)}</div>
+                                    </div>
+                                    <div class="message-reactions">${reactionChips}</div>
+                                </div>
+                                ${reactBtn}
+                            `;
                         } else if (message.type === 'video_call_request') {
                             const safeChannel = escapeHtml(message.channelName || '');
                             messageEl.innerHTML = `
@@ -2701,6 +2804,90 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             } finally {
                 if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i><span class="btn-text"> Send</span>'; }
             }
+        }
+
+        const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // matches storage.rules' cap for this path
+
+        async function sendImageMessage(conversationId, file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please choose an image file.');
+                return;
+            }
+            if (file.size > MAX_IMAGE_BYTES) {
+                alert('That image is too large (max 10MB). Please choose a smaller one.');
+                return;
+            }
+
+            const sendBtn = document.querySelector('#messageForm .send-btn');
+            try {
+                if (sendBtn) { sendBtn.disabled = true; sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+                const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+                const storageRef = ref(storage, `conversations/${conversationId}/images/image_${Date.now()}.${ext}`);
+
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                await new Promise((resolve, reject) => uploadTask.on('state_changed', null, reject, resolve));
+                const downloadURL = await getDownloadURL(storageRef);
+
+                const convDoc = await getDoc(doc(db, 'conversations', conversationId));
+                const convData = convDoc.data();
+                const otherParticipants = (convData.participants || []).filter(id => id !== currentUser.uid);
+
+                await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
+                    senderId: currentUser.uid,
+                    type: 'image',
+                    imageUrl: downloadURL,
+                    // Client timestamp, not serverTimestamp() — see the comment on
+                    // the text-message send above for why.
+                    timestamp: new Date(),
+                    read: false
+                });
+
+                const newUnreadCount = convData.unreadCount || {};
+                otherParticipants.forEach(id => { newUnreadCount[id] = (newUnreadCount[id] || 0) + 1; });
+
+                await setDoc(doc(db, 'conversations', conversationId), {
+                    lastMessage: '📷 Photo',
+                    lastMessageTime: new Date(),
+                    unreadCount: newUnreadCount
+                }, { merge: true });
+
+            } catch (err) {
+                console.error('Error sending image message:', err);
+                alert('Failed to send image. Please try again.');
+            } finally {
+                if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i><span class="btn-text"> Send</span>'; }
+            }
+        }
+
+        // Lightbox for viewing a shared image full-size — one element reused
+        // for whichever image was last tapped, created lazily on first use.
+        let imageLightboxEl = null;
+
+        function openImageLightbox(src) {
+            if (!imageLightboxEl) {
+                imageLightboxEl = document.createElement('div');
+                imageLightboxEl.className = 'image-lightbox';
+                imageLightboxEl.innerHTML = `
+                    <button type="button" class="image-lightbox-close" aria-label="Close"><i class="fas fa-times"></i></button>
+                    <img class="image-lightbox-img" alt="Shared image">
+                `;
+                document.body.appendChild(imageLightboxEl);
+                imageLightboxEl.addEventListener('click', (e) => {
+                    if (e.target === imageLightboxEl || e.target.closest('.image-lightbox-close')) closeImageLightbox();
+                });
+            }
+            imageLightboxEl.querySelector('.image-lightbox-img').src = src;
+            imageLightboxEl.style.display = 'flex';
+        }
+
+        function closeImageLightbox() {
+            if (imageLightboxEl) imageLightboxEl.style.display = 'none';
+        }
+
+        function handleImageClick(e) {
+            const imageEl = e.target.closest('.message-image');
+            if (imageEl) openImageLightbox(imageEl.src);
         }
 
         function formatTime(timestamp) {

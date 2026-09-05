@@ -178,10 +178,15 @@ exports.sendMessageNotification = onDocumentCreated(
       // Get sender's name from conversation participant details
       const senderName = conversation.participantDetails?.[message.senderId]?.name || 'A Lingua Bud user';
 
-      // Truncate message for preview (max 100 characters)
-      const messagePreview = message.text.length > 100
-        ? message.text.substring(0, 100) + '...'
-        : message.text;
+      // Truncate message for preview (max 100 characters). Non-text message
+      // types (audio, image) don't set `text`, so message.text.length would
+      // throw and silently kill the notification for every one of those.
+      const rawPreview = message.type === 'image' ? '📷 Photo'
+                        : message.type === 'audio' ? '🎤 Audio message'
+                        : (message.text || '');
+      const messagePreview = rawPreview.length > 100
+        ? rawPreview.substring(0, 100) + '...'
+        : rawPreview;
 
       // Send email via Resend
       const emailResult = await resend.emails.send({
