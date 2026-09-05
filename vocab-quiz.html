@@ -927,8 +927,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const defaultHtml = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
-            const oldPreferredTime = quizSchedule.preferredTime;
-            const oldDaysJSON = JSON.stringify(quizSchedule.days || {});
             quizSchedule.enabled = document.getElementById('qsEnabled').checked;
             quizSchedule.preferredTime = document.getElementById('qsPreferredTime').value || DEFAULT_QUIZ_SCHEDULE_TIME;
             try {
@@ -937,16 +935,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     preferredTime: quizSchedule.preferredTime,
                     days: quizSchedule.days || {},
                     updatedAt: serverTimestamp(),
+                    // Always clear today's already-sent guard on an explicit save
+                    // (see processScheduledQuizNotifications) rather than trying to
+                    // detect "did anything actually change" client-side first — that
+                    // comparison was against this tab's in-memory state, so a second
+                    // save in the same session (e.g. retrying because nothing seemed
+                    // to happen) compared against the previous save instead of what
+                    // was really in the database, and could wrongly see "no change"
+                    // for a genuine edit — silently leaving the guard in place for
+                    // the rest of the day. The only cost of always clearing it is a
+                    // no-op save (e.g. toggling enabled off and back on) also being
+                    // eligible to fire again today, which is harmless.
+                    lastSentDateKey: null,
                 };
-                // If the learner actually changed *when* or *what* they get
-                // reminded about, today's already-sent guard (see
-                // processScheduledQuizNotifications) shouldn't silently hold
-                // the new settings hostage until tomorrow — a deliberate edit
-                // should be able to fire today. Left alone (no reset) on a
-                // save that didn't actually change anything, e.g. just
-                // toggling enabled off and back on.
-                const changed = oldPreferredTime !== quizSchedule.preferredTime || oldDaysJSON !== JSON.stringify(quizSchedule.days || {});
-                if (changed) update.lastSentDateKey = null;
                 await setDoc(doc(db, 'quizSchedules', currentUser.uid), update, { merge: true });
                 closeQuizScheduleModal();
                 showToast('Quiz schedule saved!');
