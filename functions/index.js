@@ -2612,6 +2612,84 @@ exports.cancelBooking = onCall(async (request) => {
           `,
           text: `Hi ${student.name || 'there'},\n\nYour lesson has been cancelled.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors\n\n© 2026 Lingua Bud`
         });
+
+        // Trial-cancellation win-back + optional survey — only when the student
+        // cancels a free trial (not a regular paid lesson) they themselves booked.
+        if (booking.bookingType === 'free_trial') {
+          const winBackFirstName = (student.name || studentDisplayName || 'there').split(' ')[0];
+          const winBackInstructorName = booking.instructorName || 'your instructor';
+          const surveyUrl = `https://linguabud.com/trial-survey?booking=${bookingId}`;
+          await resend.emails.send({
+            from: 'Lingua Bud <notifications@linguabud.com>',
+            to: student.email,
+            subject: `We'd love to see you back, ${winBackFirstName}!`,
+            html: `
+              <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+              <body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;">
+                <table role="presentation" style="width:100%;border-collapse:collapse;">
+                  <tr><td align="center" style="padding:40px 0;">
+                    <table role="presentation" style="width:600px;border-collapse:collapse;background-color:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                      <tr>
+                        <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #20bcba;">
+                          <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Lingua Bud</h1>
+                          <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">Language Learning Platform</p>
+                        </td>
+                      </tr>
+                      <tr><td style="padding:40px;">
+                        <h2 style="margin: 0 0 10px 0; color: #333333; font-size: 24px;">We'd love to see you back!</h2>
+                        <p style="margin: 0 0 24px 0; color: #666666; font-size: 16px; line-height: 1.6;">
+                          Hey ${winBackFirstName}! We noticed you cancelled your free trial lesson with instructor <strong>${winBackInstructorName}</strong>.
+                          Did you know that <strong>every instructor</strong> on Lingua Bud comes with a free trial lesson &mdash; meaning you can keep exploring instructors until you find the right one for you?
+                        </p>
+                        <p style="margin: 0 0 30px 0; text-align: center;">
+                          <a href="https://linguabud.com/instructors"
+                             style="display: inline-block; padding: 14px 36px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
+                            Browse Instructors
+                          </a>
+                        </p>
+                        <hr style="border: none; border-top: 1px solid #e9ecef; margin: 0 0 28px 0;">
+                        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 24px; margin: 0 0 24px 0; border-left: 4px solid #20bcba;">
+                          <p style="margin: 0 0 4px 0; color: #113448; font-size: 17px; font-weight: bold;">Optional Survey</p>
+                          <p style="margin: 0 0 20px 0; color: #666666; font-size: 14px; line-height: 1.5;">
+                            Mind sharing a little feedback? It'll help us make Lingua Bud better &mdash; totally optional, takes under a minute.
+                          </p>
+                          <div style="margin: 0 0 20px 0;">
+                            <p style="margin: 0 0 8px 0; color: #113448; font-size: 14px; font-weight: bold;">1. Why did you decide to cancel your free trial lesson with this instructor?</p>
+                            <div style="border: 1px solid #ccc; border-radius: 4px; padding: 10px; background: #ffffff; color: #999; font-size: 14px;">Your answer&hellip;</div>
+                          </div>
+                          <div style="margin: 0 0 20px 0;">
+                            <p style="margin: 0 0 8px 0; color: #113448; font-size: 14px; font-weight: bold;">2. Did you know that every instructor comes with a free trial lesson?</p>
+                            <div style="color: #333; font-size: 14px;">&#9675; Yes &nbsp;&nbsp; &#9675; No</div>
+                          </div>
+                          <div style="margin: 0 0 20px 0;">
+                            <p style="margin: 0 0 8px 0; color: #113448; font-size: 14px; font-weight: bold;">3. How satisfied are you with our platform?</p>
+                            <div style="color: #333; font-size: 14px;">&#9675; Very satisfied &nbsp; &#9675; Satisfied &nbsp; &#9675; Neutral &nbsp; &#9675; Unsatisfied &nbsp; &#9675; Very unsatisfied</div>
+                          </div>
+                          <div style="margin: 0 0 20px 0;">
+                            <p style="margin: 0 0 8px 0; color: #113448; font-size: 14px; font-weight: bold;">4. What are your language goals?</p>
+                            <div style="border: 1px solid #ccc; border-radius: 4px; padding: 10px; background: #ffffff; color: #999; font-size: 14px;">Your answer&hellip;</div>
+                          </div>
+                          <p style="margin: 20px 0 0 0; text-align: center;">
+                            <a href="${surveyUrl}"
+                               style="display: inline-block; padding: 12px 28px; background-color: #113448; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold;">
+                              Take the Survey
+                            </a>
+                          </p>
+                        </div>
+                        <p style="margin: 0; color: #999999; font-size: 14px; line-height: 1.5;">
+                          Questions? Contact us at <a href="mailto:support@linguabud.com" style="color: #20bcba; text-decoration: none;">support@linguabud.com</a>
+                        </p>
+                      </td></tr>
+                      ${emailFooter}
+                    </table>
+                  </td></tr>
+                </table>
+              </body></html>
+            `,
+            text: `Hey ${winBackFirstName}! We noticed you cancelled your free trial lesson with instructor ${winBackInstructorName}. Did you know that every instructor comes with a free trial lesson, meaning you can keep exploring instructors until you find the right one for you?\n\nBrowse instructors: https://linguabud.com/instructors\n\n--- Optional Survey ---\n1. Why did you decide to cancel your free trial lesson with this instructor?\n2. Did you know that every instructor comes with a free trial lesson? (Yes/No)\n3. How satisfied are you with our platform?\n4. What are your language goals?\n\nTake the survey: ${surveyUrl}\n\n© 2026 Lingua Bud`
+          });
+          console.log('Trial win-back/survey email sent to student:', student.email);
+        }
       }
     } else {
       // Notify student that instructor cancelled — always full refund (reuse already-fetched profile)
@@ -2719,6 +2797,58 @@ exports.submitTrialSurvey = onCall(async (request) => {
     instructorName: booking.instructorName || null,
     whyCancelled: whyCancelled || null,
     knewAboutFreeTrials: knewAboutFreeTrials ?? null,
+    satisfaction: satisfaction || null,
+    languageGoals: languageGoals || null,
+    submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true };
+});
+
+const BOOKING_SURVEY_BARRIER_OPTIONS = [
+  'not_applicable_already_booked', 'havent_found_right_instructor', 'not_sure_how_it_works',
+  'price', 'havent_had_time', 'prefer_self_study_for_now', 'other'
+];
+
+/**
+ * Records an optional response to the general "booking an instructor" survey,
+ * sent to student users to understand booking behavior and reservations.
+ * Intentionally unauthenticated (email link may be opened logged-out) — the
+ * studentId itself scopes the write (one response per student, doc id =
+ * studentId), and Firestore rules block all direct client writes to
+ * bookingSurveyResponses, so this callable is the only way in.
+ */
+exports.submitBookingSurvey = onCall(async (request) => {
+  const { studentId, knewCanBook, knewFreeTrial, barrier, satisfaction, languageGoals } = request.data || {};
+  if (!studentId || typeof studentId !== 'string') {
+    throw new HttpsError('invalid-argument', 'studentId is required');
+  }
+  for (const [field, value] of [['knewCanBook', knewCanBook], ['knewFreeTrial', knewFreeTrial]]) {
+    if (value !== undefined && value !== null && typeof value !== 'boolean') {
+      throw new HttpsError('invalid-argument', `${field} must be a boolean`);
+    }
+  }
+  if (barrier && !BOOKING_SURVEY_BARRIER_OPTIONS.includes(barrier)) {
+    throw new HttpsError('invalid-argument', 'Invalid barrier value');
+  }
+  if (satisfaction && !TRIAL_SURVEY_SATISFACTION_OPTIONS.includes(satisfaction)) {
+    throw new HttpsError('invalid-argument', 'Invalid satisfaction value');
+  }
+  if (languageGoals !== undefined && languageGoals !== null && (typeof languageGoals !== 'string' || languageGoals.length > TRIAL_SURVEY_MAX_TEXT_LENGTH)) {
+    throw new HttpsError('invalid-argument', `languageGoals must be a string under ${TRIAL_SURVEY_MAX_TEXT_LENGTH} characters`);
+  }
+
+  const userSnap = await admin.firestore().collection('users').doc(studentId).get();
+  if (!userSnap.exists) throw new HttpsError('not-found', 'Student not found');
+  const user = userSnap.data();
+
+  await admin.firestore().collection('bookingSurveyResponses').doc(studentId).set({
+    studentId,
+    studentName: user.name || null,
+    studentEmail: user.email || null,
+    knewCanBook: knewCanBook ?? null,
+    knewFreeTrial: knewFreeTrial ?? null,
+    barrier: barrier || null,
     satisfaction: satisfaction || null,
     languageGoals: languageGoals || null,
     submittedAt: admin.firestore.FieldValue.serverTimestamp(),

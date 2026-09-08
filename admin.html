@@ -678,6 +678,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             </table>
                         </div>
                     </div>
+
+                    <div class="admin-card mt-3">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-clipboard-question" style="color:#20bcba;margin-right:8px;"></i>Booking an Instructor Feedback</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;" onclick="loadBookingSurveyFeedback()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Knew Can Book?</th>
+                                        <th>Knew Free Trial?</th>
+                                        <th>Barrier</th>
+                                        <th>Satisfaction</th>
+                                        <th>Language Goals</th>
+                                        <th>Submitted</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bookingSurveyFeedbackBody">
+                                    <tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ── Messages Tab ───────────────────────────────────── -->
@@ -1314,7 +1341,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     if (name === 'flagged')       loadFlagged();
                     if (name === 'users')         loadUsers();
                     if (name === 'bookings')      loadBookings();
-                    if (name === 'feedback')      loadFeedback();
+                    if (name === 'feedback') { loadFeedback(); loadBookingSurveyFeedback(); }
                     if (name === 'messages')      loadMessages();
                     if (name === 'reports')       loadReports();
                     if (name === 'wise-payouts')  loadWisePayouts();
@@ -2062,6 +2089,51 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
         window.loadFeedback = loadFeedback;
+
+        const BARRIER_LABELS = {
+            not_applicable_already_booked: "N/A — already booked",
+            havent_found_right_instructor: "Haven't found the right instructor",
+            not_sure_how_it_works: 'Not sure how it works',
+            price: 'Price',
+            havent_had_time: "Haven't had time",
+            prefer_self_study_for_now: 'Prefers self-study for now',
+            other: 'Other',
+        };
+
+        async function loadBookingSurveyFeedback() {
+            const tbody = document.getElementById('bookingSurveyFeedbackBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, 'bookingSurveyResponses'));
+                const responses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                responses.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+
+                if (responses.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-clipboard-question"></i>No survey responses yet.</div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = responses.map(r => {
+                    const submittedDt = r.submittedAt?.toDate ? r.submittedAt.toDate() : null;
+                    const submittedStr = submittedDt ? submittedDt.toLocaleString() : '—';
+                    const yesNo = (v) => v === true ? 'Yes' : v === false ? 'No' : '—';
+                    const barrier = BARRIER_LABELS[r.barrier] || '—';
+                    const satisfaction = SATISFACTION_LABELS[r.satisfaction] || '—';
+                    return `<tr>
+                        <td>${escHtml(r.studentName || r.studentEmail || r.studentId || '—')}</td>
+                        <td>${escHtml(yesNo(r.knewCanBook))}</td>
+                        <td>${escHtml(yesNo(r.knewFreeTrial))}</td>
+                        <td>${escHtml(barrier)}</td>
+                        <td>${escHtml(satisfaction)}</td>
+                        <td>${escHtml(r.languageGoals || '—')}</td>
+                        <td>${escHtml(submittedStr)}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadBookingSurveyFeedback = loadBookingSurveyFeedback;
 
         async function issueRefund(bookingId) {
             if (!confirm(`Issue Stripe refund for booking ${bookingId}? This will charge back the student's payment. Make sure you haven't already refunded this manually in Stripe.`)) return;

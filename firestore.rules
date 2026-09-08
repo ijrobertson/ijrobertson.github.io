@@ -215,6 +215,14 @@ service cloud.firestore {
       allow write: if false; // Cloud Function only (Admin SDK)
     }
 
+    // General "booking an instructor" survey responses — submitted (unauthenticated)
+    // via the submitBookingSurvey Cloud Function from the student survey email.
+    match /bookingSurveyResponses/{studentId} {
+      allow read: if request.auth != null
+                 && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if false; // Cloud Function only (Admin SDK)
+    }
+
     // ── Referral program ────────────────────────────────────────────────────
 
     // referralTokens: token → instructorId lookup.
