@@ -1719,7 +1719,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       doc,
       getDoc,
       setDoc,
-      deleteDoc,
       collection,
       getDocs,
       addDoc,
@@ -4022,8 +4021,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       delError.style.display = 'none';
 
       try {
-        const deleteOwnAccountFn = httpsCallable(functions, 'deleteOwnAccount');
-        await deleteOwnAccountFn();
+        // Auth deletion first: if this fails (e.g. needs recent login), nothing
+        // has been touched yet. Firestore cleanup + audit log happen server-side
+        // via the onAuthUserDeleted trigger once the Auth account is actually gone.
         await deleteUser(user);
         window.location.href = 'index';
       } catch (err) {

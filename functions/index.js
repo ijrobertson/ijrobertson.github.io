@@ -1541,6 +1541,58 @@ exports.deleteOwnAccount = onCall(async (request) => {
 });
 
 /**
+ * Safety-net cleanup: fires automatically whenever a Firebase Auth user is
+ * deleted, by ANY means — client self-delete, adminDeleteUser, or even a
+ * manual deletion in the Firebase console's Authentication tab. Deletes any
+ * remaining Firestore profile data and logs to deleted_accounts.
+ *
+ * Why this exists: the old self-service delete flow on student-dashboard.html
+ * and dashboard.html deleted Firestore data (or called deleteOwnAccount) and
+ * THEN called the client-side deleteUser() — if that second step failed
+ * (e.g. Firebase's very common 'auth/requires-recent-login' error, which
+ * both pages explicitly handled without realizing what it left behind), the
+ * account was left half-deleted forever: Firestore profile gone, Auth login
+ * still fully active. That's what happened to a real student (uid
+ * 3b19AsniAoYTF0V5EC7BoHl6nCp2) on 2026-09-08 — no admin/console action
+ * involved, just this ordering bug. Both pages now delete the Auth user
+ * FIRST and let this trigger handle Firestore cleanup — if Auth deletion
+ * fails, nothing has been touched yet, so there's no more half-deleted state
+ * possible. adminDeleteUser already deletes both in one atomic server-side
+ * call, so by the time this fires for that path the Firestore docs are
+ * already gone and the exists-check below is a no-op (no duplicate log).
+ */
+exports.onAuthUserDeleted = functions.auth.user().onDelete(async (user) => {
+  const uid = user.uid;
+  const db  = admin.firestore();
+
+  const [userSnap, instrSnap] = await Promise.all([
+    db.collection('users').doc(uid).get(),
+    db.collection('instructors').doc(uid).get(),
+  ]);
+  if (!userSnap.exists && !instrSnap.exists) return null; // already cleaned up
+
+  const userData  = userSnap.exists  ? userSnap.data()  : null;
+  const instrData = instrSnap.exists ? instrSnap.data() : null;
+
+  await db.collection('deleted_accounts').add({
+    userId:    uid,
+    name:      instrData?.name  || userData?.name  || null,
+    email:     instrData?.email || userData?.email || user.email || null,
+    role:      instrData ? (userData ? 'both' : 'instructor') : 'student',
+    deletedBy: 'auth-trigger',
+    deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  const batch = db.batch();
+  batch.delete(db.collection('users').doc(uid));
+  batch.delete(db.collection('instructors').doc(uid));
+  batch.delete(db.collection('instructor_availability').doc(uid));
+  await batch.commit();
+
+  return null;
+});
+
+/**
  * Returns the deleted_accounts audit log for the admin panel.
  */
 exports.adminGetDeletedAccounts = onCall(async (request) => {
