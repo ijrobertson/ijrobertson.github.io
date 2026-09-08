@@ -2117,7 +2117,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const submittedDt = r.submittedAt?.toDate ? r.submittedAt.toDate() : null;
                     const submittedStr = submittedDt ? submittedDt.toLocaleString() : '—';
                     const yesNo = (v) => v === true ? 'Yes' : v === false ? 'No' : '—';
-                    const barrier = BARRIER_LABELS[r.barrier] || '—';
+                    const barrier = (BARRIER_LABELS[r.barrier] || '—') + (r.barrier === 'other' && r.barrierOther ? `: ${r.barrierOther}` : '');
                     const satisfaction = SATISFACTION_LABELS[r.satisfaction] || '—';
                     return `<tr>
                         <td>${escHtml(r.studentName || r.studentEmail || r.studentId || '—')}</td>

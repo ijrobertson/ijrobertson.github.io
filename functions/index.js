@@ -2818,8 +2818,10 @@ const BOOKING_SURVEY_BARRIER_OPTIONS = [
  * studentId), and Firestore rules block all direct client writes to
  * bookingSurveyResponses, so this callable is the only way in.
  */
+const BOOKING_SURVEY_BARRIER_OTHER_MAX_LENGTH = 500;
+
 exports.submitBookingSurvey = onCall(async (request) => {
-  const { studentId, knewCanBook, knewFreeTrial, barrier, satisfaction, languageGoals } = request.data || {};
+  const { studentId, knewCanBook, knewFreeTrial, barrier, barrierOther, satisfaction, languageGoals } = request.data || {};
   if (!studentId || typeof studentId !== 'string') {
     throw new HttpsError('invalid-argument', 'studentId is required');
   }
@@ -2830,6 +2832,9 @@ exports.submitBookingSurvey = onCall(async (request) => {
   }
   if (barrier && !BOOKING_SURVEY_BARRIER_OPTIONS.includes(barrier)) {
     throw new HttpsError('invalid-argument', 'Invalid barrier value');
+  }
+  if (barrierOther !== undefined && barrierOther !== null && (typeof barrierOther !== 'string' || barrierOther.length > BOOKING_SURVEY_BARRIER_OTHER_MAX_LENGTH)) {
+    throw new HttpsError('invalid-argument', `barrierOther must be a string under ${BOOKING_SURVEY_BARRIER_OTHER_MAX_LENGTH} characters`);
   }
   if (satisfaction && !TRIAL_SURVEY_SATISFACTION_OPTIONS.includes(satisfaction)) {
     throw new HttpsError('invalid-argument', 'Invalid satisfaction value');
@@ -2849,6 +2854,7 @@ exports.submitBookingSurvey = onCall(async (request) => {
     knewCanBook: knewCanBook ?? null,
     knewFreeTrial: knewFreeTrial ?? null,
     barrier: barrier || null,
+    barrierOther: barrier === 'other' ? (barrierOther || null) : null,
     satisfaction: satisfaction || null,
     languageGoals: languageGoals || null,
     submittedAt: admin.firestore.FieldValue.serverTimestamp(),
