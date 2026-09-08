@@ -637,11 +637,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                         <th>Date &amp; Time</th>
                                         <th>Amount</th>
                                         <th>Status</th>
+                                        <th>Cancelled By</th>
                                         <th>Refund</th>
                                     </tr>
                                 </thead>
                                 <tbody id="bookingsBody">
-                                    <tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                    <tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1933,7 +1934,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 if (refundAlertEl) refundAlertEl.textContent = `⚠ ${refundNeeded} booking(s) need a manual refund`;
 
                 if (bookings.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-calendar"></i>No bookings yet.</div></td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-calendar"></i>No bookings yet.</div></td></tr>';
                     return;
                 }
                 tbody.innerHTML = bookings.slice(0, 50).map(b => {
@@ -1942,6 +1943,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const amount  = b.amount ? '$' + (b.amount / 100).toFixed(2) : '—';
                     const status  = b.status || '—';
                     const badgeCls = status === 'confirmed' ? 'badge-confirmed' : status === 'cancelled' ? 'badge-cancelled' : '';
+
+                    // Who cancelled (only meaningful for cancelled bookings)
+                    let cancelledByCell = '—';
+                    if (b.status === 'cancelled' && b.cancelledBy) {
+                        const who = b.cancelledBy === 'student' ? (b.studentName || 'Student')
+                                  : b.cancelledBy === 'instructor' ? (b.instructorName || 'Instructor')
+                                  : b.cancelledBy;
+                        const cancelledAtDt = b.cancelledAt?.toDate ? b.cancelledAt.toDate() : (b.cancelledAt ? new Date(b.cancelledAt) : null);
+                        const cancelledAtStr = cancelledAtDt && !isNaN(cancelledAtDt) ? cancelledAtDt.toLocaleString() : '';
+                        cancelledByCell = `<span title="${escHtml(cancelledAtStr)}">${escHtml(who)} <span style="color:#999;font-size:0.75rem;">(${escHtml(b.cancelledBy)})</span></span>`;
+                    }
 
                     // Determine refund cell content
                     let refundCell = '—';
@@ -1966,11 +1978,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <td>${escHtml(dateStr)}</td>
                         <td>${escHtml(amount)}</td>
                         <td><span class="status-badge ${badgeCls}">${escHtml(status)}</span></td>
+                        <td>${cancelledByCell}</td>
                         <td>${refundCell}</td>
                     </tr>`;
                 }).join('');
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="6" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
             }
         }
         window.loadBookings = loadBookings;
