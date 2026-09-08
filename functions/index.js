@@ -2680,6 +2680,53 @@ exports.cancelBooking = onCall(async (request) => {
   return { success: true, cancelledBy, refundPercent, refundLabel, refundAmountCents };
 });
 
+const TRIAL_SURVEY_SATISFACTION_OPTIONS = ['very_satisfied', 'satisfied', 'neutral', 'unsatisfied', 'very_unsatisfied'];
+const TRIAL_SURVEY_MAX_TEXT_LENGTH = 2000;
+
+/**
+ * Records an optional survey response from a student who cancelled a free trial,
+ * submitted via the link in the trial-cancellation win-back email. Intentionally
+ * unauthenticated (the student may click the email link while logged out) — the
+ * bookingId itself scopes the write, and Firestore rules block all direct client
+ * writes to trialSurveyResponses, so this callable is the only way in.
+ */
+exports.submitTrialSurvey = onCall(async (request) => {
+  const { bookingId, whyCancelled, knewAboutFreeTrials, satisfaction, languageGoals } = request.data || {};
+  if (!bookingId || typeof bookingId !== 'string') {
+    throw new HttpsError('invalid-argument', 'bookingId is required');
+  }
+  if (satisfaction && !TRIAL_SURVEY_SATISFACTION_OPTIONS.includes(satisfaction)) {
+    throw new HttpsError('invalid-argument', 'Invalid satisfaction value');
+  }
+  if (knewAboutFreeTrials !== undefined && knewAboutFreeTrials !== null && typeof knewAboutFreeTrials !== 'boolean') {
+    throw new HttpsError('invalid-argument', 'knewAboutFreeTrials must be a boolean');
+  }
+  for (const [field, value] of [['whyCancelled', whyCancelled], ['languageGoals', languageGoals]]) {
+    if (value !== undefined && value !== null && (typeof value !== 'string' || value.length > TRIAL_SURVEY_MAX_TEXT_LENGTH)) {
+      throw new HttpsError('invalid-argument', `${field} must be a string under ${TRIAL_SURVEY_MAX_TEXT_LENGTH} characters`);
+    }
+  }
+
+  const bookingSnap = await admin.firestore().collection('bookings').doc(bookingId).get();
+  if (!bookingSnap.exists) throw new HttpsError('not-found', 'Booking not found');
+  const booking = bookingSnap.data();
+
+  await admin.firestore().collection('trialSurveyResponses').doc(bookingId).set({
+    bookingId,
+    studentId: booking.studentId || null,
+    studentName: booking.studentName || null,
+    instructorId: booking.instructorId || null,
+    instructorName: booking.instructorName || null,
+    whyCancelled: whyCancelled || null,
+    knewAboutFreeTrials: knewAboutFreeTrials ?? null,
+    satisfaction: satisfaction || null,
+    languageGoals: languageGoals || null,
+    submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true };
+});
+
 /**
  * Submits a student review for a completed lesson.
  * Atomically writes the review and updates instructor averageRating + reviewCount.

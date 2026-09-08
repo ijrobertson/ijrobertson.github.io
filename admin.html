@@ -428,6 +428,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="admin-tab" data-tab="users">Students</div>
                     <div class="admin-tab" data-tab="all-users">All Users</div>
                     <div class="admin-tab" data-tab="bookings">Bookings</div>
+                    <div class="admin-tab" data-tab="feedback">Feedback</div>
                     <div class="admin-tab" data-tab="messages">
                         Messages <span class="tab-badge info" id="msgBadge" style="display:none;">0</span>
                     </div>
@@ -642,6 +643,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                     </tr>
                                 </thead>
                                 <tbody id="bookingsBody">
+                                    <tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Feedback Tab (trial-cancellation survey responses) ── -->
+                <div class="tab-pane" id="tab-feedback">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h5><i class="fas fa-comment-dots" style="color:#20bcba;margin-right:8px;"></i>Trial Cancellation Feedback</h5>
+                            <button class="btn-approve" style="font-size:0.8rem;" onclick="loadFeedback()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Instructor</th>
+                                        <th>Why They Cancelled</th>
+                                        <th>Knew About Free Trials?</th>
+                                        <th>Satisfaction</th>
+                                        <th>Language Goals</th>
+                                        <th>Submitted</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feedbackBody">
                                     <tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>
                                 </tbody>
                             </table>
@@ -1283,6 +1314,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     if (name === 'flagged')       loadFlagged();
                     if (name === 'users')         loadUsers();
                     if (name === 'bookings')      loadBookings();
+                    if (name === 'feedback')      loadFeedback();
                     if (name === 'messages')      loadMessages();
                     if (name === 'reports')       loadReports();
                     if (name === 'wise-payouts')  loadWisePayouts();
@@ -1987,6 +2019,49 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
         window.loadBookings = loadBookings;
+
+        // ── Feedback (trial cancellation survey) ────────────────────────────
+        const SATISFACTION_LABELS = {
+            very_satisfied: 'Very satisfied',
+            satisfied: 'Satisfied',
+            neutral: 'Neutral',
+            unsatisfied: 'Unsatisfied',
+            very_unsatisfied: 'Very unsatisfied',
+        };
+
+        async function loadFeedback() {
+            const tbody = document.getElementById('feedbackBody');
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            try {
+                const snap = await getDocs(collection(db, 'trialSurveyResponses'));
+                const responses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                responses.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+
+                if (responses.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-comment-dots"></i>No survey responses yet.</div></td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = responses.map(r => {
+                    const submittedDt = r.submittedAt?.toDate ? r.submittedAt.toDate() : null;
+                    const submittedStr = submittedDt ? submittedDt.toLocaleString() : '—';
+                    const knew = r.knewAboutFreeTrials === true ? 'Yes' : r.knewAboutFreeTrials === false ? 'No' : '—';
+                    const satisfaction = SATISFACTION_LABELS[r.satisfaction] || '—';
+                    return `<tr>
+                        <td>${escHtml(r.studentName || r.studentId || '—')}</td>
+                        <td>${escHtml(r.instructorName || r.instructorId || '—')}</td>
+                        <td>${escHtml(r.whyCancelled || '—')}</td>
+                        <td>${escHtml(knew)}</td>
+                        <td>${escHtml(satisfaction)}</td>
+                        <td>${escHtml(r.languageGoals || '—')}</td>
+                        <td>${escHtml(submittedStr)}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
+            }
+        }
+        window.loadFeedback = loadFeedback;
 
         async function issueRefund(bookingId) {
             if (!confirm(`Issue Stripe refund for booking ${bookingId}? This will charge back the student's payment. Make sure you haven't already refunded this manually in Stripe.`)) return;

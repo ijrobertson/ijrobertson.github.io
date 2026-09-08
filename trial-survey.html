@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quick Feedback – Lingua Bud</title>
+
+  <link rel="icon" href="images/NuevoFavicon.png">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+  <link href="css/bootstrap.css" rel="stylesheet">
+  <link href="css/fontawesome-all.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 2.75rem 2.5rem;
+      max-width: 540px;
+      width: 100%;
+    }
+    .logo { text-align: center; margin-bottom: 1.25rem; }
+    .logo img { height: 36px; }
+    h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: #113448; text-align: center; }
+    p.subtext { color: #666; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.75rem; text-align: center; }
+    label { font-weight: 600; color: #113448; font-size: 0.9rem; margin-bottom: 0.4rem; display: block; }
+    .form-group { margin-bottom: 1.5rem; }
+    textarea.form-control, select.form-control {
+      border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem;
+    }
+    textarea.form-control:focus, select.form-control:focus {
+      border-color: #20bcba; box-shadow: 0 0 0 0.15rem rgba(32,188,186,0.2);
+    }
+    .radio-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .radio-row label { font-weight: 400; color: #333; margin-bottom: 0; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-submit {
+      display: block; width: 100%; padding: 0.85rem; background: #20bcba; color: #fff;
+      border: none; border-radius: 6px; font-weight: 700; font-size: 1rem; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #199c9a; }
+    .btn-submit:disabled { background: #9dd8d6; cursor: not-allowed; }
+    .btn-skip {
+      display: block; width: 100%; text-align: center; margin-top: 0.75rem;
+      color: #888; font-size: 0.85rem; text-decoration: underline;
+    }
+    .icon-circle {
+      width: 72px; height: 72px; border-radius: 50%; background: #d1fae5; color: #10b981;
+      display: flex; align-items: center; justify-content: center; font-size: 1.75rem;
+      margin: 0 auto 1.25rem;
+    }
+    .error-box {
+      background: #fee2e2; color: #991b1b; border-radius: 6px; padding: 0.75rem 1rem;
+      font-size: 0.9rem; margin-bottom: 1.25rem; display: none;
+    }
+  </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<div class="card" id="card">
+  <div class="logo">
+    <a href="index"><img src="images/NewLogo8.png" alt="Lingua Bud"></a>
+  </div>
+
+  <div id="formView">
+    <h2>Quick Feedback</h2>
+    <p class="subtext">This is completely optional and takes under a minute — it helps us improve Lingua Bud for future students.</p>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <form id="surveyForm">
+      <div class="form-group">
+        <label for="whyCancelled">Why did you decide to cancel your free trial lesson with this instructor?</label>
+        <textarea class="form-control" id="whyCancelled" rows="3" maxlength="2000" placeholder="Your answer…"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Did you know that every instructor comes with a free trial lesson?</label>
+        <div class="radio-row">
+          <label><input type="radio" name="knewAboutFreeTrials" value="yes"> Yes</label>
+          <label><input type="radio" name="knewAboutFreeTrials" value="no"> No</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="satisfaction">How satisfied are you with our platform?</label>
+        <select class="form-control" id="satisfaction">
+          <option value="">Select an answer…</option>
+          <option value="very_satisfied">Very satisfied</option>
+          <option value="satisfied">Satisfied</option>
+          <option value="neutral">Neutral</option>
+          <option value="unsatisfied">Unsatisfied</option>
+          <option value="very_unsatisfied">Very unsatisfied</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="languageGoals">What are your language goals?</label>
+        <textarea class="form-control" id="languageGoals" rows="3" maxlength="2000" placeholder="Your answer…"></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Submit Feedback</button>
+      <a href="instructors" class="btn-skip">Skip and browse instructors instead</a>
+    </form>
+  </div>
+
+  <div id="thankYouView" style="display:none; text-align:center;">
+    <div class="icon-circle"><i class="fas fa-check"></i></div>
+    <h2>Thanks for the feedback!</h2>
+    <p class="subtext">We really appreciate you taking the time. Whenever you're ready, every instructor offers a free trial lesson — no pressure to commit.</p>
+    <a href="instructors" class="btn-submit" style="text-decoration:none; display:block;">Browse Instructors</a>
+  </div>
+</div>
+
+<script type="module">
+  import { functions, httpsCallable } from './lib/firebaseClient.js';
+
+  const params = new URLSearchParams(window.location.search);
+  const bookingId = params.get('booking');
+
+  const form = document.getElementById('surveyForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  if (!bookingId) {
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('thankYouView').style.display = 'block';
+    document.querySelector('#thankYouView .icon-circle').innerHTML = '<i class="fas fa-exclamation"></i>';
+    document.querySelector('#thankYouView .icon-circle').style.background = '#fef3c7';
+    document.querySelector('#thankYouView .icon-circle').style.color = '#f59e0b';
+    document.querySelector('#thankYouView h2').textContent = 'Link Missing Info';
+    document.querySelector('#thankYouView .subtext').textContent = "This survey link is missing its booking reference, so we can't record a response. Feel free to browse instructors instead.";
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    const knewRadio = document.querySelector('input[name="knewAboutFreeTrials"]:checked');
+
+    try {
+      const submitTrialSurvey = httpsCallable(functions, 'submitTrialSurvey');
+      await submitTrialSurvey({
+        bookingId,
+        whyCancelled: document.getElementById('whyCancelled').value.trim() || null,
+        knewAboutFreeTrials: knewRadio ? knewRadio.value === 'yes' : null,
+        satisfaction: document.getElementById('satisfaction').value || null,
+        languageGoals: document.getElementById('languageGoals').value.trim() || null,
+      });
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('thankYouView').style.display = 'block';
+    } catch (err) {
+      errorBox.textContent = 'Something went wrong submitting your feedback. Please try again.';
+      errorBox.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Feedback';
+    }
+  });
+</script>
+
+</body>
+</html>

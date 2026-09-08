@@ -207,6 +207,14 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Trial cancellation survey responses — submitted (unauthenticated) via the
+    // submitTrialSurvey Cloud Function from the win-back email's survey link.
+    match /trialSurveyResponses/{bookingId} {
+      allow read: if request.auth != null
+                 && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if false; // Cloud Function only (Admin SDK)
+    }
+
     // ── Referral program ────────────────────────────────────────────────────
 
     // referralTokens: token → instructorId lookup.
