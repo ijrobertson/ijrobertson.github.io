@@ -56,9 +56,12 @@ async function fetchEligibleStudents() {
     .filter(s => {
       if (!s.email)                         return false; // no email address
       if (s.email.endsWith('@example.com')) return false; // test accounts
-      if (s.marketingOptOut === true)       return false; // explicitly unsubscribed
-      if (s.emailNotifications === false)   return false; // opted out of all emails
+      if (s.marketingOptOut === true)       return false; // explicitly unsubscribed from marketing
       if (s.flagged === true)               return false; // flagged/banned accounts
+      // NOTE: emailNotifications is the "email me when I receive messages" toggle
+      // (student-dashboard.html) — a transactional-notification preference, not
+      // marketing consent. Do NOT filter marketing sends on it; marketingOptOut
+      // (set only by clicking unsubscribe) is the sole genuine opt-out signal.
       return true;
     });
 }
