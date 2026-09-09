@@ -2355,13 +2355,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             try {
                 const msgRef = doc(db, 'conversations', conversationId, 'messages', messageId);
                 const snap = await getDoc(msgRef);
-                const existing = (snap.data()?.reactions?.[emoji]) || [];
-                const field = `reactions.${emoji}`;
-                if (existing.includes(currentUser.uid)) {
-                    await updateDoc(msgRef, { [field]: arrayRemove(currentUser.uid) });
-                } else {
-                    await updateDoc(msgRef, { [field]: arrayUnion(currentUser.uid) });
+                const reactions = snap.data()?.reactions || {};
+                const alreadyOnThisEmoji = (reactions[emoji] || []).includes(currentUser.uid);
+
+                // Only one reaction per user per message — clear them off every
+                // other emoji before applying the one they just picked.
+                const updates = {};
+                for (const [otherEmoji, uids] of Object.entries(reactions)) {
+                    if (otherEmoji !== emoji && Array.isArray(uids) && uids.includes(currentUser.uid)) {
+                        updates[`reactions.${otherEmoji}`] = arrayRemove(currentUser.uid);
+                    }
                 }
+                updates[`reactions.${emoji}`] = alreadyOnThisEmoji
+                    ? arrayRemove(currentUser.uid)
+                    : arrayUnion(currentUser.uid);
+
+                await updateDoc(msgRef, updates);
             } catch (err) {
                 console.error('Error toggling reaction:', err);
             }
