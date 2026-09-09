@@ -268,41 +268,30 @@ exports.sendMessageNotification = onDocumentCreated(
       try {
         const pushEnabled = recipient.messagePushEnabled === true;
         if (pushEnabled) {
-          const debounceMs = 5 * 60 * 1000; // "one push per thread per few minutes" — see docs/PWA_PRD.md §13
-          const lastPushSentAt = conversation.lastPushSentAt?.[recipientId];
-          const debounced = lastPushSentAt && (Date.now() - lastPushSentAt.toMillis()) < debounceMs;
-          // The badge count must stay accurate even when the *visible*
-          // notification is debounced — otherwise several messages arriving
-          // in a row within the debounce window would leave the home-screen
-          // icon showing a stale (too-low) count until the window expires.
-          // So this always sends a data push carrying the fresh badgeCount;
-          // only the title/body (which make sw.js show an actual OS
-          // notification) are gated on the debounce.
+          // Every push MUST result in a visible notification. This used to
+          // gate title/body (whether sw.js shows an OS notification) behind
+          // a 5-minute per-thread debounce, to avoid a notification per
+          // rapid-fire message — but iOS Safari treats any push that doesn't
+          // call showNotification() as a "silent" push, and revokes the push
+          // subscription entirely after a few of those. That's why the
+          // background badge (and eventually ALL background push for that
+          // recipient) would silently stop working after a couple of quick
+          // messages in the same conversation: the very "fix" meant to
+          // reduce notification spam was killing push delivery on iOS. Now
+          // every message always sends a real title/body; sw.js collapses
+          // rapid messages from the same conversation into one *updating*
+          // notification via a stable per-conversation `tag` (+ renotify:
+          // false) instead of suppressing it outright, so there's still no
+          // spam and no silent-push violation.
           const currentConversationUnreadBefore = (conversation.unreadCount && conversation.unreadCount[recipientId]) || 0;
           const badgeCount = await computeUnreadBadgeCount(admin.firestore(), recipientId, conversationId, currentConversationUnreadBefore);
-          const pushData = {
+          await sendPushToUser(admin.firestore(), recipientId, {
             url: '/messages',
             conversationId,
             badgeCount: String(badgeCount), // FCM data values must be strings
-          };
-          if (!debounced) {
-            pushData.title = `${senderName} sent you a message`;
-            pushData.body = messagePreview;
-          } else {
-            console.log('Visible notification debounced for recipient (badge still updated):', recipientId);
-          }
-          await sendPushToUser(admin.firestore(), recipientId, pushData);
-          if (!debounced) {
-            await conversationRef.update({
-              // Plain Date, not FieldValue.serverTimestamp() — that sentinel
-              // proved unreliable in this exact function's emulator context
-              // (see sendPushToUser's token-pruning comment for the same
-              // issue). Firestore stores a Date as its own Timestamp type
-              // either way, and reads it back with .toMillis() same as
-              // above, so the debounce check itself needed no change.
-              [`lastPushSentAt.${recipientId}`]: new Date(),
-            });
-          }
+            title: `${senderName} sent you a message`,
+            body: messagePreview,
+          });
         }
       } catch (pushError) {
         console.error('Error sending push notification:', pushError);

@@ -219,7 +219,7 @@ self.addEventListener("push", (event) => {
         }
       }
 
-      if (!payload.title) return; // badge-only push — nothing to show
+      if (!payload.title) return; // defensive only — every real push type now always sends a title (see functions/index.js)
 
       const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       const focused = clients.find((c) => c.focused);
@@ -237,6 +237,17 @@ self.addEventListener("push", (event) => {
         // to survive into notificationclick below so it can deep-link
         // instead of just landing on the generic page.
         data: payload,
+        // A stable tag per conversation (falling back to one shared tag for
+        // non-conversation pushes) collapses rapid-fire notifications into a
+        // single updating one instead of stacking a banner per message —
+        // renotify:false keeps that update silent (no repeat alert/buzz).
+        // This is what replaced the old debounce-the-notification approach:
+        // that suppressed showNotification() outright for messages arriving
+        // within 5 minutes of each other, which is exactly what iOS Safari
+        // treats as a "silent push" and revokes the subscription over — see
+        // functions/index.js's sendMessageNotification for the full story.
+        tag: payload.conversationId ? `lb-conversation-${payload.conversationId}` : "lb-push",
+        renotify: false,
       });
     })()
   );
