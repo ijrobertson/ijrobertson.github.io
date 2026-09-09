@@ -16,6 +16,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <title>Messages - Lingua Bud</title>
 
+    <!-- Connection warmup — shaves the DNS/TLS handshake off the first
+         request to each of these origins (Google Fonts, the Firebase SDK
+         CDN, and Firestore's own traffic — the last one matters most here,
+         given how much of this page's perceived speed is Firestore round
+         trips), which otherwise happens fresh on every single page load in
+         this multi-page app. crossorigin is required on the gstatic.com
+         font-files origin specifically because actual font fetches are CORS
+         requests; harmless on the others. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com">
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+
     <!-- Styles -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
@@ -496,6 +509,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             align-items: center;
             justify-content: center;
             margin: 0.4rem 0;
+        }
+
+        .load-earlier-btn {
+            display: block;
+            margin: 0.2rem auto 0.85rem;
+            padding: 6px 16px;
+            border: 1px solid #e7e9e7;
+            border-radius: 999px;
+            background: white;
+            color: #0b6664;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .load-earlier-btn:disabled {
+            color: #5f6b72;
+            cursor: default;
         }
 
         .date-separator span {
@@ -1666,6 +1696,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             query,
             where,
             orderBy,
+            limit,
+            startAfter,
             onSnapshot,
             onAuthStateChanged,
             signOut,
@@ -1811,6 +1843,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         //     optimistic message once it comes back and retire it.
         const lastServerMessagesByConv = new Map();
         const pendingMessagesByConv = new Map();
+        // Pagination for a conversation's live message window — see
+        // loadMessages/loadEarlierMessages. olderMessagesByConv holds
+        // history fetched on demand via the "Load earlier" button (not part
+        // of the live onSnapshot window); hasMoreOlderByConv tracks whether
+        // there's likely more before the oldest loaded message; loadingEarlierByConv
+        // just drives the button's own loading state.
+        const olderMessagesByConv = new Map();
+        const hasMoreOlderByConv = new Map();
+        const loadingEarlierByConv = new Map();
+        const MESSAGE_PAGE_SIZE = 50;
 
         function getPendingMessages(conversationId) {
             if (!pendingMessagesByConv.has(conversationId)) pendingMessagesByConv.set(conversationId, []);
@@ -2121,8 +2163,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                            : userDoc.exists()       ? userDoc.data()
                            : null;
                 const result = data
-                    ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '' }
-                    : { name: 'Unknown User', avatar_url: '' };
+                    ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '', isInstructor: instructorDoc.exists() }
+                    : { name: 'Unknown User', avatar_url: '', isInstructor: false };
                 userCache.set(userId, result);
                 return result;
             } catch {
@@ -2270,52 +2312,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 event.currentTarget.classList.add('active');
             }
 
-            // Fetch user data from BOTH collections and prefer instructors
-            console.log('🔄 Fetching fresh user data for:', otherUserId);
-            let otherUser = { name: 'Unknown User', avatar_url: '' };
-            try {
-                console.log('🔍 Fetching from BOTH users AND instructors collections...');
-
-                // Fetch from both collections in parallel
-                const [userDoc, instructorDoc] = await Promise.all([
-                    getDoc(doc(db, 'users', otherUserId)),
-                    getDoc(doc(db, 'instructors', otherUserId))
-                ]);
-
-                console.log('👤 Users collection exists:', userDoc.exists());
-                console.log('👨‍🏫 Instructors collection exists:', instructorDoc.exists());
-
-                // Prefer instructor data if it exists, otherwise use user data
-                let userData = null;
-                let source = '';
-
-                if (instructorDoc.exists()) {
-                    userData = instructorDoc.data();
-                    source = 'instructors';
-                } else if (userDoc.exists()) {
-                    userData = userDoc.data();
-                    source = 'users';
-                }
-
-                if (userData) {
-                    console.log('📋 Using data from:', source);
-                    console.log('📋 User data retrieved:', userData);
-                    console.log('📋 userData.name =', userData.name);
-
-                    otherUser = {
-                        name: userData.name || 'Unknown User',
-                        avatar_url: userData.avatar_url || '',
-                        isInstructor: source === 'instructors'
-                    };
-                    console.log('✅ Final otherUser object:', otherUser);
-                } else {
-                    console.error('❌ User not found in either collection!');
-                }
-            } catch (error) {
-                console.error('❌ Error loading user data:', error);
-            }
-
-            console.log('🖼️ Rendering chat interface...');
+            // Use whatever's already cached for this user (almost always
+            // populated already — the conversation list the user just tapped
+            // called getCachedUser for every row to render itself) so the
+            // chat header can paint on the very same tick, instead of
+            // blocking the entire chat interface — including the message
+            // list below — behind a fresh two-collection Firestore fetch on
+            // every single open. This used to be the biggest reason opening
+            // a conversation felt slow: loadMessages() (the thing the user
+            // actually came here to see) couldn't even start until this
+            // fetch resolved. Falls back to a plain placeholder only on a
+            // true cold path (e.g. deep-linking into a conversation with a
+            // never-before-seen user, skipping the list render that would
+            // normally warm the cache) — see the background refresh below
+            // the chatPanel render, which fetches for real and patches the
+            // header in place once it resolves either way.
+            let otherUser = userCache.get(otherUserId) || { name: 'Unknown User', avatar_url: '', isInstructor: false };
 
             // Mobile: switch to chat panel view
             const messagesContainer = document.querySelector('.messages-container');
@@ -2391,6 +2403,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             console.log('✅ Chat interface rendered');
             console.log('📝 Message input element:', document.getElementById('messageInput'));
+
+            // Covers the cold-cache case only (render above used the plain
+            // placeholder because getCachedUser had never been called for
+            // this user yet, e.g. a deep link straight into a conversation) —
+            // getCachedUser is a no-op network-wise when already cached, so
+            // this just resolves instantly with the same object already
+            // rendered above in the normal case. Patches the header in place
+            // rather than blocking anything on it.
+            (async () => {
+                const fresh = await getCachedUser(otherUserId);
+                if (activeConversationId !== conversationId) return; // switched away already
+                const avatarEl = chatPanel.querySelector('.chat-header-avatar');
+                const nameLinkEl = chatPanel.querySelector('.chat-header-name-link');
+                if (avatarEl && fresh.avatar_url) avatarEl.src = fresh.avatar_url;
+                if (nameLinkEl) {
+                    nameLinkEl.textContent = fresh.name;
+                    nameLinkEl.href = fresh.isInstructor ? `instructor-profile?id=${otherUserId}` : `learner-profile?uid=${otherUserId}`;
+                }
+            })();
 
             // Presence + typing: live-updates on every doc change, plus a
             // periodic timer so staleness gets caught even when the other
@@ -2634,7 +2665,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // sendMessage/retrySendMessage so a locally-queued message appears
         // instantly, before the network round-trip that would otherwise be
         // the only thing making it show up.
-        function renderMessageList(conversationId) {
+        function renderMessageList(conversationId, { preserveScroll = false } = {}) {
             // A send/retry that resolves after the user has switched to a
             // different conversation shouldn't repaint whatever they're looking
             // at now.
@@ -2643,12 +2674,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const messagesArea = document.getElementById('messagesArea');
             if (!messagesArea) return;
 
+            // Loading earlier history re-renders in place (a user actively
+            // scrolling up to read it should never get yanked back to the
+            // bottom) — capture enough to restore the same content under the
+            // same viewport position after prepending taller content above it.
+            const prevScrollHeight = messagesArea.scrollHeight;
+            const prevScrollTop = messagesArea.scrollTop;
+
+            const olderMessages = olderMessagesByConv.get(conversationId) || [];
             const serverMessages = lastServerMessagesByConv.get(conversationId) || [];
             const pending = getPendingMessages(conversationId);
-            const messages = [...serverMessages, ...pending].sort((a, b) => toMillis(a.timestamp) - toMillis(b.timestamp));
+            const messages = [...olderMessages, ...serverMessages, ...pending].sort((a, b) => toMillis(a.timestamp) - toMillis(b.timestamp));
 
             messagesArea.innerHTML = '';
             const fragment = document.createDocumentFragment();
+
+            // "Load earlier messages" — only once we actually know (or
+            // suspect) there's more before the oldest message currently
+            // loaded; see loadMessages/loadEarlierMessages for how that's
+            // tracked. Undefined (not yet known, right when a conversation
+            // first opens) intentionally renders nothing rather than
+            // flashing the button on then off.
+            if (hasMoreOlderByConv.get(conversationId)) {
+                const loading = loadingEarlierByConv.get(conversationId);
+                const loadMoreBtn = document.createElement('button');
+                loadMoreBtn.type = 'button';
+                loadMoreBtn.className = 'load-earlier-btn';
+                loadMoreBtn.disabled = !!loading;
+                loadMoreBtn.textContent = loading ? 'Loading…' : 'Load earlier messages';
+                loadMoreBtn.addEventListener('click', () => loadEarlierMessages(conversationId));
+                fragment.appendChild(loadMoreBtn);
+            }
 
             // Date separators — "Today" / "Yesterday" / "March 5" — inserted
             // whenever consecutive messages fall on different calendar days,
@@ -2735,7 +2791,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
 
             messagesArea.appendChild(fragment);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
+            if (preserveScroll) {
+                // Keep whatever the user was looking at pinned in place —
+                // the new content is taller (older messages were prepended
+                // above it), so the same absolute scrollTop would otherwise
+                // visually jump the view down by exactly that added height.
+                messagesArea.scrollTop = prevScrollTop + (messagesArea.scrollHeight - prevScrollHeight);
+            } else {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }
         }
 
         // Read receipts: flips `read` to true on every message NOT sent by the
@@ -2765,10 +2829,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 unsubscribeMessages();
             }
 
+            // Fresh pagination state for this open — any "Load earlier"
+            // history from a previous visit to this conversation doesn't
+            // carry over (keeps memory bounded and avoids stale-vs-live
+            // duplicates); the live window below re-establishes it from
+            // scratch every time anyway.
+            olderMessagesByConv.delete(conversationId);
+            hasMoreOlderByConv.delete(conversationId);
+            loadingEarlierByConv.delete(conversationId);
+
             try {
+                // Bounded to the most recent MESSAGE_PAGE_SIZE messages, not
+                // the entire history. An unbounded orderBy('asc') query here
+                // used to download and fully re-render a conversation's
+                // COMPLETE history on every single open — and again on every
+                // single new message, since onSnapshot re-fires this whole
+                // callback — which is what actually made opening a
+                // long-running conversation feel slow, and got worse the
+                // older the conversation got. Every mainstream chat app
+                // works this way: a bounded live "recent messages" window,
+                // with full history available on demand — see
+                // loadEarlierMessages/the "Load earlier" button in
+                // renderMessageList for that on-demand half.
                 const q = query(
                     collection(db, 'conversations', conversationId, 'messages'),
-                    orderBy('timestamp', 'asc')
+                    orderBy('timestamp', 'desc'),
+                    limit(MESSAGE_PAGE_SIZE)
                 );
 
                 unsubscribeMessages = onSnapshot(q, async (snapshot) => {
@@ -2811,6 +2897,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         senderAvatarCache.set(senderId, await promise);
                     }
 
+                    // The query is newest-first (desc) so the live window
+                    // stays pinned to the most recent MESSAGE_PAGE_SIZE
+                    // messages as new ones arrive — reverse back to
+                    // chronological order for storage/render.
+                    messages.reverse();
+
+                    // Only set this from the FIRST snapshot of this live
+                    // window (not every snapshot) — a full page on that
+                    // first look means there's probably more before it,
+                    // which stays true regardless of how the live window's
+                    // own size fluctuates afterward as new messages arrive.
+                    // A real "Load earlier" fetch (see loadEarlierMessages)
+                    // is what actually resolves this one way or the other.
+                    if (!hasMoreOlderByConv.has(conversationId)) {
+                        hasMoreOlderByConv.set(conversationId, snapshot.docs.length === MESSAGE_PAGE_SIZE);
+                    }
+
                     lastServerMessagesByConv.set(conversationId, messages);
 
                     // Non-blocking — only actually writes anything if this
@@ -2831,6 +2934,61 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
             } catch (error) {
                 console.error('Error loading messages:', error);
+            }
+        }
+
+        // On-demand history fetch for whatever's older than the live
+        // MESSAGE_PAGE_SIZE-message window loadMessages keeps loaded — a
+        // one-time getDocs (not another live listener; this slice of history
+        // is never going to change) for the next page back, prepended into
+        // olderMessagesByConv and merged into the message list at render
+        // time. Wired to the "Load earlier" button rendered by
+        // renderMessageList.
+        async function loadEarlierMessages(conversationId) {
+            if (loadingEarlierByConv.get(conversationId)) return;
+
+            const older = olderMessagesByConv.get(conversationId) || [];
+            const oldestLoaded = older[0] || (lastServerMessagesByConv.get(conversationId) || [])[0];
+            if (!oldestLoaded || !oldestLoaded.timestamp) return;
+
+            loadingEarlierByConv.set(conversationId, true);
+            renderMessageList(conversationId, { preserveScroll: true }); // shows the button's own "Loading…" state
+
+            try {
+                const q = query(
+                    collection(db, 'conversations', conversationId, 'messages'),
+                    orderBy('timestamp', 'desc'),
+                    startAfter(oldestLoaded.timestamp),
+                    limit(MESSAGE_PAGE_SIZE)
+                );
+                const snap = await getDocs(q);
+                const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() })).reverse();
+
+                hasMoreOlderByConv.set(conversationId, fetched.length === MESSAGE_PAGE_SIZE);
+                olderMessagesByConv.set(conversationId, [...fetched, ...older]);
+
+                // Same lazy fetch-and-cache pattern as loadMessages' live
+                // listener, for whichever of these senders we haven't
+                // already got an avatar cached for.
+                const newSenderIds = [...new Set(fetched.map(m => m.senderId))].filter(id => !senderAvatarCache.has(id));
+                await Promise.all(newSenderIds.map(async (senderId) => {
+                    try {
+                        const [userDoc, instructorDoc] = await Promise.all([
+                            getDoc(doc(db, 'users', senderId)),
+                            getDoc(doc(db, 'instructors', senderId))
+                        ]);
+                        const data = instructorDoc.exists() ? instructorDoc.data() : userDoc.exists() ? userDoc.data() : null;
+                        senderAvatarCache.set(senderId, data ? (data.avatar_url || null) : null);
+                    } catch (error) {
+                        console.error('Error loading sender:', error);
+                        senderAvatarCache.set(senderId, null);
+                    }
+                }));
+            } catch (error) {
+                console.error('Error loading earlier messages:', error);
+            } finally {
+                loadingEarlierByConv.set(conversationId, false);
+                renderMessageList(conversationId, { preserveScroll: true });
             }
         }
 

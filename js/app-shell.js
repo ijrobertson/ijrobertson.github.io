@@ -71,20 +71,26 @@ function icon(name) {
 // "Learn" (the evolving vocabulary/learning hub, née "Notebook") is the app's
 // real front door, folding in the old Home screen's "next lesson" summary.
 // See docs/PWA_PRD.md and home.html for the Learn page itself.
+// Hrefs are the clean, extensionless form deliberately — firebase.json
+// redirects any "/:path*.html" request to "/:path*" (301), so a tab href
+// ending in .html cost every single tap an extra network round trip for
+// nothing (request .html, get redirected, then actually fetch the real
+// clean-URL page) before this was fixed. Matches how the rest of the site
+// already links internally.
 const NAV_BY_ROLE = {
   student: [
-    { id: "learn", label: "Learn", icon: "notebook", href: "home.html" },
-    { id: "connect", label: "Connect", icon: "connect", href: "connect.html" },
-    { id: "instructors", label: "Instructors", icon: "instructors", href: "instructors.html" },
-    { id: "messages", label: "Messages", icon: "messages", href: "messages.html" },
-    { id: "settings", label: "Settings", icon: "profile", href: "student-dashboard.html" },
+    { id: "learn", label: "Learn", icon: "notebook", href: "home" },
+    { id: "connect", label: "Connect", icon: "connect", href: "connect" },
+    { id: "instructors", label: "Instructors", icon: "instructors", href: "instructors" },
+    { id: "messages", label: "Messages", icon: "messages", href: "messages" },
+    { id: "settings", label: "Settings", icon: "profile", href: "student-dashboard" },
   ],
   instructor: [
-    { id: "learn", label: "Learn", icon: "notebook", href: "home.html" },
-    { id: "calendar", label: "Calendar", icon: "calendar", href: "bookings.html" },
-    { id: "messages", label: "Messages", icon: "messages", href: "messages.html" },
-    { id: "earnings", label: "Earnings", icon: "earnings", href: "dashboard.html" },
-    { id: "settings", label: "Settings", icon: "profile", href: "dashboard.html" },
+    { id: "learn", label: "Learn", icon: "notebook", href: "home" },
+    { id: "calendar", label: "Calendar", icon: "calendar", href: "bookings" },
+    { id: "messages", label: "Messages", icon: "messages", href: "messages" },
+    { id: "earnings", label: "Earnings", icon: "earnings", href: "dashboard" },
+    { id: "settings", label: "Settings", icon: "profile", href: "dashboard" },
   ],
 };
 
@@ -94,15 +100,16 @@ const NAV_BY_ROLE = {
 // _render()/menu click handling: it never navigates, it dispatches an
 // `lb-logout` event so each page can reuse its own already-wired sign-out
 // logic instead of this component depending on Firebase directly.
+// Same clean-URL reasoning as NAV_BY_ROLE above.
 const PROFILE_MENU_BY_ROLE = {
   student: [
-    { id: "my-profile", label: "My Profile", href: "learner-profile.html" },
-    { id: "friends", label: "Friends", href: "friends.html" },
+    { id: "my-profile", label: "My Profile", href: "learner-profile" },
+    { id: "friends", label: "Friends", href: "friends" },
     { id: "logout", label: "Logout", href: "#" },
   ],
   instructor: [
-    { id: "my-profile", label: "My Profile", href: "instructor-profile.html" },
-    { id: "friends", label: "Friends", href: "friends.html" },
+    { id: "my-profile", label: "My Profile", href: "instructor-profile" },
+    { id: "friends", label: "Friends", href: "friends" },
     { id: "logout", label: "Logout", href: "#" },
   ],
 };
@@ -322,6 +329,9 @@ class LbAppShell extends HTMLElement {
       this._menuOpen = false;
       this._render();
     });
+    // See prefetchSiblingTabs below — warms the SW cache for every other
+    // bottom-nav tab while the user is idle on this one.
+    prefetchSiblingTabs(this.navItems, this.getAttribute("active") || "home");
   }
 
   disconnectedCallback() {
@@ -436,6 +446,44 @@ class LbAppShell extends HTMLElement {
       });
     }
   }
+}
+
+// ── Idle-time prefetch of sibling tabs ──────────────────────────────────
+// The single biggest thing making tab-to-tab navigation *feel* slow: this
+// is a multi-page app, so every tap is a cold full-page load — network
+// fetch, parse, and a fresh Firebase re-init, even on a fast connection.
+// sw.js already makes a *second* visit to any page fast (StaleWhileRevalidate,
+// cache "linguabud-pages-v4") — this warms that exact cache for every other
+// tab's page while the user is sitting idle on the current one, so by the
+// time they actually tap a tab it's already a "second visit" as far as the
+// service worker is concerned. Written directly into the SW's own cache
+// bucket via the same Cache Storage API its StaleWhileRevalidate route
+// reads from, rather than <link rel=prefetch> — iOS Safari (this app's
+// primary target, see docs/PWA_PRD.md) doesn't reliably support prefetch
+// link hints, but the Cache API and fetch() are both solid there.
+// MUST stay in sync with sw.js's pages cache name if that's ever bumped —
+// a mismatch just makes this silently a no-op, not a functional break.
+const PAGES_CACHE_NAME = "linguabud-pages-v4";
+
+function prefetchSiblingTabs(items, activeId) {
+  if (!("caches" in window) || !("serviceWorker" in navigator)) return;
+  const hrefs = items.filter((item) => item.id !== activeId).map((item) => item.href);
+  const run = () => {
+    caches.open(PAGES_CACHE_NAME).then((cache) => {
+      hrefs.forEach((href) => {
+        cache.match(href).then((existing) => {
+          if (existing) return; // already warm from an earlier visit/prefetch
+          cache.add(href).catch(() => {}); // best-effort — never worth surfacing a prefetch failure
+        });
+      });
+    });
+  };
+  // iOS Safari has never implemented requestIdleCallback — setTimeout is the
+  // fallback there. Either way this is deliberately delayed, not immediate:
+  // it must never compete with the current page's own real network activity
+  // (auth check, live listeners, images) for bandwidth/CPU right when it matters most.
+  if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 2000 });
+  else setTimeout(run, 1500);
 }
 
 if (!customElements.get("lb-app-shell")) {
