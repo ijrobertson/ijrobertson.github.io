@@ -83,9 +83,14 @@ if (self.workbox) {
   // after that fix/deploy was tracked to this same stale-copy behavior — an
   // already-installed PWA kept serving its pre-fix cached copy of
   // vocab-quiz.html indefinitely with no second visit to force revalidation.
+  //
+  // Bumped again to v5 on 2026-09-09: a full day of real page edits
+  // (messages.html reply/scroll work, home.html) landed across several
+  // sessions — bumping here means everyone gets today's fixes on their very
+  // next visit instead of needing a second one to any specific changed page.
   workbox.routing.registerRoute(
     ({ request, url }) => request.mode === "navigate" && SAME_ORIGIN({ url }),
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v4" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v5" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -117,12 +122,26 @@ if (self.workbox) {
   //
   // Bumped again to v5 on 2026-09-03: lib/firebaseClient.js (same bucket)
   // gained the badge-clearing signOut() wrapper — same staleness risk again.
+  //
+  // Bumped again to v6 on 2026-09-09: this exact mistake happened AGAIN —
+  // both lib/firebaseClient.js (gained startAfter, for messages.html's
+  // pagination) and js/app-shell.js (gained prefetchSiblingTabs, and changed
+  // every nav href from .html to the clean extensionless form) were edited
+  // across two earlier sessions today without bumping this bucket. Neither
+  // change is a hard break on its own, but per every entry above, "this
+  // specific edit happens to be safe to leave stale" is exactly the
+  // reasoning that keeps being wrong here — the rule going forward is
+  // unconditional: touch anything in this bucket (style/script/image/font),
+  // bump the version in the same commit, no exceptions for how small the
+  // change looks. This is what a user-reported "the app is behaving
+  // strangely / a feature isn't working" after a deploy should always
+  // prompt checking first, before assuming a logic bug.
   workbox.routing.registerRoute(
     ({ request, url }) =>
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v5",
+      cacheName: "linguabud-assets-v6",
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -153,9 +172,11 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v2"),
       caches.delete("linguabud-assets-v3"),
       caches.delete("linguabud-assets-v4"),
+      caches.delete("linguabud-assets-v5"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
+      caches.delete("linguabud-pages-v4"),
     ])
   );
 });
