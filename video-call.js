@@ -894,10 +894,16 @@ async function startScreenShare() {
         // overlaid on the shared screen (see renderRemoteMainView).
         state.screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         const generateToken = httpsCallable(functions, 'generateAgoraToken');
-        const result = await generateToken({ channelName: state.channelName });
+        // Must pass a distinct, non-empty uid: generateAgoraToken always builds an
+        // account-based token for whatever uid it's given, defaulting to the literal
+        // account "0" when omitted. Joining with the plain number 0 tells Agora to
+        // auto-assign a random uid instead, which doesn't match the token's account
+        // "0" identity and gets the join rejected — silently breaking screen share.
+        const screenUidRequest = `${state.currentUser.uid}-screen`;
+        const result = await generateToken({ channelName: state.channelName, uid: screenUidRequest });
         if (!result.data?.token) throw new Error('Failed to get a screen-share token from server');
 
-        state.screenUid = await state.screenClient.join(APP_ID, state.channelName, result.data.token, result.data.uid || 0);
+        state.screenUid = await state.screenClient.join(APP_ID, state.channelName, result.data.token, result.data.uid);
 
         // Tell the remote peer which uid is our screen connection BEFORE
         // publishing, so it's very likely to arrive before the corresponding
@@ -1084,6 +1090,29 @@ function renderChatMessage(data, isOwn) {
         chatBadge.textContent = current + 1;
         chatBadge.classList.remove('hidden');
     }
+    return div;
+}
+
+/** Marks a locally-rendered own message as failed-to-send, with a click-to-retry affordance. */
+function markChatMessageFailed(div, retry) {
+    div.classList.add('chat-msg-failed');
+    let status = div.querySelector('.chat-msg-status');
+    if (!status) {
+        status = document.createElement('div');
+        status.className = 'chat-msg-status';
+        div.appendChild(status);
+    }
+    status.innerHTML = '<i class="fas fa-exclamation-circle"></i> Not delivered — tap to retry';
+    status.onclick = async () => {
+        status.textContent = 'Retrying…';
+        const ok = await retry();
+        if (ok) {
+            div.classList.remove('chat-msg-failed');
+            status.remove();
+        } else {
+            status.innerHTML = '<i class="fas fa-exclamation-circle"></i> Not delivered — tap to retry';
+        }
+    };
 }
 
 async function sendChatMessage() {
@@ -1093,17 +1122,26 @@ async function sendChatMessage() {
     chatInput.value = '';
     chatInput.style.height = 'auto';
 
-    // Render locally immediately
-    renderChatMessage({ text, sender: state.currentUserName, senderUid: state.currentUser?.uid, ts: Date.now() }, true);
+    const payload = { text, sender: state.currentUserName, senderUid: state.currentUser?.uid, ts: Date.now() };
 
-    try {
-        await addDoc(state.chatCol, {
-            text,
-            sender: state.currentUserName,
-            senderUid: state.currentUser?.uid,
-            ts: Date.now()
-        });
-    } catch (e) { console.warn('Chat send error:', e); }
+    // Render locally immediately
+    const div = renderChatMessage(payload, true);
+
+    const attemptSend = async () => {
+        try {
+            await addDoc(state.chatCol, payload);
+            return true;
+        } catch (e) {
+            console.warn('Chat send error:', e);
+            return false;
+        }
+    };
+
+    const sent = await attemptSend();
+    if (!sent) {
+        markChatMessageFailed(div, attemptSend);
+        showToast('Message failed to send — check your connection', 'error');
+    }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1227,6 +1265,9 @@ function wbHandleRemoteAction(msg) {
     } else if (msg.t === 'ss') {
         state.remoteScreenUid = msg.active ? msg.uid : null;
         renderRemoteMainView();
+        // If the screen connection's user-published event beat this relay message,
+        // it was briefly counted as a real participant — correct the list now.
+        updateParticipantsList();
     }
 }
 
