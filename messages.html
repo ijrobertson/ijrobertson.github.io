@@ -2594,23 +2594,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Back button: return to conversations list on mobile.
             //
-            // Listens on BOTH pointerdown and click, guarded against firing
-            // twice for the same interaction — a well-documented iOS Safari
-            // quirk: when a text input is focused, the *first* tap on another
-            // element only blurs it (dismissing the keyboard) without the
-            // click event ever firing, requiring a second tap to actually
-            // activate the button. pointerdown fires immediately on touch,
-            // before that blur-swallow has a chance to eat the interaction,
-            // so it's the one that reliably gets this working in one tap;
-            // click stays wired too for mouse/keyboard/accessibility
-            // activation, where pointerdown isn't the natural model.
+            // Listens on touchstart, pointerdown, AND click, guarded against
+            // firing twice for the same interaction — a well-documented iOS
+            // Safari quirk: per the W3C UI Events spec, blur is required to
+            // fire before click, and on iOS specifically, a tap that lands on
+            // a new element while a text input is focused can consume that
+            // entire tap just blurring the input, with the synthetic click on
+            // the new target never firing at all — requiring a whole separate
+            // second tap to actually activate it. This is exactly the
+            // scenario sendMessage() creates on every send: it deliberately
+            // re-focuses the message input afterward (to keep the on-screen
+            // keyboard open across a send, see its own comment), so the very
+            // next tap on this button is reliably the "keyboard is open,
+            // input is focused" case this bug needs. touchstart is the
+            // earliest, most primitive signal available for a touch — an
+            // explicit preventDefault() there stops the browser's own
+            // blur-then-maybe-click sequencing from ever getting a chance to
+            // swallow the tap, rather than just racing pointerdown against
+            // it and hoping. pointerdown+click stay wired too, both as a
+            // fallback for engines with touchstart quirks of their own and
+            // for mouse/keyboard/accessibility activation, where touchstart
+            // never fires at all.
             const chatBackBtn = document.getElementById('chatBackBtn');
             if (chatBackBtn) {
                 let backBtnHandled = false;
-                const goBackToConversationList = () => {
+                const goBackToConversationList = (e) => {
                     if (backBtnHandled) return;
                     backBtnHandled = true;
                     setTimeout(() => { backBtnHandled = false; }, 400);
+                    if (e && e.cancelable) e.preventDefault();
                     // Dismiss the keyboard explicitly rather than leaving it
                     // open over a now-hidden chat panel.
                     document.getElementById('messageInput')?.blur();
@@ -2618,6 +2630,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     container.classList.remove('chat-open');
                     container.classList.add('conversations-open');
                 };
+                chatBackBtn.addEventListener('touchstart', goBackToConversationList, { passive: false });
                 chatBackBtn.addEventListener('pointerdown', goBackToConversationList);
                 chatBackBtn.addEventListener('click', goBackToConversationList);
             }
@@ -2673,6 +2686,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     e.preventDefault();
                     sendMessage(conversationId);
                 }
+            });
+
+            // iOS Safari can scroll the outer page to "reveal" a newly-focused
+            // input even with body{overflow:hidden} and a position:fixed
+            // container (a real, long-documented WebKit quirk — see the
+            // .messages-container CSS comment) — dragging the fixed chat
+            // header, and its back button, out of the visible, keyboard-
+            // shrunk viewport along with it. That's exactly what made the
+            // back button unreachable after sending a message: sendMessage()
+            // deliberately re-focuses this input afterward (to keep the
+            // keyboard open across a send), which re-triggers this same
+            // scroll-to-reveal every time. Forcibly resetting the page's own
+            // scroll position back to (0,0) whenever this input gains focus
+            // counteracts that drift directly, without touching any layout
+            // measurement or sizing — a JS-measured resize of the container
+            // itself was tried before and made things actively worse on a
+            // real device (see that same CSS comment), so this deliberately
+            // avoids that approach entirely. Retried a couple of times over
+            // the keyboard's open animation, since a single immediate reset
+            // can be undone by iOS's own scroll-into-view attempt, which
+            // doesn't necessarily finish before this handler runs.
+            messageInput.addEventListener('focus', () => {
+                const resetPageScroll = () => {
+                    window.scrollTo(0, 0);
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                };
+                resetPageScroll();
+                setTimeout(resetPageScroll, 50);
+                setTimeout(resetPageScroll, 300);
             });
 
             // Setup video call button
