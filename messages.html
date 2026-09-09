@@ -397,7 +397,36 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative; /* anchors .jump-to-bottom-btn — see below */
         }
+
+        /* "Jump to latest" — shown whenever the message list isn't scrolled
+           near the bottom (see the wasNearBottom logic in renderMessageList).
+           Positioned absolutely rather than as a normal child of
+           #messagesArea because that element's innerHTML is fully replaced
+           on every render — an absolutely-positioned sibling survives that
+           untouched. 96px matches the same "clear of the input/nav area"
+           offset already used for the push-notification toast in
+           js/push-notifications.js. */
+        .jump-to-bottom-btn {
+            position: absolute;
+            right: 20px;
+            bottom: 96px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #e7e9e7;
+            background: white;
+            color: #0b6664;
+            box-shadow: 0 6px 16px -6px rgba(17,52,72,0.3);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 5;
+        }
+        .jump-to-bottom-btn:hover { background: #f5f7f7; }
 
         .chat-header {
             background: linear-gradient(135deg, var(--pb-teal) 0%, var(--pb-teal-deep) 100%);
@@ -528,6 +557,64 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             cursor: default;
         }
 
+        /* Quoted block inside a message bubble when it's a reply to an
+           earlier message — see renderReplyQuote/setupMessageGestures.
+           Tapping it jumps to (and briefly highlights) the original, if
+           it's still within the currently-loaded window. */
+        .reply-quote {
+            background: rgba(11,102,100,0.08);
+            border-left: 3px solid #0b6664;
+            border-radius: 6px;
+            padding: 0.35rem 0.6rem;
+            margin-bottom: 0.4rem;
+            cursor: pointer;
+        }
+        .message.sent .reply-quote { background: rgba(11,102,100,0.14); }
+        .reply-quote-name {
+            font-weight: 700;
+            font-size: 0.72rem;
+            color: #0b6664;
+        }
+        .reply-quote-text {
+            font-size: 0.78rem;
+            color: #5f6b72;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 220px;
+        }
+
+        /* Reply-target preview shown above the composer while swipe/long-press
+           has a message selected — see setReplyTarget/clearReplyTarget. */
+        .reply-preview-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.85rem;
+            margin-bottom: 0.5rem;
+            background: #eef7f6;
+            border-left: 3px solid #0b6664;
+            border-radius: 8px;
+        }
+        .reply-preview-content { flex: 1; min-width: 0; }
+        .reply-preview-name { font-weight: 700; font-size: 0.8rem; color: #0b6664; }
+        .reply-preview-text {
+            font-size: 0.82rem;
+            color: #5f6b72;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .reply-preview-cancel {
+            border: none;
+            background: none;
+            color: #5f6b72;
+            cursor: pointer;
+            padding: 4px;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+        }
+
         .date-separator span {
             background: white;
             border: 1px solid #e7e9e7;
@@ -543,11 +630,53 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             display: flex;
             gap: 0.65rem;
             max-width: 70%;
+            position: relative;
+            /* Let the browser handle vertical scroll natively; horizontal
+               movement is read and applied by JS (see setupMessageGestures) —
+               without this, touch-dragging horizontally on a bubble can get
+               fought over by/interpreted as page scroll on some browsers. */
+            touch-action: pan-y;
         }
 
         .message.sent {
             align-self: flex-end;
             flex-direction: row-reverse;
+        }
+
+        /* Reply icon revealed while swiping a bubble left (see
+           setupMessageGestures) — a plain glyph rather than a Font Awesome
+           icon so it needs no markup of its own inside the per-type message
+           templates below, just this one shared pseudo-element. Opacity is
+           driven continuously by --swipe-icon-opacity during an active drag;
+           .swipe-armed just marks that release would commit to a reply. */
+        .message::after {
+            content: "↩";
+            position: absolute;
+            top: 50%;
+            right: -30px;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0b6664;
+            opacity: var(--swipe-icon-opacity, 0);
+            pointer-events: none;
+            transition: opacity 120ms ease;
+        }
+        .message.swipe-armed::after {
+            opacity: 1;
+        }
+        .message.swipe-releasing {
+            transition: transform 180ms ease;
+        }
+
+        /* Brief highlight when jumping to a message via its reply quote —
+           see the .reply-quote click handling in handleAudioClick. */
+        .message.flash-highlight .message-content {
+            animation: lb-flash-highlight 1.1s ease;
+        }
+        @keyframes lb-flash-highlight {
+            0%, 100% { box-shadow: 0 4px 14px -8px rgba(17,52,72,0.25); }
+            25% { box-shadow: 0 0 0 3px rgba(32,188,186,0.55); }
         }
 
         .message-avatar {
@@ -1737,7 +1866,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let currentUser = null;
         let currentUserName = '';
         let activeConversationId = null;
+        let activeOtherUserId = null;
         let unsubscribeMessages = null;
+
+        // The message currently selected as a reply target (swipe-left or
+        // long-press on a bubble — see setupMessageGestures) — { id,
+        // senderId, senderName, preview } or null. Reset on every
+        // conversation switch and cleared the moment a send is kicked off.
+        let replyingToMessage = null;
 
         // Presence for whoever's chat header is currently showing — re-created
         // each time openConversation runs. latestPresenceData feeds the
@@ -2293,6 +2429,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (isCurrentlyMarkedTyping) stopTyping();
 
             activeConversationId = conversationId;
+            activeOtherUserId = otherUserId;
+            // Any reply target selected in whatever conversation was open
+            // before doesn't carry over to this one.
+            replyingToMessage = null;
 
             // Tear down the previous conversation's presence/typing
             // subscriptions and timer before starting new ones — otherwise
@@ -2355,11 +2495,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </button>
                 </div>
                 <div class="messages-area" id="messagesArea"></div>
+                <button type="button" class="jump-to-bottom-btn" id="jumpToBottomBtn" aria-label="Jump to latest messages" title="Jump to latest messages">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
                 <div id="notAcceptingNotice" style="display:none; margin: 0 1rem 0.75rem; padding: 0.75rem 1rem; background: #fff3cd; color: #856404; border-radius: 8px; font-size: 0.9rem;">
                     <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
                     This user is not currently accepting messages from new connections.
                 </div>
                 <div class="message-input-area">
+                    <div class="reply-preview-bar" id="replyPreviewBar" style="display:none;">
+                        <div class="reply-preview-content">
+                            <div class="reply-preview-name" id="replyPreviewName"></div>
+                            <div class="reply-preview-text" id="replyPreviewText"></div>
+                        </div>
+                        <button type="button" class="reply-preview-cancel" id="replyPreviewCancel" aria-label="Cancel reply">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                     <div class="recording-ui" id="recordingUI">
                         <div class="recording-indicator">
                             <div class="rec-dot"></div>
@@ -2601,6 +2753,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const messagesAreaEl = document.getElementById('messagesArea');
             messagesAreaEl.addEventListener('click', handleAudioClick);
 
+            // Swipe-left / long-press on a bubble to reply to it — see
+            // setupMessageGestures. Delegated at the container level (like
+            // handleAudioClick above) since #messagesArea's own content is
+            // fully rebuilt on every render, which would silently drop any
+            // listener attached to an individual message element.
+            setupMessageGestures(messagesAreaEl, conversationId);
+
+            // "Jump to latest" — see the wasNearBottom logic in
+            // renderMessageList for when this shows/hides, and the scroll
+            // listener below for catching a manual scroll back to the
+            // bottom that didn't go through a re-render at all.
+            document.getElementById('jumpToBottomBtn').addEventListener('click', () => {
+                messagesAreaEl.scrollTo({ top: messagesAreaEl.scrollHeight, behavior: 'smooth' });
+            });
+            messagesAreaEl.addEventListener('scroll', () => {
+                const nearBottom = messagesAreaEl.scrollHeight - messagesAreaEl.scrollTop - messagesAreaEl.clientHeight <= NEAR_BOTTOM_THRESHOLD;
+                setJumpToBottomVisible(!nearBottom);
+            });
+
+            // Reply preview bar's cancel (×) button — see clearReplyTarget.
+            document.getElementById('replyPreviewCancel').addEventListener('click', clearReplyTarget);
+
             // Clear audio players from previous conversation
             audioPlayers.forEach(a => a.pause());
             audioPlayers.clear();
@@ -2665,7 +2839,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // sendMessage/retrySendMessage so a locally-queued message appears
         // instantly, before the network round-trip that would otherwise be
         // the only thing making it show up.
-        function renderMessageList(conversationId, { preserveScroll = false } = {}) {
+        // How close to the bottom (px) still counts as "at the bottom" for
+        // deciding whether a re-render should auto-scroll — see
+        // renderMessageList's 'auto' scrollMode.
+        const NEAR_BOTTOM_THRESHOLD = 120;
+
+        function setJumpToBottomVisible(visible) {
+            const btn = document.getElementById('jumpToBottomBtn');
+            if (btn) btn.style.display = visible ? 'flex' : 'none';
+        }
+
+        // scrollMode controls what happens to the scroll position after a
+        // rebuild — this function always does a full rebuild (never an
+        // incremental append), so different callers need different
+        // outcomes:
+        //   'auto' (default) — new-message-driven re-renders (a message
+        //     arriving, being sent, a reaction, an upload progress tick).
+        //     Content is added/changed at or after the current view, so
+        //     staying "in place" just means leaving scrollTop untouched —
+        //     UNLESS the user was already near the bottom, in which case
+        //     they get scrolled to the new bottom, same as every mainstream
+        //     chat app. This is what stops sending a message while scrolled
+        //     up in history from yanking the view back down to it.
+        //   'preserveTop' — loadEarlierMessages: content is prepended
+        //     ABOVE the current view, so scrollTop must shift by exactly
+        //     the height that was added above it to keep the same messages
+        //     on screen.
+        function renderMessageList(conversationId, { scrollMode = 'auto' } = {}) {
             // A send/retry that resolves after the user has switched to a
             // different conversation shouldn't repaint whatever they're looking
             // at now.
@@ -2674,12 +2874,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const messagesArea = document.getElementById('messagesArea');
             if (!messagesArea) return;
 
-            // Loading earlier history re-renders in place (a user actively
-            // scrolling up to read it should never get yanked back to the
-            // bottom) — capture enough to restore the same content under the
-            // same viewport position after prepending taller content above it.
+            // Captured before the rebuild below — used by every scrollMode's
+            // math, and to decide whether the user was near the bottom.
             const prevScrollHeight = messagesArea.scrollHeight;
             const prevScrollTop = messagesArea.scrollTop;
+            const wasNearBottom = (prevScrollHeight - prevScrollTop - messagesArea.clientHeight) <= NEAR_BOTTOM_THRESHOLD;
 
             const olderMessages = olderMessagesByConv.get(conversationId) || [];
             const serverMessages = lastServerMessagesByConv.get(conversationId) || [];
@@ -2747,6 +2946,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     messageEl.innerHTML = `
                         <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                         <div class="msg-col">
+                            ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                             <div class="message-content message-image-content">
                                 <div class="message-image-wrap${isPending ? ' is-pending' : ''}${isFailed ? ' is-failed' : ''}">
                                     <img class="message-image" src="${imgSrc}" alt="Shared image" loading="lazy">
@@ -2764,6 +2964,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     messageEl.innerHTML = `
                         <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                         <div class="msg-col">
+                            ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                             <div class="message-content video-call-request-card">
                                 <div class="video-call-request-icon"><i class="fas fa-video"></i></div>
                                 <p class="message-text" style="margin:0;">${escapeHtml(message.text)}</p>
@@ -2778,6 +2979,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     messageEl.innerHTML = `
                         <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                         <div class="msg-col">
+                            ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                             <div class="message-content">
                                 <p class="message-text">${linkifyMessageText(message.text)}</p>
                                 ${renderMessageStatus(message, isSent)}
@@ -2791,15 +2993,192 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
 
             messagesArea.appendChild(fragment);
-            if (preserveScroll) {
+
+            let endedNearBottom;
+            if (scrollMode === 'preserveTop') {
                 // Keep whatever the user was looking at pinned in place —
                 // the new content is taller (older messages were prepended
                 // above it), so the same absolute scrollTop would otherwise
                 // visually jump the view down by exactly that added height.
                 messagesArea.scrollTop = prevScrollTop + (messagesArea.scrollHeight - prevScrollHeight);
-            } else {
+                endedNearBottom = wasNearBottom;
+            } else if (wasNearBottom) {
                 messagesArea.scrollTop = messagesArea.scrollHeight;
+                endedNearBottom = true;
+            } else {
+                // Content was added at/after the current view (a new message,
+                // a reaction, an upload progress tick) — nothing shifted
+                // above what's already on screen, so the unchanged scrollTop
+                // IS "staying put". This is what keeps sending a message (or
+                // one arriving) while scrolled up in history from jumping
+                // the view back down to the bottom.
+                messagesArea.scrollTop = prevScrollTop;
+                endedNearBottom = false;
             }
+            setJumpToBottomVisible(!endedNearBottom);
+        }
+
+        // ===== REPLY-TO-MESSAGE (swipe-left / long-press, see setupMessageGestures) =====
+
+        // The quoted snippet stored on a message's own replyTo field (and
+        // shown in the composer's preview bar while a reply is pending) —
+        // one line, type-aware so a reply to a photo/voice message/call
+        // request reads sensibly instead of showing an empty string.
+        function buildReplyPreview(message) {
+            let preview;
+            if (message.type === 'audio') preview = '🎤 Voice message';
+            else if (message.type === 'image') preview = message.text ? `📷 ${message.text}` : '📷 Photo';
+            else if (message.type === 'video_call_request') preview = message.text || 'Video call';
+            else preview = message.text || '';
+            return preview.length > 80 ? preview.slice(0, 80) + '…' : preview;
+        }
+
+        function setReplyTarget(message) {
+            if (!message || message.id?.startsWith('pending-')) return; // can't reply to a send that hasn't landed yet
+            replyingToMessage = {
+                messageId: message.id,
+                senderId: message.senderId,
+                senderName: message.senderId === currentUser.uid ? 'You' : (userCache.get(activeOtherUserId)?.name || 'Unknown User'),
+                preview: buildReplyPreview(message),
+            };
+            renderReplyPreviewBar();
+            document.getElementById('messageInput')?.focus();
+        }
+
+        function clearReplyTarget() {
+            replyingToMessage = null;
+            renderReplyPreviewBar();
+        }
+
+        function renderReplyPreviewBar() {
+            const bar = document.getElementById('replyPreviewBar');
+            if (!bar) return;
+            if (!replyingToMessage) {
+                bar.style.display = 'none';
+                return;
+            }
+            bar.style.display = 'flex';
+            document.getElementById('replyPreviewName').textContent = replyingToMessage.senderName;
+            document.getElementById('replyPreviewText').textContent = replyingToMessage.preview;
+        }
+
+        // Quoted block shown INSIDE a message bubble that replied to
+        // something — distinct from the composer's own reply-preview-bar
+        // above. Tapping it jumps to (and briefly highlights) the original
+        // message, but only if it's still within the currently-loaded
+        // window (bounded live window + whatever "Load earlier" has pulled
+        // in) — see the .reply-quote click handling in handleAudioClick.
+        function renderReplyQuote(replyTo) {
+            return `<div class="reply-quote" data-jump-to="${replyTo.messageId}">
+                <div class="reply-quote-name">${escapeHtml(replyTo.senderName)}</div>
+                <div class="reply-quote-text">${escapeHtml(replyTo.preview)}</div>
+            </div>`;
+        }
+
+        // Swipe-left or long-press a message bubble to select it as a reply
+        // target — WhatsApp's two standard gestures for this, both wired
+        // here via Pointer Events (one code path for touch AND mouse/trackpad,
+        // so it also works testing on desktop). Delegated at the
+        // #messagesArea container level, once per conversation open — every
+        // individual message element is destroyed and recreated on every
+        // renderMessageList rebuild, so a listener attached to one directly
+        // would silently stop working the moment any message changed.
+        function setupMessageGestures(messagesAreaEl, conversationId) {
+            const LONG_PRESS_MS = 450;
+            const SWIPE_THRESHOLD = 60; // px of leftward drag that commits to a reply on release
+            const SWIPE_MAX = 80;       // px the bubble is allowed to visually slide
+            const MOVE_SLOP = 10;       // px before a press is classified as a drag vs. a hold
+
+            let gesture = null; // { el, msgId, startX, startY, dx, dragging, longPressTimer }
+            let suppressNextClick = false; // set when a long-press fires, so the release doesn't also register as a tap (opening a link/lightbox)
+
+            function lookupMessage(msgId) {
+                const older = olderMessagesByConv.get(conversationId) || [];
+                const server = lastServerMessagesByConv.get(conversationId) || [];
+                const pending = getPendingMessages(conversationId);
+                return [...older, ...server, ...pending].find((m) => m.id === msgId);
+            }
+
+            function commitReply(msgId) {
+                const message = lookupMessage(msgId);
+                if (!message) return;
+                if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+                setReplyTarget(message);
+            }
+
+            function endGesture(shouldCommitOnSwipe) {
+                if (!gesture) return;
+                clearTimeout(gesture.longPressTimer);
+                const { el, dx, msgId } = gesture;
+                el.classList.add('swipe-releasing');
+                el.style.transform = '';
+                el.style.removeProperty('--swipe-icon-opacity');
+                el.classList.remove('swipe-armed');
+                setTimeout(() => el.classList.remove('swipe-releasing'), 200);
+                if (shouldCommitOnSwipe && dx <= -SWIPE_THRESHOLD) commitReply(msgId);
+                gesture = null;
+            }
+
+            messagesAreaEl.addEventListener('pointerdown', (e) => {
+                if (e.isPrimary === false || (e.button !== undefined && e.button !== 0)) return;
+                // Don't hijack existing interactive targets (reactions, links,
+                // join-call, audio controls) — long-press/swipe only applies
+                // to the bubble itself.
+                if (e.target.closest('a, button, .audio-player, .reply-quote')) return;
+                const el = e.target.closest('.message');
+                if (!el) return;
+
+                gesture = { el, msgId: el.dataset.msgId, startX: e.clientX, startY: e.clientY, dx: 0, dragging: false };
+                gesture.longPressTimer = setTimeout(() => {
+                    if (!gesture || gesture.dragging) return;
+                    suppressNextClick = true;
+                    const { el: gEl, msgId } = gesture;
+                    gesture = null;
+                    gEl.classList.add('swipe-releasing');
+                    commitReply(msgId);
+                    setTimeout(() => gEl.classList.remove('swipe-releasing'), 200);
+                }, LONG_PRESS_MS);
+            });
+
+            messagesAreaEl.addEventListener('pointermove', (e) => {
+                if (!gesture) return;
+                const dx = e.clientX - gesture.startX;
+                const dy = e.clientY - gesture.startY;
+                if (!gesture.dragging) {
+                    if (Math.abs(dx) > MOVE_SLOP && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                        gesture.dragging = true;
+                        clearTimeout(gesture.longPressTimer);
+                    } else if (Math.abs(dy) > MOVE_SLOP) {
+                        // Vertical intent — this is a scroll, not a swipe.
+                        // Bail out of the gesture entirely.
+                        clearTimeout(gesture.longPressTimer);
+                        gesture = null;
+                        return;
+                    }
+                }
+                if (gesture && gesture.dragging) {
+                    const clamped = Math.max(-SWIPE_MAX, Math.min(0, dx)); // left-swipe only
+                    gesture.dx = clamped;
+                    gesture.el.style.transform = `translateX(${clamped}px)`;
+                    gesture.el.style.setProperty('--swipe-icon-opacity', String(Math.min(1, Math.abs(clamped) / SWIPE_THRESHOLD)));
+                    gesture.el.classList.toggle('swipe-armed', clamped <= -SWIPE_THRESHOLD);
+                }
+            });
+
+            messagesAreaEl.addEventListener('pointerup', () => endGesture(true));
+            messagesAreaEl.addEventListener('pointercancel', () => endGesture(false));
+
+            // A long-press-then-release would otherwise also fire a native
+            // click right after — which, without this, would open whatever
+            // link/image/join-call button happened to be under the finger.
+            // Runs in the capture phase so it beats handleAudioClick's own
+            // (bubble-phase) listener on the same element.
+            messagesAreaEl.addEventListener('click', (e) => {
+                if (!suppressNextClick) return;
+                suppressNextClick = false;
+                e.preventDefault();
+                e.stopPropagation();
+            }, true);
         }
 
         // Read receipts: flips `read` to true on every message NOT sent by the
@@ -2952,7 +3331,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (!oldestLoaded || !oldestLoaded.timestamp) return;
 
             loadingEarlierByConv.set(conversationId, true);
-            renderMessageList(conversationId, { preserveScroll: true }); // shows the button's own "Loading…" state
+            renderMessageList(conversationId, { scrollMode: 'preserveTop' }); // shows the button's own "Loading…" state
 
             try {
                 const q = query(
@@ -2988,7 +3367,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 console.error('Error loading earlier messages:', error);
             } finally {
                 loadingEarlierByConv.set(conversationId, false);
-                renderMessageList(conversationId, { preserveScroll: true });
+                renderMessageList(conversationId, { scrollMode: 'preserveTop' });
             }
         }
 
@@ -3017,6 +3396,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     // on screen once the live listener in loadMessages sees it, so
                     // it can retire the pending entry instead of showing both.
                     clientId: optimisticMessage.clientId,
+                    // Only set when this send started as a reply (see
+                    // setReplyTarget/sendMessage) — omitted rather than null,
+                    // same convention as `type` for a plain text message.
+                    ...(optimisticMessage.replyTo ? { replyTo: optimisticMessage.replyTo } : {}),
                 });
 
                 const newUnreadCount = convData.unreadCount || {};
@@ -3071,6 +3454,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // deliberately taps away.
             input.focus();
 
+            // Captured before clearing — sendMessage clears the reply bar
+            // the instant a send is kicked off (matches the instant-send
+            // feel above), same as WhatsApp.
+            const replyTo = replyingToMessage;
+            if (replyTo) clearReplyTarget();
+
             const clientId = generateClientId();
             const optimisticMessage = {
                 id: `pending-${clientId}`,
@@ -3080,6 +3469,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 timestamp: new Date(),
                 read: false,
                 _status: 'pending',
+                ...(replyTo ? { replyTo } : {}),
             };
             getPendingMessages(conversationId).push(optimisticMessage);
             renderMessageList(conversationId);
@@ -3121,6 +3511,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 return;
             }
 
+            // Same immediate-clear-on-send as sendMessage — see its own comment.
+            const replyTo = replyingToMessage;
+            if (replyTo) clearReplyTarget();
+
             const clientId = generateClientId();
             const optimisticMessage = {
                 id: `pending-${clientId}`,
@@ -3134,6 +3528,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 _uploadProgress: 0,
                 _previewUrl: URL.createObjectURL(file),
                 _file: file, // retained for retryMessage — a failed upload needs the original bytes again, not just the preview
+                ...(replyTo ? { replyTo } : {}),
             };
             getPendingMessages(conversationId).push(optimisticMessage);
             renderMessageList(conversationId);
@@ -3166,6 +3561,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     timestamp: new Date(),
                     read: false,
                     clientId: optimisticMessage.clientId,
+                    ...(optimisticMessage.replyTo ? { replyTo: optimisticMessage.replyTo } : {}),
                 });
 
                 const newUnreadCount = convData.unreadCount || {};
@@ -3371,6 +3767,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return `
                 <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                 <div class="msg-col">
+                    ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                     <div class="message-content audio-message-content">
                         <div class="audio-player" id="audioPlayer-${msgId}">
                             <button class="audio-play-btn" id="playBtn-${msgId}"
@@ -3428,6 +3825,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         function handleAudioClick(e) {
+            // Reply quote inside a bubble — tap to jump to (and briefly
+            // highlight) the original message, if it's still within the
+            // currently-loaded window. See renderReplyQuote.
+            const quoteEl = e.target.closest('.reply-quote');
+            if (quoteEl) {
+                const targetEl = document.querySelector(`.message[data-msg-id="${quoteEl.dataset.jumpTo}"]`);
+                if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetEl.classList.add('flash-highlight');
+                    setTimeout(() => targetEl.classList.remove('flash-highlight'), 1200);
+                }
+                return;
+            }
+
             // Failed optimistic send — tap to retry (see attemptSend/attemptImageSend)
             const retryEl = e.target.closest('.message-status-failed');
             if (retryEl) {
@@ -3753,6 +4164,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         async function sendAudioMessage(conversationId, audioBlob, duration, transcript) {
             const sendBtn = document.querySelector('#messageForm .send-btn');
+            // Captured (and cleared) up front, before the upload even starts —
+            // same immediate-clear-on-send as sendMessage/startImageSend.
+            const replyTo = replyingToMessage;
+            if (replyTo) clearReplyTarget();
             try {
                 if (sendBtn) { sendBtn.disabled = true; sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
 
@@ -3777,7 +4192,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     // Client timestamp, not serverTimestamp() — see the comment on
                     // the video-call-request send above for why.
                     timestamp: new Date(),
-                    read: false
+                    read: false,
+                    ...(replyTo ? { replyTo } : {}),
                 });
 
                 const newUnreadCount = convData.unreadCount || {};
