@@ -643,17 +643,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             flex-direction: row-reverse;
         }
 
-        /* Reply icon revealed while swiping a bubble left (see
+        /* Reply icon revealed while swiping a bubble right (see
            setupMessageGestures) — a plain glyph rather than a Font Awesome
            icon so it needs no markup of its own inside the per-type message
            templates below, just this one shared pseudo-element. Opacity is
            driven continuously by --swipe-icon-opacity during an active drag;
            .swipe-armed just marks that release would commit to a reply. */
         .message::after {
-            content: "↩";
+            content: "↪";
             position: absolute;
             top: 50%;
-            right: -30px;
+            left: -30px;
             transform: translateY(-50%);
             font-size: 1.1rem;
             font-weight: 700;
@@ -1869,7 +1869,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let activeOtherUserId = null;
         let unsubscribeMessages = null;
 
-        // The message currently selected as a reply target (swipe-left or
+        // The message currently selected as a reply target (swipe-right or
         // long-press on a bubble — see setupMessageGestures) — { id,
         // senderId, senderName, preview } or null. Reset on every
         // conversation switch and cleared the moment a send is kicked off.
@@ -3018,7 +3018,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             setJumpToBottomVisible(!endedNearBottom);
         }
 
-        // ===== REPLY-TO-MESSAGE (swipe-left / long-press, see setupMessageGestures) =====
+        // ===== REPLY-TO-MESSAGE (swipe-right / long-press, see setupMessageGestures) =====
 
         // The quoted snippet stored on a message's own replyTo field (and
         // shown in the composer's preview bar while a reply is pending) —
@@ -3075,7 +3075,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>`;
         }
 
-        // Swipe-left or long-press a message bubble to select it as a reply
+        // Swipe-right or long-press a message bubble to select it as a reply
         // target — WhatsApp's two standard gestures for this, both wired
         // here via Pointer Events (one code path for touch AND mouse/trackpad,
         // so it also works testing on desktop). Delegated at the
@@ -3085,7 +3085,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // would silently stop working the moment any message changed.
         function setupMessageGestures(messagesAreaEl, conversationId) {
             const LONG_PRESS_MS = 450;
-            const SWIPE_THRESHOLD = 60; // px of leftward drag that commits to a reply on release
+            const SWIPE_THRESHOLD = 60; // px of rightward drag that commits to a reply on release
             const SWIPE_MAX = 80;       // px the bubble is allowed to visually slide
             const MOVE_SLOP = 10;       // px before a press is classified as a drag vs. a hold
 
@@ -3115,7 +3115,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 el.style.removeProperty('--swipe-icon-opacity');
                 el.classList.remove('swipe-armed');
                 setTimeout(() => el.classList.remove('swipe-releasing'), 200);
-                if (shouldCommitOnSwipe && dx <= -SWIPE_THRESHOLD) commitReply(msgId);
+                if (shouldCommitOnSwipe && dx >= SWIPE_THRESHOLD) commitReply(msgId);
                 gesture = null;
             }
 
@@ -3157,11 +3157,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                 }
                 if (gesture && gesture.dragging) {
-                    const clamped = Math.max(-SWIPE_MAX, Math.min(0, dx)); // left-swipe only
+                    const clamped = Math.max(0, Math.min(SWIPE_MAX, dx)); // right-swipe only
                     gesture.dx = clamped;
                     gesture.el.style.transform = `translateX(${clamped}px)`;
-                    gesture.el.style.setProperty('--swipe-icon-opacity', String(Math.min(1, Math.abs(clamped) / SWIPE_THRESHOLD)));
-                    gesture.el.classList.toggle('swipe-armed', clamped <= -SWIPE_THRESHOLD);
+                    gesture.el.style.setProperty('--swipe-icon-opacity', String(Math.min(1, clamped / SWIPE_THRESHOLD)));
+                    gesture.el.classList.toggle('swipe-armed', clamped >= SWIPE_THRESHOLD);
                 }
             });
 
