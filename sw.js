@@ -88,9 +88,14 @@ if (self.workbox) {
   // (messages.html reply/scroll work, home.html) landed across several
   // sessions — bumping here means everyone gets today's fixes on their very
   // next visit instead of needing a second one to any specific changed page.
+  //
+  // Bumped again to v6 on 2026-09-10: messages.html's typed-text-hidden-
+  // behind-the-keyboard regression fix — bumping here means the next launch
+  // gets it immediately instead of needing an extra reload of this specific
+  // page first.
   workbox.routing.registerRoute(
     ({ request, url }) => request.mode === "navigate" && SAME_ORIGIN({ url }),
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v5" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v6" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,

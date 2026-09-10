@@ -2688,35 +2688,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }
             });
 
-            // iOS Safari can scroll the outer page to "reveal" a newly-focused
-            // input even with body{overflow:hidden} and a position:fixed
-            // container (a real, long-documented WebKit quirk — see the
-            // .messages-container CSS comment) — dragging the fixed chat
-            // header, and its back button, out of the visible, keyboard-
-            // shrunk viewport along with it. That's exactly what made the
-            // back button unreachable after sending a message: sendMessage()
-            // deliberately re-focuses this input afterward (to keep the
-            // keyboard open across a send), which re-triggers this same
-            // scroll-to-reveal every time. Forcibly resetting the page's own
-            // scroll position back to (0,0) whenever this input gains focus
-            // counteracts that drift directly, without touching any layout
-            // measurement or sizing — a JS-measured resize of the container
-            // itself was tried before and made things actively worse on a
-            // real device (see that same CSS comment), so this deliberately
-            // avoids that approach entirely. Retried a couple of times over
-            // the keyboard's open animation, since a single immediate reset
-            // can be undone by iOS's own scroll-into-view attempt, which
-            // doesn't necessarily finish before this handler runs.
-            messageInput.addEventListener('focus', () => {
-                const resetPageScroll = () => {
-                    window.scrollTo(0, 0);
-                    document.documentElement.scrollTop = 0;
-                    document.body.scrollTop = 0;
-                };
-                resetPageScroll();
-                setTimeout(resetPageScroll, 50);
-                setTimeout(resetPageScroll, 300);
-            });
+            // NOTE: a previous fix here forced the page's scroll position
+            // back to (0,0) on every messageInput focus, repeatedly, to stop
+            // iOS Safari's own "scroll to reveal a focused input" from
+            // dragging the fixed chat header/back button out of view. It was
+            // removed (2026-09-10): fighting that native reveal on every
+            // single focus — not just the post-send refocus it targeted —
+            // also stopped the *input itself* from ever being scrolled above
+            // the on-screen keyboard, so typed text was hidden behind the
+            // keyboard until something else (e.g. the OS's own autocomplete
+            // bar) forced a reflow. It was speculative and unverified on a
+            // real device to begin with (see git history). The back button's
+            // actual reachability problem — the first tap after a send only
+            // blurring the input instead of registering as a click — is
+            // handled independently below by chatBackBtn's touchstart
+            // listener, which doesn't depend on this scroll hack at all.
 
             // Setup video call button
             document.getElementById('videoCallBtn').addEventListener('click', async () => {
