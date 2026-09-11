@@ -525,6 +525,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .messages-area {
             flex: 1;
+            min-height: 0; /* lets this shrink inside a JS-sized .chat-panel on mobile, see its comment */
             overflow-y: auto;
             padding: 1.5rem;
             display: flex;
@@ -1012,12 +1013,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                during the keyboard's open animation left the container far
                taller than the visible area, with a big blank gap where
                content should be. Reverted back to this simpler calc()-only
-               version, which is at least not broken, even though the back
-               button still isn't reliably reachable with the keyboard open —
-               see docs/PWA_PRD.md notes / memory for the ongoing back-button
-               issue. The env() terms account for the iOS notch/status-bar and
-               home-indicator safe areas, now that viewport-fit=cover makes
-               them non-zero. */
+               version, which covers the conversations-list panel fine. The
+               back button being unreachable with the keyboard open (while a
+               chat is actually open) is no longer this container's problem
+               to solve, though — see .messages-container.chat-open .chat-panel
+               below, which takes over the full screen as its own
+               independently-positioned, visualViewport-synced element
+               instead. The env() terms here account for the iOS notch/
+               status-bar and home-indicator safe areas, now that
+               viewport-fit=cover makes them non-zero. */
             .messages-container {
                 margin: 0 !important;
                 padding: 0 !important;
@@ -1059,6 +1063,81 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
             .messages-container.conversations-open .chat-panel {
                 display: none;
+            }
+
+            /* An open chat takes over the full screen, like WhatsApp's own
+               chat view: position:fixed, sized and positioned by JS from
+               window.visualViewport (see syncChatPanelToViewport in the
+               script below) instead of from the outer .messages-container's
+               calc()-based top/bottom (anchored to <lb-app-shell>'s header
+               and bottom tab bar) or wherever the document's own scroll
+               position happens to land. Ports the same fix already shipped
+               on the main site's messages.html (commit bd04c97) to this PWA
+               branch, which still had the older, unreachable-back-button
+               behavior described in the .messages-container comment above.
+               Sizing this panel directly from the real, live, keyboard-aware
+               visual viewport means there's nothing left for iOS to need to
+               scroll into view once it's synced — the chat header (with the
+               back button) and the message input stay visible at the same
+               time without fighting that scroll at all. <lb-app-shell> is
+               hidden while this is active (see body.chat-fullscreen below)
+               so there's no separate, competing fixed header/tab-bar
+               underneath it — safe-area padding it would normally have
+               covered is restored directly on the header/input instead, see
+               below.
+
+               Critically, .messages-container's own transform: translateZ(0)
+               (above) would otherwise defeat this entirely: a transform on
+               an ancestor makes a fixed-position descendant position itself
+               relative to THAT ancestor's box instead of the true viewport
+               (CSS containing-block rules), so .chat-panel's top:0 would
+               just mean "top of .messages-container's own (non-fullscreen,
+               tab-bar-clearing) box" — exactly the old, broken behavior this
+               is replacing. Neutralized below for the chat-open state only;
+               .conversations-panel (still using the untouched
+               .messages-container box) keeps the GPU-layer scroll
+               optimization the transform exists for. */
+            .messages-container.chat-open {
+                transform: none;
+                will-change: auto;
+            }
+
+            .messages-container.chat-open .chat-panel {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 100vh; /* fallback until JS sets the real value */
+                z-index: 1010; /* above <lb-app-shell> (1000), below the image lightbox (3000) */
+                flex: none;
+                margin: 0;
+                border-radius: 0;
+            }
+
+            /* Restores the iOS notch/status-bar and home-indicator safe-area
+               clearance that <lb-app-shell> and the outer .messages-container
+               normally provide, now that this panel is its own full-screen
+               fixed element instead of sitting inside them. */
+            .messages-container.chat-open .chat-panel .chat-header {
+                padding-top: calc(1.25rem + env(safe-area-inset-top, 0));
+            }
+
+            .messages-container.chat-open .chat-panel .message-input-area {
+                padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0));
+            }
+
+            /* Hides <lb-app-shell> (fixed header + bottom tab bar) while a
+               chat is open on mobile — .chat-panel above becomes its own
+               full-screen header instead of stacking a second fixed bar
+               underneath it. Toggled by JS alongside the chat-open/
+               conversations-open classes. */
+            body.chat-fullscreen lb-app-shell {
+                display: none;
+            }
+
+            body.chat-fullscreen {
+                padding-top: 0;
+                padding-bottom: 0;
             }
 
             /* Back button — only visible on mobile */
@@ -2063,6 +2142,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         })();
 
+        // Keeps an open chat's .chat-panel (position:fixed on mobile, see
+        // its CSS comment) sized and positioned to the REAL, live,
+        // keyboard-aware visual viewport rather than the outer
+        // .messages-container's calc()-based top/bottom or wherever the
+        // document happens to have scrolled to. This is what lets the chat
+        // header (and its back button) and the message input stay visible
+        // at the same time: once the panel's own height already matches
+        // what's actually visible, the focused input is already inside it,
+        // so there's nothing left for iOS's own "scroll the page to reveal
+        // a focused input" behavior to need to do — sidestepping that quirk
+        // instead of racing it (same fix as main's messages.html, commit
+        // bd04c97). Runs on every visualViewport resize/scroll (fires
+        // continuously as the keyboard animates open/closed, and on iOS's
+        // own scroll-into-view attempts, self-correcting each time rather
+        // than fighting any single one of them) plus window resize/
+        // orientation change, but only takes effect on mobile while a chat
+        // is actually open.
+        function syncChatPanelToViewport() {
+            if (window.innerWidth > 767) return;
+            const container = document.querySelector('.messages-container');
+            if (!container || !container.classList.contains('chat-open')) return;
+            const panel = document.getElementById('chatPanel');
+            if (!panel) return;
+            const vv = window.visualViewport;
+            if (!vv) return;
+            panel.style.height = vv.height + 'px';
+            panel.style.top = vv.offsetTop + 'px';
+        }
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', syncChatPanelToViewport);
+            window.visualViewport.addEventListener('scroll', syncChatPanelToViewport);
+        }
+        window.addEventListener('orientationchange', syncChatPanelToViewport);
+
         // Check authentication
         function showPushToast(payload) {
             const existing = document.querySelector('.push-toast');
@@ -2474,6 +2587,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (window.innerWidth <= 767) {
                 messagesContainer.classList.add('chat-open');
                 messagesContainer.classList.remove('conversations-open');
+                document.body.classList.add('chat-fullscreen');
+                syncChatPanelToViewport();
             }
 
             // Render chat interface
@@ -2629,6 +2744,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const container = document.querySelector('.messages-container');
                     container.classList.remove('chat-open');
                     container.classList.add('conversations-open');
+                    document.body.classList.remove('chat-fullscreen');
                 };
                 chatBackBtn.addEventListener('touchstart', goBackToConversationList, { passive: false });
                 chatBackBtn.addEventListener('pointerdown', goBackToConversationList);
@@ -2698,11 +2814,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // the on-screen keyboard, so typed text was hidden behind the
             // keyboard until something else (e.g. the OS's own autocomplete
             // bar) forced a reflow. It was speculative and unverified on a
-            // real device to begin with (see git history). The back button's
-            // actual reachability problem — the first tap after a send only
-            // blurring the input instead of registering as a click — is
-            // handled independently below by chatBackBtn's touchstart
-            // listener, which doesn't depend on this scroll hack at all.
+            // real device to begin with (see git history).
+            //
+            // The back button's reachability while the keyboard is open is
+            // now handled properly (2026-09-11, ported from main's
+            // messages.html commit bd04c97): .chat-panel becomes its own
+            // full-screen overlay sized from window.visualViewport — see
+            // syncChatPanelToViewport near the top of this script — so the
+            // header and the input stay visible together without any
+            // scroll-fighting at all. chatBackBtn's touchstart/pointerdown/
+            // click listeners (below) separately handle the "first tap only
+            // blurs" iOS quirk, unrelated to any of the above.
 
             // Setup video call button
             document.getElementById('videoCallBtn').addEventListener('click', async () => {

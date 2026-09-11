@@ -93,9 +93,14 @@ if (self.workbox) {
   // behind-the-keyboard regression fix — bumping here means the next launch
   // gets it immediately instead of needing an extra reload of this specific
   // page first.
+  //
+  // Bumped again to v7 on 2026-09-11: messages.html's mobile chat view now
+  // takes over the full screen (visualViewport-synced .chat-panel, ported
+  // from main's fix) so the back button stays visible while typing —
+  // bumping here again for the same immediate-on-next-launch reason.
   workbox.routing.registerRoute(
     ({ request, url }) => request.mode === "navigate" && SAME_ORIGIN({ url }),
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v6" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v7" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
