@@ -356,6 +356,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .messages-area {
             flex: 1;
+            min-height: 0; /* lets this shrink inside a JS-sized .chat-panel on mobile, see its comment */
             overflow-y: auto;
             padding: 1.5rem;
             display: flex;
@@ -601,6 +602,47 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 display: none;
             }
 
+            /* An open chat takes over the full screen, like WhatsApp's own
+               chat view: position:fixed, sized and positioned by JS from
+               window.visualViewport (see syncChatPanelToViewport in the
+               script below) instead of from calc(100dvh) or wherever the
+               document's own scroll position happens to land. Two earlier
+               approaches both failed on a real device: fighting iOS's
+               focus-triggered page-scroll (it turned out to be load-bearing
+               for the input's own visibility, not a redundant side effect),
+               and giving up and duplicating the back button down next to
+               the input instead. Sizing this panel directly from the real,
+               live, keyboard-aware visual viewport sidesteps the conflict
+               entirely — the panel already fits the visible area, so there's
+               nothing left for iOS to need to scroll into view, and the
+               header (with the back button) and the input stay visible at
+               the same time. The site's own top navbar is hidden while this
+               is active (see body.chat-fullscreen below) so there's no
+               second, competing fixed header underneath it. */
+            .messages-container.chat-open .chat-panel {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 100vh; /* fallback until JS sets the real value */
+                z-index: 1040; /* above the site navbar's fixed-top (Bootstrap default: 1030) */
+                flex: none;
+                margin: 0;
+                border-radius: 0;
+            }
+
+            /* Hides the site's own top navbar while a chat is open on
+               mobile — .chat-panel above becomes its own full-screen header
+               instead of stacking a second fixed bar underneath it. Toggled
+               by JS alongside the chat-open/conversations-open classes. */
+            body.chat-fullscreen nav.fixed-top {
+                display: none;
+            }
+
+            body.chat-fullscreen {
+                padding-top: 0;
+            }
+
             /* Back button — only visible on mobile */
             .chat-back-btn {
                 display: flex !important;
@@ -625,12 +667,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 background: rgba(255, 255, 255, 0.35);
                 color: white;
                 outline: none;
-            }
-
-            /* Composer back button — only visible on mobile, see the rule
-               definition above for why it exists alongside .chat-back-btn. */
-            .composer-back-btn {
-                display: flex !important;
             }
         }
 
@@ -917,37 +953,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .image-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
-        }
-
-        /* Composer back button — a second way back to the conversation
-           list, living inside .message-input-area (which is deliberately
-           "flex-shrink: 0 — never compress — always visible above
-           keyboard", see that rule above). The header's .chat-back-btn
-           gets scrolled off the top of the screen on mobile the moment the
-           message input is focused (iOS scrolls the page to bring the
-           input above the keyboard), so this duplicate — reachable
-           anywhere the composer itself is reachable — is what stays usable
-           in exactly that state. Hidden on desktop alongside .chat-back-btn
-           below; shown on mobile via the same breakpoint. */
-        .composer-back-btn {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background: #f0f0f0;
-            color: #555;
-            cursor: pointer;
-            font-size: 0.95rem;
-            flex-shrink: 0;
-            transition: background 0.2s;
-        }
-
-        .composer-back-btn:hover {
-            background: #e0e0e0;
-            color: #333;
         }
 
         .message-image-content {
@@ -1529,6 +1534,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         })();
 
+        // Keeps an open chat's .chat-panel (position:fixed on mobile, see
+        // its CSS comment) sized and positioned to the REAL, live,
+        // keyboard-aware visual viewport rather than a CSS unit like dvh or
+        // wherever the document happens to have scrolled to. This is what
+        // lets the chat header (and its back button) and the message input
+        // stay visible at the same time: once the panel's own height
+        // already matches what's actually visible, the focused input is
+        // already inside it, so there's nothing left for iOS's own
+        // "scroll the page to reveal a focused input" behavior to need to
+        // do — sidestepping that quirk instead of racing it. Runs on every
+        // visualViewport resize/scroll (fires continuously as the keyboard
+        // animates open/closed, and on iOS's own scroll-into-view attempts,
+        // self-correcting each time rather than fighting any single one of
+        // them) plus window resize/orientation change, but only takes
+        // effect on mobile while a chat is actually open.
+        function syncChatPanelToViewport() {
+            if (window.innerWidth > 767) return;
+            const container = document.querySelector('.messages-container');
+            if (!container || !container.classList.contains('chat-open')) return;
+            const panel = document.getElementById('chatPanel');
+            if (!panel) return;
+            const vv = window.visualViewport;
+            if (!vv) return;
+            panel.style.height = vv.height + 'px';
+            panel.style.top = vv.offsetTop + 'px';
+        }
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', syncChatPanelToViewport);
+            window.visualViewport.addEventListener('scroll', syncChatPanelToViewport);
+        }
+        window.addEventListener('orientationchange', syncChatPanelToViewport);
+
         // Check authentication
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -1859,6 +1896,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (window.innerWidth <= 767) {
                 messagesContainer.classList.add('chat-open');
                 messagesContainer.classList.remove('conversations-open');
+                document.body.classList.add('chat-fullscreen');
+                syncChatPanelToViewport();
             }
 
             // Render chat interface
@@ -1897,9 +1936,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
                     </div>
                     <form class="message-input-form" id="messageForm">
-                        <button type="button" class="composer-back-btn" id="composerBackBtn" title="Back to conversations" aria-label="Back to conversations">
-                            <i class="fas fa-arrow-left"></i>
-                        </button>
                         <select class="lang-select" id="langSelect" title="Language you will speak in the audio message">
                             <option value="en-US">EN</option>
                             <option value="es-ES">ES</option>
@@ -1933,46 +1969,43 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Back button: return to conversations list on mobile.
             //
-            // Two buttons share this same handler: the header's
-            // #chatBackBtn, and #composerBackBtn inside the message input
-            // row (see its CSS comment — the header one is unreachable,
-            // scrolled off the top of the screen, the instant the message
-            // input is focused on mobile, since iOS scrolls the whole page
-            // to bring the focused input above the keyboard; the composer
-            // one stays reachable in exactly that state instead, since it
-            // lives right next to the input itself).
+            // Listens on touchstart, pointerdown, AND click, guarded against
+            // firing twice for the same interaction — a well-documented iOS
+            // Safari quirk: a tap that lands on a new element while a text
+            // input is focused can consume the entire tap just blurring the
+            // input, with the synthetic click on the new target never firing
+            // at all — requiring a whole separate second tap to actually
+            // activate it. touchstart is the earliest, most primitive signal
+            // available for a touch — an explicit preventDefault() there
+            // stops the browser's own blur-then-maybe-click sequencing from
+            // ever getting a chance to swallow the tap, rather than racing
+            // it. pointerdown+click stay wired too, both as a fallback for
+            // engines with touchstart quirks of their own and for
+            // mouse/keyboard/accessibility activation, where touchstart
+            // never fires at all.
             //
-            // Both listen on touchstart, pointerdown, AND click, guarded
-            // against firing twice for the same interaction — a
-            // well-documented iOS Safari quirk: a tap that lands on a new
-            // element while a text input is focused can consume the entire
-            // tap just blurring the input, with the synthetic click on the
-            // new target never firing at all — requiring a whole separate
-            // second tap to actually activate it. touchstart is the
-            // earliest, most primitive signal available for a touch — an
-            // explicit preventDefault() there stops the browser's own
-            // blur-then-maybe-click sequencing from ever getting a chance to
-            // swallow the tap, rather than racing it. pointerdown+click stay
-            // wired too, both as a fallback for engines with touchstart
-            // quirks of their own and for mouse/keyboard/accessibility
-            // activation, where touchstart never fires at all.
-            let backBtnHandled = false;
-            const goBackToConversationList = (e) => {
-                if (backBtnHandled) return;
-                backBtnHandled = true;
-                setTimeout(() => { backBtnHandled = false; }, 400);
-                if (e && e.cancelable) e.preventDefault();
-                document.getElementById('messageInput')?.blur();
-                const container = document.querySelector('.messages-container');
-                container.classList.remove('chat-open');
-                container.classList.add('conversations-open');
-            };
-            [document.getElementById('chatBackBtn'), document.getElementById('composerBackBtn')].forEach((btn) => {
-                if (!btn) return;
-                btn.addEventListener('touchstart', goBackToConversationList, { passive: false });
-                btn.addEventListener('pointerdown', goBackToConversationList);
-                btn.addEventListener('click', goBackToConversationList);
-            });
+            // This button staying visible (not scrolled off the top of the
+            // screen while the keyboard is open) is handled separately, by
+            // sizing .chat-panel itself from the live visual viewport — see
+            // syncChatPanelToViewport near the top of this script.
+            const chatBackBtn = document.getElementById('chatBackBtn');
+            if (chatBackBtn) {
+                let backBtnHandled = false;
+                const goBackToConversationList = (e) => {
+                    if (backBtnHandled) return;
+                    backBtnHandled = true;
+                    setTimeout(() => { backBtnHandled = false; }, 400);
+                    if (e && e.cancelable) e.preventDefault();
+                    document.getElementById('messageInput')?.blur();
+                    const container = document.querySelector('.messages-container');
+                    container.classList.remove('chat-open');
+                    container.classList.add('conversations-open');
+                    document.body.classList.remove('chat-fullscreen');
+                };
+                chatBackBtn.addEventListener('touchstart', goBackToConversationList, { passive: false });
+                chatBackBtn.addEventListener('pointerdown', goBackToConversationList);
+                chatBackBtn.addEventListener('click', goBackToConversationList);
+            }
 
             // Check if the other user is blocking new messages
             try {
