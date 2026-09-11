@@ -146,12 +146,24 @@ if (self.workbox) {
   // change looks. This is what a user-reported "the app is behaving
   // strangely / a feature isn't working" after a deploy should always
   // prompt checking first, before assuming a logic bug.
+  //
+  // Bumped again to v7 on 2026-09-11: happened yet again, same as the v6
+  // note above — js/app-shell.js's own PAGES_CACHE_NAME constant (in its
+  // prefetchSiblingTabs, which writes into the pages bucket by hardcoded
+  // name) was left pointing at "linguabud-pages-v5" through two rounds of
+  // this file's own pages-bucket bumps (v6, then v7) earlier in this same
+  // session, immediately followed by a user report of quizzes/notebook
+  // failing to load — this codebase's most well-established symptom of a
+  // stale-cache mismatch (see this bucket's own v6 note and
+  // feedback_linguabud_sw_cache_versioning memory). Fixed the constant and
+  // bumped this bucket too, so every client drops whatever it has cached
+  // and refetches app-shell.js/firebaseClient.js/etc. fresh immediately.
   workbox.routing.registerRoute(
     ({ request, url }) =>
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v6",
+      cacheName: "linguabud-assets-v7",
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -183,10 +195,13 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v3"),
       caches.delete("linguabud-assets-v4"),
       caches.delete("linguabud-assets-v5"),
+      caches.delete("linguabud-assets-v6"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
       caches.delete("linguabud-pages-v4"),
+      caches.delete("linguabud-pages-v5"),
+      caches.delete("linguabud-pages-v6"),
     ])
   );
 });

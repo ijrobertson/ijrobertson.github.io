@@ -463,7 +463,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v5"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v7"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
