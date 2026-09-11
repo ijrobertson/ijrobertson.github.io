@@ -1891,14 +1891,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             console.log('✅ Chat interface rendered');
             console.log('📝 Message input element:', document.getElementById('messageInput'));
 
-            // Back button: return to conversations list on mobile
+            // Back button: return to conversations list on mobile.
+            //
+            // Listens on touchstart, pointerdown, AND click, guarded against
+            // firing twice for the same interaction — a well-documented iOS
+            // Safari quirk: a tap that lands on a new element while a text
+            // input is focused can consume the entire tap just blurring the
+            // input, with the synthetic click on the new target never firing
+            // at all — requiring a whole separate second tap to actually
+            // activate it. That's exactly why the back button needed an
+            // explicit tap to dismiss the keyboard first before it would
+            // respond. touchstart is the earliest, most primitive signal
+            // available for a touch — an explicit preventDefault() there
+            // stops the browser's own blur-then-maybe-click sequencing from
+            // ever getting a chance to swallow the tap, rather than racing
+            // it. pointerdown+click stay wired too, both as a fallback for
+            // engines with touchstart quirks of their own and for
+            // mouse/keyboard/accessibility activation, where touchstart
+            // never fires at all.
             const chatBackBtn = document.getElementById('chatBackBtn');
             if (chatBackBtn) {
-                chatBackBtn.addEventListener('click', () => {
+                let backBtnHandled = false;
+                const goBackToConversationList = (e) => {
+                    if (backBtnHandled) return;
+                    backBtnHandled = true;
+                    setTimeout(() => { backBtnHandled = false; }, 400);
+                    if (e && e.cancelable) e.preventDefault();
+                    document.getElementById('messageInput')?.blur();
                     const container = document.querySelector('.messages-container');
                     container.classList.remove('chat-open');
                     container.classList.add('conversations-open');
-                });
+                };
+                chatBackBtn.addEventListener('touchstart', goBackToConversationList, { passive: false });
+                chatBackBtn.addEventListener('pointerdown', goBackToConversationList);
+                chatBackBtn.addEventListener('click', goBackToConversationList);
             }
 
             // Check if the other user is blocking new messages
@@ -1937,6 +1963,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     e.preventDefault();
                     sendMessage(conversationId);
                 }
+            });
+
+            // iOS Safari can scroll the whole page upward to "reveal" a
+            // newly-focused input, even with body{overflow:hidden} here on
+            // mobile — a real, long-documented WebKit quirk that's separate
+            // from (and redundant with) this .messages-container already
+            // sizing itself to calc(100dvh - 4rem), which alone already
+            // shrinks to fit above the keyboard on its own. That redundant
+            // page-level scroll is what drags the chat header — and its
+            // back button — off the top of the screen while typing. Rather
+            // than fighting that scroll immediately (which would undo the
+            // keyboard-open layout before it's finished and hide the input
+            // itself behind the keyboard instead), this waits until the
+            // keyboard's open animation has settled, then makes a single
+            // correction — letting iOS finish positioning the input first.
+            messageInput.addEventListener('focus', () => {
+                setTimeout(() => {
+                    if (window.scrollY > 0 || document.documentElement.scrollTop > 0) {
+                        window.scrollTo(0, 0);
+                    }
+                }, 400);
             });
 
             // Setup video call button
