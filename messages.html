@@ -1965,26 +1965,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }
             });
 
-            // iOS Safari can scroll the whole page upward to "reveal" a
-            // newly-focused input, even with body{overflow:hidden} here on
-            // mobile — a real, long-documented WebKit quirk that's separate
-            // from (and redundant with) this .messages-container already
-            // sizing itself to calc(100dvh - 4rem), which alone already
-            // shrinks to fit above the keyboard on its own. That redundant
-            // page-level scroll is what drags the chat header — and its
-            // back button — off the top of the screen while typing. Rather
-            // than fighting that scroll immediately (which would undo the
-            // keyboard-open layout before it's finished and hide the input
-            // itself behind the keyboard instead), this waits until the
-            // keyboard's open animation has settled, then makes a single
-            // correction — letting iOS finish positioning the input first.
-            messageInput.addEventListener('focus', () => {
-                setTimeout(() => {
-                    if (window.scrollY > 0 || document.documentElement.scrollTop > 0) {
-                        window.scrollTo(0, 0);
-                    }
-                }, 400);
-            });
+            // NOTE: a scroll-correction was tried here (2026-09-11) to stop
+            // iOS Safari's own "scroll the page to reveal a focused input"
+            // quirk from dragging the chat header off the top of the screen
+            // while typing — delayed until after the keyboard's open
+            // animation, on the theory that .messages-container's own
+            // calc(100dvh - 4rem) sizing already accounted for the keyboard
+            // on its own and the reveal-scroll was purely redundant. Wrong
+            // on a real device: the reveal-scroll was NOT redundant — it was
+            // load-bearing for getting the input above the keyboard at all,
+            // so correcting it back to (0,0), even delayed, just re-hid the
+            // input behind the keyboard instead of fixing the header. Removed
+            // entirely. The back button's reachability is handled
+            // independently above via chatBackBtn's touchstart listener,
+            // which doesn't depend on any scroll correction.
 
             // Setup video call button
             document.getElementById('videoCallBtn').addEventListener('click', async () => {
