@@ -1716,7 +1716,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         // Fetch a user's display data from Firestore, preferring the instructors collection.
-        // Results are cached so subsequent renders never hit the network.
+        // Results are cached so subsequent renders never hit the network — shared by the
+        // conversation list, openConversation's header, and loadMessages' per-sender avatars.
         async function getCachedUser(userId) {
             if (userCache.has(userId)) return userCache.get(userId);
             try {
@@ -1724,16 +1725,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     getDoc(doc(db, 'users', userId)),
                     getDoc(doc(db, 'instructors', userId))
                 ]);
-                const data = instructorDoc.exists() ? instructorDoc.data()
-                           : userDoc.exists()       ? userDoc.data()
+                const isInstructor = instructorDoc.exists();
+                const data = isInstructor ? instructorDoc.data()
+                           : userDoc.exists() ? userDoc.data()
                            : null;
                 const result = data
-                    ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '' }
-                    : { name: 'Unknown User', avatar_url: '' };
+                    ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '', isInstructor }
+                    : { name: 'Unknown User', avatar_url: '', isInstructor: false };
                 userCache.set(userId, result);
                 return result;
             } catch {
-                return { name: 'Unknown User', avatar_url: '' };
+                return { name: 'Unknown User', avatar_url: '', isInstructor: false };
             }
         }
 
@@ -1844,52 +1846,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 event.currentTarget.classList.add('active');
             }
 
-            // Fetch user data from BOTH collections and prefer instructors
-            console.log('🔄 Fetching fresh user data for:', otherUserId);
-            let otherUser = { name: 'Unknown User', avatar_url: '' };
-            try {
-                console.log('🔍 Fetching from BOTH users AND instructors collections...');
-
-                // Fetch from both collections in parallel
-                const [userDoc, instructorDoc] = await Promise.all([
-                    getDoc(doc(db, 'users', otherUserId)),
-                    getDoc(doc(db, 'instructors', otherUserId))
-                ]);
-
-                console.log('👤 Users collection exists:', userDoc.exists());
-                console.log('👨‍🏫 Instructors collection exists:', instructorDoc.exists());
-
-                // Prefer instructor data if it exists, otherwise use user data
-                let userData = null;
-                let source = '';
-
-                if (instructorDoc.exists()) {
-                    userData = instructorDoc.data();
-                    source = 'instructors';
-                } else if (userDoc.exists()) {
-                    userData = userDoc.data();
-                    source = 'users';
-                }
-
-                if (userData) {
-                    console.log('📋 Using data from:', source);
-                    console.log('📋 User data retrieved:', userData);
-                    console.log('📋 userData.name =', userData.name);
-
-                    otherUser = {
-                        name: userData.name || 'Unknown User',
-                        avatar_url: userData.avatar_url || '',
-                        isInstructor: source === 'instructors'
-                    };
-                    console.log('✅ Final otherUser object:', otherUser);
-                } else {
-                    console.error('❌ User not found in either collection!');
-                }
-            } catch (error) {
-                console.error('❌ Error loading user data:', error);
-            }
-
-            console.log('🖼️ Rendering chat interface...');
+            // Render immediately using whatever's already cached — for any
+            // conversation visible in the list (the overwhelmingly common
+            // case), renderConversations already pre-fetched every
+            // participant's data before it rendered the list itself (see
+            // getCachedUser), so this is a synchronous cache hit, not a
+            // network round-trip. Previously this always re-fetched fresh
+            // from Firestore on every single click regardless, which is
+            // exactly why opening a chat you'd already opened before still
+            // took a network round-trip (or, on a slow/flaky connection,
+            // didn't finish at all) before anything appeared. Falls back to
+            // a plain placeholder only on a genuine cold cache (e.g. a deep
+            // link straight into a conversation that was never listed
+            // first) — patched in below without blocking anything.
+            let otherUser = userCache.get(otherUserId) || { name: 'Unknown User', avatar_url: '', isInstructor: false };
 
             // Mobile: switch to chat panel view
             const messagesContainer = document.querySelector('.messages-container');
@@ -1967,6 +1937,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             console.log('✅ Chat interface rendered');
             console.log('📝 Message input element:', document.getElementById('messageInput'));
 
+            // Covers the cold-cache case only (render above used the plain
+            // placeholder because getCachedUser had never been called for
+            // this user yet, e.g. a deep link straight into a conversation)
+            // — getCachedUser is a no-op network-wise when already cached,
+            // so this just resolves instantly with the same object already
+            // rendered above in the normal case. Patches the header in
+            // place rather than blocking anything on it.
+            (async () => {
+                const fresh = await getCachedUser(otherUserId);
+                if (activeConversationId !== conversationId) return; // switched away already
+                const avatarEl = chatPanel.querySelector('.chat-header-avatar');
+                const nameLinkEl = chatPanel.querySelector('.chat-header-name-link');
+                if (avatarEl && fresh.avatar_url) avatarEl.src = fresh.avatar_url;
+                if (nameLinkEl) {
+                    nameLinkEl.textContent = fresh.name;
+                    nameLinkEl.href = fresh.isInstructor ? `instructor-profile?id=${otherUserId}` : `learner-profile?uid=${otherUserId}`;
+                }
+            })();
+
+            // Load messages right away — this is the thing the user
+            // actually came here to see, so it must not wait on the
+            // blocked-user check below (which only disables the input /
+            // shows a banner, and used to run first, sequentially, adding
+            // a second network round-trip stacked on top of the profile
+            // fetch above before any message would appear).
+            loadMessages(conversationId);
+
             // Back button: return to conversations list on mobile.
             //
             // Listens on touchstart, pointerdown, AND click, guarded against
@@ -2007,24 +2004,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 chatBackBtn.addEventListener('click', goBackToConversationList);
             }
 
-            // Check if the other user is blocking new messages
-            try {
-                const blocked = await checkMessagingBlocked(otherUserId);
-                if (blocked) {
-                    document.getElementById('notAcceptingNotice').style.display = 'block';
-                    document.getElementById('messageInput').disabled = true;
-                    document.querySelector('#messageForm .send-btn').disabled = true;
-                    const micBtnEl = document.getElementById('micBtn');
-                    if (micBtnEl) micBtnEl.disabled = true;
-                    const imageBtnEl = document.getElementById('imageBtn');
-                    if (imageBtnEl) imageBtnEl.disabled = true;
+            // Check if the other user is blocking new messages — runs
+            // concurrently with the messages loaded above, not before them.
+            (async () => {
+                try {
+                    const blocked = await checkMessagingBlocked(otherUserId);
+                    if (activeConversationId !== conversationId) return; // switched away already
+                    if (blocked) {
+                        document.getElementById('notAcceptingNotice').style.display = 'block';
+                        document.getElementById('messageInput').disabled = true;
+                        document.querySelector('#messageForm .send-btn').disabled = true;
+                        const micBtnEl = document.getElementById('micBtn');
+                        if (micBtnEl) micBtnEl.disabled = true;
+                        const imageBtnEl = document.getElementById('imageBtn');
+                        if (imageBtnEl) imageBtnEl.disabled = true;
+                    }
+                } catch (e) {
+                    console.error('Error checking messaging blocked status:', e);
                 }
-            } catch (e) {
-                console.error('Error checking messaging blocked status:', e);
-            }
-
-            // Load messages
-            loadMessages(conversationId);
+            })();
 
             // Setup send message
             document.getElementById('messageForm').addEventListener('submit', (e) => {
@@ -2184,24 +2182,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         const message = { id: docSnap.id, ...docSnap.data() };
                         messages.push(message);
 
-                        // Queue up user data fetch if not already fetching
+                        // Queue up user data fetch if not already fetching — routed
+                        // through the shared getCachedUser cache (same one the
+                        // conversation list and chat header use) instead of a fresh
+                        // pair of Firestore reads every single time messages load.
+                        // A 1:1 conversation only ever has two senders, and both are
+                        // almost always already cached by the time you're in here
+                        // (the other participant from opening the conversation, and
+                        // your own account from having sent anything before), so this
+                        // is normally an instant, network-free lookup rather than the
+                        // extra round-trip — repeated on every realtime update, not
+                        // just the first load — this used to add before messages
+                        // could render at all.
                         if (!senderDataPromises.has(message.senderId)) {
                             senderDataPromises.set(message.senderId,
-                                (async () => {
-                                    try {
-                                        const [userDoc, instructorDoc] = await Promise.all([
-                                            getDoc(doc(db, 'users', message.senderId)),
-                                            getDoc(doc(db, 'instructors', message.senderId))
-                                        ]);
-                                        const data = instructorDoc.exists() ? instructorDoc.data()
-                                                   : userDoc.exists()       ? userDoc.data()
-                                                   : null;
-                                        return data ? (data.avatar_url || null) : null;
-                                    } catch (error) {
-                                        console.error('Error loading sender:', error);
-                                        return null;
-                                    }
-                                })()
+                                getCachedUser(message.senderId).then(u => u.avatar_url || null)
                             );
                         }
                     });
