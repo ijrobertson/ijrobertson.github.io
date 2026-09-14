@@ -158,12 +158,22 @@ if (self.workbox) {
   // feedback_linguabud_sw_cache_versioning memory). Fixed the constant and
   // bumped this bucket too, so every client drops whatever it has cached
   // and refetches app-shell.js/firebaseClient.js/etc. fresh immediately.
+  //
+  // Bumped again to v8 on 2026-09-14: the v7 fix above was verified correct
+  // and deployed (live sw.js matched this repo byte-for-byte), yet the user
+  // still reported quizzes/notebook broken three days later. Root cause this
+  // time wasn't a version mismatch in the code at all — js/app-shell.js
+  // gained active-update logic (visibilitychange/pageshow → registration.update(),
+  // plus a controllerchange → reload) because nothing was forcing an already-
+  // open, OS-suspended installed PWA to ever notice a new sw.js existed; see
+  // that new block's own comment for the full explanation. Bumping here too
+  // so that fix itself reaches existing installs as fast as possible.
   workbox.routing.registerRoute(
     ({ request, url }) =>
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v7",
+      cacheName: "linguabud-assets-v8",
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -196,6 +206,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v4"),
       caches.delete("linguabud-assets-v5"),
       caches.delete("linguabud-assets-v6"),
+      caches.delete("linguabud-assets-v7"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),

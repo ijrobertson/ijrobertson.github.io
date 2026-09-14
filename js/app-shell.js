@@ -486,6 +486,42 @@ function prefetchSiblingTabs(items, activeId) {
   else setTimeout(run, 1500);
 }
 
+// ── Force a stuck installed PWA to actually pick up a new deploy ────────
+// Every page registers sw.js on load, but the browser only re-checks that
+// file for changes when a *fresh navigation fetch* happens. An installed
+// iOS PWA that's merely backgrounded (not force-quit) is typically
+// suspended and resumed by the OS with no navigation and therefore no
+// update check at all — see sw.js's own history comments. That's exactly
+// how a cache-bucket-version fix (bumped and deployed correctly) can still
+// look "not fixed" to a specific user days later: their already-open app
+// instance never had a chance to notice the new sw.js existed. This runs
+// on every PWA-shell page (via this shared module) to close that gap
+// without needing an active-update-nag UI, since every past cache bump on
+// this app has always meant "everyone should just get the fresh copy":
+//   1. Whenever the app is foregrounded again (visibilitychange, or pageshow
+//      firing from a back/forward-cache restore), ask the existing
+//      registration to check the network for a new sw.js right away,
+//      instead of waiting on the browser's own update timer.
+//   2. The moment a new service worker actually takes control of this page
+//      (controllerchange — fires once, after step 1 finds and activates a
+//      newer sw.js), reload once so this tab is guaranteed to be running
+//      the fresh HTML/JS/CSS immediately rather than only on some later visit.
+if ("serviceWorker" in navigator) {
+  let reloadedForNewWorker = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadedForNewWorker) return;
+    reloadedForNewWorker = true;
+    window.location.reload();
+  });
+  const checkForUpdate = () => {
+    navigator.serviceWorker.getRegistration().then((reg) => reg && reg.update().catch(() => {}));
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") checkForUpdate();
+  });
+  window.addEventListener("pageshow", checkForUpdate);
+}
+
 if (!customElements.get("lb-app-shell")) {
   customElements.define("lb-app-shell", LbAppShell);
 }
