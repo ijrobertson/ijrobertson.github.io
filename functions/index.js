@@ -127,6 +127,14 @@ async function sendPushToUser(db, uid, data) {
   const response = await admin.messaging().sendEachForMulticast({
     tokens,
     data,
+    // Without an explicit Urgency, FCM sends web push at "normal" priority —
+    // which iOS Safari is free to defer, sometimes by minutes, especially in
+    // Low Power Mode or on a weak connection, before it wakes the service
+    // worker to run the push handler at all. Every push this app sends is a
+    // "someone is waiting on you right now" event (a chat message), so it
+    // should always ask for immediate, high-priority delivery. TTL matches
+    // FCM's own default (4 weeks) — only Urgency was missing.
+    webpush: { headers: { Urgency: 'high', TTL: '2419200' } },
   });
   console.log(`[Push] Sent to ${uid}: ${response.successCount}/${tokens.length} succeeded.`,
     response.failureCount > 0 ? response.responses.map(r => r.error?.code).filter(Boolean) : '');
