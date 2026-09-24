@@ -51,6 +51,7 @@ const state = {
     isMuted: false,
     isCameraOff: false,
     cameraFacingMode: 'user', // 'user' (front) or 'environment' (back) — mobile only
+    cameraRetrying: false,    // guards concurrent retryCamera() calls
     channelName: '',
     wasCallActive: false,
     callStartTime: null,
@@ -443,6 +444,10 @@ async function initAgora() {
     state.client.on('user-published',   handleUserPublished);
     state.client.on('user-unpublished', handleUserUnpublished);
     state.client.on('user-left',        handleUserLeft);
+    // Webcam plugged in (or re-enabled) mid-call while we have no camera — pick it up automatically
+    AgoraRTC.onCameraChanged = info => {
+        if (info.state === 'ACTIVE' && !state.localVideoTrack) retryCamera({ silent: true });
+    };
 }
 
 /**
@@ -452,20 +457,36 @@ async function initAgora() {
  * device can't be found, even when the other one works fine.
  */
 async function acquireLocalTracks() {
-    const [audioResult, videoResult] = await Promise.allSettled([
-        AgoraRTC.createMicrophoneAudioTrack(),
-        AgoraRTC.createCameraVideoTrack()
-    ]);
-    return {
-        audioTrack: audioResult.status === 'fulfilled' ? audioResult.value : null,
-        videoTrack: videoResult.status === 'fulfilled' ? videoResult.value : null,
-        audioError: audioResult.status === 'rejected' ? audioResult.reason : null,
-        videoError: videoResult.status === 'rejected' ? videoResult.reason : null,
-    };
+    // Ask for both in a single permission request first — two concurrent
+    // getUserMedia prompts can leave the camera prompt hidden/dismissed or
+    // fail outright on some browsers, so the camera silently never starts.
+    try {
+        const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        return { audioTrack, videoTrack, audioError: null, videoError: null };
+    } catch (err) {
+        console.warn('Combined mic+camera request failed, trying each device separately:', err);
+    }
+
+    // Fall back to one device at a time (sequentially, not in parallel) so a
+    // single missing/blocked device doesn't take down the other.
+    let audioTrack = null, videoTrack = null, audioError = null, videoError = null;
+    try { audioTrack = await AgoraRTC.createMicrophoneAudioTrack(); } catch (err) { audioError = err; }
+    try { videoTrack = await AgoraRTC.createCameraVideoTrack(); } catch (err) { videoError = err; }
+    return { audioTrack, videoTrack, audioError, videoError };
 }
 
 function isDeviceMissing(err) {
     return err?.code === 'DEVICE_NOT_FOUND' || err?.message?.includes('NotFoundError');
+}
+
+function isDeviceBusy(err) {
+    return err?.code === 'NOT_READABLE' || /NotReadableError|TrackStartError|Could not start video source/i.test(err?.message || '');
+}
+
+function cameraErrorMessage(err) {
+    if (isDeviceMissing(err)) return 'No camera detected';
+    if (isDeviceBusy(err))    return 'Camera is in use by another app (close Zoom/Teams/etc.)';
+    return 'Camera access blocked — check browser/OS camera permissions';
 }
 
 async function joinChannel() {
@@ -517,7 +538,10 @@ async function joinChannel() {
         // Publish whatever tracks are actually available
         await state.client.publish([audioTrack, videoTrack].filter(Boolean));
 
-        if (videoError) showToast(isDeviceMissing(videoError) ? 'No camera detected — joined audio-only' : 'Camera access blocked — joined audio-only', 'error', 6000);
+        if (videoError) {
+            console.warn('Camera unavailable at join:', videoError);
+            showToast(`${cameraErrorMessage(videoError)} — joined audio-only. Tap the camera button to retry.`, 'error', 8000);
+        }
         if (audioError) showToast(isDeviceMissing(audioError) ? 'No microphone detected — joined video-only' : 'Microphone access blocked — joined video-only', 'error', 6000);
 
         // Register presence & whiteboard relay
@@ -773,7 +797,7 @@ function toggleMute() {
 }
 
 function toggleCamera() {
-    if (!state.localVideoTrack) return;
+    if (!state.localVideoTrack) { retryCamera(); return; }
     state.isCameraOff = !state.isCameraOff;
     state.localVideoTrack.setMuted(state.isCameraOff);
     updateCameraUI();
@@ -805,11 +829,44 @@ function updateCameraUI() {
 }
 
 /** Reflect a missing/blocked camera: disable the toggle and show a placeholder in the self-view PiP */
+/**
+ * Try to (re)acquire the camera mid-call — e.g. after the user granted
+ * permission, closed another app holding the camera, or plugged in a webcam.
+ * Previously a camera that failed at join time left the button disabled
+ * for the rest of the call with no way to recover short of rejoining.
+ */
+async function retryCamera({ silent = false } = {}) {
+    const inCall = () => state.client?.connectionState === 'CONNECTED';
+    if (state.localVideoTrack || !inCall() || state.cameraRetrying) return;
+    state.cameraRetrying = true;
+    try {
+        const track = await AgoraRTC.createCameraVideoTrack();
+        if (!inCall() || state.localVideoTrack) { track.close(); return; }
+        state.localVideoTrack = track;
+        state.isCameraOff = false;
+        localStream.innerHTML = '';
+        track.play(localStream);
+        setLocalCameraUnavailable(false);
+        updateCameraUI();
+        await state.client.publish(track);
+        updateSwitchCameraAvailability();
+        updateParticipantsList();
+        showToast('Camera on', 'success');
+    } catch (err) {
+        console.warn('Camera retry failed:', err);
+        if (!silent) showToast(cameraErrorMessage(err), 'error', 6000);
+    } finally {
+        state.cameraRetrying = false;
+    }
+}
+
 function setLocalCameraUnavailable(unavailable) {
-    btnCamera.disabled = unavailable;
-    btnCamera.title = unavailable ? 'No camera detected' : 'Camera (V)';
+    // Button stays clickable while unavailable so the user can retry the camera
+    btnCamera.disabled = false;
+    btnCamera.title = unavailable ? 'Camera unavailable — click to retry (V)' : 'Camera (V)';
+    btnCamera.classList.toggle('btn-off', unavailable);
     const pipCam = $('pip-camera-btn');
-    if (pipCam) pipCam.disabled = unavailable;
+    if (pipCam) pipCam.disabled = false;
 
     localPip.classList.toggle('cam-off-overlay', unavailable);
     let placeholder = $('vc-local-nocam');
