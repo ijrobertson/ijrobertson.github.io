@@ -28,7 +28,12 @@
   --vc-panel-w:       360px;
   --vc-panel-wide-w:  480px;
   --vc-top-h:         56px;
-  --vc-ctrl-h:        80px;
+  /* Tall enough for the pill PLUS the tooltip that pops up above each
+     button — #vc-controls scrolls horizontally (for narrow phones), and
+     CSS forces overflow-y to clip along with overflow-x on the same
+     element, so anything poking out the top gets cut off unless it
+     actually fits inside this height. See align-items: flex-end below. */
+  --vc-ctrl-h:        120px;
   --vc-radius:        14px;
   --vc-radius-sm:     8px;
   --vc-shadow:        0 8px 32px rgba(0,0,0,0.5);
@@ -912,7 +917,11 @@ body.in-call {
   z-index: 50;
   height: var(--vc-ctrl-h);
   display: flex;
-  align-items: center;
+  /* flex-end (not center) — keeps the pill anchored to the bottom edge,
+     same as before, while the extra height added to --vc-ctrl-h opens up
+     room ABOVE the buttons for their hover tooltips instead of splitting
+     it uselessly above and below. */
+  align-items: flex-end;
   /* flex-start (not center) + auto margins on .vc-ctrl-pill below — a
      centered flex item that's wider than its container clips equally off
      both edges with no way to scroll to the clipped part in most browsers.
@@ -923,7 +932,9 @@ body.in-call {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0 1rem;
+  /* Bottom padding keeps the pill's own gap from the screen edge the same
+     as when it used to sit vertically centered in a shorter bar. */
+  padding: 0 1rem 0.4rem;
   background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
   flex-shrink: 0;
   transition: opacity 0.4s ease, transform 0.4s ease;
@@ -1795,7 +1806,8 @@ body.in-call {
   :root {
     --ctrl-btn-size: 44px;
     --ctrl-btn-lg: 50px;
-    --vc-ctrl-h: 74px;
+    /* Same tooltip-headroom reasoning as the desktop value in :root above. */
+    --vc-ctrl-h: 112px;
   }
 
   /* ── Bottom-sheet panels on mobile ──────────────────────────
