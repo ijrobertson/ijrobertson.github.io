@@ -628,14 +628,24 @@ async function leaveChannel() {
 // AGORA EVENT HANDLERS
 // ════════════════════════════════════════════════════════════
 
-/** True while `uid` belongs to the remote peer's dedicated screen-share connection, not a real participant. */
-function isRemoteScreenUid(uid) {
-    return state.remoteScreenUid != null && String(uid) === String(state.remoteScreenUid);
+/**
+ * True for the uid of ANY screen-share sub-connection — ours or the remote
+ * peer's — never a real participant. Matched by the `-screen` suffix used
+ * when requesting its token, so it's known the instant its join/publish/leave
+ * events arrive, instead of waiting on the (async, peer-only) relay message
+ * that used to be the sole signal. Without this, our OWN screen connection
+ * joining the channel looked, to our own main client, exactly like a second
+ * remote participant publishing — briefly showing a phantom "Guest" in the
+ * remote view/participant count while sharing, and a bogus "left the call"
+ * toast when sharing stopped.
+ */
+function isScreenConnectionUid(uid) {
+    return String(uid).endsWith('-screen');
 }
 
-/** Count of remote uids that represent an actual participant (excludes the screen-share connection). */
+/** Count of remote uids that represent an actual participant (excludes screen-share connections). */
 function realRemoteUidCount() {
-    return Object.keys(state.remoteUsers).filter(uid => !isRemoteScreenUid(uid)).length;
+    return Object.keys(state.remoteUsers).filter(uid => !isScreenConnectionUid(uid)).length;
 }
 
 /**
@@ -653,7 +663,7 @@ function renderRemoteMainView() {
     remoteContainer.classList.toggle('vc-screensharing', screenActive);
 
     const faceUid = Object.keys(state.remoteUsers).find(uid =>
-        !isRemoteScreenUid(uid) && state.remoteUsers[uid].videoTrack
+        !isScreenConnectionUid(uid) && state.remoteUsers[uid].videoTrack
     );
 
     if (screenActive) {
@@ -681,9 +691,9 @@ async function handleUserPublished(user, mediaType) {
     state.remoteUsers[user.uid] = user;
     await state.client.subscribe(user, mediaType);
 
-    if (isRemoteScreenUid(user.uid)) {
-        // Secondary connection the remote peer opened just to publish their
-        // screen — not a real participant, just re-render the main view.
+    if (isScreenConnectionUid(user.uid)) {
+        // Secondary connection opened just to publish a screen (ours or the
+        // remote peer's) — not a real participant, just re-render the main view.
         if (mediaType === 'video') renderRemoteMainView();
         return;
     }
@@ -707,13 +717,13 @@ async function handleUserPublished(user, mediaType) {
 function handleUserUnpublished(user, mediaType) {
     if (mediaType !== 'video') return;
 
-    if (isRemoteScreenUid(user.uid)) {
+    if (isScreenConnectionUid(user.uid)) {
         renderRemoteMainView();
         return;
     }
 
     // If this was our main remote user, show waiting overlay
-    if (!Object.values(state.remoteUsers).some(u => u.uid !== user.uid && !isRemoteScreenUid(u.uid) && u.videoTrack)) {
+    if (!Object.values(state.remoteUsers).some(u => u.uid !== user.uid && !isScreenConnectionUid(u.uid) && u.videoTrack)) {
         vcWaiting.style.display = 'flex';
         remoteName.textContent = '';
     }
@@ -721,10 +731,15 @@ function handleUserUnpublished(user, mediaType) {
 }
 
 function handleUserLeft(user) {
-    if (isRemoteScreenUid(user.uid)) {
-        // Their screen-share connection closed — not a real participant leaving.
+    if (isScreenConnectionUid(user.uid)) {
+        // A screen-share connection closed (ours or the peer's) — not a real
+        // participant leaving. Only clear remoteScreenUid if it was the one
+        // we were tracking, so our own connection leaving can't clobber a
+        // still-active peer screen share (or vice versa).
         delete state.remoteUsers[user.uid];
-        state.remoteScreenUid = null;
+        if (String(user.uid) === String(state.remoteScreenUid)) {
+            state.remoteScreenUid = null;
+        }
         renderRemoteMainView();
         return;
     }
@@ -994,8 +1009,8 @@ function updateParticipantsList() {
     // Local user
     list.appendChild(createParticipantItem(state.currentUserName, true, state.isMuted, state.isCameraOff));
 
-    // Remote users (excluding the peer's screen-share connection, if any)
-    Object.values(state.remoteUsers).filter(user => !isRemoteScreenUid(user.uid)).forEach(user => {
+    // Remote users (excluding any screen-share connections, ours or the peer's)
+    Object.values(state.remoteUsers).filter(user => !isScreenConnectionUid(user.uid)).forEach(user => {
         const name = state.remoteUserNames[user.uid] || 'Guest';
         list.appendChild(createParticipantItem(name, false, false, false));
     });
