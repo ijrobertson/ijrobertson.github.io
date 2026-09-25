@@ -118,6 +118,12 @@ exports.sendMessageNotification = onDocumentCreated(
       const message = snap.data();
       const conversationId = event.params.conversationId;
 
+      // Multi-photo sends: only the first image of a batch triggers an email
+      if (message.batchIndex > 0) {
+        console.log('Skipping email for non-first image in a multi-photo send');
+        return null;
+      }
+
       // Get conversation details to find the recipient
       const conversationRef = admin.firestore().collection('conversations').doc(conversationId);
       const conversationSnap = await conversationRef.get();

@@ -1919,7 +1919,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <button type="button" class="mic-btn" id="micBtn" title="Send audio message">
                             <i class="fas fa-microphone"></i>
                         </button>
-                        <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
+                        <input type="file" id="imageFileInput" accept="image/*" multiple style="display:none;">
                         <button type="button" class="image-btn" id="imageBtn" title="Send a photo">
                             <i class="fas fa-image"></i>
                         </button>
@@ -2124,9 +2124,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 imageFileInput.click();
             });
             imageFileInput.addEventListener('change', () => {
-                const file = imageFileInput.files && imageFileInput.files[0];
+                const files = Array.from(imageFileInput.files || []);
                 imageFileInput.value = ''; // reset so choosing the same file again still fires 'change'
-                if (file) sendImageMessage(conversationId, file);
+                if (files.length) sendImageMessages(conversationId, files);
             });
 
             // Event delegation for audio player controls (persists across message re-renders)
@@ -2933,56 +2933,98 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // matches storage.rules' cap for this path
 
-        async function sendImageMessage(conversationId, file) {
-            if (!file.type.startsWith('image/')) {
-                alert('Please choose an image file.');
-                return;
+        const MAX_IMAGES_PER_SEND = 20; // same cap WhatsApp uses per selection
+
+        // Sends one or more picked images, each as its own image message.
+        // Uploads run sequentially (not in parallel) so the messages land in
+        // the order they were picked, and so each unreadCount read-modify-write
+        // below can't race another one from the same batch and lose increments.
+        async function sendImageMessages(conversationId, pickedFiles) {
+            let files = pickedFiles;
+            if (files.length > MAX_IMAGES_PER_SEND) {
+                alert(`You can send up to ${MAX_IMAGES_PER_SEND} photos at a time. Only the first ${MAX_IMAGES_PER_SEND} will be sent.`);
+                files = files.slice(0, MAX_IMAGES_PER_SEND);
             }
-            if (file.size > MAX_IMAGE_BYTES) {
-                alert('That image is too large (max 10MB). Please choose a smaller one.');
-                return;
+
+            const notImages = files.filter(f => !f.type.startsWith('image/'));
+            const tooLarge = files.filter(f => f.type.startsWith('image/') && f.size > MAX_IMAGE_BYTES);
+            files = files.filter(f => f.type.startsWith('image/') && f.size <= MAX_IMAGE_BYTES);
+            if (notImages.length || tooLarge.length) {
+                const problems = [];
+                if (notImages.length) problems.push(notImages.length === 1 ? '1 file is not an image' : `${notImages.length} files are not images`);
+                if (tooLarge.length) problems.push(tooLarge.length === 1 ? '1 image is too large (max 10MB)' : `${tooLarge.length} images are too large (max 10MB each)`);
+                if (pickedFiles.length === 1) {
+                    // Single pick keeps the original one-photo wording
+                    alert(notImages.length ? 'Please choose an image file.' : 'That image is too large (max 10MB). Please choose a smaller one.');
+                } else {
+                    alert(`Skipped: ${problems.join(' and ')}.`);
+                }
             }
+            if (!files.length) return;
 
             const sendBtn = document.querySelector('#messageForm .send-btn');
+            let failed = 0;
             try {
-                if (sendBtn) { sendBtn.disabled = true; sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
-
-                const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-                const storageRef = ref(storage, `conversations/${conversationId}/images/image_${Date.now()}.${ext}`);
-
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                await new Promise((resolve, reject) => uploadTask.on('state_changed', null, reject, resolve));
-                const downloadURL = await getDownloadURL(storageRef);
-
-                const convDoc = await getDoc(doc(db, 'conversations', conversationId));
-                const convData = convDoc.data();
-                const otherParticipants = (convData.participants || []).filter(id => id !== currentUser.uid);
-
-                await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
-                    senderId: currentUser.uid,
-                    type: 'image',
-                    imageUrl: downloadURL,
-                    // Client timestamp, not serverTimestamp() — see the comment on
-                    // the text-message send above for why.
-                    timestamp: new Date(),
-                    read: false
-                });
-
-                const newUnreadCount = convData.unreadCount || {};
-                otherParticipants.forEach(id => { newUnreadCount[id] = (newUnreadCount[id] || 0) + 1; });
-
-                await setDoc(doc(db, 'conversations', conversationId), {
-                    lastMessage: '📷 Photo',
-                    lastMessageTime: new Date(),
-                    unreadCount: newUnreadCount
-                }, { merge: true });
-
-            } catch (err) {
-                console.error('Error sending image message:', err);
-                alert('Failed to send image. Please try again.');
+                if (sendBtn) sendBtn.disabled = true;
+                for (let i = 0; i < files.length; i++) {
+                    if (sendBtn) {
+                        sendBtn.innerHTML = files.length > 1
+                            ? `<i class="fas fa-spinner fa-spin"></i> ${i + 1}/${files.length}`
+                            : '<i class="fas fa-spinner fa-spin"></i>';
+                    }
+                    try {
+                        await uploadImageMessage(conversationId, files[i], i);
+                    } catch (err) {
+                        console.error('Error sending image message:', err);
+                        failed++;
+                    }
+                }
             } finally {
                 if (sendBtn) { sendBtn.disabled = false; sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i><span class="btn-text"> Send</span>'; }
             }
+
+            if (failed) {
+                alert(files.length === 1
+                    ? 'Failed to send image. Please try again.'
+                    : `${failed} of ${files.length} photos failed to send. Please try those again.`);
+            }
+        }
+
+        // Uploads a single (already-validated) image and posts it as a message.
+        // batchIndex > 0 marks the 2nd+ image of a multi-photo send so the
+        // sendMessageNotification function emails once per batch, not per photo.
+        async function uploadImageMessage(conversationId, file, batchIndex) {
+            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            // batchIndex in the name keeps back-to-back uploads from ever sharing a path
+            const storageRef = ref(storage, `conversations/${conversationId}/images/image_${Date.now()}_${batchIndex}.${ext}`);
+
+            const uploadTask = uploadBytesResumable(storageRef, file);
+            await new Promise((resolve, reject) => uploadTask.on('state_changed', null, reject, resolve));
+            const downloadURL = await getDownloadURL(storageRef);
+
+            const convDoc = await getDoc(doc(db, 'conversations', conversationId));
+            const convData = convDoc.data();
+            const otherParticipants = (convData.participants || []).filter(id => id !== currentUser.uid);
+
+            await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
+                senderId: currentUser.uid,
+                type: 'image',
+                imageUrl: downloadURL,
+                // Client timestamp, not serverTimestamp() — see the comment on
+                // the text-message send above for why.
+                timestamp: new Date(),
+                read: false,
+                ...(batchIndex > 0 ? { batchIndex } : {})
+            });
+
+            const newUnreadCount = convData.unreadCount || {};
+            otherParticipants.forEach(id => { newUnreadCount[id] = (newUnreadCount[id] || 0) + 1; });
+
+            await setDoc(doc(db, 'conversations', conversationId), {
+                lastMessage: '📷 Photo',
+                lastMessageTime: new Date(),
+                unreadCount: newUnreadCount
+            }, { merge: true });
         }
 
         // Lightbox for viewing a shared image full-size — one element reused
