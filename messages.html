@@ -2964,6 +2964,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             const sendBtn = document.querySelector('#messageForm .send-btn');
             let failed = 0;
+            let sent = 0;
             try {
                 if (sendBtn) sendBtn.disabled = true;
                 for (let i = 0; i < files.length; i++) {
@@ -2973,7 +2974,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             : '<i class="fas fa-spinner fa-spin"></i>';
                     }
                     try {
-                        await uploadImageMessage(conversationId, files[i], i);
+                        // Index by successful sends (not loop position) so the
+                        // first photo that actually lands is the one that emails,
+                        // even if an earlier upload in the batch failed.
+                        await uploadImageMessage(conversationId, files[i], sent);
+                        sent++;
                     } catch (err) {
                         console.error('Error sending image message:', err);
                         failed++;
@@ -2995,8 +3000,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // sendMessageNotification function emails once per batch, not per photo.
         async function uploadImageMessage(conversationId, file, batchIndex) {
             const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-            // batchIndex in the name keeps back-to-back uploads from ever sharing a path
-            const storageRef = ref(storage, `conversations/${conversationId}/images/image_${Date.now()}_${batchIndex}.${ext}`);
+            // Random suffix keeps back-to-back uploads from ever sharing a path
+            const storageRef = ref(storage, `conversations/${conversationId}/images/image_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`);
 
             const uploadTask = uploadBytesResumable(storageRef, file);
             await new Promise((resolve, reject) => uploadTask.on('state_changed', null, reject, resolve));
