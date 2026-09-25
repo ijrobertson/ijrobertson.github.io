@@ -215,6 +215,13 @@ exports.sendMessageNotification = onDocumentCreated(
       const message = snap.data();
       const conversationId = event.params.conversationId;
 
+      // Multi-photo sends: only the first image of a batch notifies (push and
+      // email). The client tags the 2nd+ images with batchIndex > 0.
+      if (message.batchIndex > 0) {
+        console.log('Skipping notification for non-first image in a multi-photo send');
+        return null;
+      }
+
       // Get conversation details to find the recipient
       const conversationRef = admin.firestore().collection('conversations').doc(conversationId);
       const conversationSnap = await conversationRef.get();
@@ -263,10 +270,15 @@ exports.sendMessageNotification = onDocumentCreated(
       const senderName = conversation.participantDetails?.[message.senderId]?.name || 'A Lingua Bud user';
 
       // Truncate message for preview (max 100 characters) — shared by both
-      // the email body and the push notification body below.
-      const messagePreview = message.text.length > 100
-        ? message.text.substring(0, 100) + '...'
-        : message.text;
+      // the email body and the push notification body below. Non-text message
+      // types (audio, image) may not set `text`, so message.text.length would
+      // throw and silently kill the notification for every one of those.
+      const rawPreview = message.type === 'image' ? (message.text || '📷 Photo')
+                        : message.type === 'audio' ? '🎤 Audio message'
+                        : (message.text || '');
+      const messagePreview = rawPreview.length > 100
+        ? rawPreview.substring(0, 100) + '...'
+        : rawPreview;
 
       // ── Push notification ─────────────────────────────────────────────────
       // Independent of the email branch below: gated on its own preference
