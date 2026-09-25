@@ -440,6 +440,86 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             align-items: flex-end;
         }
 
+        /* Photo tray: picked photos wait here so users can keep adding more
+           (one at a time or several at once) and send them as one batch. */
+        .photo-tray {
+            margin-bottom: 0.75rem;
+        }
+        .photo-tray-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #113448;
+            font-weight: 600;
+        }
+        .photo-tray-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .photo-tray-cancel,
+        .photo-tray-send {
+            border: none;
+            border-radius: 18px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .photo-tray-cancel {
+            background: #eef3f5;
+            color: #113448;
+        }
+        .photo-tray-send {
+            background: #20bcba;
+            color: white;
+        }
+        .photo-tray-send:hover { background: #0b6664; }
+        .photo-tray-send:disabled { opacity: 0.6; cursor: default; }
+        .photo-tray-thumbs {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.25rem;
+        }
+        .photo-tray-thumb,
+        .photo-tray-add {
+            position: relative;
+            flex: 0 0 64px;
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+        }
+        .photo-tray-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .photo-tray-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(17, 52, 72, 0.8);
+            color: white;
+            font-size: 0.7rem;
+            line-height: 20px;
+            padding: 0;
+            cursor: pointer;
+        }
+        .photo-tray-add {
+            border: 2px dashed #20bcba;
+            background: #f0fafa;
+            color: #0b6664;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
         .message-input {
             flex: 1;
             padding: 0.75rem 1rem;
@@ -984,10 +1064,51 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             z-index: 3000;
         }
 
+        .image-lightbox {
+            touch-action: pan-y pinch-zoom; /* horizontal swipes are ours (gallery nav) */
+            user-select: none;
+        }
+
         .image-lightbox-img {
             max-width: 92vw;
             max-height: 92vh;
             border-radius: 4px;
+            transition: transform 0.2s ease;
+        }
+
+        .image-lightbox-img.is-dragging {
+            transition: none;
+        }
+
+        .image-lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        .image-lightbox-nav:hover { background: rgba(255,255,255,0.3); }
+        .image-lightbox-prev { left: 1rem; }
+        .image-lightbox-next { right: 1rem; }
+
+        .image-lightbox-counter {
+            position: absolute;
+            top: 1.2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 0.95rem;
+        }
+
+        /* Touch devices swipe instead; arrows would just cover the photo */
+        @media (hover: none) {
+            .image-lightbox-nav { display: none !important; }
         }
 
         .image-lightbox-close {
@@ -1511,6 +1632,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let recognitionEndPromise = Promise.resolve();
         let recordingLanguage = 'en-US'; // BCP-47 tag for SpeechRecognition
 
+        // Photo tray: photos staged for the open conversation, [{ file, url }]
+        // where url is a blob: preview. Reset whenever the chat UI is re-rendered.
+        let stagedPhotos = [];
+
         // Supported languages: BCP-47 tag → { label, myMemory ISO code }
         const AUDIO_LANGUAGES = {
             'en-US': { label: 'EN', name: 'English',    myMemory: 'en' },
@@ -1905,6 +2030,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             </button>
                         </div>
                     </div>
+                    <div class="photo-tray" id="photoTray" style="display:none;">
+                        <div class="photo-tray-header">
+                            <span id="photoTrayCount"></span>
+                            <div class="photo-tray-actions">
+                                <button type="button" class="photo-tray-cancel" id="photoTrayCancel">Cancel</button>
+                                <button type="button" class="photo-tray-send" id="photoTraySend"><i class="fas fa-paper-plane"></i> Send</button>
+                            </div>
+                        </div>
+                        <div class="photo-tray-thumbs" id="photoTrayThumbs"></div>
+                    </div>
                     <form class="message-input-form" id="messageForm">
                         <select class="lang-select" id="langSelect" title="Language you will speak in the audio message">
                             <option value="en-US">EN</option>
@@ -2027,6 +2162,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // Setup send message
             document.getElementById('messageForm').addEventListener('submit', (e) => {
                 e.preventDefault();
+                sendStagedPhotos(conversationId);
                 sendMessage(conversationId);
             });
 
@@ -2039,6 +2175,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             messageInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
+                    sendStagedPhotos(conversationId);
                     sendMessage(conversationId);
                 }
             });
@@ -2119,15 +2256,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
 
             // Setup image attach button — click proxies to the hidden native file picker.
+            // Picked photos go into the photo tray rather than sending straight
+            // away, so users whose picker only allows one pick at a time (or who
+            // didn't know to Ctrl/long-press) can keep adding before sending.
+            clearPhotoTray(); // tray DOM was just re-rendered; drop any photos staged for a previous chat
             const imageFileInput = document.getElementById('imageFileInput');
-            document.getElementById('imageBtn').addEventListener('click', () => {
+            const openImagePicker = () => {
+                if (stagedPhotos.length >= MAX_IMAGES_PER_SEND) {
+                    alert(`You can send up to ${MAX_IMAGES_PER_SEND} photos at a time.`);
+                    return;
+                }
                 imageFileInput.click();
-            });
+            };
+            document.getElementById('imageBtn').addEventListener('click', openImagePicker);
             imageFileInput.addEventListener('change', () => {
                 const files = Array.from(imageFileInput.files || []);
                 imageFileInput.value = ''; // reset so choosing the same file again still fires 'change'
-                if (files.length) sendImageMessages(conversationId, files);
+                if (files.length) addPhotosToTray(files);
             });
+            document.getElementById('photoTrayThumbs').addEventListener('click', (e) => {
+                if (e.target.closest('.photo-tray-add')) { openImagePicker(); return; }
+                const removeBtn = e.target.closest('.photo-tray-remove');
+                if (removeBtn) removePhotoFromTray(Number(removeBtn.dataset.index));
+            });
+            document.getElementById('photoTrayCancel').addEventListener('click', clearPhotoTray);
+            document.getElementById('photoTraySend').addEventListener('click', () => sendStagedPhotos(conversationId));
 
             // Event delegation for audio player controls (persists across message re-renders)
             const messagesAreaEl = document.getElementById('messagesArea');
@@ -2935,15 +3088,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         const MAX_IMAGES_PER_SEND = 20; // same cap WhatsApp uses per selection
 
-        // Sends one or more picked images, each as its own image message.
-        // Uploads run sequentially (not in parallel) so the messages land in
-        // the order they were picked, and so each unreadCount read-modify-write
-        // below can't race another one from the same batch and lose increments.
-        async function sendImageMessages(conversationId, pickedFiles) {
+        // Drops non-images and >10MB files (with one summary alert) and trims
+        // to `limit`. Used both when staging into the photo tray and when sending.
+        function filterSendableImages(pickedFiles, limit) {
             let files = pickedFiles;
-            if (files.length > MAX_IMAGES_PER_SEND) {
-                alert(`You can send up to ${MAX_IMAGES_PER_SEND} photos at a time. Only the first ${MAX_IMAGES_PER_SEND} will be sent.`);
-                files = files.slice(0, MAX_IMAGES_PER_SEND);
+            if (files.length > limit) {
+                alert(`You can send up to ${MAX_IMAGES_PER_SEND} photos at a time. Only the first ${limit} ${limit === 1 ? 'was' : 'were'} added.`);
+                files = files.slice(0, limit);
             }
 
             const notImages = files.filter(f => !f.type.startsWith('image/'));
@@ -2960,6 +3111,64 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     alert(`Skipped: ${problems.join(' and ')}.`);
                 }
             }
+            return files;
+        }
+
+        // ===== PHOTO TRAY =====
+        // (state: stagedPhotos, declared with the other page state above)
+
+        function addPhotosToTray(pickedFiles) {
+            const files = filterSendableImages(pickedFiles, MAX_IMAGES_PER_SEND - stagedPhotos.length);
+            files.forEach(file => stagedPhotos.push({ file, url: URL.createObjectURL(file) }));
+            renderPhotoTray();
+        }
+
+        function removePhotoFromTray(index) {
+            const [removed] = stagedPhotos.splice(index, 1);
+            if (removed) URL.revokeObjectURL(removed.url);
+            renderPhotoTray();
+        }
+
+        function clearPhotoTray() {
+            stagedPhotos.forEach(p => URL.revokeObjectURL(p.url));
+            stagedPhotos = [];
+            renderPhotoTray();
+        }
+
+        function renderPhotoTray() {
+            const tray = document.getElementById('photoTray');
+            if (!tray) return;
+            if (!stagedPhotos.length) { tray.style.display = 'none'; return; }
+            tray.style.display = 'block';
+            const n = stagedPhotos.length;
+            document.getElementById('photoTrayCount').textContent = `${n} photo${n === 1 ? '' : 's'} selected`;
+            document.getElementById('photoTraySend').innerHTML = `<i class="fas fa-paper-plane"></i> Send${n > 1 ? ' ' + n : ''}`;
+            document.getElementById('photoTrayThumbs').innerHTML =
+                stagedPhotos.map((p, i) => `
+                    <div class="photo-tray-thumb">
+                        <img src="${p.url}" alt="Selected photo ${i + 1}">
+                        <button type="button" class="photo-tray-remove" data-index="${i}" aria-label="Remove photo"><i class="fas fa-times"></i></button>
+                    </div>`).join('') +
+                (n < MAX_IMAGES_PER_SEND
+                    ? '<button type="button" class="photo-tray-add" aria-label="Add more photos"><i class="fas fa-plus"></i></button>'
+                    : '');
+        }
+
+        // Sends everything in the tray as one batch and empties it. No-op when
+        // the tray is empty, so it's safe to call from the normal Send path.
+        function sendStagedPhotos(conversationId) {
+            if (!stagedPhotos.length) return;
+            const files = stagedPhotos.map(p => p.file);
+            clearPhotoTray();
+            sendImageMessages(conversationId, files);
+        }
+
+        // Sends one or more picked images, each as its own image message.
+        // Uploads run sequentially (not in parallel) so the messages land in
+        // the order they were picked, and so each unreadCount read-modify-write
+        // below can't race another one from the same batch and lose increments.
+        async function sendImageMessages(conversationId, pickedFiles) {
+            const files = filterSendableImages(pickedFiles, MAX_IMAGES_PER_SEND);
             if (!files.length) return;
 
             const sendBtn = document.querySelector('#messageForm .send-btn');
@@ -3036,21 +3245,79 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // for whichever image was last tapped, created lazily on first use.
         let imageLightboxEl = null;
 
-        function openImageLightbox(src) {
+        // Gallery state: every photo in the open chat at the time the lightbox
+        // was opened, so users can swipe/arrow between them without closing it.
+        let lightboxImages = [];
+        let lightboxIndex = 0;
+
+        function openImageLightbox(src, images = [src], index = 0) {
             if (!imageLightboxEl) {
                 imageLightboxEl = document.createElement('div');
                 imageLightboxEl.className = 'image-lightbox';
                 imageLightboxEl.innerHTML = `
+                    <span class="image-lightbox-counter"></span>
                     <button type="button" class="image-lightbox-close" aria-label="Close"><i class="fas fa-times"></i></button>
-                    <img class="image-lightbox-img" alt="Shared image">
+                    <button type="button" class="image-lightbox-nav image-lightbox-prev" aria-label="Previous photo"><i class="fas fa-chevron-left"></i></button>
+                    <img class="image-lightbox-img" alt="Shared image" draggable="false">
+                    <button type="button" class="image-lightbox-nav image-lightbox-next" aria-label="Next photo"><i class="fas fa-chevron-right"></i></button>
                 `;
                 document.body.appendChild(imageLightboxEl);
                 imageLightboxEl.addEventListener('click', (e) => {
+                    if (e.target.closest('.image-lightbox-prev')) { showLightboxImage(lightboxIndex - 1); return; }
+                    if (e.target.closest('.image-lightbox-next')) { showLightboxImage(lightboxIndex + 1); return; }
                     if (e.target === imageLightboxEl || e.target.closest('.image-lightbox-close')) closeImageLightbox();
                 });
+
+                // Swipe left/right to move between photos. The image follows the
+                // finger while dragging, then either advances or snaps back.
+                const imgEl = imageLightboxEl.querySelector('.image-lightbox-img');
+                let startX = 0, startY = 0, dragging = false;
+                imageLightboxEl.addEventListener('touchstart', (e) => {
+                    if (e.touches.length !== 1 || lightboxImages.length < 2) { dragging = false; return; }
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    dragging = true;
+                    imgEl.classList.add('is-dragging');
+                }, { passive: true });
+                imageLightboxEl.addEventListener('touchmove', (e) => {
+                    if (!dragging) return;
+                    if (e.touches.length !== 1) { dragging = false; imgEl.classList.remove('is-dragging'); imgEl.style.transform = ''; return; }
+                    const dx = e.touches[0].clientX - startX;
+                    const dy = e.touches[0].clientY - startY;
+                    if (Math.abs(dx) > Math.abs(dy)) imgEl.style.transform = `translateX(${dx}px)`;
+                }, { passive: true });
+                imageLightboxEl.addEventListener('touchend', (e) => {
+                    if (!dragging) return;
+                    dragging = false;
+                    imgEl.classList.remove('is-dragging');
+                    imgEl.style.transform = '';
+                    const dx = e.changedTouches[0].clientX - startX;
+                    const dy = e.changedTouches[0].clientY - startY;
+                    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                        showLightboxImage(lightboxIndex + (dx < 0 ? 1 : -1));
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (!imageLightboxEl || imageLightboxEl.style.display === 'none') return;
+                    if (e.key === 'ArrowLeft') showLightboxImage(lightboxIndex - 1);
+                    else if (e.key === 'ArrowRight') showLightboxImage(lightboxIndex + 1);
+                    else if (e.key === 'Escape') closeImageLightbox();
+                });
             }
-            imageLightboxEl.querySelector('.image-lightbox-img').src = src;
+            lightboxImages = images.length ? images : [src];
             imageLightboxEl.style.display = 'flex';
+            showLightboxImage(index);
+        }
+
+        function showLightboxImage(index) {
+            if (index < 0 || index >= lightboxImages.length) return; // no wrap-around, like WhatsApp
+            lightboxIndex = index;
+            imageLightboxEl.querySelector('.image-lightbox-img').src = lightboxImages[index];
+            const multiple = lightboxImages.length > 1;
+            imageLightboxEl.querySelector('.image-lightbox-counter').textContent = multiple ? `${index + 1} / ${lightboxImages.length}` : '';
+            imageLightboxEl.querySelector('.image-lightbox-prev').style.display = multiple && index > 0 ? '' : 'none';
+            imageLightboxEl.querySelector('.image-lightbox-next').style.display = multiple && index < lightboxImages.length - 1 ? '' : 'none';
         }
 
         function closeImageLightbox() {
@@ -3059,7 +3326,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function handleImageClick(e) {
             const imageEl = e.target.closest('.message-image');
-            if (imageEl) openImageLightbox(imageEl.src);
+            if (!imageEl) return;
+            // Gallery = every photo in this chat, in thread order
+            const allImages = Array.from(document.querySelectorAll('#messagesArea .message-image'));
+            const index = Math.max(0, allImages.indexOf(imageEl));
+            openImageLightbox(imageEl.src, allImages.map(img => img.src), index);
         }
 
         function formatTime(timestamp) {
