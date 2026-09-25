@@ -448,6 +448,9 @@ async function initAgora() {
     AgoraRTC.onCameraChanged = info => {
         if (info.state === 'ACTIVE' && !state.localVideoTrack) retryCamera({ silent: true });
     };
+    // Browser blocked remote audio from auto-starting (common on Safari/iOS) —
+    // without this the other person is just silently inaudible.
+    AgoraRTC.onAutoplayFailed = () => showAudioUnlockBanner();
 }
 
 /**
@@ -582,6 +585,8 @@ async function leaveChannel() {
     state.callStartTime = null;
     callDuration.textContent = '00:00';
 
+    hideAudioUnlockBanner();
+
     // Stop local tracks
     if (state.localScreenTrack) { state.localScreenTrack.close(); state.localScreenTrack = null; }
     if (state.screenClient) { state.screenClient.leave().catch(() => {}); state.screenClient = null; }
@@ -711,9 +716,72 @@ function renderRemoteMainView() {
     }
 }
 
+const SUBSCRIBE_ATTEMPTS = 3;
+
+function isStillPublishing(user, mediaType) {
+    const present = state.client?.remoteUsers.some(u => u.uid === user.uid);
+    return present && (mediaType === 'audio' ? user.hasAudio : user.hasVideo);
+}
+
+/**
+ * Subscribe with retries. A single failed subscribe used to be unhandled,
+ * leaving that person's audio/video silently missing for the whole call.
+ */
+async function subscribeWithRetry(user, mediaType) {
+    for (let attempt = 1; attempt <= SUBSCRIBE_ATTEMPTS; attempt++) {
+        try {
+            await state.client.subscribe(user, mediaType);
+            return true;
+        } catch (err) {
+            console.warn(`Subscribe ${mediaType} for ${user.uid} failed (attempt ${attempt}/${SUBSCRIBE_ATTEMPTS}):`, err);
+            // They left or stopped publishing meanwhile — nothing to retry
+            if (!isStillPublishing(user, mediaType)) return false;
+            if (attempt < SUBSCRIBE_ATTEMPTS) await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
+    }
+    return false;
+}
+
+function playRemoteAudio(user) {
+    try {
+        user.audioTrack?.play();
+    } catch (err) {
+        console.warn('Remote audio play error:', err);
+        showAudioUnlockBanner();
+    }
+}
+
+/** Prompt for a tap so the browser lets remote audio play; any tap anywhere unlocks it. */
+function showAudioUnlockBanner() {
+    if ($('vc-audio-unlock')) return;
+    const btn = document.createElement('button');
+    btn.id = 'vc-audio-unlock';
+    btn.className = 'vc-audio-unlock';
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Tap to enable sound';
+    document.body.appendChild(btn);
+    document.addEventListener('pointerdown', unlockRemoteAudio, { once: true, capture: true });
+}
+
+function hideAudioUnlockBanner() {
+    document.removeEventListener('pointerdown', unlockRemoteAudio, { capture: true });
+    $('vc-audio-unlock')?.remove();
+}
+
+function unlockRemoteAudio() {
+    // Runs inside a user gesture, so the browser now allows playback
+    Object.values(state.remoteUsers).forEach(u => playRemoteAudio(u));
+    hideAudioUnlockBanner();
+}
+
 async function handleUserPublished(user, mediaType) {
     state.remoteUsers[user.uid] = user;
-    await state.client.subscribe(user, mediaType);
+    if (!await subscribeWithRetry(user, mediaType)) {
+        if (!isScreenConnectionUid(user.uid) && isStillPublishing(user, mediaType)) {
+            const who = state.remoteUserNames[user.uid] || 'the other participant';
+            showToast(`Couldn't receive ${who}'s ${mediaType === 'audio' ? 'audio' : 'video'} — try leaving and rejoining`, 'error', 8000);
+        }
+        return;
+    }
 
     if (isScreenConnectionUid(user.uid)) {
         // Secondary connection opened just to publish a screen (ours or the
@@ -732,7 +800,7 @@ async function handleUserPublished(user, mediaType) {
         renderRemoteMainView();
     }
     if (mediaType === 'audio') {
-        user.audioTrack.play();
+        playRemoteAudio(user);
     }
 
     updateParticipantsList();
