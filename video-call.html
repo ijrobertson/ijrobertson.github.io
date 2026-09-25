@@ -20,7 +20,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Favicon -->
     <link rel="icon" href="images/NuevoFavicon.png">
     <!-- Video Call Styles -->
-    <link rel="stylesheet" href="video-call.css?v=20260925">
+    <link rel="stylesheet" href="video-call.css?v=20260925b">
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -92,6 +92,47 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <button id="copyRoomBtn" class="pj-copy-btn" title="Copy room code">
                         <i class="fas fa-copy"></i>
                     </button>
+                </div>
+            </div>
+
+            <!-- Camera / mic / speaker check -->
+            <div class="pj-devices">
+                <div class="pj-preview">
+                    <div id="pj-preview-video" class="pj-preview-video"></div>
+                    <div id="pj-preview-placeholder" class="pj-preview-placeholder">
+                        <i class="fas fa-video-slash"></i>
+                        <span id="pj-preview-msg">Camera preview</span>
+                        <button id="pj-check-btn" type="button" class="pj-check-btn hidden">
+                            <i class="fas fa-video"></i> Check camera &amp; mic
+                        </button>
+                    </div>
+                    <div id="pj-mic-meter" class="pj-mic-meter pj-mic-meter-off" title="Microphone level — speak to test">
+                        <i class="fas fa-microphone"></i>
+                        <div class="pj-mic-bar"><div id="pj-mic-level" class="pj-mic-level"></div></div>
+                    </div>
+                </div>
+
+                <div id="pj-device-issues" class="pj-device-issues hidden">
+                    <ul id="pj-device-issues-list"></ul>
+                    <button id="pj-device-retry" type="button" class="pj-device-retry">
+                        <i class="fas fa-redo"></i> Try again
+                    </button>
+                </div>
+
+                <div class="pj-device-grid">
+                    <label class="pj-label" for="pj-camera-select">Camera</label>
+                    <select id="pj-camera-select" class="pj-select" disabled></select>
+
+                    <label class="pj-label" for="pj-mic-select">Microphone</label>
+                    <select id="pj-mic-select" class="pj-select" disabled></select>
+
+                    <label class="pj-label" for="pj-speaker-select">Speaker</label>
+                    <div class="pj-input-row">
+                        <select id="pj-speaker-select" class="pj-select" disabled></select>
+                        <button id="pj-speaker-test" type="button" class="pj-copy-btn pj-speaker-test" title="Play a test sound">
+                            <i class="fas fa-volume-up"></i> Test
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -574,7 +615,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- Agora Web SDK -->
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.21.0.js"></script>
 <!-- Video Call JS (ES Module) -->
-<script type="module" src="video-call.js?v=20260925"></script>
+<script type="module" src="video-call.js?v=20260925b"></script>
 
 </body>
 </html>

@@ -207,6 +207,26 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Video call diagnostics — one doc per join, written by the caller's own
+    // client (device errors, connection/subscribe/autoplay events, media stats)
+    // so reported call problems can be investigated afterwards. Admin-read only.
+    match /callDiagnostics/{docId} {
+      allow read: if request.auth != null
+                  && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['uid', 'name', 'channel', 'agoraUid', 'userAgent', 'startedAt', 'events'])
+                    && request.resource.data.events is list
+                    && request.resource.data.events.size() <= 300;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['events', 'endedAt'])
+                    && request.resource.data.events is list
+                    && request.resource.data.events.size() <= 300;
+      allow delete: if false;
+    }
+
     // Trial cancellation survey responses — submitted (unauthenticated) via the
     // submitTrialSurvey Cloud Function from the win-back email's survey link.
     match /trialSurveyResponses/{bookingId} {

@@ -13,6 +13,7 @@ import {
     doc, getDoc, setDoc, deleteDoc, addDoc, updateDoc,
     collection, getDocs, query, where,
     onSnapshot,
+    serverTimestamp, arrayUnion,
     httpsCallable
 } from './lib/firebaseClient.js';
 
@@ -52,6 +53,7 @@ const state = {
     isCameraOff: false,
     cameraFacingMode: 'user', // 'user' (front) or 'environment' (back) — mobile only
     cameraRetrying: false,    // guards concurrent retryCamera() calls
+    playbackDeviceId: null,   // speaker chosen in the pre-join device check (Chrome/Edge only)
     channelName: '',
     wasCallActive: false,
     callStartTime: null,
@@ -444,13 +446,35 @@ async function initAgora() {
     state.client.on('user-published',   handleUserPublished);
     state.client.on('user-unpublished', handleUserUnpublished);
     state.client.on('user-left',        handleUserLeft);
+    // Diagnostics only
+    state.client.on('connection-state-change', (cur, prev, reason) => diag('conn_state', { cur, prev, reason }));
+    state.client.on('exception', e => diag('exception', { code: e.code, msg: e.msg, uid: e.uid }));
+    state.client.on('user-joined', user => diag('remote_joined', { uid: user.uid }));
+    state.client.on('user-info-updated', (uid, msg) => diag('remote_info', { uid, msg }));
+}
+
+/** Global AgoraRTC device/autoplay callbacks — installed once, used pre-join and in-call. */
+function installDeviceHooks() {
     // Webcam plugged in (or re-enabled) mid-call while we have no camera — pick it up automatically
     AgoraRTC.onCameraChanged = info => {
+        diag('camera_changed', { state: info.state, label: info.device?.label });
+        refreshPreviewDeviceLists();
         if (info.state === 'ACTIVE' && !state.localVideoTrack) retryCamera({ silent: true });
+    };
+    AgoraRTC.onMicrophoneChanged = info => {
+        diag('mic_changed', { state: info.state, label: info.device?.label });
+        refreshPreviewDeviceLists();
+    };
+    AgoraRTC.onPlaybackDeviceChanged = info => {
+        diag('speaker_changed', { state: info.state, label: info.device?.label });
+        refreshPreviewDeviceLists();
     };
     // Browser blocked remote audio from auto-starting (common on Safari/iOS) —
     // without this the other person is just silently inaudible.
-    AgoraRTC.onAutoplayFailed = () => showAudioUnlockBanner();
+    AgoraRTC.onAutoplayFailed = () => {
+        diag('autoplay_failed');
+        showAudioUnlockBanner();
+    };
 }
 
 /**
@@ -492,12 +516,33 @@ function cameraErrorMessage(err) {
     return 'Camera access blocked — check browser/OS camera permissions';
 }
 
+function micErrorMessage(err) {
+    if (isDeviceMissing(err)) return 'No microphone detected';
+    if (isDeviceBusy(err))    return 'Microphone is in use by another app (close Zoom/Teams/etc.)';
+    return 'Microphone access blocked — check browser/OS microphone permissions';
+}
+
+/** Compact, Firestore-safe description of a device/SDK error for diagnostics. */
+function errInfo(err) {
+    if (!err) return null;
+    return { code: err.code || null, name: err.name || null, msg: String(err.message || err).slice(0, 300) };
+}
+
+function trackDeviceId(track) {
+    try { return track?.getMediaStreamTrack()?.getSettings()?.deviceId || null; } catch { return null; }
+}
+
+function trackLabel(track) {
+    try { return track?.getTrackLabel() || null; } catch { return null; }
+}
+
 async function joinChannel() {
     const channel = channelInput.value.trim();
     if (!channel) { showPjStatus('Please enter a room code.', 'error'); return; }
 
     showScreen('screen-loading');
     setLoadingMsg('Generating secure token…');
+    diag('join_start', { channel });
 
     try {
         if (!state.client) await initAgora();
@@ -516,7 +561,12 @@ async function joinChannel() {
         state.wbJoinTime     = Date.now();
 
         setLoadingMsg('Starting camera & microphone…');
-        const { audioTrack, videoTrack, audioError, videoError } = await acquireLocalTracks();
+        const { audioTrack, videoTrack, audioError, videoError } = await takeTracksForCall();
+        startDiagSession(channel, actualUid);
+        diag('local_tracks', {
+            mic: trackLabel(audioTrack), cam: trackLabel(videoTrack),
+            micErr: errInfo(audioError), camErr: errInfo(videoError),
+        });
 
         if (!audioTrack && !videoTrack) {
             await state.client.leave();
@@ -540,12 +590,13 @@ async function joinChannel() {
 
         // Publish whatever tracks are actually available
         await state.client.publish([audioTrack, videoTrack].filter(Boolean));
+        diag('published', { audio: !!audioTrack, video: !!videoTrack });
 
         if (videoError) {
             console.warn('Camera unavailable at join:', videoError);
             showToast(`${cameraErrorMessage(videoError)} — joined audio-only. Tap the camera button to retry.`, 'error', 8000);
         }
-        if (audioError) showToast(isDeviceMissing(audioError) ? 'No microphone detected — joined video-only' : 'Microphone access blocked — joined video-only', 'error', 6000);
+        if (audioError) showToast(`${micErrorMessage(audioError)} — joined video-only`, 'error', 6000);
 
         // Register presence & whiteboard relay
         await registerPresence(actualUid, channel);
@@ -570,6 +621,8 @@ async function joinChannel() {
 
     } catch (err) {
         console.error('Join error:', err);
+        diag('join_error', errInfo(err));
+        endDiagSession();
         showScreen('screen-prejoin');
         let msg = `Could not join: ${err.message}`;
         if (err.message?.includes('CAN_NOT_GET_GATEWAY_SERVER')) {
@@ -580,6 +633,8 @@ async function joinChannel() {
 }
 
 async function leaveChannel() {
+    // Final stats snapshot must be taken before tracks are closed
+    endDiagSession();
     clearTimeout(state.controlsHideTimer);
     clearInterval(state.callTimerInterval);
     state.callStartTime = null;
@@ -647,6 +702,7 @@ async function leaveChannel() {
     showScreen('screen-prejoin');
     channelInput.disabled = false;
     joinBtn.disabled = false;
+    resetDevicePreviewUI();
 
     if (hadActiveCall) {
         maybeShowRatingPopup().catch(console.error);
@@ -734,6 +790,7 @@ async function subscribeWithRetry(user, mediaType) {
             return true;
         } catch (err) {
             console.warn(`Subscribe ${mediaType} for ${user.uid} failed (attempt ${attempt}/${SUBSCRIBE_ATTEMPTS}):`, err);
+            diag('subscribe_failed', { uid: user.uid, mediaType, attempt, err: errInfo(err) });
             // They left or stopped publishing meanwhile — nothing to retry
             if (!isStillPublishing(user, mediaType)) return false;
             if (attempt < SUBSCRIBE_ATTEMPTS) await new Promise(r => setTimeout(r, 1000 * attempt));
@@ -745,8 +802,13 @@ async function subscribeWithRetry(user, mediaType) {
 function playRemoteAudio(user) {
     try {
         user.audioTrack?.play();
+        if (state.playbackDeviceId && user.audioTrack?.setPlaybackDevice) {
+            user.audioTrack.setPlaybackDevice(state.playbackDeviceId)
+                .catch(err => diag('speaker_set_failed', errInfo(err)));
+        }
     } catch (err) {
         console.warn('Remote audio play error:', err);
+        diag('audio_play_error', { uid: user.uid, err: errInfo(err) });
         showAudioUnlockBanner();
     }
 }
@@ -768,6 +830,7 @@ function hideAudioUnlockBanner() {
 }
 
 function unlockRemoteAudio() {
+    diag('audio_unlocked');
     // Runs inside a user gesture, so the browser now allows playback
     Object.values(state.remoteUsers).forEach(u => playRemoteAudio(u));
     hideAudioUnlockBanner();
@@ -775,7 +838,9 @@ function unlockRemoteAudio() {
 
 async function handleUserPublished(user, mediaType) {
     state.remoteUsers[user.uid] = user;
+    diag('remote_published', { uid: user.uid, mediaType });
     if (!await subscribeWithRetry(user, mediaType)) {
+        diag('subscribe_gave_up', { uid: user.uid, mediaType });
         if (!isScreenConnectionUid(user.uid) && isStillPublishing(user, mediaType)) {
             const who = state.remoteUserNames[user.uid] || 'the other participant';
             showToast(`Couldn't receive ${who}'s ${mediaType === 'audio' ? 'audio' : 'video'} — try leaving and rejoining`, 'error', 8000);
@@ -807,6 +872,7 @@ async function handleUserPublished(user, mediaType) {
 }
 
 function handleUserUnpublished(user, mediaType) {
+    diag('remote_unpublished', { uid: user.uid, mediaType });
     if (mediaType !== 'video') return;
 
     if (isScreenConnectionUid(user.uid)) {
@@ -822,7 +888,8 @@ function handleUserUnpublished(user, mediaType) {
     renderRemoteMainView();
 }
 
-function handleUserLeft(user) {
+function handleUserLeft(user, reason) {
+    diag('remote_left', { uid: user.uid, reason });
     if (isScreenConnectionUid(user.uid)) {
         // A screen-share connection closed (ours or the peer's) — not a real
         // participant leaving. Only clear remoteScreenUid if it was the one
@@ -919,9 +986,11 @@ async function retryCamera({ silent = false } = {}) {
         await state.client.publish(track);
         updateSwitchCameraAvailability();
         updateParticipantsList();
+        diag('camera_retry_ok', { cam: trackLabel(track) });
         showToast('Camera on', 'success');
     } catch (err) {
         console.warn('Camera retry failed:', err);
+        diag('camera_retry_failed', errInfo(err));
         if (!silent) showToast(cameraErrorMessage(err), 'error', 6000);
     } finally {
         state.cameraRetrying = false;
@@ -2133,6 +2202,381 @@ function renderStars(n) {
 }
 
 // ════════════════════════════════════════════════════════════
+// PRE-JOIN DEVICE CHECK
+// Camera preview, mic level meter, device pickers and a speaker
+// test, so device problems surface before the call instead of in it.
+// The preview tracks are handed straight to the call on join, so what
+// the user checked is exactly what gets published.
+// ════════════════════════════════════════════════════════════
+
+const preview = {
+    audioTrack: null,
+    videoTrack: null,
+    audioError: null,
+    videoError: null,
+    pending: null,      // in-flight startDevicePreview() promise
+    meterTimer: null,
+};
+
+const supportsSpeakerSelect = typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
+let _chimeUrl = null;
+
+function setupDevicePreview() {
+    $('pj-check-btn')?.addEventListener('click', () => startDevicePreview());
+    $('pj-device-retry')?.addEventListener('click', () => startDevicePreview());
+    $('pj-camera-select')?.addEventListener('change', e => switchPreviewDevice('video', e.target.value));
+    $('pj-mic-select')?.addEventListener('change', e => switchPreviewDevice('audio', e.target.value));
+    $('pj-speaker-select')?.addEventListener('change', e => {
+        state.playbackDeviceId = e.target.value || null;
+        diag('speaker_selected', { label: e.target.selectedOptions[0]?.textContent });
+    });
+    $('pj-speaker-test')?.addEventListener('click', playSpeakerTest);
+    if (!supportsSpeakerSelect) $('pj-speaker-select')?.classList.add('hidden');
+
+    startDevicePreview();
+}
+
+/** Start the preview, acquiring only whichever of mic/camera we don't already have. */
+function startDevicePreview() {
+    if (preview.pending) return preview.pending;
+    if (state.client?.connectionState === 'CONNECTED') return Promise.resolve();
+
+    preview.pending = (async () => {
+        $('pj-check-btn')?.classList.add('hidden');
+        setPreviewMsg('Starting camera & microphone…');
+
+        if (!preview.audioTrack && !preview.videoTrack) {
+            const r = await acquireLocalTracks();
+            Object.assign(preview, r);
+        } else {
+            if (!preview.audioTrack) {
+                try { preview.audioTrack = await AgoraRTC.createMicrophoneAudioTrack(); preview.audioError = null; }
+                catch (err) { preview.audioError = err; }
+            }
+            if (!preview.videoTrack) {
+                try { preview.videoTrack = await AgoraRTC.createCameraVideoTrack(); preview.videoError = null; }
+                catch (err) { preview.videoError = err; }
+            }
+        }
+
+        // Joined while we were acquiring — takeTracksForCall() will have waited
+        // on this promise and taken the tracks, so nothing more to render.
+        if (state.client?.connectionState === 'CONNECTED') return;
+
+        diag('preview', {
+            mic: trackLabel(preview.audioTrack), cam: trackLabel(preview.videoTrack),
+            micErr: errInfo(preview.audioError), camErr: errInfo(preview.videoError),
+        });
+        renderDevicePreview();
+        await refreshPreviewDeviceLists();
+    })().finally(() => { preview.pending = null; });
+
+    return preview.pending;
+}
+
+function setPreviewMsg(msg) {
+    const el = $('pj-preview-msg');
+    if (el) el.textContent = msg;
+}
+
+function renderDevicePreview() {
+    const videoEl = $('pj-preview-video');
+    const placeholder = $('pj-preview-placeholder');
+    if (preview.videoTrack && videoEl) {
+        preview.videoTrack.play(videoEl, { mirror: true });
+        placeholder?.classList.add('hidden');
+    } else {
+        placeholder?.classList.remove('hidden');
+        setPreviewMsg(preview.videoError ? cameraErrorMessage(preview.videoError) : 'Camera off');
+    }
+
+    const issues = [];
+    if (preview.videoError) issues.push(cameraErrorMessage(preview.videoError));
+    if (preview.audioError) issues.push(micErrorMessage(preview.audioError));
+    const box = $('pj-device-issues');
+    const list = $('pj-device-issues-list');
+    if (box && list) {
+        list.innerHTML = '';
+        issues.forEach(text => {
+            const li = document.createElement('li');
+            li.textContent = text;
+            list.appendChild(li);
+        });
+        box.classList.toggle('hidden', issues.length === 0);
+    }
+
+    $('pj-mic-meter')?.classList.toggle('pj-mic-meter-off', !preview.audioTrack);
+    clearInterval(preview.meterTimer);
+    preview.meterTimer = preview.audioTrack ? setInterval(updateMicMeter, 100) : null;
+    if (!preview.audioTrack) updateMicMeter();
+}
+
+function updateMicMeter() {
+    const bar = $('pj-mic-level');
+    if (!bar) return;
+    let level = 0;
+    try { level = preview.audioTrack?.getVolumeLevel() || 0; } catch { /* track closed */ }
+    bar.style.width = `${Math.min(100, Math.round(level * 250))}%`;
+}
+
+function fillDeviceSelect(select, devices, currentId, noun) {
+    if (!select) return;
+    select.innerHTML = '';
+    if (!devices.length) {
+        select.add(new Option(`No ${noun.toLowerCase()} found`, ''));
+        select.disabled = true;
+        return;
+    }
+    devices.forEach((d, i) => select.add(new Option(d.label || `${noun} ${i + 1}`, d.deviceId)));
+    if (currentId && devices.some(d => d.deviceId === currentId)) select.value = currentId;
+    select.disabled = false;
+}
+
+async function refreshPreviewDeviceLists() {
+    if (!$('pj-camera-select')) return;
+    const [cams, mics, speakers] = await Promise.all([
+        AgoraRTC.getCameras().catch(() => []),
+        AgoraRTC.getMicrophones().catch(() => []),
+        supportsSpeakerSelect ? AgoraRTC.getPlaybackDevices().catch(() => []) : Promise.resolve([]),
+    ]);
+    fillDeviceSelect($('pj-camera-select'), cams, trackDeviceId(preview.videoTrack), 'Camera');
+    fillDeviceSelect($('pj-mic-select'), mics, trackDeviceId(preview.audioTrack), 'Microphone');
+    if (supportsSpeakerSelect) fillDeviceSelect($('pj-speaker-select'), speakers, state.playbackDeviceId, 'Speaker');
+}
+
+async function switchPreviewDevice(kind, deviceId) {
+    if (!deviceId) return;
+    const isVideo = kind === 'video';
+    const track = isVideo ? preview.videoTrack : preview.audioTrack;
+    try {
+        if (track) {
+            await track.setDevice(deviceId);
+        } else if (isVideo) {
+            preview.videoTrack = await AgoraRTC.createCameraVideoTrack({ cameraId: deviceId });
+            preview.videoError = null;
+        } else {
+            preview.audioTrack = await AgoraRTC.createMicrophoneAudioTrack({ microphoneId: deviceId });
+            preview.audioError = null;
+        }
+        diag(isVideo ? 'camera_selected' : 'mic_selected', { label: trackLabel(isVideo ? preview.videoTrack : preview.audioTrack) });
+    } catch (err) {
+        console.warn(`Switch ${kind} device failed:`, err);
+        diag('device_switch_failed', { kind, err: errInfo(err) });
+        showPjStatus(isVideo ? cameraErrorMessage(err) : micErrorMessage(err), 'error');
+    }
+    renderDevicePreview();
+}
+
+/** Two-note chime as a WAV blob, so it can be routed to the chosen speaker via setSinkId. */
+function chimeUrl() {
+    if (_chimeUrl) return _chimeUrl;
+    const rate = 44100, n = Math.floor(rate * 0.8);
+    const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const str = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+    str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVE'); str(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    str(36, 'data'); v.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) {
+        const t = i / rate;
+        const second = t >= 0.35;
+        const tt = second ? t - 0.35 : t;
+        const env = Math.exp(-tt * 5) * Math.min(1, tt * 300);
+        v.setInt16(44 + i * 2, Math.sin(2 * Math.PI * (second ? 880 : 660) * t) * env * 0.45 * 32767, true);
+    }
+    _chimeUrl = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+    return _chimeUrl;
+}
+
+async function playSpeakerTest() {
+    const audio = new Audio(chimeUrl());
+    try {
+        if (supportsSpeakerSelect && state.playbackDeviceId) await audio.setSinkId(state.playbackDeviceId);
+        await audio.play();
+        showPjStatus("Playing a test sound — if you can't hear it, check your volume or pick another speaker.", 'info');
+    } catch (err) {
+        console.warn('Speaker test failed:', err);
+        diag('speaker_test_failed', errInfo(err));
+        showPjStatus('Could not play the test sound on this speaker.', 'error');
+    }
+}
+
+/**
+ * Hand the preview tracks to the call. Anything missing from the preview is
+ * retried once more here, in case the user fixed it (closed another app,
+ * granted permission) without pressing "Try again".
+ */
+async function takeTracksForCall() {
+    if (preview.pending) await preview.pending.catch(() => {});
+
+    let { audioTrack, videoTrack, audioError, videoError } = preview;
+    clearInterval(preview.meterTimer);
+    Object.assign(preview, { audioTrack: null, videoTrack: null, audioError: null, videoError: null, meterTimer: null });
+    videoTrack?.stop(); // stop preview playback only; capture continues into the call
+
+    if (!audioTrack && !videoTrack) return acquireLocalTracks();
+
+    if (!audioTrack) {
+        try { audioTrack = await AgoraRTC.createMicrophoneAudioTrack(); audioError = null; }
+        catch (err) { audioError = err; }
+    }
+    if (!videoTrack) {
+        try { videoTrack = await AgoraRTC.createCameraVideoTrack(); videoError = null; }
+        catch (err) { videoError = err; }
+    }
+    return { audioTrack, videoTrack, audioError, videoError };
+}
+
+/** Back on the pre-join screen after a call: preview is off until the user asks for it. */
+function resetDevicePreviewUI() {
+    clearInterval(preview.meterTimer);
+    preview.meterTimer = null;
+    const videoEl = $('pj-preview-video');
+    if (videoEl) videoEl.innerHTML = '';
+    $('pj-preview-placeholder')?.classList.remove('hidden');
+    $('pj-check-btn')?.classList.remove('hidden');
+    $('pj-device-issues')?.classList.add('hidden');
+    $('pj-mic-meter')?.classList.add('pj-mic-meter-off');
+    setPreviewMsg('Camera & mic are off');
+    updateMicMeter();
+}
+
+// ════════════════════════════════════════════════════════════
+// CALL DIAGNOSTICS
+// One callDiagnostics doc per join (signed-in users only): device
+// errors, connection changes, subscribe/autoplay failures and periodic
+// media stats, so a reported call problem can be looked up afterwards
+// instead of guessed at. Admin-read-only (see firestore.rules).
+// ════════════════════════════════════════════════════════════
+
+const DIAG_MAX_EVENTS = 250;
+const DIAG_MAX_EXCEPTIONS = 40;
+const diagState = {
+    ref: null,
+    ready: null,       // create-write promise; updates chain after it
+    buffer: [],
+    count: 0,
+    exceptions: 0,
+    flushTimer: null,
+    statsTimer: null,
+};
+
+/** Drop undefined values (Firestore rejects them) and cap the event count. */
+function diag(type, data = {}) {
+    if (diagState.count >= DIAG_MAX_EVENTS) return;
+    if (type === 'exception' && ++diagState.exceptions > DIAG_MAX_EXCEPTIONS) return;
+    diagState.count++;
+    let clean = {};
+    try { clean = JSON.parse(JSON.stringify(data ?? {})); } catch { /* unserializable */ }
+    diagState.buffer.push({ t: Date.now(), type, ...clean });
+    if (diagState.ref && !diagState.flushTimer) {
+        diagState.flushTimer = setTimeout(flushDiag, 3000);
+    }
+}
+
+function startDiagSession(channel, agoraUid) {
+    const user = auth.currentUser;
+    if (!user) { diagState.buffer = []; return; } // guests can't write
+
+    diagState.ref = doc(collection(db, 'callDiagnostics'));
+    diagState.count = diagState.buffer.length;
+    diagState.exceptions = 0;
+    const events = diagState.buffer.splice(0);
+    diagState.ready = setDoc(diagState.ref, {
+        uid: user.uid,
+        name: state.currentUserName || null,
+        channel,
+        agoraUid: String(agoraUid),
+        userAgent: navigator.userAgent.slice(0, 400),
+        startedAt: serverTimestamp(),
+        events,
+    }).catch(err => { console.warn('Diagnostics create failed:', err); diagState.ref = null; });
+
+    // First snapshot once media has had time to flow, then every 2 minutes
+    diagState.statsTimer = setTimeout(function snap() {
+        diag('stats', collectCallStats());
+        diagState.statsTimer = setTimeout(snap, 120000);
+    }, 20000);
+}
+
+function flushDiag(extra = {}) {
+    clearTimeout(diagState.flushTimer);
+    diagState.flushTimer = null;
+    const ref = diagState.ref;
+    if (!ref || (!diagState.buffer.length && !Object.keys(extra).length)) return;
+    const events = diagState.buffer.splice(0);
+    const payload = { ...extra };
+    if (events.length) payload.events = arrayUnion(...events);
+    diagState.ready = (diagState.ready || Promise.resolve())
+        .then(() => updateDoc(ref, payload))
+        .catch(err => console.warn('Diagnostics write failed:', err));
+}
+
+function endDiagSession() {
+    clearTimeout(diagState.statsTimer);
+    diagState.statsTimer = null;
+    if (!diagState.ref) { diagState.buffer = []; return; }
+    diag('stats', collectCallStats());
+    diag('left');
+    flushDiag({ endedAt: serverTimestamp() });
+    diagState.ref = null;
+    diagState.count = 0;
+}
+
+function setupDiagPageListeners() {
+    // Backgrounding a mobile tab commonly kills camera/mic — worth knowing
+    document.addEventListener('visibilitychange', () => {
+        if (!diagState.ref) return;
+        diag('visibility', { state: document.visibilityState });
+        if (document.visibilityState === 'hidden') flushDiag();
+    });
+    window.addEventListener('pagehide', () => {
+        if (!diagState.ref) return;
+        diag('page_hide', { stats: collectCallStats() });
+        flushDiag();
+    });
+}
+
+function collectCallStats() {
+    const c = state.client;
+    if (!c) return {};
+    const round = n => (typeof n === 'number' ? Math.round(n * 1000) / 1000 : null);
+    const out = { conn: c.connectionState };
+    try {
+        const rtc = c.getRTCStats();
+        out.rtc = { rtt: rtc.RTT, sendKbps: Math.round((rtc.SendBitrate || 0) / 1000), recvKbps: Math.round((rtc.RecvBitrate || 0) / 1000) };
+        const la = c.getLocalAudioStats();
+        const lv = c.getLocalVideoStats();
+        out.local = {
+            mic: !!state.localAudioTrack,
+            micMuted: state.isMuted,
+            micLevel: round(state.localAudioTrack?.getVolumeLevel()),
+            audioSendBytes: la?.sendBytes ?? null,
+            cam: !!state.localVideoTrack,
+            camOff: state.isCameraOff,
+            videoSendBytes: lv?.sendBytes ?? null,
+        };
+        const ra = c.getRemoteAudioStats();
+        const rv = c.getRemoteVideoStats();
+        out.remote = Object.values(state.remoteUsers).map(u => ({
+            uid: String(u.uid),
+            hasAudio: !!u.hasAudio,
+            hasVideo: !!u.hasVideo,
+            audioSubscribed: !!u.audioTrack,
+            audioPlaying: !!u.audioTrack?.isPlaying,
+            audioLevel: round(u.audioTrack?.getVolumeLevel()),
+            audioRecvBytes: ra?.[u.uid]?.receiveBytes ?? null,
+            audioLoss: round(ra?.[u.uid]?.packetLossRate),
+            videoSubscribed: !!u.videoTrack,
+            videoRecvBytes: rv?.[u.uid]?.receiveBytes ?? null,
+        }));
+    } catch (err) {
+        out.statsError = String(err?.message || err).slice(0, 200);
+    }
+    return out;
+}
+
+// ════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════
 
@@ -2147,6 +2591,10 @@ function init() {
 
     // Initialize whiteboard canvas
     wbInitCanvas();
+
+    installDeviceHooks();
+    setupDevicePreview();
+    setupDiagPageListeners();
 
     // Set up all listeners
     setupEventListeners();
