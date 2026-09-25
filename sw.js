@@ -260,16 +260,29 @@ self.addEventListener("push", (event) => {
       // row within the debounce window would leave the badge stuck showing
       // a stale, too-low count. The foreground/app-open equivalent lives in
       // js/unread-messages.js, driven by a live Firestore listener instead.
-      // registration.setAppBadge (not navigator.setAppBadge) is the
-      // service-worker-context form of the same API. Not every browser
-      // supports it (e.g. Firefox) — feature-detected, silently a no-op
-      // otherwise.
-      if (payload.badgeCount !== undefined && "setAppBadge" in self.registration) {
+      // The Badging API's setAppBadge()/clearAppBadge() are spec'd on the
+      // Navigator/WorkerNavigator interfaces, NOT on ServiceWorkerRegistration
+      // (confirmed against MDN's Badging API reference and WebKit's own
+      // "Badging for Home Screen Web Apps" post, whose canonical example
+      // calls `self.navigator.setAppBadge(...)` inside a push handler).
+      // This previously called `self.registration.setAppBadge`, which simply
+      // doesn't exist on that object in any spec-compliant browser — the
+      // `"setAppBadge" in self.registration` feature-detect silently
+      // evaluated to false, so the badge call never ran, while
+      // showNotification() a few lines below it still fired normally. That's
+      // exactly why the visible notification always showed up but the badge
+      // only ever updated via the foreground path in js/unread-messages.js.
+      // Earlier testing (Playwright + a vm.createContext-mocked `self`) never
+      // caught this because the mock object supplied a `registration.setAppBadge`
+      // stub that doesn't exist on a real ServiceWorkerRegistration — feature-detected,
+      // silently a no-op on any browser that doesn't support the Badging API at all
+      // (e.g. Firefox).
+      if (payload.badgeCount !== undefined && "setAppBadge" in self.navigator) {
         const n = parseInt(payload.badgeCount, 10);
         if (!isNaN(n)) {
           try {
-            if (n > 0) await self.registration.setAppBadge(n);
-            else await self.registration.clearAppBadge();
+            if (n > 0) await self.navigator.setAppBadge(n);
+            else await self.navigator.clearAppBadge();
           } catch {
             // Badge failures are cosmetic — never worth surfacing to the user.
           }
