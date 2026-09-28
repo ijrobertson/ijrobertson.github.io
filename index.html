@@ -2676,12 +2676,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     if (userData.role === 'student' && userData.avatar_url) {
                         allStudents.push(userData);
 
-                        // Collect languages for filters
-                        const languages = [
-                            ...(userData.languages_spoken || []),
-                            ...(userData.languages_learning || [])
-                        ];
-                        languages.forEach(lang => studentLanguages.add(lang));
+                        // Filter buttons list languages people can practise
+                        // with, i.e. ones a partner speaks (not just learns)
+                        (userData.languages_spoken || []).forEach(lang => studentLanguages.add(lang));
                     }
                 });
 
@@ -2825,13 +2822,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             let filtered = allStudents;
             if (filterLanguage !== 'all') {
-                filtered = allStudents.filter(student => {
-                    const allLangs = [
-                        ...(student.languages_spoken || []),
-                        ...(student.languages_learning || [])
-                    ];
-                    return allLangs.includes(filterLanguage);
-                });
+                // Only partners who speak the language, not ones still learning it
+                filtered = allStudents.filter(student =>
+                    (student.languages_spoken || []).includes(filterLanguage)
+                );
             }
 
             if (filtered.length === 0) {

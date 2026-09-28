@@ -1109,8 +1109,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 users.sort((a, b) => activeMs(b) - activeMs(a));
 
                 const englishUsers = users.filter(u => {
-                    const langs = [...(u.languages_spoken || []), ...(u.languages_learning || [])];
-                    return langs.some(isEnglish);
+                    // Only partners who speak the language, not ones still learning it
+                    return (u.languages_spoken || []).some(isEnglish);
                 });
                 grid.innerHTML = '';
                 if (englishUsers.length === 0) {
