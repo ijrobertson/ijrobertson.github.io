@@ -124,6 +124,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #dee2e6;
             text-align: left;
         }
+        .admin-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+        .admin-table th.sortable:hover { color: #20bcba; }
+        .admin-table th.sortable.sorted { color: #0b6664; }
+        .admin-table th .sort-ind { margin-left: 4px; font-size: 0.7rem; }
         .admin-table td {
             padding: 12px 14px; border-bottom: 1px solid #f0f0f0;
             vertical-align: middle; color: #333;
@@ -497,10 +501,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <table class="admin-table">
                                 <thead>
                                     <tr>
-                                        <th>Instructor</th>
+                                        <th class="sortable" data-sort-table="instructors" data-sort-key="name" onclick="setSort('instructors','name')" title="Sort by name">Instructor<span class="sort-ind"></span></th>
                                         <th>Languages</th>
                                         <th>Rate</th>
-                                        <th>Joined</th>
+                                        <th class="sortable" data-sort-table="instructors" data-sort-key="date" onclick="setSort('instructors','date')" title="Sort by date joined">Joined<span class="sort-ind"></span></th>
                                         <th>Instructor Type</th>
                                         <th>Details</th>
                                         <th>Actions</th>
@@ -553,10 +557,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <table class="admin-table">
                                 <thead>
                                     <tr>
-                                        <th>Student</th>
+                                        <th class="sortable" data-sort-table="students" data-sort-key="name" onclick="setSort('students','name')" title="Sort by name">Student<span class="sort-ind"></span></th>
                                         <th>Languages Spoken</th>
                                         <th>Languages Learning</th>
-                                        <th>Joined</th>
+                                        <th class="sortable" data-sort-table="students" data-sort-key="date" onclick="setSort('students','date')" title="Sort by date joined">Joined<span class="sort-ind"></span></th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -1243,6 +1247,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             doc, getDoc, getDocs, deleteDoc, collection, collectionGroup, query, where, orderBy, limit,
             httpsCallable
         } from './lib/firebaseClient.js';
+        // Same SDK URL/version as firebaseClient.js, so this shares its Firestore instance
+        import { getCountFromServer } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
         // ── Admin Functions ──────────────────────────────────────────────
         const approveInstructor   = httpsCallable(functions, 'adminApproveInstructor');
@@ -1256,7 +1262,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Cache
         let allUsersCache = [];
         let allCombinedCache = [];
+        let activeInstructorsCache = [];
         let tabsLoaded = {};
+
+        // Column sort state for the Active Instructors and Students tables.
+        // Name sorts A→Z first; date sorts newest first. Clicking the active
+        // column again flips its direction.
+        const sortState = {
+            instructors: { key: 'name', dir: 'asc' },
+            students:    { key: 'name', dir: 'asc' }
+        };
 
         // Guard: once admin access is confirmed, ignore transient null events from
         // token refresh or browser tab-switching so the page doesn't redirect on its own.
@@ -1538,6 +1553,56 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return i.name || i.email || i.id;
         }
 
+        // ── Helpers: column sorting ───────────────────────────────────────
+        // createdAt is stored as an ISO string, a millis number, or a Firestore
+        // Timestamp depending on when the account was created; null if absent.
+        function joinedMs(x) {
+            const v = x.createdAt;
+            if (!v) return null;
+            const ms = typeof v.toMillis === 'function' ? v.toMillis() : new Date(v).getTime();
+            return isNaN(ms) ? null : ms;
+        }
+
+        function formatJoined(x, fallback) {
+            const ms = joinedMs(x);
+            return ms === null ? fallback : new Date(ms).toLocaleDateString();
+        }
+
+        function sortRows(list, table) {
+            const { key, dir } = sortState[table];
+            const sign = dir === 'asc' ? 1 : -1;
+            return [...list].sort((a, b) => {
+                if (key === 'date') {
+                    const da = joinedMs(a), dbb = joinedMs(b);
+                    // Accounts with no join date (legacy) always go last
+                    if (da === null && dbb === null) return displayName(a).localeCompare(displayName(b));
+                    if (da === null) return 1;
+                    if (dbb === null) return -1;
+                    return (da - dbb) * sign;
+                }
+                return displayName(a).localeCompare(displayName(b), undefined, { sensitivity: 'base' }) * sign;
+            });
+        }
+
+        function updateSortHeaders(table) {
+            const { key, dir } = sortState[table];
+            document.querySelectorAll(`th.sortable[data-sort-table="${table}"]`).forEach(th => {
+                const active = th.dataset.sortKey === key;
+                th.classList.toggle('sorted', active);
+                let label = '';
+                if (active) label = key === 'date' ? (dir === 'desc' ? '▼ newest' : '▲ oldest') : (dir === 'asc' ? '▲ A–Z' : '▼ Z–A');
+                th.querySelector('.sort-ind').textContent = label;
+            });
+        }
+
+        window.setSort = function(table, key) {
+            const s = sortState[table];
+            if (s.key === key) s.dir = s.dir === 'asc' ? 'desc' : 'asc';
+            else { s.key = key; s.dir = key === 'date' ? 'desc' : 'asc'; }
+            if (table === 'instructors') renderActiveInstructors();
+            else window.filterUsers();
+        };
+
         // ── Applications (pending / declined only) ────────────────────────
         async function loadApplications() {
             const tbody = document.getElementById('applicationsBody');
@@ -1590,40 +1655,46 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
             try {
                 const snap = await getDocs(collection(db, 'instructors'));
-                const active = snap.docs
+                activeInstructorsCache = snap.docs
                     .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(i => !i.status || i.status === 'approved')
-                    .sort((a, b) => (a.name || a.email || '').localeCompare(b.name || b.email || ''));
-
-                if (active.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-users"></i>No active instructors yet.</div></td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = active.map(i => {
-                    const langs  = (i.languages_teaching || []).join(', ') || '—';
-                    const price  = i.price_per_lesson ? `${i.price_per_lesson} ${i.currency || 'USD'}` : '—';
-                    const joined = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : 'Legacy';
-                    const avatar = i.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
-                    const dataJson = escHtml(JSON.stringify(i));
-                    const instructorTypeBadge = i.isFoundingInstructor !== false
-                        ? `<span style="background:#fff8e1;border:1px solid #ffe082;color:#b45309;border-radius:12px;padding:3px 10px;font-size:0.78rem;font-weight:600;white-space:nowrap;">&#9733; Founding (90%)</span>`
-                        : `<span style="background:#f0fffe;border:1px solid #99e6e5;color:#0f766e;border-radius:12px;padding:3px 10px;font-size:0.78rem;font-weight:600;white-space:nowrap;">Standard (85%)</span>`;
-                    return `<tr>
-                        <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(displayName(i))}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
-                        <td>${escHtml(langs)}</td>
-                        <td>${escHtml(price)}</td>
-                        <td>${escHtml(joined)}</td>
-                        <td>${instructorTypeBadge}</td>
-                        <td><button class="btn-detail-view" onclick="openAppDetail(this)" data-instructor="${dataJson}">View Details</button></td>
-                        <td><button class="btn-decline" onclick="doDecline('${i.id}','${escHtml(displayName(i))}')">Revoke</button></td>
-                    </tr>`;
-                }).join('');
+                    .filter(i => !i.status || i.status === 'approved');
+                renderActiveInstructors();
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="7" style="color:red;padding:1rem;">Error: ${escHtml(err.message)}</td></tr>`;
             }
         }
         window.loadActiveInstructors = loadActiveInstructors;
+
+        function renderActiveInstructors() {
+            const tbody = document.getElementById('activeInstructorsBody');
+            updateSortHeaders('instructors');
+            const active = sortRows(activeInstructorsCache, 'instructors');
+
+            if (active.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fas fa-users"></i>No active instructors yet.</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = active.map(i => {
+                const langs  = (i.languages_teaching || []).join(', ') || '—';
+                const price  = i.price_per_lesson ? `${i.price_per_lesson} ${i.currency || 'USD'}` : '—';
+                const joined = formatJoined(i, 'Legacy');
+                const avatar = i.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+                const dataJson = escHtml(JSON.stringify(i));
+                const instructorTypeBadge = i.isFoundingInstructor !== false
+                    ? `<span style="background:#fff8e1;border:1px solid #ffe082;color:#b45309;border-radius:12px;padding:3px 10px;font-size:0.78rem;font-weight:600;white-space:nowrap;">&#9733; Founding (90%)</span>`
+                    : `<span style="background:#f0fffe;border:1px solid #99e6e5;color:#0f766e;border-radius:12px;padding:3px 10px;font-size:0.78rem;font-weight:600;white-space:nowrap;">Standard (85%)</span>`;
+                return `<tr>
+                    <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(displayName(i))}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
+                    <td>${escHtml(langs)}</td>
+                    <td>${escHtml(price)}</td>
+                    <td>${escHtml(joined)}</td>
+                    <td>${instructorTypeBadge}</td>
+                    <td><button class="btn-detail-view" onclick="openAppDetail(this)" data-instructor="${dataJson}">View Details</button></td>
+                    <td><button class="btn-decline" onclick="doDecline('${i.id}','${escHtml(displayName(i))}')">Revoke</button></td>
+                </tr>`;
+            }).join('');
+        }
 
         // ── Application Detail Modal ──────────────────────────────────────
         window.openAppDetail = function(btn) {
@@ -1826,6 +1897,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function renderUsersTable(users) {
             const tbody = document.getElementById('usersBody');
+            updateSortHeaders('students');
+            users = sortRows(users, 'students');
             if (users.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-users"></i>No students found.</div></td></tr>';
                 return;
@@ -1834,7 +1907,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const avatar   = u.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
                 const spoken   = (u.languages_spoken || []).join(', ') || '—';
                 const learning = (u.languages_learning || []).join(', ') || '—';
-                const joined   = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
+                const joined   = formatJoined(u, '—');
                 const flagLabel = u.flagged ? 'Unflag' : 'Flag';
                 const flagIcon  = u.flagged ? '<span style="color:#dc3545;margin-right:4px;">🚩</span>' : '';
                 return `<tr>
@@ -2727,26 +2800,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 document.getElementById('an-calls-month').textContent   = lessonsMonth;
             } catch(e) { console.error('Analytics: booking stats error', e); }
 
-            // ── Conversation count ────────────────────────────────────────
+            // ── Conversation count + message stats ────────────────────────
+            // Messages live in conversations/{id}/messages and are dated by
+            // `timestamp`. Counted per conversation (admins can read each
+            // thread under the existing rules), skipping threads with no
+            // activity this month, instead of one collectionGroup query —
+            // that would need a {path=**} rule and a collection-group index.
             try {
                 const convosSnap = await getDocs(collection(db, 'conversations'));
                 document.getElementById('an-convos-total').textContent = convosSnap.size;
+
+                const recentConvos = convosSnap.docs.filter(c => {
+                    const lmt = c.data().lastMessageTime;
+                    const d = lmt?.toDate ? lmt.toDate() : (lmt ? new Date(lmt) : null);
+                    return !d || isNaN(d) || d >= startOfMonth;
+                });
+                const countSince = (convo, since) => getCountFromServer(
+                    query(collection(db, 'conversations', convo.id, 'messages'), where('timestamp', '>=', since))
+                ).then(s => s.data().count);
+                const perConvo = await Promise.all(recentConvos.map(c =>
+                    Promise.all([countSince(c, startOfToday), countSince(c, startOfMonth)])
+                ));
+                let msgsToday = 0, msgsMonth = 0;
+                perConvo.forEach(([t, m]) => { msgsToday += t; msgsMonth += m; });
+                document.getElementById('an-msgs-today').textContent = msgsToday;
+                document.getElementById('an-msgs-month').textContent = msgsMonth;
             } catch(e) {
                 document.getElementById('an-convos-total').textContent = 'N/A';
-            }
-
-            // ── Message stats via collection group query ──────────────────
-            try {
-                const [msgsToday, msgsMonth] = await Promise.all([
-                    getDocs(query(collectionGroup(db, 'messages'), where('createdAt', '>=', startOfToday))),
-                    getDocs(query(collectionGroup(db, 'messages'), where('createdAt', '>=', startOfMonth)))
-                ]);
-                document.getElementById('an-msgs-today').textContent = msgsToday.size;
-                document.getElementById('an-msgs-month').textContent = msgsMonth.size;
-            } catch(e) {
                 document.getElementById('an-msgs-today').textContent = 'N/A';
                 document.getElementById('an-msgs-month').textContent = 'N/A';
-                console.warn('Analytics: message query unavailable (may need Firestore index):', e.message);
+                console.warn('Analytics: conversation/message stats unavailable:', e.message);
             }
         }
         window.loadAnalytics = loadAnalytics;
