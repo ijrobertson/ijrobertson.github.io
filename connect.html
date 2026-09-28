@@ -928,6 +928,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                 });
 
+                // Most recently active first; accounts never stamped go last
+                const activeMs = u => u.lastActiveAt?.toMillis ? u.lastActiveAt.toMillis() : 0;
+                allUsers.sort((a, b) => activeMs(b) - activeMs(a));
+
                 console.log('Fetched users after filtering:', allUsers.length);
 
                 populateFilterOptions(allUsers);

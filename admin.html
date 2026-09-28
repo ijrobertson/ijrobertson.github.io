@@ -314,6 +314,32 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background: #fafafa; border-radius: 6px; border: 1px solid #f0f0f0;
         }
         .analytics-na { opacity: 0.55; }
+
+        /* Messaging Insights */
+        .mi-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .mi-header select { border: 1px solid #dee2e6; border-radius: 6px; padding: 4px 8px; font-size: 0.8rem; color: #113448; background: white; }
+        .mi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1rem; align-items: start; }
+        .mi-card { background: white; border-radius: 10px; padding: 1.1rem 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); min-width: 0; }
+        .mi-card h6 { font-size: 0.8rem; font-weight: 700; color: #113448; margin: 0 0 0.85rem; text-transform: uppercase; letter-spacing: 0.4px; }
+        .mi-card .admin-table td, .mi-card .admin-table th { padding: 8px 10px; }
+        .mi-share { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+        .mi-share-track { flex: 1; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+        .mi-share-fill { height: 100%; background: #20bcba; border-radius: 4px; }
+        .mi-share-pct { font-size: 0.75rem; color: #666; width: 34px; text-align: right; }
+        .mi-chart { display: flex; align-items: flex-end; gap: 6px; height: 170px; padding-top: 18px; border-bottom: 1px solid #dee2e6; }
+        .mi-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; cursor: default; }
+        .mi-bar-val { font-size: 0.72rem; font-weight: 600; color: #113448; margin-bottom: 3px; }
+        .mi-bar { width: 100%; max-width: 38px; background: #20bcba; border-radius: 4px 4px 0 0; min-height: 2px; transition: background 0.15s; }
+        .mi-bar-col:hover .mi-bar { background: #0b6664; }
+        .mi-bar-tip { display: none; position: absolute; bottom: calc(100% - 10px); left: 50%; transform: translateX(-50%); background: #113448; color: white; font-size: 0.72rem; padding: 5px 8px; border-radius: 5px; white-space: nowrap; z-index: 2; pointer-events: none; }
+        .mi-bar-col:hover .mi-bar-tip { display: block; }
+        .mi-axis { display: flex; gap: 6px; margin-top: 5px; }
+        .mi-axis span { flex: 1; text-align: center; font-size: 0.68rem; color: #999; white-space: nowrap; overflow: hidden; }
+        .mi-role { font-size: 0.72rem; font-weight: 600; border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+        .mi-role.student { background: #f0fffe; color: #0b6664; border: 1px solid #99e6e5; }
+        .mi-role.instructor { background: #eef2f6; color: #113448; border: 1px solid #c9d4df; }
+        .mi-role.admin { background: #113448; color: white; }
+        .mi-callout { font-size: 0.82rem; color: #113448; background: #f0fffe; border-left: 3px solid #20bcba; border-radius: 4px; padding: 8px 12px; margin-top: 0.75rem; }
     </style>
 </head>
 <body>
@@ -917,6 +943,60 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <div><div class="mini-stat-val" id="an-convos-total">—</div><div class="mini-stat-lbl">Total Conversations</div></div>
                         </div>
                     </div>
+
+                    <!-- Messaging Insights -->
+                    <div class="analytics-section-label mi-header">
+                        <span><i class="fas fa-chart-bar" style="color:#20bcba;margin-right:6px;"></i>Messaging Insights</span>
+                        <select id="mi-period" onchange="renderMessagingInsights()" aria-label="Messaging Insights period">
+                            <option value="month">This month</option>
+                            <option value="30">Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+                    <div class="overview-grid mb-3">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-comments"></i></div>
+                            <div><div class="mini-stat-val" id="mi-active-convos">—</div><div class="mini-stat-lbl">Active Conversations</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-plus-circle"></i></div>
+                            <div><div class="mini-stat-val" id="mi-new-convos">—</div><div class="mini-stat-lbl">New Conversations</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-purple"><i class="fas fa-user-friends"></i></div>
+                            <div><div class="mini-stat-val" id="mi-senders">—</div><div class="mini-stat-lbl">People Messaging</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-green"><i class="fas fa-handshake"></i></div>
+                            <div><div class="mini-stat-val" id="mi-si-convos">—</div><div class="mini-stat-lbl" id="mi-si-lbl">Instructor ↔ Student Chats</div></div>
+                        </div>
+                    </div>
+                    <div class="mi-grid">
+                        <div class="mi-card">
+                            <h6>Messages per week (last 8 weeks)</h6>
+                            <div id="mi-weekly"><div class="profiles-loading" style="color:#999;font-size:0.85rem;">Loading…</div></div>
+                        </div>
+                        <div class="mi-card">
+                            <h6>Who's talking to whom</h6>
+                            <div style="overflow-x:auto;">
+                                <table class="admin-table">
+                                    <thead><tr><th>Conversation type</th><th>Messages</th><th>Chats</th><th>Share</th></tr></thead>
+                                    <tbody id="mi-types"><tr class="loading-row"><td colspan="4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr></tbody>
+                                </table>
+                            </div>
+                            <div id="mi-callout"></div>
+                        </div>
+                    </div>
+                    <div class="mi-card mb-2">
+                        <h6>Most active users</h6>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th>#</th><th>User</th><th>Role</th><th>Messages sent</th><th>Chats</th><th>Last message</th></tr></thead>
+                                <tbody id="mi-top"><tr class="loading-row"><td colspan="6"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="analytics-note">Based on message counts and participants only. Message content is never shown here.</div>
 
                     <!-- Lessons & Revenue -->
                     <h6 class="analytics-section-label"><i class="fas fa-calendar-check" style="color:#10b981;margin-right:6px;"></i>Lessons &amp; Revenue</h6>
@@ -2824,6 +2904,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // ── Analytics ────────────────────────────────────────────────────
         async function loadAnalytics() {
+            loadMessagingInsights(); // independent — renders its own section when ready
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -2909,6 +2990,158 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
         window.loadAnalytics = loadAnalytics;
+
+        // ── Messaging Insights ────────────────────────────────────────────
+        // Loads the last 90 days of message metadata once (sender + time per
+        // message, participants per conversation) and re-slices it when the
+        // period dropdown changes. Message text is never read or rendered.
+        const MI_WINDOW_DAYS = 90;
+        let miData = null; // { convos: [...], messages: [...] }
+
+        async function loadMessagingInsights() {
+            try {
+                const since = new Date(Date.now() - MI_WINDOW_DAYS * 864e5);
+                const [convosSnap, usersSnap, instrSnap, bookingsSnap] = await Promise.all([
+                    getCollection('conversations'), getCollection('users'),
+                    getCollection('instructors'), getCollection('bookings')
+                ]);
+                const tsMs = v => v?.toMillis ? v.toMillis() : (v ? new Date(v).getTime() : NaN);
+                const recent = convosSnap.docs.filter(c => {
+                    const lmt = tsMs(c.data().lastMessageTime);
+                    return isNaN(lmt) || lmt >= since.getTime();
+                });
+                const perConvo = await Promise.all(recent.map(c => fetchWithRetry(() => getDocs(
+                    query(collection(db, 'conversations', c.id, 'messages'), where('timestamp', '>=', since))
+                ))));
+
+                const names = {};
+                usersSnap.docs.forEach(d => { names[d.id] = d.data().name || d.data().email; });
+                const instructorIds = new Set();
+                instrSnap.docs.forEach(d => {
+                    const x = d.data();
+                    if (!x.status || x.status === 'approved') instructorIds.add(d.id);
+                    names[d.id] = x.name || names[d.id] || x.email;
+                });
+                const bookedPairs = new Set(bookingsSnap.docs.map(d => d.data().studentId + '|' + d.data().instructorId));
+
+                const convos = [], messages = [];
+                recent.forEach((c, i) => {
+                    const x = c.data();
+                    convos.push({ id: c.id, participants: x.participants || [], createdMs: tsMs(x.createdAt) });
+                    perConvo[i].forEach(m => {
+                        const md = m.data();
+                        messages.push({ convoId: c.id, senderId: md.senderId, ms: tsMs(md.timestamp) });
+                    });
+                });
+                miData = { convos, messages, names, instructorIds, bookedPairs, me: auth.currentUser?.uid };
+                renderMessagingInsights();
+            } catch (e) {
+                console.warn('Messaging Insights unavailable:', e.message);
+                document.getElementById('mi-types').innerHTML =
+                    `<tr><td colspan="4" style="color:red;padding:1rem;">Couldn't load messaging data: ${escHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        window.renderMessagingInsights = function() {
+            if (!miData) return;
+            const { convos, messages, names, instructorIds, bookedPairs, me } = miData;
+            const period = document.getElementById('mi-period').value;
+            const now = new Date();
+            const startMs = period === 'month'
+                ? new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+                : Date.now() - Number(period) * 864e5;
+
+            const role = id => id === me ? 'admin' : instructorIds.has(id) ? 'instructor' : 'student';
+            const roleLabel = { admin: 'You (admin)', instructor: 'Instructor', student: 'Student' };
+            const order = { instructor: 0, student: 1, admin: 2 };
+            const convoById = Object.fromEntries(convos.map(c => [c.id, c]));
+            const inPeriod = messages.filter(m => m.ms >= startMs);
+
+            // Per-conversation and per-sender tallies for the period
+            const convoMsgs = {}, sent = {}, senderConvos = {}, lastSent = {};
+            inPeriod.forEach(m => {
+                convoMsgs[m.convoId] = (convoMsgs[m.convoId] || 0) + 1;
+                sent[m.senderId] = (sent[m.senderId] || 0) + 1;
+                (senderConvos[m.senderId] ||= new Set()).add(m.convoId);
+                lastSent[m.senderId] = Math.max(lastSent[m.senderId] || 0, m.ms);
+            });
+            const activeIds = Object.keys(convoMsgs);
+
+            // Conversation type breakdown
+            const types = {};
+            let siChats = 0, siBooked = 0;
+            activeIds.forEach(id => {
+                const p = convoById[id].participants;
+                const roles = p.map(role).sort((a, b) => order[a] - order[b]);
+                const label = roles.map(r => roleLabel[r]).join(' ↔ ');
+                (types[label] ||= { msgs: 0, chats: 0 });
+                types[label].msgs += convoMsgs[id];
+                types[label].chats++;
+                if (roles.join() === 'instructor,student') {
+                    siChats++;
+                    const s = p.find(x => role(x) === 'student'), i = p.find(x => role(x) === 'instructor');
+                    if (bookedPairs.has(s + '|' + i)) siBooked++;
+                }
+            });
+
+            document.getElementById('mi-active-convos').textContent = activeIds.length;
+            document.getElementById('mi-new-convos').textContent =
+                convos.filter(c => c.createdMs >= startMs && convoMsgs[c.id]).length;
+            document.getElementById('mi-senders').textContent = Object.keys(sent).length;
+            document.getElementById('mi-si-convos').textContent = siChats;
+            document.getElementById('mi-si-lbl').textContent =
+                `Instructor ↔ Student Chats${siChats ? ` · ${siBooked} led to a booking` : ''}`;
+
+            const total = inPeriod.length;
+            const typeRows = Object.entries(types).sort((a, b) => b[1].msgs - a[1].msgs);
+            document.getElementById('mi-types').innerHTML = typeRows.length ? typeRows.map(([label, t]) => {
+                const pct = total ? Math.round(t.msgs / total * 100) : 0;
+                return `<tr>
+                    <td>${escHtml(label)}</td><td>${t.msgs}</td><td>${t.chats}</td>
+                    <td><div class="mi-share"><div class="mi-share-track"><div class="mi-share-fill" style="width:${pct}%"></div></div><span class="mi-share-pct">${pct}%</span></div></td>
+                </tr>`;
+            }).join('') + `<tr><td><strong>Total</strong></td><td><strong>${total}</strong></td><td><strong>${activeIds.length}</strong></td><td></td></tr>`
+              : '<tr><td colspan="4"><div class="empty-state"><i class="fas fa-comments"></i>No messages in this period.</div></td></tr>';
+
+            const callout = document.getElementById('mi-callout');
+            callout.innerHTML = total && siChats === 0
+                ? '<div class="mi-callout"><i class="fas fa-info-circle" style="margin-right:6px;"></i>No student has messaged an instructor in this period — the conversation that usually leads to a booking.</div>'
+                : '';
+
+            // Most active users
+            const top = Object.entries(sent).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            document.getElementById('mi-top').innerHTML = top.length ? top.map(([id, n], i) => {
+                const r = role(id);
+                return `<tr>
+                    <td style="color:#999;">${i + 1}</td>
+                    <td>${escHtml(names[id] || id)}</td>
+                    <td><span class="mi-role ${r}">${roleLabel[r]}</span></td>
+                    <td>${n}</td>
+                    <td>${senderConvos[id].size}</td>
+                    <td>${new Date(lastSent[id]).toLocaleDateString()}</td>
+                </tr>`;
+            }).join('') : '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i>No messages in this period.</div></td></tr>';
+
+            // Weekly trend: last 8 Monday-start weeks (independent of the period dropdown)
+            const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+            const weeks = [];
+            for (let w = 7; w >= 0; w--) {
+                const start = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - w * 7);
+                const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+                weeks.push({ start, count: messages.filter(m => m.ms >= start.getTime() && m.ms < end.getTime()).length });
+            }
+            const max = Math.max(1, ...weeks.map(w => w.count));
+            const fmt = d => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            document.getElementById('mi-weekly').innerHTML = `
+                <div class="mi-chart" role="img" aria-label="Messages per week: ${weeks.map(w => fmt(w.start) + ' ' + w.count).join(', ')}">
+                    ${weeks.map((w, i) => `<div class="mi-bar-col">
+                        <span class="mi-bar-tip">Week of ${fmt(w.start)}${i === 7 ? ' (so far)' : ''}: ${w.count} messages</span>
+                        <span class="mi-bar-val">${w.count}</span>
+                        <div class="mi-bar" style="height:${Math.round(w.count / max * 125)}px;"></div>
+                    </div>`).join('')}
+                </div>
+                <div class="mi-axis">${weeks.map(w => `<span>${w.start.getMonth() + 1}/${w.start.getDate()}</span>`).join('')}</div>`;
+        };
 
         // ── Wise: load payout audit logs ──────────────────────────────────
         window.loadWisePayoutLogs = async function() {

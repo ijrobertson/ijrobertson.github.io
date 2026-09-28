@@ -2554,7 +2554,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- Firebase Module Script -->
     <script type="module">
-        import { db, auth, collection, getDocs, query, limit, onAuthStateChanged, signOut, doc, getDoc, onSnapshot, where } from './lib/firebaseClient.js';
+        import { db, auth, collection, getDocs, query, orderBy, limit, onAuthStateChanged, signOut, doc, getDoc, onSnapshot, where } from './lib/firebaseClient.js';
 
         let allStudents = [];
         let allInstructors = [];
@@ -2654,11 +2654,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Load students from users collection
         async function loadStudents() {
             try {
-                const q = query(collection(db, 'users'), limit(30));
-                const querySnapshot = await getDocs(q);
+                // Most recently active first (lastActiveAt is stamped by
+                // lib/firebaseClient.js); extra headroom because non-students
+                // and students without a photo are filtered out below
+                const q = query(collection(db, 'users'), orderBy('lastActiveAt', 'desc'), limit(60));
+                const docs = (await getDocs(q)).docs;
+                // orderBy skips accounts never stamped with lastActiveAt, so
+                // top up from the unordered list if that leaves too few cards
+                if (docs.filter(d => d.data().role === 'student' && d.data().avatar_url).length < 6) {
+                    const seen = new Set(docs.map(d => d.id));
+                    (await getDocs(query(collection(db, 'users'), limit(30)))).docs
+                        .forEach(d => { if (!seen.has(d.id)) docs.push(d); });
+                }
 
                 allStudents = [];
-                querySnapshot.forEach((doc) => {
+                docs.forEach((doc) => {
                     const userData = { id: doc.id, ...doc.data() };
                     if (userData.role === 'student' && userData.avatar_url) {
                         allStudents.push(userData);
