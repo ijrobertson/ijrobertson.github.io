@@ -1125,12 +1125,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function loadFrenchPartners() {
             const grid = document.getElementById('partnersGrid');
             try {
-                const snap = await getDocs(query(collection(db, 'users'), limit(40)));
+                const snap = await getDocs(collection(db, 'users'));
                 const users = [];
                 snap.forEach(d => {
                     const data = { id: d.id, ...d.data() };
                     if (data.role === 'student') users.push(data);
                 });
+
+                // Most recently active first (lastActiveAt is stamped by lib/firebaseClient.js)
+                const activeMs = u => u.lastActiveAt?.toMillis ? u.lastActiveAt.toMillis() : 0;
+                users.sort((a, b) => activeMs(b) - activeMs(a));
 
                 const frenchUsers = users.filter(u => {
                     const langs = [...(u.languages_spoken || []), ...(u.languages_learning || [])];
