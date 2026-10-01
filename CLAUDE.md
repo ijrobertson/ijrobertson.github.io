@@ -40,12 +40,12 @@ import { auth, db, onAuthStateChanged, ... } from './lib/firebaseClient.js';
 The site has three main types of pages:
 
 1. **Language Hub Pages** (New[Language]Page.html):
-   - Landing pages for each language (e.g., NewFrenchPage.html, NewSpanishPage.html)
+   - Landing pages for each language (e.g., learn-french.html, learn-spanish.html)
    - ~1280 lines each with consistent structure
    - Link to specific lessons and resources for that language
 
 2. **Lesson Pages** ([Language][Topic].html):
-   - Individual lessons by topic (e.g., FrenchBasics.html, SpanishAirport.html)
+   - Individual lessons by topic (e.g., basic-french-phrases.html, spanish-airport-phrases.html)
    - Topics include: Basics, Airport, Hotel, Restaurant, Day, Duck, Jack, King, Aladdin
    - Additional resources: Accents, Tortoise/Hare stories, Three Little Pigs
 
@@ -56,7 +56,7 @@ The site has three main types of pages:
    - **connect.html**: Language learning partner finder (Firebase integrated)
    - **login.html**: Authentication page (Firebase integrated)
    - **instructors.html**: Public instructor directory (Firebase integrated)
-   - **Resources2.html**: Comprehensive resource index across all languages
+   - **language-learning-resources.html**: Comprehensive resource index across all languages
 
 ### Navigation Pattern
 
@@ -96,7 +96,7 @@ When modifying dashboard.html, login.html, student-dashboard.html, or instructor
 2. Copy structure from existing lesson in the same language
 3. Maintain consistent navbar with proper links to hub page
 4. Update the language hub page (New[Language]Page.html) to link to the new lesson
-5. Consider adding to Resources2.html if it's a major resource
+5. Consider adding to language-learning-resources.html if it's a major resource
 
 ### Modifying shared navigation
 
