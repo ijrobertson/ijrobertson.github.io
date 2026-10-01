@@ -1548,6 +1548,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 option.textContent = lang;
                 languageFilter.appendChild(option);
             });
+
+            // Pre-select a language from the URL (e.g. instructors?language=Spanish).
+            // Unknown or unstaffed languages fall back to "All Languages".
+            const wanted = (new URLSearchParams(window.location.search).get('language') || '').trim().toLowerCase();
+            if (wanted) {
+                const match = Array.from(languageFilter.options).find(o => o.value.toLowerCase() === wanted);
+                if (match) languageFilter.value = match.value;
+            }
         }
 
         function populateCountryOptions(data) {
