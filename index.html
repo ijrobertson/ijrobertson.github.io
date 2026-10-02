@@ -2830,12 +2830,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // Language pills are ordered by learner demand (most sought-after first),
+        // not alphabetically. Languages not listed fall to the end, A-Z.
+        const LANGUAGE_DEMAND_ORDER = [
+            'English', 'Spanish', 'French', 'Italian', 'Portuguese', 'German', 'Arabic',
+            'Japanese', 'Chinese', 'Mandarin', 'Mandarin Chinese', 'Chinese (Mandarin)', 'Cantonese',
+            'Korean', 'Russian', 'Dutch', 'Turkish', 'Hindi', 'Swedish', 'Polish', 'Greek',
+            'Hebrew', 'Norwegian', 'Danish', 'Ukrainian', 'Vietnamese', 'Thai', 'Indonesian',
+            'Persian', 'Farsi', 'Czech', 'Romanian', 'Finnish', 'Hungarian', 'Tagalog', 'Filipino',
+            'Urdu', 'Bengali', 'Swahili'
+        ].map(l => l.toLowerCase());
+
+        function sortLanguagesByDemand(languages) {
+            const rank = (lang) => {
+                const i = LANGUAGE_DEMAND_ORDER.indexOf(String(lang).trim().toLowerCase());
+                return i === -1 ? LANGUAGE_DEMAND_ORDER.length : i;
+            };
+            return Array.from(languages).sort((a, b) => rank(a) - rank(b) || String(a).localeCompare(String(b)));
+        }
+
         // Populate student language filter buttons
         function populateStudentFilters() {
             const filtersContainer = document.getElementById('studentLanguageFilters');
             const allButton = filtersContainer.querySelector('.language-filter-btn');
 
-            Array.from(studentLanguages).sort().forEach(language => {
+            sortLanguagesByDemand(studentLanguages).forEach(language => {
                 const btn = document.createElement('button');
                 btn.className = 'language-filter-btn';
                 btn.setAttribute('data-language', language);
@@ -2850,7 +2869,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const filtersContainer = document.getElementById('instructorLanguageFilters');
             const allButton = filtersContainer.querySelector('.language-filter-btn');
 
-            Array.from(instructorLanguages).sort().forEach(language => {
+            sortLanguagesByDemand(instructorLanguages).forEach(language => {
                 const btn = document.createElement('button');
                 btn.className = 'language-filter-btn';
                 btn.setAttribute('data-language', language);
