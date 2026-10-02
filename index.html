@@ -2904,10 +2904,48 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return window.innerWidth < 768 ? 3 : 6;
         }
 
-        // Render student cards
-        function renderStudents(filterLanguage = 'all') {
+        // Speakers of a language fetched on demand, keyed by language
+        const studentLanguageCache = new Map();
+        let activeStudentFilter = 'all';
+
+        // allStudents only holds the most recently active users, so a less
+        // common language may have just one or two speakers in it. Fetch that
+        // language's speakers directly to fill the grid.
+        async function fetchStudentsByLanguage(language) {
+            if (!studentLanguageCache.has(language)) {
+                const snap = await getDocs(query(
+                    collection(db, 'users'),
+                    where('languages_spoken', 'array-contains', language),
+                    limit(100)
+                ));
+                const lastActive = (s) => (s.lastActiveAt && s.lastActiveAt.toMillis) ? s.lastActiveAt.toMillis() : 0;
+                const students = snap.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(s => s.role === 'student' && s.avatar_url)
+                    .sort((a, b) => lastActive(b) - lastActive(a));
+                studentLanguageCache.set(language, students);
+            }
+            return studentLanguageCache.get(language);
+        }
+
+        function renderStudentCards(students) {
             const grid = document.getElementById('studentsGrid');
             grid.innerHTML = '';
+
+            if (students.length === 0) {
+                grid.innerHTML = '<div class="profiles-loading">No language partners found</div>';
+                return;
+            }
+
+            students.slice(0, getDisplayLimit()).forEach(student => {
+                const card = createStudentCard(student);
+                grid.appendChild(card);
+            });
+        }
+
+        // Render student cards
+        async function renderStudents(filterLanguage = 'all') {
+            activeStudentFilter = filterLanguage;
 
             let filtered = allStudents;
             if (filterLanguage !== 'all') {
@@ -2916,16 +2954,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     (student.languages_spoken || []).includes(filterLanguage)
                 );
             }
+            renderStudentCards(filtered);
 
-            if (filtered.length === 0) {
-                grid.innerHTML = '<div class="profiles-loading">No language partners found</div>';
-                return;
+            if (filterLanguage === 'all' || filtered.length >= 6) return;
+
+            try {
+                const fetched = await fetchStudentsByLanguage(filterLanguage);
+                // Ignore the result if another pill was clicked meanwhile
+                if (activeStudentFilter !== filterLanguage) return;
+                const seen = new Set(filtered.map(s => s.id));
+                renderStudentCards(filtered.concat(fetched.filter(s => !seen.has(s.id))));
+            } catch (error) {
+                console.error('Error loading language partners for', filterLanguage, error);
             }
-
-            filtered.slice(0, getDisplayLimit()).forEach(student => {
-                const card = createStudentCard(student);
-                grid.appendChild(card);
-            });
         }
 
         function renderStarsHtml(rating) {
