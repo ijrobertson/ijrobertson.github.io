@@ -825,6 +825,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // If no ?id= param, the auth handler will load the logged-in instructor's
         // own profile. If no auth or not an instructor, it will show the error.
 
+        // Intro videos whose opening frames make a poor thumbnail (e.g. a white
+        // title screen): show and start them this many seconds in instead.
+        const VIDEO_PREVIEW_START_SECONDS = {
+            'njp0QrFfRwhB76J7onZ3tt0YTym1': 0.5 // Melissa
+        };
+
         async function loadProfile(uid) {
             try {
                 const snap = await getDoc(doc(db, 'instructors', uid));
@@ -944,7 +950,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     // Seek to first frame after metadata loads so mobile browsers
                     // show a thumbnail instead of a black screen before the user plays.
                     introVideo.addEventListener('loadedmetadata', () => {
-                        introVideo.currentTime = 0.001;
+                        introVideo.currentTime = VIDEO_PREVIEW_START_SECONDS[uid] || 0.001;
                     }, { once: true });
                     document.getElementById('videoSection').style.display = '';
                 }

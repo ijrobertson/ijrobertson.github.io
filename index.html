@@ -3005,6 +3005,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return card;
         }
 
+        // Intro videos whose opening frames make a poor thumbnail (e.g. a white
+        // title screen): show and start them this many seconds in instead.
+        const VIDEO_PREVIEW_START_SECONDS = {
+            'njp0QrFfRwhB76J7onZ3tt0YTym1': 0.5 // Melissa
+        };
+
         function formatInstructorPrice(instructor) {
             if (!instructor.price_per_lesson) return '';
             const symbols = {USD:'$',EUR:'€',GBP:'£',CAD:'CA$',AUD:'A$'};
@@ -3096,7 +3102,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                     // Seek to first frame so mobile browsers render a thumbnail
                     // instead of showing a black screen before the user hits play.
-                    videoEl.currentTime = 0.001;
+                    videoEl.currentTime = VIDEO_PREVIEW_START_SECONDS[instructor.id] || 0.001;
                 });
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
