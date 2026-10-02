@@ -1570,15 +1570,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return Math.round((next.getTime() - today.getTime()) / 86400000);
         }
 
-        // "Recommended" order: bookable soon first, then proven (reviews),
-        // then instructors with an intro video
+        // Hand-picked instructors, in display order. They sit directly below
+        // instructors who have reviews, so newly rated instructors move
+        // ahead of them automatically.
+        const FEATURED_INSTRUCTOR_IDS = [
+            'YQW6oZ5e9ycWsAWeDaet5vMOeic2', // B. Michael James Crowe
+            'njp0QrFfRwhB76J7onZ3tt0YTym1', // Melissa
+            '2zo8BNoviLfo8Ld9JbxJUV8gJb62', // Alicia Velásquez
+            'E0ZH8A0BiQe51wwh2tuzaDkJUMd2'  // Sara Hoyos
+        ];
+
+        // "Recommended" order: reviewed instructors with open availability,
+        // then the featured list, then everyone else (bookable soon first,
+        // then those with an intro video)
         function recommendedScore(instructor) {
-            const days = daysUntilAvailable(instructor);
+            const next = getNextAvailableDate(availabilityMap[instructor.id]);
+            const rated = instructor.reviewCount > 0;
+            const featuredIndex = FEATURED_INSTRUCTOR_IDS.indexOf(instructor.id);
             let score = 0;
-            if (days !== null) score += 100 + (days <= 1 ? 5 : days <= 3 ? 3 : 0);
-            if (instructor.reviewCount) {
-                score += 20 + (instructor.averageRating || 0) * 2 + Math.min(instructor.reviewCount, 10);
+            if (next) {
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const days = Math.round((next.getTime() - today.getTime()) / 86400000);
+                score += 1000 + (days <= 1 ? 5 : days <= 3 ? 3 : 0);
+                if (rated) score += 1000;
             }
+            if (rated) score += 20 + (instructor.averageRating || 0) * 2 + Math.min(instructor.reviewCount, 10);
+            if (featuredIndex !== -1 && score < 1500) score = 1500 - featuredIndex;
             if (instructor.intro_video_url) score += 10;
             return score;
         }
