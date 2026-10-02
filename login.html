@@ -471,6 +471,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     return msg;
   }
 
+  // ── Return destination ────────────────────────────────────────────────────
+  // login?next=<page> sends a student back where they came from (e.g. the
+  // instructor they were about to book). Only a same-site page name with an
+  // optional query string is accepted, never a full URL or path.
+  const pageParams = new URLSearchParams(window.location.search);
+  const rawNext = pageParams.get('next') || '';
+  const postLoginNext = /^[a-z0-9-]+(\.html)?(\?[\w=&%.~-]*)?$/i.test(rawNext) ? '/' + rawNext : null;
+
   // ── Redirect helper ───────────────────────────────────────────────────────
   function redirectByRole(role) {
     if (role === 'instructor') window.location.href = '/dashboard';
@@ -531,7 +539,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
       if (role === 'student') {
         clearTimeout(safetyTimer);
-        if (userData && !userData.hasLoggedIn) {
+        if (postLoginNext) {
+          window.location.href = postLoginNext;
+        } else if (userData && !userData.hasLoggedIn) {
           try { await updateDoc(doc(db, 'users', auth.currentUser.uid), { hasLoggedIn: true }); } catch(e) {}
           window.location.href = '/student-dashboard';
         } else {
@@ -692,6 +702,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     errorEl.textContent = '';
   });
 
+  // login?mode=signup opens directly on the sign-up form
+  if (pageParams.get('mode') === 'signup') toggleLink.click();
+
   // ── Password Reset Modal ──────────────────────────────────────────────────
   const resetBackdrop   = document.getElementById('reset-modal-backdrop');
   const resetFormView   = document.getElementById('reset-form-view');
@@ -827,6 +840,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           console.warn('[Referral] Registration failed (non-fatal):', refErr.message);
         }
 
+        // Came here mid-booking: the new account is already signed in, so go
+        // straight back instead of asking them to sign in again
+        if (postLoginNext) {
+          window.location.href = postLoginNext;
+          return;
+        }
+
         alert('Account created! Please sign in.');
         submitBtn.disabled = false;
         submitBtn.textContent = origText;
@@ -857,7 +877,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           window.location.href = '/dashboard';
           // Don't re-enable button — page is navigating away
         } else if (role === 'student') {
-          if (userData && !userData.hasLoggedIn) {
+          if (postLoginNext) {
+            window.location.href = postLoginNext;
+          } else if (userData && !userData.hasLoggedIn) {
             try { await updateDoc(doc(db, 'users', user.uid), { hasLoggedIn: true }); } catch(e) {}
             window.location.href = '/student-dashboard';
           } else {

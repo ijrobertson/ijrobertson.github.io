@@ -556,6 +556,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </div>
 
+    <!-- Sign-up prompt (shown when a logged-out visitor tries to book) -->
+    <div class="modal fade" id="authPromptModal" tabindex="-1" role="dialog" aria-labelledby="auth-prompt-title">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="border-radius: 12px;">
+                <div class="modal-body" style="padding: 2rem 1.75rem; text-align: center;">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <i class="fas fa-gift" style="font-size: 2rem; color: #20bcba; margin-bottom: 0.75rem;"></i>
+                    <h5 id="auth-prompt-title" style="color: #113448; font-weight: 700; margin-bottom: 0.75rem;"></h5>
+                    <p id="auth-prompt-text" style="color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;"></p>
+                    <a id="auth-prompt-signup" href="login" class="btn-book" style="justify-content: center; width: 100%; padding: 0.85rem;">Sign Up Free</a>
+                    <a id="auth-prompt-signin" href="login" style="display: block; margin-top: 1rem; color: #0b6664; font-weight: 600; font-size: 0.92rem;">I already have an account</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Free Trial Modal -->
     <div class="modal fade" id="trialModal" tabindex="-1" role="dialog" aria-labelledby="trialModalLabel">
         <div class="modal-dialog modal-lg" role="document">
@@ -652,7 +668,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/scripts.js"></script>
 
     <script type="module">
-        import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
+        import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot, updateDoc } from './lib/firebaseClient.js';
 
         // ── Referral token capture ──────────────────────────────────────────
         // If a ?ref=TOKEN parameter is present, store it in localStorage for up
@@ -716,6 +732,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const cachedAvatar = localStorage.getItem('nav_avatar') || localStorage.getItem('instructor_avatar');
         if (cachedAvatar && navProfilePic) navProfilePic.src = cachedAvatar;
 
+        // Resolves once the first auth check (and the student's timezone lookup)
+        // has finished, so a booking calendar can be opened automatically.
+        let resolveAuthSetup;
+        const authSetupDone = new Promise(resolve => { resolveAuthSetup = resolve; });
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 profileNavWrapper.style.cssText = 'display: flex !important;';
@@ -735,8 +756,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         navProfilePic.src = uData.avatar_url;
                         localStorage.setItem('nav_avatar', uData.avatar_url);
                     }
-                    if (!isInstructor && usersSnap.exists() && usersSnap.data().timezone) {
-                        studentStoredTZ = usersSnap.data().timezone;
+                    if (!isInstructor && usersSnap.exists()) {
+                        studentStoredTZ = usersSnap.data().timezone || null;
+                        if (!studentStoredTZ) {
+                            // No saved timezone yet: use the browser's so booking
+                            // isn't blocked, and save it to the student's profile
+                            const browserTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                            if (browserTZ) {
+                                studentStoredTZ = browserTZ;
+                                updateDoc(doc(db, 'users', user.uid), { timezone: browserTZ })
+                                    .catch(e => console.warn('Could not save timezone:', e));
+                            }
+                        }
                     }
                     const profileLink = document.getElementById('myProfileLink');
                     if (profileLink) profileLink.href = isInstructor ? 'instructor-profile' : 'learner-profile';
@@ -752,6 +783,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     document.getElementById('profileError').style.display = 'flex';
                 }
             }
+            resolveAuthSetup();
         });
 
         document.getElementById('logoutLink').addEventListener('click', (e) => {
@@ -784,6 +816,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         const params      = new URLSearchParams(window.location.search);
         const instructorId = params.get('id');
+        // ?book=trial|lesson opens that booking calendar as soon as the profile loads
+        const bookIntent  = params.get('book');
 
         if (instructorId) {
             loadProfile(instructorId);
@@ -815,10 +849,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }
 
                 if (p.price_per_lesson) {
-                    const csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
+                    const csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'CA$',AUD:'A$'};
                     const cCode = (p.currency || 'USD').trim();
-                    const cSym  = csMap[cCode] || '';
-                    document.getElementById('heroPriceText').textContent = `${cCode} ${cSym}${p.price_per_lesson}/hour`;
+                    const cSym  = csMap[cCode];
+                    document.getElementById('heroPriceText').textContent = cSym
+                        ? `${cSym}${p.price_per_lesson} / hour`
+                        : `${cCode} ${p.price_per_lesson} / hour`;
                     document.getElementById('heroPrice').style.display = '';
                 }
 
@@ -892,6 +928,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     trialBtn.disabled = true;
                 }
 
+                // Arriving from a card's "Book Free Trial" button, or coming back
+                // after signing up: go straight to the booking calendar
+                if (bookIntent === 'trial' || bookIntent === 'lesson') {
+                    authSetupDone.then(() => {
+                        const btn = bookIntent === 'lesson' ? bookBtn : trialBtn;
+                        if (!btn.disabled) btn.click();
+                    });
+                }
+
                 // Intro video
                 if (p.intro_video_url) {
                     const introVideo = document.getElementById('introVideo');
@@ -943,13 +988,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // ── Sign-up prompt for logged-out visitors ───────────────────────────
+        // Sends them to sign up / sign in and brings them back to this
+        // instructor with the same booking calendar open.
+        function showAuthPrompt(intent, instructorId, instructorName) {
+            const next = encodeURIComponent(`instructor-profile?id=${instructorId}&book=${intent}`);
+            document.getElementById('auth-prompt-title').textContent = intent === 'trial'
+                ? 'Create a free account to book your trial'
+                : 'Create a free account to book a lesson';
+            document.getElementById('auth-prompt-text').textContent = intent === 'trial'
+                ? `Your free 15-minute trial with ${instructorName} is one step away. Signing up takes about a minute, and we'll bring you straight back here to pick a time.`
+                : `Signing up takes about a minute, and we'll bring you straight back here to pick a time with ${instructorName}.`;
+            document.getElementById('auth-prompt-signup').href = `login?mode=signup&next=${next}`;
+            document.getElementById('auth-prompt-signin').href = `login?next=${next}`;
+            $('#authPromptModal').modal('show');
+        }
+
         // ── Booking functions ────────────────────────────────────────────────
 
         async function openBookingModal(instructorId, instructorName) {
             if (!auth.currentUser) {
-                if (confirm('Please log in to book a lesson. Go to login page?')) {
-                    window.location.href = 'login';
-                }
+                showAuthPrompt('lesson', instructorId, instructorName);
                 return;
             }
 
@@ -1364,9 +1423,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         async function openTrialModal(instructorId, instructorName) {
             if (!auth.currentUser) {
-                if (confirm('Please log in to book a free trial. Go to login page?')) {
-                    window.location.href = 'login';
-                }
+                showAuthPrompt('trial', instructorId, instructorName);
                 return;
             }
 

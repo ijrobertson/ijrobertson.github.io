@@ -675,6 +675,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background-color: #5a6268;
         }
 
+        .book-trial-btn,
         .view-profile-btn {
             display: block;
             box-sizing: border-box;
@@ -682,21 +683,36 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             text-decoration: none;
             width: 100%;
             padding: 0.85rem;
-            background: #20bcba;
-            color: white;
-            border: none;
             border-radius: 8px;
             font-weight: 600;
             font-size: 1rem;
             cursor: pointer;
-            transition: background 0.2s;
-            margin-bottom: 0.75rem;
+            transition: background 0.2s, color 0.2s;
         }
 
-        .view-profile-btn:hover {
+        .book-trial-btn {
+            background: #20bcba;
+            color: white;
+            border: 2px solid #20bcba;
+        }
+
+        .book-trial-btn:hover {
             color: white;
             text-decoration: none;
             background: #1a9d9b;
+            border-color: #1a9d9b;
+        }
+
+        .view-profile-btn {
+            background: white;
+            color: #0b6664;
+            border: 2px solid #b2e8e6;
+        }
+
+        .view-profile-btn:hover {
+            color: #0b6664;
+            text-decoration: none;
+            background: #e8f8f7;
         }
 
         @media (max-width: 768px) {
@@ -1310,7 +1326,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="priceFilter"><i class="fas fa-dollar-sign"></i> Max Price (per hour)</label>
+                    <label for="priceFilter"><i class="fas fa-dollar-sign"></i> Max Price (per hour, USD)</label>
                     <select id="priceFilter">
                         <option value="">Any Price</option>
                         <option value="10">$10</option>
@@ -1320,6 +1336,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <option value="30">$30</option>
                         <option value="40">$40</option>
                         <option value="50">$50</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="availabilityFilter"><i class="fas fa-calendar-check"></i> Availability</label>
+                    <select id="availabilityFilter">
+                        <option value="">Any Time</option>
+                        <option value="0">Available Today</option>
+                        <option value="2">Available in the Next 3 Days</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="sortFilter"><i class="fas fa-sort-amount-down"></i> Sort By</label>
+                    <select id="sortFilter">
+                        <option value="recommended">Recommended</option>
+                        <option value="rating">Top Rated</option>
+                        <option value="soonest">Available Soonest</option>
+                        <option value="priceAsc">Price: Low to High</option>
+                        <option value="priceDesc">Price: High to Low</option>
                     </select>
                 </div>
             </div>
@@ -1369,6 +1403,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const countryFilter = document.getElementById('countryFilter');
         const priceFilter = document.getElementById('priceFilter');
         const nameSearch = document.getElementById('nameSearch');
+        const availabilityFilter = document.getElementById('availabilityFilter');
+        const sortFilter = document.getElementById('sortFilter');
         const navProfilePic = document.getElementById('navProfilePic');
         const profileNavWrapper = document.getElementById('profileNavWrapper');
         const signInWrapper = document.getElementById('signInWrapper');
@@ -1501,6 +1537,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return 'Available ' + date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
 
+        // Instructors can only be booked once their payout account is connected
+        function isPaymentReady(instructor) {
+            return (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) ||
+                   (instructor.payoutMethod === 'wise' && !!instructor.wiseEmail);
+        }
+
+        // Approximate USD value of one unit of each currency instructors can
+        // price in. Only used to compare prices in the filter and sort.
+        const USD_RATES = { USD: 1, EUR: 1.1, GBP: 1.3, CAD: 0.73, AUD: 0.66 };
+        const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$' };
+
+        function priceInUsd(instructor) {
+            const price = parseFloat(instructor.price_per_lesson) || 0;
+            const code = (instructor.currency || 'USD').trim();
+            return price * (USD_RATES[code] || 1);
+        }
+
+        function formatPrice(instructor) {
+            const price = instructor.price_per_lesson;
+            if (!price) return '';
+            const code = (instructor.currency || 'USD').trim();
+            const symbol = CURRENCY_SYMBOLS[code];
+            return symbol ? `${symbol}${price} / hour` : `${code} ${price} / hour`;
+        }
+
+        // Whole days until the instructor's next open day, or null if none in 14 days
+        function daysUntilAvailable(instructor) {
+            const next = getNextAvailableDate(availabilityMap[instructor.id]);
+            if (!next) return null;
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            return Math.round((next.getTime() - today.getTime()) / 86400000);
+        }
+
+        // "Recommended" order: bookable soon first, then proven (reviews),
+        // then instructors with an intro video
+        function recommendedScore(instructor) {
+            const days = daysUntilAvailable(instructor);
+            let score = 0;
+            if (days !== null) score += 100 + (days <= 1 ? 5 : days <= 3 ? 3 : 0);
+            if (instructor.reviewCount) {
+                score += 20 + (instructor.averageRating || 0) * 2 + Math.min(instructor.reviewCount, 10);
+            }
+            if (instructor.intro_video_url) score += 10;
+            return score;
+        }
+
         async function fetchInstructors() {
             try {
                 // Fetch instructors and availability in parallel
@@ -1516,7 +1598,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 allInstructors = [];
                 instructorSnap.forEach((doc) => {
                     const data = doc.data();
-                    if (!data.status || data.status === 'approved') {
+                    // Listed only once approved and able to take paid bookings
+                    if ((!data.status || data.status === 'approved') && isPaymentReady(data)) {
                         allInstructors.push({ id: doc.id, ...data });
                     }
                 });
@@ -1604,6 +1687,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const selectedLang = languageFilter.value;
             const selectedCountry = countryFilter.value;
             const maxPrice = parseFloat(priceFilter.value);
+            const maxDaysAway = availabilityFilter.value;
             instructorGrid.innerHTML = '';
 
             const searchTerm = nameSearch.value.trim().toLowerCase();
@@ -1612,17 +1696,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const matchesLang = selectedLang ? teaches.includes(selectedLang) : true;
                 const country = (instructor.native_country || '').trim();
                 const matchesCountry = selectedCountry ? country === selectedCountry : true;
-                const price = parseFloat(instructor.price_per_lesson) || 0;
-                const matchesPrice = maxPrice ? price <= maxPrice : true;
+                // The price filter is in USD, so compare converted prices
+                const matchesPrice = maxPrice ? priceInUsd(instructor) <= maxPrice : true;
                 const matchesName = searchTerm ? (instructor.name || '').toLowerCase().includes(searchTerm) : true;
-                return matchesLang && matchesCountry && matchesPrice && matchesName;
+                const days = daysUntilAvailable(instructor);
+                const matchesAvailability = maxDaysAway === '' ? true : (days !== null && days <= parseInt(maxDaysAway, 10));
+                return matchesLang && matchesCountry && matchesPrice && matchesName && matchesAvailability;
             });
 
-            filtered.sort((a, b) => {
-                const aReady = (a.chargesEnabled === true && a.payoutsEnabled === true) || (a.payoutMethod === 'wise' && !!a.wiseEmail) ? 1 : 0;
-                const bReady = (b.chargesEnabled === true && b.payoutsEnabled === true) || (b.payoutMethod === 'wise' && !!b.wiseEmail) ? 1 : 0;
-                return bReady - aReady;
-            });
+            const daysOrLast = (i) => { const d = daysUntilAvailable(i); return d === null ? Infinity : d; };
+            const ratingOf = (i) => i.reviewCount ? (i.averageRating || 0) : 0;
+            const sorters = {
+                recommended: (a, b) => recommendedScore(b) - recommendedScore(a),
+                rating:      (a, b) => ratingOf(b) - ratingOf(a) || (b.reviewCount || 0) - (a.reviewCount || 0) || recommendedScore(b) - recommendedScore(a),
+                soonest:     (a, b) => daysOrLast(a) - daysOrLast(b) || recommendedScore(b) - recommendedScore(a),
+                priceAsc:    (a, b) => priceInUsd(a) - priceInUsd(b),
+                priceDesc:   (a, b) => priceInUsd(b) - priceInUsd(a)
+            };
+            filtered.sort(sorters[sortFilter.value] || sorters.recommended);
 
             if (filtered.length === 0) {
                 instructorGrid.innerHTML = '<div class="no-results"><i class="fas fa-chalkboard-teacher" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No instructors found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';
@@ -1652,11 +1743,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function createInstructorCard(instructor) {
             const spoken = instructor.languages_spoken || [];
             const teaching = instructor.languages_teaching || [];
-            const price = instructor.price_per_lesson || '';
-            const _csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
-            const _cCode = (instructor.currency || 'USD').trim();
-            const _cSym = _csMap[_cCode] || '';
-            const priceDisplay = price ? `${escapeHtml(_cCode)} ${_cSym}${escapeHtml(String(price))}/hour` : '';
+            const priceDisplay = escapeHtml(formatPrice(instructor));
             const avatar = instructor.avatar_url || 'https://via.placeholder.com/100';
             const name = escapeHtml(instructor.name || 'Unnamed Instructor');
             const aboutMe = escapeHtml(instructor.about_me || 'No bio yet');
@@ -1678,10 +1765,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                    </div>`
                 : `<span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>`;
 
-            const metaRowHtml = `<div class="card-meta-row">
-                <span class="card-meta-item"><i class="fas fa-book-open"></i> ${lessonsCount} lesson${lessonsCount !== 1 ? 's' : ''}</span>
+            // A lesson count of zero is left off rather than shown as "0 lessons"
+            const metaRowHtml = (lessonsCount > 0 || nextAvailLabel) ? `<div class="card-meta-row">
+                ${lessonsCount > 0 ? `<span class="card-meta-item"><i class="fas fa-book-open"></i> ${lessonsCount} lesson${lessonsCount !== 1 ? 's' : ''}</span>` : ''}
                 ${nextAvailLabel ? `<span class="card-meta-item next-avail"><i class="fas fa-calendar-check"></i> ${nextAvailLabel}</span>` : ''}
-            </div>`;
+            </div>` : '';
 
             let cardHTML = hasVideo
                 ? `<div class="card-video-container">
@@ -1740,16 +1828,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 `;
             }
 
-            const paymentReady = (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) || (instructor.payoutMethod === 'wise' && !!instructor.wiseEmail);
             cardHTML += `
                 </div>
                 <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
-                    <a class="view-profile-btn" href="instructor-profile?id=${encodeURIComponent(instructor.id)}" target="_blank" rel="noopener" data-instructor-id="${instructor.id}">
-                        <i class="fas fa-external-link-alt"></i> View Full Profile
+                    <a class="book-trial-btn" href="instructor-profile?id=${encodeURIComponent(instructor.id)}&book=trial">
+                        <i class="fas fa-gift"></i> Book Free Trial
                     </a>
-                    ${!paymentReady ? `<div class="stripe-pending-badge" style="text-align:center;margin-top:0.5rem;">
-                        <i class="fas fa-clock"></i> Payment setup pending
-                    </div>` : ''}
+                    <a class="view-profile-btn" href="instructor-profile?id=${encodeURIComponent(instructor.id)}" target="_blank" rel="noopener" data-instructor-id="${instructor.id}">
+                        View Full Profile
+                    </a>
                 </div>
             `;
 
@@ -1764,6 +1851,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // new tab itself, so just keep the click from also triggering the card.
             const viewProfileBtn = card.querySelector('.view-profile-btn');
             viewProfileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            // Book Free Trial goes straight to the trial calendar on the profile page
+            card.querySelector('.book-trial-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
             });
 
@@ -1848,6 +1939,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         countryFilter.addEventListener('change', renderInstructors);
         priceFilter.addEventListener('change', renderInstructors);
         nameSearch.addEventListener('input', renderInstructors);
+        availabilityFilter.addEventListener('change', renderInstructors);
+        sortFilter.addEventListener('change', renderInstructors);
 
         // Fetch instructors when page loads
         fetchInstructors();
@@ -1857,9 +1950,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function openBookingModal(instructorId, instructorName) {
             // Check authentication
             if (!auth.currentUser) {
-                if (confirm('Please log in to book a lesson. Go to login page?')) {
-                    window.location.href = 'login';
-                }
+                window.location.href = `instructor-profile?id=${encodeURIComponent(instructorId)}&book=lesson`;
                 return;
             }
 
@@ -2401,18 +2492,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // Populate modal with instructor data
             const avatar = instructor.avatar_url || 'https://via.placeholder.com/130';
             const name = escapeHtml(instructor.name || 'Unnamed Instructor');
-            const price = instructor.price_per_lesson || '';
-            const _csMap2 = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
-            const _cCode2 = (instructor.currency || 'USD').trim();
-            const _cSym2 = _csMap2[_cCode2] || '';
-            const spoken = instructor.languages_spoken || [];
-            const teaching = instructor.languages_teaching || [];
-            const country = escapeHtml(instructor.native_country || 'Not specified');
-            const aboutMe = escapeHtml(instructor.about_me || 'No bio yet');
-
-            document.getElementById('profileModalAvatar').src = avatar;
-            document.getElementById('profileModalName').textContent = name;
-            document.getElementById('profileModalPrice').textContent = price ? `${_cCode2} ${_cSym2}${price}/hour` : '';
+            document.getElementById('profileModalPrice').textContent = formatPrice(instructor);
 
             // Rating & lessons summary
             const ratingEl = document.getElementById('profileModalRating');
