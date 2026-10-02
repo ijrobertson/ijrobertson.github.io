@@ -61,6 +61,7 @@ const state = {
 
     // Firebase refs / listeners
     presenceRef: null,
+    presenceUnsubscribe: null,
     wbRelayRef: null,
     wbUnsubscribe: null,
     promptRelayRef: null,
@@ -600,6 +601,7 @@ async function joinChannel() {
 
         // Register presence & whiteboard relay
         await registerPresence(actualUid, channel);
+        setupPresenceListener(channel);
         setupWhiteboardRelay(channel);
         setupChatListener(channel);
 
@@ -662,6 +664,8 @@ async function leaveChannel() {
     state.promptRelayRef = null;
 
     // Clear presence
+    if (state.presenceUnsubscribe) { state.presenceUnsubscribe(); state.presenceUnsubscribe = null; }
+    state.remoteUserNames = {};
     await clearPresence();
 
     // Leave Agora channel
@@ -856,12 +860,10 @@ async function handleUserPublished(user, mediaType) {
     }
 
     if (mediaType === 'video') {
-        // Look up display name
-        if (!state.remoteUserNames[user.uid]) {
-            state.remoteUserNames[user.uid] = await lookupRemoteName(user.uid) || 'Guest';
-        }
+        // Display name comes from the live presence listener; if their presence
+        // doc hasn't landed yet the label is corrected as soon as it does.
         vcWaiting.style.display = 'none';
-        remoteName.textContent = state.remoteUserNames[user.uid];
+        remoteName.textContent = state.remoteUserNames[user.uid] || 'Guest';
         renderRemoteMainView();
     }
     if (mediaType === 'audio') {
@@ -905,7 +907,6 @@ function handleUserLeft(user, reason) {
 
     const leavingName = state.remoteUserNames[user.uid] || 'Participant';
     delete state.remoteUsers[user.uid];
-    delete state.remoteUserNames[user.uid];
     if (realRemoteUidCount() === 0) {
         vcWaiting.style.display = 'flex';
         remoteName.textContent = '';
@@ -1252,12 +1253,28 @@ async function clearPresence() {
     state.presenceRef = null;
 }
 
-async function lookupRemoteName(agoraUid) {
-    try {
-        if (!state.channelName) return null;
-        const snap = await getDoc(doc(db, 'video_calls', state.channelName, 'presence', String(agoraUid)));
-        return snap.exists() ? snap.data().name || null : null;
-    } catch (e) { return null; }
+/**
+ * Keeps remote display names in sync with the channel's presence docs.
+ * A live listener (rather than a one-off read) means a name still resolves
+ * when the remote's video arrives before their presence doc is written, or
+ * when they join audio-only.
+ */
+function setupPresenceListener(channel) {
+    if (!state.currentUser || state.currentUser.uid.startsWith('guest-')) return;
+    state.presenceUnsubscribe = onSnapshot(collection(db, 'video_calls', channel, 'presence'), (snap) => {
+        snap.forEach(d => {
+            const name = d.data().name;
+            if (name && name !== 'Guest') state.remoteUserNames[d.id] = name;
+        });
+        refreshRemoteNames();
+    }, (e) => console.warn('Presence listener failed:', e));
+}
+
+/** Re-applies known names to the remote video label and the Participants list. */
+function refreshRemoteNames() {
+    const main = Object.values(state.remoteUsers).find(u => !isScreenConnectionUid(u.uid) && u.videoTrack);
+    if (main) remoteName.textContent = state.remoteUserNames[main.uid] || 'Guest';
+    updateParticipantsList();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1982,6 +1999,12 @@ onAuthStateChanged(auth, async (user) => {
                        : userSnap.exists()  ? userSnap.data() : null;
             if (data) {
                 if (data.name)       state.currentUserName = data.name;
+                else if (user.displayName) state.currentUserName = user.displayName;
+                // Profile finished loading after we'd already joined — correct the name others see
+                if (state.presenceRef && state.currentUserName !== 'Guest') {
+                    localName.textContent = state.currentUserName;
+                    setDoc(state.presenceRef, { name: state.currentUserName }, { merge: true }).catch(() => {});
+                }
                 if (data.avatar_url) {
                     const av = $('navProfilePic');
                     if (av) av.src = data.avatar_url;
