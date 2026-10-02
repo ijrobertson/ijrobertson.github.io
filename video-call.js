@@ -39,6 +39,7 @@ const state = {
     isScreenSharing: false,
     screenClient: null,      // secondary Agora connection used to publish the screen while sharing
     screenUid: null,         // uid of our own screen-share connection
+    screenStarting: false,   // true while the picker is open / the screen connection is being set up
     remoteScreenUid: null,   // uid the remote peer's screen-share connection is using (learned via relay)
     remoteUsers: {},
     remoteUserNames: {},
@@ -733,6 +734,24 @@ function isScreenConnectionUid(uid) {
 }
 
 /** Count of remote uids that represent an actual participant (excludes screen-share connections). */
+/** True for the screen-share connection opened by THIS browser (we never need to receive it). */
+function isOwnScreenUid(uid) {
+    return !!state.currentUser && String(uid) === `${state.currentUser.uid}-screen`;
+}
+
+/**
+ * The remote peer's live screen-share connection, if any. Derived straight
+ * from the Agora users in the channel rather than from the Firestore relay
+ * message: that message is dropped when the viewer (re)joins mid-share or
+ * when the two devices' clocks disagree, which left the shared screen
+ * published but never displayed.
+ */
+function remoteScreenUser() {
+    return Object.values(state.remoteUsers).find(u =>
+        isScreenConnectionUid(u.uid) && !isOwnScreenUid(u.uid) && u.videoTrack
+    ) || null;
+}
+
 function realRemoteUidCount() {
     return Object.keys(state.remoteUsers).filter(uid => !isScreenConnectionUid(uid)).length;
 }
@@ -744,8 +763,8 @@ function realRemoteUidCount() {
  * just show their camera as usual.
  */
 function renderRemoteMainView() {
-    const screenUser = state.remoteScreenUid != null ? state.remoteUsers[state.remoteScreenUid] : null;
-    const screenActive = !!(screenUser && screenUser.videoTrack);
+    const screenUser = remoteScreenUser();
+    const screenActive = !!screenUser;
 
     const badge = $('vc-screensharing-badge');
     if (badge) badge.classList.toggle('hidden', !screenActive);
@@ -841,6 +860,9 @@ function unlockRemoteAudio() {
 }
 
 async function handleUserPublished(user, mediaType) {
+    // Our own screen-share connection: never download our own screen back —
+    // it's not displayed, and it competes with the upload for bandwidth.
+    if (isOwnScreenUid(user.uid)) return;
     state.remoteUsers[user.uid] = user;
     diag('remote_published', { uid: user.uid, mediaType });
     if (!await subscribeWithRetry(user, mediaType)) {
@@ -1091,11 +1113,35 @@ async function switchCamera() {
 // SCREEN SHARE
 // ════════════════════════════════════════════════════════════
 
+/** Human-readable reason a screen share failed to start. */
+function screenShareErrorMessage(err) {
+    const text = `${err?.code || ''} ${err?.name || ''} ${err?.message || ''}`;
+    if (/NOT_SUPPORTED|NotSupportedError/i.test(text)) return "Screen sharing isn't supported in this browser — use Chrome, Edge or Firefox on a computer.";
+    if (/NotReadableError|AbortError/i.test(text)) return "Your computer blocked the screen capture. Close other apps that are recording the screen, check your screen-recording permission, then try again.";
+    if (/token/i.test(text)) return 'Could not start screen sharing — the server did not respond. Please try again.';
+    return `Could not share screen${err?.message ? `: ${err.message}` : ''}. Please try again.`;
+}
+
 async function startScreenShare() {
-    if (!state.client || !state.localVideoTrack) return;
+    // Works with or without a camera; guard against double-clicks while the picker is open
+    if (!state.client || state.isScreenSharing || state.screenStarting) return;
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+        showToast("Screen sharing isn't supported on this device — use Chrome, Edge or Firefox on a computer.", 'error', 7000);
+        return;
+    }
+    state.screenStarting = true;
     try {
+        // Same settings for a tab, a window or an entire screen: capped at
+        // 1080p/15fps and tuned for sharp text. An uncapped full-monitor
+        // capture is much heavier than a single window and is what low-end
+        // phones on the other end struggle to receive.
         // 'disable' = no screen audio track; mic audio is already published separately
-        state.localScreenTrack = await AgoraRTC.createScreenVideoTrack({}, 'disable');
+        state.localScreenTrack = await AgoraRTC.createScreenVideoTrack({
+            encoderConfig: { width: { max: 1920 }, height: { max: 1080 }, frameRate: { max: 15 }, bitrateMin: 300, bitrateMax: 2000 },
+            optimizationMode: 'detail',
+        }, 'disable');
+        const settings = state.localScreenTrack.getMediaStreamTrack?.().getSettings?.() || {};
+        diag('screen_captured', { surface: settings.displaySurface, w: settings.width, h: settings.height, fps: settings.frameRate });
 
         // Publish the screen on a SEPARATE Agora connection (its own uid) instead
         // of swapping out the camera track. This keeps the camera published the
@@ -1103,6 +1149,8 @@ async function startScreenShare() {
         // self-view PiP is untouched, and the remote peer gets a small face PiP
         // overlaid on the shared screen (see renderRemoteMainView).
         state.screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        state.screenClient.on('connection-state-change', (cur, prev, reason) => diag('screen_conn_state', { cur, prev, reason }));
+        state.screenClient.on('exception', e => diag('screen_exception', { code: e.code, msg: e.msg }));
         const generateToken = httpsCallable(functions, 'generateAgoraToken');
         // Must pass a distinct, non-empty uid: generateAgoraToken always builds an
         // account-based token for whatever uid it's given, defaulting to the literal
@@ -1115,18 +1163,19 @@ async function startScreenShare() {
 
         state.screenUid = await state.screenClient.join(APP_ID, state.channelName, result.data.token, result.data.uid);
 
-        // Tell the remote peer which uid is our screen connection BEFORE
-        // publishing, so it's very likely to arrive before the corresponding
-        // Agora user-published event (which requires slower SFU negotiation).
+        // Also announce it over the relay (older clients still rely on this)
         if (state.wbRelayRef) {
             setDoc(state.wbRelayRef, { t: 'ss', active: true, uid: state.screenUid, ts: Date.now() }).catch(() => {});
         }
 
         await state.screenClient.publish(state.localScreenTrack);
+        diag('screen_published', { uid: state.screenUid });
 
         state.isScreenSharing = true;
         updateScreenShareUI();
-        showToast('Screen sharing started', 'success');
+        showToast(settings.displaySurface === 'monitor'
+            ? 'Sharing your entire screen — switch to what you want to show'
+            : 'Screen sharing started', 'success');
 
         // When the user clicks "Stop sharing" in the browser's native bar
         state.localScreenTrack.on('track-ended', () => stopScreenShare());
@@ -1135,42 +1184,45 @@ async function startScreenShare() {
         if (state.screenClient) { state.screenClient.leave().catch(() => {}); state.screenClient = null; }
         if (state.localScreenTrack) { state.localScreenTrack.close(); state.localScreenTrack = null; }
         state.screenUid = null;
-        // NotAllowedError means the user cancelled the picker — not an error worth toasting
-        if (err.name !== 'NotAllowedError' && err.code !== 'PERMISSION_DENIED') {
+        // The user cancelling the picker isn't an error worth toasting. (A real OS/browser
+        // block also surfaces as NotAllowedError, but with a "by system" message.)
+        const cancelled = (err.name === 'NotAllowedError' || err.code === 'PERMISSION_DENIED')
+            && !/system/i.test(err.message || '');
+        diag('screen_error', { cancelled, ...errInfo(err) });
+        if (!cancelled) {
             console.error('Screen share error:', err);
-            showToast('Could not share screen', 'error');
+            showToast(/system/i.test(err.message || '')
+                ? 'Your computer is blocking screen capture. Allow screen recording for your browser in system settings, then try again.'
+                : screenShareErrorMessage(err), 'error', 8000);
         }
+    } finally {
+        state.screenStarting = false;
     }
 }
 
 async function stopScreenShare() {
-    if (!state.isScreenSharing || !state.localScreenTrack) return;
-    try {
-        if (state.screenClient) {
-            await state.screenClient.unpublish(state.localScreenTrack);
-            await state.screenClient.leave();
-            state.screenClient = null;
-        }
-        state.localScreenTrack.close();
-        state.localScreenTrack = null;
-        state.screenUid = null;
+    if (!state.isScreenSharing && !state.localScreenTrack) return;
+    const track = state.localScreenTrack;
+    const client = state.screenClient;
+    // Reset state first so the button always returns to "Share Screen", even
+    // if tearing the connection down fails.
+    state.localScreenTrack = null;
+    state.screenClient = null;
+    state.screenUid = null;
+    const wasSharing = state.isScreenSharing;
+    state.isScreenSharing = false;
+    updateScreenShareUI();
 
-        state.isScreenSharing = false;
-        updateScreenShareUI();
-        showToast('Screen sharing stopped');
+    // Always release the capture so the browser's "sharing" indicator goes away
+    try { track?.close(); } catch (e) { /* already closed */ }
+    try { await client?.leave(); } catch (err) { console.error('Stop screen share error:', err); }
+    diag('screen_stopped');
 
-        // Notify remote participant via relay
-        if (state.wbRelayRef) {
-            setDoc(state.wbRelayRef, { t: 'ss', active: false, uid: null, ts: Date.now() }).catch(() => {});
-        }
-    } catch (err) {
-        console.error('Stop screen share error:', err);
-        state.isScreenSharing = false;
-        state.localScreenTrack = null;
-        state.screenClient = null;
-        state.screenUid = null;
-        updateScreenShareUI();
+    // Notify remote participant via relay
+    if (state.wbRelayRef) {
+        setDoc(state.wbRelayRef, { t: 'ss', active: false, uid: null, ts: Date.now() }).catch(() => {});
     }
+    if (wasSharing) showToast('Screen sharing stopped');
 }
 
 function toggleScreenShare() {
@@ -2592,6 +2644,9 @@ function collectCallStats() {
             audioLoss: round(ra?.[u.uid]?.packetLossRate),
             videoSubscribed: !!u.videoTrack,
             videoRecvBytes: rv?.[u.uid]?.receiveBytes ?? null,
+            videoRes: rv?.[u.uid] ? `${rv[u.uid].receiveResolutionWidth}x${rv[u.uid].receiveResolutionHeight}` : null,
+            videoFps: rv?.[u.uid]?.renderFrameRate ?? rv?.[u.uid]?.decodeFrameRate ?? null,
+            videoFreezeSec: round(rv?.[u.uid]?.totalFreezeTime),
         }));
     } catch (err) {
         out.statsError = String(err?.message || err).slice(0, 200);
