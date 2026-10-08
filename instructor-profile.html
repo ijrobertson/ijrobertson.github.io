@@ -841,6 +841,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Update page title
                 document.title = `${p.name || 'Instructor'} - Lingua Bud`;
 
+                // Each instructor is a distinct page for search engines: point the
+                // canonical at this profile, minus booking/tracking parameters.
+                const profileUrl = `https://linguabud.com/instructor-profile?id=${encodeURIComponent(uid)}`;
+                let canonical = document.querySelector('link[rel="canonical"]');
+                if (!canonical) {
+                    canonical = document.createElement('link');
+                    canonical.rel = 'canonical';
+                    document.head.appendChild(canonical);
+                }
+                canonical.href = profileUrl;
+                document.querySelector('meta[property="og:url"]')?.setAttribute('content', profileUrl);
+
                 // Hero
                 const avatar = p.avatar_url || 'https://via.placeholder.com/160';
                 document.getElementById('heroAvatar').src = avatar;
