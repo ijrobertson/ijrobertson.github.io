@@ -4,6 +4,7 @@ const { Resend } = require('resend');
 const Stripe = require('stripe');
 const { randomUUID } = require('crypto');
 const { google } = require('googleapis');
+const { processLessonReminders } = require('./lessonReminders');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -4265,6 +4266,48 @@ exports.runScheduledQuizNotificationsNow = onCall(async (request) => {
   } catch (err) {
     console.error('[Quiz Schedule] runScheduledQuizNotificationsNow error:', err.message);
     throw new HttpsError('internal', `Scheduled quiz notification run failed: ${err.message}`);
+  }
+});
+
+// ── Lesson Reminder Emails ──────────────────────────────────────────────────
+//
+// Emails both the student and the instructor about 24 hours before a lesson
+// and again about 1 hour before. Logic and templates live in
+// lessonReminders.js; each send is recorded on the booking (remindersSent) so
+// nobody gets a second copy, and cancelled lessons or ones booked with less
+// notice than the reminder's lead time are skipped.
+
+/**
+ * Scheduled Cloud Function — runs every 10 minutes.
+ */
+exports.sendLessonReminders = onSchedule('*/10 * * * *', async () => {
+  console.log('[Lesson Reminder] sendLessonReminders: tick starting');
+  const db = admin.firestore();
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const results = await processLessonReminders(db, resend);
+    console.log('[Lesson Reminder] tick complete:', JSON.stringify(results));
+  } catch (err) {
+    console.error('[Lesson Reminder] tick fatal error:', err.message);
+  }
+});
+
+/**
+ * Admin callable — manually trigger a lesson-reminder tick (the Functions
+ * emulator never fires onSchedule on a wall clock, same pattern as
+ * runDailyRemindersNow above). Pass { dryRun: true } to see what would be
+ * sent without sending or marking anything.
+ */
+exports.runLessonRemindersNow = onCall(async (request) => {
+  await assertAdmin(request);
+  console.log('[Lesson Reminder] runLessonRemindersNow: admin-triggered tick');
+  const db = admin.firestore();
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    return await processLessonReminders(db, resend, { dryRun: !!request.data?.dryRun });
+  } catch (err) {
+    console.error('[Lesson Reminder] runLessonRemindersNow error:', err.message);
+    throw new HttpsError('internal', `Lesson reminder run failed: ${err.message}`);
   }
 });
 
