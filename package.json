@@ -5,7 +5,10 @@
   "scripts": {
     "serve": "npx serve .",
     "emulator": "firebase emulators:start --export-on-exit --import=./firebase-emulator-data",
-    "dev": "npm run serve & npm run emulator"
+    "dev": "npm run serve & npm run emulator",
+    "deploy:pwa": "firebase deploy --only hosting && npm run check:secrets",
+    "deploy:pwa-test": "firebase hosting:channel:deploy pwa-ios-test --expires 30d",
+    "check:secrets": "bash scripts/check-hosting-secrets.sh"
   },
   "private": true
 }
