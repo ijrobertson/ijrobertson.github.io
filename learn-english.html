@@ -1191,17 +1191,74 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return card;
         }
 
+        /* ── Instructor ranking (same rules as index.html and instructors.html) ── */
+        // Instructors can only be booked once their payout account is connected
+        function isPaymentReady(instructor) {
+            return (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) ||
+                   (instructor.payoutMethod === 'wise' && !!instructor.wiseEmail);
+        }
+
+        function getNextAvailableDate(availability) {
+            if (!availability || !availability.weeklySchedule) return null;
+            const dayKeys = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+            const today = new Date(); today.setHours(0,0,0,0);
+            const blocked = availability.blockedDates || [];
+            for (let i = 0; i < 14; i++) {
+                const d = new Date(today); d.setDate(today.getDate() + i);
+                const iso = d.toISOString().slice(0,10);
+                if (blocked.includes(iso)) continue;
+                if ((availability.weeklySchedule[dayKeys[d.getDay()]] || []).length > 0) return d;
+            }
+            return null;
+        }
+
+        // Hand-picked instructors, in display order. Keep in sync with index.html.
+        const FEATURED_INSTRUCTOR_IDS = [
+            'YQW6oZ5e9ycWsAWeDaet5vMOeic2', // B. Michael James Crowe
+            'njp0QrFfRwhB76J7onZ3tt0YTym1', // Melissa
+            '2zo8BNoviLfo8Ld9JbxJUV8gJb62', // Alicia Velásquez
+            'E0ZH8A0BiQe51wwh2tuzaDkJUMd2'  // Sara Hoyos
+        ];
+
+        // "Recommended" order: reviewed instructors with open availability,
+        // then the featured list, then everyone else (bookable soon first,
+        // then those with an intro video)
+        function recommendedScore(instructor, availabilityMap) {
+            const next = getNextAvailableDate(availabilityMap[instructor.id]);
+            const rated = instructor.reviewCount > 0;
+            const featuredIndex = FEATURED_INSTRUCTOR_IDS.indexOf(instructor.id);
+            let score = 0;
+            if (next) {
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const days = Math.round((next.getTime() - today.getTime()) / 86400000);
+                score += 1000 + (days <= 1 ? 5 : days <= 3 ? 3 : 0);
+                if (rated) score += 1000;
+            }
+            if (rated) score += 20 + (instructor.averageRating || 0) * 2 + Math.min(instructor.reviewCount, 10);
+            if (featuredIndex !== -1 && score < 1500) score = 1500 - featuredIndex;
+            if (instructor.intro_video_url) score += 10;
+            return score;
+        }
+
         async function loadEnglishInstructors() {
             const grid = document.getElementById('instructorsGrid');
             try {
-                const snap = await getDocs(query(collection(db, 'instructors'), limit(40)));
+                const [snap, availSnap] = await Promise.all([
+                    getDocs(collection(db, 'instructors')),
+                    getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] }))
+                ]);
+                const availabilityMap = {};
+                availSnap.docs.forEach(d => { availabilityMap[d.id] = d.data(); });
+
                 const instructors = [];
                 snap.forEach(d => {
                     const data = d.data();
-                    if (!data.status || data.status === 'approved') {
+                    // Only approved instructors who can take paid bookings
+                    if ((!data.status || data.status === 'approved') && isPaymentReady(data)) {
                         instructors.push({ id: d.id, ...data });
                     }
                 });
+                instructors.sort((a, b) => recommendedScore(b, availabilityMap) - recommendedScore(a, availabilityMap));
                 const englishInstructors = instructors.filter(i => {
                     return (i.languages_teaching || []).some(isEnglish);
                 });
