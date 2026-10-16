@@ -3831,6 +3831,16 @@ async function processWisePayouts(db) {
       continue;
     }
 
+    // Guard: instructors who can't receive Wise (e.g. Ecuador) are paid manually
+    // (PayPal) by an admin, then settled via Mark as Paid — leave them pending.
+    const instructorDoc = await db.collection('instructors').doc(instructorId).get();
+    if (instructorDoc.exists && instructorDoc.data().manualPayout) {
+      console.log(`[Wise] ${instructorId} — manualPayout=${instructorDoc.data().manualPayout}, skipping`);
+      results.skipped++;
+      results.details.push({ instructorId, status: 'skipped', reason: `manual payout (${instructorDoc.data().manualPayout})` });
+      continue;
+    }
+
     const amountDecimal         = totalCents / 100;
     // Wise requires customerTransactionId to be a valid UUID v4
     const customerTransactionId = randomUUID();
