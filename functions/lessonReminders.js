@@ -371,4 +371,4 @@ async function processLessonReminders(db, resend, opts = {}) {
   return results;
 }
 
-module.exports = { buildLessonReminderEmail, processLessonReminders };
+module.exports = { buildLessonReminderEmail, processLessonReminders, escapeHtml };

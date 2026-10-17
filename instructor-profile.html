@@ -506,6 +506,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 Next <i class="fas fa-chevron-right"></i>
                             </button>
                         </div>
+                        <p id="booking-notice-hint" style="margin: -0.75rem 0 1rem; color: #666; font-size: 0.85rem; text-align: center;"></p>
                         <div id="days-grid"></div>
                     </div>
 
@@ -618,6 +619,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 Next <i class="fas fa-chevron-right"></i>
                             </button>
                         </div>
+                        <p id="trial-notice-hint" style="margin: -0.75rem 0 1rem; color: #666; font-size: 0.85rem; text-align: center;"></p>
                         <div id="trial-days-grid"></div>
                     </div>
 
@@ -699,6 +701,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let currentInstructorName = null;
         let currentWeekStart      = null;
         let instructorAvailability = null;
+        // Hours of notice a booking needs; instructors can change theirs on the dashboard
+        const DEFAULT_MIN_NOTICE_HOURS = 12;
         let existingBookings      = [];
         let selectedSlot          = null;
         let stripeInstance        = null;
@@ -1113,6 +1117,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function renderWeekCalendar() {
             const daysGrid = document.getElementById('days-grid');
             daysGrid.innerHTML = '';
+            document.getElementById('booking-notice-hint').textContent = noticeHintText();
             const weekEnd = new Date(currentWeekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
             document.getElementById('current-week-label').textContent =
@@ -1183,8 +1188,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return column;
         }
 
+        function minNoticeHours() {
+            const h = Number(instructorAvailability && instructorAvailability.minNoticeHours);
+            return Number.isFinite(h) && h > 0 ? h : DEFAULT_MIN_NOTICE_HOURS;
+        }
+
+        // Earliest start time a student may book right now
+        function earliestBookableTime() {
+            return new Date(Date.now() + minNoticeHours() * 60 * 60 * 1000);
+        }
+
+        function noticeHintText() {
+            const h = minNoticeHours();
+            return `Lessons must be booked at least ${h} hour${h === 1 ? '' : 's'} in advance.`;
+        }
+
         function generateSlotsForDay(date, dayKey) {
-            const now = new Date();
+            const earliest = earliestBookableTime();
             if (date < new Date().setHours(0, 0, 0, 0)) return [];
 
             const instructorTZ = instructorAvailability && instructorAvailability.timezone;
@@ -1218,7 +1238,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const end   = makeUTCFromTZ(ymdInstructorTZ, endHour, endMin, instructorTZ);
                     while (current < end) {
                         const slotEnd = new Date(current.getTime() + 60 * 60 * 1000);
-                        if (slotEnd <= end && current >= now) {
+                        if (slotEnd <= end && current >= earliest) {
                             const isBooked = existingBookings.some(b => Math.abs(b.dateTime - current) < 60000);
                             slots.push({ startTime: new Date(current), endTime: new Date(slotEnd), booked: isBooked });
                         }
@@ -1244,7 +1264,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     end.setHours(endHour, endMin, 0, 0);
                     while (current < end) {
                         const slotEnd = new Date(current.getTime() + 60 * 60 * 1000);
-                        if (slotEnd <= end && current >= now) {
+                        if (slotEnd <= end && current >= earliest) {
                             const isBooked = existingBookings.some(b => Math.abs(b.dateTime - current) < 60000);
                             slots.push({ startTime: new Date(current), endTime: new Date(slotEnd), booked: isBooked });
                         }
@@ -1260,6 +1280,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         async function confirmBooking(slot) {
+            // The calendar may have been open a while; re-check notice before taking payment
+            if (slot.startTime < earliestBookableTime()) {
+                alert(`That time is too soon to book. ${noticeHintText()}`);
+                renderWeekCalendar();
+                return;
+            }
             selectedSlot = slot;
             document.getElementById('booking-calendar').style.display = 'none';
             document.getElementById('booking-loading').style.display = 'none';
@@ -1503,6 +1529,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function renderTrialWeekCalendar() {
             const daysGrid = document.getElementById('trial-days-grid');
             daysGrid.innerHTML = '';
+            document.getElementById('trial-notice-hint').textContent = noticeHintText();
             const weekEnd = new Date(trialWeekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
             document.getElementById('trial-week-label').textContent =
@@ -1602,6 +1629,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         document.getElementById('trial-confirm-btn').addEventListener('click', async () => {
             if (!trialSelectedSlot) return;
+            if (trialSelectedSlot.startTime < earliestBookableTime()) {
+                const errEl = document.getElementById('trial-error-msg');
+                errEl.textContent = `That time is too soon to book. ${noticeHintText()} Please go back and pick a later time.`;
+                errEl.style.display = 'block';
+                return;
+            }
             const confirmBtn = document.getElementById('trial-confirm-btn');
             confirmBtn.disabled = true;
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Booking...';

@@ -4,7 +4,7 @@ const { Resend } = require('resend');
 const Stripe = require('stripe');
 const { randomUUID } = require('crypto');
 const { google } = require('googleapis');
-const { processLessonReminders } = require('./lessonReminders');
+const { processLessonReminders, escapeHtml } = require('./lessonReminders');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -2401,6 +2401,9 @@ exports.cancelBooking = onCall(async (request) => {
 
   const { bookingId } = request.data;
   if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required');
+  // Optional: older cached pages cancel without a reason
+  const cancelReason = typeof request.data.reason === 'string' ? request.data.reason.trim().slice(0, 100) : '';
+  const cancelNote   = typeof request.data.note === 'string' ? request.data.note.trim().slice(0, 500) : '';
 
   const uid = request.auth.uid;
   const bookingRef = admin.firestore().collection('bookings').doc(bookingId);
@@ -2539,6 +2542,8 @@ exports.cancelBooking = onCall(async (request) => {
     refundPercent,
     refundLabel,
     refundAmountCents,
+    ...(cancelReason && { cancelReason }),
+    ...(cancelNote && { cancelNote }),
     ...(stripeRefundId && { stripeRefundId }),
     ...(refundError && { refundError }),
   });
@@ -2553,6 +2558,13 @@ exports.cancelBooking = onCall(async (request) => {
   });
 
   const resend = new Resend(process.env.RESEND_API_KEY);
+
+  // Reason lines for the email sent to the other person
+  const reasonHtml = (cancelReason
+    ? `<p style="margin:8px 0 0;color:#333;font-size:15px;"><strong>Reason:</strong> ${escapeHtml(cancelReason)}</p>` : '')
+    + (cancelNote
+    ? `<p style="margin:8px 0 0;color:#333;font-size:15px;white-space:pre-line;"><strong>Note:</strong> ${escapeHtml(cancelNote)}</p>` : '');
+  const reasonText = (cancelReason ? `\nReason: ${cancelReason}` : '') + (cancelNote ? `\nNote: ${cancelNote}` : '');
 
   const emailHeader = `
     <tr>
@@ -2605,6 +2617,7 @@ exports.cancelBooking = onCall(async (request) => {
                         <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Date:</strong> ${formattedDate}</p>
                         <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Time:</strong> ${formattedTime}</p>
                         <p style="margin:0;color:#333;font-size:15px;"><strong>Refund:</strong> ${refundLabel}</p>
+                        ${reasonHtml}
                       </div>
                       <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">
                         This time slot is now available for other students to book. Visit your dashboard to review your schedule.
@@ -2621,7 +2634,7 @@ exports.cancelBooking = onCall(async (request) => {
               </table>
             </body></html>
           `,
-          text: `Hi ${instructor.name || 'Instructor'},\n\n${studentName} has cancelled their lesson with you.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\nRefund: ${refundLabel}\n\nThis slot is now available for other students.\n\nDashboard: https://linguabud.com/dashboard\n\n© 2026 Lingua Bud`
+          text: `Hi ${instructor.name || 'Instructor'},\n\n${studentName} has cancelled their lesson with you.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\nRefund: ${refundLabel}${reasonText}\n\nThis slot is now available for other students.\n\nDashboard: https://linguabud.com/dashboard\n\n© 2026 Lingua Bud`
         });
         console.log('Cancellation email sent to instructor:', instructor.email);
       }
@@ -2787,6 +2800,7 @@ exports.cancelBooking = onCall(async (request) => {
                         <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Instructor:</strong> ${instructorName}</p>
                         <p style="margin:0 0 8px;color:#333;font-size:15px;"><strong>Date:</strong> ${formattedDate}</p>
                         <p style="margin:0;color:#333;font-size:15px;"><strong>Time:</strong> ${formattedTime}</p>
+                        ${reasonHtml}
                       </div>
                       <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">${refundNote}</p>
                       <p style="margin:0 0 28px;color:#666;font-size:15px;line-height:1.6;">
@@ -2804,7 +2818,7 @@ exports.cancelBooking = onCall(async (request) => {
               </table>
             </body></html>
           `,
-          text: `Hi ${student.name || 'there'},\n\n${instructorName} has cancelled your upcoming lesson.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors\n\n© 2026 Lingua Bud`
+          text: `Hi ${student.name || 'there'},\n\n${instructorName} has cancelled your upcoming lesson.\n\nDate: ${formattedDate}\nTime: ${formattedTime}${reasonText}\n\n${refundNotePlain}\n\nFind another instructor: https://linguabud.com/instructors\n\n© 2026 Lingua Bud`
         });
         console.log('Cancellation email sent to student:', student.email);
       }

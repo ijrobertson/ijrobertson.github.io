@@ -993,6 +993,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <h3>Cancel This Lesson?</h3>
       <div id="cancel-lesson-details" class="cancel-lesson-info"></div>
+      <div style="text-align: left; margin-bottom: 1rem;">
+        <label for="cancel-reason" style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.35rem;">Reason for cancelling</label>
+        <select id="cancel-reason" style="width: 100%; box-sizing: border-box; padding: 0.55rem 0.6rem; border: 1.5px solid #d0d5dd; border-radius: 7px; font-size: 0.9rem; background: #fff; margin: 0 0 0.6rem;"></select>
+        <textarea id="cancel-note" rows="2" maxlength="500" placeholder="Add a note (optional). It's included in the email to your instructor." style="width: 100%; box-sizing: border-box; padding: 0.55rem 0.6rem; border: 1.5px solid #d0d5dd; border-radius: 7px; font-size: 0.9rem; resize: vertical; margin: 0;"></textarea>
+      </div>
       <p class="cancel-policy-text">
         By cancelling, you confirm that you have read and agree to our
         <a href="refund-policy" target="_blank">Cancellation &amp; Refund Policy</a>.
@@ -1952,6 +1957,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // ── Cancel Booking Modal ──────────────────────────────
     let _cancelBookingId = null;
 
+    // Shown in the cancel dialog; the chosen label is stored on the booking and emailed to the other person
+    const CANCEL_REASONS = {
+      instructor: ["I'm not available at this time", 'Booked with too little notice', 'Illness or personal emergency', 'Technical problem', 'Other'],
+      student:    ['Schedule conflict', 'Booked by mistake', 'Want to try a different instructor', 'Illness or personal emergency', 'Other']
+    };
+
+    function resetCancelReason(role) {
+      const sel = document.getElementById('cancel-reason');
+      sel.innerHTML = '<option value="" disabled selected>Select a reason…</option>' +
+        (CANCEL_REASONS[role] || CANCEL_REASONS.student).map(r => `<option>${escapeHtml(r)}</option>`).join('');
+      document.getElementById('cancel-note').value = '';
+    }
+
+    // Returns { reason, note }, or an error message string if the form is incomplete
+    function readCancelReason() {
+      const reason = document.getElementById('cancel-reason').value;
+      const note = document.getElementById('cancel-note').value.trim();
+      if (!reason) return 'Please choose a reason for cancelling.';
+      if (reason === 'Other' && !note) return 'Please add a short note explaining why.';
+      return { reason, note };
+    }
+
     function openCancelModal(bookingId, booking) {
       _cancelBookingId = bookingId;
 
@@ -1986,6 +2013,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const btn = document.getElementById('cancel-confirm-btn');
       btn.disabled = false;
       document.getElementById('cancel-btn-text').textContent = 'Cancel Lesson';
+      resetCancelReason('student');
       document.getElementById('cancel-backdrop').classList.add('active');
     }
 
@@ -2004,13 +2032,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       const btn = document.getElementById('cancel-confirm-btn');
       const err = document.getElementById('cancel-error');
+      const cancelReason = readCancelReason();
+      if (typeof cancelReason === 'string') { err.textContent = cancelReason; return; }
       btn.disabled = true;
       document.getElementById('cancel-btn-text').textContent = 'Cancelling…';
       err.textContent = '';
 
       try {
         const cancelFn = httpsCallable(functions, 'cancelBooking');
-        await cancelFn({ bookingId: _cancelBookingId });
+        await cancelFn({ bookingId: _cancelBookingId, ...cancelReason });
         document.getElementById('cancel-backdrop').classList.remove('active');
         _cancelBookingId = null;
         await loadStudentBookings();

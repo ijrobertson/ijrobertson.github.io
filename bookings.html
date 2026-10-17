@@ -1504,6 +1504,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ===== CANCEL BOOKING MODAL =====
         let _cancelId = null;
 
+        // Shown in the cancel dialog; the chosen label is stored on the booking and emailed to the other person
+        const CANCEL_REASONS = {
+            instructor: ["I'm not available at this time", 'Booked with too little notice', 'Illness or personal emergency', 'Technical problem', 'Other'],
+            student:    ['Schedule conflict', 'Booked by mistake', 'Want to try a different instructor', 'Illness or personal emergency', 'Other']
+        };
+
+        function resetCancelReason(role) {
+            const sel = document.getElementById('cancelReason');
+            sel.innerHTML = '<option value="" disabled selected>Select a reason…</option>' +
+                (CANCEL_REASONS[role] || CANCEL_REASONS.student).map(r => `<option>${escapeHtml(r)}</option>`).join('');
+            document.getElementById('cancelNote').value = '';
+        }
+
+        // Returns { reason, note }, or an error message string if the form is incomplete
+        function readCancelReason() {
+            const reason = document.getElementById('cancelReason').value;
+            const note = document.getElementById('cancelNote').value.trim();
+            if (!reason) return 'Please choose a reason for cancelling.';
+            if (reason === 'Other' && !note) return 'Please add a short note explaining why.';
+            return { reason, note };
+        }
+
+
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-cancel-id]');
             if (!btn) return;
@@ -1540,6 +1563,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 ${refundNote ? `<br><br>${refundNote}` : ''}
             `;
             document.getElementById('cancelModalErr').textContent = '';
+            resetCancelReason(role);
             const doBtn = document.getElementById('cancelDoBtn');
             doBtn.disabled = false;
             document.getElementById('cancelDoBtnText').textContent = 'Cancel Lesson';
@@ -1560,12 +1584,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (!_cancelId) return;
             const doBtn = document.getElementById('cancelDoBtn');
             const err = document.getElementById('cancelModalErr');
+            const cancelReason = readCancelReason();
+            if (typeof cancelReason === 'string') { err.textContent = cancelReason; return; }
             doBtn.disabled = true;
             document.getElementById('cancelDoBtnText').textContent = 'Cancelling…';
             err.textContent = '';
             try {
                 const cancelFn = httpsCallable(functions, 'cancelBooking');
-                await cancelFn({ bookingId: _cancelId });
+                await cancelFn({ bookingId: _cancelId, ...cancelReason });
                 document.getElementById('cancelBackdrop').classList.remove('active');
                 _cancelId = null;
                 await loadLessons();
@@ -2018,6 +2044,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
             <h3>Cancel This Lesson?</h3>
             <div id="cancelLessonInfo" class="cancel-lesson-info-box"></div>
+            <div style="text-align: left; margin-bottom: 1rem;">
+                <label for="cancelReason" style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.35rem;">Reason for cancelling</label>
+                <select id="cancelReason" style="width: 100%; box-sizing: border-box; padding: 0.55rem 0.6rem; border: 1.5px solid #d0d5dd; border-radius: 7px; font-size: 0.9rem; background: #fff; margin: 0 0 0.6rem;"></select>
+                <textarea id="cancelNote" rows="2" maxlength="500" placeholder="Add a note (optional). It's included in the email to the other person." style="width: 100%; box-sizing: border-box; padding: 0.55rem 0.6rem; border: 1.5px solid #d0d5dd; border-radius: 7px; font-size: 0.9rem; resize: vertical; margin: 0;"></textarea>
+            </div>
             <p class="cancel-policy-note">
                 By cancelling, you confirm you have read our
                 <a href="refund-policy" target="_blank">Cancellation &amp; Refund Policy</a>.
