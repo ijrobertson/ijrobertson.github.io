@@ -98,9 +98,13 @@ if (self.workbox) {
   // takes over the full screen (visualViewport-synced .chat-panel, ported
   // from main's fix) so the back button stays visible while typing —
   // bumping here again for the same immediate-on-next-launch reason.
+  //
+  // Bumped to v8 on 2026-10-19: every app-shell page gained an early async
+  // <script> for js/app-shell.js (tab bar renders with first paint) and the
+  // tab bar gained the sliding glider.
   workbox.routing.registerRoute(
     ({ request, url }) => request.mode === "navigate" && SAME_ORIGIN({ url }),
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v7" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v8" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -173,7 +177,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v8",
+      cacheName: "linguabud-assets-v9", // v9 (2026-10-19): js/app-shell.js tab-bar glider
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -207,12 +211,14 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v5"),
       caches.delete("linguabud-assets-v6"),
       caches.delete("linguabud-assets-v7"),
+      caches.delete("linguabud-assets-v8"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
       caches.delete("linguabud-pages-v4"),
       caches.delete("linguabud-pages-v5"),
       caches.delete("linguabud-pages-v6"),
+      caches.delete("linguabud-pages-v7"),
     ])
   );
 });

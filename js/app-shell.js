@@ -270,7 +270,29 @@ const STYLE = `
     transform: translateZ(0);
     will-change: transform;
   }
+  /* The sliding "glider" pill behind the active tab's icon (see _placeGlider()).
+     One tab-width wide so translateX(N * 100%) lands exactly on tab N with no
+     measuring; the visible pill is centered inside it. */
+  .glider {
+    position: absolute;
+    top: 3px;
+    left: 0;
+    width: calc(100% / var(--tab-count, 5));
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .glider.hidden { visibility: hidden; }
+  .glider-pill {
+    width: 60px;
+    height: 100%;
+    border-radius: 999px;
+    background: rgba(32, 188, 186, 0.18); /* brand teal #20bcba, tinted */
+  }
   a.tab {
+    position: relative;
+    z-index: 1;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -283,8 +305,13 @@ const STYLE = `
     font-weight: 600;
     transition: color var(--lb-duration-fast, 150ms) var(--lb-ease-out, ease-out);
   }
-  a.tab svg { width: 22px; height: 22px; }
-  a.tab[aria-current="page"] { color: var(--action); }
+  a.tab svg {
+    width: 22px;
+    height: 22px;
+    transition: transform var(--lb-duration-fast, 150ms) var(--lb-ease-out, ease-out);
+  }
+  a.tab[aria-current="page"] { color: var(--action); font-weight: 700; }
+  a.tab.tab-tapped svg { transform: scale(0.88); }
   /* Set via the messages-unread attribute (see js/unread-messages.js) —
      takes precedence over aria-current so it's visible even while the
      Messages tab happens to already be the active one mid-transition. */
@@ -302,7 +329,7 @@ const STYLE = `
   }
 
   @media (prefers-reduced-motion: reduce) {
-    a.tab { transition: none; }
+    a.tab, a.tab svg { transition: none; }
   }
 
   /* The bottom tab bar stays visible at every viewport size, including desktop.
@@ -313,6 +340,36 @@ const STYLE = `
      navigate between app screens. Visible-everywhere is the safe interim state. */
 `;
 
+const ROLE_STORAGE_KEY = "lb-shell-role";
+const GLIDE_STORAGE_KEY = "lb-tab-glide";
+const GLIDE_EASING = "cubic-bezier(0.2, 0.9, 0.1, 1)";
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+// ── Glider hand-off between pages ───────────────────────────────────────
+// Every tab is a separate page load, so the slide that starts on tap would
+// otherwise be cut off when the old page unloads. The old page records the
+// pill's position (on tap, then again on pagehide); the next page's shell
+// starts its glider there and finishes the slide. Keyed to the destination
+// href so an entry left by a tap that ended somewhere else (e.g. a redirect
+// to login) can't animate an unrelated later page.
+function saveGlide(toId, pos, href) {
+  try {
+    sessionStorage.setItem(GLIDE_STORAGE_KEY, JSON.stringify({ toId, pos, href, at: Date.now() }));
+  } catch (e) {}
+}
+
+function readGlideArrival() {
+  let entry = null;
+  try {
+    entry = JSON.parse(sessionStorage.getItem(GLIDE_STORAGE_KEY) || "null");
+    sessionStorage.removeItem(GLIDE_STORAGE_KEY);
+  } catch (e) {}
+  if (!entry || Date.now() - entry.at > 5000) return null;
+  const page = location.pathname.replace(/^\/+/, "").replace(/\.html$/, "") || "index";
+  if (entry.href !== page) return null;
+  return entry;
+}
+
 class LbAppShell extends HTMLElement {
   static get observedAttributes() {
     return ["role", "active", "page-title", "notifications", "streak", "hide-header", "messages-unread", "back-href"];
@@ -321,7 +378,18 @@ class LbAppShell extends HTMLElement {
   connectedCallback() {
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
     this._menuOpen = false;
+    // Arriving via a tab tap on the previous page: show that tab as active
+    // right away (most pages start at active="none" until auth resolves) and
+    // continue the glider from wherever it was when the old page unloaded.
+    const arrival = readGlideArrival();
+    let arrivalPos = null;
+    if (arrival) {
+      this._activeOverride = arrival.toId;
+      arrivalPos = arrival.pos;
+    }
     this._render();
+    if (arrival) this._placeGlider(arrivalPos);
+    this._connected = true;
     // Attached once (not per-render) so re-renders don't stack duplicate listeners.
     document.addEventListener("click", this._onDocumentClick = (e) => {
       if (!this._menuOpen) return;
@@ -331,19 +399,100 @@ class LbAppShell extends HTMLElement {
     });
     // See prefetchSiblingTabs below — warms the SW cache for every other
     // bottom-nav tab while the user is idle on this one.
-    prefetchSiblingTabs(this.navItems, this.getAttribute("active") || "home");
+    prefetchSiblingTabs(this.navItems, this._activeId());
+
+    // Remember where the glider is as this page goes away, so the next page's
+    // shell can pick the slide up from that exact spot (see readGlideArrival).
+    window.addEventListener("pagehide", this._onPageHide = () => {
+      if (this._overrideHref) saveGlide(this._activeOverride, this._gliderPos(), this._overrideHref);
+    });
+    // Back/forward-cache restore: this page comes back exactly as it was left,
+    // glider sitting on the tab that was tapped. Slide it back home.
+    window.addEventListener("pageshow", this._onPageShow = (e) => {
+      if (!e.persisted || !this._overrideHref) return;
+      const from = this._gliderPos();
+      this._activeOverride = this._overrideHref = null;
+      this._render();
+      this._placeGlider(from);
+    });
   }
 
   disconnectedCallback() {
     if (this._onDocumentClick) document.removeEventListener("click", this._onDocumentClick);
+    if (this._onPageHide) window.removeEventListener("pagehide", this._onPageHide);
+    if (this._onPageShow) window.removeEventListener("pageshow", this._onPageShow);
   }
 
-  attributeChangedCallback() {
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === "role" && newValue) {
+      try { localStorage.setItem(ROLE_STORAGE_KEY, newValue); } catch (e) {}
+    }
+    // The page's own script has now decided which tab is active (usually
+    // after auth resolves) — that wins over the optimistic arrival guess,
+    // but not over a tab the user has just tapped on their way out.
+    if (name === "active" && this._connected && !this._overrideHref) this._activeOverride = null;
     if (this.shadowRoot) this._render();
   }
 
+  // Pages only set role once auth + a Firestore lookup resolve, so until then
+  // fall back to the last role this device saw instead of always "student" —
+  // otherwise instructors watch their tab bar swap sets on every page load.
+  get _role() {
+    let role = this.getAttribute("role");
+    if (!role) {
+      try { role = localStorage.getItem(ROLE_STORAGE_KEY); } catch (e) {}
+    }
+    return role === "instructor" ? "instructor" : "student";
+  }
+
   get navItems() {
-    return this._nav || NAV_BY_ROLE[this.getAttribute("role") || "student"];
+    return this._nav || NAV_BY_ROLE[this._role];
+  }
+
+  _activeId() {
+    if (this._activeOverride && this.navItems.some((item) => item.id === this._activeOverride)) {
+      return this._activeOverride;
+    }
+    return this.getAttribute("active") || "home";
+  }
+
+  // Current glider position in tab units (0 = first tab, may be fractional
+  // mid-slide), or null when there's no visible glider to continue from.
+  _gliderPos() {
+    const glider = this.shadowRoot?.querySelector(".glider");
+    if (!glider || glider.classList.contains("hidden") || !glider.offsetWidth) return null;
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(glider).transform);
+    return matrix.m41 / glider.offsetWidth;
+  }
+
+  // Puts the glider under the active tab, sliding there from `fromPos` (tab
+  // units) when given. Called after every render, so a re-render mid-slide
+  // (e.g. messages-unread flipping as Firestore loads) carries on from the
+  // pill's current spot instead of snapping.
+  _placeGlider(fromPos) {
+    const glider = this.shadowRoot.querySelector(".glider");
+    if (!glider) return;
+    const items = this.navItems;
+    const index = items.findIndex((item) => item.id === this._activeId());
+    glider.getAnimations().forEach((a) => a.cancel());
+    glider.style.setProperty("--tab-count", items.length);
+    glider.classList.toggle("hidden", index < 0);
+    if (index < 0) return;
+    glider.style.transform = `translateX(${index * 100}%)`;
+    if (REDUCED_MOTION.matches || fromPos == null) return;
+    const distance = Math.abs(index - fromPos);
+    if (distance < 0.01) return;
+    const duration = Math.min(220 + 70 * distance, 460);
+    glider.animate(
+      [{ transform: `translateX(${fromPos * 100}%)` }, { transform: `translateX(${index * 100}%)` }],
+      { duration, easing: GLIDE_EASING }
+    );
+    // Stretch along the direction of travel, then settle — reads as one
+    // fluid object moving rather than a box being repositioned.
+    glider.querySelector(".glider-pill").animate(
+      [{ transform: "scaleX(1)" }, { transform: `scaleX(${1 + Math.min(0.45, 0.18 * distance)})`, offset: 0.35 }, { transform: "scaleX(1)" }],
+      { duration, easing: "ease-out" }
+    );
   }
 
   set nav(items) {
@@ -357,8 +506,9 @@ class LbAppShell extends HTMLElement {
   }
 
   _render() {
-    const role = this.getAttribute("role") === "instructor" ? "instructor" : "student";
-    const active = this.getAttribute("active") || "home";
+    const role = this._role;
+    const active = this._activeId();
+    const gliderFrom = this._gliderPos();
     const pageTitle = this.getAttribute("page-title") || "Lingua Bud";
     const notifications = parseInt(this.getAttribute("notifications") || "0", 10);
     const streak = parseInt(this.getAttribute("streak") || "0", 10);
@@ -402,6 +552,7 @@ class LbAppShell extends HTMLElement {
         </div>
       </header>`}
       <nav aria-label="Primary">
+        <span class="glider" aria-hidden="true"><span class="glider-pill"></span></span>
         ${items
           .map(
             (item) => `
@@ -425,7 +576,26 @@ class LbAppShell extends HTMLElement {
       tab.addEventListener("pointerup", clear);
       tab.addEventListener("pointercancel", clear);
       tab.addEventListener("pointerleave", clear);
+      // Slide the glider the instant a tab is tapped, while the next page
+      // loads — updated in place rather than re-rendered, since replacing
+      // the <a> mid-click could cancel its navigation. Tapping the tab
+      // you're already on keeps its old behavior (plain reload).
+      tab.addEventListener("click", (e) => {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const id = tab.dataset.id;
+        if (id === this._activeId()) return;
+        const from = this._gliderPos();
+        this._activeOverride = id;
+        this._overrideHref = tab.getAttribute("href");
+        this.shadowRoot.querySelectorAll("a.tab").forEach((t) => {
+          if (t === tab) t.setAttribute("aria-current", "page");
+          else t.removeAttribute("aria-current");
+        });
+        this._placeGlider(from);
+        saveGlide(id, from, this._overrideHref);
+      });
     });
+    this._placeGlider(gliderFrom);
 
     if (!hideHeader) {
       const menuBtn = this.shadowRoot.getElementById("profileMenuBtn");
@@ -439,6 +609,7 @@ class LbAppShell extends HTMLElement {
         e.preventDefault();
         this._menuOpen = false;
         this._render();
+        try { localStorage.removeItem(ROLE_STORAGE_KEY); } catch (err) {}
         // Dispatched rather than importing Firebase here — keeps this component
         // backend-agnostic. Each page listens and reuses its own existing
         // sign-out logic (see docs/PWA_PRD.md §15).
@@ -463,7 +634,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v7"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v8"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
