@@ -177,7 +177,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v9", // v9 (2026-10-19): js/app-shell.js tab-bar glider
+      cacheName: "linguabud-assets-v10", // v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -212,6 +212,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v6"),
       caches.delete("linguabud-assets-v7"),
       caches.delete("linguabud-assets-v8"),
+      caches.delete("linguabud-assets-v9"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),

@@ -525,7 +525,7 @@ class LbAppShell extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${STYLE}</style>
       ${hideHeader ? "" : `
-      <header>
+      <header part="header">
         <div class="header-left">
           ${backHref ? `<a class="back-btn" href="${backHref}" aria-label="Back">${icon("back")}</a>` : ""}
           <p class="title">${pageTitle}</p>
@@ -551,7 +551,7 @@ class LbAppShell extends HTMLElement {
           </div>
         </div>
       </header>`}
-      <nav aria-label="Primary">
+      <nav part="nav" aria-label="Primary">
         <span class="glider" aria-hidden="true"><span class="glider-pill"></span></span>
         ${items
           .map(

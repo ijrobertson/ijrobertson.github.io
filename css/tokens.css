@@ -63,3 +63,34 @@
 
   --lb-z-shell: 1000;
 }
+
+/* ── Page-to-page transitions ─────────────────────────────────────────────
+   Every app screen is its own page, so moving between them used to be a hard
+   cut. Browsers that support cross-document View Transitions (Chrome 126+,
+   Safari 18.2+) now fade the content across instead; older ones just keep
+   the hard cut, nothing breaks. Only pages that link this file opt in, i.e.
+   the app-shell pages — the marketing site is unaffected.
+   The header and tab bar are named so they're lifted out of the fade and
+   stay put: the tab bar shows the new page's own bar immediately, so its
+   glider can finish sliding instead of being cross-faded. Named from out
+   here via ::part — a view-transition-name set inside the component's
+   shadow DOM is ignored for page navigations. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+
+  lb-app-shell::part(header) { view-transition-name: lb-header; }
+  lb-app-shell::part(nav) { view-transition-name: lb-nav; }
+
+  ::view-transition-old(root) {
+    animation: 160ms cubic-bezier(0, 0, 0.2, 1) both lb-page-out;
+  }
+  ::view-transition-new(root) {
+    animation: 260ms cubic-bezier(0.2, 0.9, 0.1, 1) both lb-page-in;
+  }
+  ::view-transition-group(lb-header) { animation-duration: 200ms; }
+  ::view-transition-old(lb-nav) { display: none; }
+  ::view-transition-new(lb-nav) { animation: none; }
+}
+
+@keyframes lb-page-out { to { opacity: 0; } }
+@keyframes lb-page-in { from { opacity: 0; transform: translateY(8px); } }
