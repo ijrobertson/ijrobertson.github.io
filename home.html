@@ -45,6 +45,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
          instead of waiting for the page's Firebase imports to download. -->
     <script type="module" async src="js/app-shell.js"></script>
     <script src="js/page-transitions.js"></script>
+    <!-- Windows has no flag emoji (🇲🇽 shows as "MX") — see js/flag-emoji.js. -->
+    <script src="js/flag-emoji.js"></script>
 
     <!-- Favicon -->
     <link rel="icon" href="images/NuevoFavicon.png">
@@ -202,6 +204,37 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             transition: transform 0.15s;
         }
         .quiz-primary-cta:hover { transform: translateY(-2px); color: var(--pb-teal-dark); text-decoration: none; }
+
+        /* ===== ADVENTURES (today's pick — see adventures.html / js/adventures.js) =====
+           Teal rather than the quiz card's navy so the two primary actions read
+           as distinct, without either becoming a second hero. */
+        .adventure-card {
+            margin-top: 1rem;
+            background: linear-gradient(135deg, var(--pb-teal) 0%, #14a29f 100%);
+            border-radius: 28px; padding: 1.5rem 1.6rem 1.6rem; color: white; position: relative; overflow: hidden;
+            box-shadow: 0 16px 34px -12px rgba(11, 102, 100, 0.5);
+        }
+        .adventure-card::before {
+            content: ""; position: absolute; width: 170px; height: 170px; border-radius: 50%;
+            background: rgba(255,255,255,0.12); top: -70px; right: -50px;
+        }
+        .adventure-card > * { position: relative; z-index: 1; }
+        .adventure-eyebrow { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.9); margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem; }
+        .adventure-top { display: flex; align-items: center; gap: 0.85rem; }
+        .adventure-flag { font-size: 2.3rem; line-height: 1; flex-shrink: 0; }
+        .adventure-card h2 { font-family: 'Baloo 2', sans-serif; font-size: 1.3rem; font-weight: 800; margin: 0; color: white; line-height: 1.25; }
+        .adventure-meta { font-size: 0.85rem; color: rgba(255,255,255,0.88); margin-top: 0.2rem; }
+        .adventure-summary { font-size: 0.95rem; color: rgba(255,255,255,0.92); margin: 0.85rem 0 1.15rem; }
+        .adventure-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.9rem 1.2rem; }
+        .adventure-cta {
+            display: inline-flex; align-items: center; gap: 0.55rem; background: white; color: var(--pb-teal-deep);
+            padding: 0.75rem 1.4rem; border-radius: 999px; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 0.98rem;
+            text-decoration: none; box-shadow: 0 10px 22px -8px rgba(0,0,0,0.3);
+        }
+        .adventure-cta:hover { color: var(--pb-teal-deep); text-decoration: none; }
+        .adventure-all { color: white; font-weight: 700; font-size: 0.9rem; text-decoration: underline; text-underline-offset: 3px; }
+        .adventure-all:hover { color: white; }
+        .adventure-card .lb-skel { background: linear-gradient(90deg, rgba(255,255,255,0.18) 25%, rgba(255,255,255,0.3) 37%, rgba(255,255,255,0.18) 63%); background-size: 400% 100%; }
 
         /* ===== RESOURCES DRAWER (Learn-tab redesign, 2026-09-03) =====
            Page-scoped to home.html only — deliberately NOT added to the shared
@@ -482,6 +515,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             <div class="resources-group">
                 <p class="resources-group-label">Explore</p>
+                <a class="resource-row" href="adventures" style="margin-bottom:0.65rem;">
+                    <span class="resource-row-icon"><i class="fas fa-compass"></i></span>
+                    <span class="resource-row-text">
+                        <h4>Adventures</h4>
+                        <p id="adventuresResourceSubtitle"><span class="lb-skel lb-skel-text"></span><span class="lb-sr-only">Loading…</span></p>
+                    </span>
+                    <i class="fas fa-chevron-right resource-row-arrow" aria-hidden="true"></i>
+                </a>
                 <a class="resource-row" href="culture-guides">
                     <span class="resource-row-icon icon-navy"><i class="fas fa-globe"></i></span>
                     <span class="resource-row-text">
@@ -515,6 +556,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <h2>Language Quizzes</h2>
             <p>Test yourself on vocabulary and save what you miss straight to your Notebook.</p>
             <a class="quiz-primary-cta" href="vocab-quiz"><i class="fas fa-play"></i> Take a quiz</a>
+        </div>
+
+        <!-- ===== ADVENTURES — today's pick (adventures.html, js/adventures.js).
+             Placeholder until loadAdventuresSummary() fills it in. ===== -->
+        <div class="adventure-card" id="adventureCard">
+            <div class="adventure-eyebrow"><i class="fas fa-compass" aria-hidden="true"></i> Today's adventure</div>
+            <div aria-hidden="true">
+                <span class="lb-skel lb-skel-title" style="width:75%;height:20px;"></span>
+                <span class="lb-skel lb-skel-line" style="width:45%;"></span>
+                <span class="lb-skel lb-skel-line" style="width:90%;margin-top:14px;"></span>
+            </div>
+            <span class="lb-sr-only">Loading today's adventure…</span>
         </div>
 
         <hr class="section-divider">
@@ -574,12 +627,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
         import { getCultureProgress, completedLessonsFor } from './js/culture-progress.js';
+        import { loadCatalogue, getAdventureProgress, pickDailyAdventure } from './js/adventures.js';
         import { startPresenceHeartbeat } from './js/presence.js';
 
         const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
 
         let currentUser = null;
         let isInstructorRole = false;
+        let profileLearningLanguages = []; // users.languages_learning — steers today's adventure
 
         // Shared across loadNextLesson() and loadVocabSummary() — both contribute
         // "active days" (YYYY-MM-DD) toward the streak, computed in updateStreakAndGoal()
@@ -609,7 +664,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // so they run concurrently instead of adding a third round-trip
             // to the critical path of the very first thing shown on launch.
             await loadProfileBasics(user);
-            await Promise.all([loadNextLesson(), loadVocabSummary(), loadCultureSummary(), loadTravelJourneySummary()]);
+            await Promise.all([loadNextLesson(), loadVocabSummary(), loadCultureSummary(), loadTravelJourneySummary(), loadAdventuresSummary()]);
             updateStreakAndGoal();
         });
 
@@ -630,6 +685,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
                     if (userDoc.exists()) {
                         name = userDoc.data().name || '';
+                        profileLearningLanguages = userDoc.data().languages_learning || [];
                         if (userDoc.data().avatar_url) {
                             document.getElementById('navProfilePic').src = userDoc.data().avatar_url;
                         }
@@ -853,6 +909,61 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             } catch (e) {
                 console.error('Culture summary load error:', e);
                 subtitle.textContent = "Couldn't load culture guides";
+            }
+        }
+
+        // ===== ADVENTURES (card under Language Quizzes + drawer row) =====
+        // Same pick as the "Today's adventure" card on adventures.html — same
+        // inputs (catalogue, saved filters, profile languages) into the same
+        // deterministic pickDailyAdventure, so the two always agree.
+        async function loadAdventuresSummary() {
+            const card = document.getElementById('adventureCard');
+            const subtitle = document.getElementById('adventuresResourceSubtitle');
+            const escape = (str) => { const d = document.createElement('div'); d.textContent = str == null ? '' : String(str); return d.innerHTML; };
+            const fallback = () => {
+                card.innerHTML = `
+                    <div class="adventure-eyebrow"><i class="fas fa-compass" aria-hidden="true"></i> Adventures</div>
+                    <h2>Real conversations in real places</h2>
+                    <p class="adventure-summary">Practise the phrases people actually use — at a market, a café or a friend's barbecue.</p>
+                    <div class="adventure-actions"><a class="adventure-cta" href="adventures"><i class="fas fa-play"></i> Explore adventures</a></div>`;
+            };
+            try {
+                const [catalogue, progress] = await Promise.all([
+                    loadCatalogue(),
+                    getAdventureProgress(currentUser.uid).catch(() => ({ completed: {}, prefs: {} })),
+                ]);
+                const available = new Set(catalogue.map(a => a.language));
+                const pick = pickDailyAdventure({
+                    catalogue, progress, uid: currentUser.uid,
+                    profileLanguages: profileLearningLanguages.filter(l => available.has(l)),
+                });
+
+                const done = catalogue.filter(a => progress.completed[a.id]).length;
+                subtitle.textContent = catalogue.length === 0
+                    ? 'Coming soon'
+                    : `${catalogue.length} adventure${catalogue.length === 1 ? '' : 's'}${done ? ` · ${done} completed` : ' · real conversations in real places'}`;
+
+                if (!pick) { fallback(); return; }
+                const a = pick.adventure;
+                const best = progress.completed[a.id];
+                card.innerHTML = `
+                    <div class="adventure-eyebrow"><i class="fas fa-compass" aria-hidden="true"></i> ${pick.reason === 'replay' ? 'Try this adventure again' : "Today's adventure"}</div>
+                    <div class="adventure-top">
+                        <div class="adventure-flag flag-emoji" aria-hidden="true">${escape(a.flag || '🧭')}</div>
+                        <div>
+                            <h2>${escape(a.title)}</h2>
+                            <div class="adventure-meta">${escape(a.variety?.label || a.language)} · ${escape(a.estMinutes)} min</div>
+                        </div>
+                    </div>
+                    <p class="adventure-summary">${escape(a.summary || '')}${pick.reason === 'replay' && best ? ` Your best: ${best.bestScore}/${best.total}.` : ''}</p>
+                    <div class="adventure-actions">
+                        <a class="adventure-cta" href="adventure?id=${encodeURIComponent(a.id)}"><i class="fas fa-play"></i> ${pick.reason === 'replay' ? 'Play again' : 'Start adventure'}</a>
+                        <a class="adventure-all" href="adventures">See all adventures</a>
+                    </div>`;
+            } catch (e) {
+                console.error('Adventures summary load error:', e);
+                fallback();
+                subtitle.textContent = 'Real conversations in real places';
             }
         }
 
