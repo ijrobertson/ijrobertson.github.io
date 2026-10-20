@@ -743,7 +743,7 @@ const CHECKIN_EXTEND_MS  = 60 * 60 * 1000;      // "Keep going" buys another hou
 /** True if a real person (not a screen-share connection) is in the channel with us. */
 function hasOtherParticipant() {
     return (state.client?.remoteUsers || []).some(u =>
-        !isRemoteScreenUid(u.uid) && String(u.uid) !== String(state.screenUid));
+        !isScreenConnectionUid(u.uid));
 }
 
 function startCallLimits() {
