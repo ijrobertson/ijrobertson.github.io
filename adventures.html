@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="Lingua Bud Adventures — short, realistic scenarios in real places to practise the language people actually use.">
+    <meta name="author" content="Lingua Bud">
+    <meta name="robots" content="noindex">
+    <title>Adventures - Lingua Bud</title>
+
+    <!-- Styles — same set as culture-guides.html, the Learn page this sits beside -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used by <lb-app-shell> below -->
+    <link href="css/tokens.css" rel="stylesheet">
+    <!-- Loaded on its own (async) so the header/tab bar renders with the first paint,
+         instead of waiting for the page's Firebase imports to download. -->
+    <script type="module" async src="js/app-shell.js"></script>
+    <script src="js/page-transitions.js"></script>
+    <!-- Windows has no flag emoji (🇲🇽 shows as "MX") — see js/flag-emoji.js. -->
+    <script src="js/flag-emoji.js"></script>
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        :root {
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-surface: #fbfbfb;
+        }
+        body {
+            padding-top: calc(60px + env(safe-area-inset-top, 0));
+            background-color: var(--pb-surface);
+        }
+        .navbar-custom { display: none; }
+
+        /* ===== HERO (matches culture-guides.html) ===== */
+        .activity-hero {
+            background: linear-gradient(135deg, var(--pb-teal) 0%, #14a29f 100%);
+            color: white; text-align: center;
+            border-radius: 28px;
+            margin: 20px 16px 0;
+            padding: 1.85rem 1.5rem 1.7rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 32px -12px rgba(11, 102, 100, 0.5);
+        }
+        .activity-hero::before, .activity-hero::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.12); }
+        .activity-hero::before { width: 160px; height: 160px; top: -70px; right: -40px; }
+        .activity-hero::after { width: 110px; height: 110px; bottom: -50px; left: -30px; background: rgba(17, 52, 72, 0.18); }
+        .activity-hero > * { position: relative; z-index: 1; }
+        .hero-icon { font-size: 1.6rem; margin-bottom: 0.2rem; }
+        .activity-hero h1 { font-family: 'Baloo 2', sans-serif; font-size: 1.8rem; font-weight: 800; color: white; margin-bottom: 0.3rem; letter-spacing: -0.3px; }
+        .activity-hero p { font-size: 0.98rem; color: rgba(255, 255, 255, 0.92); margin: 0; }
+
+        .activity-container { max-width: 760px; margin: 1.4rem auto 0; padding: 0 1rem; }
+        .section-heading { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.15rem; margin: 1.5rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .section-heading i { color: var(--pb-teal); font-size: 1rem; }
+
+        /* ===== TODAY'S ADVENTURE ===== */
+        .today-card {
+            display: block; text-decoration: none; color: white;
+            background: linear-gradient(135deg, var(--pb-teal-dark) 0%, #1a5276 100%);
+            border-radius: 24px; padding: 1.3rem 1.4rem 1.4rem;
+            box-shadow: 0 14px 30px -12px rgba(17, 52, 72, 0.5);
+            position: relative; overflow: hidden;
+        }
+        .today-card:hover { color: white; text-decoration: none; }
+        .today-card::after { content: ""; position: absolute; width: 150px; height: 150px; border-radius: 50%; right: -50px; top: -60px; background: rgba(32, 188, 186, 0.22); }
+        .today-card > * { position: relative; z-index: 1; }
+        .today-eyebrow { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #7fe3e0; margin-bottom: 0.5rem; }
+        .today-top { display: flex; align-items: center; gap: 0.85rem; }
+        .today-flag { font-size: 2.3rem; line-height: 1; flex-shrink: 0; }
+        .today-title { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.25rem; line-height: 1.25; margin: 0; color: white; }
+        .today-summary { font-size: 0.92rem; color: rgba(255, 255, 255, 0.85); margin: 0.7rem 0 0.9rem; }
+        .today-cta {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: white; color: var(--pb-teal-deep); border-radius: 999px;
+            padding: 0.55rem 1.2rem; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 0.95rem;
+        }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem; }
+        .chip { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: #eef1f0; color: #5f6b72; }
+        .chip.variety { background: #e3f5f3; color: var(--pb-teal-deep); }
+        .today-card .chip { background: rgba(255, 255, 255, 0.14); color: white; }
+        .today-card .chip.variety { background: rgba(32, 188, 186, 0.35); }
+
+        /* ===== FILTERS ===== */
+        .filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+        .adv-filter label { display: block; font-size: 0.75rem; font-weight: 700; color: #5f6b72; margin-bottom: 0.25rem; }
+        .adv-filter select {
+            width: 100%; appearance: none; -webkit-appearance: none;
+            border: 2px solid #e7e9e7; border-radius: 14px; background: white;
+            padding: 0.55rem 2rem 0.55rem 0.8rem; font-size: 0.9rem; font-weight: 600; color: var(--pb-teal-dark);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230b6664' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.75rem center;
+        }
+        .adv-filter select:focus { outline: none; border-color: var(--pb-teal); }
+        @media (max-width: 520px) {
+            .filters { grid-template-columns: 1fr 1fr; }
+            .adv-filter.region { grid-column: 1 / -1; order: 3; }
+        }
+        .filter-note { margin: 0.65rem 0 0; font-size: 0.85rem; color: #5f6b72; background: #fff8ee; border-radius: 12px; padding: 0.55rem 0.8rem; }
+        .result-count { font-size: 0.85rem; color: #787976; margin: 0.9rem 0 0.6rem; }
+
+        /* ===== ADVENTURE LIST ===== */
+        .adv-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .adv-item {
+            display: flex; gap: 0.9rem; align-items: flex-start;
+            background: white; border: 2px solid #e7e9e7; border-radius: 20px; padding: 1rem 1.1rem;
+            text-decoration: none; color: inherit;
+        }
+        .adv-item:hover { text-decoration: none; color: inherit; border-color: #c9ebe9; }
+        .adv-item.done { background: #fbfdfc; }
+        .adv-item-flag { font-size: 2rem; line-height: 1; flex-shrink: 0; margin-top: 0.1rem; }
+        .adv-item-main { flex: 1; min-width: 0; }
+        .adv-item-title { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.05rem; line-height: 1.3; margin: 0; }
+        .adv-item-summary { font-size: 0.88rem; color: #5f6b72; margin: 0.3rem 0 0; line-height: 1.45; }
+        .status { flex-shrink: 0; font-size: 0.75rem; font-weight: 800; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+        .status.new { background: #e3f5f3; color: var(--pb-teal-deep); }
+        .status.done { background: #e3f9ec; color: #1f7a41; }
+
+        .empty-state { text-align: center; padding: 2.25rem 1.5rem; background: white; border-radius: 24px; border: 2px solid #e7e9e7; }
+        .empty-state i { font-size: 2.4rem; color: var(--pb-teal); opacity: 0.4; display: block; margin-bottom: 0.8rem; }
+        .empty-state h3 { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.15rem; margin-bottom: 0.3rem; }
+        .empty-state p { color: #5f6b72; margin: 0 0 1rem; font-size: 0.92rem; }
+        .btn-pill {
+            display: inline-flex; align-items: center; gap: 0.45rem; border: none; border-radius: 999px;
+            padding: 0.6rem 1.25rem; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 0.92rem; cursor: pointer;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white; text-decoration: none;
+        }
+        .btn-pill:hover { color: white; text-decoration: none; }
+        .error-note { color: #5f6b72; text-align: center; padding: 1.5rem; }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <div class="activity-hero">
+        <div class="hero-icon" aria-hidden="true"><i class="fas fa-compass"></i></div>
+        <h1>Adventures</h1>
+        <p>Real conversations in real places</p>
+    </div>
+
+    <div class="activity-container">
+        <h2 class="section-heading"><i class="fas fa-sun"></i> Today's adventure</h2>
+        <div id="todaySlot">
+            <div class="today-card" aria-hidden="true">
+                <span class="lb-skel lb-skel-line" style="width:35%;opacity:0.35;"></span>
+                <span class="lb-skel lb-skel-title" style="width:75%;height:20px;opacity:0.35;"></span>
+                <span class="lb-skel lb-skel-line" style="width:90%;opacity:0.35;"></span>
+            </div>
+        </div>
+
+        <h2 class="section-heading"><i class="fas fa-map"></i> All adventures</h2>
+        <div class="filters" id="filters">
+            <div class="adv-filter"><label for="languageFilter">Language</label><select id="languageFilter" disabled><option>All languages</option></select></div>
+            <div class="adv-filter"><label for="difficultyFilter">Level</label><select id="difficultyFilter" disabled><option>All levels</option></select></div>
+            <div class="adv-filter region"><label for="regionFilter">Region</label><select id="regionFilter" disabled><option>All regions</option></select></div>
+        </div>
+        <div id="filterNote"></div>
+        <p class="result-count" id="resultCount" aria-live="polite"></p>
+        <div class="adv-list" id="advList" aria-busy="true">
+            <span class="lb-sr-only">Loading adventures…</span>
+            <div class="adv-item" aria-hidden="true"><span class="lb-skel lb-skel-circle" style="width:34px;height:34px;"></span><div class="adv-item-main"><span class="lb-skel lb-skel-title" style="width:70%;"></span><span class="lb-skel lb-skel-line" style="width:45%;"></span><span class="lb-skel lb-skel-line" style="width:90%;"></span></div></div>
+            <div class="adv-item" aria-hidden="true"><span class="lb-skel lb-skel-circle" style="width:34px;height:34px;"></span><div class="adv-item-main"><span class="lb-skel lb-skel-title" style="width:60%;"></span><span class="lb-skel lb-skel-line" style="width:40%;"></span><span class="lb-skel lb-skel-line" style="width:85%;"></span></div></div>
+            <div class="adv-item" aria-hidden="true"><span class="lb-skel lb-skel-circle" style="width:34px;height:34px;"></span><div class="adv-item-main"><span class="lb-skel lb-skel-title" style="width:65%;"></span><span class="lb-skel lb-skel-line" style="width:50%;"></span><span class="lb-skel lb-skel-line" style="width:80%;"></span></div></div>
+        </div>
+    </div>
+
+    <!-- Explicit spacer so the fixed bottom tab bar never overlaps the last card -->
+    <div style="height: calc(92px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
+
+    <!-- Part of the Learn tab (like culture-guides.html): Learn stays highlighted,
+         back arrow returns to the Learn page. -->
+    <lb-app-shell id="shell" page-title="Adventures" active="learn" back-href="home"></lb-app-shell>
+
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
+        import { watchUnreadMessages } from './js/unread-messages.js';
+        import { startPresenceHeartbeat } from './js/presence.js';
+        import { loadCatalogue, getAdventureProgress, savePrefs, pickDailyAdventure } from './js/adventures.js';
+
+        const DIFFICULTIES = [['beginner', 'Beginner'], ['intermediate', 'Intermediate'], ['advanced', 'Advanced']];
+        const DIFFICULTY_LABELS = Object.fromEntries(DIFFICULTIES);
+
+        const languageFilter = document.getElementById('languageFilter');
+        const difficultyFilter = document.getElementById('difficultyFilter');
+        const regionFilter = document.getElementById('regionFilter');
+        const advList = document.getElementById('advList');
+
+        let currentUser = null;
+        let catalogue = [];
+        let progress = { completed: {}, prefs: {} };
+        let profileLanguages = [];      // users.languages_learning, for the daily pick
+        let unmatchedProfileLanguages = []; // learning languages we have no adventures for yet
+        let savePrefsTimer = null;
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login'; return; }
+            currentUser = user;
+            initPush(user.uid);
+            startPresenceHeartbeat(user.uid);
+            watchUnreadMessages(user.uid, document.getElementById('shell'));
+            setShellRole(user);
+            await loadPage();
+        });
+
+        async function setShellRole(user) {
+            const shell = document.getElementById('shell');
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                shell.setAttribute('role', instructorDoc.exists() ? 'instructor' : 'student');
+            } catch (e) {
+                shell.setAttribute('role', 'student');
+            }
+        }
+
+        async function loadPage() {
+            try {
+                const [cat, prog, userSnap] = await Promise.all([
+                    loadCatalogue(),
+                    getAdventureProgress(currentUser.uid).catch(() => ({ completed: {}, prefs: {} })),
+                    getDoc(doc(db, 'users', currentUser.uid)).catch(() => null),
+                ]);
+                catalogue = cat;
+                progress = prog;
+                const learning = userSnap && userSnap.exists() ? (userSnap.data().languages_learning || []) : [];
+                const available = new Set(catalogue.map(a => a.language));
+                profileLanguages = learning.filter(l => available.has(l));
+                unmatchedProfileLanguages = learning.filter(l => !available.has(l));
+            } catch (e) {
+                console.error('Adventures load error:', e);
+                document.getElementById('todaySlot').innerHTML = '';
+                advList.removeAttribute('aria-busy');
+                advList.innerHTML = `<p class="error-note">Couldn't load adventures. Check your connection and try again.</p>`;
+                return;
+            }
+            setUpFilters();
+            render();
+        }
+
+        // ===== FILTERS =====
+        // Starting values: the filters this user last chose (saved in
+        // adventureProgress.prefs, so they follow them across devices), else
+        // the first language on their profile that has adventures, else all.
+        function setUpFilters() {
+            const prefs = progress.prefs || {};
+            const languages = [...new Set(catalogue.map(a => a.language))].sort();
+            languageFilter.innerHTML = `<option value="">All languages</option>` +
+                languages.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+            difficultyFilter.innerHTML = `<option value="">All levels</option>` +
+                DIFFICULTIES.map(([v, label]) => `<option value="${v}">${label}</option>`).join('');
+
+            const startLanguage = prefs.language && languages.includes(prefs.language)
+                ? prefs.language
+                : (prefs.language === null && 'language' in prefs ? '' : (profileLanguages[0] || ''));
+            languageFilter.value = startLanguage;
+            difficultyFilter.value = prefs.difficulty || '';
+            fillRegions(prefs.variety || '');
+
+            [languageFilter, difficultyFilter, regionFilter].forEach(sel => { sel.disabled = false; });
+            languageFilter.addEventListener('change', () => { fillRegions(''); onFiltersChanged(); });
+            difficultyFilter.addEventListener('change', onFiltersChanged);
+            regionFilter.addEventListener('change', onFiltersChanged);
+        }
+
+        // Regions for the chosen language — each a country plus its variety
+        // label, so it's clear these are regional ways of speaking, not "the"
+        // language of a whole country.
+        function fillRegions(selected) {
+            const language = languageFilter.value;
+            const seen = new Map();
+            catalogue
+                .filter(a => !language || a.language === language)
+                .forEach(a => { if (a.variety && !seen.has(a.variety.id)) seen.set(a.variety.id, a); });
+            const options = [...seen.values()].sort((a, b) => a.country.localeCompare(b.country));
+            regionFilter.innerHTML = `<option value="">All regions</option>` + options.map(a =>
+                `<option value="${escapeHtml(a.variety.id)}">${escapeHtml(a.country)} · ${escapeHtml(a.variety.label)}</option>`).join('');
+            regionFilter.value = seen.has(selected) ? selected : '';
+        }
+
+        function currentFilters() {
+            return { language: languageFilter.value, variety: regionFilter.value, difficulty: difficultyFilter.value };
+        }
+
+        function onFiltersChanged() {
+            const f = currentFilters();
+            progress.prefs = { language: f.language || null, variety: f.variety || null, difficulty: f.difficulty || null };
+            render();
+            // Debounced: someone flicking through filters shouldn't write on every change.
+            clearTimeout(savePrefsTimer);
+            savePrefsTimer = setTimeout(() => {
+                savePrefs(currentUser.uid, progress.prefs).catch(err => console.error('Save prefs error:', err));
+            }, 800);
+        }
+
+        function clearFilters() {
+            languageFilter.value = '';
+            difficultyFilter.value = '';
+            fillRegions('');
+            onFiltersChanged();
+        }
+
+        // ===== RENDER =====
+        function chipsHtml(a) {
+            return `<div class="chips">
+                <span class="chip variety">${escapeHtml(a.variety?.label || a.language)}</span>
+                <span class="chip">${escapeHtml(DIFFICULTY_LABELS[a.difficulty] || a.difficulty)}</span>
+                <span class="chip"><i class="far fa-clock" aria-hidden="true"></i> ${escapeHtml(a.estMinutes)} min</span>
+            </div>`;
+        }
+
+        function render() {
+            renderToday();
+            renderNote();
+            renderList();
+        }
+
+        function renderToday() {
+            const slot = document.getElementById('todaySlot');
+            const pick = pickDailyAdventure({ catalogue, progress, uid: currentUser.uid, profileLanguages });
+            if (!pick) { slot.innerHTML = ''; return; }
+            const a = pick.adventure;
+            const best = progress.completed[a.id];
+            slot.innerHTML = `
+                <a class="today-card" href="adventure?id=${encodeURIComponent(a.id)}">
+                    <div class="today-eyebrow">${pick.reason === 'replay' ? 'Try this one again' : 'Picked for you today'}</div>
+                    <div class="today-top">
+                        <div class="today-flag flag-emoji" aria-hidden="true">${escapeHtml(a.flag || '🧭')}</div>
+                        <div>
+                            <p class="today-title">${escapeHtml(a.title)}</p>
+                            ${chipsHtml(a)}
+                        </div>
+                    </div>
+                    <p class="today-summary">${escapeHtml(a.summary || '')}${pick.reason === 'replay' && best ? ` Your best so far: ${best.bestScore}/${best.total}.` : ''}</p>
+                    <span class="today-cta"><i class="fas fa-play"></i> ${pick.reason === 'replay' ? 'Play again' : 'Start'}</span>
+                </a>`;
+        }
+
+        // A gentle note when someone's profile languages have no adventures yet.
+        function renderNote() {
+            const note = document.getElementById('filterNote');
+            if (!unmatchedProfileLanguages.length || languageFilter.value) { note.innerHTML = ''; return; }
+            const names = unmatchedProfileLanguages.slice(0, 3).join(' or ');
+            note.innerHTML = `<p class="filter-note"><i class="fas fa-seedling" style="color:#b7791f;margin-right:0.35rem;"></i>There aren't any ${escapeHtml(names)} adventures yet — we're adding new places regularly. In the meantime, explore the ones below.</p>`;
+        }
+
+        function renderList() {
+            const f = currentFilters();
+            const matches = catalogue.filter(a =>
+                (!f.language || a.language === f.language) &&
+                (!f.variety || a.variety?.id === f.variety) &&
+                (!f.difficulty || a.difficulty === f.difficulty));
+            // Not-yet-completed first; otherwise catalogue order.
+            matches.sort((a, b) => Number(!!progress.completed[a.id]) - Number(!!progress.completed[b.id]));
+
+            advList.removeAttribute('aria-busy');
+            const doneCount = matches.filter(a => progress.completed[a.id]).length;
+            document.getElementById('resultCount').textContent = matches.length
+                ? `${matches.length} adventure${matches.length === 1 ? '' : 's'}${doneCount ? ` · ${doneCount} completed` : ''}`
+                : '';
+
+            if (!matches.length) {
+                const what = [f.difficulty && DIFFICULTY_LABELS[f.difficulty].toLowerCase(), f.language].filter(Boolean).join(' ');
+                advList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-map-signs"></i>
+                        <h3>No ${escapeHtml(what || '')} adventures here yet</h3>
+                        <p>We're adding new places and levels regularly. Try a different level or region, or see everything.</p>
+                        <button type="button" class="btn-pill" id="clearFiltersBtn"><i class="fas fa-undo"></i> Show all adventures</button>
+                    </div>`;
+                document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+                return;
+            }
+
+            advList.innerHTML = matches.map(a => {
+                const done = progress.completed[a.id];
+                return `
+                    <a class="adv-item${done ? ' done' : ''}" href="adventure?id=${encodeURIComponent(a.id)}">
+                        <div class="adv-item-flag flag-emoji" aria-hidden="true">${escapeHtml(a.flag || '🧭')}</div>
+                        <div class="adv-item-main">
+                            <p class="adv-item-title">${escapeHtml(a.title)}</p>
+                            ${chipsHtml(a)}
+                            <p class="adv-item-summary">${escapeHtml(a.summary || '')}</p>
+                        </div>
+                        ${done
+                            ? `<span class="status done"><i class="fas fa-check"></i> ${done.bestScore}/${done.total}</span>`
+                            : `<span class="status new">New</span>`}
+                    </a>`;
+            }).join('');
+        }
+
+        document.getElementById('shell').addEventListener('lb-logout', async () => {
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>
