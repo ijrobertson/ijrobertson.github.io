@@ -111,7 +111,8 @@ if (self.workbox) {
     // v13 (same day): instructor Calendar empty state + dashboard #availability anchor.
     // v14 (same day): connect.html orders by last active, photos only.
     // v15 (same day): connect.html shows everyone (photos first) + Windows flag font.
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v15" })
+    // v16 (same day): adventure.html; connect.html uses shared js/flag-emoji.js.
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v16" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -184,7 +185,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v21", // v21: video-call pre-join back/Not now buttons; v20: video-call.js/.css/.html synced with main (screen-share rewrite) + overlay layout; v19: video-call.js screen-share token uid; v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
+      cacheName: "linguabud-assets-v22", // v22: js/adventures.js, js/flag-emoji.js, tokens.css .flag-emoji, page-transitions depths; v21: video-call pre-join back/Not now buttons; v20: video-call.js/.css/.html synced with main (screen-share rewrite) + overlay layout; v19: video-call.js screen-share token uid; v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -227,6 +228,11 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v14"),
       caches.delete("linguabud-assets-v15"),
       caches.delete("linguabud-assets-v16"),
+      caches.delete("linguabud-assets-v17"),
+      caches.delete("linguabud-assets-v18"),
+      caches.delete("linguabud-assets-v19"),
+      caches.delete("linguabud-assets-v20"),
+      caches.delete("linguabud-assets-v21"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
@@ -241,6 +247,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-pages-v12"),
       caches.delete("linguabud-pages-v13"),
       caches.delete("linguabud-pages-v14"),
+      caches.delete("linguabud-pages-v15"),
     ])
   );
 });

@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="A Lingua Bud Adventure — practise real phrases in a realistic scene, with cultural tips and instant feedback.">
+    <meta name="author" content="Lingua Bud">
+    <meta name="robots" content="noindex">
+    <title>Adventure - Lingua Bud</title>
+
+    <!-- Styles — same set as the Culture Guide lesson page this is modelled on -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used by <lb-app-shell> below -->
+    <link href="css/tokens.css" rel="stylesheet">
+    <!-- Loaded on its own (async) so the header/tab bar renders with the first paint,
+         instead of waiting for the page's Firebase imports to download. -->
+    <script type="module" async src="js/app-shell.js"></script>
+    <script src="js/page-transitions.js"></script>
+    <!-- Windows has no flag emoji (🇲🇽 shows as "MX") — see js/flag-emoji.js. -->
+    <script src="js/flag-emoji.js"></script>
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        :root {
+            --pb-teal: #20bcba;
+            --pb-teal-deep: #0b6664;
+            --pb-teal-dark: #113448;
+            --pb-surface: #fbfbfb;
+        }
+        body {
+            padding-top: calc(60px + env(safe-area-inset-top, 0));
+            background-color: var(--pb-surface);
+        }
+        .navbar-custom { display: none; }
+
+        /* ===== HERO ===== */
+        .adv-hero {
+            background: linear-gradient(135deg, var(--pb-teal-dark) 0%, #1a5276 100%);
+            color: white;
+            text-align: center;
+            border-radius: 28px;
+            margin: 20px 16px 0;
+            padding: 1.75rem 1.5rem 1.6rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 16px 32px -12px rgba(17, 52, 72, 0.5);
+        }
+        .adv-hero::before, .adv-hero::after { content: ""; position: absolute; border-radius: 50%; }
+        .adv-hero::before { width: 160px; height: 160px; top: -70px; right: -40px; background: rgba(32, 188, 186, 0.22); }
+        .adv-hero::after { width: 110px; height: 110px; bottom: -50px; left: -30px; background: rgba(255, 255, 255, 0.08); }
+        .adv-hero > * { position: relative; z-index: 1; }
+        .adv-hero-flag { font-size: 2.2rem; line-height: 1; }
+        .adv-hero h1 {
+            font-family: 'Baloo 2', sans-serif; font-size: 1.55rem; font-weight: 800; color: white;
+            margin: 0.4rem 0 0.5rem; letter-spacing: -0.3px; line-height: 1.25;
+        }
+        .adv-hero-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; }
+        .adv-chip {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14); color: white;
+        }
+        .adv-chip.variety { background: rgba(32, 188, 186, 0.35); }
+
+        .adv-container { max-width: 640px; margin: 1.25rem auto 0; padding: 0 1rem; }
+
+        /* Prepare → Practise → Review */
+        .stage-track { display: flex; gap: 0.4rem; margin-bottom: 1rem; }
+        .stage { flex: 1; text-align: center; font-size: 0.75rem; font-weight: 700; color: #9aa5a9; }
+        .stage::before { content: ""; display: block; height: 5px; border-radius: 999px; background: #e7e9e7; margin-bottom: 0.35rem; }
+        .stage.done, .stage.current { color: var(--pb-teal-deep); }
+        .stage.done::before { background: var(--pb-teal); }
+        .stage.current::before { background: linear-gradient(90deg, var(--pb-teal) 50%, #e7e9e7 50%); }
+
+        /* ===== CARDS (shared look with culture-lesson.html) ===== */
+        .adv-card { border-radius: 22px; border: 2px solid #e7e9e7; background: white; padding: 1.25rem 1.4rem; margin-bottom: 1rem; }
+        .adv-card-label { display: flex; align-items: center; gap: 0.6rem; font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 0.98rem; margin-bottom: 0.6rem; }
+        .adv-card-label i { color: var(--pb-teal-deep); }
+        .adv-card p { margin: 0; color: #444; line-height: 1.55; font-size: 0.95rem; }
+        .adv-card p + p { margin-top: 0.6rem; }
+        .objectives { margin: 0; padding: 0; list-style: none; }
+        .objectives li { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.3rem 0; color: #444; font-size: 0.95rem; }
+        .objectives li i { color: var(--pb-teal); margin-top: 0.25rem; }
+        .variety-card { background: #e8fffe; border-color: #bdeeec; }
+        .culture-card { background: #fff8ee; border-color: #f3e3c6; }
+        .culture-card .adv-card-label i { color: #b7791f; }
+        .culture-card ul { margin: 0; padding-left: 1.1rem; }
+        .culture-card li { color: #4a4234; font-size: 0.93rem; line-height: 1.5; margin-bottom: 0.45rem; }
+        .culture-card li:last-child { margin-bottom: 0; }
+        .past-result { text-align: center; color: #2f7a52; font-weight: 700; font-size: 0.9rem; margin: -0.25rem 0 1rem; }
+
+        /* ===== PHRASES ===== */
+        .phrase {
+            border-radius: 18px; border: 2px solid #e7e9e7; background: white;
+            padding: 1rem 1.1rem; margin-bottom: 0.75rem;
+        }
+        .phrase.missed { border-color: #f3c6c6; }
+        .phrase-top { display: flex; align-items: flex-start; gap: 0.75rem; }
+        .phrase-main { flex: 1; min-width: 0; }
+        .phrase-text { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.2rem; line-height: 1.3; }
+        .phrase-translation { color: #5f6b72; font-size: 0.92rem; margin-top: 0.1rem; }
+        .phrase-missed-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; color: #a92e2e; background: #fbe4e4; border-radius: 999px; padding: 1px 8px; margin-bottom: 0.3rem; }
+        .phrase-example { margin-top: 0.6rem; font-size: 0.88rem; color: #444; }
+        .phrase-example em { color: #787976; font-style: normal; display: block; }
+        .phrase-note { margin-top: 0.5rem; font-size: 0.85rem; color: #5f6b72; }
+        .phrase-also { margin-top: 0.5rem; font-size: 0.82rem; color: #5f6b72; }
+        .phrase-also strong { color: var(--pb-teal-dark); }
+        .phrase-actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
+        .icon-pill {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+            border: none; border-radius: 999px; padding: 0.45rem 0.8rem;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+            background: #e3f5f3; color: var(--pb-teal-deep);
+        }
+        .icon-pill.saved { background: #e3f9ec; color: #1f7a41; cursor: default; }
+        .icon-pill:disabled { opacity: 0.8; }
+
+        /* ===== CONVERSATION ===== */
+        .convo { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1rem; }
+        .convo > * { animation: adv-in 260ms cubic-bezier(0.2, 0.9, 0.1, 1) both; }
+        .scene-text { text-align: center; color: #787976; font-style: italic; font-size: 0.9rem; padding: 0 1rem; }
+        .bubble-row { display: flex; }
+        .bubble-row.me { justify-content: flex-end; }
+        .bubble {
+            max-width: 86%; background: white; border: 2px solid #e7e9e7; border-radius: 18px 18px 18px 6px;
+            padding: 0.65rem 0.9rem;
+        }
+        .bubble-row.me .bubble { background: var(--pb-teal-deep); border-color: var(--pb-teal-deep); border-radius: 18px 18px 6px 18px; color: white; }
+        .bubble-speaker { font-size: 0.75rem; font-weight: 800; color: var(--pb-teal-deep); margin-bottom: 0.15rem; }
+        .bubble-row.me .bubble-speaker { color: rgba(255, 255, 255, 0.8); }
+        .bubble-text { font-size: 1rem; color: var(--pb-teal-dark); line-height: 1.4; }
+        .bubble-row.me .bubble-text { color: white; }
+        .bubble-tools { display: flex; gap: 0.75rem; margin-top: 0.3rem; }
+        .link-btn { background: none; border: none; padding: 0; font-size: 0.78rem; font-weight: 700; color: var(--pb-teal-deep); cursor: pointer; }
+        .link-btn:focus:not(:focus-visible) { outline: none; }
+        .bubble-translation { font-size: 0.86rem; color: #5f6b72; margin-top: 0.3rem; }
+
+        .question-card { border-radius: 22px; border: 2px solid var(--pb-teal); background: white; padding: 1.1rem 1.2rem; }
+        .question-kind { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--pb-teal-deep); margin-bottom: 0.3rem; }
+        .question-prompt { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--pb-teal-dark); font-size: 1.05rem; line-height: 1.35; margin-bottom: 0.85rem; }
+        .answer-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+        .answer-btn {
+            background: white; border: 2px solid #e7e9e7; border-radius: 16px; padding: 0.8rem 1rem;
+            font-size: 0.95rem; font-weight: 600; color: var(--pb-teal-dark); text-align: left; cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .answer-btn:hover:not(:disabled) { border-color: var(--pb-teal); background: #e8fffe; }
+        .answer-btn:disabled { cursor: default; }
+        .answer-btn.correct { background: #e3f9ec; border-color: #2f9e58; color: #1f7a41; }
+        .answer-btn.incorrect { background: #fbe4e4; border-color: #d64545; color: #a92e2e; }
+        .answer-btn.dimmed { opacity: 0.55; }
+
+        .feedback { margin-top: 0.9rem; border-radius: 16px; padding: 0.85rem 1rem; }
+        .feedback.good { background: #e3f9ec; }
+        .feedback.bad { background: #fdf0f0; }
+        .feedback-title { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1rem; margin-bottom: 0.2rem; }
+        .feedback.good .feedback-title { color: #1f7a41; }
+        .feedback.bad .feedback-title { color: #a92e2e; }
+        .feedback p { margin: 0; font-size: 0.92rem; color: #444; line-height: 1.5; }
+        .feedback .better { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid rgba(0, 0, 0, 0.06); }
+        .feedback .better strong { color: #1f7a41; }
+
+        .question-progress { text-align: center; font-size: 0.8rem; font-weight: 700; color: #9aa5a9; margin-bottom: 0.5rem; }
+
+        /* ===== BUTTONS (same as culture-lesson.html) ===== */
+        .btn-lb-pill {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1.6rem;
+            background: linear-gradient(135deg, var(--pb-teal), var(--pb-teal-deep)); color: white; border: none;
+            border-radius: 999px; font-family: 'Baloo 2', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer;
+            text-decoration: none; width: 100%;
+            box-shadow: 0 8px 18px -6px rgba(11, 102, 100, 0.45);
+        }
+        .btn-lb-pill:hover { color: white; text-decoration: none; }
+        .btn-lb-pill-outline { background: #eef1f0; color: var(--pb-teal-dark); box-shadow: none; }
+        .btn-lb-pill-outline:hover { color: var(--pb-teal-dark); }
+        .actions { display: flex; flex-direction: column; gap: 0.65rem; margin: 0.25rem 0 1rem; }
+
+        /* ===== COMPLETION ===== */
+        .completion-card { text-align: center; padding: 1.75rem 1.4rem; }
+        .completion-emoji { font-size: 2.6rem; line-height: 1; margin-bottom: 0.5rem; }
+        .completion-card h2 { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.45rem; margin-bottom: 0.25rem; }
+        .completion-score { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 2.2rem; color: var(--pb-teal-deep); line-height: 1.1; }
+        .completion-card p { color: #5f6b72; margin: 0.35rem 0 0; }
+        .section-heading { font-family: 'Baloo 2', sans-serif; font-weight: 800; color: var(--pb-teal-dark); font-size: 1.1rem; margin: 1.4rem 0 0.7rem; }
+
+        .empty-state { text-align: center; padding: 2.5rem 1.5rem; background: white; border-radius: 24px; border: 2px solid #e7e9e7; }
+        .empty-state i { font-size: 2.5rem; color: var(--pb-teal); opacity: 0.4; display: block; margin-bottom: 0.9rem; }
+        .empty-state p { color: #5f6b72; margin-bottom: 1rem; }
+
+        .adv-toast {
+            position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0)); transform: translateX(-50%);
+            background: var(--pb-teal-dark); color: white; padding: 9px 18px; border-radius: 999px;
+            font-size: 0.88rem; font-weight: 700; z-index: 2000; pointer-events: none;
+            animation: adv-in 200ms ease-out both;
+        }
+
+        @keyframes adv-in { from { opacity: 0; transform: translateY(8px); } }
+        @media (prefers-reduced-motion: reduce) {
+            .convo > *, .adv-toast { animation: none; }
+        }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <!-- Hero — filled in once the scenario loads; skeletons until then. -->
+    <div class="adv-hero">
+        <div class="adv-hero-flag flag-emoji" id="heroFlag" aria-hidden="true"><span class="lb-skel lb-skel-circle" style="width:38px;height:38px;margin:0 auto;opacity:0.4;"></span></div>
+        <h1 id="heroTitle"><span class="lb-skel lb-skel-title" style="width:70%;height:22px;margin:0.3rem auto;opacity:0.4;"></span></h1>
+        <div class="adv-hero-meta" id="heroMeta"></div>
+    </div>
+
+    <div class="adv-container">
+        <div id="advContent" aria-live="polite">
+            <span class="lb-sr-only">Loading adventure…</span>
+            <div class="adv-card" aria-hidden="true">
+                <span class="lb-skel lb-skel-line" style="width:90%;"></span>
+                <span class="lb-skel lb-skel-line" style="width:80%;"></span>
+                <span class="lb-skel lb-skel-line" style="width:55%;"></span>
+            </div>
+            <div class="adv-card" aria-hidden="true">
+                <span class="lb-skel lb-skel-title" style="width:40%;"></span>
+                <span class="lb-skel lb-skel-line" style="width:75%;"></span>
+                <span class="lb-skel lb-skel-line" style="width:65%;"></span>
+                <span class="lb-skel lb-skel-line" style="width:70%;"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explicit spacer so the fixed bottom tab bar never overlaps the last card -->
+    <div style="height: calc(92px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
+
+    <!-- Reached from the Adventures library (one level deeper than Learn),
+         so active="none" with a back arrow — same as culture-lesson.html. -->
+    <lb-app-shell id="shell" page-title="Adventure" active="none" back-href="adventures"></lb-app-shell>
+
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
+        import { watchUnreadMessages } from './js/unread-messages.js';
+        import { startPresenceHeartbeat } from './js/presence.js';
+        import {
+            loadAdventure, getAdventureProgress, recordCompletion,
+            savePhraseToNotebook, savedPhraseIds
+        } from './js/adventures.js';
+
+        const adventureId = new URLSearchParams(location.search).get('id');
+        const content = document.getElementById('advContent');
+
+        const SKILL_LABELS = { respond: 'What would you say?', meaning: 'What does it mean?', culture: 'Culture check' };
+        const DIFFICULTY_LABELS = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+
+        let currentUser = null;
+        let adventure = null;
+        let pastResult = null;          // adventureProgress entry from an earlier run, if any
+        let savedIds = new Set();       // phrase ids already in the Notebook
+        let run = null;                 // { stepIndex, score, total, missed:Set } for the current play-through
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        function track(event, extra = {}) {
+            (window.dataLayer = window.dataLayer || []).push({ event, adventure_id: adventureId, ...extra });
+        }
+
+        function scrollToEl(el) {
+            if (!el) return;
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+        }
+
+        function showToast(text) {
+            document.querySelector('.adv-toast')?.remove();
+            const t = document.createElement('div');
+            t.className = 'adv-toast';
+            t.setAttribute('role', 'status');
+            t.textContent = text;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 1800);
+        }
+
+        // ===== AUTH / LOAD =====
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { window.location.href = 'login'; return; }
+            currentUser = user;
+            initPush(user.uid);
+            startPresenceHeartbeat(user.uid);
+            watchUnreadMessages(user.uid, document.getElementById('shell'));
+            setShellRole(user);
+            await loadPage();
+        });
+
+        async function setShellRole(user) {
+            const shell = document.getElementById('shell');
+            try {
+                const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
+                shell.setAttribute('role', instructorDoc.exists() ? 'instructor' : 'student');
+            } catch (e) {
+                shell.setAttribute('role', 'student');
+            }
+        }
+
+        function showNotFound(message) {
+            document.getElementById('heroFlag').textContent = '🧭';
+            document.getElementById('heroTitle').textContent = 'Adventure not found';
+            content.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-map-signs"></i>
+                    <p>${escapeHtml(message)}</p>
+                    <a class="btn-lb-pill" href="adventures"><i class="fas fa-compass"></i> Browse adventures</a>
+                </div>`;
+        }
+
+        async function loadPage() {
+            try {
+                adventure = await loadAdventure(adventureId);
+            } catch (e) {
+                console.error('Adventure load error:', e);
+                showNotFound("Couldn't load this adventure. Check your connection and try again.");
+                return;
+            }
+            if (!adventure) {
+                showNotFound("This adventure doesn't exist, or the link is out of date.");
+                return;
+            }
+
+            const [progress, saved] = await Promise.all([
+                getAdventureProgress(currentUser.uid).catch(() => ({ completed: {} })),
+                savedPhraseIds(currentUser.uid, adventure).catch(() => new Set()),
+            ]);
+            pastResult = progress.completed[adventure.id] || null;
+            savedIds = saved;
+
+            renderHero();
+            renderIntro();
+        }
+
+        function renderHero() {
+            document.title = `${adventure.title} - Lingua Bud`;
+            document.getElementById('heroFlag').textContent = adventure.flag || '🧭';
+            document.getElementById('heroTitle').textContent = adventure.title;
+            document.getElementById('heroMeta').innerHTML = `
+                <span class="adv-chip variety"><i class="fas fa-comment-dots" aria-hidden="true"></i> ${escapeHtml(adventure.variety?.label || adventure.language)}</span>
+                <span class="adv-chip">${escapeHtml(DIFFICULTY_LABELS[adventure.difficulty] || adventure.difficulty)}</span>
+                <span class="adv-chip"><i class="far fa-clock" aria-hidden="true"></i> ${escapeHtml(adventure.estMinutes)} min</span>`;
+        }
+
+        // finished = the run is over, so every stage shows complete.
+        function stageTrack(current, { finished = false } = {}) {
+            const stages = ['Prepare', 'Practise', 'Review'];
+            const i = stages.indexOf(current);
+            return `<div class="stage-track" aria-label="Step ${i + 1} of 3: ${current}">
+                ${stages.map((s, j) => `<div class="stage ${j < i || finished ? 'done' : j === i ? 'current' : ''}">${s}</div>`).join('')}
+            </div>`;
+        }
+
+        // ===== 1. INTRO + PREPARE =====
+        function renderIntro() {
+            const best = pastResult
+                ? `<p class="past-result"><i class="fas fa-check-circle"></i> Completed before · best score ${pastResult.bestScore}/${pastResult.total}</p>` : '';
+            content.innerHTML = `
+                ${stageTrack('Prepare')}
+                ${best}
+                <div class="adv-card">
+                    <div class="adv-card-label"><i class="fas fa-map-marker-alt"></i> The scene</div>
+                    <p>${escapeHtml(adventure.setting)}</p>
+                </div>
+                <div class="adv-card">
+                    <div class="adv-card-label"><i class="fas fa-bullseye"></i> You'll practise</div>
+                    <ul class="objectives">
+                        ${(adventure.objectives || []).map(o => `<li><i class="fas fa-check"></i><span>${escapeHtml(o)}</span></li>`).join('')}
+                    </ul>
+                </div>
+                <div class="adv-card variety-card">
+                    <div class="adv-card-label"><i class="fas fa-globe"></i> About ${escapeHtml(adventure.variety?.label || adventure.language)}</div>
+                    <p>${escapeHtml(adventure.varietyNote)}</p>
+                </div>
+
+                <h2 class="section-heading">Key phrases</h2>
+                ${(adventure.phrases || []).map(p => phraseCard(p)).join('')}
+
+                ${(adventure.cultureNotes || []).length ? `
+                <div class="adv-card culture-card">
+                    <div class="adv-card-label"><i class="fas fa-lightbulb"></i> Good to know</div>
+                    <ul>${adventure.cultureNotes.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul>
+                </div>` : ''}
+
+                <div class="actions">
+                    <button type="button" class="btn-lb-pill" id="startBtn"><i class="fas fa-play"></i> ${pastResult ? 'Play again' : 'Start the conversation'}</button>
+                </div>`;
+            document.getElementById('startBtn').addEventListener('click', startRun);
+        }
+
+        // One phrase, with Listen (browser speech, if available) and Save.
+        function phraseCard(p, { missed = false } = {}) {
+            const saved = savedIds.has(p.id);
+            const canSpeak = 'speechSynthesis' in window;
+            const also = (p.alsoHeard || []).map(a => `<div><strong>${escapeHtml(a.text)}</strong> — ${escapeHtml(a.where)}</div>`).join('');
+            return `
+                <div class="phrase${missed ? ' missed' : ''}" data-phrase-id="${escapeHtml(p.id)}">
+                    <div class="phrase-top">
+                        <div class="phrase-main">
+                            ${missed ? '<span class="phrase-missed-tag">Missed</span>' : ''}
+                            <div class="phrase-text" lang="${escapeHtml(adventure.variety?.id || '')}">${escapeHtml(p.text)}</div>
+                            <div class="phrase-translation">${escapeHtml(p.translation)}</div>
+                        </div>
+                        <div class="phrase-actions">
+                            ${canSpeak ? `<button type="button" class="icon-pill" data-action="listen" aria-label="Listen to ${escapeHtml(p.text)}"><i class="fas fa-volume-up"></i> Listen</button>` : ''}
+                            <button type="button" class="icon-pill${saved ? ' saved' : ''}" data-action="save" ${saved ? 'disabled' : ''}>
+                                ${saved ? '<i class="fas fa-check"></i> Saved' : '<i class="fas fa-bookmark"></i> Save'}
+                            </button>
+                        </div>
+                    </div>
+                    ${p.example ? `<div class="phrase-example" lang="${escapeHtml(adventure.variety?.id || '')}">${escapeHtml(p.example)}${p.exampleTranslation ? `<em lang="en">${escapeHtml(p.exampleTranslation)}</em>` : ''}</div>` : ''}
+                    ${p.note ? `<div class="phrase-note">${escapeHtml(p.note)}</div>` : ''}
+                    ${also ? `<div class="phrase-also">Also heard: ${also}</div>` : ''}
+                </div>`;
+        }
+
+        // Listen / Save on any phrase card, wherever it's rendered.
+        content.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.phrase [data-action]');
+            if (!btn) return;
+            const phrase = adventure.phrases.find(p => p.id === btn.closest('.phrase').dataset.phraseId);
+            if (!phrase) return;
+            if (btn.dataset.action === 'listen') speak(phrase.text);
+            if (btn.dataset.action === 'save') await savePhrase(phrase, btn);
+        });
+
+        async function savePhrase(phrase, btn) {
+            btn.disabled = true; // a double tap must not create two entries
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving';
+            try {
+                const result = await savePhraseToNotebook(currentUser.uid, adventure, phrase);
+                savedIds.add(phrase.id);
+                markSaved(phrase.id);
+                showToast(result.status === 'exists' ? 'Already in your Notebook' : 'Saved to your Notebook');
+                track('adventure_phrase_saved', { phrase_id: phrase.id, duplicate: result.status === 'exists' });
+            } catch (err) {
+                console.error('Save phrase error:', err);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-bookmark"></i> Save';
+                showToast("Couldn't save — try again");
+            }
+        }
+
+        function markSaved(phraseId) {
+            content.querySelectorAll(`.phrase[data-phrase-id="${CSS.escape(phraseId)}"] [data-action="save"]`).forEach(b => {
+                b.disabled = true;
+                b.classList.add('saved');
+                b.innerHTML = '<i class="fas fa-check"></i> Saved';
+            });
+        }
+
+        // The browser's own text-to-speech, in the scenario's regional variety
+        // where the device has such a voice (else the language's, else default).
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            const synth = window.speechSynthesis;
+            synth.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            const lang = adventure.variety?.id || '';
+            utter.lang = lang;
+            const voices = synth.getVoices();
+            const base = lang.split('-')[0];
+            utter.voice = voices.find(v => v.lang.replace('_', '-') === lang)
+                || voices.find(v => v.lang.toLowerCase().startsWith(base))
+                || null;
+            utter.rate = 0.9;
+            synth.speak(utter);
+        }
+
+        // ===== 2. PRACTISE — the conversation =====
+        function shuffle(list) {
+            const a = list.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function startRun() {
+            const total = adventure.steps.filter(s => s.type === 'choice').length;
+            run = { stepIndex: 0, score: 0, total, asked: 0, missed: new Set() };
+            content.innerHTML = `${stageTrack('Practise')}<div class="convo" id="convo"></div>`;
+            track('adventure_started');
+            scrollToEl(document.querySelector('.adv-hero'));
+            advance();
+        }
+
+        // Shows narration and dialogue up to the next question (or the end).
+        function advance() {
+            const convo = document.getElementById('convo');
+            let firstNew = null;
+            while (run.stepIndex < adventure.steps.length) {
+                const step = adventure.steps[run.stepIndex];
+                if (step.type === 'choice') {
+                    const card = renderQuestion(step);
+                    convo.appendChild(card);
+                    firstNew = firstNew || card;
+                    break;
+                }
+                const el = step.type === 'scene' ? sceneEl(step) : lineEl(step);
+                convo.appendChild(el);
+                firstNew = firstNew || el;
+                run.stepIndex++;
+            }
+            if (run.stepIndex >= adventure.steps.length) {
+                const finish = document.createElement('div');
+                finish.className = 'actions';
+                finish.innerHTML = `<button type="button" class="btn-lb-pill" id="finishBtn"><i class="fas fa-flag-checkered"></i> See how you did</button>`;
+                convo.appendChild(finish);
+                finish.querySelector('button').addEventListener('click', finishRun);
+                firstNew = firstNew || finish;
+            }
+            scrollToEl(firstNew);
+        }
+
+        function sceneEl(step) {
+            const el = document.createElement('div');
+            el.className = 'scene-text';
+            el.textContent = step.text;
+            return el;
+        }
+
+        function lineEl(step, { me = false } = {}) {
+            const row = document.createElement('div');
+            row.className = `bubble-row${me ? ' me' : ''}`;
+            const lang = adventure.variety?.id || '';
+            row.innerHTML = `
+                <div class="bubble">
+                    <div class="bubble-speaker">${escapeHtml(me ? 'You' : step.speaker)}</div>
+                    <div class="bubble-text" lang="${escapeHtml(lang)}">${escapeHtml(step.text)}</div>
+                    ${me ? '' : `
+                    <div class="bubble-tools">
+                        ${step.translation ? '<button type="button" class="link-btn" data-action="translate">Show translation</button>' : ''}
+                        ${'speechSynthesis' in window ? '<button type="button" class="link-btn" data-action="listen"><i class="fas fa-volume-up"></i> Listen</button>' : ''}
+                    </div>
+                    <div class="bubble-translation" hidden>${escapeHtml(step.translation || '')}</div>`}
+                </div>`;
+            row.querySelector('[data-action="translate"]')?.addEventListener('click', (e) => {
+                const tr = row.querySelector('.bubble-translation');
+                tr.hidden = !tr.hidden;
+                e.currentTarget.textContent = tr.hidden ? 'Show translation' : 'Hide translation';
+            });
+            row.querySelector('[data-action="listen"]')?.addEventListener('click', () => speak(step.text));
+            return row;
+        }
+
+        function renderQuestion(step) {
+            run.asked++;
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            const options = shuffle(step.options);
+            card.innerHTML = `
+                <div class="question-progress">Question ${run.asked} of ${run.total}</div>
+                <div class="question-kind">${escapeHtml(SKILL_LABELS[step.skill] || 'Question')}</div>
+                <div class="question-prompt">${escapeHtml(step.prompt)}</div>
+                <div class="answer-grid">
+                    ${options.map((o, i) => `<button type="button" class="answer-btn" data-i="${i}">${escapeHtml(o.text)}</button>`).join('')}
+                </div>
+                <div class="feedback-slot" aria-live="polite"></div>`;
+            card.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.addEventListener('click', () => answer(step, options, Number(btn.dataset.i), card));
+            });
+            return card;
+        }
+
+        function answer(step, options, chosenIndex, card) {
+            const chosen = options[chosenIndex];
+            const correct = options.find(o => o.correct);
+            const isRight = chosen === correct;
+            card.querySelectorAll('.answer-btn').forEach((b, i) => {
+                b.disabled = true;
+                if (options[i] === correct) b.classList.add('correct');
+                else if (i === chosenIndex) b.classList.add('incorrect');
+                else b.classList.add('dimmed');
+            });
+            if (isRight) run.score++;
+            else (step.phraseIds || []).forEach(id => run.missed.add(id));
+
+            // The chosen option's own explanation — and, after a mistake, why
+            // the right answer works.
+            card.querySelector('.feedback-slot').innerHTML = `
+                <div class="feedback ${isRight ? 'good' : 'bad'}">
+                    <div class="feedback-title">${isRight ? '<i class="fas fa-check-circle"></i> Nice!' : '<i class="fas fa-times-circle"></i> Not quite'}</div>
+                    <p>${escapeHtml(chosen.why)}</p>
+                    ${isRight ? '' : `<p class="better"><strong>Better:</strong> “${escapeHtml(correct.text)}” — ${escapeHtml(correct.why)}</p>`}
+                </div>
+                <div class="actions" style="margin-top:0.9rem;margin-bottom:0;">
+                    <button type="button" class="btn-lb-pill">Continue <i class="fas fa-arrow-right"></i></button>
+                </div>`;
+            const next = card.querySelector('.feedback-slot .btn-lb-pill');
+            next.addEventListener('click', () => {
+                next.closest('.actions').remove();
+                // A "what would you say" answer becomes your line in the scene.
+                if (step.skill === 'respond') {
+                    card.after(lineEl({ text: correct.text }, { me: true }));
+                }
+                run.stepIndex++;
+                advance();
+            }, { once: true });
+            next.focus({ preventScroll: true });
+        }
+
+        // ===== 3. REVIEW — completion =====
+        async function finishRun() {
+            const { score, total } = run;
+            track('adventure_completed', { score, total });
+            let entry = null;
+            try {
+                entry = await recordCompletion(currentUser.uid, adventure.id, score, total);
+                pastResult = { ...entry, completedAt: null };
+            } catch (e) {
+                console.error('Record completion error:', e);
+            }
+
+            const ratio = total ? score / total : 1;
+            const [emoji, headline, line] = ratio === 1
+                ? ['🎉', 'Perfect!', 'You handled every moment like a local.']
+                : ratio >= 0.6
+                    ? ['👏', 'Great job!', 'You got through the scene — review the ones you missed below.']
+                    : ['💪', 'Good practice!', 'Every mistake here is one you won’t make for real. Review the phrases and try again.'];
+
+            const missed = adventure.phrases.filter(p => run.missed.has(p.id));
+            const others = adventure.phrases.filter(p => !run.missed.has(p.id));
+            const related = adventure.related || {};
+
+            content.innerHTML = `
+                ${stageTrack('Review', { finished: true })}
+                <div class="adv-card completion-card">
+                    <div class="completion-emoji" aria-hidden="true">${emoji}</div>
+                    <h2>${headline}</h2>
+                    <div class="completion-score">${score}/${total}</div>
+                    <p>${line}</p>
+                    ${entry && entry.attempts > 1 ? `<p>Best score: ${entry.bestScore}/${total}</p>` : ''}
+                </div>
+
+                ${missed.length ? `<h2 class="section-heading">Phrases to review</h2>${missed.map(p => phraseCard(p, { missed: true })).join('')}` : ''}
+                <h2 class="section-heading">${missed.length ? 'Other phrases from this adventure' : 'Save the phrases you want to keep'}</h2>
+                ${others.map(p => phraseCard(p)).join('')}
+
+                <h2 class="section-heading">Keep going</h2>
+                <div class="actions">
+                    <a class="btn-lb-pill" href="connect"><i class="fas fa-user-friends"></i> Practise with a language partner</a>
+                    <a class="btn-lb-pill btn-lb-pill-outline" href="instructors"><i class="fas fa-chalkboard-teacher"></i> Book a lesson with an instructor</a>
+                    ${related.cultureGuide && related.cultureLesson ? `<a class="btn-lb-pill btn-lb-pill-outline" href="culture-lesson?country=${encodeURIComponent(related.cultureGuide)}&lesson=${encodeURIComponent(related.cultureLesson)}"><i class="fas fa-globe"></i> Related culture lesson</a>` : ''}
+                    <button type="button" class="btn-lb-pill btn-lb-pill-outline" id="replayBtn"><i class="fas fa-redo"></i> Play again</button>
+                    <a class="btn-lb-pill btn-lb-pill-outline" href="adventures"><i class="fas fa-compass"></i> More adventures</a>
+                </div>`;
+            document.getElementById('replayBtn').addEventListener('click', startRun);
+            scrollToEl(document.querySelector('.adv-hero'));
+        }
+
+        document.getElementById('shell').addEventListener('lb-logout', async () => {
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>
