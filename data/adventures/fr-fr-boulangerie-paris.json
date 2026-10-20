@@ -1,0 +1,141 @@
+{
+  "id": "fr-fr-boulangerie-paris",
+  "title": "Buying bread at a bakery in Paris",
+  "language": "French",
+  "country": "France",
+  "countryCode": "FR",
+  "flag": "🇫🇷",
+  "variety": { "id": "fr-FR", "label": "French from France" },
+  "difficulty": "beginner",
+  "estMinutes": 5,
+  "setting": "It's late morning in Montmartre, Paris. The smell of fresh bread leads you into a small boulangerie. A short queue waits at the counter, where the baker is wrapping baguettes in paper.",
+  "objectives": [
+    "Greet shopkeepers the way the French expect",
+    "Order bread politely",
+    "Understand \"Et avec ceci ?\" and finish your order",
+    "Say goodbye the friendly French way"
+  ],
+  "varietyNote": "This is everyday French as spoken in Paris and most of France. French varies across France, Belgium, Switzerland, Africa and Canada — in Québec, for example, you'll hear different expressions in shops (see the Montréal adventure).",
+  "phrases": [
+    {
+      "id": "bonjour",
+      "text": "Bonjour, madame !",
+      "translation": "Hello! (to a woman — \"monsieur\" to a man)",
+      "example": "Bonjour, monsieur ! Une baguette, s'il vous plaît.",
+      "exampleTranslation": "Hello! A baguette, please.",
+      "note": "Always say \"bonjour\" when you walk into a shop. In France, skipping it comes across as rude."
+    },
+    {
+      "id": "je-voudrais",
+      "text": "Je voudrais une baguette, s'il vous plaît.",
+      "translation": "I'd like a baguette, please.",
+      "example": "Je voudrais deux croissants, s'il vous plaît.",
+      "exampleTranslation": "I'd like two croissants, please.",
+      "alsoHeard": [
+        { "text": "Une baguette, s'il vous plaît.", "where": "Short and perfectly polite — once you've said bonjour" }
+      ]
+    },
+    {
+      "id": "tradition",
+      "text": "une tradition",
+      "translation": "a traditional baguette (\"baguette de tradition\")",
+      "example": "Une tradition bien cuite, s'il vous plaît.",
+      "exampleTranslation": "A well-baked traditional baguette, please.",
+      "note": "Made to a traditional recipe with no additives — crustier and chewier than a classic baguette. Many Parisians ask for theirs \"bien cuite\" (well baked) or \"pas trop cuite\" (not too baked)."
+    },
+    {
+      "id": "et-avec-ceci",
+      "text": "Et avec ceci ?",
+      "translation": "Anything else?",
+      "example": "—Et avec ceci ? —Un pain au chocolat, s'il vous plaît.",
+      "exampleTranslation": "\"Anything else?\" \"A pain au chocolat, please.\""
+    },
+    {
+      "id": "ce-sera-tout",
+      "text": "Ce sera tout, merci.",
+      "translation": "That'll be all, thanks.",
+      "example": "Non, ce sera tout, merci.",
+      "exampleTranslation": "No, that'll be all, thanks.",
+      "alsoHeard": [
+        { "text": "C'est tout, merci.", "where": "Also very common" }
+      ]
+    },
+    {
+      "id": "bonne-journee",
+      "text": "Bonne journée !",
+      "translation": "Have a good day!",
+      "example": "Merci, bonne journée !",
+      "exampleTranslation": "Thanks, have a good day!",
+      "note": "In the evening, you'll hear \"Bonne soirée !\" instead."
+    }
+  ],
+  "cultureNotes": [
+    "\"Bonjour\" is essential. Walking into a shop and asking for something without greeting first is one of the most common mistakes visitors make in France.",
+    "Adding \"madame\" or \"monsieur\" after bonjour sounds warm and polite with shopkeepers.",
+    "Bakeries get busy around lunchtime and before dinner, when people pick up fresh bread for the meal.",
+    "Small purchases by contactless card are common, but cash is fine too."
+  ],
+  "steps": [
+    { "type": "scene", "text": "It's your turn. The baker looks up at you and waits." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "What's the first thing you should do?",
+      "options": [
+        { "text": "Say \"Bonjour, madame !\" before asking for anything.", "correct": true, "why": "Exactly. Greeting first is expected in every French shop." },
+        { "text": "Point at the bread and say \"Baguette.\"", "why": "You'd get your bread, but skipping the greeting comes across as rude in France." },
+        { "text": "Wait silently until she asks what you want.", "why": "In France the customer is expected to greet first — waiting silently can seem cold." }
+      ],
+      "phraseIds": ["bonjour"]
+    },
+    { "type": "line", "speaker": "Baker", "text": "Bonjour ! Qu'est-ce que je vous sers ?", "translation": "Hello! What can I get you?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "How do you ask for a baguette?",
+      "options": [
+        { "text": "Je voudrais une baguette, s'il vous plaît.", "correct": true, "why": "Polite and natural — \"je voudrais\" (I would like) is the classic way to order." },
+        { "text": "Je veux une baguette.", "why": "\"Je veux\" (I want) sounds blunt in a shop, especially without \"s'il vous plaît\"." },
+        { "text": "Donnez-moi baguette.", "why": "\"Give me\" sounds demanding, and it's missing \"une\" (a)." }
+      ],
+      "phraseIds": ["je-voudrais"]
+    },
+    { "type": "line", "speaker": "Baker", "text": "Une tradition ou une classique ?", "translation": "A traditional one or a classic one?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What is the baker asking?",
+      "options": [
+        { "text": "Which kind of baguette you want — traditional or classic", "correct": true, "why": "Right. A \"tradition\" is made to a traditional recipe and is crustier; a \"classique\" is the standard baguette." },
+        { "text": "Whether you want it wrapped the traditional way", "why": "It's about the bread itself, not the wrapping." },
+        { "text": "Whether you're a regular customer", "why": "She's asking about the type of baguette, not about you." }
+      ],
+      "phraseIds": ["tradition"]
+    },
+    { "type": "line", "speaker": "Baker", "text": "Très bien. Et avec ceci ?", "translation": "Very good. Anything else?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "That's all you need. What do you say?",
+      "options": [
+        { "text": "Ce sera tout, merci.", "correct": true, "why": "Polite and natural: \"That'll be all, thanks.\"" },
+        { "text": "C'est fini.", "why": "This means \"It's over / finished\" — it sounds like you're ending something, not your order." },
+        { "text": "Rien.", "why": "\"Nothing\" on its own is understood but sounds abrupt. Add \"merci\", or say \"ce sera tout\"." }
+      ],
+      "phraseIds": ["et-avec-ceci", "ce-sera-tout"]
+    },
+    { "type": "line", "speaker": "Baker", "text": "Ça fait un euro trente. Merci, bonne journée !", "translation": "That's €1.30. Thank you, have a good day!" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You pay and take your baguette. How do you say goodbye?",
+      "options": [
+        { "text": "Merci, bonne journée !", "correct": true, "why": "Warm and polite — exactly what a French customer would say." },
+        { "text": "Salut !", "why": "\"Salut\" is for friends. With a shopkeeper it's too informal." },
+        { "text": "Bon appétit !", "why": "\"Bon appétit\" is said before someone eats a meal — a bit odd to the baker." }
+      ],
+      "phraseIds": ["bonne-journee"]
+    }
+  ],
+  "related": { "cultureGuide": "france", "cultureLesson": "shopping-etiquette" }
+}

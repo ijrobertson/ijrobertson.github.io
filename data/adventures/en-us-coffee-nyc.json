@@ -1,0 +1,154 @@
+{
+  "id": "en-us-coffee-nyc",
+  "title": "Ordering coffee in New York",
+  "language": "English",
+  "country": "United States",
+  "countryCode": "US",
+  "flag": "🇺🇸",
+  "variety": { "id": "en-US", "label": "American English" },
+  "difficulty": "beginner",
+  "estMinutes": 5,
+  "setting": "It's 8 a.m. at a busy coffee shop in Manhattan, New York. The line moves fast, the barista is friendly but quick, and everyone seems to know exactly what they want.",
+  "objectives": [
+    "Order a drink the way Americans usually do",
+    "Understand quick questions like \"Room for milk?\" and \"For here or to go?\"",
+    "Say \"no thanks\" naturally",
+    "Know what to do when the screen asks for a tip"
+  ],
+  "varietyNote": "This is everyday American English, as you'd hear it in New York. British English uses some different phrases for the same things — \"to take away\" instead of \"to go\", for example (see the London adventure). American English itself varies by region, but the phrases here are understood everywhere in the US.",
+  "phrases": [
+    {
+      "id": "can-i-get",
+      "text": "Can I get a medium iced coffee, please?",
+      "translation": "I'd like a medium iced coffee, please.",
+      "example": "Hi! Can I get a large latte and a blueberry muffin?",
+      "exampleTranslation": "Hello! I'd like a large latte and a blueberry muffin.",
+      "note": "\"Can I get…?\" is the normal, polite way to order in the US. It isn't rude — it's what almost everyone says.",
+      "alsoHeard": [
+        { "text": "I'll have a medium iced coffee.", "where": "Also very common in the US" },
+        { "text": "Could I have a medium iced coffee?", "where": "A little more formal; common in the UK too" }
+      ]
+    },
+    {
+      "id": "room-for-milk",
+      "text": "Room for milk?",
+      "translation": "Should I leave space at the top so you can add milk?",
+      "example": "\"Black coffee, please.\" \"Room for milk?\" \"No, thanks.\"",
+      "exampleTranslation": "The barista asks whether to leave space in the cup."
+    },
+    {
+      "id": "to-go",
+      "text": "For here or to go?",
+      "translation": "Will you drink it here, or take it with you?",
+      "example": "To go, please.",
+      "exampleTranslation": "I'll take it with me, please.",
+      "alsoHeard": [
+        { "text": "Eat in or take away?", "where": "British English" }
+      ]
+    },
+    {
+      "id": "im-good",
+      "text": "I'm good, thanks.",
+      "translation": "No, thank you. (when offered something)",
+      "example": "\"Anything else?\" \"I'm good, thanks.\"",
+      "exampleTranslation": "\"Do you want anything else?\" \"No, thank you.\"",
+      "note": "Here \"I'm good\" doesn't describe how you feel — it means you don't need anything more."
+    },
+    {
+      "id": "name-on-cup",
+      "text": "What name should I put on it?",
+      "translation": "What's your name? (so we can call you when your drink is ready)",
+      "example": "\"Name for the order?\" \"It's Sam.\"",
+      "exampleTranslation": "Another common way to ask for your name."
+    },
+    {
+      "id": "have-a-good-one",
+      "text": "Have a good one!",
+      "translation": "Have a good day! (casual goodbye)",
+      "example": "\"Thanks!\" \"You too — have a good one!\"",
+      "exampleTranslation": "A friendly way to say goodbye."
+    }
+  ],
+  "cultureNotes": [
+    "In a busy New York coffee shop, short and friendly is the norm. Ordering quickly isn't rude — holding up the line is what people notice.",
+    "The card screen often suggests a tip. Tipping at a counter is common but optional; a small tip or a dollar is typical, and \"No tip\" is always an option.",
+    "Cup sizes vary by chain: small, medium and large in most places, but other names at some big chains.",
+    "\"How are you?\" from staff is a greeting, not a real question. \"Good, thanks — how are you?\" is all you need."
+  ],
+  "steps": [
+    { "type": "scene", "text": "You reach the front of the line. The barista smiles." },
+    { "type": "line", "speaker": "Barista", "text": "Hi there! What can I get you?", "translation": "Hello! What would you like?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like a medium iced coffee. How do you order it?",
+      "options": [
+        { "text": "Can I get a medium iced coffee, please?", "correct": true, "why": "Natural, polite and exactly how people order in the US." },
+        { "text": "Give me a coffee medium iced.", "why": "The word order is off (\"a medium iced coffee\"), and \"Give me…\" without \"please\" sounds demanding." },
+        { "text": "I would like to receive one coffee with ice in the medium size.", "why": "Grammatically fine, but it sounds like a textbook — very stiff for a fast coffee line." }
+      ],
+      "phraseIds": ["can-i-get"]
+    },
+    { "type": "line", "speaker": "Barista", "text": "Sure thing. Room for milk?", "translation": "Of course. Should I leave space for milk?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What is the barista asking?",
+      "options": [
+        { "text": "Whether to leave space at the top of the cup for milk", "correct": true, "why": "Right — \"room\" here means space, not a room in a building." },
+        { "text": "Whether you'd like to sit in the room with the milk", "why": "\"Room\" can mean a room, but here it means space in the cup." },
+        { "text": "Whether you want milk instead of coffee", "why": "You'd still get coffee — this is only about leaving space to add milk yourself." }
+      ],
+      "phraseIds": ["room-for-milk"]
+    },
+    { "type": "line", "speaker": "Barista", "text": "For here or to go?", "translation": "Will you drink it here or take it with you?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You're taking it to the office. What do you say?",
+      "options": [
+        { "text": "To go, please.", "correct": true, "why": "\"To go\" is the fixed American expression for taking food or drinks away." },
+        { "text": "To leave, please.", "why": "Understandable, but it isn't the expression people use — say \"to go\"." },
+        { "text": "Take away, please.", "why": "That's British English. You'll be understood, but in New York people say \"to go\"." }
+      ],
+      "phraseIds": ["to-go"]
+    },
+    { "type": "line", "speaker": "Barista", "text": "Anything else? The muffins just came out of the oven.", "translation": "Do you want anything else? The muffins are fresh." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You don't want anything else. How do you say no, politely and naturally?",
+      "options": [
+        { "text": "I'm good, thanks.", "correct": true, "why": "The casual American way to say \"no thanks\" to an offer." },
+        { "text": "Nothing.", "why": "Clear, but on its own it sounds curt. Add \"thanks\" — or say \"I'm good, thanks\"." },
+        { "text": "I'm well, thank you.", "why": "That answers \"How are you?\", not an offer of muffins — it may confuse the barista." }
+      ],
+      "phraseIds": ["im-good"]
+    },
+    { "type": "line", "speaker": "Barista", "text": "That's $4.75. What name should I put on it?", "translation": "It costs $4.75. What's your name, for the order?" },
+    { "type": "scene", "text": "You give your name and tap your card. The screen shows: 15% · 20% · 25% · Custom · No tip." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "What should you do about the tip screen?",
+      "options": [
+        { "text": "Tipping at a counter is common but optional — a small tip is typical, and \"No tip\" is fine too.", "correct": true, "why": "Right. Counter tips are appreciated, not required. Sit-down restaurants are different: there, 15–20% is expected." },
+        { "text": "You must choose at least 20% — anything less is against the law.", "why": "Tips are never required by law. At a counter it's entirely your choice." },
+        { "text": "Always press \"No tip\" — tipping is considered rude in the US.", "why": "It isn't rude at all. Many people leave a small tip for counter service." }
+      ]
+    },
+    { "type": "line", "speaker": "Barista", "text": "Thanks! Have a good one!", "translation": "Thank you! Have a good day!" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What does \"Have a good one!\" mean?",
+      "options": [
+        { "text": "Have a good day", "correct": true, "why": "A casual, friendly goodbye. You can answer \"You too!\"." },
+        { "text": "Enjoy your coffee", "why": "Close in spirit, but \"one\" means your day (or evening), not the coffee." },
+        { "text": "Come back for another one", "why": "It's just a goodbye, not an invitation to buy another." }
+      ],
+      "phraseIds": ["have-a-good-one"]
+    }
+  ],
+  "related": {}
+}

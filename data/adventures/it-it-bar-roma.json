@@ -1,0 +1,139 @@
+{
+  "id": "it-it-bar-roma",
+  "title": "Morning coffee at a bar in Rome",
+  "language": "Italian",
+  "country": "Italy",
+  "countryCode": "IT",
+  "flag": "🇮🇹",
+  "variety": { "id": "it-IT", "label": "Italian (Rome)" },
+  "difficulty": "beginner",
+  "estMinutes": 5,
+  "setting": "It's 8:30 a.m. near the Pantheon in Rome. You walk into a busy \"bar\" — in Italy, that's a café. Locals are knocking back espressos at the counter, and there's a separate till (\"la cassa\") by the door.",
+  "objectives": [
+    "Understand how ordering works in a busy Italian bar",
+    "Order a coffee and a pastry",
+    "Know the difference between standing and sitting",
+    "Follow a few local coffee customs"
+  ],
+  "varietyNote": "This is standard Italian as heard in Rome. Italy has strong regional differences in accent, dialect and vocabulary — the pastry called a \"cornetto\" in Rome and the south is usually a \"brioche\" in Milan and the north. Standard Italian is understood everywhere.",
+  "phrases": [
+    {
+      "id": "caffe",
+      "text": "Un caffè, per favore.",
+      "translation": "An espresso, please.",
+      "example": "Un caffè e un bicchiere d'acqua, per favore.",
+      "exampleTranslation": "An espresso and a glass of water, please.",
+      "note": "In Italy, \"un caffè\" means an espresso — no need to say \"espresso\"."
+    },
+    {
+      "id": "cornetto",
+      "text": "un cornetto",
+      "translation": "a croissant-style pastry",
+      "example": "Un cappuccino e un cornetto alla crema, per favore.",
+      "exampleTranslation": "A cappuccino and a custard-filled cornetto, please.",
+      "alsoHeard": [
+        { "text": "una brioche", "where": "Milan and much of northern Italy" }
+      ]
+    },
+    {
+      "id": "scontrino",
+      "text": "lo scontrino",
+      "translation": "the receipt",
+      "example": "Ecco lo scontrino.",
+      "exampleTranslation": "Here's the receipt.",
+      "note": "In many busy bars you pay at the till first, then show the receipt at the counter to get your order."
+    },
+    {
+      "id": "al-banco",
+      "text": "al banco / al tavolo",
+      "translation": "at the counter / at a table",
+      "example": "Lo prendo al banco.",
+      "exampleTranslation": "I'll have it at the counter.",
+      "note": "Standing at the counter is usually cheaper than sitting at a table."
+    },
+    {
+      "id": "quant-e",
+      "text": "Quant'è?",
+      "translation": "How much is it?",
+      "example": "Scusi, quant'è?",
+      "exampleTranslation": "Excuse me, how much is it?"
+    },
+    {
+      "id": "buona-giornata",
+      "text": "Grazie, buona giornata!",
+      "translation": "Thanks, have a good day!",
+      "example": "Grazie mille, buona giornata!",
+      "exampleTranslation": "Thanks a lot, have a good day!"
+    }
+  ],
+  "cultureNotes": [
+    "In Italy a \"bar\" is a café. Many people drink an espresso standing at the counter in a couple of minutes.",
+    "In busy bars you often pay at the till (\"la cassa\") first, then hand your receipt (\"lo scontrino\") to the barista.",
+    "Sitting at a table, especially in a tourist area, can cost noticeably more than standing at the counter.",
+    "Cappuccino is traditionally a morning drink. Nobody will refuse to make you one after lunch, but locals usually switch to an espresso."
+  ],
+  "steps": [
+    { "type": "scene", "text": "The counter is crowded. A sign by the door says \"Cassa\", where a cashier is taking orders and printing receipts." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "How does ordering usually work in a busy bar like this?",
+      "options": [
+        { "text": "Order and pay at the till first, then take the receipt to the counter.", "correct": true, "why": "Right — the barista makes your order when you hand over the scontrino." },
+        { "text": "Sit at a table and wait for someone to take your order.", "why": "You can, but you'll often pay more, and in busy bars locals order at the till and stand at the counter." },
+        { "text": "Shout your order to the barista over the crowd.", "why": "In bars with a cassa, the barista usually wants to see your receipt first." }
+      ],
+      "phraseIds": ["scontrino"]
+    },
+    { "type": "line", "speaker": "Cashier", "text": "Buongiorno! Cosa prende?", "translation": "Good morning! What will you have?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like an espresso and a pastry. How do you order?",
+      "options": [
+        { "text": "Un caffè e un cornetto, per favore.", "correct": true, "why": "Exactly — and \"un caffè\" already means an espresso." },
+        { "text": "Un espresso latte grande, per favore.", "why": "That's coffee-chain language, not Italian. A milky coffee would be a cappuccino or a \"caffè latte\"." },
+        { "text": "Voglio caffè.", "why": "\"I want coffee\" sounds blunt, and it's missing \"un\" and \"per favore\"." }
+      ],
+      "phraseIds": ["caffe", "cornetto"]
+    },
+    { "type": "line", "speaker": "Cashier", "text": "Al banco o al tavolo?", "translation": "At the counter or at a table?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What is the cashier asking — and why does it matter?",
+      "options": [
+        { "text": "Whether you'll stand at the counter or sit at a table — sitting often costs more.", "correct": true, "why": "Right. The price can change depending on where you have it." },
+        { "text": "Whether you want it in a cup or a glass", "why": "It's about where you'll have it, not what it's served in." },
+        { "text": "Whether you're paying by card or cash", "why": "That would be \"carta o contanti?\"." }
+      ],
+      "phraseIds": ["al-banco"]
+    },
+    { "type": "line", "speaker": "Cashier", "text": "Al banco: due euro e venti. Ecco lo scontrino.", "translation": "At the counter: €2.20. Here's the receipt." },
+    { "type": "scene", "text": "You hand the receipt to the barista. A minute later, your espresso and cornetto are on the counter." },
+    { "type": "line", "speaker": "Barista", "text": "Ecco a lei!", "translation": "Here you go!" },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "Later, after lunch, you fancy a coffee. What do most locals order?",
+      "options": [
+        { "text": "An espresso (\"un caffè\") — cappuccino is traditionally a morning drink.", "correct": true, "why": "Right. You can still order a cappuccino; it's just less usual after a meal." },
+        { "text": "A large cappuccino — it's the usual after-lunch drink.", "why": "Italians usually drink cappuccino in the morning, and an espresso after meals." },
+        { "text": "Nothing — coffee isn't drunk after lunch.", "why": "An espresso after lunch is extremely common in Italy." }
+      ],
+      "phraseIds": ["caffe"]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You've finished your breakfast. How do you say goodbye to the barista?",
+      "options": [
+        { "text": "Grazie, buona giornata!", "correct": true, "why": "Warm and natural: \"Thanks, have a good day!\"" },
+        { "text": "Ciao, bello!", "why": "Very familiar — fine with friends, too casual for a barista you don't know." },
+        { "text": "Arrivederla, signore illustrissimo.", "why": "Hugely over-formal — it would sound like a joke." }
+      ],
+      "phraseIds": ["buona-giornata"]
+    }
+  ],
+  "related": { "cultureGuide": "italy", "cultureLesson": "coffee-culture" }
+}

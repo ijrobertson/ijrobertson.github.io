@@ -74,6 +74,10 @@ for (const entry of entries) {
     if (st.type === 'line') {
       if (!isText(st.speaker) || !isText(st.text)) problem(sw, 'line needs "speaker" and "text"');
       if (!isText(st.translation)) problem(sw, 'line needs a "translation"');
+      // The learner's own lines come from their answers to "respond"
+      // questions (shown as their bubble); a "You" line would render as if
+      // someone else said it. Use a scene step for things the learner says.
+      if (/^(you|me)$/i.test(String(st.speaker).trim())) problem(sw, 'a line can\'t be spoken by "You" — use a scene step instead');
     }
     if (st.type === 'choice') {
       choices++;

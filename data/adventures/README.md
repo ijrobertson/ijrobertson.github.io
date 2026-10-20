@@ -62,7 +62,7 @@ label → tag, scenario → source).
 Three step types:
 
 - `scene` — narration: `{ "type": "scene", "text": "…" }`
-- `line` — someone speaks: `{ "type": "line", "speaker": "Waiter", "text": "…", "translation": "…" }`
+- `line` — someone speaks: `{ "type": "line", "speaker": "Waiter", "text": "…", "translation": "…" }` — never the learner; their lines come from their answers to `respond` questions (use a `scene` for anything else they say)
 - `choice` — a question with instant feedback:
 
 ```json
