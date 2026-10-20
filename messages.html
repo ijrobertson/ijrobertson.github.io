@@ -336,6 +336,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             background: #f7f9f8;
         }
 
+        .conversation-item.is-skeleton { cursor: default; }
+        .conversation-item.is-skeleton:hover { background: none; }
+
         .conversation-item.active {
             background: #e8fffe;
             border-left: 4px solid var(--pb-teal);
@@ -1846,17 +1849,63 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </nav>
 
     <!-- Messages Container -->
-    <div class="messages-container">
+    <!-- conversations-open is set here rather than only by initMobileView()
+         below: that script waits on the Firebase SDK download, so on a cold
+         open the phone layout briefly showed the desktop "Select a
+         conversation" panel under the list. The class only has an effect
+         inside the phone-width media query, so it's inert on desktop. -->
+    <div class="messages-container conversations-open">
         <!-- Conversations List -->
         <div class="conversations-panel">
             <div class="conversations-header">
                 <i class="fas fa-envelope"></i> Messages
             </div>
             <div class="conversations-list" id="conversationsList">
-                <div class="empty-state">
-                    <i class="fas fa-comments"></i>
-                    <h3>No conversations yet</h3>
-                    <p>Start chatting with language partners!</p>
+                <!-- Placeholder rows until renderConversations() fills the list
+                     (it removes them). This used to be the "No conversations yet"
+                     empty state, which every user saw briefly on each open. -->
+                <span class="lb-sr-only is-skeleton">Loading conversations…</span>
+                <div class="conversation-item is-skeleton" aria-hidden="true">
+                    <span class="lb-skel lb-skel-circle" style="width:50px;height:50px;"></span>
+                    <div class="conversation-info">
+                        <span class="lb-skel lb-skel-title" style="width:38%;"></span>
+                        <span class="lb-skel lb-skel-line" style="width:70%;"></span>
+                    </div>
+                </div>
+                <div class="conversation-item is-skeleton" aria-hidden="true">
+                    <span class="lb-skel lb-skel-circle" style="width:50px;height:50px;"></span>
+                    <div class="conversation-info">
+                        <span class="lb-skel lb-skel-title" style="width:46%;"></span>
+                        <span class="lb-skel lb-skel-line" style="width:58%;"></span>
+                    </div>
+                </div>
+                <div class="conversation-item is-skeleton" aria-hidden="true">
+                    <span class="lb-skel lb-skel-circle" style="width:50px;height:50px;"></span>
+                    <div class="conversation-info">
+                        <span class="lb-skel lb-skel-title" style="width:30%;"></span>
+                        <span class="lb-skel lb-skel-line" style="width:76%;"></span>
+                    </div>
+                </div>
+                <div class="conversation-item is-skeleton" aria-hidden="true">
+                    <span class="lb-skel lb-skel-circle" style="width:50px;height:50px;"></span>
+                    <div class="conversation-info">
+                        <span class="lb-skel lb-skel-title" style="width:42%;"></span>
+                        <span class="lb-skel lb-skel-line" style="width:52%;"></span>
+                    </div>
+                </div>
+                <div class="conversation-item is-skeleton" aria-hidden="true">
+                    <span class="lb-skel lb-skel-circle" style="width:50px;height:50px;"></span>
+                    <div class="conversation-info">
+                        <span class="lb-skel lb-skel-title" style="width:34%;"></span>
+                        <span class="lb-skel lb-skel-line" style="width:66%;"></span>
+                    </div>
+                </div>
+                <div class="conversation-item is-skeleton" aria-hidden="true">
+                    <span class="lb-skel lb-skel-circle" style="width:50px;height:50px;"></span>
+                    <div class="conversation-info">
+                        <span class="lb-skel lb-skel-title" style="width:40%;"></span>
+                        <span class="lb-skel lb-skel-line" style="width:60%;"></span>
+                    </div>
                 </div>
             </div>
             <button type="button" class="unread-jump-badge" id="unreadJumpBadge" style="display:none;" aria-label="Jump to unread conversations">
@@ -2396,6 +2445,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     });
 
                     renderConversations(conversations);
+                }, (error) => {
+                    console.error('Error loading conversations:', error);
+                    conversationsList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Couldn't load your conversations</h3>
+                            <p>Check your connection and try again.</p>
+                        </div>`;
                 });
             } catch (error) {
                 console.error('Error loading conversations:', error);
@@ -2500,7 +2557,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // Remove any items for conversations that no longer exist
             Object.values(existing).forEach(el => el.remove());
             // Remove any lingering empty-state placeholder
-            conversationsList.querySelectorAll('.empty-state').forEach(el => el.remove());
+            conversationsList.querySelectorAll('.empty-state, .is-skeleton').forEach(el => el.remove());
 
             updateUnreadJumpBadge(conversations);
         }

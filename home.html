@@ -308,6 +308,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .empty-state a { color: var(--pb-teal-deep); font-weight: 700; text-decoration: none; }
         .empty-state a:hover { text-decoration: underline; }
         .loading-state { text-align: center; padding: 2.5rem; color: #aaa; }
+        .skeleton-lesson-card { background: white; border-radius: 24px; border: 2px solid #e7e9e7; padding: 1.35rem 1.5rem 1.5rem; max-width: 480px; }
+        .skeleton-lesson-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
         .loading-state i { font-size: 2rem; color: var(--pb-teal); display: block; margin-bottom: 0.75rem; }
 
         /* ===== THIS WEEK'S GOAL ===== */
@@ -466,7 +468,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <span class="resource-row-icon"><i class="fas fa-book-open"></i></span>
                     <span class="resource-row-text">
                         <h4>My Notebook</h4>
-                        <p id="notebookResourceSubtitle">Loading…</p>
+                        <p id="notebookResourceSubtitle"><span class="lb-skel lb-skel-text"></span><span class="lb-sr-only">Loading…</span></p>
                     </span>
                     <i class="fas fa-chevron-right resource-row-arrow" aria-hidden="true"></i>
                 </a>
@@ -483,7 +485,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <span class="resource-row-icon icon-navy"><i class="fas fa-globe"></i></span>
                     <span class="resource-row-text">
                         <h4>Culture Guides</h4>
-                        <p id="cultureResourceSubtitle">Loading…</p>
+                        <p id="cultureResourceSubtitle"><span class="lb-skel lb-skel-text"></span><span class="lb-sr-only">Loading…</span></p>
                     </span>
                     <i class="fas fa-chevron-right resource-row-arrow" aria-hidden="true"></i>
                 </a>
@@ -491,7 +493,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <span class="resource-row-icon icon-navy"><i class="fas fa-plane"></i></span>
                     <span class="resource-row-text">
                         <h4>Travel Journey</h4>
-                        <p id="travelResourceSubtitle">Loading…</p>
+                        <p id="travelResourceSubtitle"><span class="lb-skel lb-skel-text"></span><span class="lb-sr-only">Loading…</span></p>
                     </span>
                     <i class="fas fa-chevron-right resource-row-arrow" aria-hidden="true"></i>
                 </a>
@@ -522,10 +524,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <h2>Continue Learning</h2>
         </div>
         <div id="nextLessonContainer">
-            <div class="loading-state">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                <div>Loading...</div>
+            <!-- Placeholder until loadNextLesson() renders the real card. -->
+            <div class="skeleton-lesson-card" aria-hidden="true">
+                <div class="skeleton-lesson-head">
+                    <span class="lb-skel lb-skel-circle" style="width:56px;height:56px;"></span>
+                    <div style="flex:1;">
+                        <span class="lb-skel lb-skel-title" style="width:60%;"></span>
+                        <span class="lb-skel lb-skel-line" style="width:35%;"></span>
+                    </div>
+                </div>
+                <span class="lb-skel lb-skel-line" style="width:30%;height:22px;border-radius:999px;margin-bottom:14px;"></span>
+                <span class="lb-skel lb-skel-line" style="width:70%;"></span>
             </div>
+            <span class="lb-sr-only">Loading your next lesson…</span>
         </div>
 
     </div>

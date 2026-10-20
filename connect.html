@@ -961,6 +961,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
     </div>
+    <!-- Skeleton cards painted immediately, before the module script below
+         (which waits on the Firebase SDK download) runs — renderSkeletons()
+         there reuses this same template. A plain classic script so it runs
+         during parsing, ahead of the first paint. -->
+    <script>
+        window.connectSkeletonHtml = (count) => Array.from({ length: count }).map(() => `
+                <div class="user-card skeleton-card">
+                    <div class="user-card-header">
+                        <div class="skeleton skeleton-avatar"></div>
+                        <div class="skeleton skeleton-line" style="width:55%;"></div>
+                        <div class="skeleton skeleton-line" style="width:35%;"></div>
+                    </div>
+                    <div class="user-card-body">
+                        <div class="skeleton skeleton-line" style="width:28%;margin:0 0 0.5rem;"></div>
+                        <div class="skeleton-pill-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
+                        <div class="skeleton skeleton-line" style="width:28%;margin:1rem 0 0.5rem;"></div>
+                        <div class="skeleton-pill-row"><span class="skeleton skeleton-pill"></span></div>
+                    </div>
+                </div>
+            `).join('');
+        document.getElementById('userGrid').innerHTML = window.connectSkeletonHtml(6);
+    </script>
 
     <!-- Explicit spacer, not body padding-bottom — see the comment on body's
          style rule above for why. -->
@@ -1340,21 +1362,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         function renderSkeletons(count = 6) {
-            userGrid.innerHTML = Array.from({ length: count }).map(() => `
-                <div class="user-card skeleton-card">
-                    <div class="user-card-header">
-                        <div class="skeleton skeleton-avatar"></div>
-                        <div class="skeleton skeleton-line" style="width:55%;"></div>
-                        <div class="skeleton skeleton-line" style="width:35%;"></div>
-                    </div>
-                    <div class="user-card-body">
-                        <div class="skeleton skeleton-line" style="width:28%;margin:0 0 0.5rem;"></div>
-                        <div class="skeleton-pill-row"><span class="skeleton skeleton-pill"></span><span class="skeleton skeleton-pill"></span></div>
-                        <div class="skeleton skeleton-line" style="width:28%;margin:1rem 0 0.5rem;"></div>
-                        <div class="skeleton-pill-row"><span class="skeleton skeleton-pill"></span></div>
-                    </div>
-                </div>
-            `).join('');
+            userGrid.innerHTML = window.connectSkeletonHtml(count);
         }
 
         function getActiveFilterChips() {

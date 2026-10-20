@@ -300,6 +300,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             transform: translateY(-4px);
             box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         }
+        .lesson-card.is-skeleton:hover { transform: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .lesson-card.is-skeleton .lesson-card-header { background: #f4f6f7; }
 
         .lesson-card-header {
             background: linear-gradient(135deg, #113448 0%, #1a5276 100%);
@@ -964,9 +966,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <h2>Upcoming Lessons</h2>
         </div>
         <div id="lessonsContainer">
-            <div class="loading-state">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                <div>Loading your lessons...</div>
+            <!-- Placeholder cards until the real lessons render over them. -->
+            <span class="lb-sr-only">Loading your lessons…</span>
+            <div class="lessons-grid">
+                    <div class="lesson-card is-skeleton" aria-hidden="true">
+                        <div class="lesson-card-header">
+                            <span class="lb-skel lb-skel-circle" style="width:56px;height:56px;"></span>
+                            <div style="flex:1;">
+                                <span class="lb-skel lb-skel-title" style="width:65%;"></span>
+                                <span class="lb-skel lb-skel-line" style="width:40%;"></span>
+                            </div>
+                        </div>
+                        <div class="lesson-card-body">
+                            <span class="lb-skel lb-skel-line" style="width:28%;height:22px;border-radius:999px;margin-bottom:16px;"></span>
+                            <span class="lb-skel lb-skel-line" style="width:75%;margin-bottom:12px;"></span>
+                            <span class="lb-skel lb-skel-line" style="width:55%;margin-bottom:14px;"></span>
+                        </div>
+                    </div>
+                    <div class="lesson-card is-skeleton" aria-hidden="true">
+                        <div class="lesson-card-header">
+                            <span class="lb-skel lb-skel-circle" style="width:56px;height:56px;"></span>
+                            <div style="flex:1;">
+                                <span class="lb-skel lb-skel-title" style="width:65%;"></span>
+                                <span class="lb-skel lb-skel-line" style="width:40%;"></span>
+                            </div>
+                        </div>
+                        <div class="lesson-card-body">
+                            <span class="lb-skel lb-skel-line" style="width:28%;height:22px;border-radius:999px;margin-bottom:16px;"></span>
+                            <span class="lb-skel lb-skel-line" style="width:75%;margin-bottom:12px;"></span>
+                            <span class="lb-skel lb-skel-line" style="width:55%;margin-bottom:14px;"></span>
+                        </div>
+                    </div>
             </div>
         </div>
 
@@ -978,9 +1008,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <h2>Previous Lessons</h2>
         </div>
         <div id="previousLessonsContainer">
-            <div class="loading-state">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                <div>Loading previous lessons...</div>
+            <!-- Placeholder cards until the real lessons render over them. -->
+            <span class="lb-sr-only">Loading previous lessons…</span>
+            <div class="lessons-grid">
+                    <div class="lesson-card is-skeleton" aria-hidden="true">
+                        <div class="lesson-card-header">
+                            <span class="lb-skel lb-skel-circle" style="width:56px;height:56px;"></span>
+                            <div style="flex:1;">
+                                <span class="lb-skel lb-skel-title" style="width:65%;"></span>
+                                <span class="lb-skel lb-skel-line" style="width:40%;"></span>
+                            </div>
+                        </div>
+                        <div class="lesson-card-body">
+                            <span class="lb-skel lb-skel-line" style="width:28%;height:22px;border-radius:999px;margin-bottom:16px;"></span>
+                            <span class="lb-skel lb-skel-line" style="width:75%;margin-bottom:12px;"></span>
+                            <span class="lb-skel lb-skel-line" style="width:55%;margin-bottom:14px;"></span>
+                        </div>
+                    </div>
+                    <div class="lesson-card is-skeleton" aria-hidden="true">
+                        <div class="lesson-card-header">
+                            <span class="lb-skel lb-skel-circle" style="width:56px;height:56px;"></span>
+                            <div style="flex:1;">
+                                <span class="lb-skel lb-skel-title" style="width:65%;"></span>
+                                <span class="lb-skel lb-skel-line" style="width:40%;"></span>
+                            </div>
+                        </div>
+                        <div class="lesson-card-body">
+                            <span class="lb-skel lb-skel-line" style="width:28%;height:22px;border-radius:999px;margin-bottom:16px;"></span>
+                            <span class="lb-skel lb-skel-line" style="width:75%;margin-bottom:12px;"></span>
+                            <span class="lb-skel lb-skel-line" style="width:55%;margin-bottom:14px;"></span>
+                        </div>
+                    </div>
             </div>
         </div>
         <div class="prev-lessons-pagination" id="prevLessonsPagination" style="display: none;">

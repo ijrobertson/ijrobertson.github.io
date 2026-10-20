@@ -104,7 +104,8 @@ if (self.workbox) {
   // tab bar gained the sliding glider.
   workbox.routing.registerRoute(
     ({ request, url }) => request.mode === "navigate" && SAME_ORIGIN({ url }),
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v8" })
+    // v9 (same day): skeleton placeholders written into the main screens' HTML.
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v9" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -177,7 +178,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v10", // v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
+      cacheName: "linguabud-assets-v11", // v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -213,6 +214,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v7"),
       caches.delete("linguabud-assets-v8"),
       caches.delete("linguabud-assets-v9"),
+      caches.delete("linguabud-assets-v10"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
@@ -220,6 +222,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-pages-v5"),
       caches.delete("linguabud-pages-v6"),
       caches.delete("linguabud-pages-v7"),
+      caches.delete("linguabud-pages-v8"),
     ])
   );
 });
