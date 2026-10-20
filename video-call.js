@@ -13,6 +13,7 @@ import {
     doc, getDoc, setDoc, deleteDoc, addDoc, updateDoc,
     collection, getDocs, query, where,
     onSnapshot,
+    serverTimestamp, arrayUnion,
     httpsCallable
 } from './lib/firebaseClient.js';
 
@@ -38,6 +39,7 @@ const state = {
     isScreenSharing: false,
     screenClient: null,      // secondary Agora connection used to publish the screen while sharing
     screenUid: null,         // uid of our own screen-share connection
+    screenStarting: false,   // true while the picker is open / the screen connection is being set up
     remoteScreenUid: null,   // uid the remote peer's screen-share connection is using (learned via relay)
     remoteUsers: {},
     remoteUserNames: {},
@@ -51,6 +53,8 @@ const state = {
     isMuted: false,
     isCameraOff: false,
     cameraFacingMode: 'user', // 'user' (front) or 'environment' (back) — mobile only
+    cameraRetrying: false,    // guards concurrent retryCamera() calls
+    playbackDeviceId: null,   // speaker chosen in the pre-join device check (Chrome/Edge only)
     channelName: '',
     wasCallActive: false,
     callStartTime: null,
@@ -63,6 +67,7 @@ const state = {
 
     // Firebase refs / listeners
     presenceRef: null,
+    presenceUnsubscribe: null,
     wbRelayRef: null,
     wbUnsubscribe: null,
     promptRelayRef: null,
@@ -458,6 +463,35 @@ async function initAgora() {
     state.client.on('token-privilege-did-expire', () => {
         if (state.wasCallActive) leaveChannel().catch(console.error);
     });
+    // Diagnostics only
+    state.client.on('connection-state-change', (cur, prev, reason) => diag('conn_state', { cur, prev, reason }));
+    state.client.on('exception', e => diag('exception', { code: e.code, msg: e.msg, uid: e.uid }));
+    state.client.on('user-joined', user => diag('remote_joined', { uid: user.uid }));
+    state.client.on('user-info-updated', (uid, msg) => diag('remote_info', { uid, msg }));
+}
+
+/** Global AgoraRTC device/autoplay callbacks — installed once, used pre-join and in-call. */
+function installDeviceHooks() {
+    // Webcam plugged in (or re-enabled) mid-call while we have no camera — pick it up automatically
+    AgoraRTC.onCameraChanged = info => {
+        diag('camera_changed', { state: info.state, label: info.device?.label });
+        refreshPreviewDeviceLists();
+        if (info.state === 'ACTIVE' && !state.localVideoTrack) retryCamera({ silent: true });
+    };
+    AgoraRTC.onMicrophoneChanged = info => {
+        diag('mic_changed', { state: info.state, label: info.device?.label });
+        refreshPreviewDeviceLists();
+    };
+    AgoraRTC.onPlaybackDeviceChanged = info => {
+        diag('speaker_changed', { state: info.state, label: info.device?.label });
+        refreshPreviewDeviceLists();
+    };
+    // Browser blocked remote audio from auto-starting (common on Safari/iOS) —
+    // without this the other person is just silently inaudible.
+    AgoraRTC.onAutoplayFailed = () => {
+        diag('autoplay_failed');
+        showAudioUnlockBanner();
+    };
 }
 
 /**
@@ -467,20 +501,56 @@ async function initAgora() {
  * device can't be found, even when the other one works fine.
  */
 async function acquireLocalTracks() {
-    const [audioResult, videoResult] = await Promise.allSettled([
-        AgoraRTC.createMicrophoneAudioTrack(),
-        AgoraRTC.createCameraVideoTrack()
-    ]);
-    return {
-        audioTrack: audioResult.status === 'fulfilled' ? audioResult.value : null,
-        videoTrack: videoResult.status === 'fulfilled' ? videoResult.value : null,
-        audioError: audioResult.status === 'rejected' ? audioResult.reason : null,
-        videoError: videoResult.status === 'rejected' ? videoResult.reason : null,
-    };
+    // Ask for both in a single permission request first — two concurrent
+    // getUserMedia prompts can leave the camera prompt hidden/dismissed or
+    // fail outright on some browsers, so the camera silently never starts.
+    try {
+        const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        return { audioTrack, videoTrack, audioError: null, videoError: null };
+    } catch (err) {
+        console.warn('Combined mic+camera request failed, trying each device separately:', err);
+    }
+
+    // Fall back to one device at a time (sequentially, not in parallel) so a
+    // single missing/blocked device doesn't take down the other.
+    let audioTrack = null, videoTrack = null, audioError = null, videoError = null;
+    try { audioTrack = await AgoraRTC.createMicrophoneAudioTrack(); } catch (err) { audioError = err; }
+    try { videoTrack = await AgoraRTC.createCameraVideoTrack(); } catch (err) { videoError = err; }
+    return { audioTrack, videoTrack, audioError, videoError };
 }
 
 function isDeviceMissing(err) {
     return err?.code === 'DEVICE_NOT_FOUND' || err?.message?.includes('NotFoundError');
+}
+
+function isDeviceBusy(err) {
+    return err?.code === 'NOT_READABLE' || /NotReadableError|TrackStartError|Could not start video source/i.test(err?.message || '');
+}
+
+function cameraErrorMessage(err) {
+    if (isDeviceMissing(err)) return 'No camera detected';
+    if (isDeviceBusy(err))    return 'Camera is in use by another app (close Zoom/Teams/etc.)';
+    return 'Camera access blocked — check browser/OS camera permissions';
+}
+
+function micErrorMessage(err) {
+    if (isDeviceMissing(err)) return 'No microphone detected';
+    if (isDeviceBusy(err))    return 'Microphone is in use by another app (close Zoom/Teams/etc.)';
+    return 'Microphone access blocked — check browser/OS microphone permissions';
+}
+
+/** Compact, Firestore-safe description of a device/SDK error for diagnostics. */
+function errInfo(err) {
+    if (!err) return null;
+    return { code: err.code || null, name: err.name || null, msg: String(err.message || err).slice(0, 300) };
+}
+
+function trackDeviceId(track) {
+    try { return track?.getMediaStreamTrack()?.getSettings()?.deviceId || null; } catch { return null; }
+}
+
+function trackLabel(track) {
+    try { return track?.getTrackLabel() || null; } catch { return null; }
 }
 
 async function joinChannel() {
@@ -489,6 +559,7 @@ async function joinChannel() {
 
     showScreen('screen-loading');
     setLoadingMsg('Generating secure token…');
+    diag('join_start', { channel });
 
     try {
         if (!state.client) await initAgora();
@@ -507,7 +578,12 @@ async function joinChannel() {
         state.wbJoinTime     = Date.now();
 
         setLoadingMsg('Starting camera & microphone…');
-        const { audioTrack, videoTrack, audioError, videoError } = await acquireLocalTracks();
+        const { audioTrack, videoTrack, audioError, videoError } = await takeTracksForCall();
+        startDiagSession(channel, actualUid);
+        diag('local_tracks', {
+            mic: trackLabel(audioTrack), cam: trackLabel(videoTrack),
+            micErr: errInfo(audioError), camErr: errInfo(videoError),
+        });
 
         if (!audioTrack && !videoTrack) {
             await state.client.leave();
@@ -531,12 +607,17 @@ async function joinChannel() {
 
         // Publish whatever tracks are actually available
         await state.client.publish([audioTrack, videoTrack].filter(Boolean));
+        diag('published', { audio: !!audioTrack, video: !!videoTrack });
 
-        if (videoError) showToast(isDeviceMissing(videoError) ? 'No camera detected — joined audio-only' : 'Camera access blocked — joined audio-only', 'error', 6000);
-        if (audioError) showToast(isDeviceMissing(audioError) ? 'No microphone detected — joined video-only' : 'Microphone access blocked — joined video-only', 'error', 6000);
+        if (videoError) {
+            console.warn('Camera unavailable at join:', videoError);
+            showToast(`${cameraErrorMessage(videoError)} — joined audio-only. Tap the camera button to retry.`, 'error', 8000);
+        }
+        if (audioError) showToast(`${micErrorMessage(audioError)} — joined video-only`, 'error', 6000);
 
         // Register presence & whiteboard relay
         await registerPresence(actualUid, channel);
+        setupPresenceListener(channel);
         setupWhiteboardRelay(channel);
         setupChatListener(channel);
 
@@ -559,6 +640,8 @@ async function joinChannel() {
 
     } catch (err) {
         console.error('Join error:', err);
+        diag('join_error', errInfo(err));
+        endDiagSession();
         showScreen('screen-prejoin');
         let msg = `Could not join: ${err.message}`;
         if (err.message?.includes('CAN_NOT_GET_GATEWAY_SERVER')) {
@@ -569,11 +652,15 @@ async function joinChannel() {
 }
 
 async function leaveChannel() {
+    // Final stats snapshot must be taken before tracks are closed
+    endDiagSession();
     clearTimeout(state.controlsHideTimer);
     clearInterval(state.callTimerInterval);
     stopCallLimits();
     state.callStartTime = null;
     callDuration.textContent = '00:00';
+
+    hideAudioUnlockBanner();
 
     // Stop local tracks
     if (state.localScreenTrack) { state.localScreenTrack.close(); state.localScreenTrack = null; }
@@ -595,6 +682,8 @@ async function leaveChannel() {
     state.promptRelayRef = null;
 
     // Clear presence
+    if (state.presenceUnsubscribe) { state.presenceUnsubscribe(); state.presenceUnsubscribe = null; }
+    state.remoteUserNames = {};
     await clearPresence();
 
     // Leave Agora channel
@@ -635,6 +724,7 @@ async function leaveChannel() {
     showScreen('screen-prejoin');
     channelInput.disabled = false;
     joinBtn.disabled = false;
+    resetDevicePreviewUI();
 
     if (hadActiveCall) {
         maybeShowRatingPopup().catch(console.error);
@@ -658,7 +748,7 @@ const CHECKIN_EXTEND_MS  = 60 * 60 * 1000;      // "Keep going" buys another hou
 /** True if a real person (not a screen-share connection) is in the channel with us. */
 function hasOtherParticipant() {
     return (state.client?.remoteUsers || []).some(u =>
-        !isRemoteScreenUid(u.uid) && String(u.uid) !== String(state.screenUid));
+        !isScreenConnectionUid(u.uid));
 }
 
 function startCallLimits() {
@@ -756,14 +846,42 @@ function watchTokenExpiry(client, getTokenParams) {
 // AGORA EVENT HANDLERS
 // ════════════════════════════════════════════════════════════
 
-/** True while `uid` belongs to the remote peer's dedicated screen-share connection, not a real participant. */
-function isRemoteScreenUid(uid) {
-    return state.remoteScreenUid != null && String(uid) === String(state.remoteScreenUid);
+/**
+ * True for the uid of ANY screen-share sub-connection — ours or the remote
+ * peer's — never a real participant. Matched by the `-screen` suffix used
+ * when requesting its token, so it's known the instant its join/publish/leave
+ * events arrive, instead of waiting on the (async, peer-only) relay message
+ * that used to be the sole signal. Without this, our OWN screen connection
+ * joining the channel looked, to our own main client, exactly like a second
+ * remote participant publishing — briefly showing a phantom "Guest" in the
+ * remote view/participant count while sharing, and a bogus "left the call"
+ * toast when sharing stopped.
+ */
+function isScreenConnectionUid(uid) {
+    return String(uid).endsWith('-screen');
 }
 
-/** Count of remote uids that represent an actual participant (excludes the screen-share connection). */
+/** Count of remote uids that represent an actual participant (excludes screen-share connections). */
+/** True for the screen-share connection opened by THIS browser (we never need to receive it). */
+function isOwnScreenUid(uid) {
+    return !!state.currentUser && String(uid) === `${state.currentUser.uid}-screen`;
+}
+
+/**
+ * The remote peer's live screen-share connection, if any. Derived straight
+ * from the Agora users in the channel rather than from the Firestore relay
+ * message: that message is dropped when the viewer (re)joins mid-share or
+ * when the two devices' clocks disagree, which left the shared screen
+ * published but never displayed.
+ */
+function remoteScreenUser() {
+    return Object.values(state.remoteUsers).find(u =>
+        isScreenConnectionUid(u.uid) && !isOwnScreenUid(u.uid) && u.videoTrack
+    ) || null;
+}
+
 function realRemoteUidCount() {
-    return Object.keys(state.remoteUsers).filter(uid => !isRemoteScreenUid(uid)).length;
+    return Object.keys(state.remoteUsers).filter(uid => !isScreenConnectionUid(uid)).length;
 }
 
 /**
@@ -773,15 +891,15 @@ function realRemoteUidCount() {
  * just show their camera as usual.
  */
 function renderRemoteMainView() {
-    const screenUser = state.remoteScreenUid != null ? state.remoteUsers[state.remoteScreenUid] : null;
-    const screenActive = !!(screenUser && screenUser.videoTrack);
+    const screenUser = remoteScreenUser();
+    const screenActive = !!screenUser;
 
     const badge = $('vc-screensharing-badge');
     if (badge) badge.classList.toggle('hidden', !screenActive);
     remoteContainer.classList.toggle('vc-screensharing', screenActive);
 
     const faceUid = Object.keys(state.remoteUsers).find(uid =>
-        !isRemoteScreenUid(uid) && state.remoteUsers[uid].videoTrack
+        !isScreenConnectionUid(uid) && state.remoteUsers[uid].videoTrack
     );
 
     if (screenActive) {
@@ -805,61 +923,140 @@ function renderRemoteMainView() {
     }
 }
 
-async function handleUserPublished(user, mediaType) {
-    state.remoteUsers[user.uid] = user;
-    await state.client.subscribe(user, mediaType);
+const SUBSCRIBE_ATTEMPTS = 3;
 
-    if (isRemoteScreenUid(user.uid)) {
-        // Secondary connection the remote peer opened just to publish their
-        // screen — not a real participant, just re-render the main view.
+function isStillPublishing(user, mediaType) {
+    const present = state.client?.remoteUsers.some(u => u.uid === user.uid);
+    return present && (mediaType === 'audio' ? user.hasAudio : user.hasVideo);
+}
+
+/**
+ * Subscribe with retries. A single failed subscribe used to be unhandled,
+ * leaving that person's audio/video silently missing for the whole call.
+ */
+async function subscribeWithRetry(user, mediaType) {
+    for (let attempt = 1; attempt <= SUBSCRIBE_ATTEMPTS; attempt++) {
+        try {
+            await state.client.subscribe(user, mediaType);
+            return true;
+        } catch (err) {
+            console.warn(`Subscribe ${mediaType} for ${user.uid} failed (attempt ${attempt}/${SUBSCRIBE_ATTEMPTS}):`, err);
+            diag('subscribe_failed', { uid: user.uid, mediaType, attempt, err: errInfo(err) });
+            // They left or stopped publishing meanwhile — nothing to retry
+            if (!isStillPublishing(user, mediaType)) return false;
+            if (attempt < SUBSCRIBE_ATTEMPTS) await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
+    }
+    return false;
+}
+
+function playRemoteAudio(user) {
+    try {
+        user.audioTrack?.play();
+        if (state.playbackDeviceId && user.audioTrack?.setPlaybackDevice) {
+            user.audioTrack.setPlaybackDevice(state.playbackDeviceId)
+                .catch(err => diag('speaker_set_failed', errInfo(err)));
+        }
+    } catch (err) {
+        console.warn('Remote audio play error:', err);
+        diag('audio_play_error', { uid: user.uid, err: errInfo(err) });
+        showAudioUnlockBanner();
+    }
+}
+
+/** Prompt for a tap so the browser lets remote audio play; any tap anywhere unlocks it. */
+function showAudioUnlockBanner() {
+    if ($('vc-audio-unlock')) return;
+    const btn = document.createElement('button');
+    btn.id = 'vc-audio-unlock';
+    btn.className = 'vc-audio-unlock';
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> Tap to enable sound';
+    document.body.appendChild(btn);
+    document.addEventListener('pointerdown', unlockRemoteAudio, { once: true, capture: true });
+}
+
+function hideAudioUnlockBanner() {
+    document.removeEventListener('pointerdown', unlockRemoteAudio, { capture: true });
+    $('vc-audio-unlock')?.remove();
+}
+
+function unlockRemoteAudio() {
+    diag('audio_unlocked');
+    // Runs inside a user gesture, so the browser now allows playback
+    Object.values(state.remoteUsers).forEach(u => playRemoteAudio(u));
+    hideAudioUnlockBanner();
+}
+
+async function handleUserPublished(user, mediaType) {
+    // Our own screen-share connection: never download our own screen back —
+    // it's not displayed, and it competes with the upload for bandwidth.
+    if (isOwnScreenUid(user.uid)) return;
+    state.remoteUsers[user.uid] = user;
+    diag('remote_published', { uid: user.uid, mediaType });
+    if (!await subscribeWithRetry(user, mediaType)) {
+        diag('subscribe_gave_up', { uid: user.uid, mediaType });
+        if (!isScreenConnectionUid(user.uid) && isStillPublishing(user, mediaType)) {
+            const who = state.remoteUserNames[user.uid] || 'the other participant';
+            showToast(`Couldn't receive ${who}'s ${mediaType === 'audio' ? 'audio' : 'video'} — try leaving and rejoining`, 'error', 8000);
+        }
+        return;
+    }
+
+    if (isScreenConnectionUid(user.uid)) {
+        // Secondary connection opened just to publish a screen (ours or the
+        // remote peer's) — not a real participant, just re-render the main view.
         if (mediaType === 'video') renderRemoteMainView();
         return;
     }
 
     if (mediaType === 'video') {
-        // Look up display name
-        if (!state.remoteUserNames[user.uid]) {
-            state.remoteUserNames[user.uid] = await lookupRemoteName(user.uid) || 'Guest';
-        }
+        // Display name comes from the live presence listener; if their presence
+        // doc hasn't landed yet the label is corrected as soon as it does.
         vcWaiting.style.display = 'none';
-        remoteName.textContent = state.remoteUserNames[user.uid];
+        remoteName.textContent = state.remoteUserNames[user.uid] || 'Guest';
         renderRemoteMainView();
     }
     if (mediaType === 'audio') {
-        user.audioTrack.play();
+        playRemoteAudio(user);
     }
 
     updateParticipantsList();
 }
 
 function handleUserUnpublished(user, mediaType) {
+    diag('remote_unpublished', { uid: user.uid, mediaType });
     if (mediaType !== 'video') return;
 
-    if (isRemoteScreenUid(user.uid)) {
+    if (isScreenConnectionUid(user.uid)) {
         renderRemoteMainView();
         return;
     }
 
     // If this was our main remote user, show waiting overlay
-    if (!Object.values(state.remoteUsers).some(u => u.uid !== user.uid && !isRemoteScreenUid(u.uid) && u.videoTrack)) {
+    if (!Object.values(state.remoteUsers).some(u => u.uid !== user.uid && !isScreenConnectionUid(u.uid) && u.videoTrack)) {
         vcWaiting.style.display = 'flex';
         remoteName.textContent = '';
     }
     renderRemoteMainView();
 }
 
-function handleUserLeft(user) {
-    if (isRemoteScreenUid(user.uid)) {
-        // Their screen-share connection closed — not a real participant leaving.
+function handleUserLeft(user, reason) {
+    diag('remote_left', { uid: user.uid, reason });
+    if (isScreenConnectionUid(user.uid)) {
+        // A screen-share connection closed (ours or the peer's) — not a real
+        // participant leaving. Only clear remoteScreenUid if it was the one
+        // we were tracking, so our own connection leaving can't clobber a
+        // still-active peer screen share (or vice versa).
         delete state.remoteUsers[user.uid];
-        state.remoteScreenUid = null;
+        if (String(user.uid) === String(state.remoteScreenUid)) {
+            state.remoteScreenUid = null;
+        }
         renderRemoteMainView();
         return;
     }
 
     const leavingName = state.remoteUserNames[user.uid] || 'Participant';
     delete state.remoteUsers[user.uid];
-    delete state.remoteUserNames[user.uid];
     if (realRemoteUidCount() === 0) {
         vcWaiting.style.display = 'flex';
         remoteName.textContent = '';
@@ -886,7 +1083,7 @@ function toggleMute() {
 }
 
 function toggleCamera() {
-    if (!state.localVideoTrack) return;
+    if (!state.localVideoTrack) { retryCamera(); return; }
     state.isCameraOff = !state.isCameraOff;
     state.localVideoTrack.setMuted(state.isCameraOff);
     updateCameraUI();
@@ -918,11 +1115,46 @@ function updateCameraUI() {
 }
 
 /** Reflect a missing/blocked camera: disable the toggle and show a placeholder in the self-view PiP */
+/**
+ * Try to (re)acquire the camera mid-call — e.g. after the user granted
+ * permission, closed another app holding the camera, or plugged in a webcam.
+ * Previously a camera that failed at join time left the button disabled
+ * for the rest of the call with no way to recover short of rejoining.
+ */
+async function retryCamera({ silent = false } = {}) {
+    const inCall = () => state.client?.connectionState === 'CONNECTED';
+    if (state.localVideoTrack || !inCall() || state.cameraRetrying) return;
+    state.cameraRetrying = true;
+    try {
+        const track = await AgoraRTC.createCameraVideoTrack();
+        if (!inCall() || state.localVideoTrack) { track.close(); return; }
+        state.localVideoTrack = track;
+        state.isCameraOff = false;
+        localStream.innerHTML = '';
+        track.play(localStream);
+        setLocalCameraUnavailable(false);
+        updateCameraUI();
+        await state.client.publish(track);
+        updateSwitchCameraAvailability();
+        updateParticipantsList();
+        diag('camera_retry_ok', { cam: trackLabel(track) });
+        showToast('Camera on', 'success');
+    } catch (err) {
+        console.warn('Camera retry failed:', err);
+        diag('camera_retry_failed', errInfo(err));
+        if (!silent) showToast(cameraErrorMessage(err), 'error', 6000);
+    } finally {
+        state.cameraRetrying = false;
+    }
+}
+
 function setLocalCameraUnavailable(unavailable) {
-    btnCamera.disabled = unavailable;
-    btnCamera.title = unavailable ? 'No camera detected' : 'Camera (V)';
+    // Button stays clickable while unavailable so the user can retry the camera
+    btnCamera.disabled = false;
+    btnCamera.title = unavailable ? 'Camera unavailable — click to retry (V)' : 'Camera (V)';
+    btnCamera.classList.toggle('btn-off', unavailable);
     const pipCam = $('pip-camera-btn');
-    if (pipCam) pipCam.disabled = unavailable;
+    if (pipCam) pipCam.disabled = false;
 
     localPip.classList.toggle('cam-off-overlay', unavailable);
     let placeholder = $('vc-local-nocam');
@@ -1009,11 +1241,35 @@ async function switchCamera() {
 // SCREEN SHARE
 // ════════════════════════════════════════════════════════════
 
+/** Human-readable reason a screen share failed to start. */
+function screenShareErrorMessage(err) {
+    const text = `${err?.code || ''} ${err?.name || ''} ${err?.message || ''}`;
+    if (/NOT_SUPPORTED|NotSupportedError/i.test(text)) return "Screen sharing isn't supported in this browser — use Chrome, Edge or Firefox on a computer.";
+    if (/NotReadableError|AbortError/i.test(text)) return "Your computer blocked the screen capture. Close other apps that are recording the screen, check your screen-recording permission, then try again.";
+    if (/token/i.test(text)) return 'Could not start screen sharing — the server did not respond. Please try again.';
+    return `Could not share screen${err?.message ? `: ${err.message}` : ''}. Please try again.`;
+}
+
 async function startScreenShare() {
-    if (!state.client || !state.localVideoTrack) return;
+    // Works with or without a camera; guard against double-clicks while the picker is open
+    if (!state.client || state.isScreenSharing || state.screenStarting) return;
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+        showToast("Screen sharing isn't supported on this device — use Chrome, Edge or Firefox on a computer.", 'error', 7000);
+        return;
+    }
+    state.screenStarting = true;
     try {
+        // Same settings for a tab, a window or an entire screen: capped at
+        // 1080p/15fps and tuned for sharp text. An uncapped full-monitor
+        // capture is much heavier than a single window and is what low-end
+        // phones on the other end struggle to receive.
         // 'disable' = no screen audio track; mic audio is already published separately
-        state.localScreenTrack = await AgoraRTC.createScreenVideoTrack({}, 'disable');
+        state.localScreenTrack = await AgoraRTC.createScreenVideoTrack({
+            encoderConfig: { width: { max: 1920 }, height: { max: 1080 }, frameRate: { max: 15 }, bitrateMin: 300, bitrateMax: 2000 },
+            optimizationMode: 'detail',
+        }, 'disable');
+        const settings = state.localScreenTrack.getMediaStreamTrack?.().getSettings?.() || {};
+        diag('screen_captured', { surface: settings.displaySurface, w: settings.width, h: settings.height, fps: settings.frameRate });
 
         // Publish the screen on a SEPARATE Agora connection (its own uid) instead
         // of swapping out the camera track. This keeps the camera published the
@@ -1021,6 +1277,8 @@ async function startScreenShare() {
         // self-view PiP is untouched, and the remote peer gets a small face PiP
         // overlaid on the shared screen (see renderRemoteMainView).
         state.screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        state.screenClient.on('connection-state-change', (cur, prev, reason) => diag('screen_conn_state', { cur, prev, reason }));
+        state.screenClient.on('exception', e => diag('screen_exception', { code: e.code, msg: e.msg }));
         const generateToken = httpsCallable(functions, 'generateAgoraToken');
         // Must pass a distinct, non-empty uid: generateAgoraToken always builds an
         // account-based token for whatever uid it's given, defaulting to the literal
@@ -1034,18 +1292,19 @@ async function startScreenShare() {
 
         state.screenUid = await state.screenClient.join(APP_ID, state.channelName, result.data.token, result.data.uid);
 
-        // Tell the remote peer which uid is our screen connection BEFORE
-        // publishing, so it's very likely to arrive before the corresponding
-        // Agora user-published event (which requires slower SFU negotiation).
+        // Also announce it over the relay (older clients still rely on this)
         if (state.wbRelayRef) {
             setDoc(state.wbRelayRef, { t: 'ss', active: true, uid: state.screenUid, ts: Date.now() }).catch(() => {});
         }
 
         await state.screenClient.publish(state.localScreenTrack);
+        diag('screen_published', { uid: state.screenUid });
 
         state.isScreenSharing = true;
         updateScreenShareUI();
-        showToast('Screen sharing started', 'success');
+        showToast(settings.displaySurface === 'monitor'
+            ? 'Sharing your entire screen — switch to what you want to show'
+            : 'Screen sharing started', 'success');
 
         // When the user clicks "Stop sharing" in the browser's native bar
         state.localScreenTrack.on('track-ended', () => stopScreenShare());
@@ -1054,42 +1313,45 @@ async function startScreenShare() {
         if (state.screenClient) { state.screenClient.leave().catch(() => {}); state.screenClient = null; }
         if (state.localScreenTrack) { state.localScreenTrack.close(); state.localScreenTrack = null; }
         state.screenUid = null;
-        // NotAllowedError means the user cancelled the picker — not an error worth toasting
-        if (err.name !== 'NotAllowedError' && err.code !== 'PERMISSION_DENIED') {
+        // The user cancelling the picker isn't an error worth toasting. (A real OS/browser
+        // block also surfaces as NotAllowedError, but with a "by system" message.)
+        const cancelled = (err.name === 'NotAllowedError' || err.code === 'PERMISSION_DENIED')
+            && !/system/i.test(err.message || '');
+        diag('screen_error', { cancelled, ...errInfo(err) });
+        if (!cancelled) {
             console.error('Screen share error:', err);
-            showToast('Could not share screen', 'error');
+            showToast(/system/i.test(err.message || '')
+                ? 'Your computer is blocking screen capture. Allow screen recording for your browser in system settings, then try again.'
+                : screenShareErrorMessage(err), 'error', 8000);
         }
+    } finally {
+        state.screenStarting = false;
     }
 }
 
 async function stopScreenShare() {
-    if (!state.isScreenSharing || !state.localScreenTrack) return;
-    try {
-        if (state.screenClient) {
-            await state.screenClient.unpublish(state.localScreenTrack);
-            await state.screenClient.leave();
-            state.screenClient = null;
-        }
-        state.localScreenTrack.close();
-        state.localScreenTrack = null;
-        state.screenUid = null;
+    if (!state.isScreenSharing && !state.localScreenTrack) return;
+    const track = state.localScreenTrack;
+    const client = state.screenClient;
+    // Reset state first so the button always returns to "Share Screen", even
+    // if tearing the connection down fails.
+    state.localScreenTrack = null;
+    state.screenClient = null;
+    state.screenUid = null;
+    const wasSharing = state.isScreenSharing;
+    state.isScreenSharing = false;
+    updateScreenShareUI();
 
-        state.isScreenSharing = false;
-        updateScreenShareUI();
-        showToast('Screen sharing stopped');
+    // Always release the capture so the browser's "sharing" indicator goes away
+    try { track?.close(); } catch (e) { /* already closed */ }
+    try { await client?.leave(); } catch (err) { console.error('Stop screen share error:', err); }
+    diag('screen_stopped');
 
-        // Notify remote participant via relay
-        if (state.wbRelayRef) {
-            setDoc(state.wbRelayRef, { t: 'ss', active: false, uid: null, ts: Date.now() }).catch(() => {});
-        }
-    } catch (err) {
-        console.error('Stop screen share error:', err);
-        state.isScreenSharing = false;
-        state.localScreenTrack = null;
-        state.screenClient = null;
-        state.screenUid = null;
-        updateScreenShareUI();
+    // Notify remote participant via relay
+    if (state.wbRelayRef) {
+        setDoc(state.wbRelayRef, { t: 'ss', active: false, uid: null, ts: Date.now() }).catch(() => {});
     }
+    if (wasSharing) showToast('Screen sharing stopped');
 }
 
 function toggleScreenShare() {
@@ -1123,8 +1385,8 @@ function updateParticipantsList() {
     // Local user
     list.appendChild(createParticipantItem(state.currentUserName, true, state.isMuted, state.isCameraOff));
 
-    // Remote users (excluding the peer's screen-share connection, if any)
-    Object.values(state.remoteUsers).filter(user => !isRemoteScreenUid(user.uid)).forEach(user => {
+    // Remote users (excluding any screen-share connections, ours or the peer's)
+    Object.values(state.remoteUsers).filter(user => !isScreenConnectionUid(user.uid)).forEach(user => {
         const name = state.remoteUserNames[user.uid] || 'Guest';
         list.appendChild(createParticipantItem(name, false, false, false));
     });
@@ -1172,12 +1434,28 @@ async function clearPresence() {
     state.presenceRef = null;
 }
 
-async function lookupRemoteName(agoraUid) {
-    try {
-        if (!state.channelName) return null;
-        const snap = await getDoc(doc(db, 'video_calls', state.channelName, 'presence', String(agoraUid)));
-        return snap.exists() ? snap.data().name || null : null;
-    } catch (e) { return null; }
+/**
+ * Keeps remote display names in sync with the channel's presence docs.
+ * A live listener (rather than a one-off read) means a name still resolves
+ * when the remote's video arrives before their presence doc is written, or
+ * when they join audio-only.
+ */
+function setupPresenceListener(channel) {
+    if (!state.currentUser || state.currentUser.uid.startsWith('guest-')) return;
+    state.presenceUnsubscribe = onSnapshot(collection(db, 'video_calls', channel, 'presence'), (snap) => {
+        snap.forEach(d => {
+            const name = d.data().name;
+            if (name && name !== 'Guest') state.remoteUserNames[d.id] = name;
+        });
+        refreshRemoteNames();
+    }, (e) => console.warn('Presence listener failed:', e));
+}
+
+/** Re-applies known names to the remote video label and the Participants list. */
+function refreshRemoteNames() {
+    const main = Object.values(state.remoteUsers).find(u => !isScreenConnectionUid(u.uid) && u.videoTrack);
+    if (main) remoteName.textContent = state.remoteUserNames[main.uid] || 'Guest';
+    updateParticipantsList();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1219,6 +1497,29 @@ function renderChatMessage(data, isOwn) {
         chatBadge.textContent = current + 1;
         chatBadge.classList.remove('hidden');
     }
+    return div;
+}
+
+/** Marks a locally-rendered own message as failed-to-send, with a click-to-retry affordance. */
+function markChatMessageFailed(div, retry) {
+    div.classList.add('chat-msg-failed');
+    let status = div.querySelector('.chat-msg-status');
+    if (!status) {
+        status = document.createElement('div');
+        status.className = 'chat-msg-status';
+        div.appendChild(status);
+    }
+    status.innerHTML = '<i class="fas fa-exclamation-circle"></i> Not delivered — tap to retry';
+    status.onclick = async () => {
+        status.textContent = 'Retrying…';
+        const ok = await retry();
+        if (ok) {
+            div.classList.remove('chat-msg-failed');
+            status.remove();
+        } else {
+            status.innerHTML = '<i class="fas fa-exclamation-circle"></i> Not delivered — tap to retry';
+        }
+    };
 }
 
 async function sendChatMessage() {
@@ -1228,17 +1529,26 @@ async function sendChatMessage() {
     chatInput.value = '';
     chatInput.style.height = 'auto';
 
-    // Render locally immediately
-    renderChatMessage({ text, sender: state.currentUserName, senderUid: state.currentUser?.uid, ts: Date.now() }, true);
+    const payload = { text, sender: state.currentUserName, senderUid: state.currentUser?.uid, ts: Date.now() };
 
-    try {
-        await addDoc(state.chatCol, {
-            text,
-            sender: state.currentUserName,
-            senderUid: state.currentUser?.uid,
-            ts: Date.now()
-        });
-    } catch (e) { console.warn('Chat send error:', e); }
+    // Render locally immediately
+    const div = renderChatMessage(payload, true);
+
+    const attemptSend = async () => {
+        try {
+            await addDoc(state.chatCol, payload);
+            return true;
+        } catch (e) {
+            console.warn('Chat send error:', e);
+            return false;
+        }
+    };
+
+    const sent = await attemptSend();
+    if (!sent) {
+        markChatMessageFailed(div, attemptSend);
+        showToast('Message failed to send — check your connection', 'error');
+    }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1362,6 +1672,9 @@ function wbHandleRemoteAction(msg) {
     } else if (msg.t === 'ss') {
         state.remoteScreenUid = msg.active ? msg.uid : null;
         renderRemoteMainView();
+        // If the screen connection's user-published event beat this relay message,
+        // it was briefly counted as a real participant — correct the list now.
+        updateParticipantsList();
     }
 }
 
@@ -1880,6 +2193,12 @@ onAuthStateChanged(auth, async (user) => {
                        : userSnap.exists()  ? userSnap.data() : null;
             if (data) {
                 if (data.name)       state.currentUserName = data.name;
+                else if (user.displayName) state.currentUserName = user.displayName;
+                // Profile finished loading after we'd already joined — correct the name others see
+                if (state.presenceRef && state.currentUserName !== 'Guest') {
+                    localName.textContent = state.currentUserName;
+                    setDoc(state.presenceRef, { name: state.currentUserName }, { merge: true }).catch(() => {});
+                }
                 if (data.avatar_url) {
                     const av = $('navProfilePic');
                     if (av) av.src = data.avatar_url;
@@ -2111,6 +2430,384 @@ function renderStars(n) {
 }
 
 // ════════════════════════════════════════════════════════════
+// PRE-JOIN DEVICE CHECK
+// Camera preview, mic level meter, device pickers and a speaker
+// test, so device problems surface before the call instead of in it.
+// The preview tracks are handed straight to the call on join, so what
+// the user checked is exactly what gets published.
+// ════════════════════════════════════════════════════════════
+
+const preview = {
+    audioTrack: null,
+    videoTrack: null,
+    audioError: null,
+    videoError: null,
+    pending: null,      // in-flight startDevicePreview() promise
+    meterTimer: null,
+};
+
+const supportsSpeakerSelect = typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
+let _chimeUrl = null;
+
+function setupDevicePreview() {
+    $('pj-check-btn')?.addEventListener('click', () => startDevicePreview());
+    $('pj-device-retry')?.addEventListener('click', () => startDevicePreview());
+    $('pj-camera-select')?.addEventListener('change', e => switchPreviewDevice('video', e.target.value));
+    $('pj-mic-select')?.addEventListener('change', e => switchPreviewDevice('audio', e.target.value));
+    $('pj-speaker-select')?.addEventListener('change', e => {
+        state.playbackDeviceId = e.target.value || null;
+        diag('speaker_selected', { label: e.target.selectedOptions[0]?.textContent });
+    });
+    $('pj-speaker-test')?.addEventListener('click', playSpeakerTest);
+    if (!supportsSpeakerSelect) $('pj-speaker-select')?.classList.add('hidden');
+
+    startDevicePreview();
+}
+
+/** Start the preview, acquiring only whichever of mic/camera we don't already have. */
+function startDevicePreview() {
+    if (preview.pending) return preview.pending;
+    if (state.client?.connectionState === 'CONNECTED') return Promise.resolve();
+
+    preview.pending = (async () => {
+        $('pj-check-btn')?.classList.add('hidden');
+        setPreviewMsg('Starting camera & microphone…');
+
+        if (!preview.audioTrack && !preview.videoTrack) {
+            const r = await acquireLocalTracks();
+            Object.assign(preview, r);
+        } else {
+            if (!preview.audioTrack) {
+                try { preview.audioTrack = await AgoraRTC.createMicrophoneAudioTrack(); preview.audioError = null; }
+                catch (err) { preview.audioError = err; }
+            }
+            if (!preview.videoTrack) {
+                try { preview.videoTrack = await AgoraRTC.createCameraVideoTrack(); preview.videoError = null; }
+                catch (err) { preview.videoError = err; }
+            }
+        }
+
+        // Joined while we were acquiring — takeTracksForCall() will have waited
+        // on this promise and taken the tracks, so nothing more to render.
+        if (state.client?.connectionState === 'CONNECTED') return;
+
+        diag('preview', {
+            mic: trackLabel(preview.audioTrack), cam: trackLabel(preview.videoTrack),
+            micErr: errInfo(preview.audioError), camErr: errInfo(preview.videoError),
+        });
+        renderDevicePreview();
+        await refreshPreviewDeviceLists();
+    })().finally(() => { preview.pending = null; });
+
+    return preview.pending;
+}
+
+function setPreviewMsg(msg) {
+    const el = $('pj-preview-msg');
+    if (el) el.textContent = msg;
+}
+
+function renderDevicePreview() {
+    const videoEl = $('pj-preview-video');
+    const placeholder = $('pj-preview-placeholder');
+    if (preview.videoTrack && videoEl) {
+        preview.videoTrack.play(videoEl, { mirror: true });
+        placeholder?.classList.add('hidden');
+    } else {
+        placeholder?.classList.remove('hidden');
+        setPreviewMsg(preview.videoError ? cameraErrorMessage(preview.videoError) : 'Camera off');
+    }
+
+    const issues = [];
+    if (preview.videoError) issues.push(cameraErrorMessage(preview.videoError));
+    if (preview.audioError) issues.push(micErrorMessage(preview.audioError));
+    const box = $('pj-device-issues');
+    const list = $('pj-device-issues-list');
+    if (box && list) {
+        list.innerHTML = '';
+        issues.forEach(text => {
+            const li = document.createElement('li');
+            li.textContent = text;
+            list.appendChild(li);
+        });
+        box.classList.toggle('hidden', issues.length === 0);
+    }
+
+    $('pj-mic-meter')?.classList.toggle('pj-mic-meter-off', !preview.audioTrack);
+    clearInterval(preview.meterTimer);
+    preview.meterTimer = preview.audioTrack ? setInterval(updateMicMeter, 100) : null;
+    if (!preview.audioTrack) updateMicMeter();
+}
+
+function updateMicMeter() {
+    const bar = $('pj-mic-level');
+    if (!bar) return;
+    let level = 0;
+    try { level = preview.audioTrack?.getVolumeLevel() || 0; } catch { /* track closed */ }
+    bar.style.width = `${Math.min(100, Math.round(level * 250))}%`;
+}
+
+function fillDeviceSelect(select, devices, currentId, noun) {
+    if (!select) return;
+    select.innerHTML = '';
+    if (!devices.length) {
+        select.add(new Option(`No ${noun.toLowerCase()} found`, ''));
+        select.disabled = true;
+        return;
+    }
+    devices.forEach((d, i) => select.add(new Option(d.label || `${noun} ${i + 1}`, d.deviceId)));
+    if (currentId && devices.some(d => d.deviceId === currentId)) select.value = currentId;
+    select.disabled = false;
+}
+
+async function refreshPreviewDeviceLists() {
+    if (!$('pj-camera-select')) return;
+    const [cams, mics, speakers] = await Promise.all([
+        AgoraRTC.getCameras().catch(() => []),
+        AgoraRTC.getMicrophones().catch(() => []),
+        supportsSpeakerSelect ? AgoraRTC.getPlaybackDevices().catch(() => []) : Promise.resolve([]),
+    ]);
+    fillDeviceSelect($('pj-camera-select'), cams, trackDeviceId(preview.videoTrack), 'Camera');
+    fillDeviceSelect($('pj-mic-select'), mics, trackDeviceId(preview.audioTrack), 'Microphone');
+    if (supportsSpeakerSelect) fillDeviceSelect($('pj-speaker-select'), speakers, state.playbackDeviceId, 'Speaker');
+}
+
+async function switchPreviewDevice(kind, deviceId) {
+    if (!deviceId) return;
+    const isVideo = kind === 'video';
+    const track = isVideo ? preview.videoTrack : preview.audioTrack;
+    try {
+        if (track) {
+            await track.setDevice(deviceId);
+        } else if (isVideo) {
+            preview.videoTrack = await AgoraRTC.createCameraVideoTrack({ cameraId: deviceId });
+            preview.videoError = null;
+        } else {
+            preview.audioTrack = await AgoraRTC.createMicrophoneAudioTrack({ microphoneId: deviceId });
+            preview.audioError = null;
+        }
+        diag(isVideo ? 'camera_selected' : 'mic_selected', { label: trackLabel(isVideo ? preview.videoTrack : preview.audioTrack) });
+    } catch (err) {
+        console.warn(`Switch ${kind} device failed:`, err);
+        diag('device_switch_failed', { kind, err: errInfo(err) });
+        showPjStatus(isVideo ? cameraErrorMessage(err) : micErrorMessage(err), 'error');
+    }
+    renderDevicePreview();
+}
+
+/** Two-note chime as a WAV blob, so it can be routed to the chosen speaker via setSinkId. */
+function chimeUrl() {
+    if (_chimeUrl) return _chimeUrl;
+    const rate = 44100, n = Math.floor(rate * 0.8);
+    const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+    const str = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+    str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVE'); str(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    str(36, 'data'); v.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) {
+        const t = i / rate;
+        const second = t >= 0.35;
+        const tt = second ? t - 0.35 : t;
+        const env = Math.exp(-tt * 5) * Math.min(1, tt * 300);
+        v.setInt16(44 + i * 2, Math.sin(2 * Math.PI * (second ? 880 : 660) * t) * env * 0.45 * 32767, true);
+    }
+    _chimeUrl = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+    return _chimeUrl;
+}
+
+async function playSpeakerTest() {
+    const audio = new Audio(chimeUrl());
+    try {
+        if (supportsSpeakerSelect && state.playbackDeviceId) await audio.setSinkId(state.playbackDeviceId);
+        await audio.play();
+        showPjStatus("Playing a test sound — if you can't hear it, check your volume or pick another speaker.", 'info');
+    } catch (err) {
+        console.warn('Speaker test failed:', err);
+        diag('speaker_test_failed', errInfo(err));
+        showPjStatus('Could not play the test sound on this speaker.', 'error');
+    }
+}
+
+/**
+ * Hand the preview tracks to the call. Anything missing from the preview is
+ * retried once more here, in case the user fixed it (closed another app,
+ * granted permission) without pressing "Try again".
+ */
+async function takeTracksForCall() {
+    if (preview.pending) await preview.pending.catch(() => {});
+
+    let { audioTrack, videoTrack, audioError, videoError } = preview;
+    clearInterval(preview.meterTimer);
+    Object.assign(preview, { audioTrack: null, videoTrack: null, audioError: null, videoError: null, meterTimer: null });
+    videoTrack?.stop(); // stop preview playback only; capture continues into the call
+
+    if (!audioTrack && !videoTrack) return acquireLocalTracks();
+
+    if (!audioTrack) {
+        try { audioTrack = await AgoraRTC.createMicrophoneAudioTrack(); audioError = null; }
+        catch (err) { audioError = err; }
+    }
+    if (!videoTrack) {
+        try { videoTrack = await AgoraRTC.createCameraVideoTrack(); videoError = null; }
+        catch (err) { videoError = err; }
+    }
+    return { audioTrack, videoTrack, audioError, videoError };
+}
+
+/** Back on the pre-join screen after a call: preview is off until the user asks for it. */
+function resetDevicePreviewUI() {
+    clearInterval(preview.meterTimer);
+    preview.meterTimer = null;
+    const videoEl = $('pj-preview-video');
+    if (videoEl) videoEl.innerHTML = '';
+    $('pj-preview-placeholder')?.classList.remove('hidden');
+    $('pj-check-btn')?.classList.remove('hidden');
+    $('pj-device-issues')?.classList.add('hidden');
+    $('pj-mic-meter')?.classList.add('pj-mic-meter-off');
+    setPreviewMsg('Camera & mic are off');
+    updateMicMeter();
+}
+
+// ════════════════════════════════════════════════════════════
+// CALL DIAGNOSTICS
+// One callDiagnostics doc per join (signed-in users only): device
+// errors, connection changes, subscribe/autoplay failures and periodic
+// media stats, so a reported call problem can be looked up afterwards
+// instead of guessed at. Admin-read-only (see firestore.rules).
+// ════════════════════════════════════════════════════════════
+
+const DIAG_MAX_EVENTS = 250;
+const DIAG_MAX_EXCEPTIONS = 40;
+const diagState = {
+    ref: null,
+    ready: null,       // create-write promise; updates chain after it
+    buffer: [],
+    count: 0,
+    exceptions: 0,
+    flushTimer: null,
+    statsTimer: null,
+};
+
+/** Drop undefined values (Firestore rejects them) and cap the event count. */
+function diag(type, data = {}) {
+    if (diagState.count >= DIAG_MAX_EVENTS) return;
+    if (type === 'exception' && ++diagState.exceptions > DIAG_MAX_EXCEPTIONS) return;
+    diagState.count++;
+    let clean = {};
+    try { clean = JSON.parse(JSON.stringify(data ?? {})); } catch { /* unserializable */ }
+    diagState.buffer.push({ t: Date.now(), type, ...clean });
+    if (diagState.ref && !diagState.flushTimer) {
+        diagState.flushTimer = setTimeout(flushDiag, 3000);
+    }
+}
+
+function startDiagSession(channel, agoraUid) {
+    const user = auth.currentUser;
+    if (!user) { diagState.buffer = []; return; } // guests can't write
+
+    diagState.ref = doc(collection(db, 'callDiagnostics'));
+    diagState.count = diagState.buffer.length;
+    diagState.exceptions = 0;
+    const events = diagState.buffer.splice(0);
+    diagState.ready = setDoc(diagState.ref, {
+        uid: user.uid,
+        name: state.currentUserName || null,
+        channel,
+        agoraUid: String(agoraUid),
+        userAgent: navigator.userAgent.slice(0, 400),
+        startedAt: serverTimestamp(),
+        events,
+    }).catch(err => { console.warn('Diagnostics create failed:', err); diagState.ref = null; });
+
+    // First snapshot once media has had time to flow, then every 2 minutes
+    diagState.statsTimer = setTimeout(function snap() {
+        diag('stats', collectCallStats());
+        diagState.statsTimer = setTimeout(snap, 120000);
+    }, 20000);
+}
+
+function flushDiag(extra = {}) {
+    clearTimeout(diagState.flushTimer);
+    diagState.flushTimer = null;
+    const ref = diagState.ref;
+    if (!ref || (!diagState.buffer.length && !Object.keys(extra).length)) return;
+    const events = diagState.buffer.splice(0);
+    const payload = { ...extra };
+    if (events.length) payload.events = arrayUnion(...events);
+    diagState.ready = (diagState.ready || Promise.resolve())
+        .then(() => updateDoc(ref, payload))
+        .catch(err => console.warn('Diagnostics write failed:', err));
+}
+
+function endDiagSession() {
+    clearTimeout(diagState.statsTimer);
+    diagState.statsTimer = null;
+    if (!diagState.ref) { diagState.buffer = []; return; }
+    diag('stats', collectCallStats());
+    diag('left');
+    flushDiag({ endedAt: serverTimestamp() });
+    diagState.ref = null;
+    diagState.count = 0;
+}
+
+function setupDiagPageListeners() {
+    // Backgrounding a mobile tab commonly kills camera/mic — worth knowing
+    document.addEventListener('visibilitychange', () => {
+        if (!diagState.ref) return;
+        diag('visibility', { state: document.visibilityState });
+        if (document.visibilityState === 'hidden') flushDiag();
+    });
+    window.addEventListener('pagehide', () => {
+        if (!diagState.ref) return;
+        diag('page_hide', { stats: collectCallStats() });
+        flushDiag();
+    });
+}
+
+function collectCallStats() {
+    const c = state.client;
+    if (!c) return {};
+    const round = n => (typeof n === 'number' ? Math.round(n * 1000) / 1000 : null);
+    const out = { conn: c.connectionState };
+    try {
+        const rtc = c.getRTCStats();
+        out.rtc = { rtt: rtc.RTT, sendKbps: Math.round((rtc.SendBitrate || 0) / 1000), recvKbps: Math.round((rtc.RecvBitrate || 0) / 1000) };
+        const la = c.getLocalAudioStats();
+        const lv = c.getLocalVideoStats();
+        out.local = {
+            mic: !!state.localAudioTrack,
+            micMuted: state.isMuted,
+            micLevel: round(state.localAudioTrack?.getVolumeLevel()),
+            audioSendBytes: la?.sendBytes ?? null,
+            cam: !!state.localVideoTrack,
+            camOff: state.isCameraOff,
+            videoSendBytes: lv?.sendBytes ?? null,
+        };
+        const ra = c.getRemoteAudioStats();
+        const rv = c.getRemoteVideoStats();
+        out.remote = Object.values(state.remoteUsers).map(u => ({
+            uid: String(u.uid),
+            hasAudio: !!u.hasAudio,
+            hasVideo: !!u.hasVideo,
+            audioSubscribed: !!u.audioTrack,
+            audioPlaying: !!u.audioTrack?.isPlaying,
+            audioLevel: round(u.audioTrack?.getVolumeLevel()),
+            audioRecvBytes: ra?.[u.uid]?.receiveBytes ?? null,
+            audioLoss: round(ra?.[u.uid]?.packetLossRate),
+            videoSubscribed: !!u.videoTrack,
+            videoRecvBytes: rv?.[u.uid]?.receiveBytes ?? null,
+            videoRes: rv?.[u.uid] ? `${rv[u.uid].receiveResolutionWidth}x${rv[u.uid].receiveResolutionHeight}` : null,
+            videoFps: rv?.[u.uid]?.renderFrameRate ?? rv?.[u.uid]?.decodeFrameRate ?? null,
+            videoFreezeSec: round(rv?.[u.uid]?.totalFreezeTime),
+        }));
+    } catch (err) {
+        out.statsError = String(err?.message || err).slice(0, 200);
+    }
+    return out;
+}
+
+// ════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════
 
@@ -2125,6 +2822,10 @@ function init() {
 
     // Initialize whiteboard canvas
     wbInitCanvas();
+
+    installDeviceHooks();
+    setupDevicePreview();
+    setupDiagPageListeners();
 
     // Set up all listeners
     setupEventListeners();
