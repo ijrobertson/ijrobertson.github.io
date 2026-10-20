@@ -555,7 +555,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .user-card-country i { color: var(--pb-teal); }
 
-        .country-flag { font-size: 1.05rem; line-height: 1; }
+        /* "Twemoji Country Flags" is only defined (see the script at the end of
+           <head>) on devices whose emoji font has no flags — Windows, which
+           otherwise shows "BR" instead of 🇧🇷. Everywhere else the name
+           matches nothing and the device's own emoji flags are used. */
+        .country-flag {
+            font-size: 1.05rem;
+            line-height: 1;
+            font-family: "Twemoji Country Flags", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+        }
 
         .user-card-body {
             padding: 1.35rem 1.5rem;
@@ -804,6 +812,46 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             }
         }
     </style>
+    <!-- Country flag emoji fallback for Windows (no flag emoji there, so 🇧🇷
+         shows as "BR"). Same check as the country-flag-emoji-polyfill package
+         (MIT, TalkJS): if a normal emoji draws in colour but a flag doesn't,
+         define the self-hosted Twemoji flag font (webfonts/, CC-BY 4.0 —
+         see webfonts/TwemojiCountryFlags-LICENSE.md). unicode-range limits it
+         to flag characters, and the browser only downloads it once a flag is
+         actually drawn — so other devices never fetch it at all. -->
+    <script>
+        (function () {
+            try {
+                var stack = '"Twemoji Mozilla","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji","EmojiOne Color","Android Emoji",sans-serif';
+                var canvas = document.createElement('canvas');
+                canvas.width = canvas.height = 1;
+                var ctx = canvas.getContext('2d', { willReadFrequently: true });
+                if (!ctx) return;
+                ctx.textBaseline = 'top';
+                ctx.font = '100px ' + stack;
+                ctx.scale(0.01, 0.01);
+                // A colour emoji ignores fillStyle, so it draws the same pixel
+                // in white and in black; a plain-letter fallback doesn't.
+                var drawsInColour = function (text) {
+                    var draw = function (fill) {
+                        ctx.clearRect(0, 0, 100, 100);
+                        ctx.fillStyle = fill;
+                        ctx.fillText(text, 0, 0);
+                        return ctx.getImageData(0, 0, 1, 1).data.join(',');
+                    };
+                    var white = draw('#fff'), black = draw('#000');
+                    return black === white && black.indexOf('0,0,0,') !== 0;
+                };
+                if (drawsInColour('\uD83D\uDE0A') && !drawsInColour('\uD83C\uDDE8\uD83C\uDDED')) {
+                    var style = document.createElement('style');
+                    style.textContent = '@font-face { font-family: "Twemoji Country Flags";'
+                        + ' unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;'
+                        + ' src: url("webfonts/TwemojiCountryFlags.woff2") format("woff2"); font-display: swap; }';
+                    document.head.appendChild(style);
+                }
+            } catch (e) { /* no canvas — keep whatever the device shows */ }
+        })();
+    </script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -1210,16 +1258,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                 });
 
-                // Most recently active first (users.lastActiveAt, stamped by
+                // Profiles with a photo first, then those without; within each,
+                // most recently active first (users.lastActiveAt, stamped by
                 // lib/firebaseClient.js), so the partners a student sees first
-                // are the ones most likely to reply. Accounts never stamped go
-                // last. Profiles without a photo are left out of browsing, like
-                // the home page's student cards — see hasPhoto/renderUsers.
+                // are the ones most likely to reply. Never-stamped accounts go
+                // last within their group.
                 const activeMs = u => u.lastActiveAt?.toMillis ? u.lastActiveAt.toMillis() : 0;
-                allUsers.sort((a, b) => activeMs(b) - activeMs(a));
+                allUsers.sort((a, b) => (hasPhoto(b) - hasPhoto(a)) || (activeMs(b) - activeMs(a)));
 
-                updatePartnerCountBadge(allUsers.filter(hasPhoto).length);
-                populateFilterOptions(allUsers.filter(hasPhoto)); // options that browsing can actually show
+                updatePartnerCountBadge(allUsers.length);
+                populateFilterOptions(allUsers);
 
                 if (currentUser) {
                     await Promise.all([loadPresenceMap(allUsers), loadFriendRequestState()]);
@@ -1441,9 +1489,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             const searchTerm = nameSearch.value.trim().toLowerCase();
             const filtered = allUsers.filter(user => {
-                // Browsing shows only profiles with a photo; searching by name
-                // still finds anyone, so a specific person is never unfindable.
-                if (!searchTerm && !hasPhoto(user)) return false;
 
                 const spoken   = user.languages_spoken   || [];
                 const learning = user.languages_learning || [];
