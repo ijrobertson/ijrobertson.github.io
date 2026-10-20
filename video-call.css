@@ -557,8 +557,13 @@ body.in-call {
 }
 
 /* ── Top Bar ─────────────────────────────────────────────── */
+/* The top bar and control bar float over the video (both auto-hide) rather
+   than taking their own rows: in-flow, the hidden control bar left an empty
+   band at the bottom of the screen and squeezed the video into a short, wide
+   box that cropped the camera. The self-view PiP offsets already assume this. */
 #vc-top-bar {
-  position: relative;
+  position: absolute;
+  top: 0; left: 0; right: 0;
   z-index: 50;
   display: flex;
   align-items: center;
@@ -655,8 +660,8 @@ body.in-call {
 
 /* ── Video Area ─────────────────────────────────────────── */
 #vc-video-area {
-  flex: 1;
-  position: relative;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   background: #050608;
 }
@@ -684,6 +689,13 @@ body.in-call {
   object-fit: cover !important;
 }
 
+/* On laptops/desktops, show the whole camera frame (letterboxed if needed)
+   instead of cropping it — webcams are often 4:3 and phones portrait, so
+   "cover" cut off heads and chins. Phones keep "cover" to fill the screen. */
+@media (min-width: 769px) {
+  #vc-remote-stream video { object-fit: contain !important; }
+}
+
 /* Screen share: show the whole screen — cropping with "cover" cuts off
    content (e.g. chat messages) at the top/bottom of the shared window. */
 #vc-remote-container.vc-screensharing #vc-remote-stream video {
@@ -691,9 +703,10 @@ body.in-call {
   background: #000;
 }
 
+.vc-participant-label:empty { display: none; }
 .vc-participant-label {
   position: absolute;
-  bottom: 1rem;
+  bottom: calc(var(--vc-ctrl-h) + 1.25rem); /* clear of the overlaid control bar, level with the self-view PiP */
   left: 1rem;
   background: rgba(0,0,0,0.55);
   backdrop-filter: blur(4px);
@@ -1054,7 +1067,8 @@ body.in-call {
 
 /* ── Control Bar ────────────────────────────────────────── */
 #vc-controls {
-  position: relative;
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
   z-index: 50;
   height: var(--vc-ctrl-h);
   display: flex;
@@ -2061,7 +2075,9 @@ body.in-call {
 
 /* When a panel is open on desktop, shrink video area */
 @media (min-width: 769px) {
-  #vc-video-area { transition: padding-right 0.3s cubic-bezier(0.4,0,0.2,1); }
-  #screen-call.panel-open-narrow  #vc-video-area { padding-right: var(--vc-panel-w); }
-  #screen-call.panel-open-wide    #vc-video-area { padding-right: var(--vc-panel-wide-w); }
+  /* `right`, not padding — the remote video and PiP are absolutely positioned
+     inside, so padding never actually moved them out from under the panel. */
+  #vc-video-area { transition: right 0.3s cubic-bezier(0.4,0,0.2,1); }
+  #screen-call.panel-open-narrow  #vc-video-area { right: var(--vc-panel-w); }
+  #screen-call.panel-open-wide    #vc-video-area { right: var(--vc-panel-wide-w); }
 }
