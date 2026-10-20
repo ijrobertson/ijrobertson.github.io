@@ -296,6 +296,22 @@ function setLoadingMsg(msg) {
     if (el) el.textContent = msg;
 }
 
+/**
+ * Leave the pre-join screen without joining. Calls are usually opened in a
+ * new tab/window from Messages, so close that first; otherwise go back in
+ * history, or to the Learn tab.
+ */
+function exitPrejoin() {
+    // A tab with no history of its own (opened from a link) is one scripts may close
+    if (history.length <= 1) window.close();
+    // Still here: the browser refused to close it (or it isn't a popup)
+    setTimeout(() => {
+        const fromOurSite = document.referrer && new URL(document.referrer).origin === location.origin;
+        if (fromOurSite && history.length > 1) history.back();
+        else window.location.href = 'home';
+    }, 150);
+}
+
 /** Show the pre-join status area */
 function showPjStatus(msg, type = 'info') {
     pjStatus.textContent = msg;
@@ -2243,6 +2259,10 @@ function setupEventListeners() {
     channelInput.addEventListener('keypress', e => {
         if (e.key === 'Enter' && !joinBtn.disabled) joinChannel();
     });
+
+    // Pre-join: back out without joining
+    $('pj-back-btn')?.addEventListener('click', exitPrejoin);
+    $('pj-cancel-btn')?.addEventListener('click', exitPrejoin);
 
     // Pre-join: copy room code
     copyRoomBtn.addEventListener('click', () => {
