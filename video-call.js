@@ -1021,12 +1021,18 @@ async function startScreenShare() {
         // self-view PiP is untouched, and the remote peer gets a small face PiP
         // overlaid on the shared screen (see renderRemoteMainView).
         state.screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-        watchTokenExpiry(state.screenClient, () => ({ channelName: state.channelName }));
         const generateToken = httpsCallable(functions, 'generateAgoraToken');
-        const result = await generateToken({ channelName: state.channelName });
+        // Must pass a distinct, non-empty uid: generateAgoraToken always builds an
+        // account-based token for whatever uid it's given, defaulting to the literal
+        // account "0" when omitted. Joining with the plain number 0 tells Agora to
+        // auto-assign a random uid instead, which doesn't match the token's account
+        // "0" identity and gets the join rejected — silently breaking screen share.
+        const screenUidRequest = `${state.currentUser.uid}-screen`;
+        watchTokenExpiry(state.screenClient, () => ({ channelName: state.channelName, uid: screenUidRequest }));
+        const result = await generateToken({ channelName: state.channelName, uid: screenUidRequest });
         if (!result.data?.token) throw new Error('Failed to get a screen-share token from server');
 
-        state.screenUid = await state.screenClient.join(APP_ID, state.channelName, result.data.token, result.data.uid || 0);
+        state.screenUid = await state.screenClient.join(APP_ID, state.channelName, result.data.token, result.data.uid);
 
         // Tell the remote peer which uid is our screen connection BEFORE
         // publishing, so it's very likely to arrive before the corresponding
