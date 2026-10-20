@@ -395,6 +395,143 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             box-shadow: 0 4px 10px -3px rgba(11,102,100,0.55);
         }
 
+        /* Manually "marked as unread" (long-press a chat) — a dot with no
+           number, like WhatsApp, since there's no real count behind it. */
+        .unread-badge.unread-dot {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Long-pressing a chat row shouldn't select its text or pop up iOS's
+           own callout menu over ours. */
+        .conversation-item {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* ===== LONG-PRESS ACTION SHEET (messages + chat list) ===== */
+        .lb-sheet-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 2500; /* above <lb-app-shell> (1000), below the image lightbox (3000) */
+            background: rgba(17, 52, 72, 0.35);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            animation: lb-sheet-fade 160ms ease-out both;
+        }
+        .lb-sheet-backdrop.closing { animation: lb-sheet-fade 140ms ease-in reverse both; }
+        .lb-sheet {
+            width: 100%;
+            max-width: 440px;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0));
+            box-shadow: 0 -8px 30px rgba(17, 52, 72, 0.18);
+            animation: lb-sheet-up 260ms cubic-bezier(0.2, 0.9, 0.1, 1) both;
+        }
+        .lb-sheet-backdrop.closing .lb-sheet { animation: lb-sheet-up 160ms ease-in reverse both; }
+        .lb-sheet-grabber {
+            width: 36px; height: 4px; border-radius: 2px;
+            background: #d7dbd8; margin: 0 auto 10px;
+        }
+        .lb-sheet-preview {
+            margin: 0 4px 10px;
+            padding: 10px 12px;
+            background: #f4f6f7;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: #484a46;
+            max-height: 4.8em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            word-break: break-word;
+        }
+        .lb-sheet-title { font-weight: 700; color: #113448; margin: 0 4px 10px; font-size: 1rem; }
+        .lb-sheet-text { margin: -4px 4px 12px; color: #5f6b72; font-size: 0.9rem; }
+        .lb-sheet-reactions {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+            padding: 4px 4px 10px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #eef1f0;
+        }
+        .lb-sheet-reactions button {
+            flex: 1;
+            font-size: 1.6rem;
+            line-height: 1;
+            padding: 8px 0;
+            border: none;
+            background: none;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        .lb-sheet-reactions button.mine { background: #e3f5f3; }
+        .lb-sheet-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 13px 12px;
+            border: none;
+            background: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            color: #113448;
+            text-align: left;
+            cursor: pointer;
+        }
+        .lb-sheet-item:hover, .lb-sheet-item:focus-visible { background: #f4f6f7; outline: none; }
+        .lb-sheet-item i { width: 20px; text-align: center; color: #39728f; }
+        .lb-sheet-item.danger, .lb-sheet-item.danger i { color: #d64545; }
+        @keyframes lb-sheet-fade { from { opacity: 0; } }
+        @keyframes lb-sheet-up { from { transform: translateY(100%); } }
+        @media (prefers-reduced-motion: reduce) {
+            .lb-sheet-backdrop, .lb-sheet, .lb-sheet-backdrop.closing, .lb-sheet-backdrop.closing .lb-sheet { animation: none; }
+        }
+
+        /* The bubble a menu is open for stays lit above the dimmed backdrop's
+           intent — a cue for which message the actions apply to. */
+        .message.is-menu-target .message-content { box-shadow: 0 0 0 3px rgba(32, 188, 186, 0.45); }
+
+        .message-deleted {
+            background: #f4f6f7 !important;
+            color: #787976 !important;
+            font-style: italic;
+        }
+        .message-deleted .message-text { color: #787976 !important; }
+        .message-deleted .message-text i { margin-right: 6px; }
+        .message-edited { font-style: italic; margin-right: 4px; opacity: 0.85; }
+
+        /* On touch screens a long-press opens our menu (which has Copy), so
+           stop iOS starting a text selection/callout on the bubble instead. */
+        @media (hover: none) {
+            .message-content {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-touch-callout: none;
+            }
+        }
+
+        .lb-toast {
+            position: fixed;
+            left: 50%;
+            bottom: calc(96px + env(safe-area-inset-bottom, 0));
+            transform: translateX(-50%);
+            z-index: 2600;
+            background: #113448;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            animation: lb-sheet-fade 160ms ease-out both;
+        }
+
         /* Chat Panel */
         .chat-panel {
             background: white;
@@ -2007,6 +2144,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // conversation switch and cleared the moment a send is kicked off.
         let replyingToMessage = null;
 
+        // The message currently being edited from the long-press menu —
+        // { id, conversationId, originalText } or null. While set, the
+        // composer holds that message's text and Send saves the edit instead
+        // of sending a new message. Reset on every conversation switch.
+        let editingMessage = null;
+
+        // How long after sending a text message it can still be edited —
+        // same window WhatsApp uses, so a conversation can't be quietly
+        // rewritten long after the other person has read and replied to it.
+        const EDIT_WINDOW_MS = 15 * 60 * 1000;
+
+        // Messages in the thread as last rendered, by id — lets a reply quote
+        // show "Deleted message" when the message it quotes has since been
+        // deleted, instead of the original text it captured at reply time.
+        let renderedMessagesById = new Map();
+
+        // Latest conversation docs from the list listener, by id — read by
+        // the chat-row long-press menu (mark as read/unread).
+        const conversationsById = new Map();
+
         // Presence for whoever's chat header is currently showing — re-created
         // each time openConversation runs. latestPresenceData feeds the
         // periodic re-render timer below, which exists because staleness (see
@@ -2431,7 +2588,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
         }
 
+        let conversationListGesturesReady = false;
+
         async function loadConversations() {
+            if (!conversationListGesturesReady) {
+                conversationListGesturesReady = true;
+                setupConversationListGestures();
+            }
             try {
                 const q = query(
                     collection(db, 'conversations'),
@@ -2497,13 +2660,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
                 <div class="conv-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
                     <div class="conversation-time">${formatTime(conv.lastMessageTime)}</div>
-                    ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
+                    ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : isMarkedUnread(conv) ? '<div class="unread-badge unread-dot" aria-label="Marked as unread"></div>' : ''}
                 </div>`;
             item.onclick = (e) => openConversation(conv.id, otherUserId, e);
             return item;
         }
 
         async function renderConversations(conversations) {
+            conversationsById.clear();
+            conversations.forEach((conv) => conversationsById.set(conv.id, conv));
             if (conversations.length === 0) {
                 conversationsList.innerHTML = `
                     <div class="empty-state">
@@ -2541,10 +2706,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     item.querySelector('.conversation-time').textContent =
                         formatTime(conv.lastMessageTime);
                     const meta = item.querySelector('.conv-meta');
-                    const badge = meta.querySelector('.unread-badge');
-                    if (unread > 0) {
-                        if (badge) badge.textContent = unread;
-                        else { const b = document.createElement('div'); b.className = 'unread-badge'; b.textContent = unread; meta.appendChild(b); }
+                    let badge = meta.querySelector('.unread-badge');
+                    if (unread > 0 || isMarkedUnread(conv)) {
+                        if (!badge) { badge = document.createElement('div'); meta.appendChild(badge); }
+                        // A real count wins; otherwise it's a manual mark — a dot.
+                        badge.className = unread > 0 ? 'unread-badge' : 'unread-badge unread-dot';
+                        badge.textContent = unread > 0 ? unread : '';
                     } else if (badge) badge.remove();
                     if (activeConversationId === conv.id) item.classList.add('active');
                     else item.classList.remove('active');
@@ -2570,7 +2737,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function updateUnreadJumpBadge(conversations) {
             const badge = document.getElementById('unreadJumpBadge');
             if (!badge) return;
-            const unreadCount = conversations.filter(c => c.unreadCount && c.unreadCount[currentUser.uid] > 0).length;
+            const unreadCount = conversations.filter(c => (c.unreadCount && c.unreadCount[currentUser.uid] > 0) || isMarkedUnread(c)).length;
             if (unreadCount === 0) {
                 badge.style.display = 'none';
                 return;
@@ -2605,8 +2772,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             activeConversationId = conversationId;
             activeOtherUserId = otherUserId;
             // Any reply target selected in whatever conversation was open
-            // before doesn't carry over to this one.
+            // before doesn't carry over to this one, and neither does an edit.
             replyingToMessage = null;
+            editingMessage = null;
 
             // Tear down the previous conversation's presence/typing
             // subscriptions and timer before starting new ones — otherwise
@@ -2685,6 +2853,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <div class="reply-preview-text" id="replyPreviewText"></div>
                         </div>
                         <button type="button" class="reply-preview-cancel" id="replyPreviewCancel" aria-label="Cancel reply">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="reply-preview-bar" id="editPreviewBar" style="display:none;">
+                        <div class="reply-preview-content">
+                            <div class="reply-preview-name"><i class="fas fa-pencil-alt" aria-hidden="true"></i> Edit message</div>
+                            <div class="reply-preview-text" id="editPreviewText"></div>
+                        </div>
+                        <button type="button" class="reply-preview-cancel" id="editPreviewCancel" aria-label="Cancel edit">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -2986,6 +3163,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Reply preview bar's cancel (×) button — see clearReplyTarget.
             document.getElementById('replyPreviewCancel').addEventListener('click', clearReplyTarget);
+            document.getElementById('editPreviewCancel').addEventListener('click', cancelEditingMessage);
 
             // Clear audio players from previous conversation
             audioPlayers.forEach(a => a.pause());
@@ -3004,8 +3182,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const newUnreadCount = convData.unreadCount || {};
                 newUnreadCount[currentUser.uid] = 0;
 
+                // Opening a chat also clears a manual "mark as unread".
                 await setDoc(doc(db, 'conversations', conversationId), {
-                    unreadCount: newUnreadCount
+                    unreadCount: newUnreadCount,
+                    markedUnread: { [currentUser.uid]: false }
                 }, { merge: true });
             } catch (error) {
                 console.error('Error resetting unread count:', error);
@@ -3041,7 +3221,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const readReceipt = isSent
                 ? ` <i class="fas ${message.read ? 'fa-check-circle message-read-icon' : 'fa-check'}"></i>`
                 : '';
-            return `<div class="message-time">${formatTime(message.timestamp)}${readReceipt}</div>`;
+            const editedLabel = message.edited && !message.deleted ? '<span class="message-edited">Edited</span>' : '';
+            return `<div class="message-time">${editedLabel}${formatTime(message.timestamp)}${readReceipt}</div>`;
         }
 
         // Renders the full message list for a conversation from cached state —
@@ -3096,6 +3277,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const serverMessages = lastServerMessagesByConv.get(conversationId) || [];
             const pending = getPendingMessages(conversationId);
             const messages = [...olderMessages, ...serverMessages, ...pending].sort((a, b) => toMillis(a.timestamp) - toMillis(b.timestamp));
+            renderedMessagesById = new Map(messages.map((m) => [m.id, m]));
 
             messagesArea.innerHTML = '';
             const fragment = document.createDocumentFragment();
@@ -3146,7 +3328,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const reactBtn = `<button class="react-trigger" data-msg-id="${message.id}" data-conv-id="${conversationId}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
                 const reactionChips = renderReactions(message.reactions, currentUser.uid);
 
-                if (message.type === 'audio') {
+                if (message.deleted) {
+                    // "Delete for everyone" (see deleteMessageForEveryone) —
+                    // the content is already wiped server-side; only this
+                    // placeholder stays, so the conversation's flow still makes
+                    // sense. No reactions, reply quote or react button.
+                    messageEl.classList.add('is-deleted');
+                    messageEl.innerHTML = `
+                        <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                        <div class="msg-col">
+                            <div class="message-content message-deleted">
+                                <p class="message-text"><i class="fas fa-ban"></i>${isSent ? 'You deleted this message' : 'This message was deleted'}</p>
+                                ${renderMessageStatus(message, isSent)}
+                            </div>
+                        </div>
+                    `;
+                } else if (message.type === 'audio') {
                     messageEl.innerHTML = renderAudioMessage(message, senderAvatar, conversationId);
                 } else if (message.type === 'image') {
                     const isPending = message._status === 'pending';
@@ -3247,6 +3444,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function setReplyTarget(message) {
             if (!message || message.id?.startsWith('pending-')) return; // can't reply to a send that hasn't landed yet
+            if (editingMessage) cancelEditingMessage();
             replyingToMessage = {
                 messageId: message.id,
                 senderId: message.senderId,
@@ -3281,14 +3479,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // window (bounded live window + whatever "Load earlier" has pulled
         // in) — see the .reply-quote click handling in handleAudioClick.
         function renderReplyQuote(replyTo) {
+            // The quote stores a copy of the original's text; once that
+            // original is deleted, don't keep showing what it said.
+            const preview = renderedMessagesById.get(replyTo.messageId)?.deleted ? 'Deleted message' : replyTo.preview;
             return `<div class="reply-quote" data-jump-to="${replyTo.messageId}">
                 <div class="reply-quote-name">${escapeHtml(replyTo.senderName)}</div>
-                <div class="reply-quote-text">${escapeHtml(replyTo.preview)}</div>
+                <div class="reply-quote-text">${escapeHtml(preview)}</div>
             </div>`;
         }
 
-        // Swipe-right or long-press a message bubble to select it as a reply
-        // target — WhatsApp's two standard gestures for this, both wired
+        // Swipe-right a message bubble to select it as a reply target, or
+        // long-press it for the actions menu (openMessageMenu) — both wired
         // here via Pointer Events (one code path for touch AND mouse/trackpad,
         // so it also works testing on desktop). Delegated at the
         // #messagesArea container level, once per conversation open — every
@@ -3333,6 +3534,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             messagesAreaEl.addEventListener('pointerdown', (e) => {
                 if (e.isPrimary === false || (e.button !== undefined && e.button !== 0)) return;
+                // A long-press that opened the menu leaves this set, and its
+                // release lands on the menu rather than here — so clear it at
+                // the start of every new press, or it would eat the next tap.
+                suppressNextClick = false;
                 // Don't hijack existing interactive targets (reactions, links,
                 // join-call, audio controls) — long-press/swipe only applies
                 // to the bubble itself.
@@ -3347,9 +3552,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const { el: gEl, msgId } = gesture;
                     gesture = null;
                     gEl.classList.add('swipe-releasing');
-                    commitReply(msgId);
+                    // Long-press opens the actions menu (react, reply, copy,
+                    // edit, delete); swipe-right stays the quick way to reply.
+                    const message = lookupMessage(msgId);
+                    if (message) {
+                        if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
+                        openMessageMenu(conversationId, gEl, message);
+                    }
                     setTimeout(() => gEl.classList.remove('swipe-releasing'), 200);
                 }, LONG_PRESS_MS);
+            });
+
+            // Desktop equivalent of the long-press: right-click a bubble.
+            // Links keep the browser's own menu (open in new tab, copy link).
+            messagesAreaEl.addEventListener('contextmenu', (e) => {
+                if (e.target.closest('a, button, .audio-player, .reply-quote')) return;
+                const el = e.target.closest('.message');
+                if (!el) return;
+                // Android fires contextmenu on a long-press too, just after
+                // the long-press timer above has already opened the menu.
+                if (document.querySelector('.lb-sheet-backdrop')) { e.preventDefault(); return; }
+                const message = lookupMessage(el.dataset.msgId);
+                if (!message) return;
+                e.preventDefault();
+                if (gesture) { clearTimeout(gesture.longPressTimer); gesture = null; }
+                openMessageMenu(conversationId, el, message);
             });
 
             messagesAreaEl.addEventListener('pointermove', (e) => {
@@ -3391,6 +3618,362 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 e.preventDefault();
                 e.stopPropagation();
             }, true);
+        }
+
+        // ===== LONG-PRESS ACTION SHEET =====
+        // One bottom sheet for both long-press menus (a message bubble, a
+        // chat row). `content` is trusted markup built by the callers below
+        // (anything user-written goes through escapeHtml); items are
+        // { label, icon, danger, onSelect }. Returns a close() function.
+        function openActionSheet({ content = '', items = [], onClose } = {}) {
+            closeActionSheet(true);
+            const backdrop = document.createElement('div');
+            backdrop.className = 'lb-sheet-backdrop';
+            backdrop.innerHTML = `
+                <div class="lb-sheet" role="dialog" aria-modal="true">
+                    <div class="lb-sheet-grabber" aria-hidden="true"></div>
+                    ${content}
+                    <div class="lb-sheet-items"></div>
+                </div>`;
+            const list = backdrop.querySelector('.lb-sheet-items');
+            items.forEach((item) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `lb-sheet-item${item.danger ? ' danger' : ''}`;
+                btn.innerHTML = `<i class="fas ${item.icon}" aria-hidden="true"></i><span></span>`;
+                btn.querySelector('span').textContent = item.label;
+                btn.addEventListener('click', () => {
+                    closeActionSheet();
+                    item.onSelect();
+                });
+                list.appendChild(btn);
+            });
+            // Only a tap that *starts* on the backdrop closes it — the finger
+            // lifting at the end of the long-press that opened this sheet
+            // would otherwise land as a click on the backdrop and close it
+            // straight away.
+            let pressStartedOnBackdrop = false;
+            backdrop.addEventListener('pointerdown', (e) => { pressStartedOnBackdrop = e.target === backdrop; });
+            backdrop.addEventListener('click', (e) => {
+                if (e.target === backdrop && pressStartedOnBackdrop) closeActionSheet();
+            });
+            backdrop.addEventListener('contextmenu', (e) => e.preventDefault());
+            backdrop._onClose = onClose;
+            document.body.appendChild(backdrop);
+            document.addEventListener('keydown', onActionSheetKeydown);
+            return () => closeActionSheet();
+        }
+
+        function onActionSheetKeydown(e) {
+            if (e.key === 'Escape') closeActionSheet();
+        }
+
+        function closeActionSheet(immediate = false) {
+            const backdrop = document.querySelector('.lb-sheet-backdrop:not(.closing)');
+            if (!backdrop) return;
+            document.removeEventListener('keydown', onActionSheetKeydown);
+            backdrop._onClose?.();
+            if (immediate || REDUCED_MOTION_QUERY.matches) { backdrop.remove(); return; }
+            backdrop.classList.add('closing');
+            setTimeout(() => backdrop.remove(), 170);
+        }
+
+        const REDUCED_MOTION_QUERY = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+        function showToast(text) {
+            document.querySelector('.lb-toast')?.remove();
+            const toast = document.createElement('div');
+            toast.className = 'lb-toast';
+            toast.setAttribute('role', 'status');
+            toast.textContent = text;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 1600);
+        }
+
+        function isPlainTextMessage(message) {
+            return !message.type || message.type === 'text';
+        }
+
+        function canEditMessage(message) {
+            return message.senderId === currentUser.uid
+                && isPlainTextMessage(message)
+                && !message.deleted
+                && !message.id?.startsWith('pending-')
+                && Date.now() - toMillis(message.timestamp) < EDIT_WINDOW_MS;
+        }
+
+        // The long-press menu for one message bubble: quick reactions, then
+        // Reply / Copy / Edit / Delete as they apply. Deleted and still-sending
+        // messages have nothing to act on.
+        function openMessageMenu(conversationId, el, message) {
+            if (message.deleted || message._status) return;
+            const isMine = message.senderId === currentUser.uid;
+            const copyText = message.type === 'audio' ? (message.transcript || '') : (message.text || '');
+            const mine = Object.entries(message.reactions || {})
+                .filter(([, uids]) => Array.isArray(uids) && uids.includes(currentUser.uid))
+                .map(([emoji]) => emoji);
+
+            const items = [
+                { label: 'Reply', icon: 'fa-reply', onSelect: () => setReplyTarget(message) },
+            ];
+            if (copyText) {
+                items.push({ label: 'Copy', icon: 'fa-copy', onSelect: () => copyMessageText(copyText) });
+            }
+            if (canEditMessage(message)) {
+                items.push({ label: 'Edit', icon: 'fa-pencil-alt', onSelect: () => startEditingMessage(conversationId, message) });
+            }
+            if (isMine) {
+                items.push({ label: 'Delete', icon: 'fa-trash-alt', danger: true, onSelect: () => confirmDeleteMessage(conversationId, message) });
+            }
+
+            const reactions = `<div class="lb-sheet-reactions">${QUICK_EMOJIS.map((emoji) =>
+                `<button type="button" data-emoji="${emoji}" class="${mine.includes(emoji) ? 'mine' : ''}" aria-label="React ${emoji}">${emoji}</button>`).join('')}</div>`;
+
+            el.classList.add('is-menu-target');
+            openActionSheet({
+                content: reactions,
+                items,
+                onClose: () => el.classList.remove('is-menu-target'),
+            });
+            document.querySelectorAll('.lb-sheet-reactions button').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    closeActionSheet();
+                    toggleReaction(conversationId, message.id, btn.dataset.emoji);
+                });
+            });
+        }
+
+        async function copyMessageText(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('Copied');
+            } catch (err) {
+                console.error('Copy failed:', err);
+                showToast("Couldn't copy");
+            }
+        }
+
+        // Patches a message in this conversation's local caches and repaints,
+        // so an edit/delete shows instantly rather than after the round trip
+        // (the live listener then confirms it with the server's copy).
+        function patchCachedMessage(conversationId, messageId, changes) {
+            [olderMessagesByConv.get(conversationId), lastServerMessagesByConv.get(conversationId)].forEach((list) => {
+                const m = list?.find((x) => x.id === messageId);
+                if (m) Object.assign(m, changes);
+            });
+            renderMessageList(conversationId);
+        }
+
+        function isLatestMessage(conversationId, messageId) {
+            const server = lastServerMessagesByConv.get(conversationId) || [];
+            return server.length > 0 && server[server.length - 1].id === messageId;
+        }
+
+        // ----- Edit -----
+        function startEditingMessage(conversationId, message) {
+            if (!canEditMessage(message)) {
+                showToast('Messages can only be edited for 15 minutes');
+                return;
+            }
+            clearReplyTarget();
+            editingMessage = { id: message.id, conversationId, originalText: message.text || '' };
+            const input = document.getElementById('messageInput');
+            if (input) {
+                input.value = editingMessage.originalText;
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+                input.focus();
+                input.setSelectionRange(input.value.length, input.value.length);
+            }
+            renderEditBar();
+        }
+
+        function cancelEditingMessage() {
+            if (!editingMessage) return;
+            editingMessage = null;
+            const input = document.getElementById('messageInput');
+            if (input) {
+                input.value = '';
+                input.style.height = 'auto';
+            }
+            renderEditBar();
+        }
+
+        // The "Edit message" bar above the composer, and Send turning into a
+        // tick while an edit is in progress.
+        function renderEditBar() {
+            const bar = document.getElementById('editPreviewBar');
+            const sendIcon = document.querySelector('#messageForm .send-btn i');
+            const sendText = document.querySelector('#messageForm .send-btn .btn-text');
+            if (!bar) return;
+            if (!editingMessage) {
+                bar.style.display = 'none';
+                if (sendIcon) sendIcon.className = 'fas fa-paper-plane';
+                if (sendText) sendText.textContent = ' Send';
+                return;
+            }
+            bar.style.display = 'flex';
+            document.getElementById('editPreviewText').textContent = editingMessage.originalText;
+            if (sendIcon) sendIcon.className = 'fas fa-check';
+            if (sendText) sendText.textContent = ' Save';
+        }
+
+        async function saveMessageEdit(newText) {
+            const { id, conversationId, originalText } = editingMessage;
+            cancelEditingMessage();
+            if (newText === originalText) return;
+            const wasLatest = isLatestMessage(conversationId, id);
+            patchCachedMessage(conversationId, id, { text: newText, edited: true });
+            try {
+                await updateDoc(doc(db, 'conversations', conversationId, 'messages', id), {
+                    text: newText,
+                    edited: true,
+                    editedAt: new Date(),
+                });
+                if (wasLatest) {
+                    await updateDoc(doc(db, 'conversations', conversationId), { lastMessage: newText });
+                }
+            } catch (err) {
+                console.error('Error editing message:', err);
+                patchCachedMessage(conversationId, id, { text: originalText });
+                showToast("Couldn't save your edit");
+            }
+        }
+
+        // ----- Delete (for everyone) -----
+        function confirmDeleteMessage(conversationId, message) {
+            openActionSheet({
+                content: `<p class="lb-sheet-title">Delete this message?</p>
+                          <p class="lb-sheet-text">It will be removed for everyone in this chat.</p>`,
+                items: [
+                    { label: 'Delete for everyone', icon: 'fa-trash-alt', danger: true, onSelect: () => deleteMessageForEveryone(conversationId, message) },
+                    { label: 'Cancel', icon: 'fa-times', onSelect: () => {} },
+                ],
+            });
+        }
+
+        // A soft delete, like WhatsApp's "Delete for everyone": the message
+        // document stays (so the thread's order, read receipts and anything
+        // replying to it still make sense) but everything it said is wiped
+        // from it, and it renders as "This message was deleted". A photo's
+        // or voice note's file itself stays in Storage — only the link to it
+        // is removed from the message.
+        async function deleteMessageForEveryone(conversationId, message) {
+            if (editingMessage?.id === message.id) cancelEditingMessage();
+            if (replyingToMessage?.messageId === message.id) clearReplyTarget();
+            const wasLatest = isLatestMessage(conversationId, message.id);
+            const before = { ...message };
+            const wiped = {
+                deleted: true,
+                text: '',
+                imageUrl: null,
+                audioUrl: null,
+                transcript: null,
+                replyTo: null,
+                reactions: null,
+            };
+            patchCachedMessage(conversationId, message.id, wiped);
+            try {
+                await updateDoc(doc(db, 'conversations', conversationId, 'messages', message.id), {
+                    ...wiped,
+                    deletedAt: new Date(),
+                });
+                if (wasLatest) {
+                    await updateDoc(doc(db, 'conversations', conversationId), { lastMessage: '🚫 This message was deleted' });
+                }
+            } catch (err) {
+                console.error('Error deleting message:', err);
+                patchCachedMessage(conversationId, message.id, before);
+                showToast("Couldn't delete the message");
+            }
+        }
+
+        // ----- Chat list: long-press a chat to mark it read/unread -----
+        // Set up once — #conversationsList itself is never replaced, only its
+        // rows (renderConversations updates them in place).
+        function setupConversationListGestures() {
+            const LONG_PRESS_MS = 450;
+            const MOVE_SLOP = 10;
+            let press = null; // { row, startX, startY, timer }
+            let suppressNextClick = false;
+
+            function openFor(row) {
+                const conv = conversationsById.get(row.dataset.convId);
+                if (!conv) return;
+                if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
+                openConversationMenu(conv);
+            }
+
+            conversationsList.addEventListener('pointerdown', (e) => {
+                if (e.isPrimary === false || (e.button !== undefined && e.button !== 0)) return;
+                suppressNextClick = false; // see the same reset in setupMessageGestures
+                const row = e.target.closest('.conversation-item[data-conv-id]');
+                if (!row) return;
+                press = { row, startX: e.clientX, startY: e.clientY };
+                press.timer = setTimeout(() => {
+                    if (!press) return;
+                    suppressNextClick = true;
+                    const { row: pressedRow } = press;
+                    press = null;
+                    openFor(pressedRow);
+                }, LONG_PRESS_MS);
+            });
+            conversationsList.addEventListener('pointermove', (e) => {
+                if (!press) return;
+                if (Math.abs(e.clientX - press.startX) > MOVE_SLOP || Math.abs(e.clientY - press.startY) > MOVE_SLOP) {
+                    clearTimeout(press.timer);
+                    press = null;
+                }
+            });
+            const cancel = () => { if (press) { clearTimeout(press.timer); press = null; } };
+            conversationsList.addEventListener('pointerup', cancel);
+            conversationsList.addEventListener('pointercancel', cancel);
+            // The release after a long-press must not also open the chat.
+            conversationsList.addEventListener('click', (e) => {
+                if (!suppressNextClick) return;
+                suppressNextClick = false;
+                e.preventDefault();
+                e.stopPropagation();
+            }, true);
+            conversationsList.addEventListener('contextmenu', (e) => {
+                const row = e.target.closest('.conversation-item[data-conv-id]');
+                if (!row) return;
+                e.preventDefault();
+                if (document.querySelector('.lb-sheet-backdrop')) return; // Android: long-press already opened it
+                cancel();
+                openFor(row);
+            });
+        }
+
+        function isMarkedUnread(conv) {
+            return conv.markedUnread?.[currentUser.uid] === true;
+        }
+
+        function openConversationMenu(conv) {
+            const otherUserId = conv.participants.find((id) => id !== currentUser.uid);
+            const name = userCache.get(otherUserId)?.name || 'this chat';
+            const unread = conv.unreadCount?.[currentUser.uid] > 0 || isMarkedUnread(conv);
+            openActionSheet({
+                content: `<p class="lb-sheet-title">${escapeHtml(name)}</p>`,
+                items: [unread
+                    ? { label: 'Mark as read', icon: 'fa-envelope-open', onSelect: () => setConversationUnread(conv.id, false) }
+                    : { label: 'Mark as unread', icon: 'fa-envelope', onSelect: () => setConversationUnread(conv.id, true) }],
+            });
+        }
+
+        // "Unread" from the menu is its own flag (markedUnread.{uid}) rather
+        // than a fake unread count, so the real count stays honest when a new
+        // message then arrives. Reading the chat clears both — see
+        // resetUnreadCount. Dot-notation updates touch only this user's key.
+        async function setConversationUnread(conversationId, unread) {
+            const changes = { [`markedUnread.${currentUser.uid}`]: unread };
+            if (!unread) changes[`unreadCount.${currentUser.uid}`] = 0;
+            try {
+                await updateDoc(doc(db, 'conversations', conversationId), changes);
+            } catch (err) {
+                console.error('Error updating unread state:', err);
+                showToast("Couldn't update this chat");
+            }
         }
 
         // Read receipts: flips `read` to true on every message NOT sent by the
@@ -3644,6 +4227,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
             if (!text) return;
+
+            // Editing an existing message (long-press → Edit): Send saves the
+            // change to that message instead of sending a new one.
+            if (editingMessage && editingMessage.conversationId === conversationId) {
+                input.focus();
+                await saveMessageEdit(text);
+                return;
+            }
 
             // Cleared immediately, before any network call — the message is
             // about to appear in the thread right away (see below), matching
@@ -4621,6 +5212,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const conv = doc.data();
                     if (conv.unreadCount && conv.unreadCount[auth.currentUser.uid]) {
                         _unreadMsgCount += conv.unreadCount[auth.currentUser.uid];
+                    } else if (conv.markedUnread && conv.markedUnread[auth.currentUser.uid] === true) {
+                        _unreadMsgCount += 1; // a chat marked unread counts as one, like WhatsApp
                     }
                 });
 

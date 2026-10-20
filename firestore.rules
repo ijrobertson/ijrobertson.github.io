@@ -50,9 +50,18 @@ service cloud.firestore {
                       && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
                       && request.auth.uid == request.resource.data.senderId;
 
-        // Users can update their own messages (e.g., mark as read)
+        // Participants can update messages, but only the sender can change
+        // what a message says (edit / delete-for-everyone, see messages.html)
+        // — the other person can only mark it read or react to it. senderId
+        // can never be rewritten. (Before this, any participant could rewrite
+        // any field of the other person's messages.)
         allow update: if request.auth != null
-                      && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+                      && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
+                      && request.resource.data.senderId == resource.data.senderId
+                      && (
+                        request.auth.uid == resource.data.senderId
+                        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'reactions'])
+                      );
       }
     }
 

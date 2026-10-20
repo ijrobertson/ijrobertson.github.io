@@ -45,6 +45,9 @@ export function watchUnreadMessages(uid, shell) {
     snapshot.forEach((docSnap) => {
       const conv = docSnap.data();
       if (conv.unreadCount && conv.unreadCount[uid]) total += conv.unreadCount[uid];
+      // A chat the user marked as unread themselves (messages.html long-press)
+      // counts as one, like WhatsApp.
+      else if (conv.markedUnread && conv.markedUnread[uid] === true) total += 1;
     });
     shell.setAttribute('messages-unread', total > 0 ? 'true' : 'false');
     setAppBadgeCount(total);
