@@ -184,7 +184,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v17", // v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
+      cacheName: "linguabud-assets-v18", // v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );

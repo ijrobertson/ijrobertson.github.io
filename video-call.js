@@ -55,6 +55,11 @@ const state = {
     wasCallActive: false,
     callStartTime: null,
     callTimerInterval: null,
+    callLimitInterval: null,
+    aloneSince: null,        // when we became the only person in the call (null = someone else is here)
+    checkinDeadline: null,   // when the call auto-ends unless someone clicks "Keep going"
+    limitWarningKind: null,  // 'alone' | 'checkin' while the auto-end warning is shown
+    limitSavedTitle: null,
 
     // Firebase refs / listeners
     presenceRef: null,
@@ -250,6 +255,7 @@ const rebookBookBtn   = $('rebookBookBtn');
 
 // Nav warning
 const navWarning     = $('call-nav-warning');
+const callLimitWarning = $('call-limit-warning');
 
 // ════════════════════════════════════════════════════════════
 // UI HELPERS
@@ -448,6 +454,10 @@ async function initAgora() {
     state.client.on('user-published',   handleUserPublished);
     state.client.on('user-unpublished', handleUserUnpublished);
     state.client.on('user-left',        handleUserLeft);
+    watchTokenExpiry(state.client, () => ({ channelName: state.channelName, uid: state.currentUser.uid }));
+    state.client.on('token-privilege-did-expire', () => {
+        if (state.wasCallActive) leaveChannel().catch(console.error);
+    });
 }
 
 /**
@@ -534,6 +544,7 @@ async function joinChannel() {
         state.callStartTime = Date.now();
         state.callTimerInterval = setInterval(updateCallTimer, 1000);
         updateCallTimer();
+        startCallLimits();
 
         // Update UI
         vcRoomName.textContent = channel;
@@ -560,6 +571,7 @@ async function joinChannel() {
 async function leaveChannel() {
     clearTimeout(state.controlsHideTimer);
     clearInterval(state.callTimerInterval);
+    stopCallLimits();
     state.callStartTime = null;
     callDuration.textContent = '00:00';
 
@@ -627,6 +639,117 @@ async function leaveChannel() {
     if (hadActiveCall) {
         maybeShowRatingPopup().catch(console.error);
     }
+}
+
+// ════════════════════════════════════════════════════════════
+// CALL LIMITS — auto-end forgotten calls
+// ════════════════════════════════════════════════════════════
+// Agora bills every minute someone is in a channel (even alone), so a tab left
+// open after a lesson keeps costing money. These client-side checks end such
+// calls; the short token lifetime in generateAgoraToken is the server-side
+// backstop for a frozen or tampered-with page.
+
+const ALONE_LIMIT_MS     = 10 * 60 * 1000;      // end after 10 min with nobody else in the call
+const ALONE_WARNING_MS   =  2 * 60 * 1000;      // …warning shown for the last 2 of those
+const CHECKIN_AFTER_MS   =  2 * 60 * 60 * 1000; // ask "still there?" after 2 hours
+const CHECKIN_WARNING_MS =  5 * 60 * 1000;      // …warning shown 5 min before it ends the call
+const CHECKIN_EXTEND_MS  = 60 * 60 * 1000;      // "Keep going" buys another hour
+
+/** True if a real person (not a screen-share connection) is in the channel with us. */
+function hasOtherParticipant() {
+    return (state.client?.remoteUsers || []).some(u =>
+        !isRemoteScreenUid(u.uid) && String(u.uid) !== String(state.screenUid));
+}
+
+function startCallLimits() {
+    state.aloneSince = hasOtherParticipant() ? null : Date.now();
+    state.checkinDeadline = Date.now() + CHECKIN_AFTER_MS;
+    clearInterval(state.callLimitInterval);
+    // Deadlines are timestamps, so a throttled background-tab timer still ends the call on time (± a tick)
+    state.callLimitInterval = setInterval(checkCallLimits, 1000);
+}
+
+function stopCallLimits() {
+    clearInterval(state.callLimitInterval);
+    state.callLimitInterval = null;
+    state.aloneSince = null;
+    state.checkinDeadline = null;
+    hideLimitWarning();
+}
+
+function checkCallLimits() {
+    if (!state.wasCallActive || !state.checkinDeadline) return;
+    const now = Date.now();
+    if (hasOtherParticipant()) state.aloneSince = null;
+    else if (state.aloneSince == null) state.aloneSince = now;
+
+    const aloneEndsAt = state.aloneSince != null ? state.aloneSince + ALONE_LIMIT_MS : Infinity;
+    const kind   = aloneEndsAt <= state.checkinDeadline ? 'alone' : 'checkin';
+    const endsAt = Math.min(aloneEndsAt, state.checkinDeadline);
+    const remaining = endsAt - now;
+
+    if (remaining <= 0) {
+        autoEndCall(kind);
+    } else if (remaining <= (kind === 'alone' ? ALONE_WARNING_MS : CHECKIN_WARNING_MS)) {
+        showLimitWarning(kind, remaining);
+    } else {
+        hideLimitWarning();
+    }
+}
+
+function showLimitWarning(kind, remainingMs) {
+    const countdown = formatDuration(Math.ceil(remainingMs / 1000));
+    if (state.limitWarningKind !== kind) {
+        state.limitWarningKind = kind;
+        $('call-limit-title').textContent = kind === 'alone' ? "You're the only one here" : 'Are you still there?';
+        $('call-limit-stay').textContent  = kind === 'alone' ? 'Stay in Call' : 'Keep Going';
+        if (state.limitSavedTitle == null) state.limitSavedTitle = document.title;
+        callLimitWarning.classList.remove('hidden');
+    }
+    $('call-limit-text').textContent = kind === 'alone'
+        ? `No one else has been in this call for a while. It will end automatically in ${countdown}.`
+        : `This call has been running for a long time. It will end automatically in ${countdown} unless you keep going.`;
+    // Visible from other tabs, where the user may actually be
+    document.title = `⏳ ${countdown} — call ending`;
+}
+
+function hideLimitWarning() {
+    if (!state.limitWarningKind) return;
+    state.limitWarningKind = null;
+    callLimitWarning.classList.add('hidden');
+    if (state.limitSavedTitle != null) { document.title = state.limitSavedTitle; state.limitSavedTitle = null; }
+}
+
+async function autoEndCall(kind) {
+    await leaveChannel();
+    showPjStatus(kind === 'alone'
+        ? 'Your call ended automatically because no one else was in it for 10 minutes.'
+        : 'Your call ended automatically because no one confirmed they were still there.', 'error');
+}
+
+function setupCallLimitWarning() {
+    $('call-limit-stay').addEventListener('click', () => {
+        if (state.limitWarningKind === 'alone') state.aloneSince = Date.now();
+        else state.checkinDeadline = Date.now() + CHECKIN_EXTEND_MS;
+        hideLimitWarning();
+    });
+    $('call-limit-leave').addEventListener('click', () => leaveChannel());
+}
+
+/**
+ * Agora tokens are short-lived (see generateAgoraToken), so fetch a fresh one
+ * shortly before expiry. A frozen/closed page can't do this, which is what
+ * makes the expiry a backstop for calls left open.
+ */
+function watchTokenExpiry(client, getTokenParams) {
+    client.on('token-privilege-will-expire', async () => {
+        try {
+            const result = await httpsCallable(functions, 'generateAgoraToken')(getTokenParams());
+            if (result.data?.token) await client.renewToken(result.data.token);
+        } catch (err) {
+            console.error('Agora token renewal failed:', err);
+        }
+    });
 }
 
 // ════════════════════════════════════════════════════════════
@@ -898,6 +1021,7 @@ async function startScreenShare() {
         // self-view PiP is untouched, and the remote peer gets a small face PiP
         // overlaid on the shared screen (see renderRemoteMainView).
         state.screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        watchTokenExpiry(state.screenClient, () => ({ channelName: state.channelName }));
         const generateToken = httpsCallable(functions, 'generateAgoraToken');
         const result = await generateToken({ channelName: state.channelName });
         if (!result.data?.token) throw new Error('Failed to get a screen-share token from server');
@@ -1999,6 +2123,7 @@ function init() {
     // Set up all listeners
     setupEventListeners();
     setupPanels();
+    setupCallLimitWarning();
     setupKeyboardShortcuts();
     setupNavWarning();
     setupLocalPipDrag();
