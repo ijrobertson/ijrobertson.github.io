@@ -19,7 +19,7 @@
   // login, …) never get a direction, so they keep the default fade/cut.
   var DEPTH = {
     "home": 0, "connect": 0, "instructors": 0, "messages": 0, "bookings": 0,
-    "dashboard": 0, "student-dashboard": 0,
+    "dashboard": 0, "student-dashboard": 0, "earnings": 0,
     "notebook": 1, "vocab-quiz": 1, "travel-journey": 1, "culture-guides": 1,
     "friends": 1, "learner-profile": 1, "instructor-profile": 1,
     "culture-guide": 2,

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="Your Lingua Bud teaching earnings, payouts and lesson history.">
+    <meta name="author" content="Lingua Bud">
+    <meta name="robots" content="noindex">
+    <title>Earnings - Lingua Bud</title>
+
+    <!-- Styles. Unlike the older app pages, this one never had the marketing
+         navbar, so it needs none of Bootstrap/styles.css — just the icons,
+         the app's design tokens and its own styles below. -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600&display=swap&subset=latin-ext" rel="stylesheet">
+    <link href="css/fontawesome-all.css" rel="stylesheet">
+
+    <!-- PWA design tokens — used by <lb-app-shell> below -->
+    <link href="css/tokens.css" rel="stylesheet">
+    <!-- Loaded on its own (async) so the header/tab bar renders with the first paint,
+         instead of waiting for the page's Firebase imports to download. -->
+    <script type="module" async src="js/app-shell.js"></script>
+    <script src="js/page-transitions.js"></script>
+
+    <!-- Favicon -->
+    <link rel="icon" href="images/NuevoFavicon.png">
+
+    <!-- PWA installability -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b6664">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding-top: calc(60px + env(safe-area-inset-top, 0)); /* <lb-app-shell> header height + iOS notch/status-bar clearance */
+            background-color: #f8f9fa;
+            font-family: 'Open Sans', -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #484a46;
+        }
+
+        h1, h2, h3 { font-family: 'Montserrat', sans-serif; color: #113448; }
+
+        /* ===== HERO — this month's earnings, front and centre ===== */
+        .earnings-hero {
+            background: linear-gradient(135deg, #113448 0%, #1a5276 100%);
+            color: white;
+            padding: 2.25rem 1rem 2.5rem;
+            text-align: center;
+            border-bottom: 4px solid #20bcba;
+        }
+        .earnings-hero-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0 0 0.4rem;
+        }
+        .earnings-hero-amount {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.6rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            letter-spacing: -0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+        .earnings-hero-sub {
+            margin: 0.35rem 0 0;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.75);
+        }
+        .earnings-hero .lb-skel { background: linear-gradient(90deg, rgba(255,255,255,0.14) 25%, rgba(255,255,255,0.24) 37%, rgba(255,255,255,0.14) 63%); background-size: 400% 100%; }
+
+        /* ===== CONTENT ===== */
+        .earnings-container {
+            max-width: 760px;
+            margin: 1.5rem auto 0;
+            padding: 0 1rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.85rem;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 1rem 1.15rem;
+            box-shadow: 0 1px 4px rgba(17, 52, 72, 0.08);
+            border-left: 4px solid #20bcba;
+        }
+        .stat-card.pending { border-left-color: #f59e0b; }
+        .stat-card.paid { border-left-color: #10b981; }
+        .stat-label {
+            margin: 0 0 4px;
+            font-size: 0.75rem;
+            color: #787976;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .stat-value {
+            margin: 0;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #113448;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-card.pending .stat-value { color: #b45309; }
+        .stat-card.paid .stat-value { color: #065f46; }
+        .stat-sub { margin: 4px 0 0; font-size: 0.8rem; color: #787976; }
+        .fee-note { margin: 0.75rem 0 0; font-size: 0.8rem; color: #787976; }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 2rem 0 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-title i { color: #20bcba; }
+
+        /* Payout method card */
+        .payout-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 1rem 1.15rem;
+            box-shadow: 0 1px 4px rgba(17, 52, 72, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+        }
+        .payout-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #e3f5f3;
+            color: #0b6664;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+        .payout-text { flex: 1; min-width: 0; }
+        .payout-text h3 { margin: 0 0 2px; font-size: 0.98rem; }
+        .payout-text p { margin: 0; font-size: 0.85rem; color: #5f6b72; line-height: 1.45; }
+        .payout-action {
+            border: none;
+            background: #0b6664;
+            color: white;
+            border-radius: 999px;
+            padding: 0.55rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .payout-action:disabled { opacity: 0.6; cursor: default; }
+        .payout-action.secondary { background: #e3f5f3; color: #0b6664; }
+
+        /* Lesson-by-lesson history */
+        .history-list {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 1px 4px rgba(17, 52, 72, 0.08);
+            overflow: hidden;
+        }
+        .history-row {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.9rem 1.15rem;
+            border-bottom: 1px solid #eef1f0;
+        }
+        .history-row:last-child { border-bottom: none; }
+        .history-main { flex: 1; min-width: 0; }
+        .history-name {
+            margin: 0;
+            font-weight: 600;
+            color: #113448;
+            font-size: 0.95rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .history-meta { margin: 2px 0 0; font-size: 0.8rem; color: #787976; }
+        .history-amount { text-align: right; flex-shrink: 0; }
+        .history-net {
+            margin: 0;
+            font-weight: 700;
+            color: #113448;
+            font-variant-numeric: tabular-nums;
+        }
+        .history-badge {
+            display: inline-block;
+            margin-top: 3px;
+            padding: 1px 8px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .history-badge.paid { background: #e7f6ee; color: #1a7a45; }
+        .history-badge.pending { background: #fdf3e2; color: #a2620b; }
+        .history-badge.referral { background: #e3f5f3; color: #0b6664; margin-left: 4px; }
+
+        .show-more-btn {
+            display: block;
+            width: 100%;
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            border: 1.5px solid #d7dbd8;
+            background: white;
+            color: #0b6664;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.25rem 1.5rem;
+            color: #5f6b72;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 1px 4px rgba(17, 52, 72, 0.08);
+        }
+        .empty-state i { font-size: 2.2rem; color: #20bcba; opacity: 0.4; display: block; margin-bottom: 0.75rem; }
+        .empty-state p { margin: 0 0 0.35rem; }
+        .empty-state a { color: #0b6664; font-weight: 600; }
+
+        .error-note { color: #787976; font-size: 0.9rem; }
+
+        @media (max-width: 480px) {
+            .earnings-hero-amount { font-size: 2.2rem; }
+            .payout-card { flex-wrap: wrap; }
+            .payout-action { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+    <lb-app-shell id="shell" role="instructor" page-title="Earnings" active="earnings"></lb-app-shell>
+
+    <!-- Hero: this month's net earnings. Skeletons until loadEarnings() fills it. -->
+    <div class="earnings-hero">
+        <p class="earnings-hero-label">This month</p>
+        <p class="earnings-hero-amount" id="heroAmount"><span class="lb-skel" style="width:9rem;height:2.4rem;margin:0 auto;"></span></p>
+        <p class="earnings-hero-sub" id="heroSub"><span class="lb-skel lb-skel-text" style="width:7rem;"></span></p>
+    </div>
+
+    <div class="earnings-container">
+        <div class="stat-grid" id="statGrid" aria-busy="true">
+            <span class="lb-sr-only">Loading earnings…</span>
+            <div class="stat-card" aria-hidden="true">
+                <span class="lb-skel lb-skel-line" style="width:55%;"></span>
+                <span class="lb-skel lb-skel-title" style="width:70%;height:22px;"></span>
+                <span class="lb-skel lb-skel-line" style="width:40%;"></span>
+            </div>
+            <div class="stat-card" aria-hidden="true">
+                <span class="lb-skel lb-skel-line" style="width:55%;"></span>
+                <span class="lb-skel lb-skel-title" style="width:70%;height:22px;"></span>
+                <span class="lb-skel lb-skel-line" style="width:40%;"></span>
+            </div>
+        </div>
+        <p class="fee-note" id="feeNote"></p>
+
+        <h2 class="section-title"><i class="fas fa-wallet"></i> How you get paid</h2>
+        <div id="payoutSection">
+            <div class="payout-card" aria-hidden="true">
+                <span class="lb-skel" style="width:44px;height:44px;border-radius:12px;flex-shrink:0;"></span>
+                <div style="flex:1;">
+                    <span class="lb-skel lb-skel-title" style="width:45%;"></span>
+                    <span class="lb-skel lb-skel-line" style="width:85%;"></span>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title"><i class="fas fa-receipt"></i> Lesson history</h2>
+        <div id="historySection">
+            <div class="history-list" aria-hidden="true">
+                <div class="history-row">
+                    <div class="history-main"><span class="lb-skel lb-skel-title" style="width:50%;"></span><span class="lb-skel lb-skel-line" style="width:70%;"></span></div>
+                    <span class="lb-skel" style="width:60px;height:18px;"></span>
+                </div>
+                <div class="history-row">
+                    <div class="history-main"><span class="lb-skel lb-skel-title" style="width:40%;"></span><span class="lb-skel lb-skel-line" style="width:60%;"></span></div>
+                    <span class="lb-skel" style="width:60px;height:18px;"></span>
+                </div>
+                <div class="history-row">
+                    <div class="history-main"><span class="lb-skel lb-skel-title" style="width:55%;"></span><span class="lb-skel lb-skel-line" style="width:65%;"></span></div>
+                    <span class="lb-skel" style="width:60px;height:18px;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explicit spacer, not body padding-bottom — the bottom tab bar is
+         fixed, so this reserves room for it at the end of the page. -->
+    <div style="height: calc(96px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
+
+    <script type="module">
+        import {
+            auth, db, functions, httpsCallable,
+            onAuthStateChanged, signOut,
+            collection, query, where, getDocs, doc, getDoc
+        } from './lib/firebaseClient.js';
+        import './js/app-shell.js';
+        import { initPush } from './js/push-notifications.js';
+        import { watchUnreadMessages } from './js/unread-messages.js';
+        import { startPresenceHeartbeat } from './js/presence.js';
+
+        const HISTORY_PAGE_SIZE = 15;
+
+        let currentUser = null;
+        let instrData = {};
+        let allEarnings = [];     // every earnings record, newest first
+        let historyShown = 0;     // how many of them are rendered in the history list
+        const bookingCache = new Map();
+        const studentNameCache = new Map();
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        function formatMoney(cents, currency) {
+            try {
+                return (cents / 100).toLocaleString('en-US', { style: 'currency', currency: currency || 'USD' });
+            } catch (e) {
+                return `${(cents / 100).toFixed(2)} ${currency || ''}`.trim();
+            }
+        }
+
+        function toDate(value) {
+            if (!value) return null;
+            if (value.toDate) return value.toDate();
+            const d = new Date(value);
+            return isNaN(d) ? null : d;
+        }
+
+        // ===== AUTH =====
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login';
+                return;
+            }
+            currentUser = user;
+
+            // Instructors only — anyone without an instructor profile goes to
+            // the Learn tab instead (students never see an Earnings tab).
+            let instrSnap;
+            try {
+                instrSnap = await getDoc(doc(db, 'instructors', user.uid));
+            } catch (e) {
+                console.error('Error loading instructor profile:', e);
+            }
+            if (!instrSnap || !instrSnap.exists()) {
+                window.location.href = 'home';
+                return;
+            }
+            instrData = instrSnap.data();
+            if (instrData.status === 'pending' || instrData.status === 'declined') {
+                window.location.href = 'instructor-apply';
+                return;
+            }
+
+            initPush(user.uid);
+            startPresenceHeartbeat(user.uid);
+            watchUnreadMessages(user.uid, document.getElementById('shell'));
+
+            renderPayoutSection();
+            await loadEarnings();
+        });
+
+        document.getElementById('shell').addEventListener('lb-logout', async () => {
+            await signOut(auth);
+            window.location.href = 'index';
+        });
+
+        // ===== SUMMARY =====
+        // The totals are the same calculation the dashboard's Earnings box used
+        // (net instructorEarningsCents per record; Wise splits pending vs paid;
+        // "this month" by createdAt), so the numbers match what instructors saw there.
+        async function loadEarnings() {
+            const statGrid = document.getElementById('statGrid');
+            try {
+                const isWise = instrData.payoutMethod === 'wise';
+                const commissionRate = typeof instrData.commissionRate === 'number'
+                    ? instrData.commissionRate : 0.15;
+                const commissionPct = Math.round(commissionRate * 100);
+
+                // No orderBy: sorted here instead, so this needs no composite
+                // index — an instructor's earnings records are a small set.
+                const earningsSnap = await getDocs(
+                    query(collection(db, 'earnings'), where('instructorId', '==', currentUser.uid))
+                );
+
+                let totalCents = 0, pendingCents = 0, paidCents = 0;
+                let totalLessons = 0, pendingLessons = 0;
+                let monthCents = 0, monthLessons = 0;
+                let currency = 'USD';
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+                allEarnings = [];
+                earningsSnap.forEach(d => {
+                    const e = { id: d.id, ...d.data() };
+                    allEarnings.push(e);
+                    const net = e.instructorEarningsCents || 0;
+                    currency = e.currency || 'USD';
+                    totalCents += net;
+                    totalLessons++;
+                    if (e.payoutStatus === 'pending') { pendingCents += net; pendingLessons++; }
+                    else { paidCents += net; }
+                    const createdAt = toDate(e.createdAt);
+                    if (createdAt && createdAt >= startOfMonth) { monthCents += net; monthLessons++; }
+                });
+                allEarnings.sort((a, b) => (toDate(b.createdAt)?.getTime() || 0) - (toDate(a.createdAt)?.getTime() || 0));
+
+                const fmt = (cents) => formatMoney(cents, currency);
+                const plural = (n, word) => `${n} ${word}${n !== 1 ? 's' : ''}`;
+
+                document.getElementById('heroAmount').textContent = fmt(monthCents);
+                document.getElementById('heroSub').textContent = `${plural(monthLessons, 'lesson')} in ${now.toLocaleString('en-US', { month: 'long' })}`;
+
+                const card = (cls, label, value, sub) => `
+                    <div class="stat-card ${cls}">
+                        <p class="stat-label">${label}</p>
+                        <p class="stat-value">${value}</p>
+                        <p class="stat-sub">${sub}</p>
+                    </div>`;
+                statGrid.innerHTML = isWise
+                    ? card('pending', 'Pending payout', fmt(pendingCents), plural(pendingLessons, 'lesson'))
+                      + card('paid', 'Paid out', fmt(paidCents), plural(totalLessons - pendingLessons, 'lesson'))
+                      + card('', 'All time', fmt(totalCents), `${plural(totalLessons, 'lesson')} total`)
+                    : card('', 'All time (net)', fmt(totalCents), `${plural(totalLessons, 'lesson')} total`)
+                      + card('', 'Average per lesson', fmt(totalLessons ? Math.round(totalCents / totalLessons) : 0), 'after fees');
+                statGrid.removeAttribute('aria-busy');
+
+                document.getElementById('feeNote').textContent =
+                    `You keep ${100 - commissionPct}% of every lesson after the ${commissionPct}% platform fee. Amounts shown are what you earn, after fees.`;
+
+                historyShown = 0;
+                await renderHistory();
+            } catch (err) {
+                console.error('Error loading earnings:', err);
+                document.getElementById('heroAmount').textContent = '—';
+                document.getElementById('heroSub').textContent = '';
+                statGrid.innerHTML = `<p class="error-note">Couldn't load your earnings. Check your connection and try again.</p>`;
+                document.getElementById('historySection').innerHTML = '';
+            }
+        }
+
+        // ===== PAYOUT METHOD =====
+        function renderPayoutSection() {
+            const section = document.getElementById('payoutSection');
+            const method = instrData.payoutMethod;
+            if (method === 'wise') {
+                const paypal = instrData.manualPayout === 'paypal';
+                section.innerHTML = `
+                    <div class="payout-card">
+                        <div class="payout-icon"><i class="${paypal ? 'fab fa-paypal' : 'fas fa-university'}"></i></div>
+                        <div class="payout-text">
+                            <h3>${paypal ? 'PayPal' : 'Wise'}</h3>
+                            <p>Payouts are sent manually once or twice a week after your lessons are completed.${instrData.wiseEmail && !paypal ? ` Sent to <strong>${escapeHtml(instrData.wiseEmail)}</strong>.` : ''}</p>
+                        </div>
+                        <a class="payout-action secondary" href="dashboard">Change</a>
+                    </div>`;
+            } else if (instrData.stripeAccountId || method === 'stripe') {
+                section.innerHTML = `
+                    <div class="payout-card">
+                        <div class="payout-icon"><i class="fab fa-stripe-s"></i></div>
+                        <div class="payout-text">
+                            <h3>Stripe</h3>
+                            <p>Paid automatically to your bank through Stripe. See payouts and statements in your Stripe dashboard.</p>
+                        </div>
+                        <button type="button" class="payout-action" id="stripeDashboardBtn"><i class="fas fa-external-link-alt"></i> Stripe dashboard</button>
+                    </div>`;
+                document.getElementById('stripeDashboardBtn').addEventListener('click', openStripeDashboard);
+            } else {
+                section.innerHTML = `
+                    <div class="payout-card">
+                        <div class="payout-icon"><i class="fas fa-exclamation"></i></div>
+                        <div class="payout-text">
+                            <h3>Payout method not set up</h3>
+                            <p>Set up how you'd like to be paid so students can book paid lessons with you.</p>
+                        </div>
+                        <a class="payout-action" href="dashboard">Set up</a>
+                    </div>`;
+            }
+        }
+
+        async function openStripeDashboard() {
+            const btn = document.getElementById('stripeDashboardBtn');
+            // Opened synchronously, inside the tap, then pointed at the URL once
+            // it arrives — browsers (iOS Safari especially) block a window
+            // opened after an await as an unrequested pop-up.
+            const win = window.open('', '_blank');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Opening…';
+            try {
+                const getDashboard = httpsCallable(functions, 'getStripeConnectDashboard');
+                const result = await getDashboard();
+                if (!result.data.loginUrl) throw new Error('No dashboard link returned');
+                if (win) win.location.href = result.data.loginUrl;
+                else window.location.href = result.data.loginUrl;
+            } catch (error) {
+                console.error('Error opening Stripe dashboard:', error);
+                if (win) win.close();
+                alert("Couldn't open your Stripe dashboard. Please try again in a moment.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-external-link-alt"></i> Stripe dashboard';
+            }
+        }
+
+        // ===== LESSON HISTORY =====
+        // Each earnings record links to its booking (lesson date, length, and
+        // usually the student's name) — fetched only for the rows on screen,
+        // a page at a time, rather than for the whole history up front.
+        async function getBooking(bookingId) {
+            if (!bookingId) return null;
+            if (!bookingCache.has(bookingId)) {
+                bookingCache.set(bookingId, getDoc(doc(db, 'bookings', bookingId))
+                    .then(s => (s.exists() ? s.data() : null))
+                    .catch(() => null));
+            }
+            return bookingCache.get(bookingId);
+        }
+
+        async function getStudentName(studentId, booking) {
+            if (booking?.studentName) return booking.studentName;
+            if (!studentId) return 'Student';
+            if (!studentNameCache.has(studentId)) {
+                studentNameCache.set(studentId, getDoc(doc(db, 'users', studentId))
+                    .then(s => (s.exists() && s.data().name) || 'Student')
+                    .catch(() => 'Student'));
+            }
+            return studentNameCache.get(studentId);
+        }
+
+        async function renderHistory() {
+            const section = document.getElementById('historySection');
+            if (allEarnings.length === 0) {
+                section.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>No paid lessons yet.</p>
+                        <p>Your earnings from each paid lesson will show up here. Keep your <a href="dashboard">availability</a> up to date so students can book you.</p>
+                    </div>`;
+                return;
+            }
+
+            const page = allEarnings.slice(historyShown, historyShown + HISTORY_PAGE_SIZE);
+            const rows = await Promise.all(page.map(async (e) => {
+                const booking = await getBooking(e.bookingId);
+                const name = await getStudentName(e.studentId, booking);
+                const lessonDate = toDate(booking?.dateTime) || toDate(e.createdAt);
+                const isTrial = booking?.bookingType === 'free_trial';
+                const minutes = isTrial ? 15 : (booking?.durationMinutes || 60);
+                const dateLabel = lessonDate
+                    ? lessonDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: lessonDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined })
+                    : '';
+                const isPending = e.payoutStatus === 'pending';
+                return `
+                    <div class="history-row">
+                        <div class="history-main">
+                            <p class="history-name">${escapeHtml(name)}</p>
+                            <p class="history-meta">${escapeHtml(dateLabel)}${dateLabel ? ' · ' : ''}${minutes}-min lesson · ${escapeHtml(formatMoney(e.lessonAmountCents || 0, e.currency))} lesson price</p>
+                        </div>
+                        <div class="history-amount">
+                            <p class="history-net">${escapeHtml(formatMoney(e.instructorEarningsCents || 0, e.currency))}</p>
+                            <span class="history-badge ${isPending ? 'pending' : 'paid'}">${isPending ? 'Pending' : 'Paid'}</span>${e.referralCreditApplied ? '<span class="history-badge referral" title="Referral credit: no platform fee on this lesson">0% fee</span>' : ''}
+                        </div>
+                    </div>`;
+            }));
+
+            let list = section.querySelector('.history-list:not([aria-hidden])');
+            if (!list || historyShown === 0) {
+                section.innerHTML = '<div class="history-list"></div>';
+                list = section.querySelector('.history-list');
+            }
+            list.insertAdjacentHTML('beforeend', rows.join(''));
+            historyShown += page.length;
+
+            section.querySelector('.show-more-btn')?.remove();
+            const remaining = allEarnings.length - historyShown;
+            if (remaining > 0) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'show-more-btn';
+                btn.textContent = `Show ${Math.min(remaining, HISTORY_PAGE_SIZE)} more`;
+                btn.addEventListener('click', async () => {
+                    btn.disabled = true;
+                    btn.textContent = 'Loading…';
+                    await renderHistory();
+                });
+                section.appendChild(btn);
+            }
+        }
+    </script>
+
+    <!-- PWA service worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js', { scope: '/' });
+        }
+    </script>
+</body>
+</html>

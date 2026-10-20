@@ -107,7 +107,8 @@ if (self.workbox) {
     // v9 (same day): skeleton placeholders written into the main screens' HTML.
     // v10 (same day): every shell page loads js/page-transitions.js in <head>.
     // v11 (same day): messages.html long-press menus (edit/delete, mark unread).
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v11" })
+    // v12 (2026-10-20): new earnings.html; dashboard.html becomes instructor Settings.
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v12" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -180,7 +181,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v13", // v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
+      cacheName: "linguabud-assets-v14", // v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -219,6 +220,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v10"),
       caches.delete("linguabud-assets-v11"),
       caches.delete("linguabud-assets-v12"),
+      caches.delete("linguabud-assets-v13"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
@@ -229,6 +231,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-pages-v8"),
       caches.delete("linguabud-pages-v9"),
       caches.delete("linguabud-pages-v10"),
+      caches.delete("linguabud-pages-v11"),
     ])
   );
 });

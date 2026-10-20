@@ -89,7 +89,7 @@ const NAV_BY_ROLE = {
     { id: "learn", label: "Learn", icon: "notebook", href: "home" },
     { id: "calendar", label: "Calendar", icon: "calendar", href: "bookings" },
     { id: "messages", label: "Messages", icon: "messages", href: "messages" },
-    { id: "earnings", label: "Earnings", icon: "earnings", href: "dashboard" },
+    { id: "earnings", label: "Earnings", icon: "earnings", href: "earnings" },
     { id: "settings", label: "Settings", icon: "profile", href: "dashboard" },
   ],
 };
@@ -634,7 +634,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v11"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v12"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
