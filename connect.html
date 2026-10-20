@@ -1210,8 +1210,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                 });
 
-                updatePartnerCountBadge(allUsers.length);
-                populateFilterOptions(allUsers);
+                // Most recently active first (users.lastActiveAt, stamped by
+                // lib/firebaseClient.js), so the partners a student sees first
+                // are the ones most likely to reply. Accounts never stamped go
+                // last. Profiles without a photo are left out of browsing, like
+                // the home page's student cards — see hasPhoto/renderUsers.
+                const activeMs = u => u.lastActiveAt?.toMillis ? u.lastActiveAt.toMillis() : 0;
+                allUsers.sort((a, b) => activeMs(b) - activeMs(a));
+
+                updatePartnerCountBadge(allUsers.filter(hasPhoto).length);
+                populateFilterOptions(allUsers.filter(hasPhoto)); // options that browsing can actually show
 
                 if (currentUser) {
                     await Promise.all([loadPresenceMap(allUsers), loadFriendRequestState()]);
@@ -1222,6 +1230,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 console.error('Error fetching users:', error);
                 userGrid.innerHTML = `<div class="no-results"><div>Error loading users: ${escapeHtml(error.message)}</div><div style="margin-top:0.5rem;color:#999;">Please check the console for details.</div></div>`;
             }
+        }
+
+        function hasPhoto(user) {
+            return !!(user.avatar_url || user.avatar);
         }
 
         function updatePartnerCountBadge(count) {
@@ -1429,6 +1441,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             const searchTerm = nameSearch.value.trim().toLowerCase();
             const filtered = allUsers.filter(user => {
+                // Browsing shows only profiles with a photo; searching by name
+                // still finds anyone, so a specific person is never unfindable.
+                if (!searchTerm && !hasPhoto(user)) return false;
+
                 const spoken   = user.languages_spoken   || [];
                 const learning = user.languages_learning || [];
 
