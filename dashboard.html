@@ -1483,8 +1483,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
     <p id="messagePushStatus" style="display:none; margin: 0 0 1.5rem; font-size: 0.85rem;"></p>
 
-    <!-- AVAILABILITY SECTION -->
-    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
+    <!-- AVAILABILITY SECTION (id="availability" — linked from the Calendar
+         tab's "Open more times" prompt; scroll-margin keeps it clear of the
+         fixed app header) -->
+    <h3 id="availability" style="scroll-margin-top: calc(76px + env(safe-area-inset-top, 0)); margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
       <i class="fas fa-calendar-alt"></i> Teaching Availability
     </h3>
 
@@ -2246,6 +2248,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
           await loadProfile();
           await loadAvailability();
+
+          // Arriving via a link to #availability (the Calendar tab's "Open more
+          // times" prompt): the browser's own jump happened before the profile
+          // form above filled in and pushed the section down, so jump again
+          // now that it's in its final place.
+          if (location.hash === '#availability') {
+            document.getElementById('availability')?.scrollIntoView({ block: 'start' });
+          }
 
           // Check Stripe payment setup status — auto-create account if needed
           const urlParams = new URLSearchParams(window.location.search);

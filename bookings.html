@@ -556,6 +556,65 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .empty-state a:hover { text-decoration: underline; }
 
+        /* ===== INSTRUCTOR: NO LESSONS BOOKED — ways to get the next one ===== */
+        .grow-intro { text-align: center; margin: 0.5rem 0 1.25rem; }
+        .grow-intro h3 { font-size: 1.1rem; font-weight: 700; color: #113448; margin: 0 0 0.25rem; }
+        .grow-intro p { color: #5f6b72; margin: 0; font-size: 0.95rem; }
+        .grow-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+        .grow-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .grow-card-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: #e3f5f3;
+            color: #0b6664;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+        }
+        .grow-card h4 { font-size: 1rem; font-weight: 700; color: #113448; margin: 0; }
+        .grow-card p { font-size: 0.88rem; color: #5f6b72; margin: 0; line-height: 1.5; flex: 1; }
+        .grow-btn {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border: none;
+            border-radius: 999px;
+            background: #0b6664;
+            color: white !important;
+            padding: 0.55rem 1.1rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none !important;
+            cursor: pointer;
+        }
+        .past-students { list-style: none; padding: 0; margin: 0; }
+        .past-students li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            border-top: 1px solid #eef1f0;
+        }
+        .past-students li:first-child { border-top: none; }
+        .past-student-name { font-weight: 600; color: #113448; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .past-students .grow-btn { padding: 0.4rem 0.9rem; font-size: 0.82rem; flex-shrink: 0; }
+
         .loading-state {
             text-align: center;
             padding: 2.5rem;
@@ -964,7 +1023,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- ===== UPCOMING LESSONS ===== -->
         <div class="section-header">
             <div class="section-icon"><i class="fas fa-graduation-cap"></i></div>
-            <h2>Upcoming Lessons</h2>
+            <h2 id="upcomingHeading">Upcoming Lessons</h2>
         </div>
         <div id="lessonsContainer">
             <!-- Placeholder cards until the real lessons render over them. -->
@@ -1006,7 +1065,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- ===== PREVIOUS LESSONS ===== -->
         <div class="section-header">
             <div class="section-icon" style="background: linear-gradient(135deg, #6c757d, #495057);"><i class="fas fa-history"></i></div>
-            <h2>Previous Lessons</h2>
+            <h2 id="previousHeading">Previous Lessons</h2>
         </div>
         <div id="previousLessonsContainer">
             <!-- Placeholder cards until the real lessons render over them. -->
@@ -1100,6 +1159,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let reviewedBookingIdsCache = new Set();
         let currentPreviousPage = 0;
 
+        // Set by routeProfileLink (which runs before loadLessons) — instructors
+        // get their own headings and empty states on this page (their
+        // "Calendar" tab) instead of the student "Browse instructors" prompt.
+        let isInstructorUser = false;
+
         // ===== AUTH =====
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
@@ -1149,6 +1213,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             try {
                 const snap = await getDoc(doc(db, 'instructors', uid));
                 const isInstructor = snap.exists();
+                isInstructorUser = isInstructor;
                 if (isInstructor) {
                     document.getElementById('myProfileLink').href = 'instructor-profile';
                 }
@@ -1160,6 +1225,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 if (shell) {
                     shell.setAttribute('role', isInstructor ? 'instructor' : 'student');
                     shell.setAttribute('active', isInstructor ? 'calendar' : 'none');
+                    // Instructors reach this page from their "Calendar" tab — name it that.
+                    if (isInstructor) shell.setAttribute('page-title', 'Calendar');
+                }
+                if (isInstructor) {
+                    const heroTitle = document.querySelector('.activity-hero h1');
+                    const heroSub = document.querySelector('.activity-hero p');
+                    if (heroTitle) heroTitle.textContent = 'My Calendar';
+                    if (heroSub) heroSub.textContent = 'Your teaching schedule';
                 }
             } catch (e) {}
         }
@@ -1262,8 +1335,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     } catch (e) {}
                 }
 
+                // Instructors who only teach (no lessons booked as a student)
+                // see headings written from the teacher's side.
+                if (isInstructorUser && !bookings.some(b => b.myRole === 'student')) {
+                    document.getElementById('upcomingHeading').textContent = "Lessons you're teaching";
+                    document.getElementById('previousHeading').textContent = "Lessons you've taught";
+                }
+
                 // Render upcoming lessons
-                if (upcoming.length === 0) {
+                if (upcoming.length === 0 && isInstructorUser) {
+                    renderInstructorNoLessons(container, previous);
+                } else if (upcoming.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-calendar-alt"></i>
@@ -1296,14 +1378,99 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // An instructor with nothing booked: instead of a dead end, the three
+        // things that actually lead to bookings — sharing their profile,
+        // opening more times, and inviting back students they've taught.
+        // (Deliberately not "message students on Connect": unsolicited pitches
+        // in learners' inboxes would cost the platform their trust.)
+        function renderInstructorNoLessons(container, previous) {
+            const profileUrl = `https://linguabud.com/instructor-profile?id=${encodeURIComponent(currentUser.uid)}`;
+
+            // Most recently taught first, one entry per student, up to three.
+            const pastStudents = [];
+            const seen = new Set();
+            previous
+                .filter(b => b.myRole === 'instructor' && b.studentId)
+                .forEach(b => {
+                    if (seen.has(b.studentId) || pastStudents.length >= 3) return;
+                    seen.add(b.studentId);
+                    pastStudents.push({ id: b.studentId, name: b.studentName || 'Student' });
+                });
+
+            const pastStudentsCard = pastStudents.length === 0 ? '' : `
+                <div class="grow-card">
+                    <div class="grow-card-icon"><i class="fas fa-comment-dots"></i></div>
+                    <h4>Invite a past student back</h4>
+                    <p>Students who've already had a lesson with you are the most likely to book again.</p>
+                    <ul class="past-students">
+                        ${pastStudents.map(s => `
+                            <li>
+                                <span class="past-student-name">${escapeHtml(s.name)}</span>
+                                <a class="grow-btn" href="messages?with=${encodeURIComponent(s.id)}"><i class="fas fa-paper-plane"></i> Message</a>
+                            </li>`).join('')}
+                    </ul>
+                </div>`;
+
+            container.innerHTML = `
+                <div class="grow-intro">
+                    <h3>No lessons booked right now</h3>
+                    <p>Here's how to get your next booking:</p>
+                </div>
+                <div class="grow-actions">
+                    <div class="grow-card">
+                        <div class="grow-card-icon"><i class="fas fa-share-alt"></i></div>
+                        <h4>Share your profile</h4>
+                        <p>Post your profile link on social media or send it on WhatsApp. Students can see your reviews and book you straight away.</p>
+                        <button type="button" class="grow-btn" id="shareProfileBtn"><i class="fas fa-link"></i> Share your link</button>
+                    </div>
+                    <div class="grow-card">
+                        <div class="grow-card-icon"><i class="fas fa-clock"></i></div>
+                        <h4>Open more times</h4>
+                        <p>The more times you're available, the easier it is for students to find one that suits them.</p>
+                        <a class="grow-btn" href="dashboard#availability"><i class="fas fa-calendar-plus"></i> Update availability</a>
+                    </div>
+                    ${pastStudentsCard}
+                </div>`;
+
+            const shareBtn = document.getElementById('shareProfileBtn');
+            shareBtn.addEventListener('click', async () => {
+                // The phone's own share sheet where there is one (WhatsApp,
+                // Instagram, Messages…); otherwise copy the link.
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: 'Book a lesson with me on Lingua Bud',
+                            text: "I teach on Lingua Bud — book a lesson with me (there's a free 15-minute trial):",
+                            url: profileUrl,
+                        });
+                        return;
+                    } catch (e) {
+                        if (e.name === 'AbortError') return; // closed the share sheet
+                    }
+                }
+                try {
+                    await navigator.clipboard.writeText(profileUrl);
+                    shareBtn.innerHTML = '<i class="fas fa-check"></i> Link copied';
+                } catch (e) {
+                    window.prompt('Copy your profile link:', profileUrl);
+                }
+                setTimeout(() => { shareBtn.innerHTML = '<i class="fas fa-link"></i> Share your link'; }, 2500);
+            });
+        }
+
         function renderPreviousLessonsPage() {
             const prevContainer = document.getElementById('previousLessonsContainer');
             const pagination = document.getElementById('prevLessonsPagination');
             const pageInfo = document.getElementById('prevPageInfo');
 
             if (allPreviousBookings.length === 0) {
-                prevContainer.innerHTML = `
-                    <div class="empty-state">
+                prevContainer.innerHTML = isInstructorUser
+                    ? `<div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>No lessons taught yet.</p>
+                        <p>Lessons you've taught will show up here.</p>
+                    </div>`
+                    : `<div class="empty-state">
                         <i class="fas fa-history"></i>
                         <p>No previous lessons yet.</p>
                     </div>`;
