@@ -1023,6 +1023,11 @@ const { RtcTokenBuilder, RtcRole } = require('agora-token');
 const functions = require('firebase-functions');
 
 exports.generateAgoraToken = onCall(async (request) => {
+  // Every token is billable Agora minutes, so only signed-in users may mint one
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'You must be signed in to join a video call');
+  }
+
   try {
     // Get channel name and UID from request
     const { channelName, uid } = request.data;
@@ -1052,7 +1057,9 @@ exports.generateAgoraToken = onCall(async (request) => {
 
     // Token configuration
     const role = RtcRole.PUBLISHER; // Allow both publishing and subscribing
-    const expirationTimeInSeconds = 3600 * 24; // 24 hours
+    // Short-lived on purpose: video-call.js renews it while the page is alive, so a
+    // frozen/abandoned tab gets disconnected by Agora (and stops billing) within 3h
+    const expirationTimeInSeconds = 3600 * 3; // 3 hours
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
 
