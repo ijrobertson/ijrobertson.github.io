@@ -634,7 +634,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v9"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v10"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
@@ -692,6 +692,72 @@ if ("serviceWorker" in navigator) {
   });
   window.addEventListener("pageshow", checkForUpdate);
 }
+
+// ── Press feedback on everything tappable ───────────────────────────────
+// Native apps answer a touch instantly (the thing under your finger dips,
+// then springs back on release) before any navigation or loading happens;
+// most of this app's buttons and cards did nothing visible until the next
+// page appeared. Applied page-wide from here rather than per element, since
+// these pages have hundreds of buttons/cards, many wired up in JS.
+// Uses the `scale` property via the Web Animations API, which composes with
+// (instead of replacing) any transform an element already has — e.g. the
+// cards' hover lift — and doesn't fight the pages' own CSS transitions.
+const PRESS_SKIP = "input, select, textarea, video, iframe, [contenteditable], lb-app-shell";
+let pressedEl = null;
+
+// The element a press on `target` should animate, or null: the nearest real
+// control, else — for cards made clickable in JS, visible only as
+// cursor:pointer — the outermost element of that pointer-cursor run.
+function pressTargetFor(target) {
+  if (!(target instanceof Element) || target.closest(PRESS_SKIP)) return null;
+  let el = target.closest('a[href], button, [role="button"], label[for], summary');
+  if (!el) {
+    for (let cur = target; cur && cur !== document.body && getComputedStyle(cur).cursor === "pointer"; cur = cur.parentElement) {
+      el = cur;
+    }
+  }
+  if (!el || el.disabled || el.getAttribute("aria-disabled") === "true") return null;
+  const style = getComputedStyle(el);
+  // Inline elements (links in running text) can't be scaled; fixed ones are
+  // usually overlays/backdrops; and anything covering the whole screen would
+  // read as the page lurching rather than a press. (Tall cards are fine —
+  // instructor cards are ~90% of a phone screen.)
+  if (style.display === "inline" || style.position === "fixed") return null;
+  const rect = el.getBoundingClientRect();
+  if (rect.width >= innerWidth && rect.height >= innerHeight) return null;
+  return el;
+}
+
+function pressIn(el) {
+  const rect = el.getBoundingClientRect();
+  // Same few pixels of travel whatever the size: small buttons dip visibly,
+  // big cards and full-width rows only slightly.
+  const scale = Math.min(0.98, Math.max(0.93, 1 - 8 / Math.max(rect.width, rect.height)));
+  el._lbPress?.cancel();
+  el._lbPress = el.animate([{ scale: "1" }, { scale: String(scale) }], { duration: 110, easing: "ease-out", fill: "forwards" });
+}
+
+function pressOut() {
+  const el = pressedEl;
+  if (!el) return;
+  pressedEl = null;
+  const from = getComputedStyle(el).scale;
+  el._lbPress?.cancel();
+  el._lbPress = el.animate([{ scale: from }, { scale: "1" }], { duration: 280, easing: "cubic-bezier(0.34, 1.5, 0.64, 1)" });
+}
+
+document.addEventListener("pointerdown", (e) => {
+  if (REDUCED_MOTION.matches || !e.isPrimary || e.button !== 0) return;
+  pressOut();
+  const el = pressTargetFor(e.target);
+  if (!el) return;
+  pressedEl = el;
+  pressIn(el);
+}, { passive: true });
+// pointercancel covers a touch that turns into a scroll; scroll covers the
+// rest (e.g. momentum on a mouse wheel mid-press).
+["pointerup", "pointercancel", "dragstart"].forEach((type) => document.addEventListener(type, pressOut, { passive: true }));
+document.addEventListener("scroll", pressOut, { passive: true, capture: true });
 
 if (!customElements.get("lb-app-shell")) {
   customElements.define("lb-app-shell", LbAppShell);
