@@ -1324,9 +1324,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- end of navbar -->
 
   <!-- Auth loading overlay — shown until Firebase resolves auth state -->
-  <div id="auth-loading" style="position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99998;">
-    <div style="width:44px;height:44px;border:4px solid #e8e8e8;border-top-color:#20bcba;border-radius:50%;animation:authSpin 0.9s linear infinite;"></div>
-    <p style="margin-top:1rem;color:#666;font-family:'Segoe UI',sans-serif;font-size:0.95rem;">Loading your dashboard...</p>
+  <!-- Placeholder while your account loads. Sits between the app header and
+       the tab bar — like the skeletons on every other tab — rather than
+       covering the whole screen, and stays until the profile has filled in
+       (see hideAuthLoading), so the form never flashes up empty. -->
+  <div id="auth-loading" style="position:fixed;left:0;right:0;top:calc(60px + env(safe-area-inset-top, 0px));bottom:calc(72px + env(safe-area-inset-bottom, 0px));background:inherit;z-index:900;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem;transition:opacity 0.2s ease;">
+    <div style="width:100%;max-width:720px;" aria-hidden="true">
+      <div style="background:#fff;border-radius:16px;padding:1.5rem;box-shadow:0 2px 12px rgba(0,0,0,0.06);text-align:center;margin-bottom:1rem;">
+        <span class="lb-skel lb-skel-circle" style="width:96px;height:96px;margin:0 auto 1rem;"></span>
+        <span class="lb-skel lb-skel-title" style="width:40%;margin:0 auto 10px;"></span>
+        <span class="lb-skel lb-skel-line" style="width:25%;margin:0 auto;"></span>
+      </div>
+      <div style="background:#fff;border-radius:16px;padding:1.5rem;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+        <span class="lb-skel lb-skel-line" style="width:30%;margin-bottom:10px;"></span>
+        <span class="lb-skel" style="height:42px;border-radius:10px;margin-bottom:18px;"></span>
+        <span class="lb-skel lb-skel-line" style="width:35%;margin-bottom:10px;"></span>
+        <span class="lb-skel" style="height:42px;border-radius:10px;margin-bottom:18px;"></span>
+        <span class="lb-skel lb-skel-line" style="width:25%;margin-bottom:10px;"></span>
+        <span class="lb-skel" style="height:90px;border-radius:10px;"></span>
+      </div>
+    </div>
+    <span class="lb-sr-only">Loading your settings…</span>
   </div>
   <style>@keyframes authSpin{to{transform:rotate(360deg)}}</style>
 
@@ -1768,16 +1786,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <lb-app-shell id="shell" page-title="Settings" active="none"></lb-app-shell>
 
   <!-- Scripts -->
-  <script src="js/jquery.min.js"></script>
-  <script src="js/popper.min.js"></script>
-  <script src="js/bootstrap.min.js"></script>
-  <script src="js/jquery.easing.min.js"></script>
-  <script src="js/swiper.min.js"></script>
-  <script src="js/jquery.magnific-popup.js"></script>
-  <script src="js/morphext.min.js"></script>
-  <script src="js/isotope.pkgd.min.js"></script>
-  <script src="js/validator.min.js"></script>
-  <script src="js/scripts.js"></script>
 
   <script type="module">
     import {
@@ -2191,12 +2199,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       });
 
       // Listen for auth state
+      // Fades out the settings placeholder (#auth-loading) once the profile
+      // has loaded — or straight away if something fails, so it can never
+      // hide the page for good.
+      function hideAuthLoading() {
+        const el = document.getElementById('auth-loading');
+        if (!el || el.style.display === 'none') return;
+        el.style.opacity = '0';
+        setTimeout(() => { el.style.display = 'none'; }, 200);
+      }
+      setTimeout(hideAuthLoading, 10000); // last-resort failsafe
+
       onAuthStateChanged(auth, async (user) => {
-        // Hide loading overlay once auth state is determined
         const loadingEl = document.getElementById('auth-loading');
-        if (loadingEl) loadingEl.style.display = 'none';
 
         if (user) {
+          // Both lookups at once rather than one after the other — they're
+          // independent, and this page can't show anything until both are in.
+          const instructorSnapPromise = getDoc(doc(db, 'instructors', user.uid));
+          instructorSnapPromise.catch(() => {}); // still awaited below; this just stops an early redirect leaving it "unhandled"
           // Guard: students must not access the instructor dashboard
           try {
             const userRoleSnap = await getDoc(doc(db, 'users', user.uid));
@@ -2215,7 +2236,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           currentUser = user;
 
           // Redirect pending/declined/no-profile instructors to the application page
-          const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+          const instructorSnap = await instructorSnapPromise;
           if (!instructorSnap.exists()) {
             window.location.href = 'instructor-apply';
             return;
@@ -2246,7 +2267,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             console.error('Shell role detection error:', error);
           }
 
-          await loadProfile();
+          try {
+            await loadProfile();
+          } finally {
+            hideAuthLoading();
+          }
           await loadAvailability();
 
           // Arriving via a link to #availability (the Calendar tab's "Open more

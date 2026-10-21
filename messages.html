@@ -2425,37 +2425,43 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 startPresenceHeartbeat(user.uid);
 
                 // Load profile picture — check both collections in parallel; prefer instructors
-                try {
-                    const [usersSnap, instructorsSnap] = await Promise.all([
-                        getDoc(doc(db, 'users', user.uid)),
-                        getDoc(doc(db, 'instructors', user.uid))
-                    ]);
-                    const isInstructor = instructorsSnap.exists();
-                    const userData = isInstructor ? instructorsSnap.data()
-                                   : usersSnap.exists() ? usersSnap.data() : null;
-                    if (userData) {
-                        currentUserName = userData.name || user.displayName || 'Someone';
-                        if (userData.avatar_url) {
-                            navProfilePic.src = userData.avatar_url;
-                            localStorage.setItem('nav_avatar', userData.avatar_url);
+                // Your own profile (name for call messages, avatar, role for the
+                // tab bar) loads in the background — the conversation list
+                // below doesn't need it, so it no longer waits a round trip
+                // for it before starting.
+                (async () => {
+                    try {
+                        const [usersSnap, instructorsSnap] = await Promise.all([
+                            getDoc(doc(db, 'users', user.uid)),
+                            getDoc(doc(db, 'instructors', user.uid))
+                        ]);
+                        const isInstructor = instructorsSnap.exists();
+                        const userData = isInstructor ? instructorsSnap.data()
+                                       : usersSnap.exists() ? usersSnap.data() : null;
+                        if (userData) {
+                            currentUserName = userData.name || user.displayName || 'Someone';
+                            if (userData.avatar_url) {
+                                navProfilePic.src = userData.avatar_url;
+                                localStorage.setItem('nav_avatar', userData.avatar_url);
+                            }
+                        } else {
+                            currentUserName = user.displayName || 'Someone';
                         }
-                    } else {
-                        currentUserName = user.displayName || 'Someone';
+                        // Point "My Profile" to the right dashboard
+                        const myProfileLink = document.getElementById('myProfileLink');
+                        if (myProfileLink) {
+                            myProfileLink.href = 'learner-profile';
+                        }
+    
+                        // Bottom tab bar (Phase 2, see docs/PWA_PRD.md §15): Messages
+                        // tab points here for both roles, so it's always correct to
+                        // highlight — only role needs setting.
+                        const shell = document.getElementById('shell');
+                        if (shell) shell.setAttribute('role', isInstructor ? 'instructor' : 'student');
+                    } catch (error) {
+                        console.error('Error loading profile:', error);
                     }
-                    // Point "My Profile" to the right dashboard
-                    const myProfileLink = document.getElementById('myProfileLink');
-                    if (myProfileLink) {
-                        myProfileLink.href = 'learner-profile';
-                    }
-
-                    // Bottom tab bar (Phase 2, see docs/PWA_PRD.md §15): Messages
-                    // tab points here for both roles, so it's always correct to
-                    // highlight — only role needs setting.
-                    const shell = document.getElementById('shell');
-                    if (shell) shell.setAttribute('role', isInstructor ? 'instructor' : 'student');
-                } catch (error) {
-                    console.error('Error loading profile:', error);
-                }
+                })();
 
                 // Show profile nav and hide sign in button
                 console.log('👁️ Showing profile nav wrapper');
@@ -2591,6 +2597,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let conversationListGesturesReady = false;
 
         async function loadConversations() {
+            loadContactCache();
             if (!conversationListGesturesReady) {
                 conversationListGesturesReady = true;
                 setupConversationListGestures();
@@ -2625,21 +2632,71 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // Fetch a user's display data from Firestore, preferring the instructors collection.
         // Results are cached so subsequent renders never hit the network.
-        async function getCachedUser(userId) {
-            if (userCache.has(userId)) return userCache.get(userId);
+        // Contacts' names/photos are also remembered on this device
+        // (localStorage, per signed-in user; cleared on sign-out by
+        // lib/firebaseClient.js), so the conversation list can draw straight
+        // away on the next visit instead of waiting on two reads per contact.
+        // An entry older than a day is still shown instantly, then refreshed
+        // in the background (refreshContact), so name/photo changes catch up.
+        const CONTACT_CACHE_FRESH_MS = 24 * 60 * 60 * 1000;
+        const contactCacheKey = () => `lb-contacts-${currentUser.uid}`;
+
+        function loadContactCache() {
             try {
-                const [userDoc, instructorDoc] = await Promise.all([
-                    getDoc(doc(db, 'users', userId)),
-                    getDoc(doc(db, 'instructors', userId))
-                ]);
-                const data = instructorDoc.exists() ? instructorDoc.data()
-                           : userDoc.exists()       ? userDoc.data()
-                           : null;
-                const result = data
-                    ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '', isInstructor: instructorDoc.exists() }
-                    : { name: 'Unknown User', avatar_url: '', isInstructor: false };
-                userCache.set(userId, result);
-                return result;
+                const saved = JSON.parse(localStorage.getItem(contactCacheKey()) || '{}');
+                Object.entries(saved).forEach(([id, v]) => { if (!userCache.has(id) && v && v.name) userCache.set(id, v); });
+            } catch (e) { /* storage unavailable — fall back to fetching */ }
+        }
+
+        function saveContactCache() {
+            try {
+                localStorage.setItem(contactCacheKey(), JSON.stringify(Object.fromEntries(userCache)));
+            } catch (e) { /* storage full or blocked — not critical */ }
+        }
+
+        async function fetchContact(userId) {
+            const [userDoc, instructorDoc] = await Promise.all([
+                getDoc(doc(db, 'users', userId)),
+                getDoc(doc(db, 'instructors', userId))
+            ]);
+            const data = instructorDoc.exists() ? instructorDoc.data()
+                       : userDoc.exists()       ? userDoc.data()
+                       : null;
+            const result = data
+                ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '', isInstructor: instructorDoc.exists() }
+                : { name: 'Unknown User', avatar_url: '', isInstructor: false };
+            result._at = Date.now();
+            userCache.set(userId, result);
+            saveContactCache();
+            return result;
+        }
+
+        // Background refresh of a stale remembered contact; updates any rows
+        // already drawn for them if their name or photo changed.
+        const refreshingContacts = new Set();
+        function refreshContact(userId) {
+            if (refreshingContacts.has(userId)) return;
+            refreshingContacts.add(userId);
+            const before = userCache.get(userId) || {};
+            fetchContact(userId).then((fresh) => {
+                if (fresh.name === before.name && fresh.avatar_url === before.avatar_url) return;
+                conversationsList.querySelectorAll(`.conversation-item[data-other-id="${CSS.escape(userId)}"]`).forEach((row) => {
+                    row.querySelector('.conversation-name').textContent = fresh.name;
+                    const img = row.querySelector('.conversation-avatar');
+                    img.src = fresh.avatar_url || DEFAULT_AVATAR;
+                    img.alt = fresh.name;
+                });
+            }).catch(() => {}).finally(() => refreshingContacts.delete(userId));
+        }
+
+        async function getCachedUser(userId) {
+            const cached = userCache.get(userId);
+            if (cached) {
+                if (!cached._at || Date.now() - cached._at > CONTACT_CACHE_FRESH_MS) refreshContact(userId);
+                return cached;
+            }
+            try {
+                return await fetchContact(userId);
             } catch {
                 return { name: 'Unknown User', avatar_url: '' };
             }
@@ -2651,6 +2708,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const item = document.createElement('div');
             item.className = 'conversation-item';
             item.dataset.convId = conv.id;
+            item.dataset.otherId = otherUserId;
             if (activeConversationId === conv.id) item.classList.add('active');
             item.innerHTML = `
                 <img class="conversation-avatar" src="${otherUser.avatar_url || DEFAULT_AVATAR}" onerror="this.src=DEFAULT_AVATAR" alt="${otherUser.name}">

@@ -340,6 +340,20 @@ const STYLE = `
      navigate between app screens. Visible-everywhere is the safe interim state. */
 `;
 
+// ── Warm up connections to Firebase ────────────────────────────────────
+// This module loads early on every app page (async, in <head>), well before
+// the page's own Firebase code runs. Opening the connections now (DNS + TLS)
+// means the first database read and the login token refresh don't each pay
+// a fresh connection set-up on a phone network.
+["https://firestore.googleapis.com", "https://www.gstatic.com", "https://securetoken.googleapis.com"].forEach((origin) => {
+  if (document.querySelector(`link[rel="preconnect"][href="${origin}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "preconnect";
+  link.href = origin;
+  link.crossOrigin = "anonymous";
+  document.head.appendChild(link);
+});
+
 const ROLE_STORAGE_KEY = "lb-shell-role";
 const GLIDE_STORAGE_KEY = "lb-tab-glide";
 const GLIDE_EASING = "cubic-bezier(0.2, 0.9, 0.1, 1)";
@@ -634,7 +648,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v17"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v18"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
