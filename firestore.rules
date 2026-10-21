@@ -427,10 +427,12 @@ service cloud.firestore {
         resource.data.instructorId == request.auth.uid ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
-      // Approved instructors only (each one emails the student)
+      // Instructors only, not pending/declined applicants (each one emails the
+      // student). Older approved instructors may have no status field at all.
       allow create: if request.auth != null &&
         request.resource.data.instructorId == request.auth.uid &&
-        get(/databases/$(database)/documents/instructors/$(request.auth.uid)).data.get('status', '') == 'approved';
+        exists(/databases/$(database)/documents/instructors/$(request.auth.uid)) &&
+        !(get(/databases/$(database)/documents/instructors/$(request.auth.uid)).data.get('status', '') in ['pending', 'declined']);
       allow update: if request.auth != null &&
         request.auth.uid == resource.data.studentId &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seenByStudent', 'completedByStudent', 'completedAt']);
