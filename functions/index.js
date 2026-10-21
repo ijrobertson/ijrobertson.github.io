@@ -48,15 +48,45 @@ function buildGoogleOAuth2Client() {
   );
 }
 
+// OAuth tokens live in googleCalendarTokens/{instructorId}, which Firestore
+// rules close to all clients. They used to sit on the public instructors doc,
+// where anyone could read them; the instructors doc now only carries
+// googleCalendar: { connected, connectedAt } for the dashboard.
+function googleCalendarTokensRef(instructorId) {
+  return admin.firestore().collection('googleCalendarTokens').doc(instructorId);
+}
+
+/**
+ * The instructor's Google Calendar tokens, or null if not connected. Tokens
+ * still on the public instructors doc from before the move are migrated on
+ * first use.
+ */
+async function getGoogleCalendarTokens(instructorId) {
+  const privateSnap = await googleCalendarTokensRef(instructorId).get();
+  if (privateSnap.exists && privateSnap.data().refreshToken) return privateSnap.data();
+
+  const instructorRef = admin.firestore().collection('instructors').doc(instructorId);
+  const legacy = (await instructorRef.get()).data()?.googleCalendar;
+  if (!legacy?.connected || !legacy?.refreshToken) return null;
+  const tokens = {
+    accessToken:  legacy.accessToken || null,
+    refreshToken: legacy.refreshToken,
+    tokenExpiry:  legacy.tokenExpiry || null,
+    connectedAt:  legacy.connectedAt || admin.firestore.FieldValue.serverTimestamp()
+  };
+  await googleCalendarTokensRef(instructorId).set(tokens, { merge: true });
+  await instructorRef.update({ googleCalendar: { connected: true, connectedAt: tokens.connectedAt } });
+  return tokens;
+}
+
 /**
  * Creates a Google Calendar event for a booking on the instructor's connected calendar.
  * Non-fatal — logs errors rather than throwing so booking flow is never blocked.
  */
 async function syncBookingToGoogleCalendar(instructorId, booking, bookingId) {
   try {
-    const instructorSnap = await admin.firestore().collection('instructors').doc(instructorId).get();
-    const gcal = instructorSnap.data()?.googleCalendar;
-    if (!gcal?.connected || !gcal?.refreshToken) return;
+    const gcal = await getGoogleCalendarTokens(instructorId);
+    if (!gcal?.refreshToken) return;
 
     const oauth2Client = buildGoogleOAuth2Client();
     oauth2Client.setCredentials({
@@ -67,10 +97,10 @@ async function syncBookingToGoogleCalendar(instructorId, booking, bookingId) {
 
     // Persist any refreshed tokens back to Firestore automatically
     oauth2Client.on('tokens', async (tokens) => {
-      const update = { 'googleCalendar.accessToken': tokens.access_token };
-      if (tokens.refresh_token) update['googleCalendar.refreshToken'] = tokens.refresh_token;
-      if (tokens.expiry_date) update['googleCalendar.tokenExpiry'] = tokens.expiry_date;
-      await admin.firestore().collection('instructors').doc(instructorId).update(update);
+      const update = { accessToken: tokens.access_token };
+      if (tokens.refresh_token) update.refreshToken = tokens.refresh_token;
+      if (tokens.expiry_date) update.tokenExpiry = tokens.expiry_date;
+      await googleCalendarTokensRef(instructorId).set(update, { merge: true });
     });
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
@@ -4778,18 +4808,25 @@ exports.sendHomeworkNotification = onDocumentCreated(
 
 // ── Google Calendar Sync ───────────────────────────────────────────────────
 
+const GCAL_STATE_MAX_AGE_MS = 15 * 60 * 1000;
+
 /**
  * Returns a Google OAuth URL for the instructor to authorize calendar access.
- * The state param carries the instructor's UID so the callback can store tokens.
+ * The state param is "<uid>.<one-time nonce>": the nonce is stored privately
+ * and checked by the callback, so nobody can link their own Google account
+ * to someone else's profile by forging the state.
  */
 exports.googleCalendarAuthUrl = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+
+  const nonce = randomUUID();
+  await googleCalendarTokensRef(request.auth.uid).set({ oauthState: nonce, oauthStateAt: Date.now() }, { merge: true });
 
   const oauth2Client = buildGoogleOAuth2Client();
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/calendar.events'],
-    state: request.auth.uid,
+    state: `${request.auth.uid}.${nonce}`,
     prompt: 'consent'  // always get a refresh token
   });
 
@@ -4802,25 +4839,37 @@ exports.googleCalendarAuthUrl = onCall(async (request) => {
  * Redirects back to the dashboard with ?gcal=connected (or ?gcal=error on failure).
  */
 exports.googleCalendarCallback = onRequest(async (req, res) => {
-  const { code, state: instructorId, error } = req.query;
+  const { code, state, error } = req.query;
+  const [instructorId, nonce] = String(state || '').split('.');
 
-  if (error || !code || !instructorId) {
+  if (error || !code || !instructorId || !nonce) {
     console.error('[GCal] OAuth callback error:', error || 'missing code/state');
     return res.redirect('https://linguabud.com/dashboard?gcal=error');
   }
 
   try {
+    // The state must be the one googleCalendarAuthUrl just issued to this instructor
+    const tokensRef = googleCalendarTokensRef(instructorId);
+    const pending = (await tokensRef.get()).data() || {};
+    if (pending.oauthState !== nonce || Date.now() - (pending.oauthStateAt || 0) > GCAL_STATE_MAX_AGE_MS) {
+      console.error(`[GCal] Rejected callback for ${instructorId}: state missing, wrong or expired`);
+      return res.redirect('https://linguabud.com/dashboard?gcal=error');
+    }
+
     const oauth2Client = buildGoogleOAuth2Client();
     const { tokens } = await oauth2Client.getToken(code);
+    const connectedAt = admin.firestore.FieldValue.serverTimestamp();
 
+    await tokensRef.set({
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      tokenExpiry: tokens.expiry_date || null,
+      connectedAt,
+      oauthState: admin.firestore.FieldValue.delete(),
+      oauthStateAt: admin.firestore.FieldValue.delete()
+    }, { merge: true });
     await admin.firestore().collection('instructors').doc(instructorId).update({
-      googleCalendar: {
-        connected: true,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        tokenExpiry: tokens.expiry_date || null,
-        connectedAt: admin.firestore.FieldValue.serverTimestamp()
-      }
+      googleCalendar: { connected: true, connectedAt }
     });
 
     console.log(`[GCal] Tokens stored for instructor ${instructorId}`);
@@ -4837,7 +4886,15 @@ exports.googleCalendarCallback = onRequest(async (req, res) => {
 exports.googleCalendarDisconnect = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
 
-  await admin.firestore().collection('instructors').doc(request.auth.uid).update({
+  const uid = request.auth.uid;
+  // Revoke with Google too, so the token is dead rather than just forgotten
+  const gcal = await getGoogleCalendarTokens(uid).catch(() => null);
+  if (gcal?.refreshToken) {
+    await buildGoogleOAuth2Client().revokeToken(gcal.refreshToken)
+      .catch(err => console.warn(`[GCal] Revoke failed for ${uid}:`, err.message));
+  }
+  await googleCalendarTokensRef(uid).delete();
+  await admin.firestore().collection('instructors').doc(uid).update({
     googleCalendar: admin.firestore.FieldValue.delete()
   });
 

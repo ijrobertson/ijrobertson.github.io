@@ -153,6 +153,12 @@ service cloud.firestore {
                     && request.resource.data.status in ['accepted', 'declined'];
     }
 
+    // Google Calendar OAuth tokens (see functions/index.js getGoogleCalendarTokens).
+    // Cloud Functions only — these grant access to the instructor's calendar.
+    match /googleCalendarTokens/{instructorId} {
+      allow read, write: if false;
+    }
+
     // Email log collection (only Cloud Functions can write)
     match /emailLog/{logId} {
       // No client reads or writes - this is for server-side logging only
