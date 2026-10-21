@@ -1552,6 +1552,41 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return 'Available ' + date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
 
+        function isPaymentReady(instructor) {
+            return (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) ||
+                   (instructor.payoutMethod === 'wise' && !!instructor.wiseEmail);
+        }
+
+        // Hand-picked instructors, in display order. They sit directly below
+        // instructors who have reviews, so newly rated instructors move
+        // ahead of them automatically. (Kept in sync with main's instructors.html.)
+        const FEATURED_INSTRUCTOR_IDS = [
+            'YQW6oZ5e9ycWsAWeDaet5vMOeic2', // B. Michael James Crowe
+            'njp0QrFfRwhB76J7onZ3tt0YTym1', // Melissa
+            '2zo8BNoviLfo8Ld9JbxJUV8gJb62', // Alicia Velásquez
+            'E0ZH8A0BiQe51wwh2tuzaDkJUMd2'  // Sara Hoyos
+        ];
+
+        // "Recommended" order: reviewed instructors with open availability,
+        // then the featured list, then everyone else (bookable soon first,
+        // then those with an intro video)
+        function recommendedScore(instructor) {
+            const next = getNextAvailableDate(availabilityMap[instructor.id]);
+            const rated = instructor.reviewCount > 0;
+            const featuredIndex = FEATURED_INSTRUCTOR_IDS.indexOf(instructor.id);
+            let score = 0;
+            if (next) {
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const days = Math.round((next.getTime() - today.getTime()) / 86400000);
+                score += 1000 + (days <= 1 ? 5 : days <= 3 ? 3 : 0);
+                if (rated) score += 1000;
+            }
+            if (rated) score += 20 + (instructor.averageRating || 0) * 2 + Math.min(instructor.reviewCount, 10);
+            if (featuredIndex !== -1 && score < 1500) score = 1500 - featuredIndex;
+            if (instructor.intro_video_url) score += 10;
+            return score;
+        }
+
         async function fetchInstructors() {
             try {
                 // Fetch instructors and availability in parallel
@@ -1661,11 +1696,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 return matchesLang && matchesCountry && matchesPrice && matchesName;
             });
 
-            filtered.sort((a, b) => {
-                const aReady = (a.chargesEnabled === true && a.payoutsEnabled === true) || (a.payoutMethod === 'wise' && !!a.wiseEmail) ? 1 : 0;
-                const bReady = (b.chargesEnabled === true && b.payoutsEnabled === true) || (b.payoutMethod === 'wise' && !!b.wiseEmail) ? 1 : 0;
-                return bReady - aReady;
-            });
+            // Same "Recommended" order as the main website (instructors.html on
+            // main): bookable instructors first, ranked by recommendedScore —
+            // reviewed instructors with open availability, then the featured
+            // list, then everyone else. Instructors who can't take paid
+            // bookings yet (hidden on the website) stay at the bottom here.
+            filtered.sort((a, b) =>
+                (isPaymentReady(b) ? 1 : 0) - (isPaymentReady(a) ? 1 : 0) ||
+                recommendedScore(b) - recommendedScore(a));
 
             if (filtered.length === 0) {
                 instructorGrid.innerHTML = '<div class="no-results"><i class="fas fa-chalkboard-teacher" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No instructors found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';

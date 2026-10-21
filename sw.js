@@ -115,7 +115,8 @@ if (self.workbox) {
     // v17 (same day): Learn page (home.html) gains the Adventures card + drawer row.
     // v18 (2026-10-21): faster tabs — Messages, Settings (both roles) and Connect.
     // v19: rollback of the v18 speed changes (Messages/Settings failed to load on iPhone).
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v19" })
+    // v20 (2026-10-21): Instructors tab uses the main website's recommended order.
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v20" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -188,7 +189,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v25", // v25: rollback of v24 (offline-cache change broke iPhone); v24: Firestore offline cache (lib/firebaseClient.js), Firebase preconnect (app-shell.js); v23: PAGES_CACHE_NAME sync in app-shell.js; v22: js/adventures.js, js/flag-emoji.js, tokens.css .flag-emoji, page-transitions depths; v21: video-call pre-join back/Not now buttons; v20: video-call.js/.css/.html synced with main (screen-share rewrite) + overlay layout; v19: video-call.js screen-share token uid; v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
+      cacheName: "linguabud-assets-v26", // v26: PAGES_CACHE_NAME sync in app-shell.js; v25: rollback of v24 (offline-cache change broke iPhone); v24: Firestore offline cache (lib/firebaseClient.js), Firebase preconnect (app-shell.js); v23: PAGES_CACHE_NAME sync in app-shell.js; v22: js/adventures.js, js/flag-emoji.js, tokens.css .flag-emoji, page-transitions depths; v21: video-call pre-join back/Not now buttons; v20: video-call.js/.css/.html synced with main (screen-share rewrite) + overlay layout; v19: video-call.js screen-share token uid; v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -239,6 +240,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v22"),
       caches.delete("linguabud-assets-v23"),
       caches.delete("linguabud-assets-v24"),
+      caches.delete("linguabud-assets-v25"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
@@ -257,6 +259,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-pages-v16"),
       caches.delete("linguabud-pages-v17"),
       caches.delete("linguabud-pages-v18"),
+      caches.delete("linguabud-pages-v19"),
     ])
   );
 });
