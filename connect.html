@@ -1231,16 +1231,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 updatePartnerCountBadge(allUsers.length);
                 populateFilterOptions(allUsers);
 
-                // Cards first: online dots and friend-request buttons fill in
-                // once those load. Waiting for them used to hold the whole
-                // grid back behind one presence read per student (hundreds on
-                // the real site).
-                renderUsers();
-
                 if (currentUser) {
                     await Promise.all([loadPresenceMap(allUsers), loadFriendRequestState()]);
-                    renderUsers();
                 }
+
+                renderUsers();
             } catch (error) {
                 console.error('Error fetching users:', error);
                 userGrid.innerHTML = `<div class="no-results"><div>Error loading users: ${escapeHtml(error.message)}</div><div style="margin-top:0.5rem;color:#999;">Please check the console for details.</div></div>`;
