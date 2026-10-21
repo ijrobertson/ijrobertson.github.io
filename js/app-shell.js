@@ -253,6 +253,31 @@ const STYLE = `
   }
   .profile-dropdown a:hover, .profile-dropdown button:hover { background: var(--lb-color-surface-0, #fbfbfb); }
   .profile-dropdown .menu-logout { color: var(--danger); border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px; }
+  /* Night mode switch (js/theme.js) */
+  .profile-dropdown .menu-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .switch {
+    position: relative;
+    flex: none;
+    width: 34px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--lb-color-border-strong, #d7dbd8);
+    transition: background var(--lb-duration-fast, 150ms);
+  }
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: transform var(--lb-duration-fast, 150ms);
+  }
+  .menu-toggle[aria-checked="true"] .switch { background: var(--accent); }
+  .menu-toggle[aria-checked="true"] .switch::after { transform: translateX(14px); }
 
   nav {
     position: fixed;
@@ -521,6 +546,10 @@ class LbAppShell extends HTMLElement {
     const backHref = this.getAttribute("back-href");
     const items = this._nav || NAV_BY_ROLE[role];
     const menuItems = this._profileMenu || PROFILE_MENU_BY_ROLE[role];
+    const night = !!window.lbTheme?.isNight();
+    const nightToggle = `<button type="button" class="menu-toggle" id="nightToggle" role="menuitemcheckbox" aria-checked="${night}">
+                  <span>Night mode</span><span class="switch" aria-hidden="true"></span>
+                </button>`;
 
     this.shadowRoot.innerHTML = `
       <style>${STYLE}</style>
@@ -545,7 +574,11 @@ class LbAppShell extends HTMLElement {
             </button>
             <div class="profile-dropdown${this._menuOpen ? " open" : ""}" role="menu">
               ${menuItems
-                .map((item) => `<a href="${item.href}" role="menuitem" data-id="${item.id}" class="${item.id === "logout" ? "menu-logout" : ""}">${item.label}</a>`)
+                .map((item) => {
+                  const link = `<a href="${item.href}" role="menuitem" data-id="${item.id}" class="${item.id === "logout" ? "menu-logout" : ""}">${item.label}</a>`;
+                  // Night mode switch sits just above Logout
+                  return item.id === "logout" && window.lbTheme ? nightToggle + link : link;
+                })
                 .join("")}
             </div>
           </div>
@@ -602,6 +635,13 @@ class LbAppShell extends HTMLElement {
       menuBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
         this._menuOpen = !this._menuOpen;
+        this._render();
+      });
+
+      // Stays open after toggling so the change is visible right away
+      this.shadowRoot.getElementById("nightToggle")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.lbTheme.set(!window.lbTheme.isNight());
         this._render();
       });
 
