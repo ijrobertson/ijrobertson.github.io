@@ -1,8 +1,8 @@
-const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onDocumentCreated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const { Resend } = require('resend');
 const Stripe = require('stripe');
-const { randomUUID } = require('crypto');
+const { randomUUID, createHash } = require('crypto');
 const { google } = require('googleapis');
 const { processLessonReminders } = require('./lessonReminders');
 
@@ -3164,15 +3164,56 @@ exports.cancelBooking = onCall(async (request) => {
  * Submits a student review for a completed lesson.
  * Atomically writes the review and updates instructor averageRating + reviewCount.
  */
+const REVIEW_YES_NO_FIELDS = ['lessonStructure', 'clarity', 'engagement', 'progress', 'wouldRecommend'];
+
+/**
+ * The student's most recent finished, non-cancelled lesson with this
+ * instructor that hasn't been reviewed yet (the post-call rating popup
+ * knows the instructor but not the booking). Null if there isn't one.
+ */
+async function findReviewableBookingId(studentId, instructorId) {
+  const db = admin.firestore();
+  const snap = await db.collection('bookings')
+    .where('studentId', '==', studentId)
+    .where('instructorId', '==', instructorId)
+    .get();
+  const cutoff = Date.now() - 55 * 60 * 1000;
+  const candidates = snap.docs
+    .filter(d => d.data().status !== 'cancelled' && d.data().dateTime?.toDate?.().getTime() <= cutoff)
+    .sort((a, b) => b.data().dateTime.toMillis() - a.data().dateTime.toMillis());
+  for (const d of candidates) {
+    const reviewed = await db.collection('reviews').where('bookingId', '==', d.id).limit(1).get();
+    if (reviewed.empty) return d.id;
+  }
+  return null;
+}
+
 exports.submitReview = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
 
-  const { bookingId, rating, review } = request.data;
-  if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required');
+  const { rating, review, instructorId } = request.data;
   if (!rating || !Number.isInteger(rating) || rating < 1 || rating > 5)
     throw new HttpsError('invalid-argument', 'Rating must be an integer 1–5');
+  if (review !== undefined && review !== null && (typeof review !== 'string' || review.length > 2000))
+    throw new HttpsError('invalid-argument', 'Review must be under 2000 characters');
+  const answers = {};
+  for (const f of REVIEW_YES_NO_FIELDS) {
+    const v = request.data[f];
+    if (v !== undefined && v !== null && typeof v !== 'boolean') throw new HttpsError('invalid-argument', `${f} must be true/false`);
+    if (typeof v === 'boolean') answers[f] = v;
+  }
 
   const studentId = request.auth.uid;
+
+  // Reviews must be tied to a real lesson: either the booking the student
+  // picked on the Bookings page, or their latest finished lesson with this
+  // instructor (post-call popup). Clients can no longer write reviews directly.
+  let bookingId = request.data.bookingId;
+  if (!bookingId && typeof instructorId === 'string' && instructorId) {
+    bookingId = await findReviewableBookingId(studentId, instructorId);
+    if (!bookingId) throw new HttpsError('failed-precondition', 'You can review this lesson from your Bookings page once it has finished.');
+  }
+  if (!bookingId) throw new HttpsError('invalid-argument', 'bookingId is required');
 
   // Verify booking exists and belongs to this student
   const bookingRef = admin.firestore().collection('bookings').doc(bookingId);
@@ -3180,6 +3221,7 @@ exports.submitReview = onCall(async (request) => {
   if (!bookingSnap.exists) throw new HttpsError('not-found', 'Booking not found');
   const booking = bookingSnap.data();
   if (booking.studentId !== studentId) throw new HttpsError('permission-denied', 'Not your booking');
+  if (booking.status === 'cancelled') throw new HttpsError('failed-precondition', 'This lesson was cancelled');
 
   // Verify lesson has ended (lesson start + 55 min)
   const lessonTime = booking.dateTime.toDate();
@@ -3213,6 +3255,7 @@ exports.submitReview = onCall(async (request) => {
       studentName,
       rating,
       review: (review || '').trim(),
+      ...answers,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
@@ -3660,6 +3703,28 @@ async function unpayableEarningReason(db, earning, seenPaymentIntents) {
  * For Stripe instructors → payoutStatus = 'paid' (funds go automatically via Connect).
  * For Wise instructors  → payoutStatus = 'pending' (admin pays manually).
  */
+/**
+ * Keeps bookedSlots/{bookingId} = { instructorId, dateTime, durationMinutes }
+ * in step with confirmed bookings. Booking pages read this public, minimal
+ * mirror to grey out taken slots, so the bookings themselves (student names,
+ * payments) only need to be readable by the two people involved.
+ */
+exports.syncBookedSlot = onDocumentWritten('bookings/{bookingId}', async (event) => {
+  const after = event.data?.after?.exists ? event.data.after.data() : null;
+  const slotRef = admin.firestore().collection('bookedSlots').doc(event.params.bookingId);
+  if (!after || after.status !== 'confirmed' || !after.instructorId || !after.dateTime) {
+    await slotRef.delete();
+    return null;
+  }
+  await slotRef.set({
+    instructorId:    after.instructorId,
+    dateTime:        after.dateTime,
+    durationMinutes: after.durationMinutes || 60,
+    status:          'confirmed'
+  });
+  return null;
+});
+
 exports.createEarningsRecord = onDocumentCreated('bookings/{bookingId}', async (event) => {
   try {
     const booking = event.data.data();
@@ -5103,6 +5168,22 @@ exports.sendCustomPasswordReset = onCall(async (request) => {
     throw new HttpsError('invalid-argument', 'A valid email address is required.');
   }
 
+  // Anyone can call this, so cap it per address (1 a minute, 5 a day) to stop
+  // it being used to flood someone's inbox. Same reply either way.
+  const db = admin.firestore();
+  const throttleRef = db.collection('passwordResetThrottle').doc(createHash('sha256').update(email).digest('hex'));
+  const allowed = await db.runTransaction(async (tx) => {
+    const now = Date.now();
+    const sent = ((await tx.get(throttleRef)).data()?.sentAt || []).filter(t => now - t < 24 * 60 * 60 * 1000);
+    if (sent.length >= 5 || (sent.length && now - sent[sent.length - 1] < 60 * 1000)) return false;
+    tx.set(throttleRef, { sentAt: [...sent, now] });
+    return true;
+  });
+  if (!allowed) {
+    console.log('[PasswordReset] Throttled a request');
+    return { success: true };
+  }
+
   try {
     const resetLink = await admin.auth().generatePasswordResetLink(email);
     const oobCode = new URL(resetLink).searchParams.get('oobCode');
@@ -5188,7 +5269,7 @@ exports.sendCustomPasswordReset = onCall(async (request) => {
   } catch (err) {
     if (err instanceof HttpsError) throw err;
     // user-not-found: return success anyway to prevent email enumeration
-    if (err.code === 'auth/user-not-found') {
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/email-not-found') {
       console.log(`[PasswordReset] No account for ${email}, returning success silently.`);
       return { success: true };
     }
