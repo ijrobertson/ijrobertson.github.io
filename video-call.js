@@ -54,6 +54,9 @@ const state = {
     isCameraOff: false,
     cameraFacingMode: 'user', // 'user' (front) or 'environment' (back) — mobile only
     cameraRetrying: false,    // guards concurrent retryCamera() calls
+    micRestarting: false,     // guards concurrent restartMic() calls
+    media: null,              // MEDIA RECOVERY bookkeeping while in a call
+    mediaWatchInterval: null,
     playbackDeviceId: null,   // speaker chosen in the pre-join device check (Chrome/Edge only)
     channelName: '',
     wasCallActive: false,
@@ -476,7 +479,7 @@ async function initAgora() {
     });
     // Diagnostics only
     state.client.on('connection-state-change', (cur, prev, reason) => diag('conn_state', { cur, prev, reason }));
-    state.client.on('exception', e => diag('exception', { code: e.code, msg: e.msg, uid: e.uid }));
+    state.client.on('exception', e => { diag('exception', { code: e.code, msg: e.msg, uid: e.uid }); onLocalBitrateException(e); });
     state.client.on('user-joined', user => diag('remote_joined', { uid: user.uid }));
     state.client.on('user-info-updated', (uid, msg) => diag('remote_info', { uid, msg }));
 }
@@ -488,9 +491,12 @@ function installDeviceHooks() {
         diag('camera_changed', { state: info.state, label: info.device?.label });
         refreshPreviewDeviceLists();
         if (info.state === 'ACTIVE' && !state.localVideoTrack) retryCamera({ silent: true });
+        // Webcam reset under us (seen on Windows): the old track is dead even though it still exists
+        else if (info.state === 'ACTIVE' && isMediaTrackDead(state.localVideoTrack)) restartCamera();
     };
     AgoraRTC.onMicrophoneChanged = info => {
         diag('mic_changed', { state: info.state, label: info.device?.label });
+        if (info.state === 'ACTIVE' && state.localAudioTrack && isMediaTrackDead(state.localAudioTrack)) restartMic();
         refreshPreviewDeviceLists();
     };
     AgoraRTC.onPlaybackDeviceChanged = info => {
@@ -637,6 +643,7 @@ async function joinChannel() {
         state.callTimerInterval = setInterval(updateCallTimer, 1000);
         updateCallTimer();
         startCallLimits();
+        startMediaWatch();
 
         // Update UI
         vcRoomName.textContent = channel;
@@ -668,6 +675,7 @@ async function leaveChannel() {
     clearTimeout(state.controlsHideTimer);
     clearInterval(state.callTimerInterval);
     stopCallLimits();
+    stopMediaWatch();
     state.callStartTime = null;
     callDuration.textContent = '00:00';
 
@@ -1067,6 +1075,7 @@ function handleUserLeft(user, reason) {
     }
 
     const leavingName = state.remoteUserNames[user.uid] || 'Participant';
+    setRemoteAway(false);
     delete state.remoteUsers[user.uid];
     if (realRemoteUidCount() === 0) {
         vcWaiting.style.display = 'flex';
@@ -1188,6 +1197,177 @@ function setLocalMicUnavailable(unavailable) {
     btnMute.title = unavailable ? 'No microphone detected' : 'Mute (M)';
     const pipMute = $('pip-mute-btn');
     if (pipMute) pipMute.disabled = unavailable;
+}
+
+// ════════════════════════════════════════════════════════════
+// MEDIA RECOVERY — camera/mic that die mid-call
+// ════════════════════════════════════════════════════════════
+// A track can stop delivering anything while still "existing", and the call
+// never noticed: a laptop webcam resetting (Windows reports it gone and back
+// a few seconds later), or iOS taking the camera/mic for a phone call and
+// never giving them back (long-standing WebKit bug). Watch for that and swap
+// in a fresh track instead of making people leave and rejoin.
+
+const MEDIA_CHECK_MS        = 2000;
+const MEDIA_DEAD_GRACE_MS   = 4000;   // muted by the OS / sending nothing for this long → restart
+const MEDIA_RESTART_GAP_MS  = 15000;  // don't restart the same device more often than this
+
+function isMediaTrackDead(track) {
+    const mst = track?.getMediaStreamTrack?.();
+    return !mst || mst.readyState === 'ended';
+}
+
+function isMediaTrackOsMuted(track) {
+    return !!track?.getMediaStreamTrack?.()?.muted;
+}
+
+function startMediaWatch() {
+    state.media = { camBadSince: null, micBadSince: null, lowAudioSince: null, lowVideoSince: null, lastCamRestart: 0, lastMicRestart: 0 };
+    clearInterval(state.mediaWatchInterval);
+    state.mediaWatchInterval = setInterval(() => checkMediaHealth(), MEDIA_CHECK_MS);
+}
+
+function stopMediaWatch() {
+    clearInterval(state.mediaWatchInterval);
+    state.mediaWatchInterval = null;
+    state.media = null;
+}
+
+/**
+ * Restart the camera/mic if it has died. Only while the page is visible:
+ * phones pause capture in the background on purpose and resume it on return.
+ * `immediate` skips the grace period (used right after coming back to the app).
+ */
+async function checkMediaHealth({ immediate = false } = {}) {
+    const m = state.media;
+    if (!m || state.client?.connectionState !== 'CONNECTED' || document.visibilityState !== 'visible') return;
+    const now = Date.now();
+    const overdue = since => since != null && (immediate || now - since >= MEDIA_DEAD_GRACE_MS);
+
+    if (state.localVideoTrack) {
+        const bad = isMediaTrackDead(state.localVideoTrack) || isMediaTrackOsMuted(state.localVideoTrack)
+            || (!state.isCameraOff && m.lowVideoSince != null);
+        m.camBadSince = bad ? (m.camBadSince ?? now) : null;
+        if (overdue(m.camBadSince) && now - m.lastCamRestart > MEDIA_RESTART_GAP_MS) restartCamera();
+    }
+    if (state.localAudioTrack) {
+        const bad = isMediaTrackDead(state.localAudioTrack) || isMediaTrackOsMuted(state.localAudioTrack)
+            || (!state.isMuted && m.lowAudioSince != null);
+        m.micBadSince = bad ? (m.micBadSince ?? now) : null;
+        if (overdue(m.micBadSince) && now - m.lastMicRestart > MEDIA_RESTART_GAP_MS) restartMic();
+    }
+}
+
+/** Agora's "sending (almost) nothing" warnings — the clearest sign a device went silent. */
+function onLocalBitrateException(e) {
+    const m = state.media;
+    if (!m || e.uid != null && String(e.uid) !== String(state.wbMyUid)) return;
+    const code = Number(e.code);
+    if (code === 2003) m.lowAudioSince = m.lowAudioSince ?? Date.now();
+    if (code === 4003) m.lowAudioSince = null;
+    if (code === 1003) m.lowVideoSince = m.lowVideoSince ?? Date.now();
+    if (code === 3003) m.lowVideoSince = null;
+}
+
+async function restartCamera() {
+    const old = state.localVideoTrack;
+    if (!old || state.cameraRetrying || !state.client) return;
+    state.cameraRetrying = true;
+    if (state.media) { state.media.lastCamRestart = Date.now(); state.media.camBadSince = null; state.media.lowVideoSince = null; }
+    const deviceId = trackDeviceId(old);
+    diag('camera_restart', { cam: trackLabel(old), ended: isMediaTrackDead(old), osMuted: isMediaTrackOsMuted(old) });
+    try {
+        // Release the dead camera first: on Windows a still-open handle to a
+        // reset webcam is what makes it look "in use by another app".
+        await state.client.unpublish(old).catch(() => {});
+        old.close();
+        state.localVideoTrack = null;
+
+        const config = isMobilePhone() ? { facingMode: state.cameraFacingMode } : (deviceId ? { cameraId: deviceId } : {});
+        const track = await AgoraRTC.createCameraVideoTrack(config)
+            .catch(() => AgoraRTC.createCameraVideoTrack());
+        if (state.client?.connectionState !== 'CONNECTED') { track.close(); return; }
+        track.setMuted(state.isCameraOff);
+        state.localVideoTrack = track;
+        localStream.innerHTML = '';
+        track.play(localStream);
+        setLocalCameraUnavailable(false);
+        await state.client.publish(track);
+        updateSwitchCameraAvailability();
+        diag('camera_restart_ok', { cam: trackLabel(track) });
+        showToast('Camera reconnected', 'success');
+    } catch (err) {
+        console.warn('Camera restart failed:', err);
+        diag('camera_restart_failed', errInfo(err));
+        // No track now, so retryCamera() picks it up when the device comes back
+        // (AgoraRTC.onCameraChanged) or when the camera button is tapped.
+        setLocalCameraUnavailable(true);
+        showToast(`${cameraErrorMessage(err)} — tap the camera button to try again`, 'error', 7000);
+    } finally {
+        state.cameraRetrying = false;
+    }
+}
+
+async function restartMic() {
+    const old = state.localAudioTrack;
+    if (!old || state.micRestarting || !state.client) return;
+    state.micRestarting = true;
+    if (state.media) { state.media.lastMicRestart = Date.now(); state.media.micBadSince = null; state.media.lowAudioSince = null; }
+    const deviceId = trackDeviceId(old);
+    diag('mic_restart', { mic: trackLabel(old), ended: isMediaTrackDead(old), osMuted: isMediaTrackOsMuted(old) });
+    try {
+        await state.client.unpublish(old).catch(() => {});
+        old.close();
+        state.localAudioTrack = null;
+
+        const track = await AgoraRTC.createMicrophoneAudioTrack(deviceId && !isMobilePhone() ? { microphoneId: deviceId } : {})
+            .catch(() => AgoraRTC.createMicrophoneAudioTrack());
+        if (state.client?.connectionState !== 'CONNECTED') { track.close(); return; }
+        track.setMuted(state.isMuted);
+        state.localAudioTrack = track;
+        setLocalMicUnavailable(false);
+        await state.client.publish(track);
+        diag('mic_restart_ok', { mic: trackLabel(track) });
+        showToast('Microphone reconnected', 'success');
+    } catch (err) {
+        console.warn('Mic restart failed:', err);
+        diag('mic_restart_failed', errInfo(err));
+        setLocalMicUnavailable(true);
+        showToast(micErrorMessage(err), 'error', 7000);
+    } finally {
+        state.micRestarting = false;
+    }
+}
+
+/**
+ * Phones pause camera + mic while the app is in the background (iOS does
+ * this for every web app — there's no way to keep them running). Tell the
+ * other person, rather than leaving them looking at a frozen picture, and
+ * check the devices the moment we're back.
+ */
+function setupMediaWatchListeners() {
+    const sendPresence = away => {
+        if (!state.wbRelayRef || !isMobilePhone()) return;
+        setDoc(state.wbRelayRef, { t: 'away', away, ts: Date.now() }).catch(() => {});
+    };
+    document.addEventListener('visibilitychange', () => {
+        if (state.client?.connectionState !== 'CONNECTED') return;
+        if (document.visibilityState === 'hidden') {
+            sendPresence(true);
+        } else {
+            sendPresence(false);
+            // Low-bitrate warnings from while we were away are expected, not a fault
+            if (state.media) state.media.lowAudioSince = state.media.lowVideoSince = null;
+            // Give iOS a moment to hand the camera/mic back before judging them
+            setTimeout(() => checkMediaHealth({ immediate: true }), 1500);
+        }
+    });
+    window.addEventListener('focus', () => setTimeout(() => checkMediaHealth(), 1500));
+}
+
+function setRemoteAway(away) {
+    $('vc-away-badge')?.classList.toggle('hidden', !away);
+    remoteContainer.classList.toggle('vc-remote-away', !!away);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1680,6 +1860,8 @@ function wbHandleRemoteAction(msg) {
         wbInitCanvas();
     } else if (msg.t === 'prompt') {
         showPrompt({ icon: msg.icon, title: msg.title, text: msg.text }, msg.generatedBy, true);
+    } else if (msg.t === 'away') {
+        setRemoteAway(msg.away);
     } else if (msg.t === 'ss') {
         state.remoteScreenUid = msg.active ? msg.uid : null;
         renderRemoteMainView();
@@ -2818,6 +3000,7 @@ function init() {
     setupCallLimitWarning();
     setupKeyboardShortcuts();
     setupNavWarning();
+    setupMediaWatchListeners();
     setupLocalPipDrag();
 }
 
