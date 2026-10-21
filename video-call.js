@@ -2101,12 +2101,10 @@ async function submitReview() {
     ratingSubmitBtn.textContent = 'Submitting…';
 
     try {
-        await addDoc(collection(db, 'reviews'), {
+        // Server checks there's a finished lesson with this instructor, stores
+        // the review and updates the instructor's rating.
+        await httpsCallable(functions, 'submitReview')({
             instructorId:    instructorUid,
-            instructorName:  instructorName,
-            studentId:       state.currentUser.uid,
-            studentName:     state.currentUserName,
-            channelName:     state.channelName,
             rating:          state.selectedRating,
             lessonStructure: state.selectedAnswers.lessonStructure ?? null,
             clarity:         state.selectedAnswers.clarity ?? null,
@@ -2114,22 +2112,18 @@ async function submitReview() {
             progress:        state.selectedAnswers.progress ?? null,
             wouldRecommend:  state.selectedAnswers.wouldRecommend ?? null,
             review:          $('ratingReviewText').value.trim(),
-            createdAt:       new Date()
-        });
-
-        // Recalculate instructor aggregate
-        const allSnap = await getDocs(query(collection(db, 'reviews'), where('instructorId', '==', instructorUid)));
-        const ratings = allSnap.docs.map(d => d.data().rating).filter(r => typeof r === 'number');
-        const avg     = ratings.reduce((s, r) => s + r, 0) / ratings.length;
-        await updateDoc(doc(db, 'instructors', instructorUid), {
-            averageRating: Math.round(avg * 10) / 10,
-            reviewCount:   ratings.length
         });
 
         ratingPopup.classList.add('hidden');
         showPjStatus('Thank you for your feedback!', 'success');
     } catch (e) {
         console.error('Review submit error:', e);
+        // e.g. the call wasn't a booked lesson, or it hasn't finished yet
+        if (e.code === 'functions/failed-precondition') {
+            ratingPopup.classList.add('hidden');
+            showPjStatus(e.message, 'info');
+            return;
+        }
         ratingSubmitBtn.disabled = false;
         ratingSubmitBtn.textContent = 'Submit Review';
     }

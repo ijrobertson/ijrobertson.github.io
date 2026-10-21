@@ -168,6 +168,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           try {
             const snap = await getDocs(query(
               collection(db, 'bookings'),
+              where('studentId', '==', user.uid),
               where('paymentIntentId', '==', piId)
             ));
             if (!snap.empty) {
