@@ -2848,12 +2848,16 @@ exports.cancelBooking = onCall(async (request) => {
   if (refundPercent > 0 && booking.paymentIntentId && booking.paymentStatus === 'paid') {
     try {
       const stripe = getStripe();
+      // A faked booking could point at someone else's payment — refund only a
+      // payment Stripe confirms was made for this booking's student + instructor.
+      const pi = await getVerifiedPaymentIntent(booking);
+      if (!pi) throw new Error('Payment could not be verified with Stripe');
       refundAmountCents = refundPercent === 100
-        ? booking.amount
-        : Math.round(booking.amount * refundPercent / 100);
+        ? pi.amount
+        : Math.round(pi.amount * refundPercent / 100);
 
       const refund = await stripe.refunds.create({
-        payment_intent: booking.paymentIntentId,
+        payment_intent: pi.id,
         ...(refundPercent < 100 && { amount: refundAmountCents }),
         // Wise bookings have no application fee or connected-account transfer,
         // so both refund_application_fee and reverse_transfer must be omitted.
@@ -3577,6 +3581,51 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
 const STUDENT_FEE_CENTS = 100; // $1 flat fee stored in booking.amount
 
 /**
+ * Confirms a booking's payment with Stripe rather than trusting the booking
+ * doc, which the student's own browser writes (and so could fake: any
+ * paymentStatus, amount or someone else's paymentIntentId). Returns the
+ * PaymentIntent only if it succeeded and createPaymentIntent made it for this
+ * exact student + instructor; otherwise null.
+ */
+async function getVerifiedPaymentIntent(booking) {
+  if (!booking || typeof booking.paymentIntentId !== 'string' || !booking.paymentIntentId) return null;
+  try {
+    const pi = await getStripe().paymentIntents.retrieve(booking.paymentIntentId);
+    const meta = pi.metadata || {};
+    if (pi.status !== 'succeeded') return null;
+    if (meta.studentId !== booking.studentId || meta.instructorId !== booking.instructorId) return null;
+    return pi;
+  } catch (err) {
+    console.error(`[Payment] Could not verify ${booking.paymentIntentId}:`, err.message);
+    return null;
+  }
+}
+
+/**
+ * Why a pending Wise earning must not be paid out yet, or null if it's fine.
+ * Re-checks the booking's payment with Stripe at payout time, which also
+ * covers earnings created before createEarningsRecord verified payments.
+ */
+async function unpayableEarningReason(db, earning, seenPaymentIntents) {
+  if (!earning.bookingId) return 'no booking linked';
+  const bookingSnap = await db.collection('bookings').doc(earning.bookingId).get();
+  if (!bookingSnap.exists) return 'booking not found';
+  const booking = bookingSnap.data();
+  if (booking.instructorId !== earning.instructorId) return 'booking is for a different instructor';
+
+  const pi = await getVerifiedPaymentIntent(booking);
+  if (!pi) return 'payment could not be verified with Stripe';
+  if (earning.paymentIntentId && earning.paymentIntentId !== pi.id) return 'payment does not match booking';
+  if ((earning.instructorEarningsCents || 0) > pi.amount) return 'earnings exceed the amount paid';
+
+  if (seenPaymentIntents.has(pi.id)) return 'payment already counted for another lesson';
+  seenPaymentIntents.add(pi.id);
+  const sharing = await db.collection('bookings').where('paymentIntentId', '==', pi.id).limit(2).get();
+  if (sharing.size > 1) return 'payment is attached to more than one booking';
+  return null;
+}
+
+/**
  * Firestore trigger: creates an earnings record whenever a booking is confirmed.
  * For Stripe instructors → payoutStatus = 'paid' (funds go automatically via Connect).
  * For Wise instructors  → payoutStatus = 'pending' (admin pays manually).
@@ -3589,21 +3638,41 @@ exports.createEarningsRecord = onDocumentCreated('bookings/{bookingId}', async (
     if (booking.paymentStatus !== 'paid') return null;
 
     const db = admin.firestore();
+
+    // The booking doc comes from the student's browser, so check the payment
+    // with Stripe and take every amount from the PaymentIntent (written by
+    // createPaymentIntent), never from the booking.
+    const pi = await getVerifiedPaymentIntent(booking);
+    if (!pi) {
+      console.warn(`[Earnings] Booking ${bookingId}: payment not verified with Stripe — no earnings recorded`);
+      return null;
+    }
+    const earlier = await db.collection('earnings').where('paymentIntentId', '==', pi.id).limit(1).get();
+    if (!earlier.empty) {
+      console.warn(`[Earnings] Booking ${bookingId}: ${pi.id} already has an earnings record — skipping`);
+      return null;
+    }
+
     const instructorSnap = await db.collection('instructors').doc(booking.instructorId).get();
     if (!instructorSnap.exists) return null;
 
     const instructor = instructorSnap.data();
-    const commissionRate = typeof instructor.commissionRate === 'number'
-      ? instructor.commissionRate
+    const meta = pi.metadata || {};
+    const metaRate = Number(meta.commissionRate);
+    const commissionRate = Number.isFinite(metaRate) && metaRate >= 0 && metaRate <= 1
+      ? metaRate
       : DEFAULT_COMMISSION_RATE;
-    const payoutMethod = instructor.payoutMethod || 'stripe';
-    const wiseEmail    = instructor.wiseEmail || null;
+    const payoutMethod = meta.payoutMethod === 'wise' ? 'wise' : 'stripe';
+    const wiseEmail    = meta.wiseEmail || instructor.wiseEmail || null;
 
-    // booking.amount = lessonAmountCents + $1 student fee
-    const lessonAmountCents = (booking.amount || 0) - STUDENT_FEE_CENTS;
+    // pi.amount = lessonAmountCents + $1 student fee
+    const metaLesson = Number(meta.lessonAmount);
+    const lessonAmountCents = Number.isInteger(metaLesson) && metaLesson > 0 && metaLesson <= pi.amount
+      ? metaLesson
+      : pi.amount - STUDENT_FEE_CENTS;
 
     // Referral credit: instructor keeps 100% of the lesson amount; platform keeps only $1
-    const referralCreditApplied  = booking.referralCreditApplied === true;
+    const referralCreditApplied  = meta.referralCreditApplied === 'true';
     const effectiveCommissionCents = referralCreditApplied
       ? 0
       : Math.round(lessonAmountCents * commissionRate);
@@ -3615,10 +3684,13 @@ exports.createEarningsRecord = onDocumentCreated('bookings/{bookingId}', async (
     // Stripe: paid immediately via Connect; Wise: pending manual payout
     const payoutStatus = payoutMethod === 'wise' ? 'pending' : 'paid';
 
-    await db.collection('earnings').add({
+    // Doc id per PaymentIntent: a second booking reusing the same payment
+    // fails here instead of creating a second earnings record.
+    await db.collection('earnings').doc(`pi_${pi.id}`).create({
       instructorId:           booking.instructorId,
       instructorName:         instructor.name || '',
       bookingId,
+      paymentIntentId:        pi.id,
       studentId:              booking.studentId || '',
       lessonAmountCents,
       platformFeeCents,
@@ -3627,7 +3699,7 @@ exports.createEarningsRecord = onDocumentCreated('bookings/{bookingId}', async (
       referralCreditApplied,
       payoutMethod,
       payoutStatus,
-      currency:               (booking.currency || 'USD').toUpperCase(),
+      currency:               (pi.currency || 'USD').toUpperCase(),
       wiseEmail:              payoutMethod === 'wise' ? wiseEmail : null,
       createdAt:              now,
       paidAt:                 payoutMethod === 'wise' ? null : now
@@ -3802,9 +3874,24 @@ async function processWisePayouts(db) {
   }
   console.log(`[Wise] ${pendingSnap.size} pending earning(s) found`);
 
+  // Only pay earnings whose booking payment checks out with Stripe. Anything
+  // else stays pending and shows up in the run details for an admin to review.
+  const payableDocs = [];
+  const seenPaymentIntents = new Set();
+  for (const docSnap of pendingSnap.docs) {
+    const reason = await unpayableEarningReason(db, docSnap.data(), seenPaymentIntents);
+    if (reason) {
+      console.warn(`[Wise] Holding earning ${docSnap.id}: ${reason}`);
+      results.skipped++;
+      results.details.push({ instructorId: docSnap.data().instructorId, earningId: docSnap.id, status: 'held', reason });
+    } else {
+      payableDocs.push(docSnap);
+    }
+  }
+
   // Group by instructor
   const byInstructor = {};
-  pendingSnap.docs.forEach(docSnap => {
+  payableDocs.forEach(docSnap => {
     const e = docSnap.data();
     if (!byInstructor[e.instructorId]) {
       byInstructor[e.instructorId] = {
