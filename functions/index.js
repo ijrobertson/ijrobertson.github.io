@@ -226,9 +226,240 @@ async function computeUnreadBadgeCount(db, recipientId, currentConversationId, c
   return total;
 }
 
+// ── Message emails (sent a few minutes late, only if still unread) ────────────
+// sendMessageNotification queues each new message here instead of emailing at
+// once; sendPendingMessageEmails then sends ONE email per conversation for
+// whatever is still unread when the oldest queued message is
+// MESSAGE_EMAIL_DELAY_MS old, or nothing if the recipient already read it.
+// Anything that can't be checked counts as unread, so emails still go out.
+
+const MESSAGE_EMAIL_DELAY_MS = 5 * 60 * 1000;
+const MESSAGE_EMAIL_MAX_ATTEMPTS = 5;
+
+function pendingMessageEmailRef(recipientId, conversationId) {
+  return admin.firestore().collection('pendingMessageEmails').doc(`${recipientId}_${conversationId}`);
+}
+
+async function queueMessageEmail(recipientId, conversationId, messageId) {
+  const ref = pendingMessageEmailRef(recipientId, conversationId);
+  await admin.firestore().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (snap.exists) {
+      tx.update(ref, { messageIds: admin.firestore.FieldValue.arrayUnion(messageId) });
+    } else {
+      tx.set(ref, { recipientId, conversationId, messageIds: [messageId], dueAt: Date.now() + MESSAGE_EMAIL_DELAY_MS, attempts: 0 });
+    }
+  });
+}
+
+/** Same preview text the push notification uses (audio/image have no text). */
+function messagePreviewText(message) {
+  const raw = message.type === 'image' ? (message.text || '📷 Photo')
+            : message.type === 'audio' ? '🎤 Audio message'
+            : (message.text || '');
+  return raw.length > 100 ? raw.substring(0, 100) + '...' : raw;
+}
+
+/** The "New message from …" email (or "N new messages from …"). */
+async function sendMessageEmail({ resend, recipient, recipientId, senderName, senderId, conversationId, messageId, messagePreview, unreadCount }) {
+  const emailResult = await resend.emails.send({
+    from: 'Lingua Bud <notifications@linguabud.com>',
+    to: recipient.email,
+    subject: unreadCount > 1 ? `${unreadCount} new messages from ${senderName}` : `New message from ${senderName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>New Message on Lingua Bud</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                  <!-- Header -->
+                  <tr>
+                    <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #20bcba;">
+                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Lingua Bud</h1>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      <h2 style="margin: 0 0 20px 0; color: #333333; font-size: 24px;">New Message from ${senderName}</h2>
+
+                      <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.5;">
+                        ${unreadCount > 1 ? `You have ${unreadCount} unread messages on Lingua Bud. The latest:` : 'You have received a new message on Lingua Bud:'}
+                      </p>
+
+                      <div style="background-color: #f8f9fa; border-left: 4px solid #20bcba; padding: 20px; margin: 20px 0;">
+                        <p style="margin: 0; color: #333333; font-size: 16px; line-height: 1.6; font-style: italic;">
+                          "${messagePreview}"
+                        </p>
+                      </div>
+
+                      <p style="margin: 30px 0 20px 0;">
+                        <a href="https://linguabud.com/messages"
+                           style="display: inline-block; padding: 14px 32px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
+                          View Message
+                        </a>
+                      </p>
+
+                      <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.5;">
+                        Don't want to receive these emails? You can turn off email notifications in your
+                        <a href="https://linguabud.com/student-dashboard" style="color: #20bcba; text-decoration: none;">dashboard settings</a>.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
+                      <p style="margin: 0; color: #999999; font-size: 12px; line-height: 1.5; text-align: center;">
+                        © 2026 Lingua Bud. Connect with language partners worldwide.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `,
+    text: `
+${unreadCount > 1 ? `${unreadCount} new messages from ${senderName}` : `New message from ${senderName}`}
+
+"${messagePreview}"
+
+View your message at: https://linguabud.com/messages
+
+Don't want to receive these emails? Turn off notifications in your dashboard: https://linguabud.com/student-dashboard
+
+© 2026 Lingua Bud
+    `.trim()
+  });
+
+  console.log('Email sent successfully:', emailResult);
+
+  // Check if email was actually sent successfully
+  if (emailResult.error) {
+    console.error('Resend API error:', emailResult.error);
+
+    // Log error to Firestore
+    await admin.firestore().collection('emailLog').add({
+      recipientId: recipientId,
+      recipientEmail: recipient.email,
+      senderId: senderId,
+      conversationId: conversationId,
+      messageId: messageId,
+      error: emailResult.error.message,
+      errorCode: emailResult.error.statusCode,
+      // Plain Date, not FieldValue.serverTimestamp() — see the push-code
+      // comment above for why that sentinel is unreliable specifically in
+      // this function's emulator context. Discovered here because a
+      // Resend validation error (e.g. a test @example.com recipient)
+      // used to hit this exact line and throw, which crashed the whole
+      // function invocation instead of just failing the email — killing
+      // that message's badge/push update too, not just its email.
+      sentAt: new Date(),
+      status: 'failed'
+    });
+
+    return null;
+  }
+
+  // Optional: Log the email send to Firestore for tracking
+  await admin.firestore().collection('emailLog').add({
+    recipientId: recipientId,
+    recipientEmail: recipient.email,
+    senderId: senderId,
+    conversationId: conversationId,
+    messageId: messageId,
+    unreadCount: unreadCount,
+    emailId: emailResult.data?.id,
+    sentAt: new Date(),
+    status: 'sent'
+  });
+
+  return emailResult;
+}
+
+/**
+ * Sends the email for one queued conversation if any of its queued messages
+ * is still unread, then clears the messages it covered (newer ones that
+ * arrived meanwhile stay queued for another round).
+ */
+async function processPendingMessageEmail(db, queueSnap) {
+  const { recipientId, conversationId, messageIds = [] } = queueSnap.data();
+  const convRef = db.collection('conversations').doc(conversationId);
+  const [convSnap, ...messageSnaps] = await Promise.all([
+    convRef.get(),
+    ...messageIds.map(id => convRef.collection('messages').doc(id).get())
+  ]);
+
+  // Unread = the recipient's app hasn't marked it read. A missing `read`
+  // field (older app versions) counts as unread, so the email still goes out.
+  const unread = messageSnaps
+    .filter(m => m.exists && m.data().senderId !== recipientId && m.data().read !== true && m.data().deleted !== true)
+    .map(m => ({ id: m.id, ...m.data() }))
+    .sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0));
+
+  if (unread.length && convSnap.exists) {
+    const [instructorSnap, userSnap] = await Promise.all([
+      db.collection('instructors').doc(recipientId).get(),
+      db.collection('users').doc(recipientId).get()
+    ]);
+    const recipient = instructorSnap.exists ? instructorSnap.data() : (userSnap.exists ? userSnap.data() : null);
+    // Same checks as before the email was queued — the preference may have changed since
+    if (recipient && recipient.emailNotifications !== false && recipient.email) {
+      const latest = unread[unread.length - 1];
+      await sendMessageEmail({
+        resend: new Resend(process.env.RESEND_API_KEY),
+        recipient, recipientId,
+        senderName: convSnap.data().participantDetails?.[latest.senderId]?.name || 'A Lingua Bud user',
+        senderId: latest.senderId, conversationId, messageId: latest.id,
+        messagePreview: messagePreviewText(latest), unreadCount: unread.length
+      });
+    }
+  } else if (!unread.length) {
+    console.log(`[MessageEmail] ${recipientId} read ${conversationId} in time — no email`);
+  }
+
+  await db.runTransaction(async (tx) => {
+    const fresh = await tx.get(queueSnap.ref);
+    if (!fresh.exists) return;
+    const remaining = (fresh.data().messageIds || []).filter(id => !messageIds.includes(id));
+    if (remaining.length) tx.update(queueSnap.ref, { messageIds: remaining, dueAt: Date.now() + MESSAGE_EMAIL_DELAY_MS, attempts: 0 });
+    else tx.delete(queueSnap.ref);
+  });
+}
+
+async function processPendingMessageEmails(db) {
+  const due = await db.collection('pendingMessageEmails').where('dueAt', '<=', Date.now()).limit(200).get();
+  for (const queueSnap of due.docs) {
+    try {
+      await processPendingMessageEmail(db, queueSnap);
+    } catch (err) {
+      // Retry a few times a minute apart, then give up (and log it) rather than loop forever
+      const attempts = (queueSnap.data().attempts || 0) + 1;
+      console.error(`[MessageEmail] ${queueSnap.id} attempt ${attempts} failed:`, err.message);
+      if (attempts >= MESSAGE_EMAIL_MAX_ATTEMPTS) {
+        await queueSnap.ref.delete().catch(() => {});
+        await db.collection('emailLog').add({ queueId: queueSnap.id, error: err.message, sentAt: new Date(), status: 'failed' }).catch(() => {});
+      } else {
+        await queueSnap.ref.update({ attempts, dueAt: Date.now() + 60 * 1000 }).catch(() => {});
+      }
+    }
+  }
+}
+
 /**
  * Cloud Function that triggers when a new message is added to a conversation
- * Sends an email notification to the recipient if they have notifications enabled
+ * Sends a push right away, and queues the email (see queueMessageEmail)
  */
 exports.sendMessageNotification = onDocumentCreated(
   'conversations/{conversationId}/messages/{messageId}',
@@ -362,130 +593,22 @@ exports.sendMessageNotification = onDocumentCreated(
         return null;
       }
 
-      // Send email via Resend
-      const emailResult = await resend.emails.send({
-        from: 'Lingua Bud <notifications@linguabud.com>',
-        to: recipient.email,
-        subject: `New message from ${senderName}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>New Message on Lingua Bud</title>
-            </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-              <table role="presentation" style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td align="center" style="padding: 40px 0;">
-                    <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                      <!-- Header -->
-                      <tr>
-                        <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #20bcba;">
-                          <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Lingua Bud</h1>
-                        </td>
-                      </tr>
-
-                      <!-- Content -->
-                      <tr>
-                        <td style="padding: 40px;">
-                          <h2 style="margin: 0 0 20px 0; color: #333333; font-size: 24px;">New Message from ${senderName}</h2>
-
-                          <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.5;">
-                            You have received a new message on Lingua Bud:
-                          </p>
-
-                          <div style="background-color: #f8f9fa; border-left: 4px solid #20bcba; padding: 20px; margin: 20px 0;">
-                            <p style="margin: 0; color: #333333; font-size: 16px; line-height: 1.6; font-style: italic;">
-                              "${messagePreview}"
-                            </p>
-                          </div>
-
-                          <p style="margin: 30px 0 20px 0;">
-                            <a href="https://linguabud.com/messages"
-                               style="display: inline-block; padding: 14px 32px; background-color: #20bcba; color: #ffffff; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">
-                              View Message
-                            </a>
-                          </p>
-
-                          <p style="margin: 30px 0 0 0; color: #999999; font-size: 14px; line-height: 1.5;">
-                            Don't want to receive these emails? You can turn off email notifications in your
-                            <a href="https://linguabud.com/student-dashboard" style="color: #20bcba; text-decoration: none;">dashboard settings</a>.
-                          </p>
-                        </td>
-                      </tr>
-
-                      <!-- Footer -->
-                      <tr>
-                        <td style="padding: 30px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
-                          <p style="margin: 0; color: #999999; font-size: 12px; line-height: 1.5; text-align: center;">
-                            © 2026 Lingua Bud. Connect with language partners worldwide.
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </body>
-          </html>
-        `,
-        text: `
-New message from ${senderName}
-
-"${messagePreview}"
-
-View your message at: https://linguabud.com/messages
-
-Don't want to receive these emails? Turn off notifications in your dashboard: https://linguabud.com/student-dashboard
-
-© 2026 Lingua Bud
-        `.trim()
-      });
-
-      console.log('Email sent successfully:', emailResult);
-
-      // Check if email was actually sent successfully
-      if (emailResult.error) {
-        console.error('Resend API error:', emailResult.error);
-
-        // Log error to Firestore
-        await admin.firestore().collection('emailLog').add({
-          recipientId: recipientId,
-          recipientEmail: recipient.email,
-          senderId: message.senderId,
-          conversationId: conversationId,
-          messageId: event.params.messageId,
-          error: emailResult.error.message,
-          errorCode: emailResult.error.statusCode,
-          // Plain Date, not FieldValue.serverTimestamp() — see the push-code
-          // comment above for why that sentinel is unreliable specifically in
-          // this function's emulator context. Discovered here because a
-          // Resend validation error (e.g. a test @example.com recipient)
-          // used to hit this exact line and throw, which crashed the whole
-          // function invocation instead of just failing the email — killing
-          // that message's badge/push update too, not just its email.
-          sentAt: new Date(),
-          status: 'failed'
-        });
-
+      // Email later, and only if the message is still unread by then: someone
+      // chatting live shouldn't get an email for every message. The queued
+      // email is sent by sendPendingMessageEmails. If queueing fails, email
+      // right away as before, so nobody misses a message.
+      try {
+        await queueMessageEmail(recipientId, conversationId, event.params.messageId);
         return null;
+      } catch (queueError) {
+        console.error('Could not queue message email, sending it now:', queueError);
       }
 
-      // Optional: Log the email send to Firestore for tracking
-      await admin.firestore().collection('emailLog').add({
-        recipientId: recipientId,
-        recipientEmail: recipient.email,
-        senderId: message.senderId,
-        conversationId: conversationId,
-        messageId: event.params.messageId,
-        emailId: emailResult.data?.id,
-        sentAt: new Date(),
-        status: 'sent'
+      return sendMessageEmail({
+        resend, recipient, recipientId, senderName,
+        senderId: message.senderId, conversationId,
+        messageId: event.params.messageId, messagePreview, unreadCount: 1
       });
-
-      return emailResult;
 
     } catch (error) {
       console.error('Error sending email notification:', error);
@@ -5347,3 +5470,9 @@ function buildUnsubPage(message, success) {
 </body>
 </html>`;
 }
+
+// Queued message emails (see queueMessageEmail) — defined down here because
+// onSchedule is imported further up the file than the message helpers.
+exports.sendPendingMessageEmails = onSchedule('every 2 minutes', async () => {
+  await processPendingMessageEmails(admin.firestore());
+});
