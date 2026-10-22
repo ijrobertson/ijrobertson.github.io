@@ -194,6 +194,24 @@ if (self.workbox) {
     })
   );
 
+  // Firebase SDK (www.gstatic.com/firebasejs/<version>/…): every app page
+  // loads ~190 KB of it (~740 KB unzipped). It was only ever held by the
+  // browser's own HTTP cache, which iOS clears aggressively for home-screen
+  // apps — so after a clear-out, the next tab opened had to download it all
+  // again before anything could load. The URL contains the SDK version, so
+  // its contents never change: safe to keep for good. Upgrading the SDK
+  // changes the URLs, which simply fetches the new copies.
+  workbox.routing.registerRoute(
+    ({ url }) => url.origin === "https://www.gstatic.com" && /^\/firebasejs\/\d+\.\d+\.\d+\//.test(url.pathname),
+    new workbox.strategies.CacheFirst({
+      cacheName: "linguabud-firebase-sdk",
+      plugins: [
+        new workbox.cacheableResponse.CacheableResponsePlugin({ statuses: [200] }),
+        new workbox.expiration.ExpirationPlugin({ maxEntries: 30 }),
+      ],
+    })
+  );
+
   // Offline fallback: only for same-origin navigations with no network and no cache.
   workbox.routing.setCatchHandler(async ({ event }) => {
     if (event.request.mode === "navigate" && SAME_ORIGIN({ url: new URL(event.request.url) })) {
