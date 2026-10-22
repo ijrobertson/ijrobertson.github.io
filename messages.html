@@ -2316,6 +2316,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // Flips `read` to true on messages from the other person once they're
+        // on screen, including ones that arrive while the chat is open. The
+        // server uses this to skip the "new message" email for messages you've
+        // already seen (see sendPendingMessageEmails in functions/index.js).
+        async function markIncomingMessagesRead(conversationId, messages) {
+            const unread = messages.filter(m => m.senderId !== currentUser.uid && m.read === false);
+            if (unread.length === 0) return;
+            try {
+                await Promise.all(unread.map(m =>
+                    updateDoc(doc(db, 'conversations', conversationId, 'messages', m.id), { read: true })
+                ));
+            } catch (error) {
+                console.error('Error marking messages read:', error);
+            }
+        }
+
         async function loadMessages(conversationId) {
             const messagesArea = document.getElementById('messagesArea');
 
@@ -2357,6 +2373,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             );
                         }
                     });
+
+                    // Non-blocking — only writes if there are unread incoming messages
+                    markIncomingMessagesRead(conversationId, messages);
 
                     // Fetch all sender data in parallel
                     const senderDataMap = new Map();
