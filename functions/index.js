@@ -1414,6 +1414,27 @@ const QUIZ_QUESTION_TYPES = ['multiple_choice', 'translation', 'vocabulary', 'fi
 // before this fix (see LEVEL_GUIDANCE below).
 const QUIZ_DIFFICULTIES = ['absolute_beginner', 'beginner', 'intermediate', 'advanced_intermediate', 'advanced'];
 const QUIZ_QUESTION_COUNT = 10;
+// The difficulty pills on vocab-quiz.html (its "alphabet" pill never reaches
+// AI generation). A pill is the learner's explicit choice for this quiz, so it
+// wins over the level saved in Quiz Preferences.
+const QUIZ_PICKER_LEVELS = ['beginner', 'intermediate', 'advanced'];
+// Most sentence-based questions allowed per quiz. Enforced in
+// isValidQuizQuestions as well as asked for in the prompt.
+const MAX_SENTENCE_QUESTIONS = { absolute_beginner: 0, beginner: 2 };
+
+function pickerLevelFor(level) {
+  if (level === 'absolute_beginner') return 'beginner';
+  if (level === 'advanced_intermediate') return 'advanced';
+  return level;
+}
+
+// Keeps the saved finer tier when it sits inside the chosen pill, e.g. an
+// absolute beginner choosing Beginner stays absolute_beginner.
+function resolveQuizLevel(requestedLevel, profileLevel) {
+  if (!QUIZ_PICKER_LEVELS.includes(requestedLevel)) return profileLevel;
+  return pickerLevelFor(profileLevel) === requestedLevel ? profileLevel : requestedLevel;
+}
+
 // Languages whose native script isn't Latin — an absolute-beginner learner of
 // one of these can plausibly not read the script AT ALL yet, which a generic
 // "keep it simple" instruction doesn't capture (see LEVEL_GUIDANCE.absolute_beginner).
@@ -1428,9 +1449,14 @@ const LEVEL_GUIDANCE = {
 - Use ONLY single high-frequency words or very short 2-3 word phrases. NEVER a full sentence to read, translate, or complete.
 - Do not use the fill_in_blank or grammar question types for this learner — both require reading a full sentence, which is not appropriate here. Use only multiple_choice, translation, and vocabulary.
 - Every answer option must also be short (a word or a few words), never a full sentence.`,
-  beginner: (language) => `This learner is a BEGINNER in ${language} with some prior exposure.
-- Prioritize high-frequency, everyday vocabulary and short, simple phrases.
-- fill_in_blank and grammar questions are fine if they use short, simple sentences with common, everyday structure — nothing complex or literary.`,
+  beginner: (language) => `This learner is a BEGINNER in ${language}, CEFR level A1: picture someone in their first few months of study. A question that feels too easy is fine; one that feels too hard is a failure. When in doubt, choose the easier option.
+- Vocabulary: only the most common everyday words and set phrases (greetings, numbers, family, food, time, places, the most basic verbs and adjectives).
+- Any ${language} sentence must be 6 words or fewer, one clause, present tense.
+- Use fill_in_blank or grammar for at most 2 of the ${QUIZ_QUESTION_COUNT} questions. All the others must be multiple_choice, translation, or vocabulary questions about what a word or short phrase means.
+- Those grammar questions may only test the very first things a learner is taught: subject pronouns, articles and gender of common nouns, regular plurals, simple negation, basic question words, or present-tense forms of the most common verbs such as "to be" and "to have".
+- NEVER test or use: any past or future tense, the subjunctive, conditional or imperative, the passive, reflexive constructions, relative or subordinate clauses, object pronouns or their placement, case endings other than the basic dictionary form, verbal aspect, comparatives, exceptions to a rule, idioms, or literary vocabulary.
+- Do not use grammar terminology in any prompt or option.
+- Wrong answer options must be simple words at this same level.`,
   intermediate: (language) => `This learner is INTERMEDIATE in ${language}.
 - Use a wider range of everyday vocabulary and moderately varied grammar. Natural short sentences are appropriate for every question type.`,
   advanced_intermediate: (language) => `This learner is ADVANCED INTERMEDIATE in ${language}.
@@ -1537,8 +1563,10 @@ function buildQuizUserPrompt({ language, level, interests, goals, recentTopics, 
 // Server-side validation of the AI's tool-use output — every field checked,
 // including that correctAnswer is genuinely one of the offered options (the
 // single most important gradability guarantee). Never trust this blindly.
-function isValidQuizQuestions(questions) {
+function isValidQuizQuestions(questions, level) {
   if (!Array.isArray(questions) || questions.length !== QUIZ_QUESTION_COUNT) return false;
+  const maxSentenceQuestions = MAX_SENTENCE_QUESTIONS[level] ?? QUIZ_QUESTION_COUNT;
+  if (questions.filter((q) => ['fill_in_blank', 'grammar'].includes(q?.type)).length > maxSentenceQuestions) return false;
   return questions.every((q) => {
     if (!q || typeof q !== 'object') return false;
     if (!QUIZ_QUESTION_TYPES.includes(q.type)) return false;
@@ -1578,7 +1606,7 @@ async function callAnthropicForQuiz(systemPrompt, userPrompt) {
  * same quizzes/{id} write, just parameterized by `source` so each caller's docs
  * are distinguishable. Never throws — always returns { ok, ... }.
  */
-async function generateAndStoreQuiz(db, uid, language, source) {
+async function generateAndStoreQuiz(db, uid, language, source, requestedLevel) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const todaysQuizzesSnap = await db.collection('quizzes')
@@ -1592,7 +1620,7 @@ async function generateAndStoreQuiz(db, uid, language, source) {
   const profileDocSnap = await db.collection('quizProfiles').doc(uid).get();
   const profile = (profileDocSnap.exists ? profileDocSnap.data() : {})[language] || null;
 
-  const level = profile?.effectiveLevel || profile?.selfAssessedLevel || 'beginner';
+  const level = resolveQuizLevel(requestedLevel, profile?.effectiveLevel || profile?.selfAssessedLevel || 'beginner');
   const interests = (profile?.interests && profile.interests.length) ? profile.interests.join(', ') : 'general everyday topics';
   const goalsList = [...(profile?.goals || []), profile?.goalsOther].filter(Boolean);
   const goals = goalsList.length ? goalsList.join(', ') : 'general fluency';
@@ -1614,6 +1642,9 @@ async function generateAndStoreQuiz(db, uid, language, source) {
   recentAttemptsSnap.forEach((d) => {
     const a = d.data();
     (a.topics || []).forEach((t) => recentTopics.add(t));
+    // Misses from a harder quiz aren't review material at this level: they'd
+    // pull advanced grammar straight back into a beginner quiz.
+    if (QUIZ_DIFFICULTIES.indexOf(a.difficulty) > QUIZ_DIFFICULTIES.indexOf(level)) return;
     (a.missedVocab || []).forEach((v) => recentMissedVocab.add(v));
     (a.missedGrammarTopics || []).forEach((t) => recentMissedGrammarTopics.add(t));
   });
@@ -1629,10 +1660,10 @@ async function generateAndStoreQuiz(db, uid, language, source) {
   let questions = null;
   try {
     questions = await callAnthropicForQuiz(systemPrompt, userPrompt);
-    if (!isValidQuizQuestions(questions)) {
+    if (!isValidQuizQuestions(questions, level)) {
       console.warn('[AI Quiz] First attempt failed validation, retrying once for', uid, language);
       questions = await callAnthropicForQuiz(
-        systemPrompt + '\n\nIMPORTANT: Your previous response did not exactly match the required schema. Follow it precisely this time — exactly 10 questions, each with every required field, and correctAnswer must exactly equal one of the strings in options.',
+        systemPrompt + '\n\nIMPORTANT: Your previous response did not exactly match the required schema. Follow it precisely this time — exactly 10 questions, each with every required field, and correctAnswer must exactly equal one of the strings in options, and follow the level guidance limits on fill_in_blank and grammar questions.',
         userPrompt
       );
     }
@@ -1641,7 +1672,7 @@ async function generateAndStoreQuiz(db, uid, language, source) {
     return { ok: false, reason: 'generation_error' };
   }
 
-  if (!isValidQuizQuestions(questions)) {
+  if (!isValidQuizQuestions(questions, level)) {
     console.error('[AI Quiz] Invalid quiz structure after retry for', uid, language);
     return { ok: false, reason: 'invalid_structure' };
   }
@@ -1652,6 +1683,9 @@ async function generateAndStoreQuiz(db, uid, language, source) {
     questions,
     status: 'ready',
     source,
+    level,
+    // What vocab-quiz.html's findReadyQuiz matches against the chosen pill.
+    pickerLevel: pickerLevelFor(level),
     profileSnapshot: profile ? {
       selfAssessedLevel: profile.selfAssessedLevel || null,
       effectiveLevel: profile.effectiveLevel || null,
@@ -1665,7 +1699,7 @@ async function generateAndStoreQuiz(db, uid, language, source) {
     createdAt: new Date(),
   });
 
-  return { ok: true, quizId: quizRef.id, questions };
+  return { ok: true, quizId: quizRef.id, questions, level };
 }
 
 exports.generatePersonalizedQuiz = onCall(async (request) => {
@@ -1674,7 +1708,7 @@ exports.generatePersonalizedQuiz = onCall(async (request) => {
   const language = (request.data?.language || '').trim();
   if (!language) throw new HttpsError('invalid-argument', 'language is required');
 
-  return generateAndStoreQuiz(admin.firestore(), uid, language, 'on-demand');
+  return generateAndStoreQuiz(admin.firestore(), uid, language, 'on-demand', request.data?.level);
 });
 
 /**

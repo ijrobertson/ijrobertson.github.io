@@ -557,6 +557,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // `questions`/`answered`, since the two sources carry different shapes.
         let isAIQuiz = false;
         let currentQuizId = null; // quizzes/{id}, only set for AI rounds
+        let currentQuizLevel = null; // the level the server generated it at
 
         // ===== PHASE 4: SCHEDULED QUIZ NOTIFICATIONS =====
         const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -689,6 +690,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 document.getElementById('setupLoading').style.display = 'none';
                 document.getElementById('setupCard').style.display = 'block';
+                applySavedLevel();
                 renderLanguagePills();
                 renderLevelPills();
                 updateStartButtonState();
@@ -708,6 +710,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             container.querySelectorAll('.picker-pill').forEach(btn => {
                 btn.addEventListener('click', () => {
                     selectedLanguage = btn.getAttribute('data-lang');
+                    applySavedLevel();
                     if (!levelHasContent(selectedLanguage, selectedLevel)) selectedLevel = 'beginner';
                     renderLanguagePills();
                     renderLevelPills();
@@ -715,6 +718,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     maybeAutoPromptProfile(selectedLanguage);
                 });
             });
+        }
+
+        // The pill decides each quiz's difficulty, so it starts on the level
+        // saved in Quiz Preferences for this language. Otherwise someone who
+        // saved "Advanced" would silently get Beginner quizzes.
+        function applySavedLevel() {
+            const saved = quizProfiles[selectedLanguage];
+            const level = saved?.effectiveLevel || saved?.selfAssessedLevel;
+            if (!level) return;
+            const pill = { absolute_beginner: 'beginner', advanced_intermediate: 'advanced' }[level] || level;
+            if (levelHasContent(selectedLanguage, pill)) selectedLevel = pill;
         }
 
         function levelHasContent(language, levelId) {
@@ -745,11 +759,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function updateStartButtonState() {
             const btn = document.getElementById('startQuizBtn');
             btn.disabled = !selectedLanguage || !levelHasContent(selectedLanguage, selectedLevel);
-            const hasRealProfile = !!(selectedLanguage && quizProfiles[selectedLanguage] && quizProfiles[selectedLanguage].selfAssessedLevel);
-            document.getElementById('personalizedNote').style.display = hasRealProfile ? 'flex' : 'none';
+            document.getElementById('personalizedNote').style.display = usesAIQuiz() ? 'flex' : 'none';
         }
 
         // ===== QUIZ PREFERENCES (Phase 1 personalization) =====
+        // Alphabet rounds are always the static letter pool.
+        function usesAIQuiz() {
+            return !!quizProfiles[selectedLanguage]?.selfAssessedLevel && selectedLevel !== 'alphabet';
+        }
+
         // A profile "exists" (for the purposes of not re-prompting) once the
         // learner has either completed it (selfAssessedLevel set) or
         // explicitly skipped it (setupSkippedAt set) — both are written to the
@@ -1023,7 +1041,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // already allow owner-read on quizzes/{id}) rather than through a
         // Cloud Function; the last 10 ready quizzes is a small result set,
         // filtered to today+language in JS to avoid a fourth composite-index field.
-        async function findReadyQuiz(language) {
+        async function findReadyQuiz(language, level) {
             try {
                 const startOfToday = new Date();
                 startOfToday.setHours(0, 0, 0, 0);
@@ -1037,10 +1055,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const snap = await getDocs(q);
                 for (const docSnap of snap.docs) {
                     const data = docSnap.data();
-                    if (data.language !== language) continue;
+                    if (data.language !== language || data.pickerLevel !== level) continue;
                     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                     if (createdAt >= startOfToday) {
-                        return { quizId: docSnap.id, questions: data.questions };
+                        return { quizId: docSnap.id, questions: data.questions, level: data.level };
                     }
                 }
             } catch (e) {
@@ -1050,8 +1068,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         async function startQuiz() {
-            const profile = quizProfiles[selectedLanguage];
-            const hasRealProfile = !!(profile && profile.selfAssessedLevel);
             isAIQuiz = false;
             currentQuizId = null;
 
@@ -1064,16 +1080,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             tryAnotherBtn.disabled = true;
             try {
 
-            if (hasRealProfile) {
+            if (usesAIQuiz()) {
                 const btn = document.getElementById('startQuizBtn');
                 const defaultHtml = btn.innerHTML;
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Generating your personalized quiz...';
                 try {
-                    const ready = await findReadyQuiz(selectedLanguage);
+                    const ready = await findReadyQuiz(selectedLanguage, selectedLevel);
                     if (ready) {
                         isAIQuiz = true;
                         currentQuizId = ready.quizId;
+                        currentQuizLevel = ready.level;
                         questions = mapAIQuestions(ready.questions);
                         // Awaited (not fire-and-forget) — this must land before the
                         // user can possibly click "Try another round" again, or a
@@ -1082,10 +1099,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         await markQuizConsumed(ready.quizId);
                     } else {
                         const generate = httpsCallable(functions, 'generatePersonalizedQuiz');
-                        const result = await generate({ language: selectedLanguage });
+                        const result = await generate({ language: selectedLanguage, level: selectedLevel });
                         if (result.data?.ok && Array.isArray(result.data.questions) && result.data.questions.length === 10) {
                             isAIQuiz = true;
                             currentQuizId = result.data.quizId;
+                            currentQuizLevel = result.data.level;
                             questions = mapAIQuestions(result.data.questions);
                             // A freshly-generated quiz is stored server-side as
                             // status:'ready' too (same as a scheduled/prefetched
@@ -1141,9 +1159,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
-        function prefetchNextQuiz(language) {
+        function prefetchNextQuiz(language, level) {
             const generate = httpsCallable(functions, 'generatePersonalizedQuiz');
-            generate({ language }).catch(e => console.error('Prefetch next quiz error (non-fatal):', e));
+            generate({ language, level }).catch(e => console.error('Prefetch next quiz error (non-fatal):', e));
         }
 
         // Returns true on success, false on failure (already alerted the user).
@@ -1233,7 +1251,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // only once per round.
             if (isAIQuiz && !prefetchFiredForRound && questions.length - 1 - qIndex <= 2) {
                 prefetchFiredForRound = true;
-                prefetchNextQuiz(selectedLanguage);
+                prefetchNextQuiz(selectedLanguage, selectedLevel);
             }
         }
 
@@ -1277,7 +1295,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     missedVocab: [...missedVocab],
                     missedGrammarTopics: [...missedGrammarTopics],
                     topics: [...topics],
-                    difficulty: isAIQuiz ? (quizProfiles[selectedLanguage]?.effectiveLevel || null) : selectedLevel,
+                    difficulty: isAIQuiz ? (currentQuizLevel || selectedLevel) : selectedLevel,
                     completedAt: serverTimestamp(),
                 });
             } catch (e) {
