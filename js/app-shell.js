@@ -367,16 +367,18 @@ const STYLE = `
 
 const ROLE_STORAGE_KEY = "lb-shell-role";
 const GLIDE_STORAGE_KEY = "lb-tab-glide";
-const GLIDE_EASING = "cubic-bezier(0.2, 0.9, 0.1, 1)";
+const GLIDE_DURATION = 380;
+const GLIDE_EASING = "cubic-bezier(0.32, 0.72, 0, 1)"; // iOS's own sheet curve
 const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 // ── Glider hand-off between pages ───────────────────────────────────────
 // Every tab is a separate page load, so the slide that starts on tap would
-// otherwise be cut off when the old page unloads. The old page records the
-// pill's position (on tap, then again on pagehide); the next page's shell
-// starts its glider there and finishes the slide. Keyed to the destination
-// href so an entry left by a tap that ended somewhere else (e.g. a redirect
-// to login) can't animate an unrelated later page.
+// otherwise be cut off when the old page unloads. The old page records where
+// the slide started and when; the next page's shell works out how far along
+// it should be by now and carries on, so both pages play one single slide
+// however long the load took. Keyed to the destination href so an entry left
+// by a tap that ended somewhere else (e.g. a redirect to login) can't animate
+// an unrelated later page.
 function saveGlide(toId, pos, href) {
   try {
     sessionStorage.setItem(GLIDE_STORAGE_KEY, JSON.stringify({ toId, pos, href, at: Date.now() }));
@@ -405,15 +407,16 @@ class LbAppShell extends HTMLElement {
     this._menuOpen = false;
     // Arriving via a tab tap on the previous page: show that tab as active
     // right away (most pages start at active="none" until auth resolves) and
-    // continue the glider from wherever it was when the old page unloaded.
+    // pick up the slide the previous page started.
     const arrival = readGlideArrival();
-    let arrivalPos = null;
     if (arrival) {
       this._activeOverride = arrival.toId;
-      arrivalPos = arrival.pos;
+      if (arrival.pos != null) {
+        const to = this.navItems.findIndex((item) => item.id === arrival.toId);
+        this._slide = { from: arrival.pos, to, startedAt: arrival.at };
+      }
     }
     this._render();
-    if (arrival) this._placeGlider(arrivalPos);
     this._connected = true;
     // Attached once (not per-render) so re-renders don't stack duplicate listeners.
     document.addEventListener("click", this._onDocumentClick = (e) => {
@@ -426,11 +429,6 @@ class LbAppShell extends HTMLElement {
     // bottom-nav tab while the user is idle on this one.
     prefetchSiblingTabs(this.navItems, this._activeId());
 
-    // Remember where the glider is as this page goes away, so the next page's
-    // shell can pick the slide up from that exact spot (see readGlideArrival).
-    window.addEventListener("pagehide", this._onPageHide = () => {
-      if (this._overrideHref) saveGlide(this._activeOverride, this._gliderPos(), this._overrideHref);
-    });
     // Back/forward-cache restore: this page comes back exactly as it was left,
     // glider sitting on the tab that was tapped. Slide it back home.
     window.addEventListener("pageshow", this._onPageShow = (e) => {
@@ -444,7 +442,6 @@ class LbAppShell extends HTMLElement {
 
   disconnectedCallback() {
     if (this._onDocumentClick) document.removeEventListener("click", this._onDocumentClick);
-    if (this._onPageHide) window.removeEventListener("pagehide", this._onPageHide);
     if (this._onPageShow) window.removeEventListener("pageshow", this._onPageShow);
   }
 
@@ -490,10 +487,11 @@ class LbAppShell extends HTMLElement {
     return matrix.m41 / glider.offsetWidth;
   }
 
-  // Puts the glider under the active tab, sliding there from `fromPos` (tab
-  // units) when given. Called after every render, so a re-render mid-slide
-  // (e.g. messages-unread flipping as Firestore loads) carries on from the
-  // pill's current spot instead of snapping.
+  // Puts the glider under the active tab. Called after every render, and a
+  // render rebuilds the glider, so a slide already heading to this tab (e.g.
+  // messages-unread flipping as Firestore loads) resumes at its elapsed time
+  // rather than restarting. Otherwise it slides there from `fromPos` (tab
+  // units) when given.
   _placeGlider(fromPos) {
     const glider = this.shadowRoot.querySelector(".glider");
     if (!glider) return;
@@ -504,20 +502,18 @@ class LbAppShell extends HTMLElement {
     glider.classList.toggle("hidden", index < 0);
     if (index < 0) return;
     glider.style.transform = `translateX(${index * 100}%)`;
-    if (REDUCED_MOTION.matches || fromPos == null) return;
-    const distance = Math.abs(index - fromPos);
-    if (distance < 0.01) return;
-    const duration = Math.min(220 + 70 * distance, 460);
-    glider.animate(
-      [{ transform: `translateX(${fromPos * 100}%)` }, { transform: `translateX(${index * 100}%)` }],
-      { duration, easing: GLIDE_EASING }
+    if (REDUCED_MOTION.matches) return;
+    const resuming = this._slide?.to === index && Date.now() - this._slide.startedAt < GLIDE_DURATION;
+    if (!resuming) {
+      if (fromPos == null || Math.abs(index - fromPos) < 0.01) return;
+      this._slide = { from: fromPos, to: index, startedAt: Date.now() };
+    }
+    const { from, startedAt } = this._slide;
+    const slide = glider.animate(
+      [{ transform: `translateX(${from * 100}%)` }, { transform: `translateX(${index * 100}%)` }],
+      { duration: GLIDE_DURATION, easing: GLIDE_EASING }
     );
-    // Stretch along the direction of travel, then settle — reads as one
-    // fluid object moving rather than a box being repositioned.
-    glider.querySelector(".glider-pill").animate(
-      [{ transform: "scaleX(1)" }, { transform: `scaleX(${1 + Math.min(0.45, 0.18 * distance)})`, offset: 0.35 }, { transform: "scaleX(1)" }],
-      { duration, easing: "ease-out" }
-    );
+    slide.currentTime = Date.now() - startedAt;
   }
 
   set nav(items) {
