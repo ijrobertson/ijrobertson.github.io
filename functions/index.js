@@ -1418,9 +1418,11 @@ const QUIZ_QUESTION_COUNT = 10;
 // AI generation). A pill is the learner's explicit choice for this quiz, so it
 // wins over the level saved in Quiz Preferences.
 const QUIZ_PICKER_LEVELS = ['beginner', 'intermediate', 'advanced'];
-// Most sentence-based questions allowed per quiz. Enforced in
-// isValidQuizQuestions as well as asked for in the prompt.
-const MAX_SENTENCE_QUESTIONS = { absolute_beginner: 0, beginner: 2 };
+// Most fill_in_blank/grammar questions allowed per quiz. Enforced in
+// isValidQuizQuestions as well as asked for in the prompt. Zero at beginner
+// tiers: real test quizzes in these types marked wrong answers as correct
+// ("la agua"), while word and phrase meaning questions stayed accurate.
+const MAX_SENTENCE_QUESTIONS = { absolute_beginner: 0, beginner: 0 };
 
 function pickerLevelFor(level) {
   if (level === 'absolute_beginner') return 'beginner';
@@ -1452,9 +1454,8 @@ const LEVEL_GUIDANCE = {
   beginner: (language) => `This learner is a BEGINNER in ${language}, CEFR level A1: picture someone in their first few months of study. A question that feels too easy is fine; one that feels too hard is a failure. When in doubt, choose the easier option.
 - Vocabulary: only the most common everyday words and set phrases (greetings, numbers, family, food, time, places, the most basic verbs and adjectives).
 - Any ${language} sentence must be 6 words or fewer, one clause, present tense.
-- Use fill_in_blank or grammar for at most 2 of the ${QUIZ_QUESTION_COUNT} questions. All the others must be multiple_choice, translation, or vocabulary questions about what a word or short phrase means.
-- Those grammar questions may only test the very first things a learner is taught: subject pronouns, articles and gender of common nouns, regular plurals, simple negation, basic question words, or present-tense forms of the most common verbs such as "to be" and "to have".
-- NEVER test or use: any past or future tense, the subjunctive, conditional or imperative, the passive, reflexive constructions, relative or subordinate clauses, object pronouns or their placement, case endings other than the basic dictionary form, verbal aspect, comparatives, exceptions to a rule, idioms, or literary vocabulary.
+- Do not use the fill_in_blank or grammar question types. Use only multiple_choice, translation, and vocabulary, always about what a word or short phrase means. Never ask which form is grammatically correct.
+- Any ${language} you show must avoid: past or future tenses, the subjunctive, conditional or imperative, the passive, reflexive constructions, relative or subordinate clauses, idioms, and literary vocabulary. Set phrases like greetings are fine.
 - Do not use grammar terminology in any prompt or option.
 - Wrong answer options must be simple words at this same level.`,
   intermediate: (language) => `This learner is INTERMEDIATE in ${language}.
@@ -1533,6 +1534,8 @@ Quality bar for every question:
 - Grammatically correct and natural for a native ${language} speaker — never stilted or literally translated.
 - Genuinely useful in real-world situations, not obscure or trivia-like.
 - Distractor options must be plausible, not silly or obviously wrong.
+- Exactly one option may be correct. For fill_in_blank and grammar, check every option in the sentence: if more than one would make sense, rewrite the question so the sentence or prompt decides the answer.
+- A blank must replace a word that really belongs in that ${language} sentence. Never build a blank around a word ${language} leaves out, such as a present-tense "to be" in languages that omit it.
 - Vary the topics and question types across the quiz — do not repeat the same word or pattern twice within one quiz.
 - Keep every explanation to ONE short sentence, under 15 words. This is a real cost constraint, not just a style preference — do not write two-sentence or restate-the-question explanations.
 - If the learner's recent history below lists topics they've already covered, favor different ones today. If it lists vocabulary or grammar they've struggled with, weave a couple of those back in naturally (spaced review), but the quiz should still feel fresh overall — not a retest.
