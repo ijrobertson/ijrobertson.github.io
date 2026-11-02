@@ -6,6 +6,14 @@
   only; existing pages are unaffected until someone explicitly adds a <link>.
 */
 
+/* Keep the tab bar and header still. Swiping past the end of a page makes iOS
+   rubber-band the whole page, and position:fixed elements bounce with it, so
+   the tab bar lifts off the bottom of the screen. Lives here because only app
+   pages link this file; the marketing site keeps its normal bounce. */
+html, body {
+  overscroll-behavior: none;
+}
+
 :root {
   /* Color — brand accent kept for decorative use only (fails WCAG AA as text/fill,
      see docs/PWA_PRD.md §6.1). --lb-color-action is the corrected, text-safe teal. */
