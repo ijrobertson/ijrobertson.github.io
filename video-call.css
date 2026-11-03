@@ -1963,6 +1963,29 @@ body.in-call {
    ════════════════════════════════════════════════════════════ */
 
 /* Shown when the browser blocks remote audio autoplay — any tap unlocks it */
+/* "You're muted" — shown when someone talks with their mic muted (see MUTED-WHILE-TALKING) */
+.vc-muted-hint {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--vc-ctrl-h) + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100% - 2rem);
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  background: var(--vc-brand-dark);
+  border: 1px solid var(--vc-primary);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.vc-muted-hint i { color: var(--vc-danger); }
+
 .vc-audio-unlock {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + 1rem);

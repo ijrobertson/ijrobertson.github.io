@@ -57,6 +57,11 @@ const state = {
     micRestarting: false,     // guards concurrent restartMic() calls
     media: null,              // MEDIA RECOVERY bookkeeping while in a call
     mediaWatchInterval: null,
+    mutedTalkInterval: null,  // MUTED-WHILE-TALKING check
+    mutedTalkSamples: [],     // recent mic loudness while muted (MUTED-WHILE-TALKING)
+    mutedTalkMeter: null,     // clone of the mic + analyser, only while muted
+    mutedTalkShownAt: 0,
+    mutedTalkHintTimer: null,
     playbackDeviceId: null,   // speaker chosen in the pre-join device check (Chrome/Edge only)
     channelName: '',
     wasCallActive: false,
@@ -656,6 +661,7 @@ async function joinChannel() {
         updateCallTimer();
         startCallLimits();
         startMediaWatch();
+        startMutedTalkWatch();
 
         // Update UI
         vcRoomName.textContent = channel;
@@ -738,6 +744,7 @@ async function leaveChannelSteps({ showRating, keepSharedDocs }) {
     clearInterval(state.callTimerInterval);
     stopCallLimits();
     stopMediaWatch();
+    stopMutedTalkWatch();
     state.callStartTime = null;
     callDuration.textContent = '00:00';
 
@@ -1175,7 +1182,122 @@ function toggleMute() {
     state.isMuted = !state.isMuted;
     state.localAudioTrack.setMuted(state.isMuted);
     updateMuteUI();
+    if (!state.isMuted) { hideMutedTalkHint(); closeMutedTalkMeter(); }
     showToast(state.isMuted ? 'Microphone muted' : 'Microphone on');
+}
+
+// ════════════════════════════════════════════════════════════
+// MUTED-WHILE-TALKING
+// ════════════════════════════════════════════════════════════
+// People forget they're muted: on 2026-11-03 an instructor spent nearly a
+// whole trial lesson muted and the student never heard her. Agora reports a
+// level of 0 once a published track is muted, so while muted we measure a
+// clone of the mic ourselves (nothing is sent). Computers only: an extra
+// AudioContext on a live mic is a known source of iOS audio-routing bugs,
+// and a call that sounds wrong is worse than a missing hint.
+
+const MUTED_TALK_CHECK_MS    = 250;
+// Mic gain varies a lot between devices, so "loud" is relative to this mic's own
+// background level (the quietest moment of the last 10 s), with a floor for silence
+const MUTED_TALK_MIN_RMS     = 0.006;
+const MUTED_TALK_OVER_QUIET  = 3;      // talking = at least 3× the background level
+const MUTED_TALK_HISTORY     = 40;     // 10 s of checks to find the background level in
+const MUTED_TALK_WINDOW      = 8;      // look at the last 2 s…
+const MUTED_TALK_LOUD        = 6;      // …and call it talking if 6 of those 8 checks were loud
+const MUTED_TALK_HINT_MS     = 8000;
+const MUTED_TALK_COOLDOWN_MS = 30000;  // after a hint, wait this long before showing it again
+
+/** iPhone, iPad (which reports itself as a Mac) and Android — see above. */
+function isTouchDevice() {
+    return isMobilePhone() || /iPad|Android/i.test(navigator.userAgent)
+        || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+}
+
+function startMutedTalkWatch() {
+    if (isTouchDevice() || typeof AudioContext === 'undefined') return;
+    state.mutedTalkSamples = [];
+    state.mutedTalkShownAt = 0;
+    clearInterval(state.mutedTalkInterval);
+    state.mutedTalkInterval = setInterval(checkMutedTalk, MUTED_TALK_CHECK_MS);
+}
+
+function stopMutedTalkWatch() {
+    clearInterval(state.mutedTalkInterval);
+    state.mutedTalkInterval = null;
+    closeMutedTalkMeter();
+    hideMutedTalkHint();
+}
+
+function checkMutedTalk() {
+    if (!state.isMuted || !state.localAudioTrack || document.visibilityState !== 'visible') {
+        state.mutedTalkSamples = [];
+        closeMutedTalkMeter();
+        return;
+    }
+    let rms = 0;
+    try { rms = mutedMicRms(); } catch (err) { diag('muted_meter_failed', errInfo(err)); stopMutedTalkWatch(); return; }
+    const history = state.mutedTalkSamples;
+    history.push(rms);
+    if (history.length > MUTED_TALK_HISTORY) history.shift();
+    const threshold = Math.max(MUTED_TALK_MIN_RMS, Math.min(...history) * MUTED_TALK_OVER_QUIET);
+    const loud = history.slice(-MUTED_TALK_WINDOW).filter(v => v > threshold).length;
+    // Needs a couple of seconds of history first, or the "background" is just whatever was said
+    if (history.length >= MUTED_TALK_WINDOW && loud >= MUTED_TALK_LOUD && Date.now() - state.mutedTalkShownAt > MUTED_TALK_COOLDOWN_MS) {
+        state.mutedTalkSamples = [];
+        showMutedTalkHint();
+    }
+}
+
+/** Loudness of the (muted) mic, from a clone of its capture track. */
+function mutedMicRms() {
+    const mst = state.localAudioTrack.getMediaStreamTrack();
+    if (!mst || mst.readyState !== 'live') return 0;
+    let m = state.mutedTalkMeter;
+    if (!m || m.sourceId !== mst.id) {
+        closeMutedTalkMeter();
+        const clone = mst.clone();
+        clone.enabled = true;
+        const ctx = new AudioContext();
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        ctx.createMediaStreamSource(new MediaStream([clone])).connect(analyser);
+        m = state.mutedTalkMeter = { sourceId: mst.id, clone, ctx, analyser, buf: new Float32Array(analyser.fftSize) };
+    }
+    m.analyser.getFloatTimeDomainData(m.buf);
+    let sum = 0;
+    for (const v of m.buf) sum += v * v;
+    return Math.sqrt(sum / m.buf.length);
+}
+
+function closeMutedTalkMeter() {
+    const m = state.mutedTalkMeter;
+    if (!m) return;
+    state.mutedTalkMeter = null;
+    m.clone.stop();
+    m.ctx.close().catch(() => {});
+}
+
+function showMutedTalkHint() {
+    state.mutedTalkShownAt = Date.now();
+    diag('muted_talking');
+    if ($('vc-muted-hint')) return;
+    const btn = document.createElement('button');
+    btn.id = 'vc-muted-hint';
+    btn.className = 'vc-muted-hint';
+    btn.innerHTML = '<i class="fas fa-microphone-slash"></i> You\'re muted. Tap to unmute';
+    btn.addEventListener('click', () => {
+        diag('muted_hint_unmute');
+        if (state.isMuted) toggleMute();
+        hideMutedTalkHint();
+    });
+    document.body.appendChild(btn);
+    clearTimeout(state.mutedTalkHintTimer);
+    state.mutedTalkHintTimer = setTimeout(hideMutedTalkHint, MUTED_TALK_HINT_MS);
+}
+
+function hideMutedTalkHint() {
+    clearTimeout(state.mutedTalkHintTimer);
+    $('vc-muted-hint')?.remove();
 }
 
 function toggleCamera() {
