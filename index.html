@@ -2563,6 +2563,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import { db, auth, collection, getDocs, query, limit, onAuthStateChanged, signOut, doc, getDoc, onSnapshot, where } from './lib/firebaseClient.js';
 
         let allStudents = [];
+        // Students whose uploaded "photo" is just a generic silhouette, so
+        // they're left out of the photo cards (still on the site otherwise)
+        const PLACEHOLDER_PHOTO_UIDS = new Set(['MXLJL7VgN6SgkmQyrNfCursXstJ2']);
         let allInstructors = [];
         let studentLanguages = new Set();
         let instructorLanguages = new Set();
@@ -2666,7 +2669,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 allStudents = [];
                 querySnapshot.forEach((doc) => {
                     const userData = { id: doc.id, ...doc.data() };
-                    if (userData.role === 'student' && userData.avatar_url) {
+                    if (userData.role === 'student' && userData.avatar_url && !PLACEHOLDER_PHOTO_UIDS.has(userData.id)) {
                         allStudents.push(userData);
 
                         // Collect languages for filters

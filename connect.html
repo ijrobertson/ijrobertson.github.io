@@ -1243,8 +1243,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // Students whose uploaded "photo" is just a generic silhouette;
+        // sorted with the no-photo profiles rather than at the top
+        const PLACEHOLDER_PHOTO_UIDS = new Set(['MXLJL7VgN6SgkmQyrNfCursXstJ2']);
+
         function hasPhoto(user) {
-            return !!(user.avatar_url || user.avatar);
+            return !!(user.avatar_url || user.avatar) && !PLACEHOLDER_PHOTO_UIDS.has(user.id);
         }
 
         function updatePartnerCountBadge(count) {
