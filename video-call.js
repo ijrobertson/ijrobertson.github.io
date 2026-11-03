@@ -22,6 +22,7 @@ import {
 // ════════════════════════════════════════════════════════════
 
 const APP_ID = 'dfd628e44de640e3b7717f422d1dc3e7';
+const BUILD = '20261103f';  // keep in step with video-call.js?v= in video-call.html; logged in callDiagnostics
 const WB_THROTTLE_MS = 50;       // ~20 whiteboard writes/sec max
 const CONTROLS_HIDE_DELAY = 3500; // ms before controls auto-hide
 const RATING_LABELS = ['', 'Needs Improvement', 'Fair', 'Good', 'Very Good', 'Excellent!'];
@@ -3108,9 +3109,11 @@ function startDiagSession(channel, agoraUid) {
     if (!user) { diagState.buffer = []; return; } // guests can't write
 
     diagState.ref = doc(collection(db, 'callDiagnostics'));
-    diagState.count = diagState.buffer.length;
+    diagState.count = diagState.buffer.length + 1;  // + the page event below
     diagState.exceptions = 0;
-    const events = diagState.buffer.splice(0);
+    // Which site (live, PWA test channel, preview) and code version ran the call.
+    // An event rather than a field: the rules only allow a fixed set of fields.
+    const events = [{ t: Date.now(), type: 'page', host: location.host, build: BUILD }, ...diagState.buffer.splice(0)];
     diagState.ready = setDoc(diagState.ref, {
         uid: user.uid,
         name: state.currentUserName || null,
