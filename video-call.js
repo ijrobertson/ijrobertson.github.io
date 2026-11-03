@@ -485,7 +485,12 @@ async function initAgora() {
     // Diagnostics only
     state.client.on('connection-state-change', (cur, prev, reason) => diag('conn_state', { cur, prev, reason }));
     state.client.on('exception', e => { diag('exception', { code: e.code, msg: e.msg, uid: e.uid }); onLocalBitrateException(e); });
-    state.client.on('user-joined', user => diag('remote_joined', { uid: user.uid }));
+    state.client.on('user-joined', user => {
+        diag('remote_joined', { uid: user.uid });
+        if (isScreenConnectionUid(user.uid)) return;
+        renderRemoteStatus();
+        updateParticipantsList();
+    });
     state.client.on('user-info-updated', (uid, msg) => diag('remote_info', { uid, msg }));
 }
 
@@ -720,6 +725,7 @@ async function leaveChannel() {
     closeAllPanels();
     remoteName.textContent = '';
     vcWaiting.style.display = 'flex';
+    $('vc-remote-camoff')?.classList.add('hidden');
     localName.textContent = '';
     remoteStream.innerHTML = '';
     localStream.innerHTML = '';
@@ -908,6 +914,35 @@ function realRemoteUidCount() {
     return Object.keys(state.remoteUsers).filter(uid => !isScreenConnectionUid(uid)).length;
 }
 
+/** Real people in the channel with us, whether or not they're sending audio/video. */
+function remoteParticipants(leftUid = null) {
+    return (state.client?.remoteUsers || []).filter(u =>
+        !isScreenConnectionUid(u.uid) && String(u.uid) !== String(leftUid));
+}
+
+/**
+ * Waiting overlay, camera-off card and name label for the other person, worked
+ * out from who is actually in the channel. The waiting overlay used to come back
+ * whenever the other person turned their camera off, so a student saw "Waiting
+ * for participant…" while their instructor was in the call with camera and mic off.
+ */
+function renderRemoteStatus(leftUid = null) {
+    const user = remoteParticipants(leftUid)[0] || null;
+    const name = user ? (state.remoteUserNames[user.uid] || 'Guest') : '';
+    const cameraOff = !!user && !user.videoTrack && !remoteScreenUser();
+
+    vcWaiting.style.display = user ? 'none' : 'flex';
+    $('vc-remote-camoff')?.classList.toggle('hidden', !cameraOff);
+    if (cameraOff) {
+        $('vc-remote-camoff-avatar').textContent = name[0].toUpperCase();
+        $('vc-remote-camoff-name').textContent = name;
+        $('vc-remote-camoff-mic').classList.toggle('hidden', !!user.hasAudio);
+    }
+    remoteName.innerHTML = user && !cameraOff
+        ? `${user.hasAudio ? '' : '<i class="fas fa-microphone-slash" title="Microphone off"></i>'}${escapeHtml(name)}`
+        : '';
+}
+
 /**
  * Renders the main remote area from current state: if the peer's screen
  * connection has a live video track, show the screen full-size and overlay
@@ -1029,39 +1064,23 @@ async function handleUserPublished(user, mediaType) {
     if (isScreenConnectionUid(user.uid)) {
         // Secondary connection opened just to publish a screen (ours or the
         // remote peer's) — not a real participant, just re-render the main view.
-        if (mediaType === 'video') renderRemoteMainView();
+        if (mediaType === 'video') { renderRemoteMainView(); renderRemoteStatus(); }
         return;
     }
 
-    if (mediaType === 'video') {
-        // Display name comes from the live presence listener; if their presence
-        // doc hasn't landed yet the label is corrected as soon as it does.
-        vcWaiting.style.display = 'none';
-        remoteName.textContent = state.remoteUserNames[user.uid] || 'Guest';
-        renderRemoteMainView();
-    }
-    if (mediaType === 'audio') {
-        playRemoteAudio(user);
-    }
-
+    // Display name comes from the live presence listener; if their presence
+    // doc hasn't landed yet the label is corrected as soon as it does.
+    if (mediaType === 'video') renderRemoteMainView();
+    if (mediaType === 'audio') playRemoteAudio(user);
+    renderRemoteStatus();
     updateParticipantsList();
 }
 
 function handleUserUnpublished(user, mediaType) {
     diag('remote_unpublished', { uid: user.uid, mediaType });
-    if (mediaType !== 'video') return;
-
-    if (isScreenConnectionUid(user.uid)) {
-        renderRemoteMainView();
-        return;
-    }
-
-    // If this was our main remote user, show waiting overlay
-    if (!Object.values(state.remoteUsers).some(u => u.uid !== user.uid && !isScreenConnectionUid(u.uid) && u.videoTrack)) {
-        vcWaiting.style.display = 'flex';
-        remoteName.textContent = '';
-    }
-    renderRemoteMainView();
+    if (mediaType === 'video') renderRemoteMainView();
+    renderRemoteStatus();
+    updateParticipantsList();
 }
 
 function handleUserLeft(user, reason) {
@@ -1082,9 +1101,8 @@ function handleUserLeft(user, reason) {
     const leavingName = state.remoteUserNames[user.uid] || 'Participant';
     setRemoteAway(false);
     delete state.remoteUsers[user.uid];
+    renderRemoteStatus(user.uid);
     if (realRemoteUidCount() === 0) {
-        vcWaiting.style.display = 'flex';
-        remoteName.textContent = '';
         remoteStream.innerHTML = '';
         const badge = $('vc-screensharing-badge');
         if (badge) badge.classList.add('hidden');
@@ -1581,14 +1599,16 @@ function updateParticipantsList() {
     // Local user
     list.appendChild(createParticipantItem(state.currentUserName, true, state.isMuted, state.isCameraOff));
 
-    // Remote users (excluding any screen-share connections, ours or the peer's)
-    Object.values(state.remoteUsers).filter(user => !isScreenConnectionUid(user.uid)).forEach(user => {
+    // Everyone else in the channel (excluding screen-share connections), including
+    // people who have joined with their camera and mic off
+    const others = remoteParticipants();
+    others.forEach(user => {
         const name = state.remoteUserNames[user.uid] || 'Guest';
-        list.appendChild(createParticipantItem(name, false, false, false));
+        list.appendChild(createParticipantItem(name, false, !user.hasAudio, !user.hasVideo));
     });
 
     // Update count badge on button
-    const total = 1 + realRemoteUidCount();
+    const total = 1 + others.length;
     participantBadge.textContent = total;
     participantBadge.classList.toggle('hidden', total <= 1);
 }
@@ -1649,8 +1669,7 @@ function setupPresenceListener(channel) {
 
 /** Re-applies known names to the remote video label and the Participants list. */
 function refreshRemoteNames() {
-    const main = Object.values(state.remoteUsers).find(u => !isScreenConnectionUid(u.uid) && u.videoTrack);
-    if (main) remoteName.textContent = state.remoteUserNames[main.uid] || 'Guest';
+    renderRemoteStatus();
     updateParticipantsList();
 }
 
