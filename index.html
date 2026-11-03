@@ -2545,6 +2545,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         import { db, auth, collection, getDocs, query, orderBy, limit, onAuthStateChanged, signOut, doc, getDoc, onSnapshot, where } from './lib/firebaseClient.js';
 
         let allStudents = [];
+        // Students whose uploaded "photo" is just a generic silhouette, so
+        // they're left out of the photo cards (still on the site otherwise)
+        const PLACEHOLDER_PHOTO_UIDS = new Set(['MXLJL7VgN6SgkmQyrNfCursXstJ2']);
         let allInstructors = [];
         let studentLanguages = new Set();
         let instructorLanguages = new Set();
@@ -2649,7 +2652,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const docs = (await getDocs(q)).docs;
                 // orderBy skips accounts never stamped with lastActiveAt, so
                 // top up from the unordered list if that leaves too few cards
-                if (docs.filter(d => d.data().role === 'student' && d.data().avatar_url).length < 6) {
+                if (docs.filter(d => d.data().role === 'student' && d.data().avatar_url && !PLACEHOLDER_PHOTO_UIDS.has(d.id)).length < 6) {
                     const seen = new Set(docs.map(d => d.id));
                     (await getDocs(query(collection(db, 'users'), limit(30)))).docs
                         .forEach(d => { if (!seen.has(d.id)) docs.push(d); });
@@ -2658,7 +2661,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 allStudents = [];
                 docs.forEach((doc) => {
                     const userData = { id: doc.id, ...doc.data() };
-                    if (userData.role === 'student' && userData.avatar_url) {
+                    if (userData.role === 'student' && userData.avatar_url && !PLACEHOLDER_PHOTO_UIDS.has(userData.id)) {
                         allStudents.push(userData);
 
                         // Filter buttons list languages people can practise
@@ -2867,7 +2870,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const lastActive = (s) => (s.lastActiveAt && s.lastActiveAt.toMillis) ? s.lastActiveAt.toMillis() : 0;
                 const students = snap.docs
                     .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(s => s.role === 'student' && s.avatar_url)
+                    .filter(s => s.role === 'student' && s.avatar_url && !PLACEHOLDER_PHOTO_UIDS.has(s.id))
                     .sort((a, b) => lastActive(b) - lastActive(a));
                 studentLanguageCache.set(language, students);
             }

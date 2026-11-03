@@ -879,6 +879,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         let allUsers = [];
         let currentUser = null;
+        // Students whose uploaded "photo" is just a generic silhouette;
+        // listed after everyone else rather than at the top
+        const PLACEHOLDER_PHOTO_UIDS = new Set(['MXLJL7VgN6SgkmQyrNfCursXstJ2']);
 
         // Check authentication and load profile picture
         onAuthStateChanged(auth, async (user) => {
@@ -975,7 +978,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 // Most recently active first; accounts never stamped go last
                 const activeMs = u => u.lastActiveAt?.toMillis ? u.lastActiveAt.toMillis() : 0;
-                allUsers.sort((a, b) => activeMs(b) - activeMs(a));
+                const placeholder = u => PLACEHOLDER_PHOTO_UIDS.has(u.id) ? 1 : 0;
+                allUsers.sort((a, b) => (placeholder(a) - placeholder(b)) || (activeMs(b) - activeMs(a)));
 
                 console.log('Fetched users after filtering:', allUsers.length);
 
