@@ -60,6 +60,7 @@ const state = {
     playbackDeviceId: null,   // speaker chosen in the pre-join device check (Chrome/Edge only)
     channelName: '',
     wasCallActive: false,
+    leaving: false,          // leaveChannel() in progress
     callStartTime: null,
     callTimerInterval: null,
     callLimitInterval: null,
@@ -477,8 +478,13 @@ async function initAgora() {
     state.client.on('token-privilege-did-expire', () => {
         if (state.wasCallActive) leaveChannel().catch(console.error);
     });
-    // Diagnostics only
-    state.client.on('connection-state-change', (cur, prev, reason) => diag('conn_state', { cur, prev, reason }));
+    state.client.on('connection-state-change', (cur, prev, reason) => {
+        diag('conn_state', { cur, prev, reason });
+        // LEAVE is our own leave(); anything else means Agora dropped us for good
+        if (cur === 'DISCONNECTED' && reason && reason !== 'LEAVE' && state.wasCallActive) {
+            handleUnexpectedDisconnect(reason);
+        }
+    });
     state.client.on('exception', e => { diag('exception', { code: e.code, msg: e.msg, uid: e.uid }); onLocalBitrateException(e); });
     state.client.on('user-joined', user => {
         diag('remote_joined', { uid: user.uid });
@@ -674,7 +680,33 @@ async function joinChannel() {
     }
 }
 
-async function leaveChannel() {
+/**
+ * Agora disconnected us without us leaving. UID_BANNED means the same account
+ * joined the call from another tab or device, which takes over the connection.
+ * This window used to stay on the call screen looking connected while sending
+ * and receiving nothing (seen 2026-11-03: an instructor sat in a dead tab for
+ * 5 minutes after opening the call a second time).
+ */
+async function handleUnexpectedDisconnect(reason) {
+    if (state.leaving) return;
+    const takenOver = reason === 'UID_BANNED';
+    // The other window is now using the same presence and relay docs — leave them alone
+    await leaveChannel({ showRating: false, keepSharedDocs: takenOver }).catch(console.error);
+    showPjStatus(takenOver
+        ? 'You joined this call from another tab or device, so it was disconnected here.'
+        : 'The call disconnected. Press "Join Call" to reconnect.', 'error');
+}
+
+async function leaveChannel({ showRating = true, keepSharedDocs = false } = {}) {
+    state.leaving = true;
+    try {
+        await leaveChannelSteps({ showRating, keepSharedDocs });
+    } finally {
+        state.leaving = false;
+    }
+}
+
+async function leaveChannelSteps({ showRating, keepSharedDocs }) {
     // Final stats snapshot must be taken before tracks are closed
     endDiagSession();
     clearTimeout(state.controlsHideTimer);
@@ -697,7 +729,7 @@ async function leaveChannel() {
 
     // Teardown whiteboard
     if (state.wbUnsubscribe) { state.wbUnsubscribe(); state.wbUnsubscribe = null; }
-    if (state.wbRelayRef)    { deleteDoc(state.wbRelayRef).catch(() => {}); state.wbRelayRef = null; }
+    if (state.wbRelayRef)    { if (!keepSharedDocs) deleteDoc(state.wbRelayRef).catch(() => {}); state.wbRelayRef = null; }
     state.wbMyUid = null;
 
     // Teardown chat
@@ -708,7 +740,8 @@ async function leaveChannel() {
     // Clear presence
     if (state.presenceUnsubscribe) { state.presenceUnsubscribe(); state.presenceUnsubscribe = null; }
     state.remoteUserNames = {};
-    await clearPresence();
+    if (keepSharedDocs) state.presenceRef = null;
+    else await clearPresence();
 
     // Leave Agora channel
     if (state.client) {
@@ -751,7 +784,7 @@ async function leaveChannel() {
     joinBtn.disabled = false;
     resetDevicePreviewUI();
 
-    if (hadActiveCall) {
+    if (hadActiveCall && showRating) {
         maybeShowRatingPopup().catch(console.error);
     }
 }
@@ -2469,7 +2502,7 @@ function setupEventListeners() {
     // Control bar buttons
     btnMute.addEventListener('click', toggleMute);
     btnCamera.addEventListener('click', toggleCamera);
-    btnLeave.addEventListener('click', leaveChannel);
+    btnLeave.addEventListener('click', () => leaveChannel());
     btnScreenShare?.addEventListener('click', toggleScreenShare);
     $('vc-stop-presenting')?.addEventListener('click', stopScreenShare);
     btnPip.addEventListener('click', enterPiP);
