@@ -588,6 +588,7 @@ async function joinChannel() {
     showScreen('screen-loading');
     setLoadingMsg('Generating secure token…');
     diag('join_start', { channel });
+    announceJoin(channel);
 
     try {
         if (!state.client) await initAgora();
@@ -658,6 +659,7 @@ async function joinChannel() {
 
         // Update UI
         vcRoomName.textContent = channel;
+        rememberActiveCall();
         showScreen('screen-call');
         setupControlsAutoHide();
         resetHideTimer();
@@ -697,8 +699,31 @@ async function handleUnexpectedDisconnect(reason) {
         : 'The call disconnected. Press "Join Call" to reconnect.', 'error');
 }
 
+/**
+ * Opening the same call in a second tab of this browser: the older tab hands
+ * over before the new one connects. Agora usually disconnects the older
+ * connection itself (UID_BANNED, above), but not always; when it doesn't, both
+ * tabs stay connected under one uid and the other person sees a muddle of the two.
+ */
+const callTabs = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('linguabud-video-call') : null;
+
+function announceJoin(channel) {
+    callTabs?.postMessage({ type: 'joining', channel });
+}
+
+function setupCallTabHandover() {
+    if (!callTabs) return;
+    callTabs.onmessage = async ({ data }) => {
+        if (data?.type !== 'joining' || data.channel !== state.channelName || !state.wasCallActive || state.leaving) return;
+        diag('handed_over_to_other_tab');
+        await leaveChannel({ showRating: false, keepSharedDocs: true }).catch(console.error);
+        showPjStatus('You opened this call in another tab, so it was closed here.', 'info');
+    };
+}
+
 async function leaveChannel({ showRating = true, keepSharedDocs = false } = {}) {
     state.leaving = true;
+    forgetActiveCall();
     try {
         await leaveChannelSteps({ showRating, keepSharedDocs });
     } finally {
@@ -2404,6 +2429,11 @@ function loadNotifications(uid) {
 // AUTHENTICATION
 // ════════════════════════════════════════════════════════════
 
+// Resolves once we know who's signed in (and their profile name), so code that
+// joins without a click doesn't join as a guest
+let resolveAuthReady;
+const authReady = new Promise(r => { resolveAuthReady = r; });
+
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         state.currentUser = user;
@@ -2447,6 +2477,7 @@ onAuthStateChanged(auth, async (user) => {
         $('pj-nav-profile')?.classList.add('hidden');
         $('pj-nav-signin')?.classList.remove('hidden');
     }
+    resolveAuthReady();
 });
 
 // Restore cached avatar instantly (before Firestore loads)
@@ -3027,6 +3058,53 @@ function collectCallStats() {
 }
 
 // ════════════════════════════════════════════════════════════
+// REJOIN AFTER RELOAD
+// iPhone Safari can throw the call page away while you're in another
+// app and reload it when you come back, which used to land you on the
+// pre-join screen mid-lesson (seen twice in one trial on 2026-11-03).
+// If this tab was in this same call a moment ago, join straight back in.
+// sessionStorage is per tab, so opening the link in a new tab never
+// auto-joins, and leaving with the button forgets the call.
+// ════════════════════════════════════════════════════════════
+
+const REJOIN_KEY = 'vc-active-call';
+const REJOIN_WINDOW_MS = 3 * 60 * 1000;
+
+function rememberActiveCall() {
+    if (!state.wasCallActive || !state.channelName) return;
+    try { sessionStorage.setItem(REJOIN_KEY, JSON.stringify({ channel: state.channelName, at: Date.now() })); } catch { /* storage blocked */ }
+}
+
+function forgetActiveCall() {
+    try { sessionStorage.removeItem(REJOIN_KEY); } catch { /* storage blocked */ }
+}
+
+function wasJustInCall(channel) {
+    try {
+        const saved = JSON.parse(sessionStorage.getItem(REJOIN_KEY) || 'null');
+        return !!saved && saved.channel === channel && Date.now() - saved.at < REJOIN_WINDOW_MS;
+    } catch { return false; }
+}
+
+function setupRejoinAfterReload() {
+    // Hidden is the last moment iOS reliably gives us before discarding the page.
+    // pagehide also covers a reload, after beforeunload's leaveChannel() has run.
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') rememberActiveCall();
+    });
+    window.addEventListener('pagehide', rememberActiveCall);
+
+    const channel = channelInput.value.trim();
+    if (!channel || !wasJustInCall(channel)) return;
+    showPjStatus('Reconnecting you to the call…', 'info');
+    authReady.then(() => {
+        if (state.wasCallActive || state.client?.connectionState === 'CONNECTED') return;
+        diag('auto_rejoin');
+        joinChannel();
+    });
+}
+
+// ════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════
 
@@ -3054,6 +3132,8 @@ function init() {
     setupNavWarning();
     setupMediaWatchListeners();
     setupLocalPipDrag();
+    setupCallTabHandover();
+    setupRejoinAfterReload();
 }
 
 init();
