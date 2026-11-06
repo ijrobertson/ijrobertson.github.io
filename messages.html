@@ -2328,6 +2328,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let speechRecognition = null;
         let recordingTranscript = '';
         let recognitionEndPromise = Promise.resolve();
+        let recorderStoppedPromise = Promise.resolve(); // resolves when mediaRecorder stops, for ANY reason
+        let recordingSendInFlight = false; // guards against a double tap sending twice
         let recordingLanguage = 'en-US'; // BCP-47 tag for SpeechRecognition
 
         // Supported languages: BCP-47 tag → { label, myMemory ISO code }
@@ -4843,10 +4845,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     : new MediaRecorder(stream);
 
                 mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+                // Wired up front, not at send time: on iOS the recorder can stop
+                // on its own mid-recording (e.g. another audio capture takes the
+                // mic). The old code set onstop only when Send was tapped, and
+                // bailed out if the recorder was already inactive, so Send did
+                // nothing at all. Now a self-stopped recorder still sends what
+                // it captured.
+                recorderStoppedPromise = new Promise(resolve => {
+                    mediaRecorder.onstop = resolve;
+                    mediaRecorder.onerror = resolve;
+                });
                 mediaRecorder.start(100);
 
-                // Start SpeechRecognition in parallel (Chrome/Edge on desktop; Android Chrome)
-                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                // Start SpeechRecognition in parallel (Chrome/Edge on desktop; Android Chrome).
+                // Skipped in the installed iOS app (home-screen PWA): there,
+                // WebKit's speech recognition competes with MediaRecorder for the
+                // mic and can stop the recording or never report that it ended,
+                // which left Send stuck. The voice note matters more than the
+                // auto-transcript, so the transcript is simply blank there.
+                const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+                    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                const isStandalone = window.navigator.standalone === true
+                    || window.matchMedia('(display-mode: standalone)').matches;
+                const SR = (isIOS && isStandalone) ? null : (window.SpeechRecognition || window.webkitSpeechRecognition);
                 recognitionEndPromise = Promise.resolve(); // reset for this recording session
                 if (SR) {
                     try {
@@ -4897,6 +4918,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 // Show recording UI
                 recordingStartTime = Date.now();
+                recordingSendInFlight = false;
+                // Drop focus from the text box before hiding it, so iOS doesn't
+                // spend the first tap on Send just dismissing the keyboard.
+                document.getElementById('messageInput')?.blur();
                 document.getElementById('messageForm').style.display = 'none';
                 document.getElementById('recordingUI').style.display = 'flex';
 
@@ -4928,8 +4953,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('messageForm').style.display = 'flex';
         }
 
+        // Resolves when `promise` does, or after `ms`, whichever comes first,
+        // so a browser API that never fires its end event can't hang Send.
+        function settleWithin(promise, ms) {
+            return Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
+        }
+
         async function stopAndSendRecording(stream, conversationId) {
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+            if (!mediaRecorder || recordingSendInFlight) return;
+            recordingSendInFlight = true;
+            const recorder = mediaRecorder;
             const duration = (Date.now() - recordingStartTime) / 1000;
 
             clearInterval(recordingTimerInterval);
@@ -4937,11 +4970,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const recSendBtn = document.getElementById('recSendBtn');
             if (recSendBtn) recSendBtn.disabled = true;
 
-            // Stop MediaRecorder and wait for the final ondataavailable + onstop
-            const mediaStopPromise = new Promise(resolve => {
-                mediaRecorder.onstop = resolve;
-                mediaRecorder.stop();
-            });
+            // Stop MediaRecorder (if it hasn't already stopped on its own) and
+            // wait for the final ondataavailable + onstop.
+            if (recorder.state !== 'inactive') {
+                try { recorder.stop(); } catch (e) { console.warn('MediaRecorder stop failed:', e); }
+            }
 
             // Trigger recognition stop; onend/onerror were already wired in startRecording
             // so recognitionEndPromise is already set up and will resolve correctly
@@ -4950,7 +4983,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 speechRecognition = null;
             }
 
-            await Promise.all([mediaStopPromise, recognitionEndPromise]);
+            // Both waits are capped: some browsers (iOS in particular) never
+            // fire onend/onstop, which used to leave Send stuck forever.
+            await Promise.all([
+                settleWithin(recorderStoppedPromise, 3000),
+                settleWithin(recognitionEndPromise, 2000),
+            ]);
             stream.getTracks().forEach(t => t.stop());
 
             // Re-enable before hiding so the button is ready for the next recording
@@ -4958,12 +4996,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('recordingUI').style.display = 'none';
             document.getElementById('messageForm').style.display = 'flex';
 
-            if (audioChunks.length === 0) return;
+            if (audioChunks.length === 0) {
+                recordingSendInFlight = false;
+                alert('No audio was captured. Please check your microphone and try again.');
+                return;
+            }
 
-            const mimeType = mediaRecorder.mimeType || 'audio/webm';
+            const mimeType = recorder.mimeType || audioChunks[0].type || 'audio/mp4';
             const blob = new Blob(audioChunks, { type: mimeType });
-            // recordingTranscript is now fully populated (onend has fired)
-            await sendAudioMessage(conversationId, blob, duration, recordingTranscript.trim());
+            audioChunks = [];
+            // recordingTranscript is now fully populated (onend has fired, or we gave up waiting)
+            try {
+                await sendAudioMessage(conversationId, blob, duration, recordingTranscript.trim());
+            } finally {
+                recordingSendInFlight = false;
+            }
         }
 
         async function sendAudioMessage(conversationId, audioBlob, duration, transcript) {
@@ -4978,7 +5025,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const ext = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm';
                 const storageRef = ref(storage, `conversations/${conversationId}/audio/audio_${Date.now()}.${ext}`);
 
-                const uploadTask = uploadBytesResumable(storageRef, audioBlob);
+                // Storage rules only accept audio/* — iOS can report an empty
+                // or video/mp4 type for a voice recording, so normalise it.
+                const contentType = /^audio\//.test(audioBlob.type) ? audioBlob.type : `audio/${ext}`;
+                const uploadTask = uploadBytesResumable(storageRef, audioBlob, { contentType });
                 await new Promise((resolve, reject) => uploadTask.on('state_changed', null, reject, resolve));
                 const downloadURL = await getDownloadURL(storageRef);
 
