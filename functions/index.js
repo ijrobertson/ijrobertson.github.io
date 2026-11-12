@@ -477,6 +477,13 @@ exports.sendMessageNotification = onDocumentCreated(
       const message = snap.data();
       const conversationId = event.params.conversationId;
 
+      // Banned senders and the new-chat limit: block before any push/email
+      const gate = await gateIncomingMessage(admin.firestore(), conversationId, snap);
+      if (gate.blocked) {
+        console.log(`[ChatLimit] blocked message ${snap.id} from ${message.senderId} (${gate.reason})`);
+        return null;
+      }
+
       // Multi-photo sends: only the first image of a batch notifies (push and
       // email). The client tags the 2nd+ images with batchIndex > 0.
       if (message.batchIndex > 0) {
@@ -2193,6 +2200,186 @@ exports.adminGetDeletedAccounts = onCall(async (request) => {
       deletedAt: d.data().deletedAt?.toDate?.()?.toISOString() || null,
     })),
   };
+});
+
+// ── Spam protection: banned senders + new-chat limit ──────────────────────
+// Added 2026-11-11 after a scam account messaged 72 people within an hour
+// of signing up. Firestore rules can't count, so this runs server-side from
+// sendMessageNotification BEFORE any push/email goes out, and deletes the
+// message if it's blocked (the queued-email processor skips deleted messages).
+//
+// "New chat" = a conversation where the other person hasn't sent anything
+// yet. Each one counts once per rolling 24h against the sender; replying to
+// someone who has messaged you never counts. Admins are exempt.
+// Historic peak for a real user was 17 in a day; the scam account hit 72.
+const { FieldValue: BanFieldValue } = require('firebase-admin/firestore');
+const NEW_CHAT_LIMIT = 20;
+const NEW_CHAT_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+async function deleteBlockedMessage(convRef, msgSnap) {
+  await msgSnap.ref.delete().catch(() => {});
+  // If that was the only message, drop the now-empty conversation too so it
+  // doesn't sit in the recipient's inbox with the blocked text as lastMessage.
+  const rest = await convRef.collection('messages').limit(1).get();
+  if (rest.empty) await convRef.delete().catch(() => {});
+}
+
+/** Returns { blocked: boolean, reason?: string } for a newly created message. */
+async function gateIncomingMessage(db, conversationId, msgSnap) {
+  const message = msgSnap.data() || {};
+  const senderId = message.senderId;
+  if (!senderId) return { blocked: false };
+  const convRef = db.collection('conversations').doc(conversationId);
+
+  // 1. Banned sender. Their ID token can outlive the ban by up to an hour,
+  //    so a write can still land after adminBanUser disables the login.
+  const [banSnap, adminSnap, convSnap] = await Promise.all([
+    db.collection('banned_users').doc(senderId).get(),
+    db.collection('admins').doc(senderId).get(),
+    convRef.get(),
+  ]);
+  if (banSnap.exists) {
+    await deleteBlockedMessage(convRef, msgSnap);
+    return { blocked: true, reason: 'banned' };
+  }
+  if (adminSnap.exists || !convSnap.exists) return { blocked: false };
+
+  // 2. New-chat limit. Has the other person ever replied here?
+  const others = (convSnap.data().participants || []).filter(id => id !== senderId);
+  for (const otherId of others) {
+    const replied = await convRef.collection('messages').where('senderId', '==', otherId).limit(1).get();
+    if (!replied.empty) return { blocked: false };
+  }
+
+  const limitRef = db.collection('chatLimits').doc(senderId);
+  const now = Date.now();
+  const result = await db.runTransaction(async (tx) => {
+    const s = await tx.get(limitRef);
+    // chats: { conversationId: firstCountedAtMs }, pruned to the window
+    const chats = {};
+    for (const [cid, t] of Object.entries((s.exists && s.data().chats) || {})) {
+      if (now - t < NEW_CHAT_WINDOW_MS) chats[cid] = t;
+    }
+    if (chats[conversationId]) { tx.set(limitRef, { chats }); return { allowed: true }; }
+    const count = Object.keys(chats).length;
+    if (count >= NEW_CHAT_LIMIT) {
+      tx.set(limitRef, { chats, blockedCount: BanFieldValue.increment(1), lastBlockedAt: now }, { merge: true });
+      return { allowed: false, resetAt: Math.min(...Object.values(chats)) + NEW_CHAT_WINDOW_MS };
+    }
+    chats[conversationId] = now;
+    tx.set(limitRef, { chats }, { merge: true });
+    return { allowed: true };
+  });
+  if (result.allowed) return { blocked: false };
+
+  await deleteBlockedMessage(convRef, msgSnap);
+  // Flag for admin review (shows in the admin panel's Flagged tab) and tell
+  // the sender's app when they can start new chats again.
+  const update = {
+    flagged: true,
+    flaggedAt: BanFieldValue.serverTimestamp(),
+    flagReason: `Hit the new-chat limit (${NEW_CHAT_LIMIT} unanswered chats in 24h)`,
+    newChatLimitUntil: new Date(result.resetAt),
+  };
+  for (const col of ['users', 'instructors']) {
+    const ref = db.collection(col).doc(senderId);
+    if ((await ref.get()).exists) await ref.update(update).catch(e => console.error('[ChatLimit] flag failed', col, e.message));
+  }
+  return { blocked: true, reason: 'new-chat-limit' };
+}
+
+/**
+ * Ban a user: disables their login (which keeps the email reserved, so it
+ * can't be used to sign up again), signs them out everywhere, deletes every
+ * conversation they're in plus any queued message emails, deletes their
+ * profile, and records the ban. extraEmails (e.g. an address the scammer
+ * asked people to contact) get disabled placeholder logins so they can't
+ * sign up either; an address already used by another account is left alone.
+ */
+exports.adminBanUser = onCall({ timeoutSeconds: 300 }, async (request) => {
+  await assertAdmin(request);
+  const { userId, reason = '', extraEmails = [] } = request.data || {};
+  if (!userId || typeof userId !== 'string') throw new HttpsError('invalid-argument', 'userId required');
+  if (userId === request.auth.uid) throw new HttpsError('failed-precondition', "You can't ban yourself");
+  if (!Array.isArray(extraEmails) || extraEmails.length > 5) throw new HttpsError('invalid-argument', 'extraEmails must be a list of up to 5 addresses');
+
+  const db = admin.firestore();
+  if ((await db.collection('admins').doc(userId).get()).exists) throw new HttpsError('failed-precondition', "Admins can't be banned");
+
+  const [userSnap, instrSnap] = await Promise.all([
+    db.collection('users').doc(userId).get(),
+    db.collection('instructors').doc(userId).get(),
+  ]);
+  const userData  = userSnap.exists  ? userSnap.data()  : null;
+  const instrData = instrSnap.exists ? instrSnap.data() : null;
+  let authUser = null;
+  try { authUser = await admin.auth().getUser(userId); }
+  catch (e) { if (e.code !== 'auth/user-not-found') throw e; }
+
+  const email = (authUser?.email || instrData?.email || userData?.email || '').trim().toLowerCase() || null;
+  const name  = instrData?.name || userData?.name || authUser?.displayName || null;
+  const cleanExtra = [...new Set(extraEmails.map(e => String(e).trim().toLowerCase()).filter(Boolean))]
+    .filter(e => e !== email);
+  for (const e of cleanExtra) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new HttpsError('invalid-argument', `Not a valid email: ${e}`);
+  }
+
+  // 1. Ban record first, so gateIncomingMessage blocks anything they send mid-cleanup
+  const banRef = db.collection('banned_users').doc(userId);
+  await banRef.set({
+    userId, email, name, reason: String(reason).slice(0, 500), extraEmails: cleanExtra,
+    role: instrData ? (userData ? 'both' : 'instructor') : 'student',
+    bannedBy: request.auth.uid,
+    bannedAt: BanFieldValue.serverTimestamp(),
+  });
+
+  // 2. Lock the login. Disabling (not deleting) keeps the email taken.
+  const reserved = [];
+  const skipped = [];
+  if (authUser) {
+    await admin.auth().updateUser(userId, { disabled: true });
+    await admin.auth().revokeRefreshTokens(userId);
+    if (email) reserved.push(email);
+  } else if (email) {
+    cleanExtra.unshift(email); // account already deleted: reserve its email with a placeholder
+  }
+  for (const e of cleanExtra) {
+    try {
+      await admin.auth().createUser({
+        email: e, disabled: true, displayName: 'BANNED',
+        password: require('crypto').randomBytes(24).toString('base64'),
+      });
+      reserved.push(e);
+    } catch (err) {
+      if (err.code === 'auth/email-already-exists') skipped.push(e);
+      else throw err;
+    }
+  }
+
+  // 3. Conversations (+ messages) and any emails still queued for them
+  const convs = await db.collection('conversations').where('participants', 'array-contains', userId).get();
+  for (const c of convs.docs) {
+    const queued = await db.collection('pendingMessageEmails').where('conversationId', '==', c.id).get();
+    await Promise.all(queued.docs.map(q => q.ref.delete()));
+    await db.recursiveDelete(c.ref);
+  }
+
+  // 4. Profile + audit log (same shape adminDeleteUser writes)
+  await db.collection('deleted_accounts').add({
+    userId, name, email,
+    role: instrData ? (userData ? 'both' : 'instructor') : 'student',
+    deletedBy: 'admin-ban',
+    deletedAt: BanFieldValue.serverTimestamp(),
+  });
+  const batch = db.batch();
+  batch.delete(db.collection('users').doc(userId));
+  batch.delete(db.collection('instructors').doc(userId));
+  batch.delete(db.collection('instructor_availability').doc(userId));
+  batch.delete(db.collection('chatLimits').doc(userId));
+  await batch.commit();
+
+  await banRef.update({ conversationsDeleted: convs.size, emailsReserved: reserved, emailsSkipped: skipped });
+  return { success: true, conversationsDeleted: convs.size, emailsReserved: reserved, emailsSkipped: skipped };
 });
 
 /**
