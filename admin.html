@@ -188,6 +188,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             cursor: pointer; transition: all 0.2s;
         }
         .btn-flag:hover { background: #e6a817; color: white; }
+        .btn-ban {
+            background: #113448; color: white; border: none;
+            padding: 5px 10px; border-radius: 5px; font-size: 0.8rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-ban:hover { background: #0b2333; }
+        .ban-field { width: 100%; margin-top: 4px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.85rem; }
         .btn-sm-icon {
             background: none; border: none; cursor: pointer;
             padding: 4px 8px; border-radius: 4px; transition: background 0.2s;
@@ -1405,6 +1412,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const declineInstructor   = adminCallable('adminDeclineInstructor');
         const deleteUser          = adminCallable('adminDeleteUser');
         const flagUser            = adminCallable('adminFlagUser');
+        const banUser             = adminCallable('adminBanUser');
         const markMsgRead         = adminCallable('adminMarkMessageRead');
         const markWisePaid        = adminCallable('markWisePayoutsPaid');
         const runWisePayoutsFn    = adminCallable('runWisePayouts');
@@ -1661,6 +1669,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <td style="white-space:nowrap;">
                             <button class="btn-unflag" style="margin-right:4px;" onclick="dismissReport('${r.id}')">Dismiss</button>
                             <button class="btn-flag" style="margin-right:4px;" onclick="flagReportedUser('${escHtml(r.reportedUserId || '')}','${escHtml(r.reportedUserName || '')}')">Flag User</button>
+                            <button class="btn-ban" style="margin-right:4px;" onclick="doBan('${escHtml(r.reportedUserId || '')}','${escHtml(r.reportedUserName || '')}')">Ban</button>
                             <button class="btn-delete" onclick="deleteReportedUser('${escHtml(r.reportedUserId || '')}','${escHtml(r.reportedUserName || '')}')">Delete User</button>
                         </td>
                     </tr>`;
@@ -2005,9 +2014,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(u.name || u.email || u.id)}</td>
                         <td>${type}</td>
                         <td>${escHtml(u.email || '—')}</td>
-                        <td>${escHtml(flaggedAt)}</td>
-                        <td>
+                        <td>${escHtml(flaggedAt)}${u.flagReason ? `<br><small style="color:#842029;">${escHtml(u.flagReason)}</small>` : ''}</td>
+                        <td style="white-space:nowrap;">
                             <button class="btn-unflag mr-1" onclick="doUnflag('${u.id}','${u.userCollection}','${escHtml(u.name || '')}')">Unflag</button>
+                            <button class="btn-ban mr-1" onclick="doBan('${u.id}','${escHtml(u.name || '')}')">Ban</button>
                             <button class="btn-delete" onclick="doDelete('${u.id}','${escHtml(u.name || '')}')">Delete Account</button>
                         </td>
                     </tr>`;
@@ -2029,6 +2039,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 `Permanently delete <strong>${escHtml(name)}</strong>'s account? This cannot be undone.`,
                 async () => { await deleteUser({ userId: id }); await loadFlagged(); await loadUsers(); await loadStats(); tabsLoaded['users'] = false; }
             );
+        };
+        // Ban = delete + lock the email so it can't sign up again + remove every
+        // conversation they're in (and any queued message emails). See
+        // adminBanUser in functions/index.js.
+        window.doBan = function(id, name) {
+            showConfirm('Ban User',
+                `Ban <strong>${escHtml(name || id)}</strong>? This deletes their profile and <strong>every conversation they're in</strong> (other people's copies too), signs them out, and blocks their email from signing up again. This cannot be undone.
+                 <label style="display:block;margin-top:12px;font-size:0.85rem;">Reason (kept in the ban record)
+                   <textarea id="banReason" class="ban-field" rows="2" placeholder="e.g. Scam messages asking people to contact them by email"></textarea></label>
+                 <label style="display:block;margin-top:8px;font-size:0.85rem;">Other emails to block (optional, comma-separated)
+                   <input id="banExtraEmails" class="ban-field" type="text" placeholder="e.g. an address they asked people to write to"></label>`,
+                async () => {
+                    const reason = (document.getElementById('banReason')?.value || '').trim();
+                    const extraEmails = (document.getElementById('banExtraEmails')?.value || '')
+                        .split(/[\s,;]+/).map(e => e.trim()).filter(Boolean);
+                    const res = await banUser({ userId: id, reason, extraEmails });
+                    const r = res.data || {};
+                    let msg = `Banned. ${r.conversationsDeleted || 0} conversation(s) removed.`;
+                    if (r.emailsReserved?.length) msg += `\nBlocked from signing up: ${r.emailsReserved.join(', ')}`;
+                    if (r.emailsSkipped?.length)  msg += `\nNot blocked (already used by another account): ${r.emailsSkipped.join(', ')}`;
+                    alert(msg);
+                    tabsLoaded['users'] = false; tabsLoaded['all-users'] = false;
+                    await Promise.allSettled([loadFlagged(), loadUsers(), loadStats(), loadReports()]);
+                }
+            );
+            document.getElementById('confirmOkBtn').textContent = 'Ban user';
         };
         window.doRemoveApplication = function(id, name) {
             showConfirm('Remove Application',
@@ -2083,6 +2119,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <button class="btn-flag mr-1" title="${flagLabel} user" onclick="doFlagUser('${u.id}','users','${escHtml(u.name || '')}',${!u.flagged})">
                             ${flagLabel}
                         </button>
+                        <button class="btn-ban mr-1" onclick="doBan('${u.id}','${escHtml(u.name || '')}')">Ban</button>
                         <button class="btn-delete" onclick="doDelete('${u.id}','${escHtml(u.name || '')}')">Delete</button>
                     </td>
                 </tr>`;
@@ -2170,6 +2207,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <td><small>${escHtml(joined)}</small></td>
                     <td style="white-space:nowrap;">
                         <button class="btn-flag mr-1" onclick="doFlagUser('${u.id}','${u._col}','${escHtml(u.name || '')}',${!u.flagged})">${flagLabel}</button>
+                        <button class="btn-ban mr-1" onclick="doBan('${u.id}','${escHtml(u.name || '')}')">Ban</button>
                         <button class="btn-delete" onclick="doDeleteFromAllUsers('${u.id}','${escHtml(u.name || '')}')">Delete</button>
                     </td>
                 </tr>`;
