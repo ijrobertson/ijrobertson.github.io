@@ -1576,7 +1576,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <input type="file" id="avatar" accept="image/*" />
       </div>
       <div class="st-hero-text">
-        <div class="st-hero-name" data-summary="hero-name">Your profile</div>
+        <div class="st-hero-name" data-summary="hero-name" translate="no">Your profile</div>
         <div class="st-hero-sub" data-summary="hero-sub"></div>
         <div class="small-note">Tap the pencil to change your photo.</div>
       </div>
@@ -1631,11 +1631,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="st-body">
           <label for="spokenLanguage">Languages You Speak</label>
           <select id="spokenLanguage"></select>
-          <div id="languages_spoken"></div>
+          <div id="languages_spoken" data-i18n-name></div>
 
           <label for="teachingLanguage">Languages You Teach</label>
           <select id="teachingLanguage"></select>
-          <div id="languages_teaching"></div>
+          <div id="languages_teaching" data-i18n-name></div>
         </div>
       </details>
       <details class="st-section" data-section="pricing">
@@ -1932,9 +1932,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       Array.prototype.forEach.call(page.querySelectorAll('[data-summary]'), function (el) {
         el.setAttribute('data-default', el.textContent);
       });
+      // Interface language (js/i18n.js); plain English when it isn't loaded.
+      var i18n = window.lbI18n;
+      function T(s) { return i18n ? i18n.t(s) : s; }
+      function F(tpl, vars) { return i18n ? i18n.f(tpl, vars) : tpl.replace(/\{(\w+)\}/g, function (m, k) { return k in vars ? vars[k] : m; }); }
+      // Language names inside a sentence are lowercase in Spanish/Portuguese.
+      function inSentence(list) {
+        if (!i18n || !i18n.locale) return list.join(', ');
+        return list.map(function (n) { return n.charAt(0).toLocaleLowerCase(i18n.locale) + n.slice(1); }).join(', ');
+      }
       function set(key, text) {
         Array.prototype.forEach.call(page.querySelectorAll('[data-summary="' + key + '"]'), function (el) {
-          var value = text || el.getAttribute('data-default');
+          var value = text || T(el.getAttribute('data-default'));
           if (el.textContent !== value) el.textContent = value;
         });
       }
@@ -1945,22 +1954,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         var spoken = tags('languages_spoken');
         var teaching = tags('languages_teaching');
         set('hero-name', name);
-        set('hero-sub', [country, teaching.length ? 'Teaches ' + teaching.join(', ') : ''].filter(Boolean).join(' · '));
+        set('hero-sub', [country, teaching.length ? F('Teaches {list}', { list: inSentence(teaching) }) : ''].filter(Boolean).join(' · '));
         set('about', [name, country].filter(Boolean).join(' · '));
         set('languages', [
-          spoken.length ? 'Speaks ' + spoken.join(', ') : '',
-          teaching.length ? 'Teaches ' + teaching.join(', ') : ''
+          spoken.length ? F('Speaks {list}', { list: inSentence(spoken) }) : '',
+          teaching.length ? F('Teaches {list}', { list: inSentence(teaching) }) : ''
         ].filter(Boolean).join(' · '));
         var price = val('price');
-        set('pricing', price ? price + ' ' + val('currency') + ' per lesson' : '');
+        set('pricing', price ? F('{price} {currency} per lesson', { price: price, currency: val('currency') }) : '');
         var video = $('videoPreview');
-        set('video', video && video.getAttribute('src') ? 'Video added · shown on your public profile' : '');
+        set('video', video && video.getAttribute('src') ? T('Video added · shown on your public profile') : '');
         var filled = ['teaching_experience', 'certifications', 'teaching_style'].filter(function (id) { return val(id); }).length;
-        set('experience', filled ? filled + ' of 3 filled in' : '');
+        set('experience', filled ? F('{n} of 3 filled in', { n: filled }) : '');
         var tz = optText($('timezone'));
-        set('availability', tz ? 'Timezone: ' + tz : '');
+        set('availability', tz ? F('Timezone: {tz}', { tz: tz }) : '');
         var push = $('messagePushEnabled');
-        set('notifications', push ? 'Push notifications ' + (push.checked ? 'on' : 'off') : '');
+        set('notifications', push ? T(push.checked ? 'Push notifications on' : 'Push notifications off') : '');
       }
 
       var queued = false;
@@ -2000,6 +2009,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var status = $('status');
       if (status) new MutationObserver(function () {
         var text = status.textContent || '';
+        if (i18n) text = i18n.toEnglish(text);
         if (!text || status.style.color !== 'red') return;
         if (/profile picture/i.test(text)) {
           page.querySelector('.st-hero').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2123,13 +2133,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="hw-view-backdrop" id="hw-view-backdrop">
     <div class="hw-view-modal">
       <div class="hw-view-header">
-        <h3 id="hw-view-title"></h3>
+        <h3 id="hw-view-title" translate="no"></h3>
         <button class="hw-view-x" id="hw-view-x"><i class="fas fa-times"></i></button>
       </div>
       <div class="hw-view-body">
         <div id="hw-view-status"></div>
         <div class="hw-view-meta" id="hw-view-meta"></div>
-        <div class="hw-view-notes" id="hw-view-notes" style="display:none;"></div>
+        <div class="hw-view-notes" id="hw-view-notes" style="display:none;" translate="no"></div>
         <div id="hw-view-pdf"></div>
       </div>
       <div class="hw-view-footer">
@@ -2174,6 +2184,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <script src="js/scripts.js"></script>
 
   <script type="module">
+    // Interface language (js/i18n.js). LB_LOCALE is for dates people SEE;
+    // day keys and Intl lookups that match availability stay 'en-US'.
+    // In English all of this produces exactly the original text.
+    const LB_LOCALE = (window.lbI18n && window.lbI18n.locale) || 'en-US';
+    const LB_H12 = !(window.lbI18n && window.lbI18n.locale);
+    const lbT = (s) => (window.lbI18n ? window.lbI18n.t(s) : s);
+    const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
     import {
       auth,
       db,
@@ -3153,7 +3170,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (!grid || !monthLabel) return;
 
       monthLabel.textContent = new Date(calViewYear, calViewMonth, 1)
-        .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        .toLocaleDateString(LB_LOCALE, { month: 'long', year: 'numeric' });
 
       grid.innerHTML = '';
 
@@ -3216,7 +3233,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const [year, month, day] = dateStr.split('-').map(Number);
       const dayName = dayKeyInTZ(dateStr);  // e.g. 'tuesday'
       const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      const title = `${capitalizeFirst(dayName)}, ${monthNames[month - 1]} ${day}, ${year}`;
+      // Same calendar date, written in the interface language when it isn't English.
+      const title = (window.lbI18n && window.lbI18n.locale)
+        ? new Date(year, month - 1, day).toLocaleDateString(LB_LOCALE, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+        : `${capitalizeFirst(dayName)}, ${monthNames[month - 1]} ${day}, ${year}`;
       document.getElementById('date-modal-title').textContent = title;
 
       // Show weekly schedule reference for this day-of-week (uses instructor TZ)
@@ -3224,10 +3244,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const weeklySlots = weeklyScheduleData[dayKey] || [];
       const weeklyRef = document.getElementById('date-modal-weekly-ref');
       if (weeklySlots.length === 0) {
-        weeklyRef.textContent = `Weekly schedule for ${capitalizeFirst(dayKey)}s: no hours set`;
+        weeklyRef.textContent = lbF('Weekly schedule for {day}s: no hours set', { day: lbT(capitalizeFirst(dayKey)) });
       } else {
         const slotsText = weeklySlots.map(s => `${s.start}–${s.end}`).join(', ');
-        weeklyRef.textContent = `Weekly schedule for ${capitalizeFirst(dayKey)}s: ${slotsText}`;
+        weeklyRef.textContent = lbF('Weekly schedule for {day}s: {slots}', { day: lbT(capitalizeFirst(dayKey)), slots: slotsText });
       }
 
       // Determine current state and pre-select the matching radio
@@ -3368,14 +3388,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       card.innerHTML = `
         <div>
-          <h5>${escapeHtmlInst(booking.studentName || 'Student')}</h5>
+          <h5${booking.studentName ? ' translate="no"' : ''}>${escapeHtmlInst(booking.studentName || 'Student')}</h5>
           <div class="booking-detail-inst">
             <i class="fas fa-calendar" style="color:#20bcba;width:14px;"></i>
-            ${booking.dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            ${booking.dateTime.toLocaleDateString(LB_LOCALE, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
           <div class="booking-detail-inst">
             <i class="fas fa-clock" style="color:#20bcba;width:14px;"></i>
-            ${booking.dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+            ${booking.dateTime.toLocaleTimeString(LB_LOCALE, { hour: 'numeric', minute: '2-digit', hour12: LB_H12 })}
             <span style="color:#bbb;font-size:0.82rem;">(${tz})</span>
           </div>
           <div class="booking-detail-inst">
@@ -3413,16 +3433,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       const amount = booking.amount || 0;
       const refundNote = amount > 0
-        ? `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> A <strong>full refund</strong> of ${new Intl.NumberFormat(undefined, { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(amount / 100)} will be issued to the student.`
+        ? `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> ${lbF('A <strong>full refund</strong> of {amount} will be issued to the student.', { amount: new Intl.NumberFormat(undefined, { style: 'currency', currency: (booking.currency || 'usd').toUpperCase() }).format(amount / 100) })}`
         : '';
 
       const details = document.getElementById('cancel-lesson-details');
       details.innerHTML = `
-        <strong style="font-size:1rem;">${escapeHtmlInst(booking.studentName || 'Student')}</strong><br>
+        <strong style="font-size:1rem;"${booking.studentName ? ' translate="no"' : ''}>${escapeHtmlInst(booking.studentName || 'Student')}</strong><br>
         <span style="color:#20bcba;"><i class="fas fa-calendar" style="width:16px;"></i></span>
-        ${booking.dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+        ${booking.dateTime.toLocaleDateString(LB_LOCALE, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
         <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
-        ${booking.dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+        ${booking.dateTime.toLocaleTimeString(LB_LOCALE, { hour: 'numeric', minute: '2-digit', hour12: LB_H12 })}
         ${refundNote ? `<br><br>${refundNote}` : ''}
       `;
 
@@ -3602,7 +3622,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const tableRows = rows.map(r => `
           <tr>
             <td style="padding:10px 12px;font-size:0.875rem;">${escHtml(r.studentId.substring(0,8))}…</td>
-            <td style="padding:10px 12px;">${r.referredAt?.toDate ? r.referredAt.toDate().toLocaleDateString() : '—'}</td>
+            <td style="padding:10px 12px;">${r.referredAt?.toDate ? ((window.lbI18n && window.lbI18n.locale) ? r.referredAt.toDate().toLocaleDateString(window.lbI18n.locale) : r.referredAt.toDate().toLocaleDateString()) : '—'}</td>
             <td style="padding:10px 12px;">${statusBadge(r.status)}</td>
             <td style="padding:10px 12px;font-size:0.875rem;">${r.creditUsedOnBookingId ? '✓ Applied' : '—'}</td>
           </tr>`).join('');
@@ -4162,7 +4182,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       document.getElementById('hw-modal-error').style.display = 'none';
       document.getElementById('hw-modal-error').textContent = '';
       document.getElementById('hw-send-btn').disabled = false;
-      document.getElementById('hw-student-label').textContent = `To: ${escapeHtmlInst(booking.studentName || 'Student')}`;
+      document.getElementById('hw-student-label').textContent = lbF('To: {name}', { name: escapeHtmlInst(booking.studentName || 'Student') });
       document.getElementById('hw-backdrop').classList.add('active');
     }
 
@@ -4286,27 +4306,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const statusEl = document.getElementById('hw-view-status');
       if (hw.completedByStudent) {
         const dateStr = hw.completedAt?.toDate?.()
-          ? ' · ' + hw.completedAt.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+          ? ' · ' + hw.completedAt.toDate().toLocaleDateString(LB_LOCALE, { month: 'long', day: 'numeric', year: 'numeric' })
           : '';
-        statusEl.innerHTML = `<span class="hw-status-badge completed"><i class="fas fa-check-circle"></i> Student Marked Complete${escapeHtmlInst(dateStr)}</span>`;
+        statusEl.innerHTML = `<span class="hw-status-badge completed"><i class="fas fa-check-circle"></i> ${lbF('Student Marked Complete{date}', { date: escapeHtmlInst(dateStr) })}</span>`;
       } else {
         statusEl.innerHTML = `<span class="hw-status-badge pending"><i class="fas fa-clock"></i> Pending</span>`;
       }
       const metaParts = [];
-      if (hw.studentName) metaParts.push(`To: ${hw.studentName}`);
+      if (hw.studentName) metaParts.push(lbF('To: {name}', { name: hw.studentName }));
       const sentDate = hw.createdAt?.toDate?.()
-        ? hw.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
-      if (sentDate) metaParts.push(`Sent: ${sentDate}`);
+        ? hw.createdAt.toDate().toLocaleDateString(LB_LOCALE, { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+      if (sentDate) metaParts.push(lbF('Sent: {date}', { date: sentDate }));
       const dueDate = hw.dueDate?.toDate?.()
-        ? hw.dueDate.toDate().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : '';
-      if (dueDate) metaParts.push(`Due: ${dueDate}`);
+        ? hw.dueDate.toDate().toLocaleDateString(LB_LOCALE, { weekday: 'long', month: 'long', day: 'numeric' }) : '';
+      if (dueDate) metaParts.push(lbF('Due: {date}', { date: dueDate }));
       document.getElementById('hw-view-meta').textContent = metaParts.join(' · ');
       const notesEl = document.getElementById('hw-view-notes');
       if (hw.notes) { notesEl.textContent = hw.notes; notesEl.style.display = 'block'; }
       else { notesEl.style.display = 'none'; }
       const pdfEl = document.getElementById('hw-view-pdf');
       pdfEl.innerHTML = hw.pdfUrl
-        ? `<a class="hw-view-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> ${escapeHtmlInst(hw.pdfName || 'Download')}</a>`
+        ? `<a class="hw-view-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> <span${hw.pdfName ? ' translate="no"' : ''}>${escapeHtmlInst(hw.pdfName || 'Download')}</span></a>`
         : '';
       document.getElementById('hw-view-backdrop').classList.add('active');
     }

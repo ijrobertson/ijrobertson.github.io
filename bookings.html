@@ -1144,6 +1144,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/scripts.js"></script>
 
     <script type="module">
+        // Interface language (js/i18n.js). LB_LOCALE is for dates people SEE;
+        // in English all of this produces exactly the original text.
+        const LB_LOCALE = (window.lbI18n && window.lbI18n.locale) || 'en-US';
+        const LB_H12 = !(window.lbI18n && window.lbI18n.locale);
+        const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
         import {
             auth, db, storage, functions, httpsCallable,
             onAuthStateChanged, signOut,
@@ -1412,7 +1417,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <ul class="past-students">
                         ${pastStudents.map(s => `
                             <li>
-                                <span class="past-student-name">${escapeHtml(s.name)}</span>
+                                <span class="past-student-name" translate="no">${escapeHtml(s.name)}</span>
                                 <a class="grow-btn" href="messages?with=${encodeURIComponent(s.id)}"><i class="fas fa-paper-plane"></i> Message</a>
                             </li>`).join('')}
                     </ul>
@@ -1532,7 +1537,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         function formatLessonTime(lessonTime) {
-            return lessonTime.toLocaleString(undefined, {
+            return lessonTime.toLocaleString((window.lbI18n && window.lbI18n.locale) || undefined, {
                 weekday: 'long',
                 month: 'long',
                 day: 'numeric',
@@ -1612,8 +1617,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             card.dataset.durationMinutes = durationMinutes;
 
             const otherNameHtml = (booking.myRole === 'instructor' && booking.studentId)
-                ? `<a href="learner-profile?uid=${escapeAttr(booking.studentId)}" class="student-profile-link" title="View ${escapeAttr(otherName)}'s profile">${escapeHtml(otherName)}</a>`
-                : escapeHtml(otherName);
+                ? `<a href="learner-profile?uid=${escapeAttr(booking.studentId)}" class="student-profile-link" title="View ${escapeAttr(otherName)}'s profile" translate="no">${escapeHtml(otherName)}</a>`
+                : `<span translate="no">${escapeHtml(otherName)}</span>`;
 
             card.innerHTML = `
                 <div class="lesson-card-header">
@@ -1622,7 +1627,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                          onerror="this.src='${DEFAULT_AVATAR}'"
                          alt="${escapeAttr(otherName)}">
                     <div class="lesson-instructor-info">
-                        <h4>${escapeHtml(roleLabel)} ${otherNameHtml}</h4>
+                        <h4>${lbF(roleLabel + ' {name}', { name: otherNameHtml })}</h4>
                         <span>${escapeHtml(lessonTypeLabel)}</span>
                     </div>
                 </div>
@@ -1797,25 +1802,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             let refundNote = '';
             if (bookingType === 'free_trial') {
-                refundNote = '<span style="color:#20bcba;"><i class="fas fa-gift" style="width:16px;"></i></span> This is a <strong>free trial</strong> — no charge will be made.';
+                refundNote = '<span style="color:#20bcba;"><i class="fas fa-gift" style="width:16px;"></i></span> ' + lbF('This is a <strong>free trial</strong> — no charge will be made.');
             } else if (role === 'instructor') {
-                refundNote = '<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> A <strong>full refund</strong> will be issued to the student.';
+                refundNote = '<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> ' + lbF('A <strong>full refund</strong> will be issued to the student.');
             } else if (amount > 0) {
                 if (hoursUntil > 24) {
-                    refundNote = `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> <strong>Full refund</strong> of ${escapeHtml(formatAmount(amount, currency))} will be issued.`;
+                    refundNote = `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> ${lbF('<strong>Full refund</strong> of {amount} will be issued.', { amount: escapeHtml(formatAmount(amount, currency)) })}`;
                 } else if (hoursUntil > 12) {
-                    refundNote = `<span style="color:#e67e22;"><i class="fas fa-undo" style="width:16px;"></i></span> <strong>50% refund</strong> of ${escapeHtml(formatAmount(Math.round(amount * 0.5), currency))} will be issued (12–24 hrs notice).`;
+                    refundNote = `<span style="color:#e67e22;"><i class="fas fa-undo" style="width:16px;"></i></span> ${lbF('<strong>50% refund</strong> of {amount} will be issued (12–24 hrs notice).', { amount: escapeHtml(formatAmount(Math.round(amount * 0.5), currency)) })}`;
                 } else {
-                    refundNote = '<span style="color:#dc3545;"><i class="fas fa-times-circle" style="width:16px;"></i></span> <strong>No refund</strong> — cancellation is within 12 hours of the lesson.';
+                    refundNote = '<span style="color:#dc3545;"><i class="fas fa-times-circle" style="width:16px;"></i></span> ' + lbF('<strong>No refund</strong> — cancellation is within 12 hours of the lesson.');
                 }
             }
 
             document.getElementById('cancelLessonInfo').innerHTML = `
-                <strong style="font-size:1rem;">${escapeHtml(name)}</strong><br>
+                <strong style="font-size:1rem;" translate="no">${escapeHtml(name)}</strong><br>
                 <span style="color:#20bcba;"><i class="fas fa-calendar" style="width:16px;"></i></span>
-                ${time.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+                ${time.toLocaleDateString(LB_LOCALE, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
                 <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
-                ${time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                ${time.toLocaleTimeString(LB_LOCALE, { hour: 'numeric', minute: '2-digit', hour12: LB_H12 })}
                 ${refundNote ? `<br><br>${refundNote}` : ''}
             `;
             document.getElementById('cancelModalErr').textContent = '';
@@ -2024,23 +2029,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const statusEl = document.getElementById('hwViewStatus');
             if (hw.completedByStudent) {
                 const dateStr = hw.completedAt?.toDate?.()
-                    ? ' · ' + hw.completedAt.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                    ? ' · ' + hw.completedAt.toDate().toLocaleDateString(LB_LOCALE, { month: 'long', day: 'numeric', year: 'numeric' })
                     : '';
-                statusEl.innerHTML = `<span class="hw-status-badge completed"><i class="fas fa-check-circle"></i> Student Marked Complete${escapeHtml(dateStr)}</span>`;
+                statusEl.innerHTML = `<span class="hw-status-badge completed"><i class="fas fa-check-circle"></i> ${lbF('Student Marked Complete{date}', { date: escapeHtml(dateStr) })}</span>`;
             } else {
                 statusEl.innerHTML = `<span class="hw-status-badge pending"><i class="fas fa-clock"></i> Pending</span>`;
             }
 
             const metaParts = [];
-            if (hw.studentName) metaParts.push(`To: ${hw.studentName}`);
+            if (hw.studentName) metaParts.push(lbF('To: {name}', { name: hw.studentName }));
             const sentDate = hw.createdAt?.toDate?.()
-                ? hw.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                ? hw.createdAt.toDate().toLocaleDateString(LB_LOCALE, { year: 'numeric', month: 'long', day: 'numeric' })
                 : '';
-            if (sentDate) metaParts.push(`Sent: ${sentDate}`);
+            if (sentDate) metaParts.push(lbF('Sent: {date}', { date: sentDate }));
             const dueDate = hw.dueDate?.toDate?.()
-                ? hw.dueDate.toDate().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+                ? hw.dueDate.toDate().toLocaleDateString(LB_LOCALE, { weekday: 'long', month: 'long', day: 'numeric' })
                 : '';
-            if (dueDate) metaParts.push(`Due: ${dueDate}`);
+            if (dueDate) metaParts.push(lbF('Due: {date}', { date: dueDate }));
             document.getElementById('hwViewMeta').textContent = metaParts.join(' · ');
 
             const notesEl = document.getElementById('hwViewNotes');
@@ -2049,7 +2054,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             const pdfEl = document.getElementById('hwViewPdf');
             pdfEl.innerHTML = hw.pdfUrl
-                ? `<a class="hw-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> ${escapeHtml(hw.pdfName || 'Download')}</a>`
+                ? `<a class="hw-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> <span${hw.pdfName ? ' translate="no"' : ''}>${escapeHtml(hw.pdfName || 'Download')}</span></a>`
                 : '';
 
             document.getElementById('hwViewBackdrop').classList.add('active');
@@ -2088,23 +2093,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 docs.forEach(d => {
                     const hw = d.data();
                     const dateStr = hw.createdAt?.toDate
-                        ? hw.createdAt.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                        ? hw.createdAt.toDate().toLocaleDateString(LB_LOCALE, { year: 'numeric', month: 'long', day: 'numeric' })
                         : '';
                     const dueStr = hw.dueDate?.toDate
-                        ? hw.dueDate.toDate().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+                        ? hw.dueDate.toDate().toLocaleDateString(LB_LOCALE, { weekday: 'long', month: 'long', day: 'numeric' })
                         : '';
 
                     const card = document.createElement('div');
                     card.className = 'hw-card';
                     card.innerHTML = `
-                        <div class="hw-card-title">${escapeHtml(hw.title)}</div>
+                        <div class="hw-card-title" translate="no">${escapeHtml(hw.title)}</div>
                         <div class="hw-card-meta">
-                            From ${escapeHtml(hw.instructorName || 'Instructor')}
+                            ${lbF('From {name}', { name: escapeHtml(hw.instructorName || 'Instructor') })}
                             ${dateStr ? ' &middot; ' + escapeHtml(dateStr) : ''}
-                            ${dueStr ? `<span class="hw-due-badge">Due: ${escapeHtml(dueStr)}</span>` : ''}
+                            ${dueStr ? `<span class="hw-due-badge">${lbF('Due: {date}', { date: escapeHtml(dueStr) })}</span>` : ''}
                         </div>
-                        ${hw.notes ? `<div class="hw-card-notes">${escapeHtml(hw.notes)}</div>` : ''}
-                        ${hw.pdfUrl ? `<a class="hw-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> ${escapeHtml(hw.pdfName || 'Download')}</a>` : ''}
+                        ${hw.notes ? `<div class="hw-card-notes" translate="no">${escapeHtml(hw.notes)}</div>` : ''}
+                        ${hw.pdfUrl ? `<a class="hw-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> <span${hw.pdfName ? ' translate="no"' : ''}>${escapeHtml(hw.pdfName || 'Download')}</span></a>` : ''}
                         <div>
                             ${hw.completedByStudent
                                 ? `<span class="hw-completed-tag"><i class="fas fa-check-circle"></i> Completed</span>`
@@ -2288,13 +2293,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="hw-view-backdrop" id="hwViewBackdrop">
         <div class="hw-view-modal">
             <div class="hw-view-header">
-                <h3 id="hwViewTitle"></h3>
+                <h3 id="hwViewTitle" translate="no"></h3>
                 <button class="hw-view-x" id="hwViewX"><i class="fas fa-times"></i></button>
             </div>
             <div class="hw-view-body">
                 <div id="hwViewStatus"></div>
                 <div class="hw-view-meta" id="hwViewMeta"></div>
-                <div class="hw-view-notes" id="hwViewNotes" style="display:none;"></div>
+                <div class="hw-view-notes" id="hwViewNotes" style="display:none;" translate="no"></div>
                 <div id="hwViewPdf"></div>
             </div>
             <div class="hw-view-footer">

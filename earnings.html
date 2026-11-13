@@ -329,6 +329,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div style="height: calc(96px + env(safe-area-inset-bottom, 0));" aria-hidden="true"></div>
 
     <script type="module">
+        // Interface language (js/i18n.js). LB_LOCALE is for dates people SEE;
+        // in English all of this produces exactly the original text.
+        const LB_LOCALE = (window.lbI18n && window.lbI18n.locale) || 'en-US';
+        const lbT = (s) => (window.lbI18n ? window.lbI18n.t(s) : s);
+        const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
         import {
             auth, db, functions, httpsCallable,
             onAuthStateChanged, signOut,
@@ -452,7 +457,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const plural = (n, word) => `${n} ${word}${n !== 1 ? 's' : ''}`;
 
                 document.getElementById('heroAmount').textContent = fmt(monthCents);
-                document.getElementById('heroSub').textContent = `${plural(monthLessons, 'lesson')} in ${now.toLocaleString('en-US', { month: 'long' })}`;
+                document.getElementById('heroSub').textContent = lbF(monthLessons === 1 ? '1 lesson in {month}' : '{n} lessons in {month}', { n: monthLessons, month: now.toLocaleString(LB_LOCALE, { month: 'long' }) });
 
                 const card = (cls, label, value, sub) => `
                     <div class="stat-card ${cls}">
@@ -493,7 +498,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div class="payout-icon"><i class="${paypal ? 'fab fa-paypal' : 'fas fa-university'}"></i></div>
                         <div class="payout-text">
                             <h3>${paypal ? 'PayPal' : 'Wise'}</h3>
-                            <p>Payouts are sent manually once or twice a week after your lessons are completed.${instrData.wiseEmail && !paypal ? ` Sent to <strong>${escapeHtml(instrData.wiseEmail)}</strong>.` : ''}</p>
+                            <p>${lbT('Payouts are sent manually once or twice a week after your lessons are completed.')}${instrData.wiseEmail && !paypal ? ' ' + lbF('Sent to <strong>{email}</strong>.', { email: `<span translate="no">${escapeHtml(instrData.wiseEmail)}</span>` }) : ''}</p>
                         </div>
                         <a class="payout-action secondary" href="dashboard">Change</a>
                     </div>`;
@@ -590,14 +595,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const isTrial = booking?.bookingType === 'free_trial';
                 const minutes = isTrial ? 15 : (booking?.durationMinutes || 60);
                 const dateLabel = lessonDate
-                    ? lessonDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: lessonDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined })
+                    ? lessonDate.toLocaleDateString((window.lbI18n && window.lbI18n.locale) || undefined, { day: 'numeric', month: 'short', year: lessonDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined })
                     : '';
                 const isPending = e.payoutStatus === 'pending';
                 return `
                     <div class="history-row">
                         <div class="history-main">
-                            <p class="history-name">${escapeHtml(name)}</p>
-                            <p class="history-meta">${escapeHtml(dateLabel)}${dateLabel ? ' · ' : ''}${minutes}-min lesson · ${escapeHtml(formatMoney(e.lessonAmountCents || 0, e.currency))} lesson price</p>
+                            <p class="history-name" translate="no">${escapeHtml(name)}</p>
+                            <p class="history-meta">${lbF('{date}{min}-min lesson · {price} lesson price', { date: escapeHtml(dateLabel) + (dateLabel ? ' · ' : ''), min: minutes, price: escapeHtml(formatMoney(e.lessonAmountCents || 0, e.currency)) })}</p>
                         </div>
                         <div class="history-amount">
                             <p class="history-net">${escapeHtml(formatMoney(e.instructorEarningsCents || 0, e.currency))}</p>
