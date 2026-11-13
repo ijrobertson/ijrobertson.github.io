@@ -27,6 +27,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="css/tokens.css" rel="stylesheet">
     <!-- Loaded on its own, before the page body, so the header/tab bar is in the first paint,
          instead of waiting for the page's Firebase imports to download. -->
+    <!-- Windows has no flag emoji — see js/flag-emoji.js (language picker flags). -->
+    <script src="js/flag-emoji.js"></script>
+    <!-- Interface language (English / Español / Português): see js/i18n.js -->
+    <script src="js/i18n-strings.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/app-shell.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
@@ -534,8 +539,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="profile-hero">
             <div class="container">
                 <img id="heroAvatar" class="hero-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Avatar">
-                <h1 id="heroName" class="hero-name"></h1>
-                <p id="heroCountry" class="hero-country"></p>
+                <h1 id="heroName" class="hero-name" translate="no"></h1>
+                <p id="heroCountry" class="hero-country" data-i18n-name></p>
                 <div id="heroLangs" class="hero-langs"></div>
                 <p id="heroSince" class="hero-since"></p>
                 <div id="notAcceptingHeroBadge" style="display:none; margin-top:0.75rem;">
@@ -557,11 +562,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <h4><i class="fas fa-comments"></i> Languages</h4>
                     <div id="speaksSection">
                         <div class="lang-section-title">SPEAKS</div>
-                        <div id="speaksTags" class="lang-tags"></div>
+                        <div id="speaksTags" class="lang-tags" data-i18n-name></div>
                     </div>
                     <div id="learningSection">
                         <div class="lang-section-title">LEARNING</div>
-                        <div id="learningTags" class="lang-tags"></div>
+                        <div id="learningTags" class="lang-tags" data-i18n-name></div>
                     </div>
                 </div>
 
@@ -732,6 +737,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 spoken.forEach(lang => {
                     const badge = document.createElement('span');
                     badge.className = 'hero-lang-badge-speaks';
+                    badge.setAttribute('data-i18n-name', ''); // shown in the interface language
                     badge.textContent = lang;
                     group.appendChild(badge);
                 });
@@ -747,6 +753,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 learning.forEach(lang => {
                     const badge = document.createElement('span');
                     badge.className = 'hero-lang-badge-learning';
+                    badge.setAttribute('data-i18n-name', ''); // shown in the interface language
                     badge.textContent = lang;
                     group.appendChild(badge);
                 });
@@ -757,7 +764,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (data.createdAt) {
                 const d = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                 document.getElementById('heroSince').textContent =
-                    'Member since ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    'Member since ' + d.toLocaleDateString((window.lbI18n && window.lbI18n.locale) || 'en-US', { month: 'long', year: 'numeric' });
             }
 
             if (data.acceptingRequests === false) {
@@ -790,6 +797,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // Bio
             const bioEl = document.getElementById('bioText');
             if (bio) {
+                bioEl.setAttribute('translate', 'no'); // the person's own words
                 bioEl.textContent = bio;
             } else {
                 bioEl.className = 'bio-none';

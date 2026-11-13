@@ -26,6 +26,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link href="css/tokens.css" rel="stylesheet">
   <!-- Loaded on its own, before the page body, so the header/tab bar is in the first paint,
        instead of waiting for the page's Firebase imports to download. -->
+  <!-- Windows has no flag emoji — see js/flag-emoji.js (language picker flags). -->
+  <script src="js/flag-emoji.js"></script>
+  <!-- Interface language (English / Español / Português): see js/i18n.js -->
+  <script src="js/i18n-strings.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/app-shell.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/page-transitions.js"></script>
@@ -1012,13 +1017,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="setup-field">
         <label for="setup-spoken-sel">Languages I Speak <span class="setup-req">*</span></label>
         <select id="setup-spoken-sel"><option value="">Select a language to add...</option></select>
-        <div class="setup-tags" id="setup-spoken-tags"></div>
+        <div class="setup-tags" id="setup-spoken-tags" data-i18n-name></div>
       </div>
 
       <div class="setup-field">
         <label for="setup-learning-sel">Languages I'm Learning <span class="setup-req">*</span></label>
         <select id="setup-learning-sel"><option value="">Select a language to add...</option></select>
-        <div class="setup-tags" id="setup-learning-tags"></div>
+        <div class="setup-tags" id="setup-learning-tags" data-i18n-name></div>
       </div>
 
       <div class="setup-field">
@@ -1065,7 +1070,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <input type="file" id="avatar" accept="image/*" />
       </div>
       <div class="st-hero-text">
-        <div class="st-hero-name" data-summary="hero-name">Your profile</div>
+        <div class="st-hero-name" data-summary="hero-name" translate="no">Your profile</div>
         <div class="st-hero-sub" data-summary="hero-sub"></div>
         <div class="small-note">Tap the pencil to change your photo.</div>
       </div>
@@ -1121,11 +1126,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="st-body">
           <label for="spokenLanguage">Languages I Speak</label>
           <select id="spokenLanguage" style="margin-bottom: 0.5rem;"></select>
-          <div id="languages_spoken" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
+          <div id="languages_spoken" data-i18n-name style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
 
           <label for="learningLanguage">Languages I'm Learning</label>
           <select id="learningLanguage" style="margin-bottom: 0.5rem;"></select>
-          <div id="languages_learning" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.25rem;"></div>
+          <div id="languages_learning" data-i18n-name style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.25rem;"></div>
         </div>
       </details>
 
@@ -1274,9 +1279,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
       var fields = page.querySelectorAll('[data-summary]');
       Array.prototype.forEach.call(fields, function (el) { el.setAttribute('data-default', el.textContent); });
+      // Interface language (js/i18n.js); plain English when it isn't loaded.
+      var i18n = window.lbI18n;
+      function T(s) { return i18n ? i18n.t(s) : s; }
+      function F(tpl, vars) { return i18n ? i18n.f(tpl, vars) : tpl.replace(/\{(\w+)\}/g, function (m, k) { return k in vars ? vars[k] : m; }); }
+      // Language names inside a sentence are lowercase in Spanish/Portuguese.
+      function inSentence(list) {
+        if (!i18n || !i18n.locale) return list.join(', ');
+        return list.map(function (n) { return n.charAt(0).toLocaleLowerCase(i18n.locale) + n.slice(1); }).join(', ');
+      }
       function set(key, text) {
         Array.prototype.forEach.call(page.querySelectorAll('[data-summary="' + key + '"]'), function (el) {
-          var value = text || el.getAttribute('data-default');
+          var value = text || T(el.getAttribute('data-default'));
           if (el.textContent !== value) el.textContent = value;
         });
       }
@@ -1288,19 +1302,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         var spoken = tags('languages_spoken');
         var learning = tags('languages_learning');
         set('hero-name', name);
-        set('hero-sub', [country, learning.length ? 'Learning ' + learning.join(', ') : ''].filter(Boolean).join(' · '));
+        set('hero-sub', [country, learning.length ? F('Learning {list}', { list: inSentence(learning) }) : ''].filter(Boolean).join(' · '));
         set('about', [name, country].filter(Boolean).join(' · '));
         set('languages', [
-          spoken.length ? 'Speaks ' + spoken.join(', ') : '',
-          learning.length ? 'Learning ' + learning.join(', ') : ''
+          spoken.length ? F('Speaks {list}', { list: inSentence(spoken) }) : '',
+          learning.length ? F('Learning {list}', { list: inSentence(learning) }) : ''
         ].filter(Boolean).join(' · '));
         var interests = $('interests-grid') ? $('interests-grid').querySelectorAll('.interest-pill.selected').length : 0;
-        set('interests', interests ? interests + ' selected' : '');
+        set('interests', interests ? (interests === 1 ? T('1 selected') : F('{n} selected', { n: interests })) : '');
         set('notifications', [
-          'Email ' + (checked('emailNotifications') ? 'on' : 'off'),
-          'Push ' + (checked('messagePushEnabled') ? 'on' : 'off'),
-          'Reminder ' + (checked('dailyReminderEnabled') ? 'on' : 'off'),
-          checked('acceptingRequests') ? 'Open to new requests' : 'Not accepting new requests'
+          T(checked('emailNotifications') ? 'Email on' : 'Email off'),
+          T(checked('messagePushEnabled') ? 'Push on' : 'Push off'),
+          T(checked('dailyReminderEnabled') ? 'Reminder on' : 'Reminder off'),
+          T(checked('acceptingRequests') ? 'Open to new requests' : 'Not accepting new requests')
         ].join(' · '));
         set('timezone', optText($('student-timezone-select')));
       }
@@ -1330,6 +1344,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var status = $('status-msg');
       if (status) new MutationObserver(function () {
         var text = status.textContent || '';
+        if (i18n) text = i18n.toEnglish(text);
         if (!text || status.style.color !== 'red') return;
         if (/profile picture/i.test(text)) {
           page.querySelector('.st-hero').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1532,6 +1547,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       });
     }
 
+    // Interface language helper (js/i18n.js): a whole sentence with {slots};
+    // in English it's exactly the template with the values filled in.
+    const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
     let currentUser = null;
     let spokenLanguages = [];
     let learningLanguages = [];
@@ -2354,14 +2372,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       card.innerHTML = `
         <div class="booking-info">
-          <h5>${escapeHtml(booking.instructorName)}</h5>
+          <h5 translate="no">${escapeHtml(booking.instructorName)}</h5>
           <div class="booking-detail">
             <i class="fas fa-calendar"></i>
-            ${dateTime.toLocaleDateString('en-US', { timeZone: studentTZ, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            ${dateTime.toLocaleDateString((window.lbI18n && window.lbI18n.locale) || 'en-US', { timeZone: studentTZ, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
           <div class="booking-detail">
             <i class="fas fa-clock"></i>
-            ${dateTime.toLocaleTimeString('en-US', { timeZone: studentTZ, hour: 'numeric', minute: '2-digit', hour12: true })}
+            ${dateTime.toLocaleTimeString((window.lbI18n && window.lbI18n.locale) || 'en-US', { timeZone: studentTZ, hour: 'numeric', minute: '2-digit', hour12: !(window.lbI18n && window.lbI18n.locale) })}
             <span style="color: #999; font-size: 0.85rem;">(${studentTZ})</span>
           </div>
           <div class="booking-detail" style="color: var(--primary);">
@@ -2407,21 +2425,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       let refundNote = '';
       if (amount > 0) {
         if (hoursUntil > 24) {
-          refundNote = `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> <strong>Full refund</strong> of ${fmtAmount(amount)} will be issued.`;
+          refundNote = `<span style="color:#20bcba;"><i class="fas fa-undo" style="width:16px;"></i></span> ${lbF('<strong>Full refund</strong> of {amount} will be issued.', { amount: fmtAmount(amount) })}`;
         } else if (hoursUntil > 12) {
-          refundNote = `<span style="color:#e67e22;"><i class="fas fa-undo" style="width:16px;"></i></span> <strong>50% refund</strong> of ${fmtAmount(Math.round(amount * 0.5))} will be issued (12–24 hrs notice).`;
+          refundNote = `<span style="color:#e67e22;"><i class="fas fa-undo" style="width:16px;"></i></span> ${lbF('<strong>50% refund</strong> of {amount} will be issued (12–24 hrs notice).', { amount: fmtAmount(Math.round(amount * 0.5)) })}`;
         } else {
-          refundNote = '<span style="color:#dc3545;"><i class="fas fa-times-circle" style="width:16px;"></i></span> <strong>No refund</strong> — cancellation is within 12 hours of the lesson.';
+          refundNote = '<span style="color:#dc3545;"><i class="fas fa-times-circle" style="width:16px;"></i></span> ' + lbF('<strong>No refund</strong> — cancellation is within 12 hours of the lesson.');
         }
       }
 
       const details = document.getElementById('cancel-lesson-details');
       details.innerHTML = `
-        <strong style="font-size:1rem;">${escapeHtml(booking.instructorName || 'Instructor')}</strong><br>
+        <strong style="font-size:1rem;"${booking.instructorName ? ' translate="no"' : ''}>${escapeHtml(booking.instructorName || 'Instructor')}</strong><br>
         <span style="color:#20bcba;"><i class="fas fa-calendar" style="width:16px;"></i></span>
-        ${booking.dateTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+        ${booking.dateTime.toLocaleDateString((window.lbI18n && window.lbI18n.locale) || 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
         <span style="color:#20bcba;"><i class="fas fa-clock" style="width:16px;"></i></span>
-        ${booking.dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+        ${booking.dateTime.toLocaleTimeString((window.lbI18n && window.lbI18n.locale) || 'en-US', { hour: 'numeric', minute: '2-digit', hour12: !(window.lbI18n && window.lbI18n.locale) })}
         ${refundNote ? `<br><br>${refundNote}` : ''}
       `;
 

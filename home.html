@@ -43,6 +43,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="css/tokens.css" rel="stylesheet">
     <!-- Loaded on its own, before the page body, so the header/tab bar is in the first paint,
          instead of waiting for the page's Firebase imports to download. -->
+    <!-- Interface language (English / Español / Português): see js/i18n.js -->
+    <script src="js/i18n-strings.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/app-shell.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
@@ -726,8 +729,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return 'upcoming';
         }
 
+        // Interface language helpers (js/i18n.js); plain English when not loaded.
+        const lbT = (s) => (window.lbI18n ? window.lbI18n.t(s) : s);
+        const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
+
         function formatLessonTime(lessonTime) {
-            return lessonTime.toLocaleString(undefined, {
+            return lessonTime.toLocaleString((window.lbI18n && window.lbI18n.locale) || undefined, {
                 weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
                 hour: '2-digit', minute: '2-digit'
             });
@@ -796,7 +803,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const next = upcoming[0];
                 const lessonTime = getLessonTime(next);
                 const status = getLessonStatus(lessonTime);
-                let otherName = next.myRole === 'student' ? (next.instructorName || 'Your instructor') : (next.studentName || next.studentEmail || 'Your student');
+                let otherName = next.myRole === 'student' ? (next.instructorName || lbT('Your instructor')) : (next.studentName || next.studentEmail || lbT('Your student'));
 
                 // Best-effort: fetch the other party's current display name/avatar
                 let avatar = null;
@@ -815,7 +822,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div class="lesson-card-header">
                             <img class="lesson-instructor-avatar" src="${avatar ? escapeHtml(avatar) : DEFAULT_AVATAR}" alt="">
                             <div class="lesson-instructor-info">
-                                <h4>${next.myRole === 'student' ? 'Learning with' : 'Teaching'} ${escapeHtml(otherName)}</h4>
+                                <h4>${lbF(next.myRole === 'student' ? 'Learning with {name}' : 'Teaching {name}', { name: escapeHtml(otherName) })}</h4>
                                 <span>${next.bookingType === 'trial' ? 'Free trial lesson' : 'Lesson'}</span>
                             </div>
                         </div>

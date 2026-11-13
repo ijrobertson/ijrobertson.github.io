@@ -57,6 +57,10 @@
 if (window.__lbAppShellLoaded) return;
 window.__lbAppShellLoaded = true;
 
+// Interface language (js/i18n.js). The header and tab bar live in shadow DOM,
+// which that file's page-wide translation can't see, so labels go through T().
+const T = (s) => (window.lbI18n ? window.lbI18n.t(s) : s);
+
 const ICONS = {
   home: '<path d="M4 11.5 12 4l8 7.5" /><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9" /><path d="M10 20v-6h4v6" />',
   book: '<rect x="4" y="4.5" width="16" height="15" rx="2" /><path d="M4 8.5h16" /><path d="M9 4.5v4" />',
@@ -234,6 +238,21 @@ const STYLE = `
   .streak svg { width: 18px; height: 18px; }
 
   .profile-menu-wrap { position: relative; }
+  .flag {
+    font-family: "Twemoji Country Flags", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    font-size: 20px;
+    line-height: 1;
+  }
+  .lang-btn { width: 30px; height: 30px; align-items: center; justify-content: center; padding: 0; }
+  .lang-dropdown { min-width: 190px; }
+  .profile-dropdown .lang-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .lang-option .lang-name { flex: 1; }
+  .lang-option[aria-checked="true"] { font-weight: 700; color: var(--action); }
+  .lang-check { color: var(--action); font-weight: 700; }
   .profile-dropdown {
     position: absolute;
     top: calc(100% + 8px);
@@ -438,9 +457,9 @@ class LbAppShell extends HTMLElement {
     this._connected = true;
     // Attached once (not per-render) so re-renders don't stack duplicate listeners.
     document.addEventListener("click", this._onDocumentClick = (e) => {
-      if (!this._menuOpen) return;
+      if (!this._menuOpen && !this._langOpen) return;
       if (e.composedPath().includes(this)) return;
-      this._menuOpen = false;
+      this._menuOpen = this._langOpen = false;
       this._render();
     });
     // See prefetchSiblingTabs below — warms the SW cache for every other
@@ -610,34 +629,47 @@ class LbAppShell extends HTMLElement {
     const backHref = this.getAttribute("back-href");
     const items = this._nav || NAV_BY_ROLE[role];
     const menuItems = this._profileMenu || PROFILE_MENU_BY_ROLE[role];
+    // Interface language picker (flag button, left of the bell).
+    const i18n = window.lbI18n;
+    const langPicker = !i18n ? "" : `<div class="profile-menu-wrap">
+            <button class="icon-btn lang-btn" type="button" id="langMenuBtn" aria-label="${T("Language")}" aria-haspopup="true" aria-expanded="${this._langOpen ? "true" : "false"}">
+              <span class="flag" aria-hidden="true">${i18n.langs[i18n.lang].flag}</span>
+            </button>
+            <div class="profile-dropdown lang-dropdown${this._langOpen ? " open" : ""}" role="menu" aria-label="${T("Language")}">
+              ${Object.keys(i18n.langs).map((code) => `<button type="button" class="lang-option" role="menuitemradio" aria-checked="${code === i18n.lang}" data-lang="${code}" lang="${i18n.langs[code].htmlLang}">
+                <span class="flag" aria-hidden="true">${i18n.langs[code].flag}</span><span class="lang-name">${i18n.langs[code].name}</span>${code === i18n.lang ? '<span class="lang-check" aria-hidden="true">\u2713</span>' : ""}
+              </button>`).join("")}
+            </div>
+          </div>`;
     const night = !!window.lbTheme?.isNight();
     const nightToggle = `<button type="button" class="menu-toggle" id="nightToggle" role="menuitemcheckbox" aria-checked="${night}">
-                  <span>Night mode</span><span class="switch" aria-hidden="true"></span>
+                  <span>${T("Night mode")}</span><span class="switch" aria-hidden="true"></span>
                 </button>`;
 
     const headerHtml = hideHeader ? "" : `
       <header part="header">
         <div class="header-left">
-          ${backHref ? `<a class="back-btn" href="${backHref}" aria-label="Back">${icon("back")}</a>` : ""}
-          <p class="title">${pageTitle}</p>
+          ${backHref ? `<a class="back-btn" href="${backHref}" aria-label="${T("Back")}">${icon("back")}</a>` : ""}
+          <p class="title">${T(pageTitle)}</p>
         </div>
         <div class="header-right">
           ${role === "student" && streak > 0
             ? `<span class="streak">${icon("flame")}${streak}</span>`
             : ""
           }
-          <button class="icon-btn" type="button" aria-label="Notifications">
+          ${langPicker}
+          <button class="icon-btn" type="button" aria-label="${T("Notifications")}">
             ${icon("bell")}
             ${notifications > 0 ? `<span class="badge">${notifications > 9 ? "9+" : notifications}</span>` : ""}
           </button>
           <div class="profile-menu-wrap">
-            <button class="icon-btn" type="button" id="profileMenuBtn" aria-label="Account menu" aria-expanded="${this._menuOpen ? "true" : "false"}">
+            <button class="icon-btn" type="button" id="profileMenuBtn" aria-label="${T("Account menu")}" aria-expanded="${this._menuOpen ? "true" : "false"}">
               ${icon("profile")}
             </button>
             <div class="profile-dropdown${this._menuOpen ? " open" : ""}" role="menu">
               ${menuItems
                 .map((item) => {
-                  const link = `<a href="${item.href}" role="menuitem" data-id="${item.id}" class="${item.id === "logout" ? "menu-logout" : ""}">${item.label}</a>`;
+                  const link = `<a href="${item.href}" role="menuitem" data-id="${item.id}" class="${item.id === "logout" ? "menu-logout" : ""}">${T(item.label)}</a>`;
                   // Night mode switch sits just above Logout
                   return item.id === "logout" && window.lbTheme ? nightToggle + link : link;
                 })
@@ -647,14 +679,14 @@ class LbAppShell extends HTMLElement {
         </div>
       </header>`;
     const navHtml = `
-      <nav part="nav" aria-label="Primary">
+      <nav part="nav" aria-label="${T("Primary")}">
         <span class="glider" aria-hidden="true"><span class="glider-pill"></span></span>
         ${items
           .map(
             (item) => `
           <a class="tab${item.id === "messages" && messagesUnread ? " unread" : ""}" href="${item.href}" data-id="${item.id}" ${item.id === active ? 'aria-current="page"' : ""}>
             ${icon(item.icon)}
-            <span>${item.label}</span>
+            <span>${T(item.label)}</span>
           </a>`
           )
           .join("")}
@@ -734,7 +766,24 @@ class LbAppShell extends HTMLElement {
       menuBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
         this._menuOpen = !this._menuOpen;
+        this._langOpen = false;
         this._render();
+      });
+
+      this.shadowRoot.getElementById("langMenuBtn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._langOpen = !this._langOpen;
+        this._menuOpen = false;
+        this._render();
+      });
+      this.shadowRoot.querySelectorAll(".lang-option").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const code = btn.dataset.lang;
+          this._langOpen = false;
+          if (window.lbI18n && code !== window.lbI18n.lang) window.lbI18n.set(code); // reloads the page
+          else this._render();
+        });
       });
 
       // Stays open after toggling so the change is visible right away
@@ -773,7 +822,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v28"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v29"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;

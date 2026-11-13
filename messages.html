@@ -42,6 +42,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="css/tokens.css" rel="stylesheet">
     <!-- Loaded on its own, before the page body, so the header/tab bar is in the first paint,
          instead of waiting for the page's Firebase imports to download. -->
+    <!-- Windows has no flag emoji — see js/flag-emoji.js (language picker flags). -->
+    <script src="js/flag-emoji.js"></script>
+    <!-- Interface language (English / Español / Português): see js/i18n.js -->
+    <script src="js/i18n-strings.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/app-shell.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
@@ -2309,7 +2314,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (diffDays === 1) return 'Yesterday';
             const options = { month: 'long', day: 'numeric' };
             if (date.getFullYear() !== now.getFullYear()) options.year = 'numeric';
-            return date.toLocaleDateString(undefined, options);
+            return date.toLocaleDateString((window.lbI18n && window.lbI18n.locale) || undefined, options);
         }
 
         // senderId -> avatar_url (or null). Populated once per sender and reused
@@ -2659,8 +2664,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             item.innerHTML = `
                 <img class="conversation-avatar" src="${otherUser.avatar_url || DEFAULT_AVATAR}" onerror="this.src=DEFAULT_AVATAR" alt="${otherUser.name}">
                 <div class="conversation-info">
-                    <div class="conversation-name">${otherUser.name}</div>
-                    <div class="conversation-last-message">${conv.lastMessage || 'No messages yet'}</div>
+                    <div class="conversation-name" translate="no">${otherUser.name}</div>
+                    <div class="conversation-last-message"${conv.lastMessage ? ' translate="no"' : ''}>${conv.lastMessage || 'No messages yet'}</div>
                 </div>
                 <div class="conv-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
                     <div class="conversation-time">${formatTime(conv.lastMessageTime)}</div>
@@ -2835,7 +2840,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </button>
                     <img class="chat-header-avatar" src="${otherUser.avatar_url || DEFAULT_AVATAR}" onerror="this.src=DEFAULT_AVATAR" alt="${otherUser.name}">
                     <div class="chat-header-info">
-                        <h3><a href="${profileUrl}" class="chat-header-name-link" title="View profile">${otherUser.name || 'Unknown User'}</a></h3>
+                        <h3><a href="${profileUrl}" class="chat-header-name-link" title="View profile" translate="no">${otherUser.name || 'Unknown User'}</a></h3>
                         <div class="chat-status" id="chatStatus"></div>
                     </div>
                     <button type="button" class="chat-header-call-btn" id="videoCallBtn" title="Start video call with this user">
@@ -2854,7 +2859,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="reply-preview-bar" id="replyPreviewBar" style="display:none;">
                         <div class="reply-preview-content">
                             <div class="reply-preview-name" id="replyPreviewName"></div>
-                            <div class="reply-preview-text" id="replyPreviewText"></div>
+                            <div class="reply-preview-text" id="replyPreviewText" translate="no"></div>
                         </div>
                         <button type="button" class="reply-preview-cancel" id="replyPreviewCancel" aria-label="Cancel reply">
                             <i class="fas fa-times"></i>
@@ -2863,7 +2868,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="reply-preview-bar" id="editPreviewBar" style="display:none;">
                         <div class="reply-preview-content">
                             <div class="reply-preview-name"><i class="fas fa-pencil-alt" aria-hidden="true"></i> Edit message</div>
-                            <div class="reply-preview-text" id="editPreviewText"></div>
+                            <div class="reply-preview-text" id="editPreviewText" translate="no"></div>
                         </div>
                         <button type="button" class="reply-preview-cancel" id="editPreviewCancel" aria-label="Cancel edit">
                             <i class="fas fa-times"></i>
@@ -3365,7 +3370,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                     <img class="message-image" src="${imgSrc}" alt="Shared image" loading="lazy">
                                     ${isPending ? `<div class="image-upload-overlay"><i class="fas fa-circle-notch fa-spin"></i>${message._uploadProgress ? ' ' + message._uploadProgress + '%' : ''}</div>` : ''}
                                 </div>
-                                ${message.text ? `<p class="message-text image-caption">${linkifyMessageText(message.text)}</p>` : ''}
+                                ${message.text ? `<p class="message-text image-caption" translate="no">${linkifyMessageText(message.text)}</p>` : ''}
                                 ${renderMessageStatus(message, isSent)}
                             </div>
                             <div class="message-reactions">${reactionChips}</div>
@@ -3380,7 +3385,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                             <div class="message-content video-call-request-card">
                                 <div class="video-call-request-icon"><i class="fas fa-video"></i></div>
-                                <p class="message-text" style="margin:0;">${escapeHtml(message.text)}</p>
+                                <p class="message-text" style="margin:0;" translate="no">${escapeHtml(message.text)}</p>
                                 <a href="video-call?channel=${safeChannel}" target="_blank" class="join-call-btn">Join Now</a>
                                 ${renderMessageStatus(message, isSent)}
                             </div>
@@ -3394,7 +3399,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div class="msg-col">
                             ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                             <div class="message-content">
-                                <p class="message-text">${linkifyMessageText(message.text)}</p>
+                                <p class="message-text" translate="no">${linkifyMessageText(message.text)}</p>
                                 ${renderMessageStatus(message, isSent)}
                             </div>
                             <div class="message-reactions">${reactionChips}</div>
@@ -3487,8 +3492,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // original is deleted, don't keep showing what it said.
             const preview = renderedMessagesById.get(replyTo.messageId)?.deleted ? 'Deleted message' : replyTo.preview;
             return `<div class="reply-quote" data-jump-to="${replyTo.messageId}">
-                <div class="reply-quote-name">${escapeHtml(replyTo.senderName)}</div>
-                <div class="reply-quote-text">${escapeHtml(preview)}</div>
+                <div class="reply-quote-name" translate="no">${escapeHtml(replyTo.senderName)}</div>
+                <div class="reply-quote-text" translate="no">${escapeHtml(preview)}</div>
             </div>`;
         }
 
@@ -4760,24 +4765,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     } else if (audioLang === 'en') {
                         // Source is English — show transcript only
                         panel.innerHTML = `<span class="translation-label">Transcript (${langLabel})</span>
-                            <div class="transcript-text">${escapeHtml(transcript)}</div>
+                            <div class="transcript-text" translate="no">${escapeHtml(transcript)}</div>
                             <span class="translation-label" style="margin-top:0.3rem;font-style:italic;opacity:0.55;">Message is already in English</span>`;
                     } else {
                         panel.innerHTML = `<span class="translation-label">Transcript (${langLabel})</span>
-                            <div class="transcript-text">${escapeHtml(transcript)}</div>
+                            <div class="transcript-text" translate="no">${escapeHtml(transcript)}</div>
                             <span class="translation-label" style="margin-top:0.3rem;">English Translation</span>
                             <div class="translation-text" style="font-style:italic;opacity:0.6;">Translating…</div>`;
 
                         translateText(transcript, audioLang)
                             .then(translation => {
                                 panel.innerHTML = `<span class="translation-label">Transcript (${langLabel})</span>
-                                    <div class="transcript-text">${escapeHtml(transcript)}</div>
+                                    <div class="transcript-text" translate="no">${escapeHtml(transcript)}</div>
                                     <span class="translation-label" style="margin-top:0.3rem;">English Translation</span>
-                                    <div class="translation-text">${escapeHtml(translation)}</div>`;
+                                    <div class="translation-text" translate="no">${escapeHtml(translation)}</div>`;
                             })
                             .catch(() => {
                                 panel.innerHTML = `<span class="translation-label">Transcript (${langLabel})</span>
-                                    <div class="transcript-text">${escapeHtml(transcript)}</div>
+                                    <div class="transcript-text" translate="no">${escapeHtml(transcript)}</div>
                                     <span class="translation-label" style="margin-top:0.3rem;font-style:italic;opacity:0.5;">Translation unavailable — try again later</span>`;
                             });
                     }
@@ -5097,7 +5102,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
 
             // Older - show date
-            return date.toLocaleDateString();
+            return (window.lbI18n && window.lbI18n.locale) ? date.toLocaleDateString(window.lbI18n.locale) : date.toLocaleDateString();
         }
 
         // No longer needed - we fetch directly from the correct collection

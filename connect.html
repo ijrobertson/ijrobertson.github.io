@@ -40,6 +40,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="css/tokens.css" rel="stylesheet">
     <!-- Loaded on its own, before the page body, so the header/tab bar is in the first paint,
          instead of waiting for the page's Firebase imports to download. -->
+    <!-- Interface language (English / Español / Português): see js/i18n.js -->
+    <script src="js/i18n-strings.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/app-shell.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
@@ -291,6 +294,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             font-weight: 700;
             font-size: 0.9rem;
             color: white;
+            /* Longer translations drop to their own line instead of squeezing
+               into a narrow column beside the number. */
+            flex-wrap: wrap;
+            justify-content: center;
+            row-gap: 0.1rem;
         }
 
         /* ===================== Discover toolbar (sticky search + filters) ===================== */
@@ -925,7 +933,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <h1>Find Your Language Partner</h1>
             <p>Connect with learners worldwide and practice together!</p>
             <div class="connect-hero-badge" id="partnerCountBadge" style="display:none;">
-                <i class="fas fa-users"></i> <span id="partnerCountNum">0</span> language partners ready to connect
+                <i class="fas fa-users"></i> <span id="partnerCountNum">0</span> <span>language partners ready to connect</span>
             </div>
         </div>
     </div>
@@ -1566,8 +1574,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <img class="user-card-avatar" src="${avatar}" alt="${name}" onerror="this.src=window.DEFAULT_AVATAR">
                         <span class="status-dot ${online ? 'online' : ''}"></span>
                     </div>
-                    <div class="user-card-name">${name}</div>
-                    <div class="user-card-country">${flag ? `<span class="country-flag">${flag}</span>` : '<i class="fas fa-map-marker-alt"></i>'} ${country}</div>
+                    <div class="user-card-name" translate="no">${name}</div>
+                    <div class="user-card-country" data-i18n-name>${flag ? `<span class="country-flag">${flag}</span>` : '<i class="fas fa-map-marker-alt"></i>'} ${country}</div>
                 </div>
                 <div class="user-card-body">
             `;
@@ -1576,7 +1584,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 cardHTML += `
                     <div class="language-section">
                         <div class="language-section-title"><i class="fas fa-comment-dots"></i>Speaks</div>
-                        <div class="language-tags">
+                        <div class="language-tags" data-i18n-name>
                             ${spoken.map(lang => `<span class="language-tag speaks">${escapeHtml(lang)}</span>`).join('')}
                         </div>
                     </div>
@@ -1587,7 +1595,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 cardHTML += `
                     <div class="language-section">
                         <div class="language-section-title"><i class="fas fa-book-open"></i>Learning</div>
-                        <div class="language-tags">
+                        <div class="language-tags" data-i18n-name>
                             ${learning.map(lang => `<span class="language-tag learning">${escapeHtml(lang)}</span>`).join('')}
                         </div>
                     </div>
@@ -1602,7 +1610,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 cardHTML += `
                     <div class="bio-section">
                         <div class="bio-section-title">About</div>
-                        <div class="bio-text">${bio}</div>
+                        <div class="bio-text" translate="no">${bio}</div>
                     </div>
                 `;
             }
