@@ -299,21 +299,23 @@ const STYLE = `
     display: flex;
     background: var(--surface);
     border-top: 1px solid var(--border);
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding: 0 12px env(safe-area-inset-bottom, 0);
     /* Same compositing-layer fix as header above — see that comment. This is
        the element reported to drift/scroll away from the bottom after
        extended scrolling on a real device. */
     transform: translateZ(0);
     will-change: transform;
   }
-  /* The sliding "glider" pill behind the active tab's icon (see _placeGlider()).
-     Positioned in px from the measured tab centres, since tabs aren't equal widths. */
+  /* The sliding capsule behind the active tab's icon and label (see
+     _placeGlider()). Sized to each tab's label with the same padding on every
+     tab, so it sits as far from the left edge on Learn as from the right edge
+     on Settings; left/top/width/height are all set from measurements. */
   .glider {
     position: absolute;
-    top: 3px;
+    top: 4px;
     left: 0;
     width: 60px;
-    height: 32px;
+    height: 46px;
     pointer-events: none;
   }
   .glider.hidden { visibility: hidden; }
@@ -336,7 +338,7 @@ const STYLE = `
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    padding: 8px 4px 10px;
+    padding: 9px 4px;
     text-decoration: none;
     color: var(--ink-500);
     font-size: 11px;
@@ -348,7 +350,9 @@ const STYLE = `
     height: 22px;
     transition: transform var(--lb-duration-fast, 150ms) var(--lb-ease-out, ease-out);
   }
-  a.tab[aria-current="page"] { color: var(--action); font-weight: 700; }
+  /* Same weight as the other tabs on purpose: a bolder label is wider, which
+     nudged every tab sideways each time the active tab changed. */
+  a.tab[aria-current="page"] { color: var(--action); }
   a.tab.tab-tapped svg { transform: scale(0.88); }
   /* Set via the messages-unread attribute (see js/unread-messages.js) —
      takes precedence over aria-current so it's visible even while the
@@ -494,23 +498,36 @@ class LbAppShell extends HTMLElement {
 
   // Centre (px from the nav's left edge) of each tab. Tabs are sized to
   // their labels, so these aren't evenly spaced and have to be measured.
-  _tabCentres() {
-    return [...this.shadowRoot.querySelectorAll("a.tab")].map((t) => t.offsetLeft + t.offsetWidth / 2);
+  // The capsule's centre and width (px, from the nav's left edge) for each
+  // tab: the label's width plus the same padding on every tab. The padding
+  // shrinks on narrow screens so the capsule never reaches the screen edge or
+  // a neighbouring label, but it's always one value, so every tab matches.
+  _tabBoxes() {
+    const nav = this.shadowRoot.querySelector("nav");
+    const labels = [...this.shadowRoot.querySelectorAll("a.tab span")].map((el) => el.getBoundingClientRect());
+    if (!nav || !labels.length || !labels[0].width) return [];
+    const navLeft = nav.getBoundingClientRect().left;
+    // At least 8px clear of the screen edge and 10px clear of the next label.
+    const room = [labels[0].left - navLeft - 8, nav.clientWidth - (labels[labels.length - 1].right - navLeft) - 8];
+    for (let i = 1; i < labels.length; i++) room.push(labels[i].left - labels[i - 1].right - 10);
+    const pad = Math.max(4, Math.min(14, ...room));
+    return labels.map((r) => ({ c: r.left - navLeft + r.width / 2, w: r.width + pad * 2 }));
   }
 
   // Positions are kept in tab units (0 = first tab, fractional mid-slide) so
-  // they carry across page loads; these convert to/from px along the centres.
-  _posToPx(pos, centres) {
-    const i = Math.max(0, Math.min(centres.length - 1, Math.floor(pos)));
-    const j = Math.min(centres.length - 1, i + 1);
-    return centres[i] + (centres[j] - centres[i]) * Math.max(0, pos - i);
+  // they carry across page loads; this turns one into a capsule box.
+  _boxAt(pos, boxes) {
+    const i = Math.max(0, Math.min(boxes.length - 1, Math.floor(pos)));
+    const j = Math.min(boxes.length - 1, i + 1);
+    const t = Math.max(0, pos - i);
+    return { c: boxes[i].c + (boxes[j].c - boxes[i].c) * t, w: boxes[i].w + (boxes[j].w - boxes[i].w) * t };
   }
 
-  _pxToPos(px, centres) {
-    for (let i = 0; i < centres.length - 1; i++) {
-      if (px <= centres[i + 1]) return i + Math.max(0, (px - centres[i]) / (centres[i + 1] - centres[i]));
+  _pxToPos(px, boxes) {
+    for (let i = 0; i < boxes.length - 1; i++) {
+      if (px <= boxes[i + 1].c) return i + Math.max(0, (px - boxes[i].c) / (boxes[i + 1].c - boxes[i].c));
     }
-    return centres.length - 1;
+    return boxes.length - 1;
   }
 
   // Current glider position in tab units, or null when there's no visible
@@ -518,10 +535,11 @@ class LbAppShell extends HTMLElement {
   _gliderPos() {
     const glider = this.shadowRoot?.querySelector(".glider");
     if (!glider || glider.classList.contains("hidden") || !glider.offsetWidth) return null;
-    const centres = this._tabCentres();
-    if (!centres.length || !centres[centres.length - 1]) return null;
-    const matrix = new DOMMatrixReadOnly(getComputedStyle(glider).transform);
-    return this._pxToPos(matrix.m41 + glider.offsetWidth / 2, centres);
+    const boxes = this._tabBoxes();
+    if (!boxes.length) return null;
+    const style = getComputedStyle(glider);
+    const matrix = new DOMMatrixReadOnly(style.transform);
+    return this._pxToPos(matrix.m41 + parseFloat(style.width) / 2, boxes);
   }
 
   // Puts the glider under the active tab. Called after every render, and a
@@ -537,14 +555,19 @@ class LbAppShell extends HTMLElement {
     glider.getAnimations().forEach((a) => a.cancel());
     glider.classList.toggle("hidden", index < 0);
     if (index < 0) return;
-    const centres = this._tabCentres();
     this._placedWidth = Math.round(glider.parentNode.getBoundingClientRect().width);
-    const half = glider.offsetWidth / 2;
-    const at = (pos) => `translateX(${(this._posToPx(pos, centres) - half).toFixed(2)}px)`;
-    glider.style.transform = at(index);
+    const boxes = this._tabBoxes();
     // Nav not laid out (hidden, e.g. inside an open chat): the ResizeObserver
     // in _render() places it once it has a size.
-    if (!centres.length || !centres[centres.length - 1]) return;
+    if (!boxes.length) return;
+    const tab = this.shadowRoot.querySelector("a.tab");
+    glider.style.top = `${tab.offsetTop + 4}px`;
+    glider.style.height = `${tab.offsetHeight - 8}px`;
+    const at = (pos) => {
+      const { c, w } = this._boxAt(pos, boxes);
+      return { transform: `translateX(${(c - w / 2).toFixed(2)}px)`, width: `${w.toFixed(2)}px` };
+    };
+    Object.assign(glider.style, at(index));
     if (REDUCED_MOTION.matches) return;
     const resuming = this._slide?.to === index && Date.now() - this._slide.startedAt < GLIDE_DURATION;
     if (!resuming) {
@@ -553,7 +576,7 @@ class LbAppShell extends HTMLElement {
     }
     const { from, startedAt } = this._slide;
     const slide = glider.animate(
-      [{ transform: at(from) }, { transform: at(index) }],
+      [at(from), at(index)],
       { duration: GLIDE_DURATION, easing: GLIDE_EASING }
     );
     slide.currentTime = Date.now() - startedAt;
@@ -722,7 +745,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v24"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v25"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
