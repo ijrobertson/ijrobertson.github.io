@@ -4760,20 +4760,33 @@ async function processScheduledQuizNotifications(db) {
         continue;
       }
 
+      // AI quiz generation is switched off (2026-11-13, Ian: cost + slow
+      // loading). The app's quizzes now come from the word banks in
+      // data/vocab/, so the daily reminder no longer pre-generates anything —
+      // it just invites the learner to practise. Set to true to restore the
+      // old behaviour (one AI quiz per scheduled language, every day).
+      const PREGENERATE_AI_QUIZZES = false;
       const readyLanguages = [];
-      for (const language of languagesToday) {
-        const result = await generateAndStoreQuiz(db, uid, language, 'scheduled');
-        if (result.ok) readyLanguages.push(language);
+      if (PREGENERATE_AI_QUIZZES) {
+        for (const language of languagesToday) {
+          const result = await generateAndStoreQuiz(db, uid, language, 'scheduled');
+          if (result.ok) readyLanguages.push(language);
+        }
+        if (readyLanguages.length === 0) { results.failed++; results.details.push({ uid, status: 'generation_failed' }); continue; }
+      } else {
+        readyLanguages.push(...languagesToday);
       }
 
-      if (readyLanguages.length === 0) { results.failed++; results.details.push({ uid, status: 'generation_failed' }); continue; }
-
-      const title = readyLanguages.length === 1
-        ? `Your ${readyLanguages[0]} quiz is ready!`
-        : `${readyLanguages.length} quizzes ready today!`;
-      const body = readyLanguages.length === 1
-        ? `Tap to start your personalized ${readyLanguages[0]} practice.`
-        : `${readyLanguages.join(' & ')} — tap to choose which to start with.`;
+      const title = PREGENERATE_AI_QUIZZES
+        ? (readyLanguages.length === 1 ? `Your ${readyLanguages[0]} quiz is ready!` : `${readyLanguages.length} quizzes ready today!`)
+        : (readyLanguages.length === 1 ? `Time for your ${readyLanguages[0]} quiz!` : 'Time for your daily quiz!');
+      const body = PREGENERATE_AI_QUIZZES
+        ? (readyLanguages.length === 1
+          ? `Tap to start your personalized ${readyLanguages[0]} practice.`
+          : `${readyLanguages.join(' & ')} — tap to choose which to start with.`)
+        : (readyLanguages.length === 1
+          ? 'Tap for a quick practice round.'
+          : `${readyLanguages.join(' & ')} — tap for a quick practice round.`);
 
       await sendPushToUser(db, uid, {
         title,

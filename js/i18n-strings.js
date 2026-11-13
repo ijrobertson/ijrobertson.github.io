@@ -980,7 +980,8 @@ window.LB_I18N_STRINGS = {
       "Couldn't open your Stripe dashboard. Please try again in a moment.": "No se pudo abrir tu panel de Stripe. Inténtalo de nuevo en un momento.",
       "1 lesson in {month}": "1 clase en {month}",
       "{n} lessons in {month}": "{n} clases en {month}",
-      "{date}{min}-min lesson · {price} lesson price": "{date}Clase de {min} min · precio: {price}"
+      "{date}{min}-min lesson · {price} lesson price": "{date}Clase de {min} min · precio: {price}",
+      "Get a daily reminder to practise with a quiz.": "Recibe un recordatorio diario para practicar con una prueba."
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Explora a nuestros {0}profesores{/0} para reservar tu primera clase.",
@@ -2404,7 +2405,8 @@ window.LB_I18N_STRINGS = {
       "Couldn't open your Stripe dashboard. Please try again in a moment.": "Não foi possível abrir seu painel do Stripe. Tente novamente em instantes.",
       "1 lesson in {month}": "1 aula em {month}",
       "{n} lessons in {month}": "{n} aulas em {month}",
-      "{date}{min}-min lesson · {price} lesson price": "{date}Aula de {min} min · preço: {price}"
+      "{date}{min}-min lesson · {price} lesson price": "{date}Aula de {min} min · preço: {price}",
+      "Get a daily reminder to practise with a quiz.": "Receba um lembrete diário para praticar com um quiz."
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Veja nossos {0}professores{/0} para agendar sua primeira aula!",

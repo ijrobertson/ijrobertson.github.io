@@ -325,7 +325,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="picker-pills" id="levelPills"></div>
 
                 <div style="display:flex; flex-wrap:wrap; gap:0.6rem;">
-                    <button type="button" class="quiz-profile-btn" id="quizPreferencesBtn">
+                    <!-- Hidden while AI quizzes are off (see AI_QUIZZES_ENABLED); kept so it can return. -->
+                    <button type="button" class="quiz-profile-btn" id="quizPreferencesBtn" style="display:none;">
                         <i class="fas fa-sliders-h"></i> Quiz Preferences
                     </button>
                     <button type="button" class="quiz-profile-btn" id="quizScheduleBtn">
@@ -398,7 +399,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="qp-header">
                     <div>
                         <h3 id="qsTitle">My Quiz Schedule</h3>
-                        <p>Get a reminder when a personalized quiz is ready.</p>
+                        <p>Get a daily reminder to practise with a quiz.</p>
                     </div>
                     <button type="button" class="qp-close" id="qsCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
                 </div>
@@ -770,8 +771,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // ===== QUIZ PREFERENCES (Phase 1 personalization) =====
         // Alphabet rounds are always the static letter pool.
+        // AI-generated quizzes are switched off (2026-11-13): every round comes
+        // from the word banks in data/vocab/ — free and instant. The AI code
+        // paths below are kept but never run while this returns false.
+        const AI_QUIZZES_ENABLED = false;
         function usesAIQuiz() {
-            return !!quizProfiles[selectedLanguage]?.selfAssessedLevel && selectedLevel !== 'alphabet';
+            return AI_QUIZZES_ENABLED && !!quizProfiles[selectedLanguage]?.selfAssessedLevel && selectedLevel !== 'alphabet';
         }
 
         // A profile "exists" (for the purposes of not re-prompting) once the
@@ -779,6 +784,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // explicitly skipped it (setupSkippedAt set) — both are written to the
         // same quizProfiles/{uid}.{language} map entry.
         function shouldAutoPromptProfile(language) {
+            // Quiz Preferences only shaped the AI quizzes, so don't ask for them.
+            if (!AI_QUIZZES_ENABLED) return false;
             if (!language || promptedLanguages.has(language)) return false;
             const p = quizProfiles[language];
             return !p || (!p.selfAssessedLevel && !p.setupSkippedAt);
