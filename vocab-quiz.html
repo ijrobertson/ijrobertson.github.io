@@ -1175,6 +1175,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             try {
                 const data = await fetch(`data/vocab/${selectedLanguage.toLowerCase()}.json`).then(r => r.json());
                 currentPool = data.words.filter(w => w.level === selectedLevel);
+                // Answers in the interface language (js/i18n.js) when every word at
+                // this level has a meaning in it — never a mix of languages in one
+                // round. English (and any deck without meanings) is unchanged.
+                const uiLang = window.lbI18n && window.lbI18n.lang;
+                meaningLang = (uiLang && uiLang !== 'en' && currentPool.length && currentPool.every(w => w.meanings && w.meanings[uiLang])) ? uiLang : null;
                 questions = buildRound(currentPool).map(q => ({ isAI: false, word: q.word, options: q.options, correct: q.correct }));
                 return true;
             } catch (e) {
@@ -1184,19 +1189,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // The meaning shown for a word: in the interface language when this round
+        // uses one (see startStaticQuiz), otherwise the deck's English meaning.
+        let meaningLang = null;
+        function meaningOf(word) {
+            return (meaningLang && word.meanings && word.meanings[meaningLang]) || word.translation;
+        }
+
         function buildRound(pool) {
             const picked = shuffle(pool.slice()).slice(0, Math.min(10, pool.length));
             return picked.map(word => {
-                const usedTranslations = new Set([word.translation.trim().toLowerCase()]);
+                const usedTranslations = new Set([meaningOf(word).trim().toLowerCase()]);
                 const distractors = [];
                 for (const cand of shuffle(pool.filter(w => w.id !== word.id))) {
-                    const key = cand.translation.trim().toLowerCase();
+                    const key = meaningOf(cand).trim().toLowerCase();
                     if (usedTranslations.has(key)) continue;
                     usedTranslations.add(key);
-                    distractors.push(cand.translation);
+                    distractors.push(meaningOf(cand));
                     if (distractors.length === 3) break;
                 }
-                return { word, options: shuffle([word.translation, ...distractors]), correct: word.translation };
+                return { word, options: shuffle([meaningOf(word), ...distractors]), correct: meaningOf(word) };
             });
         }
 
@@ -1334,7 +1346,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div translate="no">
                             <div class="results-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(a.word.term)}</div>
                             ${a.word.transliteration ? `<div class="results-translit">${escapeHtml(a.word.transliteration)}</div>` : ''}
-                            <div class="results-translation">${escapeHtml(a.word.translation)}</div>
+                            <div class="results-translation">${escapeHtml(meaningOf(a.word))}</div>
                         </div>
                         <span class="results-badge ${a.correct ? 'badge-correct' : 'badge-missed'}">${a.correct ? 'Correct' : 'Missed'}</span>
                     </label>`;
@@ -1390,7 +1402,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 } : {
                     userId: currentUser.uid,
                     term: a.word.term,
-                    translation: a.word.translation,
+                    translation: meaningOf(a.word),
                     folder: selectedLanguage,
                     language: selectedLanguage,
                     tags: Array.isArray(a.word.tags) ? a.word.tags : [],
