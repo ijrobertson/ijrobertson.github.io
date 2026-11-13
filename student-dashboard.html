@@ -886,6 +886,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .st-danger .st-icon { background: #fdecea; color: #c0392b; }
     .st-danger .st-title { color: #c0392b; }
   </style>
+    <link href="css/rtl.css" rel="stylesheet">
 </head>
 <body>
     <!-- Kept first in <body> so the header and tab bar are in the page's first frame (see js/app-shell.js). -->
@@ -1286,7 +1287,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       // Language names inside a sentence are lowercase in Spanish/Portuguese.
       function inSentence(list) {
         if (!i18n || !i18n.locale) return list.join(', ');
-        return list.map(function (n) { return n.charAt(0).toLocaleLowerCase(i18n.locale) + n.slice(1); }).join(', ');
+        return list.map(function (n) { return n.charAt(0).toLocaleLowerCase(i18n.locale) + n.slice(1); }).join(i18n.lang === 'ar' ? '، ' : ', ');
       }
       function set(key, text) {
         Array.prototype.forEach.call(page.querySelectorAll('[data-summary="' + key + '"]'), function (el) {

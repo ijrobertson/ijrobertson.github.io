@@ -1,0 +1,76 @@
+/*
+  Right-to-left layout for Arabic (js/i18n.js sets <html dir="rtl">).
+
+  Every rule is scoped to [dir="rtl"], so English, Spanish and Portuguese
+  are untouched. The browser already mirrors flexbox, grid and text for
+  dir="rtl"; this file only fixes what was built with fixed left/right
+  positions, plus a few things that should NOT simply flip.
+
+  Loaded on all app pages after their own styles. The header and tab bar
+  live in shadow DOM (js/app-shell.js) and handle direction there.
+*/
+
+/* Bootstrap's reboot forces left-aligned text. */
+[dir="rtl"] body,
+[dir="rtl"] .dropdown-menu { text-align: start; } /* start = right for Arabic, left inside English text */
+
+/* Arrows and chevrons point the other way ("forward" is to the left).
+   Play/pause and media icons deliberately don't flip. */
+[dir="rtl"] .fa-chevron-left, [dir="rtl"] .fa-chevron-right,
+[dir="rtl"] .fa-arrow-left, [dir="rtl"] .fa-arrow-right,
+[dir="rtl"] .fa-angle-left, [dir="rtl"] .fa-angle-right,
+[dir="rtl"] .fa-angle-double-left, [dir="rtl"] .fa-angle-double-right,
+[dir="rtl"] .fa-caret-left, [dir="rtl"] .fa-caret-right,
+[dir="rtl"] .fa-long-arrow-alt-left, [dir="rtl"] .fa-long-arrow-alt-right,
+[dir="rtl"] .fa-arrow-circle-left, [dir="rtl"] .fa-arrow-circle-right,
+[dir="rtl"] .fa-paper-plane, [dir="rtl"] .fa-sign-out-alt,
+[dir="rtl"] .fa-reply, [dir="rtl"] .fa-share { transform: scaleX(-1); }
+
+/* Small inline spacing between an icon and its text, written as
+   style="margin-right:…" (icon before text) or "margin-left:…" (note after
+   text). Swap sides. */
+[dir="rtl"] i[style*="margin-right"],
+[dir="rtl"] svg[style*="margin-right"],
+[dir="rtl"] span.fas[style*="margin-right"] { margin-right: 0 !important; margin-left: 0.45rem !important; }
+[dir="rtl"] span[style*="margin-left:0."], [dir="rtl"] span[style*="margin-left: 0."],
+[dir="rtl"] i[style*="margin-left:0."], [dir="rtl"] i[style*="margin-left: 0."] { margin-left: 0 !important; margin-right: 0.3rem !important; }
+[dir="rtl"] [style*="margin-left:auto"], [dir="rtl"] [style*="margin-left: auto"] { margin-left: 0 !important; margin-right: auto !important; }
+
+/* What people write (names, bios, messages, saved words) and the content
+   being learned are marked translate="no". Let that text take its own
+   direction, so English or Spanish inside an Arabic page keeps its
+   punctuation in the right place ("Hello?" not "?Hello"). Same for typing.
+   Longer running text also gets dir="auto" from js/i18n.js, so it aligns
+   left too; short blocks (a name in a card) keep the page's alignment. */
+[dir="rtl"] [translate="no"] { unicode-bidi: isolate; }
+[dir="rtl"] :is(span, a, strong, b, em, i, small, label, bdi)[translate="no"],
+[dir="rtl"] input,
+[dir="rtl"] textarea { unicode-bidi: plaintext; }
+/* Emails, phone numbers and web addresses always read left to right. */
+[dir="rtl"] input[type="email"], [dir="rtl"] input[type="tel"],
+[dir="rtl"] input[type="url"], [dir="rtl"] input[type="password"] { direction: ltr; text-align: right; }
+
+/* ── home.html: the Learning Resources button and drawer come from the right ── */
+[dir="rtl"] .resources-trigger { left: auto; right: 12px; }
+[dir="rtl"] .resources-drawer {
+  left: auto; right: 0;
+  transform: translateX(100%);
+  box-shadow: -12px 0 32px -8px rgba(17, 52, 72, 0.3);
+}
+[dir="rtl"] .resources-drawer.open { transform: translateX(0); }
+
+/* ── notebook.html: the + button sits on the left ── */
+[dir="rtl"] .fab-add { right: auto; left: 20px; }
+
+/* ── adventures.html: dropdown arrow on the left ── */
+[dir="rtl"] .adv-filter select {
+  padding: 0.55rem 0.8rem 0.55rem 2rem;
+  background-position: left 0.75rem center;
+}
+
+/* ── Learning content (adventure.html, culture-lesson.html, travel-journey.html) ──
+   Lessons and scenarios may not have an Arabic version yet, so their
+   explanations can be English. Each paragraph takes its direction from its
+   own first letter: Arabic stays right-aligned, English reads left to right
+   with its punctuation in place. (Flex/grid layout is unaffected.) */
+[dir="rtl"] :is(#advContent, #lessonContainer, #journeyContainer) :is(p, li, h2, h3, h4, h5, div, button, label, blockquote) { unicode-bidi: plaintext; }

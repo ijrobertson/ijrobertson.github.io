@@ -22,13 +22,18 @@
     exactly as they were, so every button and form works as before.
 
   Choice is stored per device in localStorage "lb-lang"; first visit
-  follows the phone's language (Spanish → es, Portuguese → pt, else en).
+  follows the phone's language (Spanish → es, Portuguese → pt, Arabic → ar,
+  else en).
 */
 (function () {
   var LANGS = {
     en: { flag: "🇺🇸", name: "English", htmlLang: "en" },
     es: { flag: "🇪🇸", name: "Español", htmlLang: "es" },
     pt: { flag: "🇧🇷", name: "Português", htmlLang: "pt-BR" },
+    // Modern Standard Arabic, right to left. No country flag (Arabic spans
+    // many countries) — the picker shows the letter ع instead. Dates and
+    // numbers use Western digits (ar-u-nu-latn) to match the rest of the app.
+    ar: { flag: "ع", name: "العربية", htmlLang: "ar", dir: "rtl", locale: "ar-u-nu-latn" },
   };
   var KEY = "lb-lang";
 
@@ -67,16 +72,37 @@
   function lower(s) { return s ? s.charAt(0).toLocaleLowerCase(LANGS[lang].htmlLang) + s.slice(1) : s; }
   // "Italian, German or French" -> each name translated, "or" in the
   // interface language.
-  var OR = { en: " or ", es: " o ", pt: " ou " };
+  var OR = { en: " or ", es: " o ", pt: " ou ", ar: " أو " };
   function nameList(s, inSentence) {
     return s.split(/(,\s*|\s+or\s+)/).map(function (x, i) {
-      if (i % 2) return /or/.test(x) ? OR[lang] : ", ";
+      if (i % 2) return /or/.test(x) ? OR[lang] : (lang === "ar" ? "، " : ", ");
       var n = name(x.trim());
       return inSentence && n !== x.trim() ? lower(n) : n;
     }).join("");
   }
 
   function norm(s) { return s.replace(/\s+/g, " ").trim(); }
+
+  // Number agreement for languages with several plural forms (Arabic has
+  // one/two/few/many/other): %1{one:يوم واحد|two:يومين|few:# أيام|many:# يومًا|other:# يوم}
+  // picks the form for captured number $1 using the browser's plural rules;
+  // # is the number. Unused by English, Spanish and Portuguese.
+  var pluralRules = null;
+  function plurals(tpl, m) {
+    if (tpl.indexOf("%") < 0) return tpl;
+    return tpl.replace(/%(\d)\{([^}]*)\}/g, function (_, g, list) {
+      var n = parseFloat(m[+g]);
+      var cat = "other";
+      try {
+        pluralRules = pluralRules || new Intl.PluralRules(LANGS[lang].htmlLang);
+        cat = pluralRules.select(n);
+      } catch (e) {}
+      var forms = {};
+      list.split("|").forEach(function (f) { var j = f.indexOf(":"); forms[f.slice(0, j)] = f.slice(j + 1); });
+      var form = forms[cat] != null ? forms[cat] : (forms.other || "");
+      return form.replace(/#/g, m[+g]);
+    });
+  }
 
   // Exact entry, then patterns (whose captured parts are translated too).
   function lookup(key) {
@@ -85,7 +111,7 @@
     for (var i = 0; i < patterns.length; i++) {
       var m = key.match(patterns[i][0]);
       if (!m) continue;
-      return patterns[i][1].replace(/\$(\d)|\$n(\d)|\$l(\d)/g, function (_, g, gn, gl) {
+      return plurals(patterns[i][1], m).replace(/\$(\d)|\$n(\d)|\$l(\d)/g, function (_, g, gn, gl) {
         if (gn) return nameList(m[+gn] || "", false);
         if (gl) return nameList(m[+gl] || "", true);
         var part = m[+g] || "";
@@ -122,7 +148,8 @@
     langs: LANGS,
     // Locale for dates and numbers, or null in English (pages then keep
     // their existing formatting exactly).
-    locale: lang === "en" ? null : LANGS[lang].htmlLang,
+    locale: lang === "en" ? null : (LANGS[lang].locale || LANGS[lang].htmlLang),
+    dir: LANGS[lang].dir || "ltr",
     t: t,
     f: f,
     name: name,
@@ -136,11 +163,20 @@
   };
 
   document.documentElement.setAttribute("lang", LANGS[lang].htmlLang);
+  // Right-to-left languages flip the whole layout; css/rtl.css fixes the
+  // places that were built with fixed left/right positions.
+  if (LANGS[lang].dir === "rtl") document.documentElement.setAttribute("dir", "rtl");
   if (!table) return; // English: nothing else to do
 
   var SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, NOSCRIPT: 1, CODE: 1, PRE: 1 };
   var ATTRS = ["placeholder", "title", "aria-label", "alt", "label"];
   var done = new WeakMap(); // text node -> the value this set
+  // Original English of each text node this has translated (for doMixed).
+  var original = new WeakMap();
+  function englishText(n) {
+    if (n.nodeType === 3) return original.get(n) || n.nodeValue;
+    return Array.prototype.map.call(n.childNodes, englishText).join("");
+  }
 
   // Placeholders etc. on a text box are translated even though what's typed
   // in it never is.
@@ -183,6 +219,7 @@
     var lead = v.match(/^\s*/)[0], trail = v.match(/\s*$/)[0];
     var out = lead + tr + trail;
     done.set(node, out);
+    original.set(node, v);
     node.nodeValue = out;
   }
 
@@ -220,7 +257,12 @@
       if (!INLINE[kids[i].tagName] || kids[i].firstElementChild && kids[i].tagName !== "A") return false;
     }
     var key = norm(el.textContent);
-    if (!Object.prototype.hasOwnProperty.call(mixed, key)) return false;
+    // A bold/linked word may already have been translated on its own (e.g.
+    // <strong>Free 15 Minute Trial</strong>); match on its original English.
+    if (!Object.prototype.hasOwnProperty.call(mixed, key)) {
+      key = norm(englishText(el));
+      if (!Object.prototype.hasOwnProperty.call(mixed, key)) return false;
+    }
     var tpl = mixed[key];
     var children = Array.prototype.slice.call(kids);
     var frag = document.createDocumentFragment();
@@ -241,9 +283,26 @@
     return true;
   }
 
+  // Right-to-left pages: what people write and the language being learned
+  // (translate="no") take their own direction, so an English message or
+  // scene in an Arabic page reads and aligns left to right.
+  var RTL = LANGS[lang].dir === "rtl";
+  // Only running text (messages, bios, dialogue: paragraphs or anything
+  // longer than a label) switches direction; short labels such as a person's
+  // name keep the page's alignment (css/rtl.css still fixes their punctuation).
+  function autoDir(root) {
+    var els = root.querySelectorAll ? Array.prototype.slice.call(root.querySelectorAll('[translate="no"]:not([dir])')) : [];
+    if (root.nodeType === 1 && root.getAttribute("translate") === "no" && !root.hasAttribute("dir")) els.push(root);
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (/^(P|LI|BLOCKQUOTE)$/.test(el.tagName) || el.textContent.trim().length > 40) el.setAttribute("dir", "auto");
+    }
+  }
+
   function walk(root) {
     if (root.nodeType === 3) { doText(root); return; }
     if (root.nodeType !== 1 && root.nodeType !== 9 && root.nodeType !== 11) return;
+    if (RTL) autoDir(root);
     if (root.nodeType === 1) {
       if (root.tagName === "TEXTAREA" && !attrsSkipped(root)) { doAttrs(root); return; }
       if (skipped(root)) return;

@@ -181,12 +181,14 @@ const STYLE = `
     background: none;
     border: none;
     padding: 4px;
-    margin-left: -4px;
+    margin-inline-start: -4px;
     color: var(--ink-900);
     cursor: pointer;
     flex-shrink: 0;
   }
   .back-btn svg { width: 22px; height: 22px; }
+  /* Right-to-left (Arabic): the back arrow points the other way. */
+  :host([dir="rtl"]) .back-btn svg { transform: scaleX(-1); }
   .title {
     font-size: var(--lb-text-lg-size, 18px);
     font-weight: 700;
@@ -214,7 +216,7 @@ const STYLE = `
   .badge {
     position: absolute;
     top: -2px;
-    right: -4px;
+    inset-inline-end: -4px;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
@@ -256,7 +258,7 @@ const STYLE = `
   .profile-dropdown {
     position: absolute;
     top: calc(100% + 8px);
-    right: 0;
+    inset-inline-end: 0;
     min-width: 180px;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -270,7 +272,7 @@ const STYLE = `
   .profile-dropdown a, .profile-dropdown button {
     display: block;
     width: 100%;
-    text-align: left;
+    text-align: start;
     padding: 9px 10px;
     border-radius: 6px;
     border: none;
@@ -298,7 +300,7 @@ const STYLE = `
     content: "";
     position: absolute;
     top: 2px;
-    left: 2px;
+    inset-inline-start: 2px;
     width: 16px;
     height: 16px;
     border-radius: 50%;
@@ -308,6 +310,7 @@ const STYLE = `
   }
   .menu-toggle[aria-checked="true"] .switch { background: var(--accent); }
   .menu-toggle[aria-checked="true"] .switch::after { transform: translateX(14px); }
+  :host([dir="rtl"]) .menu-toggle[aria-checked="true"] .switch::after { transform: translateX(-14px); }
 
   .slot { display: contents; }
   nav {
@@ -441,6 +444,9 @@ class LbAppShell extends HTMLElement {
 
   connectedCallback() {
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    // Direction flows into the shadow DOM by inheritance; the attribute lets
+    // the shell's own CSS mirror icons for right-to-left languages (Arabic).
+    if (document.documentElement.getAttribute("dir") === "rtl") this.setAttribute("dir", "rtl");
     this._menuOpen = false;
     // Arriving via a tab tap on the previous page: show that tab as active
     // right away (most pages start at active="none" until auth resolves) and
@@ -529,8 +535,10 @@ class LbAppShell extends HTMLElement {
     if (!nav || !labels.length || !labels[0].width) return [];
     const navLeft = nav.getBoundingClientRect().left;
     // At least 8px clear of the screen edge and 10px clear of the next label.
-    const room = [labels[0].left - navLeft - 8, nav.clientWidth - (labels[labels.length - 1].right - navLeft) - 8];
-    for (let i = 1; i < labels.length; i++) room.push(labels[i].left - labels[i - 1].right - 10);
+    // Measured in screen order (right-to-left languages put the first tab on the right).
+    const xs = [...labels].sort((a, b) => a.left - b.left);
+    const room = [xs[0].left - navLeft - 8, nav.clientWidth - (xs[xs.length - 1].right - navLeft) - 8];
+    for (let i = 1; i < xs.length; i++) room.push(xs[i].left - xs[i - 1].right - 10);
     const pad = Math.max(4, Math.min(14, ...room));
     return labels.map((r) => ({ c: r.left - navLeft + r.width / 2, w: r.width + pad * 2 }));
   }
@@ -822,7 +830,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v36"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v37"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
