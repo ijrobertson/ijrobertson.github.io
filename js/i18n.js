@@ -22,18 +22,20 @@
     exactly as they were, so every button and form works as before.
 
   Choice is stored per device in localStorage "lb-lang"; first visit
-  follows the phone's language (Spanish → es, Portuguese → pt, Arabic → ar,
-  else en).
+  follows the phone's language (Spanish → es, Portuguese → pt, French → fr,
+  Arabic → ar, else en).
 */
 (function () {
   var LANGS = {
     en: { flag: "🇺🇸", name: "English", htmlLang: "en" },
     es: { flag: "🇪🇸", name: "Español", htmlLang: "es" },
     pt: { flag: "🇧🇷", name: "Português", htmlLang: "pt-BR" },
-    // Modern Standard Arabic, right to left. No country flag (Arabic spans
-    // many countries) — the picker shows the letter ع instead. Dates and
-    // numbers use Western digits (ar-u-nu-latn) to match the rest of the app.
-    ar: { flag: "ع", name: "العربية", htmlLang: "ar", dir: "rtl", locale: "ar-u-nu-latn" },
+    // French from France ("vous", French typography: thin space before ? ! : ;).
+    fr: { flag: "🇫🇷", name: "Français", htmlLang: "fr" },
+    // Modern Standard Arabic, right to left, shown with the Egyptian flag
+    // (Egypt is where most Arabic-speaking users are). Dates and numbers use
+    // Western digits (ar-u-nu-latn) to match the rest of the app.
+    ar: { flag: "🇪🇬", name: "العربية", htmlLang: "ar", dir: "rtl", locale: "ar-u-nu-latn" },
   };
   var KEY = "lb-lang";
 
@@ -67,12 +69,12 @@
     if (!table) return s;
     return nameMap[s] || s;
   }
-  // In Spanish and Portuguese, language names are lowercase inside a
+  // In Spanish, Portuguese and French, language names are lowercase inside a
   // sentence ("Hablas inglés") but capitalised on their own (labels, tags).
   function lower(s) { return s ? s.charAt(0).toLocaleLowerCase(LANGS[lang].htmlLang) + s.slice(1) : s; }
   // "Italian, German or French" -> each name translated, "or" in the
   // interface language.
-  var OR = { en: " or ", es: " o ", pt: " ou ", ar: " أو " };
+  var OR = { en: " or ", es: " o ", pt: " ou ", fr: " ou ", ar: " أو " };
   function nameList(s, inSentence) {
     return s.split(/(,\s*|\s+or\s+)/).map(function (x, i) {
       if (i % 2) return /or/.test(x) ? OR[lang] : (lang === "ar" ? "، " : ", ");
