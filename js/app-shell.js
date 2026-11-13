@@ -290,6 +290,7 @@ const STYLE = `
   .menu-toggle[aria-checked="true"] .switch { background: var(--accent); }
   .menu-toggle[aria-checked="true"] .switch::after { transform: translateX(14px); }
 
+  .slot { display: contents; }
   nav {
     position: fixed;
     bottom: 0;
@@ -461,6 +462,7 @@ class LbAppShell extends HTMLElement {
     if (this._onDocumentClick) document.removeEventListener("click", this._onDocumentClick);
     if (this._onPageShow) window.removeEventListener("pageshow", this._onPageShow);
     this._navObserver?.disconnect();
+    this._navKey = this._headerHtml = null; // rebuild (and re-observe) if re-attached
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -613,9 +615,7 @@ class LbAppShell extends HTMLElement {
                   <span>Night mode</span><span class="switch" aria-hidden="true"></span>
                 </button>`;
 
-    this.shadowRoot.innerHTML = `
-      <style>${STYLE}</style>
-      ${hideHeader ? "" : `
+    const headerHtml = hideHeader ? "" : `
       <header part="header">
         <div class="header-left">
           ${backHref ? `<a class="back-btn" href="${backHref}" aria-label="Back">${icon("back")}</a>` : ""}
@@ -645,7 +645,8 @@ class LbAppShell extends HTMLElement {
             </div>
           </div>
         </div>
-      </header>`}
+      </header>`;
+    const navHtml = `
       <nav part="nav" aria-label="Primary">
         <span class="glider" aria-hidden="true"><span class="glider-pill"></span></span>
         ${items
@@ -657,15 +658,42 @@ class LbAppShell extends HTMLElement {
           </a>`
           )
           .join("")}
-      </nav>
-    `;
+      </nav>`;
+
+    // Only rebuild the part that actually changed. Pages set role, active,
+    // streak and messages-unread one by one as they load (often a second or
+    // so in), and rebuilding the tab bar each time swapped the <a> under a
+    // finger mid-tap, so the tap was lost and had to be repeated. The tabs
+    // are now rebuilt only if the set of tabs changes; the active tab and
+    // unread dot are updated on the existing elements.
+    if (!this._slots) {
+      this.shadowRoot.innerHTML = `<style>${STYLE}</style><div class="slot"></div><div class="slot"></div>`;
+      this._slots = this.shadowRoot.querySelectorAll(".slot");
+    }
+    const headerChanged = headerHtml !== this._headerHtml;
+    if (headerChanged) {
+      this._slots[0].innerHTML = headerHtml;
+      this._headerHtml = headerHtml;
+    }
+    const navKey = items.map((item) => [item.id, item.label, item.href, item.icon].join(",")).join("|");
+    const navChanged = navKey !== this._navKey;
+    if (navChanged) {
+      this._slots[1].innerHTML = navHtml;
+      this._navKey = navKey;
+    } else {
+      this._slots[1].querySelectorAll("a.tab").forEach((tab) => {
+        if (tab.dataset.id === active) tab.setAttribute("aria-current", "page");
+        else tab.removeAttribute("aria-current");
+        tab.classList.toggle("unread", tab.dataset.id === "messages" && messagesUnread);
+      });
+    }
 
     // Tap feedback (see the .tab-tapped rule above) — pointerdown/up rather
     // than relying on CSS :active, which iOS Safari doesn't reliably apply on
     // a tap without a touch listener present. pointerup/cancel/leave all
     // clear it so a tap that starts on a tab but doesn't complete as a real
     // click (e.g. dragged off before release) never leaves it stuck lit.
-    this.shadowRoot.querySelectorAll("a.tab").forEach((tab) => {
+    if (navChanged) this.shadowRoot.querySelectorAll("a.tab").forEach((tab) => {
       const clear = () => tab.classList.remove("tab-tapped");
       tab.addEventListener("pointerdown", () => tab.classList.add("tab-tapped"));
       tab.addEventListener("pointerup", clear);
@@ -693,15 +721,15 @@ class LbAppShell extends HTMLElement {
     this._placeGlider(gliderFrom);
     // Re-measure when the bar changes size (rotation, or shown again after
     // being hidden). A slide in progress resumes at its elapsed time.
-    this._navObserver?.disconnect();
-    if ("ResizeObserver" in window) {
+    if (navChanged && "ResizeObserver" in window) {
+      this._navObserver?.disconnect();
       this._navObserver = new ResizeObserver(([entry]) => {
         if (Math.round(entry.contentRect.width) !== this._placedWidth) this._placeGlider();
       });
       this._navObserver.observe(this.shadowRoot.querySelector("nav"));
     }
 
-    if (!hideHeader) {
+    if (headerChanged && !hideHeader) {
       const menuBtn = this.shadowRoot.getElementById("profileMenuBtn");
       menuBtn?.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -745,7 +773,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v25"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v26"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;

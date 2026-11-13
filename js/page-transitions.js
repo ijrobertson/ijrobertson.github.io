@@ -5,8 +5,8 @@
   Transitions). This tags each transition with a direction so moving
   *deeper* (Learn → Culture Guides → a guide) slides the new screen in from
   the right like an iOS push, and moving back up slides it away to the right
-  again — while switching between bottom-nav tabs (same depth) keeps the
-  plain fade. Depth comparison rather than "was this a Back press" means the
+  again — while switching between bottom-nav tabs has no transition at
+  all (see below), and other same-depth moves keep the plain fade. Depth comparison rather than "was this a Back press" means the
   header's back arrow, the browser/OS back gesture and in-page links all
   read the same way.
 
@@ -40,10 +40,14 @@
       sessionStorage.setItem(KEY, here);
     } catch (err) {}
     var vt = e.viewTransition;
-    if (!vt || !vt.types || !prev || prev === here) return;
+    if (!vt || !prev || prev === here) return;
     var from = depthOf(prev);
     var to = depthOf(here);
-    if (from === null || to === null || from === to) return;
+    // Switching between bottom-nav tabs: no animation at all, like a native
+    // tab bar. A page ignores taps while a transition is playing, so the
+    // fade made a quick second tap on the bar do nothing.
+    if (from === 0 && to === 0) { vt.skipTransition(); return; }
+    if (!vt.types || from === null || to === null || from === to) return;
     vt.types.add(to > from ? "lb-forward" : "lb-back");
   });
 })();
