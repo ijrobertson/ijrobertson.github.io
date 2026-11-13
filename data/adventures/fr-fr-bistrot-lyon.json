@@ -1,0 +1,309 @@
+{
+  "id": "fr-fr-bistrot-lyon",
+  "title": "Lunch menu at a bistrot in Lyon",
+  "language": "French",
+  "country": "France",
+  "countryCode": "FR",
+  "flag": "🇫🇷",
+  "variety": { "id": "fr-FR", "label": "French from France" },
+  "difficulty": "intermediate",
+  "estMinutes": 7,
+  "setting": "It's 12:30 in Lyon, France's food capital. You sit down at a small bistrot. On a chalkboard: \"Formule midi — entrée + plat ou plat + dessert : 19 €\".",
+  "objectives": [
+    "Understand a French lunch \"formule\"",
+    "Ask for free tap water",
+    "Get the waiter's attention politely",
+    "Ask for the bill and know how tipping works"
+  ],
+  "varietyNote": "This is everyday French as spoken across France. Restaurant French is very similar everywhere, but note that in France \"entrée\" is the starter — in American English, \"entrée\" means the main course!",
+  "phrases": [
+    {
+      "id": "formule",
+      "text": "Je vais prendre la formule entrée-plat.",
+      "translation": "I'll have the starter-and-main set menu.",
+      "example": "La formule plat-dessert, s'il vous plaît.",
+      "exampleTranslation": "The main-and-dessert set menu, please.",
+      "note": "A \"formule\" is a fixed-price menu with a set combination of courses — very common at lunchtime."
+    },
+    {
+      "id": "carafe-eau",
+      "text": "Une carafe d'eau, s'il vous plaît.",
+      "translation": "A jug of tap water, please.",
+      "example": "On pourrait avoir une carafe d'eau ?",
+      "exampleTranslation": "Could we have a jug of tap water?",
+      "note": "In France, restaurants serve tap water free if you ask for it this way."
+    },
+    {
+      "id": "vous-avez-choisi",
+      "text": "Vous avez choisi ?",
+      "translation": "Have you decided? / Are you ready to order?",
+      "example": "Vous avez choisi ? — Oui, je vais prendre le plat du jour.",
+      "exampleTranslation": "\"Are you ready to order?\" \"Yes, I'll have the dish of the day.\""
+    },
+    {
+      "id": "excusez-moi",
+      "text": "Excusez-moi… / S'il vous plaît !",
+      "translation": "Excuse me… (to call the waiter)",
+      "example": "S'il vous plaît, on pourrait avoir l'addition ?",
+      "exampleTranslation": "Excuse me, could we have the bill?",
+      "note": "Calling \"Garçon !\" sounds old-fashioned and rude today. Use \"Excusez-moi\" or \"S'il vous plaît\"."
+    },
+    {
+      "id": "addition",
+      "text": "L'addition, s'il vous plaît.",
+      "translation": "The bill, please.",
+      "example": "On peut avoir l'addition ?",
+      "exampleTranslation": "Can we have the bill?"
+    },
+    {
+      "id": "service-compris",
+      "text": "Le service est compris.",
+      "translation": "Service is included.",
+      "example": "Le service est compris, mais on peut laisser un petit pourboire.",
+      "exampleTranslation": "Service is included, but you can leave a small tip."
+    }
+  ],
+  "cultureNotes": [
+    "Lunch \"formules\" are great value and very popular. Lunch is usually served from about noon to 2 p.m. — arrive late and the kitchen may be closed.",
+    "Ask for \"une carafe d'eau\" for free tap water. If you just ask for \"de l'eau\", you may be offered bottled water, which you'll pay for.",
+    "In France, service is included in the prices by law. Leaving a little extra — rounding up or a few euros — is a kind gesture, not an obligation.",
+    "Waiters won't bring the bill until you ask — rushing you out would be considered rude."
+  ],
+  "steps": [
+    { "type": "scene", "text": "The waiter brings a menu and comes back a few minutes later." },
+    { "type": "line", "speaker": "Waiter", "text": "Bonjour ! Vous avez choisi ?", "translation": "Hello! Have you decided?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "On the board, the formule is \"entrée + plat\". What is an \"entrée\" in France?",
+      "options": [
+        { "text": "The starter", "correct": true, "why": "Right — in France the entrée is the first course. \"Le plat\" is the main course." },
+        { "text": "The main course", "why": "That's what \"entrée\" means in American English — but in France it's the starter." },
+        { "text": "The entrance fee to the restaurant", "why": "There's no entrance fee — \"entrée\" here is the first course." }
+      ],
+      "phraseIds": ["formule"]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like a starter and a main course. How do you order?",
+      "options": [
+        { "text": "Je vais prendre la formule entrée-plat, s'il vous plaît.", "correct": true, "why": "Natural and clear — \"je vais prendre\" (I'll have) is the usual way to order." },
+        { "text": "Je prends la formule dessert-entrée.", "why": "That combination isn't on offer — it's \"entrée + plat\" or \"plat + dessert\"." },
+        { "text": "Je veux manger tout.", "why": "\"I want to eat everything\" — enthusiastic, but it's not how you order!" }
+      ],
+      "phraseIds": ["formule"]
+    },
+    { "type": "line", "speaker": "Waiter", "text": "Très bien. Et comme boisson ?", "translation": "Very good. And to drink?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like free tap water. What do you ask for?",
+      "options": [
+        { "text": "Une carafe d'eau, s'il vous plaît.", "correct": true, "why": "Exactly — \"une carafe d'eau\" is free tap water." },
+        { "text": "Une bouteille d'eau minérale, s'il vous plaît.", "why": "That's bottled mineral water — you'll pay for it." },
+        { "text": "De l'eau du robinet gratuite, s'il vous plaît !", "why": "Understood, but insisting on \"free\" sounds a bit odd. \"Une carafe d'eau\" says it all." }
+      ],
+      "phraseIds": ["carafe-eau"]
+    },
+    { "type": "scene", "text": "Lunch is delicious. Now you want to pay, but the waiter is across the room, and he hasn't brought the bill." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "Why hasn't he brought the bill?",
+      "options": [
+        { "text": "In France the bill only comes when you ask — bringing it unasked would feel like rushing you.", "correct": true, "why": "Right. Catch his eye and ask." },
+        { "text": "He's ignoring you.", "why": "Not at all — he's leaving you to enjoy your meal." },
+        { "text": "You're supposed to pay at the bar.", "why": "In a sit-down bistrot, the waiter normally brings the bill to your table." }
+      ]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "How do you call him and ask for the bill?",
+      "options": [
+        { "text": "Excusez-moi, l'addition, s'il vous plaît.", "correct": true, "why": "Polite and natural." },
+        { "text": "Garçon ! L'addition !", "why": "\"Garçon !\" sounds old-fashioned and rude today. Use \"Excusez-moi\" or \"S'il vous plaît\"." },
+        { "text": "Excusez-moi, la note de musique, s'il vous plaît.", "why": "\"Note\" can mean a bill in some places, but \"note de musique\" is a musical note! Say \"l'addition\"." }
+      ],
+      "phraseIds": ["excusez-moi", "addition"]
+    },
+    { "type": "line", "speaker": "Waiter", "text": "Voilà. Le service est compris.", "translation": "Here you are. Service is included." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "The bill is €19. Should you tip?",
+      "options": [
+        { "text": "It's optional — service is included, but rounding up or leaving a euro or two is a nice gesture.", "correct": true, "why": "Right. French tipping is small and never compulsory." },
+        { "text": "You must add 15–20%.", "why": "That's the US custom. In France, service is already included." },
+        { "text": "Never — tipping is illegal in France.", "why": "It's perfectly legal, just optional." }
+      ],
+      "phraseIds": ["service-compris"]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "Menú del día en un bistró de Lyon",
+      "summary": "Elige una «formule», pide agua del grifo, llama al camarero con educación y paga la cuenta.",
+      "setting": "Son las 12:30 en Lyon, la capital gastronómica de Francia. Te sientas en un pequeño bistró. En una pizarra: «Formule midi — entrée + plat ou plat + dessert : 19 €».",
+      "objectives": [
+        "Entender una «formule» de almuerzo francesa",
+        "Pedir agua del grifo gratis",
+        "Llamar al camarero con educación",
+        "Pedir la cuenta y saber cómo funciona la propina"
+      ],
+      "varietyNote": "Este es el francés de todos los días que se habla en toda Francia. El francés de restaurante es muy parecido en todas partes, pero ojo: en Francia la «entrée» es el entrante; en inglés estadounidense, «entrée» significa el plato principal.",
+      "phrases": {
+        "formule": { "translation": "Voy a tomar el menú de entrante y plato principal.", "exampleTranslation": "El menú de plato principal y postre, por favor.", "note": "Una «formule» es un menú a precio fijo con una combinación de platos: muy común al mediodía." },
+        "carafe-eau": { "translation": "Una jarra de agua del grifo, por favor.", "exampleTranslation": "¿Nos podría traer una jarra de agua?", "note": "En Francia, los restaurantes sirven agua del grifo gratis si la pides así." },
+        "vous-avez-choisi": { "translation": "¿Ya ha elegido?", "exampleTranslation": "«¿Ya ha elegido?» «Sí, voy a tomar el plato del día.»" },
+        "excusez-moi": { "translation": "Disculpe… / ¡Por favor! (para llamar al camarero)", "exampleTranslation": "Por favor, ¿nos trae la cuenta?", "note": "Llamar «Garçon !» al camarero hoy suena anticuado y grosero. Usa «Excusez-moi» o «S'il vous plaît»." },
+        "addition": { "translation": "La cuenta, por favor.", "exampleTranslation": "¿Nos trae la cuenta?" },
+        "service-compris": { "translation": "El servicio está incluido.", "exampleTranslation": "El servicio está incluido, pero se puede dejar una pequeña propina." }
+      },
+      "cultureNotes": [
+        "Las «formules» de mediodía tienen muy buen precio y son muy populares. El almuerzo se sirve normalmente de 12 a 14 h; si llegas tarde, puede que la cocina esté cerrada.",
+        "Pide «une carafe d'eau» para tener agua del grifo gratis. Si solo pides «de l'eau», puede que te ofrezcan agua embotellada, que se paga.",
+        "En Francia, por ley, el servicio está incluido en los precios. Dejar algo más —redondear o unos euros— es un detalle amable, no una obligación.",
+        "Los camareros no traen la cuenta hasta que la pides: meterte prisa se consideraría de mala educación."
+      ],
+      "steps": [
+        { "text": "El camarero trae la carta y vuelve unos minutos después." },
+        { "translation": "¡Buenos días! ¿Ya ha elegido?" },
+        {
+          "prompt": "En la pizarra, la formule es «entrée + plat». ¿Qué es una «entrée» en Francia?",
+          "options": [
+            { "text": "El entrante", "why": "Correcto: en Francia la entrée es el primer plato. «Le plat» es el plato principal." },
+            { "text": "El plato principal", "why": "Eso es lo que significa «entrée» en inglés estadounidense, pero en Francia es el entrante." },
+            { "text": "La entrada al restaurante (lo que se paga por entrar)", "why": "No se paga por entrar: aquí «entrée» es el primer plato." }
+          ]
+        },
+        {
+          "prompt": "Quieres entrante y plato principal. ¿Cómo lo pides?",
+          "options": [
+            { "why": "Natural y claro: «je vais prendre» (voy a tomar) es la forma habitual de pedir." },
+            { "why": "Esa combinación no está en la oferta: es «entrée + plat» o «plat + dessert»." },
+            { "why": "«Quiero comerme todo»: mucho entusiasmo, ¡pero no es así como se pide!" }
+          ]
+        },
+        { "translation": "Muy bien. ¿Y para beber?" },
+        {
+          "prompt": "Quieres agua del grifo gratis. ¿Qué pides?",
+          "options": [
+            { "why": "Exacto: «une carafe d'eau» es agua del grifo gratis." },
+            { "why": "Eso es agua mineral embotellada: se paga." },
+            { "why": "Se entiende, pero insistir en «gratis» suena un poco raro. «Une carafe d'eau» lo dice todo." }
+          ]
+        },
+        { "text": "La comida está riquísima. Ahora quieres pagar, pero el camarero está al otro lado del local y no ha traído la cuenta." },
+        {
+          "prompt": "¿Por qué no ha traído la cuenta?",
+          "options": [
+            { "text": "En Francia la cuenta solo llega cuando la pides: traerla sin pedirla sería como meterte prisa.", "why": "Correcto. Llama su atención y pídela." },
+            { "text": "Te está ignorando.", "why": "En absoluto: te deja disfrutar de la comida." },
+            { "text": "Se supone que tienes que pagar en la barra.", "why": "En un bistró con servicio de mesa, el camarero normalmente trae la cuenta a la mesa." }
+          ]
+        },
+        {
+          "prompt": "¿Cómo lo llamas y pides la cuenta?",
+          "options": [
+            { "why": "Educado y natural." },
+            { "why": "«Garçon !» hoy suena anticuado y grosero. Usa «Excusez-moi» o «S'il vous plaît»." },
+            { "why": "«Note» puede ser la cuenta en algunos sitios, ¡pero «note de musique» es una nota musical! Di «l'addition»." }
+          ]
+        },
+        { "translation": "Aquí tiene. El servicio está incluido." },
+        {
+          "prompt": "La cuenta es de 19 €. ¿Deberías dejar propina?",
+          "options": [
+            { "text": "Es opcional: el servicio está incluido, pero redondear o dejar uno o dos euros es un buen detalle.", "why": "Correcto. En Francia la propina es pequeña y nunca obligatoria." },
+            { "text": "Hay que añadir un 15–20 %.", "why": "Esa es la costumbre de Estados Unidos. En Francia, el servicio ya está incluido." },
+            { "text": "Nunca: en Francia la propina es ilegal.", "why": "Es perfectamente legal, solo que opcional." }
+          ]
+        }
+      ]
+    },
+    "pt": {
+      "title": "Almoço executivo num bistrô em Lyon",
+      "summary": "Escolha uma «formule», peça água da torneira, chame o garçom com educação e pague a conta.",
+      "setting": "É 12h30 em Lyon, a capital gastronômica da França. Você se senta num pequeno bistrô. Num quadro-negro: «Formule midi — entrée + plat ou plat + dessert : 19 €».",
+      "objectives": [
+        "Entender uma «formule» de almoço francesa",
+        "Pedir água da torneira de graça",
+        "Chamar o garçom com educação",
+        "Pedir a conta e saber como funciona a gorjeta"
+      ],
+      "varietyNote": "Este é o francês do dia a dia falado em toda a França. O francês de restaurante é muito parecido em todo lugar, mas atenção: na França a «entrée» é a entrada — no inglês americano, «entrée» quer dizer o prato principal!",
+      "phrases": {
+        "formule": { "translation": "Vou querer a «formule» entrada e prato principal.", "exampleTranslation": "A «formule» prato principal e sobremesa, por favor.", "note": "Uma «formule» é um menu de preço fixo com uma combinação de pratos — muito comum no almoço." },
+        "carafe-eau": { "translation": "Uma jarra de água da torneira, por favor.", "exampleTranslation": "Pode trazer uma jarra de água para a gente?", "note": "Na França, os restaurantes servem água da torneira de graça se você pedir assim." },
+        "vous-avez-choisi": { "translation": "Já escolheu?", "exampleTranslation": "«Já escolheu?» «Sim, vou querer o prato do dia.»" },
+        "excusez-moi": { "translation": "Com licença… / Por favor! (para chamar o garçom)", "exampleTranslation": "Por favor, pode trazer a conta?", "note": "Chamar o garçom de «Garçon !» hoje soa antiquado e grosseiro. Use «Excusez-moi» ou «S'il vous plaît»." },
+        "addition": { "translation": "A conta, por favor.", "exampleTranslation": "Pode trazer a conta?" },
+        "service-compris": { "translation": "O serviço está incluído.", "exampleTranslation": "O serviço está incluído, mas dá para deixar uma pequena gorjeta." }
+      },
+      "cultureNotes": [
+        "As «formules» de almoço têm ótimo preço e são muito populares. O almoço costuma ser servido mais ou menos do meio-dia às 14h — chegue tarde e a cozinha pode estar fechada.",
+        "Peça «une carafe d'eau» para ter água da torneira de graça. Se pedir só «de l'eau», podem oferecer água engarrafada, que é paga.",
+        "Na França, por lei, o serviço está incluído nos preços. Deixar um pouco a mais — arredondar ou uns euros — é uma gentileza, não uma obrigação.",
+        "Os garçons não trazem a conta até você pedir — apressar o cliente seria considerado falta de educação."
+      ],
+      "steps": [
+        { "text": "O garçom traz o cardápio e volta alguns minutos depois." },
+        { "translation": "Bom dia! Já escolheu?" },
+        {
+          "prompt": "No quadro, a formule é «entrée + plat». O que é uma «entrée» na França?",
+          "options": [
+            { "text": "A entrada", "why": "Isso — na França a entrée é o primeiro prato. «Le plat» é o prato principal." },
+            { "text": "O prato principal", "why": "É o que «entrée» significa no inglês americano — mas na França é a entrada." },
+            { "text": "A taxa de entrada do restaurante", "why": "Não há taxa de entrada — «entrée» aqui é o primeiro prato." }
+          ]
+        },
+        {
+          "prompt": "Você quer entrada e prato principal. Como você pede?",
+          "options": [
+            { "why": "Natural e claro — «je vais prendre» (vou querer) é o jeito comum de pedir." },
+            { "why": "Essa combinação não existe no menu — é «entrée + plat» ou «plat + dessert»." },
+            { "why": "«Quero comer tudo» — empolgado, mas não é assim que se pede!" }
+          ]
+        },
+        { "translation": "Muito bem. E para beber?" },
+        {
+          "prompt": "Você quer água da torneira de graça. O que você pede?",
+          "options": [
+            { "why": "Exato — «une carafe d'eau» é água da torneira de graça." },
+            { "why": "Isso é água mineral engarrafada — você vai pagar." },
+            { "why": "Dá para entender, mas insistir no «de graça» soa meio estranho. «Une carafe d'eau» já diz tudo." }
+          ]
+        },
+        { "text": "O almoço está delicioso. Agora você quer pagar, mas o garçom está do outro lado do salão e não trouxe a conta." },
+        {
+          "prompt": "Por que ele não trouxe a conta?",
+          "options": [
+            { "text": "Na França a conta só vem quando você pede — trazer sem pedir seria como apressar você.", "why": "Isso. Chame a atenção dele e peça." },
+            { "text": "Ele está te ignorando.", "why": "De jeito nenhum — ele está deixando você aproveitar a refeição." },
+            { "text": "Você deveria pagar no balcão.", "why": "Num bistrô com serviço de mesa, o garçom normalmente traz a conta à mesa." }
+          ]
+        },
+        {
+          "prompt": "Como você o chama e pede a conta?",
+          "options": [
+            { "why": "Educado e natural." },
+            { "why": "«Garçon !» hoje soa antiquado e grosseiro. Use «Excusez-moi» ou «S'il vous plaît»." },
+            { "why": "«Note» pode ser a conta em alguns lugares, mas «note de musique» é uma nota musical! Diga «l'addition»." }
+          ]
+        },
+        { "translation": "Aqui está. O serviço está incluído." },
+        {
+          "prompt": "A conta é de 19 €. Você deve dar gorjeta?",
+          "options": [
+            { "text": "É opcional — o serviço está incluído, mas arredondar ou deixar um ou dois euros é uma gentileza.", "why": "Isso. A gorjeta na França é pequena e nunca obrigatória." },
+            { "text": "É preciso acrescentar 15–20%.", "why": "Esse é o costume dos Estados Unidos. Na França, o serviço já está incluído." },
+            { "text": "Nunca — gorjeta é ilegal na França.", "why": "É perfeitamente legal, só é opcional." }
+          ]
+        }
+      ]
+    }
+  }
+}

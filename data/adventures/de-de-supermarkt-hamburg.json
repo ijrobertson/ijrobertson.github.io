@@ -1,0 +1,291 @@
+{
+  "id": "de-de-supermarkt-hamburg",
+  "title": "Shopping at a supermarket in Hamburg",
+  "language": "German",
+  "country": "Germany",
+  "countryCode": "DE",
+  "flag": "🇩🇪",
+  "variety": { "id": "de-DE", "label": "German from Germany" },
+  "difficulty": "beginner",
+  "estMinutes": 6,
+  "setting": "It's Saturday in Hamburg, in the north of Germany. You need food for the weekend — and you have a bag of empty plastic bottles from your flat to take back. The supermarket is busy.",
+  "objectives": [
+    "Greet people the northern German way",
+    "Understand the bottle deposit (\"Pfand\")",
+    "Answer checkout questions about bags and payment",
+    "Keep up with a fast German checkout"
+  ],
+  "varietyNote": "This is German as heard in Hamburg. Northerners say \"Moin!\" for hello at any time of day, and \"Tschüss!\" for goodbye. In southern Germany and Austria you'd hear \"Grüß Gott\" and \"Servus\" instead.",
+  "phrases": [
+    {
+      "id": "moin",
+      "text": "Moin!",
+      "translation": "Hi! (northern Germany, any time of day)",
+      "example": "Moin! Alles klar?",
+      "exampleTranslation": "Hi! All good?",
+      "note": "Although it sounds like \"Morgen\" (morning), \"Moin\" is used all day.",
+      "alsoHeard": [
+        { "text": "Moin moin!", "where": "Also heard, often a bit chattier" }
+      ]
+    },
+    {
+      "id": "pfand",
+      "text": "das Pfand",
+      "translation": "the deposit (on bottles and cans)",
+      "example": "Auf der Flasche sind 25 Cent Pfand.",
+      "exampleTranslation": "There's a 25-cent deposit on the bottle.",
+      "note": "You pay it when you buy and get it back by returning the container to a machine at the supermarket."
+    },
+    {
+      "id": "pfandbon",
+      "text": "der Pfandbon",
+      "translation": "the deposit receipt",
+      "example": "Den Pfandbon gibst du an der Kasse ab.",
+      "exampleTranslation": "You hand the deposit receipt in at the till."
+    },
+    {
+      "id": "tuete",
+      "text": "Brauchen Sie eine Tüte?",
+      "translation": "Do you need a bag?",
+      "example": "Nein danke, ich habe eine Tasche dabei.",
+      "exampleTranslation": "No thanks, I've brought a bag.",
+      "note": "Bags cost money, so many people bring their own."
+    },
+    {
+      "id": "bar-oder-karte",
+      "text": "Bar oder mit Karte?",
+      "translation": "Cash or card?",
+      "example": "Mit Karte, bitte.",
+      "exampleTranslation": "By card, please."
+    },
+    {
+      "id": "tschuess",
+      "text": "Tschüss!",
+      "translation": "Bye!",
+      "example": "Danke, tschüss!",
+      "exampleTranslation": "Thanks, bye!"
+    }
+  ],
+  "cultureNotes": [
+    "Most plastic bottles and cans in Germany carry a deposit (\"Pfand\"), usually 25 cents. Supermarkets have return machines that print a receipt you redeem at the till.",
+    "German checkouts are famously fast. Have your bag ready, pack quickly — or move your things to the packing shelf after the till.",
+    "Bags aren't free, so bring your own. Cash is still common, though cards are accepted in almost all supermarkets.",
+    "Most shops in Germany, including supermarkets, are closed on Sundays — do your shopping on Saturday."
+  ],
+  "steps": [
+    { "type": "scene", "text": "At the entrance there's a machine with a round hole and a sign: \"Leergut / Pfand\"." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "What's this machine for?",
+      "options": [
+        { "text": "Returning bottles and cans to get your deposit back", "correct": true, "why": "Right — feed in your bottles one by one, then press the button for your Pfand receipt." },
+        { "text": "Throwing away rubbish", "why": "It's not a bin — you get money back for these bottles." },
+        { "text": "Buying drinks", "why": "It takes empty bottles back — it doesn't sell anything." }
+      ],
+      "phraseIds": ["pfand"]
+    },
+    { "type": "scene", "text": "You feed in your bottles and the machine prints a receipt: \"Pfand: 2,00 €\"." },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What do you do with the receipt?",
+      "options": [
+        { "text": "Hand it in at the till — €2 comes off your shopping", "correct": true, "why": "Right — the Pfandbon is like a voucher." },
+        { "text": "Keep it as proof you recycled", "why": "It's worth money — redeem it at the till." },
+        { "text": "Throw it away", "why": "You'd be throwing away €2!" }
+      ],
+      "phraseIds": ["pfandbon"]
+    },
+    { "type": "scene", "text": "Your basket is full. You join the queue. The cashier is scanning very fast." },
+    { "type": "line", "speaker": "Cashier", "text": "Moin! Brauchen Sie eine Tüte?", "translation": "Hi! Do you need a bag?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You've brought your own bag. How do you answer — and greet her back?",
+      "options": [
+        { "text": "Moin! Nein danke, ich habe eine dabei.", "correct": true, "why": "Perfect — the northern greeting and a clear \"no thanks, I've got one\"." },
+        { "text": "Guten Abend! Ja, zehn Tüten!", "why": "It's not evening, and ten bags is rather a lot — especially when you've brought your own." },
+        { "text": "Nein. Schnell!", "why": "\"No. Quick!\" sounds rude — and she's already fast!" }
+      ],
+      "phraseIds": ["moin", "tuete"]
+    },
+    { "type": "scene", "text": "Your shopping is piling up at the end of the belt faster than you can pack it. The next customer's items are already coming." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "What's the usual thing to do?",
+      "options": [
+        { "text": "Pay, then move your things to the packing shelf and pack there.", "correct": true, "why": "Right — that keeps the queue moving. Nobody expects you to pack at the cashier's speed." },
+        { "text": "Ask the cashier to slow down and pack for you.", "why": "Cashiers in Germany don't pack for customers — and slowing down holds up the queue." },
+        { "text": "Leave half your shopping behind.", "why": "No need to panic — just use the packing shelf." }
+      ]
+    },
+    { "type": "line", "speaker": "Cashier", "text": "Das macht 23,40. Bar oder mit Karte?", "translation": "That's €23.40. Cash or card?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You want to use your Pfand receipt and pay the rest by card.",
+      "options": [
+        { "text": "Ich habe noch einen Pfandbon. Und dann mit Karte, bitte.", "correct": true, "why": "Clear and natural — the €2 comes off and you pay the rest by card." },
+        { "text": "Ich möchte mit Pfand bezahlen, alles.", "why": "Your Pfand receipt is only worth €2 — it can't pay for everything." },
+        { "text": "Karte. Bon. Los.", "why": "Understood, but very abrupt. A full sentence with \"bitte\" is much friendlier." }
+      ],
+      "phraseIds": ["bar-oder-karte", "pfandbon"]
+    },
+    { "type": "line", "speaker": "Cashier", "text": "Alles klar. Tschüss!", "translation": "All right. Bye!" }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "En el supermercado en Hamburgo",
+      "summary": "Devuelve botellas por el «Pfand», no te quedes atrás en la caja y saluda a todos con «Moin».",
+      "setting": "Es sábado en Hamburgo, en el norte de Alemania. Necesitas comida para el fin de semana y tienes una bolsa de botellas de plástico vacías de tu piso para devolver. El supermercado está lleno.",
+      "objectives": [
+        "Saludar a la manera del norte de Alemania",
+        "Entender el depósito de las botellas («Pfand»)",
+        "Responder a las preguntas de la caja sobre bolsas y pago",
+        "Seguir el ritmo de una caja alemana rápida"
+      ],
+      "varietyNote": "Este es el alemán tal como se oye en Hamburgo. En el norte se dice «Moin!» para saludar a cualquier hora del día y «Tschüss!» para despedirse. En el sur de Alemania y en Austria oirías «Grüß Gott» y «Servus».",
+      "phrases": {
+        "moin": { "translation": "¡Hola! (norte de Alemania, a cualquier hora)", "exampleTranslation": "¡Hola! ¿Todo bien?", "note": "Aunque se parece a «Morgen» (mañana), «Moin» se usa todo el día.", "alsoHeard": ["También se oye, a menudo en tono más conversador"] },
+        "pfand": { "translation": "el depósito (de botellas y latas)", "exampleTranslation": "La botella tiene 25 céntimos de depósito.", "note": "Pagas el depósito al comprar y lo recuperas devolviendo el envase en una máquina del supermercado." },
+        "pfandbon": { "translation": "el tique del depósito", "exampleTranslation": "El tique del depósito se entrega en la caja." },
+        "tuete": { "translation": "¿Necesita una bolsa?", "exampleTranslation": "No, gracias, he traído una bolsa.", "note": "Las bolsas se pagan, así que mucha gente lleva la suya." },
+        "bar-oder-karte": { "translation": "¿En efectivo o con tarjeta?", "exampleTranslation": "Con tarjeta, por favor." },
+        "tschuess": { "translation": "¡Adiós! / ¡Chao!", "exampleTranslation": "¡Gracias, adiós!" }
+      },
+      "cultureNotes": [
+        "La mayoría de las botellas de plástico y latas en Alemania llevan un depósito («Pfand»), normalmente de 25 céntimos. Los supermercados tienen máquinas de devolución que imprimen un tique que canjeas en la caja.",
+        "Las cajas alemanas son famosas por su rapidez. Ten la bolsa preparada y guarda rápido, o lleva tus cosas a la repisa para empaquetar que hay después de la caja.",
+        "Las bolsas no son gratis, así que lleva la tuya. El efectivo sigue siendo habitual, aunque casi todos los supermercados aceptan tarjeta.",
+        "En Alemania, la mayoría de las tiendas, supermercados incluidos, cierran los domingos: haz la compra el sábado."
+      ],
+      "steps": [
+        { "text": "En la entrada hay una máquina con un agujero redondo y un cartel: «Leergut / Pfand»." },
+        {
+          "prompt": "¿Para qué sirve esta máquina?",
+          "options": [
+            { "text": "Devolver botellas y latas para recuperar el depósito", "why": "Correcto: mete las botellas una a una y luego pulsa el botón para el tique del depósito." },
+            { "text": "Tirar la basura", "why": "No es una papelera: te devuelven dinero por esas botellas." },
+            { "text": "Comprar bebidas", "why": "Recoge botellas vacías; no vende nada." }
+          ]
+        },
+        { "text": "Metes las botellas y la máquina imprime un tique: «Pfand: 2,00 €»." },
+        {
+          "prompt": "¿Qué haces con el tique?",
+          "options": [
+            { "text": "Entregarlo en la caja: se descuentan 2 € de tu compra", "why": "Correcto: el «Pfandbon» funciona como un vale." },
+            { "text": "Guardarlo como prueba de que reciclaste", "why": "Vale dinero: canjéalo en la caja." },
+            { "text": "Tirarlo", "why": "¡Estarías tirando 2 €!" }
+          ]
+        },
+        { "text": "Tu cesta está llena. Te pones en la fila. La cajera pasa los productos muy rápido." },
+        { "translation": "¡Hola! ¿Necesita una bolsa?" },
+        {
+          "prompt": "Has traído tu propia bolsa. ¿Cómo respondes y le devuelves el saludo?",
+          "options": [
+            { "why": "Perfecto: el saludo del norte y un claro «no, gracias, ya tengo una»." },
+            { "why": "No es de noche, y diez bolsas son demasiadas, sobre todo si has traído la tuya." },
+            { "why": "«No. ¡Rápido!» suena grosero… ¡y ella ya va rápido!" }
+          ]
+        },
+        { "text": "Tu compra se amontona al final de la cinta más rápido de lo que puedes guardarla. Ya llegan los productos del siguiente cliente." },
+        {
+          "prompt": "¿Qué es lo habitual?",
+          "options": [
+            { "text": "Pagar y luego llevar tus cosas a la repisa para empaquetar y guardarlas allí.", "why": "Correcto: así la fila sigue avanzando. Nadie espera que guardes a la velocidad de la cajera." },
+            { "text": "Pedir a la cajera que vaya más despacio y te guarde la compra.", "why": "En Alemania las cajeras no guardan la compra de los clientes, y ir más despacio retrasa la fila." },
+            { "text": "Dejar la mitad de la compra.", "why": "No hace falta agobiarse: usa la repisa para empaquetar." }
+          ]
+        },
+        { "translation": "Son 23,40 €. ¿En efectivo o con tarjeta?" },
+        {
+          "prompt": "Quieres usar tu tique del depósito y pagar el resto con tarjeta.",
+          "options": [
+            { "why": "Claro y natural: se descuentan los 2 € y pagas el resto con tarjeta." },
+            { "why": "Tu tique del depósito solo vale 2 €: no puede pagarlo todo." },
+            { "why": "Se entiende, pero es muy brusco. Una frase completa con «bitte» es mucho más amable." }
+          ]
+        },
+        { "translation": "Muy bien. ¡Adiós!" }
+      ]
+    },
+    "pt": {
+      "title": "No supermercado em Hamburgo",
+      "summary": "Devolva garrafas pelo «Pfand», acompanhe o ritmo do caixa e cumprimente todo mundo com «Moin».",
+      "setting": "É sábado em Hamburgo, no norte da Alemanha. Você precisa de comida para o fim de semana — e tem um saco de garrafas plásticas vazias do apartamento para devolver. O supermercado está cheio.",
+      "objectives": [
+        "Cumprimentar do jeito do norte da Alemanha",
+        "Entender o depósito das garrafas («Pfand»)",
+        "Responder às perguntas do caixa sobre sacolas e pagamento",
+        "Acompanhar o ritmo de um caixa alemão rápido"
+      ],
+      "varietyNote": "Este é o alemão como se ouve em Hamburgo. No norte se diz «Moin!» para cumprimentar a qualquer hora do dia e «Tschüss!» para se despedir. No sul da Alemanha e na Áustria você ouviria «Grüß Gott» e «Servus».",
+      "phrases": {
+        "moin": { "translation": "Oi! (norte da Alemanha, a qualquer hora)", "exampleTranslation": "Oi! Tudo certo?", "note": "Embora pareça «Morgen» (manhã), «Moin» é usado o dia todo.", "alsoHeard": ["Também se ouve, muitas vezes num tom mais conversador"] },
+        "pfand": { "translation": "o depósito (de garrafas e latas)", "exampleTranslation": "A garrafa tem 25 centavos de depósito.", "note": "Você paga o depósito na compra e recebe de volta ao devolver a embalagem numa máquina do supermercado." },
+        "pfandbon": { "translation": "o recibo do depósito", "exampleTranslation": "Você entrega o recibo do depósito no caixa." },
+        "tuete": { "translation": "Precisa de uma sacola?", "exampleTranslation": "Não, obrigado, trouxe uma sacola.", "note": "As sacolas são pagas, então muita gente leva a sua." },
+        "bar-oder-karte": { "translation": "Dinheiro ou cartão?", "exampleTranslation": "No cartão, por favor." },
+        "tschuess": { "translation": "Tchau!", "exampleTranslation": "Obrigado, tchau!" }
+      },
+      "cultureNotes": [
+        "A maioria das garrafas plásticas e latas na Alemanha tem depósito («Pfand»), normalmente de 25 centavos. Os supermercados têm máquinas de devolução que imprimem um recibo que você troca no caixa.",
+        "Os caixas alemães são famosos pela rapidez. Deixe a sacola pronta e guarde rápido — ou leve as coisas para a bancada de empacotar depois do caixa.",
+        "As sacolas não são de graça, então leve a sua. O dinheiro vivo ainda é comum, embora quase todos os supermercados aceitem cartão.",
+        "Na Alemanha, a maioria das lojas, inclusive supermercados, fecha aos domingos — faça as compras no sábado."
+      ],
+      "steps": [
+        { "text": "Na entrada há uma máquina com um buraco redondo e uma placa: «Leergut / Pfand»." },
+        {
+          "prompt": "Para que serve esta máquina?",
+          "options": [
+            { "text": "Devolver garrafas e latas para receber o depósito de volta", "why": "Isso — coloque as garrafas uma a uma e depois aperte o botão para o recibo do Pfand." },
+            { "text": "Jogar lixo fora", "why": "Não é lixeira — você recebe dinheiro de volta por essas garrafas." },
+            { "text": "Comprar bebidas", "why": "Ela recebe garrafas vazias — não vende nada." }
+          ]
+        },
+        { "text": "Você coloca as garrafas e a máquina imprime um recibo: «Pfand: 2,00 €»." },
+        {
+          "prompt": "O que você faz com o recibo?",
+          "options": [
+            { "text": "Entregar no caixa — 2 € são descontados das suas compras", "why": "Isso — o Pfandbon funciona como um vale." },
+            { "text": "Guardar como prova de que você reciclou", "why": "Ele vale dinheiro — troque no caixa." },
+            { "text": "Jogar fora", "why": "Você estaria jogando 2 € fora!" }
+          ]
+        },
+        { "text": "A sua cesta está cheia. Você entra na fila. A caixa está passando os produtos muito rápido." },
+        { "translation": "Oi! Precisa de uma sacola?" },
+        {
+          "prompt": "Você trouxe a sua sacola. Como responde — e cumprimenta de volta?",
+          "options": [
+            { "why": "Perfeito — o cumprimento do norte e um claro «não, obrigado, já tenho uma»." },
+            { "why": "Não é noite, e dez sacolas é muita coisa — ainda mais tendo trazido a sua." },
+            { "why": "«Não. Rápido!» soa grosseiro — e ela já é rápida!" }
+          ]
+        },
+        { "text": "As suas compras se acumulam no fim da esteira mais rápido do que você consegue guardar. Os produtos do próximo cliente já estão vindo." },
+        {
+          "prompt": "O que é o normal?",
+          "options": [
+            { "text": "Pagar e depois levar as coisas para a bancada de empacotar e guardar lá.", "why": "Isso — assim a fila continua andando. Ninguém espera que você guarde na velocidade da caixa." },
+            { "text": "Pedir para a caixa ir mais devagar e guardar as compras para você.", "why": "Na Alemanha os caixas não guardam as compras dos clientes — e ir devagar segura a fila." },
+            { "text": "Deixar metade das compras para trás.", "why": "Não precisa entrar em pânico — use a bancada de empacotar." }
+          ]
+        },
+        { "translation": "Dá 23,40 €. Dinheiro ou cartão?" },
+        {
+          "prompt": "Você quer usar o recibo do Pfand e pagar o resto com cartão.",
+          "options": [
+            { "why": "Claro e natural — os 2 € são descontados e você paga o resto com cartão." },
+            { "why": "O seu recibo do Pfand só vale 2 € — não dá para pagar tudo." },
+            { "why": "Dá para entender, mas é muito brusco. Uma frase completa com «bitte» é bem mais simpática." }
+          ]
+        },
+        { "translation": "Certo. Tchau!" }
+      ]
+    }
+  }
+}

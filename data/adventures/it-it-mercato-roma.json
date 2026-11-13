@@ -1,0 +1,315 @@
+{
+  "id": "it-it-mercato-roma",
+  "title": "Shopping at Campo de' Fiori market in Rome",
+  "language": "Italian",
+  "country": "Italy",
+  "countryCode": "IT",
+  "flag": "🇮🇹",
+  "variety": { "id": "it-IT", "label": "Italian (Rome)" },
+  "difficulty": "beginner",
+  "estMinutes": 6,
+  "setting": "It's a sunny morning at Campo de' Fiori, one of Rome's oldest markets. Stalls are covered in tomatoes, artichokes, peaches and herbs. You want food for a picnic in the park.",
+  "objectives": [
+    "Ask prices with \"Quanto viene?\"",
+    "Buy by weight: un etto, mezzo chilo",
+    "Follow market etiquette — let the vendor pick",
+    "Finish with \"Basta così\""
+  ],
+  "varietyNote": "This is standard Italian as heard in Rome. In Italian shops and markets, deli items are sold by the \"etto\" (100 grams), and you'll hear the polite \"Lei\" form: \"Mi dà…?\" (Could you give me…?).",
+  "phrases": [
+    {
+      "id": "quanto-viene",
+      "text": "Quanto vengono le pesche?",
+      "translation": "How much are the peaches?",
+      "example": "Quanto viene al chilo?",
+      "exampleTranslation": "How much is it per kilo?",
+      "note": "\"Quanto viene / vengono?\" is a very common way to ask prices at the market.",
+      "alsoHeard": [
+        { "text": "Quanto costano?", "where": "Also very common" }
+      ]
+    },
+    {
+      "id": "mi-da",
+      "text": "Mi dà mezzo chilo di pesche?",
+      "translation": "Could you give me half a kilo of peaches?",
+      "example": "Mi dà un chilo di pomodori, per favore?",
+      "exampleTranslation": "Could I have a kilo of tomatoes, please?",
+      "note": "\"Mi dà…?\" uses \"Lei\", the polite form used with vendors."
+    },
+    {
+      "id": "un-etto",
+      "text": "un etto di pecorino",
+      "translation": "100 grams of pecorino",
+      "example": "Due etti di prosciutto, per favore.",
+      "exampleTranslation": "200 grams of prosciutto, please.",
+      "note": "An \"etto\" is 100 grams — the usual measure at cheese and deli counters."
+    },
+    {
+      "id": "assaggiare",
+      "text": "Posso assaggiare?",
+      "translation": "Can I taste it?",
+      "example": "Posso assaggiare un pezzetto?",
+      "exampleTranslation": "Can I taste a little piece?"
+    },
+    {
+      "id": "altro",
+      "text": "Altro?",
+      "translation": "Anything else?",
+      "example": "Altro? — No, basta così, grazie.",
+      "exampleTranslation": "\"Anything else?\" \"No, that's all, thanks.\""
+    },
+    {
+      "id": "basta-cosi",
+      "text": "Basta così, grazie.",
+      "translation": "That's all, thanks.",
+      "example": "Sì, basta così.",
+      "exampleTranslation": "Yes, that's enough."
+    }
+  ],
+  "cultureNotes": [
+    "At many Italian market stalls, the vendor picks and weighs the fruit for you. Touching or squeezing the produce yourself can be frowned on — ask instead.",
+    "At cheese and deli counters, Italians order by the \"etto\" (100 g): \"un etto\", \"due etti\", \"mezzo etto\".",
+    "Fruit and vegetables are seasonal: in summer you'll find peaches and tomatoes, in spring Roman artichokes (\"carciofi\").",
+    "Popular tourist markets can include stalls with higher prices — checking the price first with \"Quanto viene?\" is completely normal."
+  ],
+  "steps": [
+    { "type": "scene", "text": "You stop at a fruit stall. The peaches look perfect. You reach out to pick one up…" },
+    { "type": "line", "speaker": "Vendor", "text": "No, no, non si tocca! Ci penso io. Cosa le do?", "translation": "No, no, don't touch! I'll do it. What can I get you?" },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "Why did the vendor stop you?",
+      "options": [
+        { "text": "At many Italian market stalls, the vendor chooses and weighs the fruit for you.", "correct": true, "why": "Right — just tell him what and how much you want." },
+        { "text": "The peaches aren't for sale.", "why": "They are — he just wants to pick them for you." },
+        { "text": "He thinks you're trying to steal them.", "why": "It's not personal — it's normal market etiquette." }
+      ]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "First, ask how much the peaches are.",
+      "options": [
+        { "text": "Quanto vengono le pesche?", "correct": true, "why": "Natural market Italian — \"vengono\" because \"le pesche\" is plural." },
+        { "text": "Quanti anni hanno le pesche?", "why": "That asks how old the peaches are!" },
+        { "text": "Quanto venite?", "why": "\"Venite\" means \"you (all) come\" — not a price question. Use \"vengono\" for the peaches." }
+      ],
+      "phraseIds": ["quanto-viene"]
+    },
+    { "type": "line", "speaker": "Vendor", "text": "Tre euro al chilo.", "translation": "Three euros a kilo." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like half a kilo. What do you say?",
+      "options": [
+        { "text": "Mi dà mezzo chilo, per favore?", "correct": true, "why": "Polite and clear, with the \"Lei\" form \"mi dà\"." },
+        { "text": "Mi dà mezzo chilometro, per favore?", "why": "Half a kilometre of peaches would be quite a picnic! It's \"mezzo chilo\"." },
+        { "text": "Dammi pesche.", "why": "\"Gimme peaches\" sounds rude to a stranger, and doesn't say how many." }
+      ],
+      "phraseIds": ["mi-da"]
+    },
+    { "type": "scene", "text": "Next, you go to a cheese stall. There's a big wheel of pecorino romano." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like to try it before buying. What do you ask?",
+      "options": [
+        { "text": "Posso assaggiare?", "correct": true, "why": "Perfect — vendors are usually happy to offer a taste." },
+        { "text": "Posso assaggiarla tutta?", "why": "\"Can I taste all of it?\" — the whole wheel!" },
+        { "text": "Posso indossare?", "why": "\"Indossare\" means to wear (clothes)! You want \"assaggiare\"." }
+      ],
+      "phraseIds": ["assaggiare"]
+    },
+    { "type": "line", "speaker": "Cheese seller", "text": "Certo, assaggi pure! Quanto ne vuole?", "translation": "Of course, go ahead and taste! How much would you like?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "You ask for \"un etto\". How much cheese is that?",
+      "options": [
+        { "text": "100 grams", "correct": true, "why": "Right — un etto is 100 g, perfect for a picnic." },
+        { "text": "One kilo", "why": "A kilo is \"un chilo\". Un etto is a tenth of that." },
+        { "text": "Eight slices", "why": "\"Otto\" is eight — \"etto\" is 100 grams." }
+      ],
+      "phraseIds": ["un-etto"]
+    },
+    { "type": "line", "speaker": "Cheese seller", "text": "Ecco qua. Altro?", "translation": "Here you are. Anything else?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "That's everything you need. How do you answer?",
+      "options": [
+        { "text": "No, basta così, grazie.", "correct": true, "why": "Natural and polite: \"No, that's all, thanks.\"" },
+        { "text": "Basta! Basta!", "why": "Shouting \"Enough! Enough!\" sounds like you're fed up." },
+        { "text": "Sì, altro.", "why": "\"Yes, more\" — but you don't want anything else!" }
+      ],
+      "phraseIds": ["altro", "basta-cosi"]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "De compras en el mercado de Campo de' Fiori en Roma",
+      "summary": "Compra fruta y queso, pide por «etto» y deja que el vendedor elija por ti.",
+      "setting": "Es una mañana soleada en Campo de' Fiori, uno de los mercados más antiguos de Roma. Los puestos están cubiertos de tomates, alcachofas, melocotones y hierbas. Quieres comida para un pícnic en el parque.",
+      "objectives": [
+        "Preguntar precios con «Quanto viene?»",
+        "Comprar por peso: un etto, mezzo chilo",
+        "Seguir las normas del mercado: deja que elija el vendedor",
+        "Terminar con «Basta così»"
+      ],
+      "varietyNote": "Este es el italiano estándar tal como se oye en Roma. En las tiendas y mercados italianos, los embutidos y quesos se venden por «etto» (100 gramos), y oirás la forma de cortesía «Lei»: «Mi dà…?» (¿Me da…?).",
+      "phrases": {
+        "quanto-viene": { "translation": "¿Cuánto cuestan los melocotones?", "exampleTranslation": "¿Cuánto cuesta el kilo?", "note": "«Quanto viene / vengono?» es una forma muy común de preguntar el precio en el mercado.", "alsoHeard": ["También muy común"] },
+        "mi-da": { "translation": "¿Me da medio kilo de melocotones?", "exampleTranslation": "¿Me da un kilo de tomates, por favor?", "note": "«Mi dà…?» usa «Lei», la forma educada que se usa con los vendedores." },
+        "un-etto": { "translation": "100 gramos de pecorino", "exampleTranslation": "200 gramos de jamón, por favor.", "note": "Un «etto» son 100 gramos: la medida habitual en los mostradores de queso y embutidos." },
+        "assaggiare": { "translation": "¿Puedo probar?", "exampleTranslation": "¿Puedo probar un trocito?" },
+        "altro": { "translation": "¿Algo más?", "exampleTranslation": "«¿Algo más?» «No, nada más, gracias.»" },
+        "basta-cosi": { "translation": "Nada más, gracias.", "exampleTranslation": "Sí, ya está bien así." }
+      },
+      "cultureNotes": [
+        "En muchos puestos de los mercados italianos, el vendedor elige y pesa la fruta por ti. Tocar o apretar el género tú mismo puede estar mal visto: mejor pregunta.",
+        "En los mostradores de quesos y embutidos, los italianos piden por «etto» (100 g): «un etto», «due etti», «mezzo etto».",
+        "La fruta y la verdura son de temporada: en verano encontrarás melocotones y tomates; en primavera, alcachofas romanas («carciofi»).",
+        "Los mercados muy turísticos pueden tener puestos con precios más altos; preguntar antes el precio con «Quanto viene?» es completamente normal."
+      ],
+      "steps": [
+        { "text": "Te paras en un puesto de fruta. Los melocotones tienen una pinta perfecta. Estiras la mano para tomar uno…" },
+        { "translation": "No, no, ¡no se toca! Ya lo hago yo. ¿Qué le doy?" },
+        {
+          "prompt": "¿Por qué te ha detenido el vendedor?",
+          "options": [
+            { "text": "En muchos puestos de los mercados italianos, el vendedor elige y pesa la fruta por ti.", "why": "Correcto: dile qué y cuánto quieres." },
+            { "text": "Los melocotones no están a la venta.", "why": "Sí lo están: solo quiere elegirlos él por ti." },
+            { "text": "Cree que intentas robarlos.", "why": "No es nada personal: es la norma habitual del mercado." }
+          ]
+        },
+        {
+          "prompt": "Primero, pregunta cuánto cuestan los melocotones.",
+          "options": [
+            { "why": "Italiano de mercado natural: «vengono» porque «le pesche» es plural." },
+            { "why": "¡Eso pregunta cuántos años tienen los melocotones!" },
+            { "why": "«Venite» significa «venís / vienen ustedes»: no es una pregunta de precio. Usa «vengono» para los melocotones." }
+          ]
+        },
+        { "translation": "Tres euros el kilo." },
+        {
+          "prompt": "Quieres medio kilo. ¿Qué dices?",
+          "options": [
+            { "why": "Educado y claro, con la forma «Lei» «mi dà»." },
+            { "why": "¡Medio kilómetro de melocotones sería todo un pícnic! Se dice «mezzo chilo»." },
+            { "why": "«Dame melocotones» suena grosero con un desconocido, y no dice cuántos." }
+          ]
+        },
+        { "text": "Después vas a un puesto de quesos. Hay una gran rueda de pecorino romano." },
+        {
+          "prompt": "Quieres probarlo antes de comprar. ¿Qué preguntas?",
+          "options": [
+            { "why": "Perfecto: los vendedores suelen dar a probar con gusto." },
+            { "why": "«¿Puedo probarla entera?»: ¡la rueda completa!" },
+            { "why": "«Indossare» significa ponerse ropa. Lo que quieres es «assaggiare»." }
+          ]
+        },
+        { "translation": "¡Claro, pruebe! ¿Cuánto quiere?" },
+        {
+          "prompt": "Pides «un etto». ¿Cuánto queso es eso?",
+          "options": [
+            { "text": "100 gramos", "why": "Correcto: un etto son 100 g, perfecto para un pícnic." },
+            { "text": "Un kilo", "why": "Un kilo es «un chilo». Un etto es la décima parte." },
+            { "text": "Ocho lonchas", "why": "«Otto» es ocho; «etto» son 100 gramos." }
+          ]
+        },
+        { "translation": "Aquí tiene. ¿Algo más?" },
+        {
+          "prompt": "Ya tienes todo lo que necesitas. ¿Cómo respondes?",
+          "options": [
+            { "why": "Natural y educado: «No, nada más, gracias»." },
+            { "why": "Gritar «¡Basta! ¡Basta!» suena a que estás harto." },
+            { "why": "«Sí, más»… ¡pero no quieres nada más!" }
+          ]
+        }
+      ]
+    },
+    "pt": {
+      "title": "Fazendo compras na feira de Campo de' Fiori em Roma",
+      "summary": "Compre frutas e queijo, peça por «etto» e deixe o vendedor escolher para você.",
+      "setting": "É uma manhã de sol em Campo de' Fiori, uma das feiras mais antigas de Roma. As bancas estão cobertas de tomates, alcachofras, pêssegos e ervas. Você quer comida para um piquenique no parque.",
+      "objectives": [
+        "Perguntar preços com «Quanto viene?»",
+        "Comprar por peso: un etto, mezzo chilo",
+        "Seguir a etiqueta da feira — deixe o vendedor escolher",
+        "Terminar com «Basta così»"
+      ],
+      "varietyNote": "Este é o italiano padrão como se ouve em Roma. Nas lojas e feiras italianas, frios e queijos são vendidos por «etto» (100 gramas), e você vai ouvir a forma educada «Lei»: «Mi dà…?» (Me dá…?).",
+      "phrases": {
+        "quanto-viene": { "translation": "Quanto custam os pêssegos?", "exampleTranslation": "Quanto custa o quilo?", "note": "«Quanto viene / vengono?» é um jeito muito comum de perguntar o preço na feira.", "alsoHeard": ["Também muito comum"] },
+        "mi-da": { "translation": "Me dá meio quilo de pêssegos?", "exampleTranslation": "Me dá um quilo de tomates, por favor?", "note": "«Mi dà…?» usa «Lei», a forma educada usada com os vendedores." },
+        "un-etto": { "translation": "100 gramas de pecorino", "exampleTranslation": "200 gramas de presunto, por favor.", "note": "Um «etto» são 100 gramas — a medida comum nos balcões de queijos e frios." },
+        "assaggiare": { "translation": "Posso provar?", "exampleTranslation": "Posso provar um pedacinho?" },
+        "altro": { "translation": "Mais alguma coisa?", "exampleTranslation": "«Mais alguma coisa?» «Não, é só isso, obrigado.»" },
+        "basta-cosi": { "translation": "É só isso, obrigado.", "exampleTranslation": "Sim, assim está bom." }
+      },
+      "cultureNotes": [
+        "Em muitas bancas das feiras italianas, o vendedor escolhe e pesa as frutas para você. Tocar ou apertar os produtos pode ser malvisto — melhor perguntar.",
+        "Nos balcões de queijos e frios, os italianos pedem por «etto» (100 g): «un etto», «due etti», «mezzo etto».",
+        "Frutas e verduras são da estação: no verão você vai encontrar pêssegos e tomates; na primavera, alcachofras romanas («carciofi»).",
+        "Feiras muito turísticas podem ter bancas com preços mais altos — conferir o preço antes com «Quanto viene?» é completamente normal."
+      ],
+      "steps": [
+        { "text": "Você para numa banca de frutas. Os pêssegos estão perfeitos. Você estica a mão para pegar um…" },
+        { "translation": "Não, não, não pode mexer! Deixa que eu faço. O que vai ser?" },
+        {
+          "prompt": "Por que o vendedor te impediu?",
+          "options": [
+            { "text": "Em muitas bancas das feiras italianas, o vendedor escolhe e pesa as frutas para você.", "why": "Isso — é só dizer o que e quanto você quer." },
+            { "text": "Os pêssegos não estão à venda.", "why": "Estão — ele só quer escolher para você." },
+            { "text": "Ele acha que você está tentando roubar.", "why": "Não é nada pessoal — é a etiqueta normal da feira." }
+          ]
+        },
+        {
+          "prompt": "Primeiro, pergunte quanto custam os pêssegos.",
+          "options": [
+            { "why": "Italiano de feira natural — «vengono» porque «le pesche» é plural." },
+            { "why": "Isso pergunta quantos anos os pêssegos têm!" },
+            { "why": "«Venite» quer dizer «vocês vêm» — não é pergunta de preço. Use «vengono» para os pêssegos." }
+          ]
+        },
+        { "translation": "Três euros o quilo." },
+        {
+          "prompt": "Você quer meio quilo. O que você diz?",
+          "options": [
+            { "why": "Educado e claro, com a forma «Lei» «mi dà»." },
+            { "why": "Meio quilômetro de pêssegos seria um baita piquenique! O certo é «mezzo chilo»." },
+            { "why": "«Me dá pêssego» soa grosseiro com um desconhecido, e não diz quantos." }
+          ]
+        },
+        { "text": "Depois você vai a uma banca de queijos. Há uma grande roda de pecorino romano." },
+        {
+          "prompt": "Você quer provar antes de comprar. O que você pergunta?",
+          "options": [
+            { "why": "Perfeito — os vendedores costumam oferecer um pedacinho com prazer." },
+            { "why": "«Posso provar tudo?» — a roda inteira!" },
+            { "why": "«Indossare» quer dizer vestir (roupa)! Você quer «assaggiare»." }
+          ]
+        },
+        { "translation": "Claro, pode provar! Quanto vai querer?" },
+        {
+          "prompt": "Você pede «un etto». Quanto queijo é isso?",
+          "options": [
+            { "text": "100 gramas", "why": "Isso — un etto são 100 g, perfeito para um piquenique." },
+            { "text": "Um quilo", "why": "Um quilo é «un chilo». Un etto é um décimo disso." },
+            { "text": "Oito fatias", "why": "«Otto» é oito — «etto» são 100 gramas." }
+          ]
+        },
+        { "translation": "Aqui está. Mais alguma coisa?" },
+        {
+          "prompt": "Você já tem tudo o que precisa. Como responde?",
+          "options": [
+            { "why": "Natural e educado: «Não, é só isso, obrigado»." },
+            { "why": "Gritar «Chega! Chega!» parece que você está irritado." },
+            { "why": "«Sim, mais» — mas você não quer mais nada!" }
+          ]
+        }
+      ]
+    }
+  }
+}

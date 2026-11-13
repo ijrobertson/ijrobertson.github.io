@@ -1,0 +1,317 @@
+{
+  "id": "de-de-biergarten-muenchen",
+  "title": "An afternoon at a beer garden in Munich",
+  "language": "German",
+  "country": "Germany",
+  "countryCode": "DE",
+  "flag": "🇩🇪",
+  "variety": { "id": "de-DE", "label": "German from Germany" },
+  "difficulty": "beginner",
+  "estMinutes": 6,
+  "setting": "It's a warm Saturday afternoon in Munich. Under the chestnut trees of a big Biergarten, hundreds of people sit at long wooden tables. You and your friend Jonas are looking for a place to sit.",
+  "objectives": [
+    "Ask if a seat is free",
+    "Order a Maß and a pretzel at the self-service counter",
+    "Understand Bavarian words like \"Servus\" and \"Brezn\"",
+    "Toast properly with \"Prost!\""
+  ],
+  "varietyNote": "This is German as heard in Munich, with some Bavarian flavour: \"Servus\" for hello and goodbye, \"Brezn\" for a pretzel (\"Brezel\" in standard German) and \"a Maß\" for a litre of beer. Standard German is understood everywhere in Bavaria.",
+  "phrases": [
+    {
+      "id": "ist-hier-frei",
+      "text": "Entschuldigung, ist hier noch frei?",
+      "translation": "Excuse me, is this seat free?",
+      "example": "Ist hier noch frei? — Ja, klar, setzt euch!",
+      "exampleTranslation": "\"Is this seat free?\" \"Sure, sit down!\"",
+      "note": "Sharing tables with strangers is completely normal in beer gardens."
+    },
+    {
+      "id": "mass",
+      "text": "Eine Maß, bitte.",
+      "translation": "A litre of beer, please.",
+      "example": "Zwei Maß Helles, bitte.",
+      "exampleTranslation": "Two litres of lager, please.",
+      "note": "A \"Maß\" is a one-litre mug. \"Helles\" is Munich's classic pale lager. Want less? Ask for \"eine Halbe\" (half a litre)."
+    },
+    {
+      "id": "radler",
+      "text": "ein Radler",
+      "translation": "beer mixed with lemonade",
+      "example": "Für mich ein Radler, bitte.",
+      "exampleTranslation": "A shandy for me, please.",
+      "note": "Half beer, half lemonade — popular on hot days. Alcohol-free options are available too."
+    },
+    {
+      "id": "brezn",
+      "text": "eine Brezn",
+      "translation": "a (big) pretzel",
+      "example": "Eine Brezn und ein Obatzda, bitte.",
+      "exampleTranslation": "A pretzel and some Obatzda (cheese spread), please.",
+      "note": "\"Brezn\" in Bavaria; \"Brezel\" elsewhere in Germany."
+    },
+    {
+      "id": "prost",
+      "text": "Prost!",
+      "translation": "Cheers!",
+      "example": "Na dann — Prost!",
+      "exampleTranslation": "Well then — cheers!",
+      "note": "When you toast, look each person in the eye as you clink."
+    },
+    {
+      "id": "servus",
+      "text": "Servus!",
+      "translation": "Hi! / Bye! (Bavaria and Austria, informal)",
+      "example": "Servus, Jonas! Bis bald!",
+      "exampleTranslation": "Bye, Jonas! See you soon!"
+    }
+  ],
+  "cultureNotes": [
+    "In traditional Bavarian beer gardens you may bring your own food — but drinks must be bought there. Tables with tablecloths are usually for table service.",
+    "Most beer gardens are self-service: you queue at the counters, collect your food and drinks, and pay at the till.",
+    "There's often a deposit (\"Pfand\") on the beer mugs, which you get back when you return them.",
+    "When you say \"Prost!\", look each person in the eye as you clink mugs — it's considered bad manners not to."
+  ],
+  "steps": [
+    { "type": "scene", "text": "Every table seems full. At one long table, an older couple have some space at the end." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "Can you sit with strangers?",
+      "options": [
+        { "text": "Yes — sharing tables is normal in a Biergarten. Just ask first.", "correct": true, "why": "Right. Long shared tables are part of the tradition." },
+        { "text": "No — it would be very rude in Germany.", "why": "Not in a beer garden — sharing is expected. Asking first is the polite part." },
+        { "text": "Only if you buy them a drink first.", "why": "No need — just ask whether the seats are free." }
+      ]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "How do you ask if the seats are free?",
+      "options": [
+        { "text": "Entschuldigung, ist hier noch frei?", "correct": true, "why": "Exactly the phrase everyone uses." },
+        { "text": "Entschuldigung, ist das gratis?", "why": "\"Gratis\" means free of charge — it sounds like you're asking whether sitting costs money!" },
+        { "text": "Weg da, wir sitzen hier.", "why": "\"Move, we're sitting here\" — very rude!" }
+      ],
+      "phraseIds": ["ist-hier-frei"]
+    },
+    { "type": "line", "speaker": "Older man", "text": "Freilich, setzt's euch hin! Servus!", "translation": "Of course, sit yourselves down! Hello!" },
+    { "type": "scene", "text": "Jonas keeps the seats while you go to the self-service counter." },
+    { "type": "line", "speaker": "Server", "text": "Servus! Was darf's sein?", "translation": "Hi! What would you like?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like two litres of lager. What do you say?",
+      "options": [
+        { "text": "Zwei Maß Helles, bitte.", "correct": true, "why": "Perfect Munich ordering — \"Maß\" stays the same in the plural." },
+        { "text": "Zwei Liter Bier in kleinen Gläsern, bitte.", "why": "Understandable, but complicated. In a Biergarten you simply order \"zwei Maß\"." },
+        { "text": "Zwei Massagen, bitte.", "why": "\"Massagen\" are massages! It's \"Maß\"." }
+      ],
+      "phraseIds": ["mass"]
+    },
+    { "type": "line", "speaker": "Server", "text": "Sonst noch was? A Brezn dazu?", "translation": "Anything else? A pretzel with that?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What is a \"Brezn\"?",
+      "options": [
+        { "text": "A big pretzel — the Bavarian word for \"Brezel\"", "correct": true, "why": "Right — the classic beer-garden snack." },
+        { "text": "A small beer", "why": "A small beer would be \"eine Halbe\". A Brezn is a pretzel." },
+        { "text": "A sausage", "why": "Sausages are \"Würstl\" in Bavaria. A Brezn is a pretzel." }
+      ],
+      "phraseIds": ["brezn"]
+    },
+    { "type": "scene", "text": "You carry the heavy mugs back to the table. Jonas raises his." },
+    { "type": "line", "speaker": "Jonas", "text": "Na dann — Prost!", "translation": "Well then — cheers!" },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "How do you toast properly?",
+      "options": [
+        { "text": "Clink mugs and look each person in the eye as you say \"Prost!\"", "correct": true, "why": "Right — avoiding eye contact during a toast is considered bad manners." },
+        { "text": "Look at your beer, not at people", "why": "The opposite — eye contact is the whole point!" },
+        { "text": "Drink first, then say \"Prost!\"", "why": "You toast first, then drink." }
+      ],
+      "phraseIds": ["prost"]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "Hours later, you say goodbye to the couple at your table. What's a friendly Bavarian goodbye?",
+      "options": [
+        { "text": "Servus! Schönen Abend noch!", "correct": true, "why": "\"Servus\" works for goodbye too, and \"Schönen Abend noch!\" wishes them a nice evening." },
+        { "text": "Moin moin!", "why": "\"Moin\" is a northern German greeting — it sounds out of place in Munich." },
+        { "text": "Auf Nimmerwiedersehen!", "why": "That means \"Goodbye forever — hope I never see you again!\"" }
+      ],
+      "phraseIds": ["servus"]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "Una tarde en una cervecería al aire libre de Múnich",
+      "summary": "Comparte mesa, pide una Maß y una Brezn, y brinda a la bávara.",
+      "setting": "Es un sábado caluroso por la tarde en Múnich. Bajo los castaños de un gran Biergarten, cientos de personas se sientan en largas mesas de madera. Tú y tu amigo Jonas buscan un sitio para sentarse.",
+      "objectives": [
+        "Preguntar si un sitio está libre",
+        "Pedir una Maß y un pretzel en el autoservicio",
+        "Entender palabras bávaras como «Servus» y «Brezn»",
+        "Brindar como es debido con «Prost!»"
+      ],
+      "varietyNote": "Este es el alemán tal como se oye en Múnich, con algo de sabor bávaro: «Servus» para hola y adiós, «Brezn» para el pretzel («Brezel» en alemán estándar) y «a Maß» para un litro de cerveza. El alemán estándar se entiende en toda Baviera.",
+      "phrases": {
+        "ist-hier-frei": { "translation": "Disculpe, ¿está libre este sitio?", "exampleTranslation": "«¿Está libre?» «¡Sí, claro, siéntense!»", "note": "En los Biergärten es completamente normal compartir mesa con desconocidos." },
+        "mass": { "translation": "Una Maß (un litro de cerveza), por favor.", "exampleTranslation": "Dos litros de cerveza rubia, por favor.", "note": "Una «Maß» es una jarra de un litro. «Helles» es la cerveza rubia típica de Múnich. Si quieres algo más pequeño, pide «eine Halbe» (medio litro)." },
+        "radler": { "translation": "una cerveza con gaseosa de limón (clara)", "exampleTranslation": "Para mí una clara, por favor.", "note": "Mitad cerveza, mitad gaseosa de limón: popular cuando hace calor. También hay opciones sin alcohol." },
+        "brezn": { "translation": "un pretzel (grande)", "exampleTranslation": "Un pretzel y un Obatzda (crema de queso), por favor.", "note": "En Baviera se dice «Brezn»; en el resto de Alemania, «Brezel»." },
+        "prost": { "translation": "¡Salud!", "exampleTranslation": "Bueno, pues… ¡salud!", "note": "Al brindar, mira a cada persona a los ojos mientras chocas las jarras." },
+        "servus": { "translation": "¡Hola! / ¡Adiós! (Baviera y Austria, informal)", "exampleTranslation": "¡Adiós, Jonas! ¡Hasta pronto!" }
+      },
+      "cultureNotes": [
+        "En los Biergärten tradicionales de Baviera puedes llevar tu propia comida, pero la bebida hay que comprarla allí. Las mesas con mantel suelen ser para servicio de mesa.",
+        "La mayoría de los Biergärten son de autoservicio: haces fila en los mostradores, recoges la comida y la bebida y pagas en la caja.",
+        "Las jarras suelen tener un depósito («Pfand») que te devuelven cuando las entregas.",
+        "Al decir «Prost!», mira a cada persona a los ojos mientras chocas las jarras: no hacerlo se considera de mala educación."
+      ],
+      "steps": [
+        { "text": "Todas las mesas parecen llenas. En una mesa larga, una pareja mayor tiene sitio libre en el extremo." },
+        {
+          "prompt": "¿Puedes sentarte con desconocidos?",
+          "options": [
+            { "text": "Sí: compartir mesa es normal en un Biergarten. Solo pregunta antes.", "why": "Correcto. Las mesas largas compartidas son parte de la tradición." },
+            { "text": "No: en Alemania sería muy maleducado.", "why": "No en un Biergarten: se espera que se comparta. Lo educado es preguntar antes." },
+            { "text": "Solo si antes les invitas a una bebida.", "why": "No hace falta: solo pregunta si los sitios están libres." }
+          ]
+        },
+        {
+          "prompt": "¿Cómo preguntas si los sitios están libres?",
+          "options": [
+            { "why": "Justo la frase que usa todo el mundo." },
+            { "why": "«Gratis» significa sin coste: ¡parece que preguntas si sentarse cuesta dinero!" },
+            { "why": "«Quítense, aquí nos sentamos nosotros»: ¡muy grosero!" }
+          ]
+        },
+        { "translation": "¡Claro que sí, siéntense! ¡Hola!" },
+        { "text": "Jonas guarda los sitios mientras tú vas al mostrador de autoservicio." },
+        { "translation": "¡Hola! ¿Qué va a ser?" },
+        {
+          "prompt": "Quieres dos litros de cerveza rubia. ¿Qué dices?",
+          "options": [
+            { "why": "Una forma perfecta de pedir en Múnich: «Maß» no cambia en plural." },
+            { "why": "Se entiende, pero es complicado. En un Biergarten simplemente se pide «zwei Maß»." },
+            { "why": "«Massagen» son masajes. Se dice «Maß»." }
+          ]
+        },
+        { "translation": "¿Algo más? ¿Un pretzel para acompañar?" },
+        {
+          "prompt": "¿Qué es una «Brezn»?",
+          "options": [
+            { "text": "Un pretzel grande: la palabra bávara para «Brezel»", "why": "Correcto: el aperitivo clásico de un Biergarten." },
+            { "text": "Una cerveza pequeña", "why": "Una cerveza pequeña sería «eine Halbe». Una Brezn es un pretzel." },
+            { "text": "Una salchicha", "why": "Las salchichas son «Würstl» en Baviera. Una Brezn es un pretzel." }
+          ]
+        },
+        { "text": "Llevas las pesadas jarras a la mesa. Jonas levanta la suya." },
+        { "translation": "Bueno, pues… ¡salud!" },
+        {
+          "prompt": "¿Cómo se brinda como es debido?",
+          "options": [
+            { "text": "Chocar las jarras y mirar a cada persona a los ojos al decir «Prost!»", "why": "Correcto: no mirar a los ojos al brindar se considera de mala educación." },
+            { "text": "Mirar tu cerveza, no a la gente", "why": "Es al revés: ¡mirarse a los ojos es lo importante!" },
+            { "text": "Beber primero y luego decir «Prost!»", "why": "Primero se brinda y luego se bebe." }
+          ]
+        },
+        {
+          "prompt": "Horas después, te despides de la pareja de tu mesa. ¿Cuál es una despedida bávara amable?",
+          "options": [
+            { "why": "«Servus» también sirve para despedirse, y «Schönen Abend noch!» les desea una buena tarde-noche." },
+            { "why": "«Moin» es un saludo del norte de Alemania: suena fuera de lugar en Múnich." },
+            { "why": "Eso significa «¡Adiós para siempre, ojalá no te vuelva a ver!»." }
+          ]
+        }
+      ]
+    },
+    "pt": {
+      "title": "Uma tarde num Biergarten em Munique",
+      "summary": "Divida a mesa, peça uma Maß e uma Brezn e brinde do jeito bávaro.",
+      "setting": "É uma tarde quente de sábado em Munique. Sob os castanheiros de um grande Biergarten, centenas de pessoas estão sentadas em mesas compridas de madeira. Você e o seu amigo Jonas procuram um lugar para sentar.",
+      "objectives": [
+        "Perguntar se um lugar está livre",
+        "Pedir uma Maß e um pretzel no autosserviço",
+        "Entender palavras bávaras como «Servus» e «Brezn»",
+        "Brindar direito com «Prost!»"
+      ],
+      "varietyNote": "Este é o alemão como se ouve em Munique, com um toque bávaro: «Servus» para oi e tchau, «Brezn» para pretzel («Brezel» no alemão padrão) e «a Maß» para um litro de cerveja. O alemão padrão é entendido em toda a Baviera.",
+      "phrases": {
+        "ist-hier-frei": { "translation": "Com licença, este lugar está livre?", "exampleTranslation": "«Está livre?» «Claro, podem sentar!»", "note": "Nos Biergärten é completamente normal dividir a mesa com desconhecidos." },
+        "mass": { "translation": "Uma Maß (um litro de cerveja), por favor.", "exampleTranslation": "Dois litros de cerveja clara, por favor.", "note": "Uma «Maß» é uma caneca de um litro. «Helles» é a cerveja clara típica de Munique. Se quiser algo menor, peça «eine Halbe» (meio litro)." },
+        "radler": { "translation": "uma cerveja com refrigerante de limão", "exampleTranslation": "Para mim um Radler, por favor.", "note": "Metade cerveja, metade refrigerante de limão — popular no calor. Também há opções sem álcool." },
+        "brezn": { "translation": "um pretzel (grande)", "exampleTranslation": "Um pretzel e um Obatzda (pasta de queijo), por favor.", "note": "Na Baviera se diz «Brezn»; no resto da Alemanha, «Brezel»." },
+        "prost": { "translation": "Saúde!", "exampleTranslation": "Então — saúde!", "note": "Ao brindar, olhe cada pessoa nos olhos enquanto bate as canecas." },
+        "servus": { "translation": "Oi! / Tchau! (Baviera e Áustria, informal)", "exampleTranslation": "Tchau, Jonas! Até logo!" }
+      },
+      "cultureNotes": [
+        "Nos Biergärten tradicionais da Baviera você pode levar a sua própria comida — mas as bebidas têm que ser compradas lá. As mesas com toalha normalmente são para serviço de mesa.",
+        "A maioria dos Biergärten é autosserviço: você faz fila nos balcões, pega a comida e a bebida e paga no caixa.",
+        "Muitas vezes há um depósito («Pfand») nas canecas, que você recebe de volta ao devolvê-las.",
+        "Ao dizer «Prost!», olhe cada pessoa nos olhos enquanto bate as canecas — não fazer isso é considerado falta de educação."
+      ],
+      "steps": [
+        { "text": "Todas as mesas parecem cheias. Numa mesa comprida, um casal mais velho tem espaço na ponta." },
+        {
+          "prompt": "Você pode sentar com desconhecidos?",
+          "options": [
+            { "text": "Sim — dividir a mesa é normal num Biergarten. É só perguntar antes.", "why": "Isso. As mesas compridas compartilhadas fazem parte da tradição." },
+            { "text": "Não — seria muito grosseiro na Alemanha.", "why": "Não num Biergarten — dividir é o esperado. O educado é perguntar antes." },
+            { "text": "Só se você pagar uma bebida para eles antes.", "why": "Não precisa — é só perguntar se os lugares estão livres." }
+          ]
+        },
+        {
+          "prompt": "Como você pergunta se os lugares estão livres?",
+          "options": [
+            { "why": "Exatamente a frase que todo mundo usa." },
+            { "why": "«Gratis» quer dizer sem custo — parece que você está perguntando se sentar custa dinheiro!" },
+            { "why": "«Sai daí, a gente vai sentar aqui» — muito grosseiro!" }
+          ]
+        },
+        { "translation": "Claro, podem sentar! Oi!" },
+        { "text": "O Jonas guarda os lugares enquanto você vai ao balcão de autosserviço." },
+        { "translation": "Oi! O que vai ser?" },
+        {
+          "prompt": "Você quer dois litros de cerveja clara. O que você diz?",
+          "options": [
+            { "why": "Pedido perfeito em Munique — «Maß» não muda no plural." },
+            { "why": "Dá para entender, mas é complicado. Num Biergarten você simplesmente pede «zwei Maß»." },
+            { "why": "«Massagen» são massagens! O certo é «Maß»." }
+          ]
+        },
+        { "translation": "Mais alguma coisa? Um pretzel para acompanhar?" },
+        {
+          "prompt": "O que é uma «Brezn»?",
+          "options": [
+            { "text": "Um pretzel grande — a palavra bávara para «Brezel»", "why": "Isso — o petisco clássico do Biergarten." },
+            { "text": "Uma cerveja pequena", "why": "Uma cerveja pequena seria «eine Halbe». Uma Brezn é um pretzel." },
+            { "text": "Uma linguiça", "why": "Linguiças são «Würstl» na Baviera. Uma Brezn é um pretzel." }
+          ]
+        },
+        { "text": "Você leva as canecas pesadas até a mesa. O Jonas levanta a dele." },
+        { "translation": "Então — saúde!" },
+        {
+          "prompt": "Como brindar direito?",
+          "options": [
+            { "text": "Bater as canecas e olhar cada pessoa nos olhos ao dizer «Prost!»", "why": "Isso — evitar o olhar durante o brinde é considerado falta de educação." },
+            { "text": "Olhar para a sua cerveja, não para as pessoas", "why": "É o contrário — olhar nos olhos é o mais importante!" },
+            { "text": "Beber primeiro e depois dizer «Prost!»", "why": "Primeiro se brinda, depois se bebe." }
+          ]
+        },
+        {
+          "prompt": "Horas depois, você se despede do casal da sua mesa. Qual é uma despedida bávara simpática?",
+          "options": [
+            { "why": "«Servus» também serve para se despedir, e «Schönen Abend noch!» deseja uma boa noite." },
+            { "why": "«Moin» é um cumprimento do norte da Alemanha — soa deslocado em Munique." },
+            { "why": "Isso quer dizer «Adeus para sempre — espero nunca mais te ver!»." }
+          ]
+        }
+      ]
+    }
+  }
+}

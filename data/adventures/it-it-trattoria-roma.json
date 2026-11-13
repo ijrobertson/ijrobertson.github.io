@@ -1,0 +1,332 @@
+{
+  "id": "it-it-trattoria-roma",
+  "title": "Dinner at a trattoria in Rome",
+  "language": "Italian",
+  "country": "Italy",
+  "countryCode": "IT",
+  "flag": "🇮🇹",
+  "variety": { "id": "it-IT", "label": "Italian (Rome)" },
+  "difficulty": "intermediate",
+  "estMinutes": 7,
+  "setting": "It's 8:30 in the evening in Trastevere, Rome. You sit down at a small family trattoria with checked tablecloths. The waiter, Marco, hands you a handwritten menu.",
+  "objectives": [
+    "Understand the Italian menu: antipasti, primi, secondi, contorni",
+    "Choose still or sparkling water",
+    "Order with \"Per me…\"",
+    "Ask for the bill and know about tipping"
+  ],
+  "varietyNote": "This is standard Italian as heard in Rome. Roman cooking has its own classics — carbonara, cacio e pepe, amatriciana — and Romans speak with a recognisable accent, but restaurant Italian is understood everywhere in Italy.",
+  "phrases": [
+    {
+      "id": "primo-secondo",
+      "text": "il primo / il secondo",
+      "translation": "the first course (pasta, risotto) / the main course (meat, fish)",
+      "example": "Come primo prendo la carbonara.",
+      "exampleTranslation": "For my first course I'll have the carbonara.",
+      "note": "You don't have to order every course — many Italians have just a primo, or a secondo with a side."
+    },
+    {
+      "id": "contorno",
+      "text": "un contorno",
+      "translation": "a side dish (vegetables, salad, potatoes)",
+      "example": "Come contorno, cicoria ripassata.",
+      "exampleTranslation": "As a side, sautéed chicory.",
+      "note": "In Italy, secondi usually come on their own — sides are ordered separately."
+    },
+    {
+      "id": "naturale-frizzante",
+      "text": "Acqua naturale o frizzante?",
+      "translation": "Still or sparkling water?",
+      "example": "Una bottiglia d'acqua frizzante, per favore.",
+      "exampleTranslation": "A bottle of sparkling water, please."
+    },
+    {
+      "id": "per-me",
+      "text": "Per me, la carbonara.",
+      "translation": "The carbonara for me.",
+      "example": "Per me, un quarto di vino rosso della casa.",
+      "exampleTranslation": "For me, a quarter litre of the house red."
+    },
+    {
+      "id": "il-conto",
+      "text": "Il conto, per favore.",
+      "translation": "The bill, please.",
+      "example": "Scusi, ci porta il conto?",
+      "exampleTranslation": "Excuse me, could you bring us the bill?"
+    },
+    {
+      "id": "buonissimo",
+      "text": "Era buonissimo!",
+      "translation": "It was delicious!",
+      "example": "Complimenti, era tutto buonissimo!",
+      "exampleTranslation": "Compliments to the kitchen — everything was delicious!"
+    }
+  ],
+  "cultureNotes": [
+    "An Italian menu has courses: antipasti (starters), primi (pasta, risotto, soup), secondi (meat or fish) and contorni (sides), then dolci (desserts). You don't need to order them all.",
+    "Water in restaurants is usually bottled: you'll be asked \"naturale o frizzante?\" (still or sparkling).",
+    "Roman carbonara is made with egg, pecorino cheese, guanciale (cured pork cheek) and black pepper — no cream.",
+    "The bill arrives only when you ask for it. Tipping isn't expected in Italy; rounding up or leaving a few euros for good service is a kind extra."
+  ],
+  "steps": [
+    { "type": "line", "speaker": "Marco", "text": "Buonasera! Intanto, acqua naturale o frizzante?", "translation": "Good evening! To start with, still or sparkling water?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What is Marco asking?",
+      "options": [
+        { "text": "Whether you want still or sparkling water", "correct": true, "why": "Right — \"naturale\" is still, \"frizzante\" is sparkling." },
+        { "text": "Whether you want natural or organic wine", "why": "\"Acqua\" is water — he's asking about water, not wine." },
+        { "text": "Whether you want a table inside or outside", "why": "It's about the water, not where you sit." }
+      ],
+      "phraseIds": ["naturale-frizzante"]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like sparkling. What do you say?",
+      "options": [
+        { "text": "Frizzante, grazie.", "correct": true, "why": "Short and natural." },
+        { "text": "Con le bolle di sapone, grazie.", "why": "\"Bolle di sapone\" are soap bubbles! Just say \"frizzante\"." },
+        { "text": "Acqua del rubinetto, subito!", "why": "Demanding tap water \"immediately\" sounds rude — and restaurants usually serve bottled water." }
+      ],
+      "phraseIds": ["naturale-frizzante"]
+    },
+    { "type": "line", "speaker": "Marco", "text": "Perfetto. Allora, avete deciso? Abbiamo carbonara, cacio e pepe, e come secondo saltimbocca alla romana.", "translation": "Perfect. So, have you decided? We have carbonara, cacio e pepe, and as a main course, saltimbocca Roman-style." },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What's the difference between a \"primo\" and a \"secondo\"?",
+      "options": [
+        { "text": "Primo is usually pasta or risotto; secondo is meat or fish", "correct": true, "why": "Right — and you don't have to order both." },
+        { "text": "Primo is the cheaper dish; secondo is the expensive one", "why": "It's about the type of dish and its order in the meal, not price." },
+        { "text": "Primo is for adults; secondo is the children's menu", "why": "They're simply the first and second courses." }
+      ],
+      "phraseIds": ["primo-secondo"]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like just the carbonara. How do you order?",
+      "options": [
+        { "text": "Per me, la carbonara, grazie.", "correct": true, "why": "Exactly how Italians order — and a primo on its own is completely normal." },
+        { "text": "Per me, la carbonara con la panna, grazie.", "why": "Asking for cream (\"panna\") in a Roman carbonara will make Marco wince — the real recipe has none!" },
+        { "text": "Io voglio carbonara.", "why": "\"I want carbonara\" sounds blunt. \"Per me, la carbonara\" is the natural way." }
+      ],
+      "phraseIds": ["per-me"]
+    },
+    { "type": "scene", "text": "The carbonara is wonderful. When Marco clears your plate, you want to compliment the food." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "What do you say?",
+      "options": [
+        { "text": "Era buonissima, complimenti!", "correct": true, "why": "Lovely — \"buonissima\" agrees with \"la carbonara\", and \"complimenti\" sends praise to the kitchen." },
+        { "text": "Era abbastanza.", "why": "\"It was enough\" — not much of a compliment!" },
+        { "text": "Sono pieno come un uovo… e basta.", "why": "\"Pieno come un uovo\" (full as an egg) is a real Italian expression, but \"e basta\" makes it sound grumpy." }
+      ],
+      "phraseIds": ["buonissimo"]
+    },
+    { "type": "scene", "text": "Half an hour later, you're ready to leave, but the bill hasn't come." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "How do you ask for the bill?",
+      "options": [
+        { "text": "Scusi, il conto, per favore.", "correct": true, "why": "Polite and standard. In Italy, the bill comes when you ask." },
+        { "text": "Scusi, il conte, per favore.", "why": "\"Il conte\" is a count (nobleman)! It's \"il conto\"." },
+        { "text": "Scusi, la cuenta, por favor.", "why": "That's Spanish! In Italian: \"il conto, per favore\"." }
+      ],
+      "phraseIds": ["il-conto"]
+    },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "The bill is €27. What about a tip?",
+      "options": [
+        { "text": "Not expected — rounding up or leaving a few euros for good service is a kind extra.", "correct": true, "why": "Right. Tipping in Italy is small and optional." },
+        { "text": "Add 20%, like in the US.", "why": "That's far more than Italians would leave." },
+        { "text": "Tipping is forbidden in Italy.", "why": "Not forbidden — just not expected." }
+      ]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "Cena en una trattoria de Roma",
+      "summary": "Pide un primo y un secondo, elige el agua y pide la cuenta al estilo romano.",
+      "setting": "Son las 8:30 de la noche en el Trastevere, en Roma. Te sientas en una pequeña trattoria familiar con manteles de cuadros. El camarero, Marco, te da una carta escrita a mano.",
+      "objectives": [
+        "Entender la carta italiana: antipasti, primi, secondi, contorni",
+        "Elegir agua sin gas o con gas",
+        "Pedir con «Per me…»",
+        "Pedir la cuenta y saber lo de la propina"
+      ],
+      "varietyNote": "Este es el italiano estándar tal como se oye en Roma. La cocina romana tiene sus propios clásicos —carbonara, cacio e pepe, amatriciana— y los romanos hablan con un acento reconocible, pero el italiano de restaurante se entiende en toda Italia.",
+      "phrases": {
+        "primo-secondo": { "translation": "el primero (pasta, risotto) / el segundo (carne, pescado)", "exampleTranslation": "De primero tomo la carbonara.", "note": "No hace falta pedir todos los platos: muchos italianos piden solo un primo, o un secondo con un contorno." },
+        "contorno": { "translation": "una guarnición (verduras, ensalada, patatas)", "exampleTranslation": "De guarnición, achicoria salteada.", "note": "En Italia, los secondi suelen venir solos: la guarnición se pide aparte." },
+        "naturale-frizzante": { "translation": "¿Agua sin gas o con gas?", "exampleTranslation": "Una botella de agua con gas, por favor." },
+        "per-me": { "translation": "Para mí, la carbonara.", "exampleTranslation": "Para mí, un cuarto de litro de vino tinto de la casa." },
+        "il-conto": { "translation": "La cuenta, por favor.", "exampleTranslation": "Disculpe, ¿nos trae la cuenta?" },
+        "buonissimo": { "translation": "¡Estaba buenísimo!", "exampleTranslation": "¡Enhorabuena, estaba todo buenísimo!" }
+      },
+      "cultureNotes": [
+        "Una carta italiana tiene varios platos: antipasti (entrantes), primi (pasta, risotto, sopa), secondi (carne o pescado) y contorni (guarniciones), y luego dolci (postres). No hace falta pedirlos todos.",
+        "En los restaurantes el agua suele ser embotellada: te preguntarán «naturale o frizzante?» (sin gas o con gas).",
+        "La carbonara romana se hace con huevo, queso pecorino, guanciale (carrillada de cerdo curada) y pimienta negra, sin nata.",
+        "La cuenta solo llega cuando la pides. En Italia no se espera propina; redondear o dejar unos euros por un buen servicio es un detalle amable."
+      ],
+      "steps": [
+        { "translation": "¡Buenas noches! Para empezar, ¿agua sin gas o con gas?" },
+        {
+          "prompt": "¿Qué te pregunta Marco?",
+          "options": [
+            { "text": "Si quieres agua sin gas o con gas", "why": "Correcto: «naturale» es sin gas y «frizzante», con gas." },
+            { "text": "Si quieres vino natural o ecológico", "why": "«Acqua» es agua: te pregunta por el agua, no por el vino." },
+            { "text": "Si quieres mesa dentro o fuera", "why": "Se trata del agua, no de dónde te sientas." }
+          ]
+        },
+        {
+          "prompt": "Quieres agua con gas. ¿Qué dices?",
+          "options": [
+            { "why": "Breve y natural." },
+            { "why": "Las «bolle di sapone» son pompas de jabón. Di simplemente «frizzante»." },
+            { "why": "Exigir agua del grifo «¡ya!» suena maleducado, y los restaurantes suelen servir agua embotellada." }
+          ]
+        },
+        { "translation": "Perfecto. Entonces, ¿ya han decidido? Tenemos carbonara, cacio e pepe y, de segundo, saltimbocca a la romana." },
+        {
+          "prompt": "¿Qué diferencia hay entre un «primo» y un «secondo»?",
+          "options": [
+            { "text": "El primo suele ser pasta o risotto; el secondo, carne o pescado", "why": "Correcto, y no hace falta pedir los dos." },
+            { "text": "El primo es el plato barato; el secondo, el caro", "why": "Se refiere al tipo de plato y a su orden en la comida, no al precio." },
+            { "text": "El primo es para adultos; el secondo es el menú infantil", "why": "Son simplemente el primer y el segundo plato." }
+          ]
+        },
+        {
+          "prompt": "Solo quieres la carbonara. ¿Cómo lo pides?",
+          "options": [
+            { "why": "Justo como piden los italianos, y pedir solo un primo es completamente normal." },
+            { "why": "Pedir nata («panna») en una carbonara romana hará que a Marco se le escape una mueca: ¡la receta auténtica no lleva!" },
+            { "why": "«Quiero carbonara» suena brusco. «Per me, la carbonara» es la forma natural." }
+          ]
+        },
+        { "text": "La carbonara está buenísima. Cuando Marco retira tu plato, quieres felicitar por la comida." },
+        {
+          "prompt": "¿Qué dices?",
+          "options": [
+            { "why": "Precioso: «buonissima» concuerda con «la carbonara», y «complimenti» felicita a la cocina." },
+            { "why": "«Era suficiente»: ¡no es precisamente un cumplido!" },
+            { "why": "«Pieno come un uovo» (lleno como un huevo) es una expresión italiana real, pero el «e basta» la hace sonar gruñona." }
+          ]
+        },
+        { "text": "Media hora después, quieres irte, pero la cuenta no ha llegado." },
+        {
+          "prompt": "¿Cómo pides la cuenta?",
+          "options": [
+            { "why": "Educado y habitual. En Italia, la cuenta llega cuando la pides." },
+            { "why": "«Il conte» es un conde (noble). Se dice «il conto»." },
+            { "why": "¡Eso es español! En italiano: «il conto, per favore»." }
+          ]
+        },
+        {
+          "prompt": "La cuenta es de 27 €. ¿Y la propina?",
+          "options": [
+            { "text": "No se espera: redondear o dejar unos euros por un buen servicio es un detalle amable.", "why": "Correcto. En Italia la propina es pequeña y opcional." },
+            { "text": "Añadir un 20 %, como en Estados Unidos.", "why": "Es mucho más de lo que dejaría un italiano." },
+            { "text": "En Italia la propina está prohibida.", "why": "No está prohibida: simplemente no se espera." }
+          ]
+        }
+      ]
+    },
+    "pt": {
+      "title": "Jantar numa trattoria em Roma",
+      "summary": "Peça um primo e um secondo, escolha a água e peça a conta — do jeito romano.",
+      "setting": "São 8h30 da noite no Trastevere, em Roma. Você se senta numa pequena trattoria familiar com toalhas xadrez. O garçom, Marco, te entrega um cardápio escrito à mão.",
+      "objectives": [
+        "Entender o cardápio italiano: antipasti, primi, secondi, contorni",
+        "Escolher água sem gás ou com gás",
+        "Pedir com «Per me…»",
+        "Pedir a conta e saber sobre a gorjeta"
+      ],
+      "varietyNote": "Este é o italiano padrão como se ouve em Roma. A cozinha romana tem seus próprios clássicos — carbonara, cacio e pepe, amatriciana — e os romanos falam com um sotaque reconhecível, mas o italiano de restaurante é entendido em toda a Itália.",
+      "phrases": {
+        "primo-secondo": { "translation": "o primeiro prato (massa, risoto) / o segundo prato (carne, peixe)", "exampleTranslation": "De primeiro prato vou querer a carbonara.", "note": "Não é preciso pedir todos os pratos — muitos italianos pedem só um primo, ou um secondo com um contorno." },
+        "contorno": { "translation": "um acompanhamento (legumes, salada, batatas)", "exampleTranslation": "De acompanhamento, chicória refogada.", "note": "Na Itália, os secondi costumam vir sozinhos — o acompanhamento é pedido à parte." },
+        "naturale-frizzante": { "translation": "Água sem gás ou com gás?", "exampleTranslation": "Uma garrafa de água com gás, por favor." },
+        "per-me": { "translation": "Para mim, a carbonara.", "exampleTranslation": "Para mim, um quarto de litro de vinho tinto da casa." },
+        "il-conto": { "translation": "A conta, por favor.", "exampleTranslation": "Com licença, pode trazer a conta?" },
+        "buonissimo": { "translation": "Estava uma delícia!", "exampleTranslation": "Parabéns, estava tudo uma delícia!" }
+      },
+      "cultureNotes": [
+        "Um cardápio italiano tem etapas: antipasti (entradas), primi (massas, risoto, sopa), secondi (carne ou peixe) e contorni (acompanhamentos), depois dolci (sobremesas). Não é preciso pedir todos.",
+        "Nos restaurantes a água costuma ser engarrafada: vão perguntar «naturale o frizzante?» (sem gás ou com gás).",
+        "A carbonara romana é feita com ovo, queijo pecorino, guanciale (bochecha de porco curada) e pimenta-do-reino — sem creme de leite.",
+        "A conta só chega quando você pede. Na Itália não se espera gorjeta; arredondar ou deixar uns euros pelo bom atendimento é uma gentileza."
+      ],
+      "steps": [
+        { "translation": "Boa noite! Para começar, água sem gás ou com gás?" },
+        {
+          "prompt": "O que o Marco está perguntando?",
+          "options": [
+            { "text": "Se você quer água sem gás ou com gás", "why": "Isso — «naturale» é sem gás, «frizzante» é com gás." },
+            { "text": "Se você quer vinho natural ou orgânico", "why": "«Acqua» é água — ele pergunta sobre água, não vinho." },
+            { "text": "Se você quer mesa dentro ou fora", "why": "É sobre a água, não sobre onde você senta." }
+          ]
+        },
+        {
+          "prompt": "Você quer com gás. O que você diz?",
+          "options": [
+            { "why": "Curto e natural." },
+            { "why": "«Bolle di sapone» são bolhas de sabão! É só dizer «frizzante»." },
+            { "why": "Exigir água da torneira «já!» soa mal-educado — e os restaurantes costumam servir água engarrafada." }
+          ]
+        },
+        { "translation": "Perfeito. E aí, já decidiram? Temos carbonara, cacio e pepe e, de segundo prato, saltimbocca à romana." },
+        {
+          "prompt": "Qual é a diferença entre um «primo» e um «secondo»?",
+          "options": [
+            { "text": "O primo costuma ser massa ou risoto; o secondo, carne ou peixe", "why": "Isso — e não é preciso pedir os dois." },
+            { "text": "O primo é o prato barato; o secondo, o caro", "why": "É sobre o tipo de prato e a ordem na refeição, não o preço." },
+            { "text": "O primo é para adultos; o secondo é o menu infantil", "why": "São simplesmente o primeiro e o segundo prato." }
+          ]
+        },
+        {
+          "prompt": "Você quer só a carbonara. Como você pede?",
+          "options": [
+            { "why": "Exatamente como os italianos pedem — e pedir só um primo é completamente normal." },
+            { "why": "Pedir creme de leite («panna») numa carbonara romana vai fazer o Marco torcer o nariz — a receita de verdade não leva!" },
+            { "why": "«Eu quero carbonara» soa seco. «Per me, la carbonara» é o jeito natural." }
+          ]
+        },
+        { "text": "A carbonara está maravilhosa. Quando o Marco tira o seu prato, você quer elogiar a comida." },
+        {
+          "prompt": "O que você diz?",
+          "options": [
+            { "why": "Ótimo — «buonissima» concorda com «la carbonara», e «complimenti» elogia a cozinha." },
+            { "why": "«Foi o suficiente» — não é bem um elogio!" },
+            { "why": "«Pieno come un uovo» (cheio como um ovo) é uma expressão italiana de verdade, mas o «e basta» deixa com cara de mau humor." }
+          ]
+        },
+        { "text": "Meia hora depois, você quer ir embora, mas a conta não chegou." },
+        {
+          "prompt": "Como você pede a conta?",
+          "options": [
+            { "why": "Educado e padrão. Na Itália, a conta chega quando você pede." },
+            { "why": "«Il conte» é um conde (nobre)! O certo é «il conto»." },
+            { "why": "Isso é espanhol! Em italiano: «il conto, per favore»." }
+          ]
+        },
+        {
+          "prompt": "A conta é de 27 €. E a gorjeta?",
+          "options": [
+            { "text": "Não é esperada — arredondar ou deixar uns euros pelo bom atendimento é uma gentileza.", "why": "Isso. A gorjeta na Itália é pequena e opcional." },
+            { "text": "Acrescentar 20%, como nos Estados Unidos.", "why": "É bem mais do que um italiano deixaria." },
+            { "text": "Na Itália a gorjeta é proibida.", "why": "Não é proibida — só não é esperada." }
+          ]
+        }
+      ]
+    }
+  }
+}

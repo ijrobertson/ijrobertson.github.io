@@ -1,0 +1,313 @@
+{
+  "id": "fr-fr-hotel-nice",
+  "title": "Checking in at a small hotel in Nice",
+  "language": "French",
+  "country": "France",
+  "countryCode": "FR",
+  "flag": "🇫🇷",
+  "variety": { "id": "fr-FR", "label": "French from France" },
+  "difficulty": "beginner",
+  "estMinutes": 6,
+  "setting": "It's early evening in Nice, on the Côte d'Azur. You've just arrived from the airport and walk into a small family-run hotel a few streets from the sea. The owner is at the reception desk.",
+  "objectives": [
+    "Say you have a reservation and give your name",
+    "Use \"vous\" politely with hotel staff",
+    "Ask whether breakfast is included and when it's served",
+    "Understand the \"taxe de séjour\""
+  ],
+  "varietyNote": "This is everyday French as spoken across France. In Nice you may hear a southern accent — people often pronounce the final \"e\" that Parisians drop — but hotel French is the same everywhere. In Québec, breakfast is \"déjeuner\", not \"petit-déjeuner\" (see the Québec City breakfast adventure).",
+  "phrases": [
+    {
+      "id": "jai-reserve",
+      "text": "J'ai réservé une chambre au nom de Garcia.",
+      "translation": "I've booked a room under the name Garcia.",
+      "example": "Bonsoir, j'ai réservé au nom de Martin.",
+      "exampleTranslation": "Good evening, I have a booking under the name Martin.",
+      "note": "\"Au nom de…\" = in the name of…"
+    },
+    {
+      "id": "piece-identite",
+      "text": "Je peux voir une pièce d'identité ?",
+      "translation": "Can I see some ID?",
+      "example": "Voici mon passeport.",
+      "exampleTranslation": "Here's my passport."
+    },
+    {
+      "id": "petit-dej-compris",
+      "text": "Le petit-déjeuner est compris ?",
+      "translation": "Is breakfast included?",
+      "example": "Le petit-déjeuner est servi de 7 h à 10 h.",
+      "exampleTranslation": "Breakfast is served from 7 to 10 a.m."
+    },
+    {
+      "id": "taxe-sejour",
+      "text": "la taxe de séjour",
+      "translation": "the tourist tax",
+      "example": "La taxe de séjour n'est pas comprise dans le prix.",
+      "exampleTranslation": "The tourist tax isn't included in the price.",
+      "note": "A small local tax per person per night, often paid directly at the hotel."
+    },
+    {
+      "id": "code-wifi",
+      "text": "Quel est le code wifi ?",
+      "translation": "What's the Wi-Fi password?",
+      "example": "Le code wifi est sur la carte de la chambre.",
+      "exampleTranslation": "The Wi-Fi password is on the room card."
+    },
+    {
+      "id": "bonne-soiree",
+      "text": "Bonne soirée !",
+      "translation": "Have a good evening!",
+      "example": "Merci, bonne soirée !",
+      "exampleTranslation": "Thanks, have a good evening!",
+      "note": "Used from late afternoon onwards instead of \"Bonne journée\"."
+    }
+  ],
+  "cultureNotes": [
+    "Use \"vous\" with hotel staff and other adults you don't know. Starting with \"Bonjour\" or, in the evening, \"Bonsoir\" is essential.",
+    "Most French towns charge a \"taxe de séjour\" — a small tourist tax per person per night. It's often not included in online prices and is paid at the hotel.",
+    "Breakfast isn't always included in French hotels. If it isn't, it's usually a fixed price per person.",
+    "In France the ground floor is the \"rez-de-chaussée\", and the \"premier étage\" (first floor) is one floor up."
+  ],
+  "steps": [
+    { "type": "scene", "text": "You walk up to the desk with your suitcase." },
+    { "type": "line", "speaker": "Owner", "text": "Bonsoir ! Je peux vous aider ?", "translation": "Good evening! Can I help you?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "Your booking is under García. What do you say?",
+      "options": [
+        { "text": "Bonsoir, j'ai réservé une chambre au nom de García.", "correct": true, "why": "Polite and complete — greeting first, then \"au nom de\" for the name." },
+        { "text": "Chambre. García.", "why": "She'd understand, but without a greeting or a sentence it sounds very abrupt in France." },
+        { "text": "Bonsoir, je suis réservé García.", "why": "\"Je suis réservé\" means \"I am reserved\" (shy)! Say \"j'ai réservé… au nom de…\"." }
+      ],
+      "phraseIds": ["jai-reserve"]
+    },
+    { "type": "line", "speaker": "Owner", "text": "Ah oui, deux nuits. Je peux voir une pièce d'identité, s'il vous plaît ?", "translation": "Ah yes, two nights. Can I see some ID, please?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What does she ask for?",
+      "options": [
+        { "text": "An identity document, such as your passport", "correct": true, "why": "Right — a \"pièce d'identité\" is any official ID." },
+        { "text": "A piece of your luggage", "why": "\"Pièce\" can mean a piece, but \"pièce d'identité\" is an ID document." },
+        { "text": "Your room number", "why": "You don't have a room number yet — she wants your ID." }
+      ],
+      "phraseIds": ["piece-identite"]
+    },
+    { "type": "scene", "text": "You hand over your passport. You'd like to know about breakfast." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "How do you ask whether breakfast is included?",
+      "options": [
+        { "text": "Le petit-déjeuner est compris ?", "correct": true, "why": "Exactly the right question. \"Compris\" = included." },
+        { "text": "Le déjeuner est compris ?", "why": "In France \"déjeuner\" is lunch. Breakfast is \"petit-déjeuner\". (In Québec it's different!)" },
+        { "text": "Le petit-déjeuner est compréhensible ?", "why": "\"Compréhensible\" means understandable! You want \"compris\" (included)." }
+      ],
+      "phraseIds": ["petit-dej-compris"]
+    },
+    { "type": "line", "speaker": "Owner", "text": "Oui, il est compris. Il est servi de 7 h 30 à 10 h, en salle. Par contre, la taxe de séjour n'est pas comprise : c'est 2,50 € par nuit.", "translation": "Yes, it's included. It's served from 7:30 to 10, in the dining room. However, the tourist tax isn't included: it's €2.50 per night." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "What's the \"taxe de séjour\"?",
+      "options": [
+        { "text": "A small local tourist tax per night, often paid at the hotel", "correct": true, "why": "Right. It's normal in most French towns and often isn't in the online price." },
+        { "text": "A tip for the owner", "why": "It's an official local tax, not a tip." },
+        { "text": "A fee for staying near the sea", "why": "It's charged in most towns, by the sea or not." }
+      ],
+      "phraseIds": ["taxe-sejour"]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'll need the internet. What do you ask?",
+      "options": [
+        { "text": "Quel est le code wifi, s'il vous plaît ?", "correct": true, "why": "Natural — the French usually say \"code\" (rather than \"mot de passe\") for the Wi-Fi password." },
+        { "text": "Donnez-moi internet.", "why": "\"Give me internet\" sounds demanding. Ask for the \"code wifi\" politely." },
+        { "text": "Où est le wifi ?", "why": "\"Where is the Wi-Fi?\" isn't quite what you mean — you need the password." }
+      ],
+      "phraseIds": ["code-wifi"]
+    },
+    { "type": "line", "speaker": "Owner", "text": "Il est sur la carte, avec votre clé. Vous êtes au deuxième étage. Bonne soirée !", "translation": "It's on the card, with your key. You're on the second floor. Have a good evening!" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "How do you answer?",
+      "options": [
+        { "text": "Merci beaucoup, bonne soirée !", "correct": true, "why": "Warm and polite — returning \"bonne soirée\" is exactly right in the evening." },
+        { "text": "Merci, bonne nuit !", "why": "\"Bonne nuit\" is for when someone is going to bed. At 7 p.m. at reception, \"bonne soirée\" fits better." },
+        { "text": "Salut !", "why": "\"Salut\" is for friends — too casual with the hotel owner." }
+      ],
+      "phraseIds": ["bonne-soiree"]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "Registrarse en un pequeño hotel de Niza",
+      "summary": "Da el nombre de tu reserva, pregunta por el desayuno y entiende la tasa turística.",
+      "setting": "Es primera hora de la tarde en Niza, en la Costa Azul. Acabas de llegar del aeropuerto y entras en un pequeño hotel familiar a unas calles del mar. La dueña está en la recepción.",
+      "objectives": [
+        "Decir que tienes una reserva y dar tu nombre",
+        "Usar «vous» con educación con el personal del hotel",
+        "Preguntar si el desayuno está incluido y a qué hora se sirve",
+        "Entender la «taxe de séjour»"
+      ],
+      "varietyNote": "Este es el francés de todos los días que se habla en toda Francia. En Niza puedes oír un acento del sur —la gente suele pronunciar la «e» final que los parisinos se comen—, pero el francés de hotel es igual en todas partes. En Quebec, el desayuno es «déjeuner», no «petit-déjeuner» (mira la aventura del desayuno en Quebec).",
+      "phrases": {
+        "jai-reserve": { "translation": "He reservado una habitación a nombre de García.", "exampleTranslation": "Buenas tardes, tengo una reserva a nombre de Martin.", "note": "«Au nom de…» = a nombre de…" },
+        "piece-identite": { "translation": "¿Puedo ver un documento de identidad?", "exampleTranslation": "Aquí tiene mi pasaporte." },
+        "petit-dej-compris": { "translation": "¿El desayuno está incluido?", "exampleTranslation": "El desayuno se sirve de 7 a 10." },
+        "taxe-sejour": { "translation": "la tasa turística", "exampleTranslation": "La tasa turística no está incluida en el precio.", "note": "Una pequeña tasa local por persona y noche, que muchas veces se paga directamente en el hotel." },
+        "code-wifi": { "translation": "¿Cuál es la contraseña del wifi?", "exampleTranslation": "La contraseña del wifi está en la tarjeta de la habitación." },
+        "bonne-soiree": { "translation": "¡Que pase buena noche!", "exampleTranslation": "Gracias, ¡que pase buena noche!", "note": "Se usa a partir de la tarde-noche, en lugar de «Bonne journée»." }
+      },
+      "cultureNotes": [
+        "Usa «vous» con el personal del hotel y con los adultos que no conoces. Empezar con «Bonjour» o, por la tarde-noche, «Bonsoir» es imprescindible.",
+        "La mayoría de las ciudades francesas cobran una «taxe de séjour»: una pequeña tasa turística por persona y noche. A menudo no está incluida en los precios de internet y se paga en el hotel.",
+        "El desayuno no siempre está incluido en los hoteles franceses. Si no lo está, suele tener un precio fijo por persona.",
+        "En Francia la planta baja es el «rez-de-chaussée», y el «premier étage» (primer piso) es el de arriba."
+      ],
+      "steps": [
+        { "text": "Te acercas a la recepción con tu maleta." },
+        { "translation": "¡Buenas tardes! ¿Puedo ayudarle?" },
+        {
+          "prompt": "Tu reserva está a nombre de García. ¿Qué dices?",
+          "options": [
+            { "why": "Educado y completo: primero el saludo, luego «au nom de» para el nombre." },
+            { "why": "Te entendería, pero sin saludo ni frase completa suena muy brusco en Francia." },
+            { "why": "«Je suis réservé» significa «soy reservado» (tímido). Di «j'ai réservé… au nom de…»." }
+          ]
+        },
+        { "translation": "Ah, sí, dos noches. ¿Puedo ver un documento de identidad, por favor?" },
+        {
+          "prompt": "¿Qué te pide?",
+          "options": [
+            { "text": "Un documento de identidad, como tu pasaporte", "why": "Correcto: una «pièce d'identité» es cualquier documento oficial de identidad." },
+            { "text": "Una pieza de tu equipaje", "why": "«Pièce» puede significar pieza, pero «pièce d'identité» es un documento de identidad." },
+            { "text": "Tu número de habitación", "why": "Aún no tienes número de habitación: quiere tu documento." }
+          ]
+        },
+        { "text": "Le das tu pasaporte. Quieres saber lo del desayuno." },
+        {
+          "prompt": "¿Cómo preguntas si el desayuno está incluido?",
+          "options": [
+            { "why": "Justo la pregunta correcta. «Compris» = incluido." },
+            { "why": "En Francia «déjeuner» es el almuerzo. El desayuno es «petit-déjeuner». (¡En Quebec es distinto!)" },
+            { "why": "«Compréhensible» significa comprensible. Lo que buscas es «compris» (incluido)." }
+          ]
+        },
+        { "translation": "Sí, está incluido. Se sirve de 7:30 a 10, en el comedor. Eso sí, la tasa turística no está incluida: son 2,50 € por noche." },
+        {
+          "prompt": "¿Qué es la «taxe de séjour»?",
+          "options": [
+            { "text": "Una pequeña tasa turística local por noche, que muchas veces se paga en el hotel", "why": "Correcto. Es normal en la mayoría de las ciudades francesas y muchas veces no aparece en el precio de internet." },
+            { "text": "Una propina para la dueña", "why": "Es una tasa local oficial, no una propina." },
+            { "text": "Un recargo por alojarte cerca del mar", "why": "Se cobra en la mayoría de las ciudades, haya mar o no." }
+          ]
+        },
+        {
+          "prompt": "Vas a necesitar internet. ¿Qué preguntas?",
+          "options": [
+            { "why": "Natural: los franceses suelen decir «code» (más que «mot de passe») para la contraseña del wifi." },
+            { "why": "«Deme internet» suena exigente. Pide el «code wifi» con educación." },
+            { "why": "«¿Dónde está el wifi?» no es exactamente lo que quieres: necesitas la contraseña." }
+          ]
+        },
+        { "translation": "Está en la tarjeta, con su llave. Está en el segundo piso. ¡Que pase buena noche!" },
+        {
+          "prompt": "¿Cómo respondes?",
+          "options": [
+            { "why": "Cálido y educado: devolver el «bonne soirée» es lo correcto por la noche." },
+            { "why": "«Bonne nuit» se dice cuando alguien se va a dormir. A las 7 de la tarde en recepción, queda mejor «bonne soirée»." },
+            { "why": "«Salut» es para amigos: demasiado informal con la dueña del hotel." }
+          ]
+        }
+      ]
+    },
+    "pt": {
+      "title": "Fazendo check-in num hotelzinho em Nice",
+      "summary": "Diga o nome da reserva, pergunte sobre o café da manhã e entenda a taxa turística.",
+      "setting": "É começo de noite em Nice, na Côte d'Azur. Você acabou de chegar do aeroporto e entra num pequeno hotel familiar a poucas ruas do mar. A dona está na recepção.",
+      "objectives": [
+        "Dizer que tem uma reserva e dar o seu nome",
+        "Usar «vous» com educação com a equipe do hotel",
+        "Perguntar se o café da manhã está incluído e a que horas é servido",
+        "Entender a «taxe de séjour»"
+      ],
+      "varietyNote": "Este é o francês do dia a dia falado em toda a França. Em Nice você pode ouvir um sotaque do sul — as pessoas costumam pronunciar o «e» final que os parisienses engolem —, mas o francês de hotel é o mesmo em todo lugar. No Quebec, o café da manhã é «déjeuner», não «petit-déjeuner» (veja a aventura do café da manhã no Quebec).",
+      "phrases": {
+        "jai-reserve": { "translation": "Reservei um quarto em nome de García.", "exampleTranslation": "Boa noite, tenho uma reserva em nome de Martin.", "note": "«Au nom de…» = em nome de…" },
+        "piece-identite": { "translation": "Posso ver um documento de identidade?", "exampleTranslation": "Aqui está o meu passaporte." },
+        "petit-dej-compris": { "translation": "O café da manhã está incluído?", "exampleTranslation": "O café da manhã é servido das 7h às 10h." },
+        "taxe-sejour": { "translation": "a taxa turística", "exampleTranslation": "A taxa turística não está incluída no preço.", "note": "Uma pequena taxa local por pessoa e por noite, muitas vezes paga direto no hotel." },
+        "code-wifi": { "translation": "Qual é a senha do Wi-Fi?", "exampleTranslation": "A senha do Wi-Fi está no cartão do quarto." },
+        "bonne-soiree": { "translation": "Boa noite! (ao se despedir)", "exampleTranslation": "Obrigado, boa noite!", "note": "Usado a partir do fim da tarde, no lugar de «Bonne journée»." }
+      },
+      "cultureNotes": [
+        "Use «vous» com a equipe do hotel e com adultos que você não conhece. Começar com «Bonjour» ou, à noite, «Bonsoir» é essencial.",
+        "A maioria das cidades francesas cobra uma «taxe de séjour» — uma pequena taxa turística por pessoa e por noite. Muitas vezes não está incluída nos preços da internet e é paga no hotel.",
+        "O café da manhã nem sempre está incluído nos hotéis franceses. Quando não está, costuma ter um preço fixo por pessoa.",
+        "Na França o térreo é o «rez-de-chaussée», e o «premier étage» (primeiro andar) é o de cima."
+      ],
+      "steps": [
+        { "text": "Você vai até o balcão com a sua mala." },
+        { "translation": "Boa noite! Posso ajudar?" },
+        {
+          "prompt": "A sua reserva está em nome de García. O que você diz?",
+          "options": [
+            { "why": "Educado e completo — primeiro o cumprimento, depois «au nom de» para o nome." },
+            { "why": "Ela entenderia, mas sem cumprimento nem frase completa soa muito brusco na França." },
+            { "why": "«Je suis réservé» quer dizer «sou reservado» (tímido)! Diga «j'ai réservé… au nom de…»." }
+          ]
+        },
+        { "translation": "Ah, sim, duas noites. Posso ver um documento de identidade, por favor?" },
+        {
+          "prompt": "O que ela pede?",
+          "options": [
+            { "text": "Um documento de identidade, como o seu passaporte", "why": "Isso — uma «pièce d'identité» é qualquer documento oficial de identidade." },
+            { "text": "Uma peça da sua bagagem", "why": "«Pièce» pode ser peça, mas «pièce d'identité» é um documento de identidade." },
+            { "text": "O número do seu quarto", "why": "Você ainda não tem número de quarto — ela quer o seu documento." }
+          ]
+        },
+        { "text": "Você entrega o passaporte. Quer saber sobre o café da manhã." },
+        {
+          "prompt": "Como você pergunta se o café da manhã está incluído?",
+          "options": [
+            { "why": "Exatamente a pergunta certa. «Compris» = incluído." },
+            { "why": "Na França «déjeuner» é o almoço. O café da manhã é «petit-déjeuner». (No Quebec é diferente!)" },
+            { "why": "«Compréhensible» quer dizer compreensível! Você quer «compris» (incluído)." }
+          ]
+        },
+        { "translation": "Sim, está incluído. É servido das 7h30 às 10h, no salão. Mas a taxa turística não está incluída: são 2,50 € por noite." },
+        {
+          "prompt": "O que é a «taxe de séjour»?",
+          "options": [
+            { "text": "Uma pequena taxa turística local por noite, muitas vezes paga no hotel", "why": "Isso. É normal na maioria das cidades francesas e muitas vezes não está no preço da internet." },
+            { "text": "Uma gorjeta para a dona", "why": "É uma taxa local oficial, não uma gorjeta." },
+            { "text": "Uma taxa por se hospedar perto do mar", "why": "É cobrada na maioria das cidades, tenha mar ou não." }
+          ]
+        },
+        {
+          "prompt": "Você vai precisar de internet. O que você pergunta?",
+          "options": [
+            { "why": "Natural — os franceses costumam dizer «code» (em vez de «mot de passe») para a senha do Wi-Fi." },
+            { "why": "«Me dá internet» soa exigente. Peça o «code wifi» com educação." },
+            { "why": "«Onde está o Wi-Fi?» não é bem o que você quer — você precisa da senha." }
+          ]
+        },
+        { "translation": "Está no cartão, com a sua chave. Você está no segundo andar. Boa noite!" },
+        {
+          "prompt": "Como você responde?",
+          "options": [
+            { "why": "Caloroso e educado — devolver o «bonne soirée» é exatamente o certo à noite." },
+            { "why": "«Bonne nuit» é para quando alguém vai dormir. Às 7 da noite na recepção, «bonne soirée» cai melhor." },
+            { "why": "«Salut» é para amigos — informal demais com a dona do hotel." }
+          ]
+        }
+      ]
+    }
+  }
+}
