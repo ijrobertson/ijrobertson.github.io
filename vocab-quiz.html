@@ -1203,13 +1203,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return (meaningLang && word.meanings && word.meanings[meaningLang]) || word.translation;
         }
 
+        // Two meanings that only differ by an article or a note in brackets
+        // ("Passport" / "The Passport", "Pasaporte" / "El pasaporte") count as
+        // the same answer, so one never appears as a wrong option for the other.
+        function answerKey(meaning) {
+            return meaning.toLowerCase().split(' / ')[0].split('(')[0].trim()
+                .replace(/^(the|to|el|la|los|las|o|a|os|as|le|les|der|die|das)\s+/, '')
+                .replace(/^l['’]/, '')
+                .replace(/[\s.…?!¿¡]+$/, '').trim();
+        }
+
         function buildRound(pool) {
             const picked = shuffle(pool.slice()).slice(0, Math.min(10, pool.length));
             return picked.map(word => {
-                const usedTranslations = new Set([meaningOf(word).trim().toLowerCase()]);
+                const usedTranslations = new Set([answerKey(meaningOf(word))]);
                 const distractors = [];
                 for (const cand of shuffle(pool.filter(w => w.id !== word.id))) {
-                    const key = meaningOf(cand).trim().toLowerCase();
+                    const key = answerKey(meaningOf(cand));
                     if (usedTranslations.has(key)) continue;
                     usedTranslations.add(key);
                     distractors.push(meaningOf(cand));
