@@ -319,7 +319,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
             <div class="setup-card" id="setupCard" style="display:none;">
                 <div class="setup-label">Which language?</div>
-                <div class="picker-pills" id="languagePills"></div>
+                <div class="picker-pills" id="languagePills" data-i18n-name></div>
 
                 <div class="setup-label">Pick a difficulty</div>
                 <div class="picker-pills" id="levelPills"></div>
@@ -356,7 +356,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="qp-header">
                     <div>
                         <h3 id="qpTitle">Quiz Preferences</h3>
-                        <p>Help us personalize your <strong id="qpLanguageName"></strong> quizzes.</p>
+                        <p>Help us personalize your <strong id="qpLanguageName" data-i18n-name="lower"></strong> quizzes.</p>
                     </div>
                     <button type="button" class="qp-close" id="qpCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
                 </div>
@@ -433,9 +433,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="quizScreen" style="display:none;">
             <div class="quiz-scroll-area" id="quizScrollArea">
                 <div class="quiz-progress-text" id="quizProgressText"></div>
-                <div class="quiz-term-card" id="quizTermCard"></div>
-                <div class="answer-grid" id="answerGrid"></div>
-                <div class="quiz-explanation" id="quizExplanation" style="display:none;"></div>
+                <div class="quiz-term-card" id="quizTermCard" translate="no"></div>
+                <div class="answer-grid" id="answerGrid" translate="no"></div>
+                <div class="quiz-explanation" id="quizExplanation" style="display:none;" translate="no"></div>
             </div>
             <button type="button" class="btn-lb-pill" id="nextQuestionBtn" style="display:none;">Next question <i class="fas fa-arrow-right"></i></button>
         </div>
@@ -1321,7 +1321,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     return `
                         <label class="results-item">
                             <input type="checkbox" data-index="${i}" ${a.correct ? '' : 'checked'}>
-                            <div>
+                            <div translate="no">
                                 <div class="results-term">${escapeHtml(term)}</div>
                                 <div class="results-translation">${escapeHtml(a.correctAnswer)}</div>
                             </div>
@@ -1331,7 +1331,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 return `
                     <label class="results-item">
                         <input type="checkbox" data-index="${i}" ${a.correct ? '' : 'checked'}>
-                        <div>
+                        <div translate="no">
                             <div class="results-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(a.word.term)}</div>
                             ${a.word.transliteration ? `<div class="results-translit">${escapeHtml(a.word.transliteration)}</div>` : ''}
                             <div class="results-translation">${escapeHtml(a.word.translation)}</div>

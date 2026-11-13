@@ -169,7 +169,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="activity-hero">
         <div class="container">
             <div class="activity-hero-eyebrow" id="lessonEyebrow">Culture Guide</div>
-            <h1 id="lessonTitle">Lesson</h1>
+            <h1 id="lessonTitle" translate="no">Lesson</h1>
             <p id="lessonMeta"></p>
         </div>
     </div>
@@ -275,17 +275,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function renderLessonContent() {
             const container = document.getElementById('lessonContainer');
             container.innerHTML = `
-                <div class="lesson-section lesson-intro"><p>${escapeHtml(lesson.intro)}</p></div>
+                <div class="lesson-section lesson-intro"><p translate="no">${escapeHtml(lesson.intro)}</p></div>
 
                 <div class="lesson-section did-you-know">
                     <div class="lesson-section-label"><i class="fas fa-lightbulb"></i> Did You Know?</div>
-                    <p>${escapeHtml(lesson.didYouKnow)}</p>
+                    <p translate="no">${escapeHtml(lesson.didYouKnow)}</p>
                 </div>
 
                 <div class="lesson-section phrase-card">
                     <div class="lesson-section-label"><i class="fas fa-quote-left"></i> ${lesson.phrases.length > 1 ? 'Useful Phrases' : 'Useful Phrase'}</div>
                     ${lesson.phrases.map(p => `
-                        <div class="phrase-row">
+                        <div class="phrase-row" translate="no">
                             <div class="phrase-text">${escapeHtml(p.text)}</div>
                             <div class="phrase-translation">${escapeHtml(p.translation)}</div>
                             ${p.pronunciation ? `<div class="phrase-pronunciation">${escapeHtml(p.pronunciation)}</div>` : ''}
@@ -294,7 +294,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 <div class="lesson-section tourist-mistake">
                     <div class="lesson-section-label"><i class="fas fa-exclamation-triangle"></i> ${lesson.commonMistakes.length > 1 ? 'Common Tourist Mistakes' : 'Common Tourist Mistake'}</div>
-                    ${lesson.commonMistakes.map(m => `<p>${escapeHtml(m)}</p>`).join('')}
+                    ${lesson.commonMistakes.map(m => `<p translate="no">${escapeHtml(m)}</p>`).join('')}
                 </div>
 
                 <div id="quizArea"></div>
@@ -336,9 +336,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             area.innerHTML = `
                 <div class="lesson-section">
                     <div class="quiz-progress-text">Question ${qIndex + 1} of ${lesson.quiz.length}</div>
-                    <div class="quiz-question-text">${escapeHtml(q.question)}</div>
+                    <div class="quiz-question-text" translate="no">${escapeHtml(q.question)}</div>
                     <div class="answer-grid" id="answerGrid">
-                        ${q.options.map((opt, i) => `<button type="button" class="answer-btn" data-index="${i}">${escapeHtml(opt)}</button>`).join('')}
+                        ${q.options.map((opt, i) => `<button type="button" class="answer-btn" data-index="${i}" translate="no">${escapeHtml(opt)}</button>`).join('')}
                     </div>
                     <button type="button" class="btn-lb-pill" id="nextQuestionBtn" style="display:none;">Continue <i class="fas fa-arrow-right"></i></button>
                 </div>`;

@@ -402,7 +402,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <button type="button" class="folder-pill${activeFilter === 'thisweek' ? ' active' : ''}" data-folder="thisweek">This week</button>
             `;
             const customHtml = built.map(name => `
-                <button type="button" class="folder-pill${activeFilter === name ? ' active' : ''}" data-folder="${escapeHtml(name)}">${escapeHtml(name)}</button>
+                <button type="button" class="folder-pill${activeFilter === name ? ' active' : ''}" data-folder="${escapeHtml(name)}" data-i18n-name="strict">${escapeHtml(name)}</button>
             `).join('');
             container.innerHTML = builtInHtml + customHtml;
 
@@ -459,8 +459,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="word-card" data-id="${e.id}">
                     <div class="word-card-top">
                         <div>
-                            <p class="word-term">${escapeHtml(e.term)}</p>
-                            <p class="word-translation">${escapeHtml(e.translation)}</p>
+                            <p class="word-term" translate="no">${escapeHtml(e.term)}</p>
+                            <p class="word-translation" translate="no">${escapeHtml(e.translation)}</p>
                         </div>
                         <div class="word-card-actions">
                             <button type="button" class="icon-btn fav${e.favorite ? ' is-favorite' : ''}" data-action="fav" title="Toggle favorite">
@@ -475,11 +475,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
                     </div>
                     <div class="word-meta-row">
-                        <span class="folder-chip"><i class="fas fa-folder" style="margin-right:4px;"></i>${escapeHtml(e.folder || 'General')}</span>
-                        ${tags.map(t => `<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}
+                        <span class="folder-chip"${e.folder ? ' data-i18n-name="strict"' : ''}><i class="fas fa-folder" style="margin-right:4px;"></i>${escapeHtml(e.folder || 'General')}</span>
+                        ${tags.map(t => `<span class="tag-chip" translate="no">${escapeHtml(t)}</span>`).join('')}
                         ${isDue ? `<span class="due-chip">Due for review</span>` : ''}
                     </div>
-                    ${e.note ? `<p class="word-note">${escapeHtml(e.note)}</p>` : ''}
+                    ${e.note ? `<p class="word-note" translate="no">${escapeHtml(e.note)}</p>` : ''}
                 </div>`;
             }).join('')}</div>`;
 
@@ -605,10 +605,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const stage = document.getElementById('reviewCardStage');
             stage.innerHTML = `
                 <div class="flashcard" id="flashcard">
-                    <div class="flashcard-term">${escapeHtml(entry.term)}</div>
+                    <div class="flashcard-term" translate="no">${escapeHtml(entry.term)}</div>
                     ${flipped ? `
-                        <div class="flashcard-translation">${escapeHtml(entry.translation)}</div>
-                        ${entry.note ? `<div class="flashcard-note">${escapeHtml(entry.note)}</div>` : ''}
+                        <div class="flashcard-translation" translate="no">${escapeHtml(entry.translation)}</div>
+                        ${entry.note ? `<div class="flashcard-note" translate="no">${escapeHtml(entry.note)}</div>` : ''}
                     ` : `<div class="flashcard-hint">Tap to reveal translation</div>`}
                 </div>
                 <div class="review-actions" id="reviewActions" style="visibility:${flipped ? 'visible' : 'hidden'};">

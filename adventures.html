@@ -312,9 +312,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             catalogue
                 .filter(a => !language || a.language === language)
                 .forEach(a => { if (a.variety && !seen.has(a.variety.id)) seen.set(a.variety.id, a); });
+            // Country / variety names in the interface language (js/i18n.js); unchanged in English.
+            const lbName = (n) => (window.lbI18n ? window.lbI18n.name(n) : n);
             const options = [...seen.values()].sort((a, b) => a.country.localeCompare(b.country));
             regionFilter.innerHTML = `<option value="">All regions</option>` + options.map(a =>
-                `<option value="${escapeHtml(a.variety.id)}">${escapeHtml(a.country)} · ${escapeHtml(a.variety.label)}</option>`).join('');
+                `<option value="${escapeHtml(a.variety.id)}">${escapeHtml(lbName(a.country))} · ${escapeHtml(lbName(a.variety.label))}</option>`).join('');
             regionFilter.value = seen.has(selected) ? selected : '';
         }
 
@@ -343,7 +345,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ===== RENDER =====
         function chipsHtml(a) {
             return `<div class="chips">
-                <span class="chip variety">${escapeHtml(a.variety?.label || a.language)}</span>
+                <span class="chip variety" data-i18n-name>${escapeHtml(a.variety?.label || a.language)}</span>
                 <span class="chip">${escapeHtml(DIFFICULTY_LABELS[a.difficulty] || a.difficulty)}</span>
                 <span class="chip"><i class="far fa-clock" aria-hidden="true"></i> ${escapeHtml(a.estMinutes)} min</span>
             </div>`;
@@ -367,11 +369,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="today-top">
                         <div class="today-flag flag-emoji" aria-hidden="true">${escapeHtml(a.flag || '🧭')}</div>
                         <div>
-                            <p class="today-title">${escapeHtml(a.title)}</p>
+                            <p class="today-title" translate="no">${escapeHtml(a.title)}</p>
                             ${chipsHtml(a)}
                         </div>
                     </div>
-                    <p class="today-summary">${escapeHtml(a.summary || '')}${pick.reason === 'replay' && best ? ` Your best so far: ${best.bestScore}/${best.total}.` : ''}</p>
+                    <p class="today-summary"><span translate="no">${escapeHtml(a.summary || '')}</span>${pick.reason === 'replay' && best ? `<span> Your best so far: ${best.bestScore}/${best.total}.</span>` : ''}</p>
                     <span class="today-cta"><i class="fas fa-play"></i> ${pick.reason === 'replay' ? 'Play again' : 'Start'}</span>
                 </a>`;
         }
@@ -418,9 +420,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <a class="adv-item${done ? ' done' : ''}" href="adventure?id=${encodeURIComponent(a.id)}">
                         <div class="adv-item-flag flag-emoji" aria-hidden="true">${escapeHtml(a.flag || '🧭')}</div>
                         <div class="adv-item-main">
-                            <p class="adv-item-title">${escapeHtml(a.title)}</p>
+                            <p class="adv-item-title" translate="no">${escapeHtml(a.title)}</p>
                             ${chipsHtml(a)}
-                            <p class="adv-item-summary">${escapeHtml(a.summary || '')}</p>
+                            <p class="adv-item-summary" translate="no">${escapeHtml(a.summary || '')}</p>
                         </div>
                         ${done
                             ? `<span class="status done"><i class="fas fa-check"></i> ${done.bestScore}/${done.total}</span>`

@@ -65,11 +65,15 @@
   // In Spanish and Portuguese, language names are lowercase inside a
   // sentence ("Hablas inglés") but capitalised on their own (labels, tags).
   function lower(s) { return s ? s.charAt(0).toLocaleLowerCase(LANGS[lang].htmlLang) + s.slice(1) : s; }
+  // "Italian, German or French" -> each name translated, "or" in the
+  // interface language.
+  var OR = { en: " or ", es: " o ", pt: " ou " };
   function nameList(s, inSentence) {
-    return s.split(/,\s*/).map(function (x) {
+    return s.split(/(,\s*|\s+or\s+)/).map(function (x, i) {
+      if (i % 2) return /or/.test(x) ? OR[lang] : ", ";
       var n = name(x.trim());
       return inSentence && n !== x.trim() ? lower(n) : n;
-    }).join(", ");
+    }).join("");
   }
 
   function norm(s) { return s.replace(/\s+/g, " ").trim(); }
@@ -159,8 +163,15 @@
     var parent = node.parentElement;
     if (!parent || skipped(parent)) return;
     var key = norm(v);
-    var tr = parent.tagName === "OPTION" || parent.closest("[data-i18n-name]") ? name(key) : null;
+    var nameEl = parent.tagName === "OPTION" ? parent : parent.closest("[data-i18n-name]");
+    var tr = nameEl ? name(key) : null;
+    // data-i18n-name="lower": the name sits inside a sentence ("tus pruebas de español").
+    if (tr && tr !== key && nameEl.getAttribute("data-i18n-name") === "lower") tr = lower(tr);
     if (tr === key) tr = null;
+    // data-i18n-name="strict": something a person named (e.g. a notebook
+    // folder) — only an exact language/country name is shown translated,
+    // never an ordinary word that happens to be in the interface table.
+    if (tr == null && nameEl && nameEl.getAttribute("data-i18n-name") === "strict") { done.set(node, v); return; }
     if (tr == null) tr = lookup(key);
     if (tr == null || tr === key) { done.set(node, v); return; }
     var lead = v.match(/^\s*/)[0], trail = v.match(/\s*$/)[0];

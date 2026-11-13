@@ -240,7 +240,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- Hero — filled in once the scenario loads; skeletons until then. -->
     <div class="adv-hero">
         <div class="adv-hero-flag flag-emoji" id="heroFlag" aria-hidden="true"><span class="lb-skel lb-skel-circle" style="width:38px;height:38px;margin:0 auto;opacity:0.4;"></span></div>
-        <h1 id="heroTitle"><span class="lb-skel lb-skel-title" style="width:70%;height:22px;margin:0.3rem auto;opacity:0.4;"></span></h1>
+        <h1 id="heroTitle" translate="no"><span class="lb-skel lb-skel-title" style="width:70%;height:22px;margin:0.3rem auto;opacity:0.4;"></span></h1>
         <div class="adv-hero-meta" id="heroMeta"></div>
     </div>
 
@@ -266,6 +266,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 
     <script type="module">
+        // Interface language helper (js/i18n.js): a whole phrase with {slots};
+        // in English it's exactly the template with the values filled in.
+        const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
         import { auth, db, onAuthStateChanged, signOut, doc, getDoc } from './lib/firebaseClient.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
@@ -375,7 +378,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('heroFlag').textContent = adventure.flag || '🧭';
             document.getElementById('heroTitle').textContent = adventure.title;
             document.getElementById('heroMeta').innerHTML = `
-                <span class="adv-chip variety"><i class="fas fa-comment-dots" aria-hidden="true"></i> ${escapeHtml(adventure.variety?.label || adventure.language)}</span>
+                <span class="adv-chip variety" data-i18n-name><i class="fas fa-comment-dots" aria-hidden="true"></i> ${escapeHtml(adventure.variety?.label || adventure.language)}</span>
                 <span class="adv-chip">${escapeHtml(DIFFICULTY_LABELS[adventure.difficulty] || adventure.difficulty)}</span>
                 <span class="adv-chip"><i class="far fa-clock" aria-hidden="true"></i> ${escapeHtml(adventure.estMinutes)} min</span>`;
         }
@@ -398,17 +401,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 ${best}
                 <div class="adv-card">
                     <div class="adv-card-label"><i class="fas fa-map-marker-alt"></i> The scene</div>
-                    <p>${escapeHtml(adventure.setting)}</p>
+                    <p translate="no">${escapeHtml(adventure.setting)}</p>
                 </div>
                 <div class="adv-card">
                     <div class="adv-card-label"><i class="fas fa-bullseye"></i> You'll practise</div>
                     <ul class="objectives">
-                        ${(adventure.objectives || []).map(o => `<li><i class="fas fa-check"></i><span>${escapeHtml(o)}</span></li>`).join('')}
+                        ${(adventure.objectives || []).map(o => `<li><i class="fas fa-check"></i><span translate="no">${escapeHtml(o)}</span></li>`).join('')}
                     </ul>
                 </div>
                 <div class="adv-card variety-card">
-                    <div class="adv-card-label"><i class="fas fa-globe"></i> About ${escapeHtml(adventure.variety?.label || adventure.language)}</div>
-                    <p>${escapeHtml(adventure.varietyNote)}</p>
+                    <div class="adv-card-label"><i class="fas fa-globe"></i> <span>${lbF('About {variety}', { variety: `<span data-i18n-name="lower">${escapeHtml(adventure.variety?.label || adventure.language)}</span>` })}</span></div>
+                    <p translate="no">${escapeHtml(adventure.varietyNote)}</p>
                 </div>
 
                 <h2 class="section-heading">Key phrases</h2>
@@ -417,7 +420,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 ${(adventure.cultureNotes || []).length ? `
                 <div class="adv-card culture-card">
                     <div class="adv-card-label"><i class="fas fa-lightbulb"></i> Good to know</div>
-                    <ul>${adventure.cultureNotes.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul>
+                    <ul>${adventure.cultureNotes.map(n => `<li translate="no">${escapeHtml(n)}</li>`).join('')}</ul>
                 </div>` : ''}
 
                 <div class="actions">
@@ -430,14 +433,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function phraseCard(p, { missed = false } = {}) {
             const saved = savedIds.has(p.id);
             const canSpeak = 'speechSynthesis' in window;
-            const also = (p.alsoHeard || []).map(a => `<div><strong>${escapeHtml(a.text)}</strong> — ${escapeHtml(a.where)}</div>`).join('');
+            const also = (p.alsoHeard || []).map(a => `<div translate="no"><strong>${escapeHtml(a.text)}</strong> — ${escapeHtml(a.where)}</div>`).join('');
             return `
                 <div class="phrase${missed ? ' missed' : ''}" data-phrase-id="${escapeHtml(p.id)}">
                     <div class="phrase-top">
                         <div class="phrase-main">
                             ${missed ? '<span class="phrase-missed-tag">Missed</span>' : ''}
-                            <div class="phrase-text" lang="${escapeHtml(adventure.variety?.id || '')}">${escapeHtml(p.text)}</div>
-                            <div class="phrase-translation">${escapeHtml(p.translation)}</div>
+                            <div class="phrase-text" translate="no" lang="${escapeHtml(adventure.variety?.id || '')}">${escapeHtml(p.text)}</div>
+                            <div class="phrase-translation" translate="no">${escapeHtml(p.translation)}</div>
                         </div>
                         <div class="phrase-actions">
                             ${canSpeak ? `<button type="button" class="icon-pill" data-action="listen" aria-label="Listen to ${escapeHtml(p.text)}"><i class="fas fa-volume-up"></i> Listen</button>` : ''}
@@ -446,8 +449,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             </button>
                         </div>
                     </div>
-                    ${p.example ? `<div class="phrase-example" lang="${escapeHtml(adventure.variety?.id || '')}">${escapeHtml(p.example)}${p.exampleTranslation ? `<em lang="en">${escapeHtml(p.exampleTranslation)}</em>` : ''}</div>` : ''}
-                    ${p.note ? `<div class="phrase-note">${escapeHtml(p.note)}</div>` : ''}
+                    ${p.example ? `<div class="phrase-example" translate="no" lang="${escapeHtml(adventure.variety?.id || '')}">${escapeHtml(p.example)}${p.exampleTranslation ? `<em lang="en">${escapeHtml(p.exampleTranslation)}</em>` : ''}</div>` : ''}
+                    ${p.note ? `<div class="phrase-note" translate="no">${escapeHtml(p.note)}</div>` : ''}
                     ${also ? `<div class="phrase-also">Also heard: ${also}</div>` : ''}
                 </div>`;
         }
@@ -565,14 +568,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const lang = adventure.variety?.id || '';
             row.innerHTML = `
                 <div class="bubble">
-                    <div class="bubble-speaker">${escapeHtml(me ? 'You' : step.speaker)}</div>
-                    <div class="bubble-text" lang="${escapeHtml(lang)}">${escapeHtml(step.text)}</div>
+                    <div class="bubble-speaker"${me ? '' : ' translate="no"'}>${escapeHtml(me ? 'You' : step.speaker)}</div>
+                    <div class="bubble-text" translate="no" lang="${escapeHtml(lang)}">${escapeHtml(step.text)}</div>
                     ${me ? '' : `
                     <div class="bubble-tools">
                         ${step.translation ? '<button type="button" class="link-btn" data-action="translate">Show translation</button>' : ''}
                         ${'speechSynthesis' in window ? '<button type="button" class="link-btn" data-action="listen"><i class="fas fa-volume-up"></i> Listen</button>' : ''}
                     </div>
-                    <div class="bubble-translation" hidden>${escapeHtml(step.translation || '')}</div>`}
+                    <div class="bubble-translation" translate="no" hidden>${escapeHtml(step.translation || '')}</div>`}
                 </div>`;
             row.querySelector('[data-action="translate"]')?.addEventListener('click', (e) => {
                 const tr = row.querySelector('.bubble-translation');
@@ -591,9 +594,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             card.innerHTML = `
                 <div class="question-progress">Question ${run.asked} of ${run.total}</div>
                 <div class="question-kind">${escapeHtml(SKILL_LABELS[step.skill] || 'Question')}</div>
-                <div class="question-prompt">${escapeHtml(step.prompt)}</div>
+                <div class="question-prompt" translate="no">${escapeHtml(step.prompt)}</div>
                 <div class="answer-grid">
-                    ${options.map((o, i) => `<button type="button" class="answer-btn" data-i="${i}">${escapeHtml(o.text)}</button>`).join('')}
+                    ${options.map((o, i) => `<button type="button" class="answer-btn" data-i="${i}" translate="no">${escapeHtml(o.text)}</button>`).join('')}
                 </div>
                 <div class="feedback-slot" aria-live="polite"></div>`;
             card.querySelectorAll('.answer-btn').forEach(btn => {
@@ -620,8 +623,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             card.querySelector('.feedback-slot').innerHTML = `
                 <div class="feedback ${isRight ? 'good' : 'bad'}">
                     <div class="feedback-title">${isRight ? '<i class="fas fa-check-circle"></i> Nice!' : '<i class="fas fa-times-circle"></i> Not quite'}</div>
-                    <p>${escapeHtml(chosen.why)}</p>
-                    ${isRight ? '' : `<p class="better"><strong>Better:</strong> “${escapeHtml(correct.text)}” — ${escapeHtml(correct.why)}</p>`}
+                    <p translate="no">${escapeHtml(chosen.why)}</p>
+                    ${isRight ? '' : `<p class="better"><strong>Better:</strong> <span translate="no">“${escapeHtml(correct.text)}” — ${escapeHtml(correct.why)}</span></p>`}
                 </div>
                 <div class="actions" style="margin-top:0.9rem;margin-bottom:0;">
                     <button type="button" class="btn-lb-pill">Continue <i class="fas fa-arrow-right"></i></button>

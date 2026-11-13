@@ -119,7 +119,7 @@ if (self.workbox) {
     // v21 (2026-11-03): video-call.html camera-off card + new asset versions (call reliability fixes).
     // v22 (same day): connect.html + index.html stop featuring a placeholder-photo account.
     // v23 (2026-11-06): messages.html voice notes send reliably in the installed iOS app.
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v29" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v30" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -192,7 +192,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v37", // v37 (2026-11-12): interface language (new js/i18n.js + js/i18n-strings.js, app-shell.js language picker, flag-emoji.js on all shell pages); v36 (2026-11-12): night.css regenerated for the instructor Settings layout; v35 (2026-11-12): night.css regenerated for the new student Settings layout; page-transitions.js swallows skipped-transition rejections; v34 (2026-11-12): tab bar updates in place instead of rebuilding (lost taps), instant tab-to-tab switches (app-shell.js, page-transitions.js), PAGES_CACHE_NAME sync; v33 (2026-11-12): tab-bar capsule sized to each tab, symmetric at both screen edges (app-shell.js); v32 (2026-11-12): app-shell.js loads before first paint (tab bar no longer rises in during page change), label-width tabs + measured glider; v31 (2026-11-06): PAGES_CACHE_NAME sync in app-shell.js; v30 (2026-11-03): PAGES_CACHE_NAME sync in app-shell.js; v29 (2026-11-03): video-call.js/.css call reliability fixes (camera-off card, dropped-call notice, auto-rejoin, tab handover, muted hint); v28: tab-bar glider, one continuous slide (app-shell.js); v27: tokens.css overscroll-behavior (tab bar no longer bounces); v26: PAGES_CACHE_NAME sync in app-shell.js; v25: rollback of v24 (offline-cache change broke iPhone); v24: Firestore offline cache (lib/firebaseClient.js), Firebase preconnect (app-shell.js); v23: PAGES_CACHE_NAME sync in app-shell.js; v22: js/adventures.js, js/flag-emoji.js, tokens.css .flag-emoji, page-transitions depths; v21: video-call pre-join back/Not now buttons; v20: video-call.js/.css/.html synced with main (screen-share rewrite) + overlay layout; v19: video-call.js screen-share token uid; v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
+      cacheName: "linguabud-assets-v38", // v38 (2026-11-13): translations phase 2 batch A (learning pages), i18n.js name rules; v37 (2026-11-12): interface language (new js/i18n.js + js/i18n-strings.js, app-shell.js language picker, flag-emoji.js on all shell pages); v36 (2026-11-12): night.css regenerated for the instructor Settings layout; v35 (2026-11-12): night.css regenerated for the new student Settings layout; page-transitions.js swallows skipped-transition rejections; v34 (2026-11-12): tab bar updates in place instead of rebuilding (lost taps), instant tab-to-tab switches (app-shell.js, page-transitions.js), PAGES_CACHE_NAME sync; v33 (2026-11-12): tab-bar capsule sized to each tab, symmetric at both screen edges (app-shell.js); v32 (2026-11-12): app-shell.js loads before first paint (tab bar no longer rises in during page change), label-width tabs + measured glider; v31 (2026-11-06): PAGES_CACHE_NAME sync in app-shell.js; v30 (2026-11-03): PAGES_CACHE_NAME sync in app-shell.js; v29 (2026-11-03): video-call.js/.css call reliability fixes (camera-off card, dropped-call notice, auto-rejoin, tab handover, muted hint); v28: tab-bar glider, one continuous slide (app-shell.js); v27: tokens.css overscroll-behavior (tab bar no longer bounces); v26: PAGES_CACHE_NAME sync in app-shell.js; v25: rollback of v24 (offline-cache change broke iPhone); v24: Firestore offline cache (lib/firebaseClient.js), Firebase preconnect (app-shell.js); v23: PAGES_CACHE_NAME sync in app-shell.js; v22: js/adventures.js, js/flag-emoji.js, tokens.css .flag-emoji, page-transitions depths; v21: video-call pre-join back/Not now buttons; v20: video-call.js/.css/.html synced with main (screen-share rewrite) + overlay layout; v19: video-call.js screen-share token uid; v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -273,6 +273,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v34"),
       caches.delete("linguabud-assets-v35"),
       caches.delete("linguabud-assets-v36"),
+      caches.delete("linguabud-assets-v37"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
@@ -301,6 +302,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-pages-v26"),
       caches.delete("linguabud-pages-v27"),
       caches.delete("linguabud-pages-v28"),
+      caches.delete("linguabud-pages-v29"),
     ])
   );
 });
