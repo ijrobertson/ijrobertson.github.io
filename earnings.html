@@ -24,9 +24,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <!-- PWA design tokens — used by <lb-app-shell> below -->
     <link href="css/tokens.css" rel="stylesheet">
-    <!-- Loaded on its own (async) so the header/tab bar renders with the first paint,
+    <!-- Loaded on its own, before the page body, so the header/tab bar is in the first paint,
          instead of waiting for the page's Firebase imports to download. -->
-    <script type="module" async src="js/app-shell.js"></script>
+    <script src="js/app-shell.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
 
@@ -258,12 +258,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </style>
 </head>
 <body>
+    <!-- Kept first in <body> so the header and tab bar are in the page's first frame (see js/app-shell.js). -->
+    <lb-app-shell id="shell" role="instructor" page-title="Earnings" active="earnings"></lb-app-shell>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-    <lb-app-shell id="shell" role="instructor" page-title="Earnings" active="earnings"></lb-app-shell>
 
     <!-- Hero: this month's net earnings. Skeletons until loadEarnings() fills it. -->
     <div class="earnings-hero">

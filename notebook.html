@@ -27,9 +27,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <!-- PWA design tokens — used only by <lb-app-shell> below (Phase 2, see docs/PWA_PRD.md) -->
     <link href="css/tokens.css" rel="stylesheet">
-    <!-- Loaded on its own (async) so the header/tab bar renders with the first paint,
+    <!-- Loaded on its own, before the page body, so the header/tab bar is in the first paint,
          instead of waiting for the page's Firebase imports to download. -->
-    <script type="module" async src="js/app-shell.js"></script>
+    <script src="js/app-shell.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
 
@@ -200,6 +200,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </style>
 </head>
 <body>
+    <!-- Kept first in <body> so the header and tab bar are in the page's first frame (see js/app-shell.js). -->
+    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15). Notebook is reached
+         from the Learn tab (home.html) rather than being a tab destination
+         itself, so active stays "none" here — same convention bookings.html
+         uses for students, who reach it the same way. -->
+    <lb-app-shell id="shell" page-title="Notebook" active="none" back-href="home"></lb-app-shell>
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -252,11 +258,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="review-card-stage" id="reviewCardStage"></div>
     </div>
 
-    <!-- PWA app shell (Phase 2, see docs/PWA_PRD.md §3/§15). Notebook is reached
-         from the Learn tab (home.html) rather than being a tab destination
-         itself, so active stays "none" here — same convention bookings.html
-         uses for students, who reach it the same way. -->
-    <lb-app-shell id="shell" page-title="Notebook" active="none" back-href="home"></lb-app-shell>
 
     <!-- Add / Edit Word Modal -->
     <div class="modal fade" id="wordModal" tabindex="-1" role="dialog" aria-labelledby="wordModalLabel" aria-hidden="true">
