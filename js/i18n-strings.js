@@ -981,7 +981,12 @@ window.LB_I18N_STRINGS = {
       "1 lesson in {month}": "1 clase en {month}",
       "{n} lessons in {month}": "{n} clases en {month}",
       "{date}{min}-min lesson · {price} lesson price": "{date}Clase de {min} min · precio: {price}",
-      "Get a daily reminder to practise with a quiz.": "Recibe un recordatorio diario para practicar con una prueba."
+      "Get a daily reminder to practise with a quiz.": "Recibe un recordatorio diario para practicar con una prueba.",
+      "What does this mean?": "¿Qué significa?",
+      "Which word means this?": "¿Qué palabra significa esto?",
+      "Complete the sentence": "Completa la frase",
+      "Listen and choose the meaning": "Escucha y elige el significado",
+      "Play the word": "Reproducir la palabra"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Explora a nuestros {0}profesores{/0} para reservar tu primera clase.",
@@ -2406,7 +2411,12 @@ window.LB_I18N_STRINGS = {
       "1 lesson in {month}": "1 aula em {month}",
       "{n} lessons in {month}": "{n} aulas em {month}",
       "{date}{min}-min lesson · {price} lesson price": "{date}Aula de {min} min · preço: {price}",
-      "Get a daily reminder to practise with a quiz.": "Receba um lembrete diário para praticar com um quiz."
+      "Get a daily reminder to practise with a quiz.": "Receba um lembrete diário para praticar com um quiz.",
+      "What does this mean?": "O que significa?",
+      "Which word means this?": "Qual palavra significa isto?",
+      "Complete the sentence": "Complete a frase",
+      "Listen and choose the meaning": "Ouça e escolha o significado",
+      "Play the word": "Ouvir a palavra"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Veja nossos {0}professores{/0} para agendar sua primeira aula!",

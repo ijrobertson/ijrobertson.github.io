@@ -161,6 +161,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
            single flashcard word — same card, smaller/left-aligned text so it
            reads as a question rather than a term to memorize. */
         .quiz-term-prompt { font-size: 1.15rem; font-weight: 700; text-align: left; line-height: 1.4; }
+        /* Question types (2026-11-13): instruction line, fill-the-gap sentence, listen button */
+        .quiz-type-label { text-align: center; font-weight: 700; color: #5f6b72; font-size: 0.95rem; margin: -0.25rem 0 0.75rem; }
+        .quiz-type-label:empty { display: none; }
+        .quiz-term-meaning { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.5rem; color: var(--pb-teal-dark); line-height: 1.25; }
+        .quiz-gap-sentence { font-size: 1.2rem; font-weight: 600; color: #113448; line-height: 1.5; }
+        .quiz-gap-sentence .gap { display: inline-block; min-width: 4.5rem; border-bottom: 3px solid #20bcba; }
+        .quiz-gap-sentence .gap-filled { color: #0b6664; border-bottom: 3px solid #20bcba; font-weight: 800; }
+        .quiz-listen-btn { width: 84px; height: 84px; border-radius: 50%; border: none; background: #20bcba; color: white; font-size: 2rem; box-shadow: 0 8px 20px -8px rgba(17,52,72,0.4); cursor: pointer; }
+        .quiz-listen-btn:active { transform: scale(0.95); }
+        .quiz-reveal { margin-top: 0.75rem; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--pb-teal-dark); }
+        .quiz-reveal-sub { font-size: 0.95rem; color: #5f6b72; margin-top: 0.25rem; }
         .answer-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
         .answer-btn {
             background: white; border: 2px solid #e7e9e7; border-radius: 16px; padding: 0.9rem 1.1rem;
@@ -434,6 +445,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="quizScreen" style="display:none;">
             <div class="quiz-scroll-area" id="quizScrollArea">
                 <div class="quiz-progress-text" id="quizProgressText"></div>
+                <div class="quiz-type-label" id="quizTypeLabel"></div>
                 <div class="quiz-term-card" id="quizTermCard" translate="no"></div>
                 <div class="answer-grid" id="answerGrid" translate="no"></div>
                 <div class="quiz-explanation" id="quizExplanation" style="display:none;" translate="no"></div>
@@ -1187,7 +1199,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // round. English (and any deck without meanings) is unchanged.
                 const uiLang = window.lbI18n && window.lbI18n.lang;
                 meaningLang = (uiLang && uiLang !== 'en' && currentPool.length && currentPool.every(w => w.meanings && w.meanings[uiLang])) ? uiLang : null;
-                questions = buildRound(currentPool).map(q => ({ isAI: false, word: q.word, options: q.options, correct: q.correct }));
+                questions = buildRound(currentPool).map(q => ({ isAI: false, type: q.type, gap: q.gap, word: q.word, options: q.options, correct: q.correct }));
                 return true;
             } catch (e) {
                 console.error('Start quiz error:', e);
@@ -1199,6 +1211,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // The meaning shown for a word: in the interface language when this round
         // uses one (see startStaticQuiz), otherwise the deck's English meaning.
         let meaningLang = null;
+        const lbT = (s) => (window.lbI18n ? window.lbI18n.t(s) : s);
         function meaningOf(word) {
             return (meaningLang && word.meanings && word.meanings[meaningLang]) || word.translation;
         }
@@ -1213,19 +1226,108 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 .replace(/[\s.…?!¿¡]+$/, '').trim();
         }
 
+        // ── Question types (all built from the word bank; no AI) ──
+        //   meaning: see the word, pick its meaning (the original type)
+        //   reverse: see the meaning, pick the word
+        //   gap:     the word's example sentence with the word blanked out
+        //   listen:  hear the word (device text-to-speech), pick its meaning
+        // A type a word can't support (no example containing the word, no voice
+        // for the language) falls back to "meaning".
+        const QUESTION_MIX = ['meaning', 'meaning', 'meaning', 'meaning', 'reverse', 'reverse', 'gap', 'gap', 'listen', 'listen'];
+        const TTS_LANG = { English: 'en-US', Spanish: 'es-ES', Portuguese: 'pt-BR', French: 'fr-FR', German: 'de-DE', Italian: 'it-IT', Russian: 'ru-RU', Arabic: 'ar-SA', Chinese: 'zh-CN', Greek: 'el-GR', Swedish: 'sv-SE' };
+        if ('speechSynthesis' in window) { try { window.speechSynthesis.getVoices(); } catch (e) {} } // starts loading voices
+
+        function voiceFor(language) {
+            if (!('speechSynthesis' in window) || !TTS_LANG[language]) return null;
+            const lang = TTS_LANG[language];
+            const voices = window.speechSynthesis.getVoices();
+            return voices.find(v => v.lang.replace('_', '-') === lang)
+                || voices.find(v => v.lang.toLowerCase().startsWith(lang.slice(0, 2).toLowerCase()))
+                || null;
+        }
+
+        function speakWord(text) {
+            if (!('speechSynthesis' in window)) return;
+            try {
+                const synth = window.speechSynthesis;
+                synth.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = TTS_LANG[selectedLanguage] || '';
+                utter.voice = voiceFor(selectedLanguage);
+                utter.rate = 0.85;
+                synth.speak(utter);
+            } catch (e) {}
+        }
+
+        // The word without its article, as it appears inside a sentence ("El pan" -> "pan").
+        function bareTerm(term) {
+            return term.replace(/^(the|to|el|la|los|las|o|a|os|as|le|les|der|die|das)\s+/i, '').replace(/^l['’]/i, '').trim();
+        }
+
+        // { before, word, after } when the word appears unchanged in its example sentence.
+        function gapParts(word) {
+            if (!word.example) return null;
+            const bare = bareTerm(word.term);
+            if (!bare || bare.length < 2 || /[\/…()]/.test(bare)) return null;
+            const esc = bare.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const m = new RegExp(`(^|[^\\p{L}])(${esc})(?![\\p{L}])`, 'iu').exec(word.example);
+            if (!m) return null;
+            const start = m.index + m[1].length;
+            return { before: word.example.slice(0, start), word: m[2], after: word.example.slice(start + m[2].length) };
+        }
+
+        // Up to three wrong options. Normally from words of the same kind (tag),
+        // which makes them plausible. For fill-the-gap it's the opposite: another
+        // food in "I buy ___ every morning" would also be right, so gap options
+        // come from other kinds of word and only one fits the sentence.
+        function pickDistractors(word, pool, valueOf, correctValue, sameKind = true) {
+            const used = new Set([answerKey(correctValue)]);
+            const out = [];
+            const others = shuffle(pool.filter(w => w.id !== word.id));
+            const tag = (word.tags || [])[0];
+            const sameTag = others.filter(w => (w.tags || [])[0] === tag);
+            const otherTag = others.filter(w => (w.tags || [])[0] !== tag);
+            for (const cand of (sameKind ? [...sameTag, ...otherTag] : otherTag)) {
+                const value = valueOf(cand);
+                if (!value) continue;
+                const key = answerKey(value);
+                if (used.has(key)) continue;
+                used.add(key);
+                out.push(value);
+                if (out.length === 3) break;
+            }
+            return out;
+        }
+
+        // Gap options follow the case of the word in the sentence ("está feliz"),
+        // except German nouns, which are always capitalised.
+        function gapOption(w, sample) {
+            const bare = bareTerm(w.term);
+            const germanNoun = selectedLanguage === 'German' && /^(der|die|das)\s/i.test(w.term);
+            if (germanNoun) return bare;
+            return sample[0] === sample[0].toLowerCase() ? bare.charAt(0).toLowerCase() + bare.slice(1) : bare;
+        }
+
         function buildRound(pool) {
             const picked = shuffle(pool.slice()).slice(0, Math.min(10, pool.length));
-            return picked.map(word => {
-                const usedTranslations = new Set([answerKey(meaningOf(word))]);
-                const distractors = [];
-                for (const cand of shuffle(pool.filter(w => w.id !== word.id))) {
-                    const key = answerKey(meaningOf(cand));
-                    if (usedTranslations.has(key)) continue;
-                    usedTranslations.add(key);
-                    distractors.push(meaningOf(cand));
-                    if (distractors.length === 3) break;
+            const mix = shuffle(QUESTION_MIX.slice());
+            const canListen = !!voiceFor(selectedLanguage);
+            return picked.map((word, i) => {
+                let type = mix[i % mix.length];
+                const gap = type === 'gap' ? gapParts(word) : null;
+                if ((type === 'gap' && !gap) || (type === 'listen' && !canListen)) type = 'meaning';
+                if (type === 'reverse') {
+                    const correct = word.term;
+                    return { type, word, correct, options: shuffle([correct, ...pickDistractors(word, pool, w => w.term, correct)]) };
                 }
-                return { word, options: shuffle([meaningOf(word), ...distractors]), correct: meaningOf(word) };
+                if (type === 'gap') {
+                    const correct = gap.word;
+                    const distractors = pickDistractors(word, pool, w => gapOption(w, gap.word), correct, false);
+                    if (distractors.length < 3) return { type: 'meaning', word, correct: meaningOf(word), options: shuffle([meaningOf(word), ...pickDistractors(word, pool, meaningOf, meaningOf(word))]) };
+                    return { type, word, gap, correct, options: shuffle([correct, ...distractors]) };
+                }
+                const correct = meaningOf(word);
+                return { type, word, correct, options: shuffle([correct, ...pickDistractors(word, pool, meaningOf, correct)]) };
             });
         }
 
@@ -1245,11 +1347,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // ordinary bidi embedding, same as any other mixed-script sentence.
                 document.getElementById('quizTermCard').innerHTML =
                     `<div class="quiz-term quiz-term-prompt">${escapeHtml(q.prompt)}</div>`;
+            } else if (q.type === 'reverse') {
+                document.getElementById('quizTermCard').innerHTML = `<div class="quiz-term-meaning">${escapeHtml(meaningOf(q.word))}</div>`;
+            } else if (q.type === 'gap') {
+                document.getElementById('quizTermCard').innerHTML = `<div class="quiz-gap-sentence"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.gap.before)}<span class="gap">&nbsp;</span>${escapeHtml(q.gap.after)}</div>`;
+            } else if (q.type === 'listen') {
+                document.getElementById('quizTermCard').innerHTML = `<button type="button" class="quiz-listen-btn" id="quizListenBtn" aria-label="${escapeHtml(lbT('Play the word'))}"><i class="fas fa-volume-up"></i></button>`;
+                document.getElementById('quizListenBtn').addEventListener('click', () => speakWord(q.word.term));
+                speakWord(q.word.term);
             } else {
                 document.getElementById('quizTermCard').innerHTML = `
                     <div class="quiz-term"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.word.term)}</div>
                     ${q.word.transliteration ? `<div class="quiz-term-translit">${escapeHtml(q.word.transliteration)}</div>` : ''}`;
             }
+            document.getElementById('quizTypeLabel').textContent = q.isAI ? '' : ({
+                reverse: 'Which word means this?',
+                gap: 'Complete the sentence',
+                listen: 'Listen and choose the meaning',
+            }[q.type] || 'What does this mean?');
             const grid = document.getElementById('answerGrid');
             grid.innerHTML = q.options.map(opt => `<button type="button" class="answer-btn" data-option="${escapeHtml(opt)}">${escapeHtml(opt)}</button>`).join('');
             grid.querySelectorAll('.answer-btn').forEach(btn => {
@@ -1273,6 +1388,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             answered.push(q.isAI
                 ? { isAI: true, type: q.type, prompt: q.prompt, correctAnswer: q.correct, explanation: q.explanation, difficulty: q.difficulty, targetVocabulary: q.targetVocabulary, topic: q.topic, correct: isCorrect }
                 : { isAI: false, word: q.word, correct: isCorrect });
+            if (!q.isAI && (q.type === 'gap' || q.type === 'listen')) {
+                const isRtl = RTL_LANGUAGES.includes(selectedLanguage);
+                const card = document.getElementById('quizTermCard');
+                if (q.type === 'gap') {
+                    card.innerHTML = `<div class="quiz-gap-sentence"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.gap.before)}<span class="gap-filled">${escapeHtml(q.gap.word)}</span>${escapeHtml(q.gap.after)}</div>
+                        <div class="quiz-reveal-sub">${escapeHtml(q.word.term)} — ${escapeHtml(meaningOf(q.word))}</div>`;
+                } else {
+                    card.insertAdjacentHTML('beforeend', `<div class="quiz-reveal"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.word.term)}</div>${q.word.transliteration ? `<div class="quiz-reveal-sub">${escapeHtml(q.word.transliteration)}</div>` : ''}`);
+                }
+            }
             if (q.isAI && q.explanation) {
                 const explanationEl = document.getElementById('quizExplanation');
                 explanationEl.innerHTML = `<i class="fas fa-lightbulb"></i>${escapeHtml(q.explanation)}`;
