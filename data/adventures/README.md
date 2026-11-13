@@ -89,8 +89,8 @@ Three step types:
 ## Translations (`i18n`)
 
 The English text above is the explanation language. A scenario can also carry
-Spanish and Brazilian Portuguese explanations, shown when the learner picks
-Español or Português in the app's language picker:
+Spanish, Brazilian Portuguese, French and Arabic explanations (`es`, `pt`,
+`fr`, `ar`), shown when the learner picks that language in the app's picker:
 
 ```json
 "i18n": {
@@ -117,7 +117,11 @@ Español or Português in the app's language picker:
 - `correct` flags and `phraseIds` stay in the English part only.
 - Copy `title` and `summary` into the scenario's `index.json` entry as
   `"i18n": { "es": { "title", "summary" }, "pt": { … } }`.
-- Don't add the scenario's own language (no `es` on a Spanish scenario).
+- Don't add the scenario's own language (no `es` on a Spanish scenario, no `fr`
+  on a French one).
+- French uses French typography (thin space before ? ! : ;) — write normal
+  spaces; the scratchpad merge script converts them. Arabic is Modern
+  Standard Arabic.
 - Anything missing falls back to English; the validator checks alignment.
 
 ## Before publishing a scenario

@@ -96,11 +96,11 @@ for (const entry of entries) {
   });
   if (choices === 0) problem(file, 'needs at least one choice step');
 
-  // Optional Spanish/Portuguese explanations (see README "Translations").
-  const OWN = { Spanish: 'es', Portuguese: 'pt' }[s.language];
+  // Optional Spanish/Portuguese/French/Arabic explanations (see README "Translations").
+  const OWN = { Spanish: 'es', Portuguese: 'pt', French: 'fr', Arabic: 'ar' }[s.language];
   for (const [lang, o] of Object.entries(s.i18n || {})) {
     const iw = `${file} → i18n.${lang}`;
-    if (!['es', 'pt'].includes(lang)) { problem(iw, 'language must be "es" or "pt"'); continue; }
+    if (!['es', 'pt', 'fr', 'ar'].includes(lang)) { problem(iw, 'language must be one of es, pt, fr, ar'); continue; }
     if (lang === OWN) problem(iw, `a ${s.language} scenario shouldn't be explained in ${s.language}`);
     for (const f of ['title', 'summary', 'setting', 'varietyNote']) if (!isText(o[f])) problem(iw, `missing "${f}"`);
     if (!Array.isArray(o.objectives) || o.objectives.length !== (s.objectives || []).length) problem(iw, 'objectives must match the English list item for item');
