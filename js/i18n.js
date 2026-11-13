@@ -172,6 +172,12 @@
     // folder) — only an exact language/country name is shown translated,
     // never an ordinary word that happens to be in the interface table.
     if (tr == null && nameEl && nameEl.getAttribute("data-i18n-name") === "strict") { done.set(node, v); return; }
+    // data-i18n-ctx: one English word that needs different translations in
+    // different places (e.g. "New" adventure = Nueva, "New" instructor = Nuevo).
+    if (tr == null) {
+      var ctxEl = parent.closest("[data-i18n-ctx]");
+      if (ctxEl) tr = lookup(key + "@" + ctxEl.getAttribute("data-i18n-ctx"));
+    }
     if (tr == null) tr = lookup(key);
     if (tr == null || tr === key) { done.set(node, v); return; }
     var lead = v.match(/^\s*/)[0], trail = v.match(/\s*$/)[0];

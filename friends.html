@@ -972,13 +972,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                          src="${escapeAttr(avatar)}"
                          onerror="this.src='${DEFAULT_AVATAR}'"
                          alt="${name}">
-                    <div class="friend-name">${name}</div>
-                    ${country ? `<div class="friend-country"><i class="fas fa-map-marker-alt" style="color:#20bcba;margin-right:4px;"></i>${country}</div>` : ''}
+                    <div class="friend-name" translate="no">${name}</div>
+                    ${country ? `<div class="friend-country" data-i18n-name><i class="fas fa-map-marker-alt" style="color:#20bcba;margin-right:4px;"></i>${country}</div>` : ''}
                 </div>
                 <div class="friend-card-body">
                     ${spokenLangs.length > 0 ? `<div class="friend-lang-row"><i class="fas fa-comments"></i><span>Speaks: ${escapeHtml(spokenLangs.join(', '))}</span></div>` : ''}
                     ${learningOrTeaching.length > 0 ? `<div class="friend-lang-row"><i class="fas fa-${isInstructor ? 'chalkboard-teacher' : 'graduation-cap'}"></i><span>${isInstructor ? 'Teaches' : 'Learning'}: ${escapeHtml(learningOrTeaching.join(', '))}</span></div>` : ''}
-                    ${bio ? `<div class="friend-bio">${bio}</div>` : ''}
+                    ${bio ? `<div class="friend-bio" translate="no">${bio}</div>` : ''}
                 </div>
                 <div class="friend-card-footer">
                     <a href="learner-profile?uid=${encodeURIComponent(friend.uid)}" class="btn-view-friend" onclick="event.stopPropagation()">
@@ -1145,9 +1145,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                      src="${avatar}"
                      onerror="this.src='${DEFAULT_AVATAR}'"
                      alt="${name}">
-                <div class="request-name">${name}</div>
+                <div class="request-name" translate="no">${name}</div>
                 ${roleBadge}
-                <div class="request-meta">
+                <div class="request-meta" data-i18n-name>
                     ${country ? `<i class="fas fa-map-marker-alt" style="color:#20bcba;margin-right:4px;"></i>${country}<br>` : ''}
                     ${langMeta}
                 </div>

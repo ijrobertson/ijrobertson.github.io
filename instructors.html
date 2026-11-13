@@ -1383,6 +1383,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/scripts.js"></script>
 
     <script type="module">
+        // Interface language (js/i18n.js). LB_LOCALE is for dates people SEE;
+        // dayKey/Intl lookups that match availability must stay 'en-US'.
+        // In English all of this produces exactly the original text.
+        const LB_LOCALE = (window.lbI18n && window.lbI18n.locale) || 'en-US';
+        const LB_H12 = !(window.lbI18n && window.lbI18n.locale);
+        const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
@@ -1556,7 +1562,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const tom = new Date(today); tom.setDate(today.getDate() + 1);
             if (date.getTime() === today.getTime()) return 'Available Today';
             if (date.getTime() === tom.getTime()) return 'Available Tomorrow';
-            return 'Available ' + date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            return lbF('Available {date}', { date: date.toLocaleDateString(LB_LOCALE, { weekday: 'short', month: 'short', day: 'numeric' }) });
         }
 
         function isPaymentReady(instructor) {
@@ -1764,7 +1770,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                        ${renderStarsHtml(instructor.averageRating)}
                        <span class="rating-count">${instructor.averageRating.toFixed(1)} (${instructor.reviewCount})</span>
                    </div>`
-                : `<span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>`;
+                : `<span class="new-instructor-badge" data-i18n-ctx="instructor"><i class="fas fa-star"></i> New</span>`;
 
             const metaRowHtml = `<div class="card-meta-row">
                 <span class="card-meta-item"><i class="fas fa-book-open"></i> ${lessonsCount} lesson${lessonsCount !== 1 ? 's' : ''}</span>
@@ -1779,9 +1785,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                        <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
                    </div>
                    <div class="instructor-card-header" style="padding-top:1rem;">
-                       <div class="instructor-card-name">${name}</div>
+                       <div class="instructor-card-name" translate="no">${name}</div>
                        ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
-                       <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>
+                       <div class="instructor-card-country" data-i18n-name><i class="fas fa-map-marker-alt"></i> ${country}</div>
                        ${ratingHtml}
                        ${metaRowHtml}
                    </div>
@@ -1789,9 +1795,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 : `<div class="instructor-card-header">
                        <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
                        <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
-                       <div class="instructor-card-name">${name}</div>
+                       <div class="instructor-card-name" translate="no">${name}</div>
                        ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
-                       <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>
+                       <div class="instructor-card-country" data-i18n-name><i class="fas fa-map-marker-alt"></i> ${country}</div>
                        ${ratingHtml}
                        ${metaRowHtml}
                    </div>
@@ -1801,7 +1807,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 cardHTML += `
                     <div class="language-section">
                         <div class="language-section-title">Teaches</div>
-                        <div class="language-tags">
+                        <div class="language-tags" data-i18n-name>
                             ${teaching.map(lang => `<span class="language-tag">${escapeHtml(lang)}</span>`).join('')}
                         </div>
                     </div>
@@ -1812,7 +1818,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 cardHTML += `
                     <div class="language-section">
                         <div class="language-section-title">Speaks</div>
-                        <div class="language-tags">
+                        <div class="language-tags" data-i18n-name>
                             ${spoken.map(lang => `<span class="language-tag">${escapeHtml(lang)}</span>`).join('')}
                         </div>
                     </div>
@@ -1823,7 +1829,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 cardHTML += `
                     <div class="language-section">
                         <div class="language-section-title">About</div>
-                        <div class="about-preview">${aboutMe}</div>
+                        <div class="about-preview" translate="no">${aboutMe}</div>
                     </div>
                 `;
             }
@@ -2040,7 +2046,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             weekEnd.setDate(weekEnd.getDate() + 6);
 
             document.getElementById('current-week-label').textContent =
-                `${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                `${currentWeekStart.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
             for (let i = 0; i < 7; i++) {
                 const date = new Date(currentWeekStart);
@@ -2052,8 +2058,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function createDayColumn(date) {
             const column = document.createElement('div');
 
-            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-            const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const dayName = date.toLocaleDateString(LB_LOCALE, { weekday: 'short' });
+            const dayDate = date.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric' });
             const dayKey  = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
             // Check if instructor has blocked this date.
@@ -2156,10 +2162,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         function formatTime(date) {
-            return date.toLocaleTimeString('en-US', {
+            return date.toLocaleTimeString(LB_LOCALE, {
                 hour: 'numeric',
                 minute: '2-digit',
-                hour12: true
+                hour12: LB_H12
             });
         }
 
@@ -2182,8 +2188,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // Populate booking summary
             document.getElementById('pay-instructor-name').textContent = currentInstructorName;
             document.getElementById('pay-datetime').textContent =
-                slot.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
-                ' at ' + formatTime(slot.startTime) + ' – ' + formatTime(slot.endTime);
+                lbF('{date} at {start} – {end}', { date: slot.startTime.toLocaleDateString(LB_LOCALE, { weekday: 'long', month: 'long', day: 'numeric' }), start: formatTime(slot.startTime), end: formatTime(slot.endTime) });
 
             // Reset payment element area — set platform fee immediately so it's
             // never blank; it's always $1 regardless of cloud function response
@@ -2545,6 +2550,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
 
             document.getElementById('profileModalCountry').textContent = country;
+            // The instructor's own words are never translated; the 'No bio yet' placeholder is.
+            if (instructor.about_me) document.getElementById('profileModalAbout').setAttribute('translate', 'no');
+            else document.getElementById('profileModalAbout').removeAttribute('translate');
             document.getElementById('profileModalAbout').textContent = aboutMe;
 
             // Guard book button based on unified payout readiness
@@ -2591,16 +2599,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 docs.forEach(d => {
                     const rv = d.data();
                     const date = rv.createdAt?.toDate ? rv.createdAt.toDate() : new Date(rv.createdAt);
-                    const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                    const dateStr = date.toLocaleDateString(LB_LOCALE, { year: 'numeric', month: 'short', day: 'numeric' });
                     const el = document.createElement('div');
                     el.className = 'review-item';
                     el.innerHTML = `
                         <div class="review-header">
-                            <span class="review-author">${escapeHtml(rv.studentName || 'Student')}</span>
+                            <span class="review-author"${rv.studentName ? ' translate="no"' : ''}>${escapeHtml(rv.studentName || 'Student')}</span>
                             <span class="review-stars">${renderStarsHtml(rv.rating)}</span>
                             <span class="review-date">${dateStr}</span>
                         </div>
-                        ${rv.review ? `<p class="review-text">${escapeHtml(rv.review)}</p>` : ''}
+                        ${rv.review ? `<p class="review-text" translate="no">${escapeHtml(rv.review)}</p>` : ''}
                     `;
                     container.appendChild(el);
                 });
@@ -2682,22 +2690,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div class="profile-modal-header">
                 <button class="profile-modal-close">&times;</button>
                 <img id="profileModalAvatar" class="profile-modal-avatar" src="" alt="Instructor Avatar">
-                <h2 id="profileModalName" class="profile-modal-name">Instructor Name</h2>
+                <h2 id="profileModalName" class="profile-modal-name" translate="no">Instructor Name</h2>
                 <div id="profileModalPrice" class="profile-modal-price">$0/hour</div>
                 <div id="profileModalRating" style="display:none;align-items:center;justify-content:center;gap:0.2rem;margin-top:0.4rem;"></div>
             </div>
             <div class="profile-modal-body">
                 <div class="profile-info-section">
                     <h4><i class="fas fa-chalkboard-teacher"></i> Teaches</h4>
-                    <div id="profileModalTeaching" class="language-tags"></div>
+                    <div id="profileModalTeaching" class="language-tags" data-i18n-name></div>
                 </div>
                 <div class="profile-info-section">
                     <h4><i class="fas fa-comments"></i> Speaks</h4>
-                    <div id="profileModalSpoken" class="language-tags"></div>
+                    <div id="profileModalSpoken" class="language-tags" data-i18n-name></div>
                 </div>
                 <div class="profile-info-section">
                     <h4><i class="fas fa-map-marker-alt"></i> Country</h4>
-                    <p id="profileModalCountry">Not specified</p>
+                    <p id="profileModalCountry" data-i18n-name>Not specified</p>
                 </div>
                 <div class="profile-info-section">
                     <h4><i class="fas fa-user"></i> About</h4>
@@ -2727,7 +2735,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="modal-header" style="background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%); color: white;">
                     <h5 class="modal-title" id="bookingModalLabel">
                         <i class="fas fa-calendar-alt"></i>
-                        Book a Lesson with <span id="modal-instructor-name"></span>
+                        Book a Lesson with <span id="modal-instructor-name" translate="no"></span>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 1;">
                         <span aria-hidden="true">&times;</span>
@@ -2777,7 +2785,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div class="payment-summary-box">
                             <div class="summary-row">
                                 <span>Instructor</span>
-                                <span id="pay-instructor-name"></span>
+                                <span id="pay-instructor-name" translate="no"></span>
                             </div>
                             <div class="summary-row">
                                 <span>Date &amp; Time</span>

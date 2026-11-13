@@ -451,13 +451,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <img id="heroAvatar" class="hero-avatar" src="" alt="Instructor">
                     </div>
                     <div class="hero-info">
-                        <h1 id="heroName" class="hero-name"></h1>
+                        <h1 id="heroName" class="hero-name" translate="no"></h1>
                         <div id="heroRating" class="hero-rating" style="display:none;"></div>
                         <div class="hero-meta">
-                            <span id="heroCountry"><i class="fas fa-map-marker-alt"></i> <span id="heroCountryText"></span></span>
+                            <span id="heroCountry"><i class="fas fa-map-marker-alt"></i> <span id="heroCountryText" data-i18n-name></span></span>
                             <span id="heroPrice" class="hero-price" style="display:none;"><i class="fas fa-tag"></i> <span id="heroPriceText"></span></span>
                         </div>
-                        <div id="heroTags" class="hero-tags"></div>
+                        <div id="heroTags" class="hero-tags" data-i18n-name></div>
                         <div class="hero-actions">
                             <button id="bookBtn" class="btn-book">
                                 <i class="fas fa-calendar-check"></i> Book Lesson
@@ -492,7 +492,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <!-- About Me -->
                 <div id="aboutSection" class="profile-section" style="display:none;">
                     <div class="section-title"><i class="fas fa-user"></i> About</div>
-                    <p id="aboutText" class="section-text"></p>
+                    <p id="aboutText" class="section-text" translate="no"></p>
                 </div>
 
                 <!-- Teaching info -->
@@ -504,7 +504,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <!-- Certifications -->
                 <div id="certSection" class="profile-section" style="display:none;">
                     <div class="section-title"><i class="fas fa-certificate"></i> Certifications &amp; Qualifications</div>
-                    <p id="certText" class="section-text"></p>
+                    <p id="certText" class="section-text" translate="no"></p>
                 </div>
 
                 <!-- Reviews -->
@@ -536,7 +536,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="modal-header" style="background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%); color: white;">
                     <h5 class="modal-title" id="bookingModalLabel">
                         <i class="fas fa-calendar-alt"></i>
-                        Book a Lesson with <span id="modal-instructor-name"></span>
+                        Book a Lesson with <span id="modal-instructor-name" translate="no"></span>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 1;">
                         <span aria-hidden="true">&times;</span>
@@ -584,7 +584,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <i class="fas fa-receipt" style="color: #20bcba;"></i> Booking Summary
                         </h6>
                         <div class="payment-summary-box">
-                            <div class="summary-row"><span>Instructor</span><span id="pay-instructor-name"></span></div>
+                            <div class="summary-row"><span>Instructor</span><span id="pay-instructor-name" translate="no"></span></div>
                             <div class="summary-row"><span>Date &amp; Time</span><span id="pay-datetime"></span></div>
                             <div class="summary-row"><span>Duration</span><span>60 minutes</span></div>
                             <div class="summary-row"><span>Lesson Price</span><span id="pay-lesson-price">Loading...</span></div>
@@ -625,7 +625,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="modal-header" style="background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%); color: white;">
                     <h5 class="modal-title" id="trialModalLabel">
                         <i class="fas fa-gift"></i>
-                        Free 15-Minute Trial with <span id="trial-instructor-name"></span>
+                        Free 15-Minute Trial with <span id="trial-instructor-name" translate="no"></span>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 1;">
                         <span aria-hidden="true">&times;</span>
@@ -680,7 +680,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <i class="fas fa-calendar-check" style="color: #20bcba;"></i> Confirm Your Free 15-Minute Trial
                         </h6>
                         <div class="payment-summary-box">
-                            <div class="summary-row"><span>Instructor</span><span id="trial-confirm-instructor"></span></div>
+                            <div class="summary-row"><span>Instructor</span><span id="trial-confirm-instructor" translate="no"></span></div>
                             <div class="summary-row"><span>Date &amp; Time</span><span id="trial-confirm-datetime"></span></div>
                             <div class="summary-row"><span>Duration</span><span>15 minutes</span></div>
                             <div class="summary-row total"><span>Total Cost</span><span style="color: #2e7d32; font-weight: 700;">FREE</span></div>
@@ -719,6 +719,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/scripts.js"></script>
 
     <script type="module">
+        // Interface language (js/i18n.js). LB_LOCALE is for dates people SEE;
+        // dayKey/Intl lookups that match availability must stay 'en-US'.
+        // In English all of this produces exactly the original text.
+        const LB_LOCALE = (window.lbI18n && window.lbI18n.locale) || 'en-US';
+        const LB_H12 = !(window.lbI18n && window.lbI18n.locale);
+        const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
         import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot } from './lib/firebaseClient.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
@@ -1017,11 +1023,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const grid = document.getElementById('teachingGrid');
                 let hasTeaching = false;
                 if (p.teaching_experience) {
-                    grid.innerHTML += `<div class="teaching-block"><h5><i class="fas fa-briefcase" style="color:#20bcba;margin-right:0.4rem;"></i>Experience</h5><p>${esc(p.teaching_experience)}</p></div>`;
+                    grid.innerHTML += `<div class="teaching-block"><h5><i class="fas fa-briefcase" style="color:#20bcba;margin-right:0.4rem;"></i>Experience</h5><p translate="no">${esc(p.teaching_experience)}</p></div>`;
                     hasTeaching = true;
                 }
                 if (p.teaching_style) {
-                    grid.innerHTML += `<div class="teaching-block"><h5><i class="fas fa-lightbulb" style="color:#20bcba;margin-right:0.4rem;"></i>Teaching Style</h5><p>${esc(p.teaching_style)}</p></div>`;
+                    grid.innerHTML += `<div class="teaching-block"><h5><i class="fas fa-lightbulb" style="color:#20bcba;margin-right:0.4rem;"></i>Teaching Style</h5><p translate="no">${esc(p.teaching_style)}</p></div>`;
                     hasTeaching = true;
                 }
                 if (hasTeaching) document.getElementById('teachingSection').style.display = '';
@@ -1142,7 +1148,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const weekEnd = new Date(currentWeekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
             document.getElementById('current-week-label').textContent =
-                `${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                `${currentWeekStart.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric', year: 'numeric' })}`;
             for (let i = 0; i < 7; i++) {
                 const date = new Date(currentWeekStart);
                 date.setDate(date.getDate() + i);
@@ -1160,8 +1166,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function createDayColumn(date) {
             const column  = document.createElement('div');
-            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-            const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const dayName = date.toLocaleDateString(LB_LOCALE, { weekday: 'short' });
+            const dayDate = date.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric' });
             const dayKey  = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
             const blockedDates = instructorAvailability.blockedDates || [];
@@ -1282,7 +1288,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         function formatTime(date) {
-            return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            return date.toLocaleTimeString(LB_LOCALE, { hour: 'numeric', minute: '2-digit', hour12: LB_H12 });
         }
 
         async function confirmBooking(slot) {
@@ -1298,8 +1304,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('pay-book-btn').innerHTML = '<i class="fas fa-lock"></i> Pay & Book';
             document.getElementById('pay-instructor-name').textContent = currentInstructorName;
             document.getElementById('pay-datetime').textContent =
-                slot.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
-                ' at ' + formatTime(slot.startTime) + ' – ' + formatTime(slot.endTime);
+                lbF('{date} at {start} – {end}', { date: slot.startTime.toLocaleDateString(LB_LOCALE, { weekday: 'long', month: 'long', day: 'numeric' }), start: formatTime(slot.startTime), end: formatTime(slot.endTime) });
             document.getElementById('payment-element-loading').style.display = 'block';
             document.getElementById('payment-element-wrapper').style.display = 'none';
             document.getElementById('payment-element').innerHTML = '';
@@ -1534,7 +1539,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const weekEnd = new Date(trialWeekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
             document.getElementById('trial-week-label').textContent =
-                `${trialWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                `${trialWeekStart.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric', year: 'numeric' })}`;
             for (let i = 0; i < 7; i++) {
                 const date = new Date(trialWeekStart);
                 date.setDate(date.getDate() + i);
@@ -1544,8 +1549,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function createTrialDayColumn(date) {
             const column  = document.createElement('div');
-            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-            const dayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const dayName = date.toLocaleDateString(LB_LOCALE, { weekday: 'short' });
+            const dayDate = date.toLocaleDateString(LB_LOCALE, { month: 'short', day: 'numeric' });
             const dayKey  = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
             const blockedDates = instructorAvailability.blockedDates || [];
@@ -1604,8 +1609,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('trial-confirm-btn').style.display = 'inline-block';
             document.getElementById('trial-confirm-instructor').textContent = currentInstructorName;
             document.getElementById('trial-confirm-datetime').textContent =
-                slot.startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) +
-                ' at ' + formatTime(slot.startTime);
+                lbF('{date} at {start}', { date: slot.startTime.toLocaleDateString(LB_LOCALE, { weekday: 'long', month: 'long', day: 'numeric' }), start: formatTime(slot.startTime) });
             document.getElementById('trial-error-msg').style.display = 'none';
         }
 
@@ -1710,7 +1714,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 sortedDocs.forEach(d => {
                     const rv = d.data();
                     const date = rv.createdAt?.toDate ? rv.createdAt.toDate() : new Date(rv.createdAt);
-                    const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                    const dateStr = date.toLocaleDateString(LB_LOCALE, { year: 'numeric', month: 'short', day: 'numeric' });
 
                     // Build yes/no pills
                     const pillMap = {
@@ -1730,11 +1734,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     card.className = 'review-card';
                     card.innerHTML = `
                         <div class="review-card-header">
-                            <span class="review-author-name">${esc(rv.studentName || 'Student')}</span>
+                            <span class="review-author-name"${rv.studentName ? ' translate="no"' : ''}>${esc(rv.studentName || 'Student')}</span>
                             ${starsHtml(rv.rating)}
                             <span class="review-date">${dateStr}</span>
                         </div>
-                        ${rv.review ? `<p class="review-body">${esc(rv.review)}</p>` : ''}
+                        ${rv.review ? `<p class="review-body" translate="no">${esc(rv.review)}</p>` : ''}
                         ${pills ? `<div class="review-pills">${pills}</div>` : ''}
                     `;
                     listEl.appendChild(card);
