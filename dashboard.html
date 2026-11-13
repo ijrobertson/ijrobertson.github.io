@@ -1218,8 +1218,152 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
       background-color: white; transition: 0.3s; border-radius: 50%;
     }
-    .toggle-switch input:checked + .toggle-slider { background-color: #3b5998; }
+    .toggle-switch input:checked + .toggle-slider { background-color: #20bcba; } /* brand teal (was #3b5998) */
     .toggle-switch input:checked + .toggle-slider:before { transform: translateX(24px); }
+
+    /* ── Settings layout (2026-11-12) ────────────────────────────────────
+       Same design as the student Settings page (student-dashboard.html).
+       Grouped, collapsible sections in place of one long form. Every field
+       and button is the same element (same id) as before; only the layout
+       changed. Sections are <details>, so closed sections' fields are still
+       in the page and still saved by the Save buttons. */
+    .settings-page { max-width: 640px; margin: 1rem auto 2rem; padding: 0 1rem; }
+    .st-hero {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(17, 52, 72, 0.08);
+    }
+    .st-hero .avatar-wrapper { margin: 0; flex-shrink: 0; }
+    .st-hero .profile-pic-preview { width: 84px; height: 84px; }
+    .st-hero .avatar-edit-btn { width: 30px; height: 30px; min-width: 0; bottom: 0; right: 0; }
+    .st-hero-text { min-width: 0; flex: 1; }
+    .st-hero-name { font-size: 1.2rem; font-weight: 700; color: #113448; line-height: 1.25; overflow-wrap: anywhere; }
+    .st-hero-sub { font-size: 0.88rem; color: #4a6272; margin-top: 2px; line-height: 1.4; }
+    .st-hero-sub:empty { display: none; }
+    .st-hero .small-note { margin-top: 6px; font-size: 0.8rem; color: #6b7f8c; line-height: 1.4; }
+
+    .st-group-label {
+      margin: 1.6rem 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #4a6272;
+    }
+    .st-card, .st-list {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(17, 52, 72, 0.08);
+      overflow: hidden;
+    }
+    .st-card-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.9rem 1rem; border-bottom: 1px solid #eef1f3; }
+    .st-card-body { padding: 1rem; }
+
+    .st-icon {
+      flex: 0 0 34px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #e6f7f7;
+      color: #0b6664;
+      font-size: 0.95rem;
+    }
+    .st-title { font-weight: 600; color: #113448; font-size: 1rem; }
+
+    .st-list > * + * { border-top: 1px solid #eef1f3; }
+    .st-section > summary, .st-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.9rem 1rem;
+      cursor: pointer;
+      list-style: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .st-link { text-decoration: none; }
+    .st-link:hover { text-decoration: none; }
+    .st-section > summary::-webkit-details-marker { display: none; }
+    .st-section > summary::marker { content: ""; }
+    .st-section > summary:focus-visible, .st-link:focus-visible { outline: 2px solid #20bcba; outline-offset: -2px; }
+    .st-summary-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .st-sub { font-size: 0.84rem; color: #6b7f8c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .st-chevron { color: #9aaab4; font-size: 0.8rem; transition: transform 0.2s ease; }
+    .st-section[open] > summary .st-chevron { transform: rotate(180deg); }
+    .st-body { padding: 0 1rem 1.1rem; }
+    .st-body > label:first-child { margin-top: 0.25rem; }
+    .st-help { font-size: 0.84rem; color: #6b7f8c; margin: 0 0 0.75rem; line-height: 1.5; }
+    .st-help-last { margin: 0.5rem 0 0; }
+    .st-subsection { margin-top: 1.25rem; }
+
+    .st-toggle-row { display: flex; align-items: center; gap: 1rem; padding: 0.4rem 0; }
+    .st-toggle-row > label:first-child { flex: 1; margin: 0; font-weight: 500; color: #113448; cursor: pointer; line-height: 1.4; }
+    .st-toggle-row > label:first-child i { width: 1.25rem; margin-right: 0.4rem; color: #20bcba; text-align: center; }
+    .st-toggle-row .toggle-switch { margin: 0; flex-shrink: 0; }
+
+    .st-secondary-btn {
+      display: block;
+      width: 100%;
+      margin: 1.25rem 0 0;
+      background: #ffffff;
+      color: #0b6664;
+      border: 1.5px solid #20bcba;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .st-secondary-btn:hover { background: #e6f7f7; }
+
+    .st-savebar {
+      position: sticky;
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px)); /* tab bar height + 8px gap */
+      z-index: 5;
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #dfe7eb;
+      box-shadow: 0 4px 18px rgba(17, 52, 72, 0.14);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .st-savebar .status-message { margin: 0; font-size: 0.88rem; }
+    .st-savebar .status-message:empty { display: none; }
+    .st-savebar .horizontal-btns { margin: 0; justify-content: center; }
+    .st-savebar #save-btn { margin: 0; min-width: 220px; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; }
+
+    .st-danger .st-icon { background: #fdecea; color: #c0392b; }
+    .st-danger .st-title { color: #c0392b; }
+
+    /* Weekly schedule on phones: day name and its + button on one line,
+       then each time range on a single row underneath (it used to squeeze
+       into a narrow column and wrap, splitting "from" and "to"). */
+    @media (max-width: 520px) {
+      #weekly-schedule-grid { padding: 0.25rem 0.75rem !important; }
+      #weekly-schedule-grid .schedule-day-row {
+        grid-template-columns: 1fr auto;
+        grid-template-areas: "day add" "slots slots";
+        row-gap: 0.5rem;
+        column-gap: 0.5rem;
+        align-items: center;
+      }
+      #weekly-schedule-grid .day-label { grid-area: day; padding-top: 0; font-size: 0.95rem; color: #113448; }
+      #weekly-schedule-grid .add-slot-btn { grid-area: add; }
+      #weekly-schedule-grid .time-slots { grid-area: slots; }
+      #weekly-schedule-grid .time-slots:empty { display: none; }
+      #weekly-schedule-grid .time-slot { flex-wrap: nowrap; }
+      #weekly-schedule-grid .time-slot input[type="time"] { flex: 1 1 0; min-width: 0; width: auto; }
+      #weekly-schedule-grid .time-slot span { flex: none; }
+      #weekly-schedule-grid .remove-slot-btn { flex: none; }
+    }
   </style>
 </head>
 <body>
@@ -1415,218 +1559,460 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
   </div>
 
-  <div class="container" id="profile-container">
-    <label for="name">Full Name</label>
-    <input type="text" id="name" />
+  <div class="settings-page" id="profile-container">
 
-    <label>Profile Picture</label>
-    <div class="avatar-wrapper">
-      <img id="avatarPreview" class="profile-pic-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile" />
-      <button type="button" class="avatar-edit-btn" id="avatar-edit-btn" title="Change photo">
+    <!-- Profile summary: photo (same upload controls as before) + name -->
+    <div class="st-hero">
+      <div class="avatar-wrapper">
+        <img id="avatarPreview" class="profile-pic-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Profile" />
+        <button type="button" class="avatar-edit-btn" id="avatar-edit-btn" title="Change photo">
         <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
       </button>
-      <input type="file" id="avatar" accept="image/*" />
-    </div>
-
-
-    <label>Intro Video</label>
-    <div class="video-upload-section">
-      <div class="video-preview-wrapper">
-        <video id="videoPreview" controls playsinline></video>
+        <input type="file" id="avatar" accept="image/*" />
       </div>
-      <div>
-        <button type="button" class="video-upload-btn" id="videoUploadBtn">
-          <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:white;flex-shrink:0"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-          Change Intro Video
-        </button>
-        <input type="file" id="videoInput" accept="video/*" />
-      </div>
-      <div class="video-progress-bar-wrap" id="videoProgressWrap">
-        <div class="video-progress-bar" id="videoProgressBar"></div>
-      </div>
-      <div class="video-status" id="videoStatus"></div>
-    </div>
-
-    <label for="spokenLanguage">Languages You Speak</label>
-    <select id="spokenLanguage"></select>
-    <div id="languages_spoken"></div>
-
-    <label for="teachingLanguage">Languages You Teach</label>
-    <select id="teachingLanguage"></select>
-    <div id="languages_teaching"></div>
-
-    <label for="price">Price Per Lesson</label>
-    <input type="number" id="price" min="5" placeholder="Enter price (min $5)" />
-    <label for="currency">Currency</label>
-    <select id="currency"></select>
-
-    <label for="about_me">About Me</label>
-    <textarea id="about_me" rows="5" placeholder="Write a short bio..."></textarea>
-
-    <label for="teaching_experience">Teaching Experience</label>
-    <textarea id="teaching_experience" rows="4" placeholder="Describe your teaching background and experience..."></textarea>
-
-    <label for="certifications">Certifications</label>
-    <textarea id="certifications" rows="3" placeholder="List any relevant teaching certificates, degrees, or language qualifications..."></textarea>
-
-    <label for="teaching_style">Teaching Style</label>
-    <textarea id="teaching_style" rows="4" placeholder="Describe your teaching approach and methodology..."></textarea>
-
-    <label for="country">Native Country</label>
-    <select id="country"></select>
-
-    <!-- NOTIFICATION SETTINGS -->
-    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
-      <i class="fas fa-bell"></i> Notification Settings
-    </h3>
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.4rem;">
-      <label for="messagePushEnabled" style="margin: 0; flex: 1; cursor: pointer;">
-        Push notifications for new messages
-      </label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="messagePushEnabled" />
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
-    <p id="messagePushStatus" style="display:none; margin: 0 0 1.5rem; font-size: 0.85rem;"></p>
-
-    <!-- AVAILABILITY SECTION (id="availability" — linked from the Calendar
-         tab's "Open more times" prompt; scroll-margin keeps it clear of the
-         fixed app header) -->
-    <h3 id="availability" style="scroll-margin-top: calc(76px + env(safe-area-inset-top, 0)); margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
-      <i class="fas fa-calendar-alt"></i> Teaching Availability
-    </h3>
-
-    <label for="timezone">Your Timezone</label>
-    <select id="timezone" style="margin-bottom: 1.5rem;">
-      <option value="">Select your timezone...</option>
-    </select>
-
-    <div style="margin-bottom: 2rem;">
-      <label style="display: block; margin-bottom: 1rem;">Weekly Schedule</label>
-      <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-        Set your regular teaching hours. All times are in your local timezone.
-      </p>
-      <div id="weekly-schedule-grid" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
-        <!-- JavaScript will populate this -->
+      <div class="st-hero-text">
+        <div class="st-hero-name" data-summary="hero-name">Your profile</div>
+        <div class="st-hero-sub" data-summary="hero-sub"></div>
+        <div class="small-note">Tap the pencil to change your photo.</div>
       </div>
     </div>
 
-    <div style="margin-bottom: 2rem;">
-      <label style="display: block; margin-bottom: 0.5rem;">Date Availability</label>
-      <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-        Click any upcoming date to set custom hours for that specific day, or to block it entirely. Custom hours override your weekly schedule for that date only — perfect for days when your availability is different from usual.
-      </p>
-      <div class="blocked-dates-calendar">
-        <div class="blocked-cal-header">
-          <button type="button" class="cal-nav-btn" id="cal-prev-btn" title="Previous month">
-            <i class="fas fa-chevron-left"></i>
+    <!-- Lessons -->
+    <div class="st-group-label">Lessons</div>
+    <div class="st-card">
+      <div class="st-card-head">
+        <span class="st-icon"><i class="fas fa-calendar-check"></i></span>
+        <span class="st-title">Upcoming Lessons</span>
+      </div>
+      <div class="st-card-body">
+        <div id="instructor-bookings" style="min-height: 80px;">
+          <p style="color: #999; font-size: 0.95rem;">Loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teaching profile (what students see) -->
+    <div class="st-group-label">Teaching Profile</div>
+    <div class="st-list">
+      <details class="st-section" data-section="about">
+        <summary>
+          <span class="st-icon"><i class="fas fa-user"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">About You</span>
+            <span class="st-sub" data-summary="about">Name, country and bio</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" />
+
+          <label for="country">Native Country</label>
+          <select id="country"></select>
+
+          <label for="about_me">About Me</label>
+          <textarea id="about_me" rows="5" placeholder="Write a short bio..."></textarea>
+        </div>
+      </details>
+      <details class="st-section" data-section="languages">
+        <summary>
+          <span class="st-icon"><i class="fas fa-language"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Languages</span>
+            <span class="st-sub" data-summary="languages">What you speak and teach</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <label for="spokenLanguage">Languages You Speak</label>
+          <select id="spokenLanguage"></select>
+          <div id="languages_spoken"></div>
+
+          <label for="teachingLanguage">Languages You Teach</label>
+          <select id="teachingLanguage"></select>
+          <div id="languages_teaching"></div>
+        </div>
+      </details>
+      <details class="st-section" data-section="pricing">
+        <summary>
+          <span class="st-icon"><i class="fas fa-tag"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Lesson Price</span>
+            <span class="st-sub" data-summary="pricing">Your price per lesson</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <label for="price">Price Per Lesson</label>
+          <input type="number" id="price" min="5" placeholder="Enter price (min $5)" />
+          <label for="currency">Currency</label>
+          <select id="currency"></select>
+        </div>
+      </details>
+      <details class="st-section" data-section="video">
+        <summary>
+          <span class="st-icon"><i class="fas fa-video"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Intro Video</span>
+            <span class="st-sub" data-summary="video">Shown on your public profile</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <div class="video-upload-section">
+            <div class="video-preview-wrapper">
+              <video id="videoPreview" controls playsinline></video>
+            </div>
+            <div>
+              <button type="button" class="video-upload-btn" id="videoUploadBtn">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:white;flex-shrink:0"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                Change Intro Video
+              </button>
+              <input type="file" id="videoInput" accept="video/*" />
+            </div>
+            <div class="video-progress-bar-wrap" id="videoProgressWrap">
+              <div class="video-progress-bar" id="videoProgressBar"></div>
+            </div>
+            <div class="video-status" id="videoStatus"></div>
+          </div>
+        </div>
+      </details>
+      <details class="st-section" data-section="experience">
+        <summary>
+          <span class="st-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Experience &amp; Teaching Style</span>
+            <span class="st-sub" data-summary="experience">Experience, certifications and approach</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <label for="teaching_experience">Teaching Experience</label>
+          <textarea id="teaching_experience" rows="4" placeholder="Describe your teaching background and experience..."></textarea>
+
+          <label for="certifications">Certifications</label>
+          <textarea id="certifications" rows="3" placeholder="List any relevant teaching certificates, degrees, or language qualifications..."></textarea>
+
+          <label for="teaching_style">Teaching Style</label>
+          <textarea id="teaching_style" rows="4" placeholder="Describe your teaching approach and methodology..."></textarea>
+        </div>
+      </details>
+    </div>
+
+    <!-- Availability -->
+    <div class="st-group-label">Availability</div>
+    <div class="st-list">
+      <!-- The #availability anchor: linked from the Calendar tab ("Update availability");
+           opened automatically when the page is reached with #availability. -->
+      <details class="st-section" data-section="availability" id="availability" style="scroll-margin-top: calc(76px + env(safe-area-inset-top, 0));">
+        <summary>
+          <span class="st-icon"><i class="fas fa-calendar-alt"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Teaching Availability</span>
+            <span class="st-sub" data-summary="availability">Timezone, weekly hours and date changes</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <label for="timezone">Your Timezone</label>
+          <select id="timezone">
+            <option value="">Select your timezone...</option>
+          </select>
+
+          <div class="st-subsection">
+            <label style="display: block; margin-bottom: 1rem;">Weekly Schedule</label>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+              Set your regular teaching hours. All times are in your local timezone.
+            </p>
+            <div id="weekly-schedule-grid" style="background: #f8f9fa; padding: 1rem; border-radius: 12px;">
+              <!-- JavaScript will populate this -->
+            </div>
+          </div>
+
+          <div class="st-subsection">
+            <label style="display: block; margin-bottom: 0.5rem;">Date Availability</label>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+              Click any upcoming date to set custom hours for that specific day, or to block it entirely. Custom hours override your weekly schedule for that date only — perfect for days when your availability is different from usual.
+            </p>
+            <div class="blocked-dates-calendar">
+              <div class="blocked-cal-header">
+                <button type="button" class="cal-nav-btn" id="cal-prev-btn" title="Previous month">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <h4 id="cal-month-label">—</h4>
+                <button type="button" class="cal-nav-btn" id="cal-next-btn" title="Next month">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+              <div class="blocked-cal-weekdays">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+                <span>Thu</span><span>Fri</span><span>Sat</span>
+              </div>
+              <div class="blocked-cal-grid" id="blocked-cal-grid">
+                <!-- JS populates -->
+              </div>
+              <div class="blocked-dates-legend">
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#e8faf9;border:1px solid #20bcba;"></div>
+                  Available
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#fff3e0;border:1px solid #ff9800;"></div>
+                  Custom hours
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#fde8e8;border:1px solid #dc3545;"></div>
+                  Blocked
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot" style="background:#f5f5f5;border:1px solid #ccc;"></div>
+                  No weekly hours
+                </div>
+                <div class="legend-item" style="margin-left:auto;">
+                  <span id="blocked-save-indicator" style="font-size:0.82rem;font-weight:600;min-width:80px;text-align:right;"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" id="save-availability-btn" class="st-secondary-btn">
+            <i class="fas fa-save"></i> Save Availability
           </button>
-          <h4 id="cal-month-label">—</h4>
-          <button type="button" class="cal-nav-btn" id="cal-next-btn" title="Next month">
-            <i class="fas fa-chevron-right"></i>
-          </button>
         </div>
-        <div class="blocked-cal-weekdays">
-          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
-          <span>Thu</span><span>Fri</span><span>Sat</span>
-        </div>
-        <div class="blocked-cal-grid" id="blocked-cal-grid">
-          <!-- JS populates -->
-        </div>
-        <div class="blocked-dates-legend">
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#e8faf9;border:1px solid #20bcba;"></div>
-            Available
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#fff3e0;border:1px solid #ff9800;"></div>
-            Custom hours
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#fde8e8;border:1px solid #dc3545;"></div>
-            Blocked
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#f5f5f5;border:1px solid #ccc;"></div>
-            No weekly hours
-          </div>
-          <div class="legend-item" style="margin-left:auto;">
-            <span id="blocked-save-indicator" style="font-size:0.82rem;font-weight:600;min-width:80px;text-align:right;"></span>
+      </details>
+      <details class="st-section" data-section="gcal">
+        <summary>
+          <span class="st-icon"><i class="fab fa-google"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Google Calendar Sync</span>
+            <span class="st-sub" data-summary="gcal">Keep your bookings in Google Calendar</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <div id="gcal-section">
+            <p style="color: #999; font-size: 0.95rem;">Loading...</p>
           </div>
         </div>
+      </details>
+    </div>
+
+    <!-- Save: stays in view above the tab bar while scrolling the sections
+         above, so its messages (photo/video uploads, availability saves)
+         are always seen. Save Profile also saves the weekly schedule. -->
+    <div class="st-savebar">
+      <div id="status" class="status-message"></div>
+      <div class="horizontal-btns">
+        <button id="save-btn" type="button">Save Profile</button>
       </div>
     </div>
 
-    <button type="button" id="save-availability-btn"
-            style="background-color: #6c757d; margin-top: 0; margin-bottom: 2rem;">
-      <i class="fas fa-save"></i> Save Availability
-    </button>
-
-    <div class="horizontal-btns">
-      <button id="save-btn" type="button">Save Profile</button>
-    </div>
-    <div id="status" class="status-message"></div>
-
-    <!-- GOOGLE CALENDAR SYNC SECTION -->
-    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
-      <i class="fab fa-google"></i> Google Calendar Sync
-    </h3>
-    <div id="gcal-section">
-      <p style="color: #999; font-size: 0.95rem;">Loading...</p>
-    </div>
-
-    <!-- PAYMENT SETUP SECTION -->
-    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
-      <i class="fas fa-credit-card"></i> Payment Setup
-    </h3>
-    <div id="stripe-status-section">
-      <p style="color: #666; font-size: 0.9rem;">Loading payment status...</p>
-    </div>
-
-    <!-- EARNINGS SECTION -->
-    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
-      <i class="fas fa-chart-line"></i> Earnings
-    </h3>
-    <!-- Earnings has its own page (earnings.html, the bottom tab bar's
-         Earnings tab) — this page is the instructor's Settings now. -->
-    <a href="earnings" style="display:flex;align-items:center;gap:1rem;background:#fff;border-radius:10px;padding:1rem 1.25rem;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-left:4px solid #20bcba;text-decoration:none;color:#113448;">
-      <i class="fas fa-chart-line" style="font-size:1.4rem;color:#20bcba;"></i>
-      <span style="flex:1;">
-        <strong style="display:block;">View your earnings</strong>
-        <span style="font-size:0.85rem;color:#666;">This month, payouts and your lesson-by-lesson history</span>
-      </span>
-      <i class="fas fa-chevron-right" style="color:#999;"></i>
-    </a>
-
-    <!-- REFERRALS SECTION -->
-    <h3 id="referrals-heading" style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
-      <i class="fas fa-user-plus"></i> Referral Program
-    </h3>
-    <div id="referrals-section">
-      <p style="color: #999; font-size: 0.95rem;">Loading referral info...</p>
+    <!-- Payments -->
+    <div class="st-group-label">Payments</div>
+    <div class="st-list">
+      <details class="st-section" data-section="payment">
+        <summary>
+          <span class="st-icon"><i class="fas fa-credit-card"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Payment Setup</span>
+            <span class="st-sub" data-summary="payment">How you get paid</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <div id="stripe-status-section">
+            <p style="color: #666; font-size: 0.9rem;">Loading payment status...</p>
+          </div>
+        </div>
+      </details>
+      <!-- Earnings has its own page (earnings.html, the bottom tab bar's
+           Earnings tab) — this is just a shortcut to it. -->
+      <a href="earnings" class="st-link">
+        <span class="st-icon"><i class="fas fa-chart-line"></i></span>
+        <span class="st-summary-text">
+          <span class="st-title">View Your Earnings</span>
+          <span class="st-sub">This month, payouts and your lesson-by-lesson history</span>
+        </span>
+        <i class="fas fa-chevron-right st-chevron" aria-hidden="true"></i>
+      </a>
+      <details class="st-section" data-section="referrals" id="referrals-heading">
+        <summary>
+          <span class="st-icon"><i class="fas fa-user-plus"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Referral Program</span>
+            <span class="st-sub" data-summary="referrals">Invite other instructors</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <div id="referrals-section">
+            <p style="color: #999; font-size: 0.95rem;">Loading referral info...</p>
+          </div>
+        </div>
+      </details>
     </div>
 
-    <!-- UPCOMING LESSONS SECTION -->
-    <h3 style="margin-top: 2.5rem; margin-bottom: 1rem; color: #20bcba; border-bottom: 2px solid #20bcba; padding-bottom: 0.5rem;">
-      <i class="fas fa-calendar-check"></i> Upcoming Lessons
-    </h3>
-    <div id="instructor-bookings" style="min-height: 80px;">
-      <p style="color: #999; font-size: 0.95rem;">Loading...</p>
+    <!-- Preferences -->
+    <div class="st-group-label">Preferences</div>
+    <div class="st-list">
+      <details class="st-section" data-section="notifications">
+        <summary>
+          <span class="st-icon"><i class="fas fa-bell"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Notifications</span>
+            <span class="st-sub" data-summary="notifications">Push notifications for new messages</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <div class="st-toggle-row">
+            <label for="messagePushEnabled">
+              <i class="fas fa-bell"></i>
+              Push notifications for new messages
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="messagePushEnabled" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <p id="messagePushStatus" style="display:none; margin: 0 0 0.5rem; font-size: 0.85rem;"></p>
+          <p class="st-help st-help-last">This switch saves as soon as you flip it.</p>
+        </div>
+      </details>
     </div>
 
-    <!-- Danger Zone -->
-    <div class="danger-card">
-      <div class="danger-header">
-        <i class="fas fa-exclamation-triangle"></i>
-        <h3>Danger Zone</h3>
-      </div>
-      <p>Permanently delete your Lingua Bud instructor account and all associated data. This action is irreversible and cannot be undone.</p>
-      <button class="btn-delete-account" id="open-delete-modal">
-        <i class="fas fa-trash-alt"></i> Delete My Account
-      </button>
+    <!-- Account -->
+    <div class="st-group-label">Account</div>
+    <div class="st-list">
+      <details class="st-section st-danger" data-section="account">
+        <summary>
+          <span class="st-icon"><i class="fas fa-exclamation-triangle"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Delete Account</span>
+            <span class="st-sub" data-summary="account">Permanently remove your account and data</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <p class="st-help">Permanently delete your Lingua Bud instructor account and all associated data. This action is irreversible and cannot be undone.</p>
+            <button class="btn-delete-account" id="open-delete-modal">
+              <i class="fas fa-trash-alt"></i> Delete My Account
+            </button>
+        </div>
+      </details>
     </div>
   </div>
+
+  <script>
+    // Settings layout helpers. Read-only with respect to the profile: this
+    // only writes the one-line summaries under each section title, opens the
+    // Availability section when the page is reached with #availability, and
+    // opens a field's section when Save reports it missing. All loading and
+    // saving is still done by the page's module script below.
+    (function () {
+      var page = document.querySelector('.settings-page');
+      if (!page) return;
+      function $(id) { return document.getElementById(id); }
+      function val(id) { var el = $(id); return el ? String(el.value || '').trim() : ''; }
+      function optText(sel) {
+        if (!sel || !sel.value) return '';
+        var opt = sel.options[sel.selectedIndex];
+        return (opt && opt.text) || sel.value;
+      }
+      function tags(id) {
+        var box = $(id);
+        if (!box) return [];
+        return Array.prototype.map.call(box.querySelectorAll('.tag'), function (t) { return t.textContent.trim(); }).filter(Boolean);
+      }
+      Array.prototype.forEach.call(page.querySelectorAll('[data-summary]'), function (el) {
+        el.setAttribute('data-default', el.textContent);
+      });
+      function set(key, text) {
+        Array.prototype.forEach.call(page.querySelectorAll('[data-summary="' + key + '"]'), function (el) {
+          var value = text || el.getAttribute('data-default');
+          if (el.textContent !== value) el.textContent = value;
+        });
+      }
+
+      function refresh() {
+        var name = val('name');
+        var country = optText($('country'));
+        var spoken = tags('languages_spoken');
+        var teaching = tags('languages_teaching');
+        set('hero-name', name);
+        set('hero-sub', [country, teaching.length ? 'Teaches ' + teaching.join(', ') : ''].filter(Boolean).join(' · '));
+        set('about', [name, country].filter(Boolean).join(' · '));
+        set('languages', [
+          spoken.length ? 'Speaks ' + spoken.join(', ') : '',
+          teaching.length ? 'Teaches ' + teaching.join(', ') : ''
+        ].filter(Boolean).join(' · '));
+        var price = val('price');
+        set('pricing', price ? price + ' ' + val('currency') + ' per lesson' : '');
+        var video = $('videoPreview');
+        set('video', video && video.getAttribute('src') ? 'Video added · shown on your public profile' : '');
+        var filled = ['teaching_experience', 'certifications', 'teaching_style'].filter(function (id) { return val(id); }).length;
+        set('experience', filled ? filled + ' of 3 filled in' : '');
+        var tz = optText($('timezone'));
+        set('availability', tz ? 'Timezone: ' + tz : '');
+        var push = $('messagePushEnabled');
+        set('notifications', push ? 'Push notifications ' + (push.checked ? 'on' : 'off') : '');
+      }
+
+      var queued = false;
+      function queue() {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; refresh(); });
+      }
+      // Fields are filled in by script (no input events), but each fill also
+      // re-renders tags / the photo / the video, which this sees.
+      new MutationObserver(queue).observe(page, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'src'] });
+      page.addEventListener('input', queue, true);
+      page.addEventListener('change', queue, true);
+      refresh();
+
+      // Links to #availability (the Calendar tab's "Update availability")
+      // land on a closed section: open it. The page's own script scrolls to
+      // it again once the profile has loaded.
+      function openFromHash() {
+        var target = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+        var section = target && target.closest ? target.closest('details') : null;
+        if (section) section.open = true;
+      }
+      openFromHash();
+      window.addEventListener('hashchange', openFromHash);
+
+      // Save reports the first missing field in #status (in red), and the
+      // page's own .focus() can't reach a field in a closed section. Open it.
+      var RULES = [
+        [/full name|native country|about me/i, 'about', function (t) {
+          return /full name/i.test(t) ? 'name' : /country/i.test(t) ? 'country' : 'about_me';
+        }],
+        [/language you (speak|teach)/i, 'languages', function (t) { return /speak/i.test(t) ? 'spokenLanguage' : 'teachingLanguage'; }],
+        [/timezone/i, 'availability', function () { return 'timezone'; }],
+        [/lesson rate|price/i, 'pricing', function () { return 'price'; }]
+      ];
+      var status = $('status');
+      if (status) new MutationObserver(function () {
+        var text = status.textContent || '';
+        if (!text || status.style.color !== 'red') return;
+        if (/profile picture/i.test(text)) {
+          page.querySelector('.st-hero').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        for (var i = 0; i < RULES.length; i++) {
+          if (!RULES[i][0].test(text)) continue;
+          var section = page.querySelector('.st-section[data-section="' + RULES[i][1] + '"]');
+          if (!section) return;
+          section.open = true;
+          var field = $(RULES[i][2](text));
+          (field || section).scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (field) setTimeout(function () { try { field.focus({ preventScroll: true }); } catch (e) {} }, 350);
+          return;
+        }
+      }).observe(status, { childList: true, characterData: true, subtree: true });
+    })();
+  </script>
 
   <!-- Date Override Modal -->
   <div class="date-override-backdrop" id="date-override-backdrop">
