@@ -1712,8 +1712,15 @@ async function generateAndStoreQuiz(db, uid, language, source, requestedLevel) {
   return { ok: true, quizId: quizRef.id, questions, level };
 }
 
+// AI quizzes are switched off (2026-11-13, Ian: cost + slow loading). The app
+// no longer calls this, but older app copies still cached on phones might:
+// answering { ok: false } makes them fall back to a free word-bank practice
+// round (vocab-quiz.html already handles that) without calling the AI.
+const AI_QUIZ_GENERATION_ENABLED = false;
+
 exports.generatePersonalizedQuiz = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
+  if (!AI_QUIZ_GENERATION_ENABLED) return { ok: false, reason: 'ai_quizzes_disabled' };
   const uid = request.auth.uid;
   const language = (request.data?.language || '').trim();
   if (!language) throw new HttpsError('invalid-argument', 'language is required');
