@@ -1,0 +1,325 @@
+{
+  "id": "en-us-urgent-care-la",
+  "title": "Seeing a doctor at urgent care in Los Angeles",
+  "language": "English",
+  "country": "United States",
+  "countryCode": "US",
+  "flag": "🇺🇸",
+  "variety": { "id": "en-US", "label": "American English" },
+  "difficulty": "intermediate",
+  "estMinutes": 7,
+  "setting": "You're visiting Los Angeles and have had a sore throat and a fever for three days. It isn't an emergency, so you go to an urgent care clinic — a walk-in clinic for problems that need a doctor today but aren't life-threatening.",
+  "objectives": [
+    "Explain what's wrong and how long you've had it",
+    "Answer check-in questions about ID and insurance",
+    "Understand questions about pain and allergies",
+    "Know when to use urgent care and when to call 911"
+  ],
+  "varietyNote": "This is everyday American English. Medical words often differ between the US and the UK — Americans talk about a \"pharmacy\" or \"drugstore\" and the \"ER\", while British people say \"chemist's\" and \"A&E\". Clear, simple descriptions are understood everywhere.",
+  "phrases": [
+    {
+      "id": "what-brings-you-in",
+      "text": "What brings you in today?",
+      "translation": "Why have you come to see the doctor today?",
+      "example": "\"What brings you in today?\" \"I've had a really bad cough.\"",
+      "exampleTranslation": "The usual opening question at a doctor's appointment."
+    },
+    {
+      "id": "ive-had",
+      "text": "I've had a sore throat for three days.",
+      "translation": "My throat has been hurting for three days.",
+      "example": "I've had a headache since yesterday.",
+      "exampleTranslation": "My head has been hurting since yesterday.",
+      "note": "Use \"I've had…\" + \"for\" (a length of time) or \"since\" (a starting point)."
+    },
+    {
+      "id": "insurance",
+      "text": "Do you have insurance?",
+      "translation": "Do you have health insurance to pay for the visit?",
+      "example": "\"I'm visiting — I have travel insurance.\" \"Okay, can I see the card?\"",
+      "exampleTranslation": "Many clinics will take travel insurance details, or you can pay yourself.",
+      "alsoHeard": [
+        { "text": "Will you be self-pay?", "where": "Asked if you'll pay the bill yourself" }
+      ]
+    },
+    {
+      "id": "scale-pain",
+      "text": "On a scale of one to ten, how bad is the pain?",
+      "translation": "How strong is the pain, from 1 (very mild) to 10 (the worst possible)?",
+      "example": "\"About a six.\"",
+      "exampleTranslation": "A number is the answer they're looking for."
+    },
+    {
+      "id": "allergic",
+      "text": "Are you allergic to any medications?",
+      "translation": "Do any medicines give you an allergic reaction?",
+      "example": "I'm allergic to penicillin.",
+      "exampleTranslation": "Penicillin gives me an allergic reaction."
+    },
+    {
+      "id": "which-pharmacy",
+      "text": "Which pharmacy should I send it to?",
+      "translation": "Which pharmacy do you want the prescription sent to?",
+      "example": "Just send it to the closest pharmacy, please.",
+      "exampleTranslation": "Please send it to the pharmacy nearest to me.",
+      "alsoHeard": [
+        { "text": "Any drugstore near you will have it.", "where": "\"Drugstore\" is another American word for a pharmacy" }
+      ]
+    }
+  ],
+  "cultureNotes": [
+    "For a life-threatening emergency — chest pain, trouble breathing, a serious injury — call 911 or go to an emergency room (ER). Urgent care is for problems that need a doctor today but aren't life-threatening.",
+    "Healthcare in the US is expensive without insurance. Bring your insurance card (or travel insurance details) and a photo ID, and ask about the self-pay price if you aren't insured.",
+    "Many urgent care clinics don't need an appointment — you just walk in, although checking in online first can shorten the wait.",
+    "Doctors in the US usually send prescriptions electronically to the pharmacy you choose. The medicine is often ready to pick up within an hour or two."
+  ],
+  "steps": [
+    { "type": "scene", "text": "You arrive at the urgent care clinic and go to the front desk." },
+    { "type": "line", "speaker": "Receptionist", "text": "Hi there. Checking in? Can I see a photo ID and your insurance card?", "translation": "Hello. Are you here to see a doctor? Please show me an ID with your photo and your health insurance card." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You're a tourist with travel insurance. What do you say?",
+      "options": [
+        { "text": "Here's my passport. I'm visiting, so I have travel insurance — is that okay?", "correct": true, "why": "Clear and polite: you hand over your ID and explain your situation." },
+        { "text": "I don't need insurance, I'm not dying.", "why": "The clinic still needs to know how the visit will be paid — explain that you have travel insurance." },
+        { "text": "Insurance? No, no.", "why": "Too vague — and it isn't true. Tell them you have travel insurance." }
+      ],
+      "phraseIds": ["insurance"]
+    },
+    { "type": "line", "speaker": "Receptionist", "text": "That's fine — we'll make a copy. Have a seat and someone will call your name.", "translation": "No problem — we'll copy it. Sit down and someone will call your name." },
+    { "type": "scene", "text": "Twenty minutes later, a nurse takes you to an exam room. Then the doctor comes in." },
+    { "type": "line", "speaker": "Doctor", "text": "Hi, I'm Dr. Nguyen. So, what brings you in today?", "translation": "Hello, I'm Dr. Nguyen. Why have you come in today?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "Your throat has hurt for three days. How do you explain?",
+      "options": [
+        { "text": "I've had a sore throat for three days, and a fever.", "correct": true, "why": "Perfect: \"I've had… for…\" is exactly how to say how long something has lasted." },
+        { "text": "I have sore throat since three days.", "why": "A very common mistake! In English: \"I've had a sore throat for three days\"." },
+        { "text": "My throat is sad.", "why": "\"Sore\" means painful — a \"sad\" throat would make the doctor smile." }
+      ],
+      "phraseIds": ["ive-had", "what-brings-you-in"]
+    },
+    { "type": "line", "speaker": "Doctor", "text": "Okay. On a scale of one to ten, how bad is the pain?", "translation": "How strong is the pain, from 1 to 10?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What does the doctor want to know?",
+      "options": [
+        { "text": "How strong the pain is, as a number from 1 to 10", "correct": true, "why": "Right — just answer with a number, like \"about a six\"." },
+        { "text": "How much you weigh", "why": "A \"scale\" can weigh things, but here it means a range from 1 to 10." },
+        { "text": "How many days you've been ill", "why": "You've already said that — now the question is how strong the pain is." }
+      ],
+      "phraseIds": ["scale-pain"]
+    },
+    { "type": "line", "speaker": "Doctor", "text": "It looks like strep throat, so I'll give you an antibiotic. Are you allergic to any medications?", "translation": "It looks like a bacterial throat infection, so I'll give you an antibiotic. Do any medicines give you an allergic reaction?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You're allergic to penicillin. What do you say?",
+      "options": [
+        { "text": "Yes — I'm allergic to penicillin.", "correct": true, "why": "Clear and important. Always mention allergies before taking a new medicine." },
+        { "text": "I don't like penicillin.", "why": "Not liking a medicine isn't the same as an allergy. Say \"I'm allergic to…\" so the doctor takes it seriously." },
+        { "text": "No problem, any medicine is fine.", "why": "Dangerous! If you have an allergy, you must say so." }
+      ],
+      "phraseIds": ["allergic"]
+    },
+    { "type": "line", "speaker": "Doctor", "text": "Good to know — I'll prescribe something else. Which pharmacy should I send it to?", "translation": "Thanks for telling me — I'll prescribe a different medicine. Which pharmacy do you want the prescription sent to?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What is the doctor asking?",
+      "options": [
+        { "text": "Where you'd like to pick up your medicine — the prescription is sent there electronically", "correct": true, "why": "Right — choose a pharmacy near your hotel, and they'll prepare the medicine for you." },
+        { "text": "Which pharmacy the doctor works at", "why": "The doctor doesn't work at a pharmacy — she's asking where you'd like to collect your medicine." },
+        { "text": "Whether you want to buy the medicine online", "why": "You'll pick it up in person; the doctor just sends the order ahead." }
+      ],
+      "phraseIds": ["which-pharmacy"]
+    },
+    { "type": "scene", "text": "On your way out, you wonder when you should call 911 instead." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "When is 911 the right call?",
+      "options": [
+        { "text": "For a life-threatening emergency, like chest pain or trouble breathing", "correct": true, "why": "Right. 911 (or the ER) is for emergencies; urgent care is for problems like yours." },
+        { "text": "Any time you feel unwell", "why": "911 is only for emergencies. For a sore throat, urgent care or a regular doctor is right." },
+        { "text": "Never — tourists can't call 911", "why": "Anyone in the US can and should call 911 in an emergency." }
+      ]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "Ir al médico en una clínica de urgencias de Los Ángeles",
+      "summary": "Explica tus síntomas, responde a las preguntas sobre el seguro y consigue una receta.",
+      "setting": "Estás de visita en Los Ángeles y llevas tres días con dolor de garganta y fiebre. No es una emergencia, así que vas a una clínica de urgencias («urgent care»): un centro sin cita para problemas que necesitan un médico hoy pero no ponen en peligro tu vida.",
+      "objectives": [
+        "Explicar qué te pasa y desde cuándo",
+        "Responder a las preguntas de la recepción sobre identificación y seguro",
+        "Entender preguntas sobre el dolor y las alergias",
+        "Saber cuándo ir a urgencias y cuándo llamar al 911"
+      ],
+      "varietyNote": "Este es el inglés estadounidense de todos los días. Las palabras médicas suelen cambiar entre Estados Unidos y el Reino Unido: los estadounidenses hablan de «pharmacy» o «drugstore» (farmacia) y de la «ER» (sala de urgencias), mientras que los británicos dicen «chemist's» y «A&E». Las descripciones claras y sencillas se entienden en todas partes.",
+      "phrases": {
+        "what-brings-you-in": { "translation": "¿Qué le trae por aquí hoy?", "exampleTranslation": "La pregunta habitual al empezar una consulta médica." },
+        "ive-had": { "translation": "Llevo tres días con dolor de garganta.", "exampleTranslation": "Me duele la cabeza desde ayer.", "note": "Usa «I've had…» + «for» (una duración) o «since» (un punto de partida)." },
+        "insurance": { "translation": "¿Tiene seguro médico?", "exampleTranslation": "Muchas clínicas aceptan los datos del seguro de viaje, o puedes pagar tú mismo.", "alsoHeard": ["Se pregunta si vas a pagar tú la factura"] },
+        "scale-pain": { "translation": "Del uno al diez, ¿cuánto le duele?", "exampleTranslation": "Lo que esperan como respuesta es un número." },
+        "allergic": { "translation": "¿Es alérgico a algún medicamento?", "exampleTranslation": "Soy alérgico a la penicilina." },
+        "which-pharmacy": { "translation": "¿A qué farmacia le envío la receta?", "exampleTranslation": "Envíela a la farmacia más cercana, por favor.", "alsoHeard": ["«Drugstore» es otra palabra estadounidense para farmacia"] }
+      },
+      "cultureNotes": [
+        "Ante una emergencia grave —dolor en el pecho, dificultad para respirar, una lesión seria— llama al 911 o ve a una sala de urgencias de hospital (ER). El «urgent care» es para problemas que necesitan un médico hoy pero no ponen en peligro tu vida.",
+        "La atención médica en Estados Unidos es cara sin seguro. Lleva tu tarjeta del seguro (o los datos de tu seguro de viaje) y un documento con foto, y si no tienes seguro, pregunta el precio para pago directo («self-pay»).",
+        "Muchas clínicas de urgencias no necesitan cita: simplemente vas, aunque registrarte antes por internet puede acortar la espera.",
+        "En Estados Unidos, los médicos suelen enviar la receta electrónicamente a la farmacia que elijas. El medicamento suele estar listo para recoger en una o dos horas."
+      ],
+      "steps": [
+        { "text": "Llegas a la clínica de urgencias y vas a la recepción." },
+        { "translation": "Hola. ¿Viene a que le atiendan? ¿Me enseña un documento con foto y su tarjeta del seguro?" },
+        {
+          "prompt": "Eres turista y tienes seguro de viaje. ¿Qué dices?",
+          "options": [
+            { "why": "Claro y educado: das tu identificación y explicas tu situación." },
+            { "why": "La clínica necesita saber igualmente cómo se pagará la consulta: explica que tienes seguro de viaje." },
+            { "why": "Demasiado vago, y además no es verdad. Diles que tienes seguro de viaje." }
+          ]
+        },
+        { "translation": "No hay problema, haremos una copia. Siéntese y le llamarán por su nombre." },
+        { "text": "Veinte minutos después, una enfermera te lleva a una sala de consulta. Luego entra la médica." },
+        { "translation": "Hola, soy la doctora Nguyen. Dígame, ¿qué le trae por aquí hoy?" },
+        {
+          "prompt": "Te duele la garganta desde hace tres días. ¿Cómo lo explicas?",
+          "options": [
+            { "why": "Perfecto: «I've had… for…» es justo como se dice cuánto tiempo dura algo." },
+            { "why": "¡Un error muy común! En inglés: «I've had a sore throat for three days»." },
+            { "why": "«Sore» significa dolorido; una garganta «sad» (triste) haría sonreír a la médica." }
+          ]
+        },
+        { "translation": "De acuerdo. Del uno al diez, ¿cuánto le duele?" },
+        {
+          "prompt": "¿Qué quiere saber la médica?",
+          "options": [
+            { "text": "Cuánto te duele, con un número del 1 al 10", "why": "Correcto: responde simplemente con un número, como «about a six» (más o menos un seis)." },
+            { "text": "Cuánto pesas", "why": "«Scale» también es una báscula, pero aquí significa una escala del 1 al 10." },
+            { "text": "Cuántos días llevas enfermo", "why": "Eso ya lo dijiste: ahora la pregunta es cuánto te duele." }
+          ]
+        },
+        { "translation": "Parece una faringitis bacteriana, así que le voy a dar un antibiótico. ¿Es alérgico a algún medicamento?" },
+        {
+          "prompt": "Eres alérgico a la penicilina. ¿Qué dices?",
+          "options": [
+            { "why": "Claro e importante. Menciona siempre tus alergias antes de tomar un medicamento nuevo." },
+            { "why": "Que no te guste un medicamento no es lo mismo que una alergia. Di «I'm allergic to…» para que la médica lo tome en serio." },
+            { "why": "¡Peligroso! Si tienes una alergia, tienes que decirlo." }
+          ]
+        },
+        { "translation": "Bien saberlo: le recetaré otra cosa. ¿A qué farmacia le envío la receta?" },
+        {
+          "prompt": "¿Qué te pregunta la médica?",
+          "options": [
+            { "text": "Dónde quieres recoger el medicamento: la receta se envía allí electrónicamente", "why": "Correcto: elige una farmacia cerca de tu hotel y allí te prepararán el medicamento." },
+            { "text": "En qué farmacia trabaja la médica", "why": "La médica no trabaja en una farmacia: te pregunta dónde quieres recoger el medicamento." },
+            { "text": "Si quieres comprar el medicamento por internet", "why": "Lo recogerás en persona; la médica solo envía el pedido por adelantado." }
+          ]
+        },
+        { "text": "Al salir, te preguntas cuándo habría que llamar al 911." },
+        {
+          "prompt": "¿Cuándo hay que llamar al 911?",
+          "options": [
+            { "text": "Ante una emergencia grave, como dolor en el pecho o dificultad para respirar", "why": "Correcto. El 911 (o la sala de urgencias) es para emergencias; el «urgent care», para problemas como el tuyo." },
+            { "text": "Siempre que te encuentres mal", "why": "El 911 es solo para emergencias. Para un dolor de garganta, lo adecuado es el «urgent care» o un médico normal." },
+            { "text": "Nunca: los turistas no pueden llamar al 911", "why": "Cualquier persona en Estados Unidos puede y debe llamar al 911 en una emergencia." }
+          ]
+        }
+      ]
+    },
+    "pt": {
+      "title": "Indo ao médico numa clínica de pronto atendimento em Los Angeles",
+      "summary": "Explique os seus sintomas, responda às perguntas sobre o seguro e consiga uma receita.",
+      "setting": "Você está visitando Los Angeles e há três dias está com dor de garganta e febre. Não é uma emergência, então você vai a uma clínica de pronto atendimento («urgent care»): um lugar sem hora marcada para problemas que precisam de um médico hoje, mas não colocam a vida em risco.",
+      "objectives": [
+        "Explicar o que você tem e há quanto tempo",
+        "Responder às perguntas da recepção sobre documento e seguro",
+        "Entender perguntas sobre dor e alergias",
+        "Saber quando ir ao pronto atendimento e quando ligar para o 911"
+      ],
+      "varietyNote": "Este é o inglês americano do dia a dia. As palavras médicas costumam mudar entre os Estados Unidos e o Reino Unido — os americanos falam em «pharmacy» ou «drugstore» (farmácia) e na «ER» (pronto-socorro), enquanto os britânicos dizem «chemist's» e «A&E». Descrições claras e simples são entendidas em todo lugar.",
+      "phrases": {
+        "what-brings-you-in": { "translation": "O que traz você aqui hoje?", "exampleTranslation": "A pergunta de sempre no começo de uma consulta." },
+        "ive-had": { "translation": "Estou com dor de garganta há três dias.", "exampleTranslation": "Estou com dor de cabeça desde ontem.", "note": "Use «I've had…» + «for» (uma duração) ou «since» (um ponto de partida)." },
+        "insurance": { "translation": "Você tem plano de saúde?", "exampleTranslation": "Muitas clínicas aceitam os dados do seguro-viagem, ou você pode pagar por conta própria.", "alsoHeard": ["Pergunta se você mesmo vai pagar a conta"] },
+        "scale-pain": { "translation": "Numa escala de um a dez, quanto está doendo?", "exampleTranslation": "A resposta que eles esperam é um número." },
+        "allergic": { "translation": "Você tem alergia a algum remédio?", "exampleTranslation": "Tenho alergia a penicilina." },
+        "which-pharmacy": { "translation": "Para qual farmácia eu mando a receita?", "exampleTranslation": "Pode mandar para a farmácia mais perto, por favor.", "alsoHeard": ["«Drugstore» é outra palavra americana para farmácia"] }
+      },
+      "cultureNotes": [
+        "Numa emergência grave — dor no peito, falta de ar, um ferimento sério — ligue para o 911 ou vá a um pronto-socorro de hospital (ER). O «urgent care» é para problemas que precisam de um médico hoje, mas não colocam a vida em risco.",
+        "A saúde nos Estados Unidos é cara sem seguro. Leve o cartão do seu plano (ou os dados do seguro-viagem) e um documento com foto, e se não tiver seguro, pergunte o preço para pagamento direto («self-pay»).",
+        "Muitas clínicas de pronto atendimento não precisam de hora marcada — é só chegar, embora fazer o check-in pela internet antes possa diminuir a espera.",
+        "Nos Estados Unidos, os médicos costumam mandar a receita eletronicamente para a farmácia que você escolher. O remédio normalmente fica pronto para retirar em uma ou duas horas."
+      ],
+      "steps": [
+        { "text": "Você chega à clínica de pronto atendimento e vai até a recepção." },
+        { "translation": "Oi. Veio para atendimento? Pode me mostrar um documento com foto e o cartão do seu plano?" },
+        {
+          "prompt": "Você é turista e tem seguro-viagem. O que você diz?",
+          "options": [
+            { "why": "Claro e educado: você entrega o documento e explica a sua situação." },
+            { "why": "A clínica precisa saber de qualquer jeito como a consulta vai ser paga — explique que você tem seguro-viagem." },
+            { "why": "Vago demais — e nem é verdade. Diga que você tem seguro-viagem." }
+          ]
+        },
+        { "translation": "Tudo bem — vamos tirar uma cópia. Pode sentar que alguém vai chamar o seu nome." },
+        { "text": "Vinte minutos depois, uma enfermeira leva você para um consultório. Depois entra a médica." },
+        { "translation": "Oi, eu sou a doutora Nguyen. Então, o que traz você aqui hoje?" },
+        {
+          "prompt": "A sua garganta dói há três dias. Como você explica?",
+          "options": [
+            { "why": "Perfeito: «I've had… for…» é exatamente como se diz há quanto tempo algo dura." },
+            { "why": "Um erro muito comum! Em inglês: «I've had a sore throat for three days»." },
+            { "why": "«Sore» significa dolorido — uma garganta «sad» (triste) faria a médica sorrir." }
+          ]
+        },
+        { "translation": "Certo. Numa escala de um a dez, quanto está doendo?" },
+        {
+          "prompt": "O que a médica quer saber?",
+          "options": [
+            { "text": "Quanto está doendo, com um número de 1 a 10", "why": "Isso — é só responder com um número, como «about a six» (mais ou menos seis)." },
+            { "text": "Quanto você pesa", "why": "«Scale» também é uma balança, mas aqui significa uma escala de 1 a 10." },
+            { "text": "Há quantos dias você está doente", "why": "Isso você já disse — agora a pergunta é quanto está doendo." }
+          ]
+        },
+        { "translation": "Parece uma infecção bacteriana na garganta, então vou passar um antibiótico. Você tem alergia a algum remédio?" },
+        {
+          "prompt": "Você tem alergia a penicilina. O que você diz?",
+          "options": [
+            { "why": "Claro e importante. Sempre fale das suas alergias antes de tomar um remédio novo." },
+            { "why": "Não gostar de um remédio não é a mesma coisa que ter alergia. Diga «I'm allergic to…» para a médica levar a sério." },
+            { "why": "Perigoso! Se você tem alergia, precisa dizer." }
+          ]
+        },
+        { "translation": "Bom saber — vou receitar outro remédio. Para qual farmácia eu mando a receita?" },
+        {
+          "prompt": "O que a médica está perguntando?",
+          "options": [
+            { "text": "Onde você quer retirar o remédio — a receita é enviada para lá eletronicamente", "why": "Isso — escolha uma farmácia perto do hotel, e lá vão preparar o remédio para você." },
+            { "text": "Em qual farmácia a médica trabalha", "why": "A médica não trabalha numa farmácia — ela quer saber onde você vai retirar o remédio." },
+            { "text": "Se você quer comprar o remédio pela internet", "why": "Você vai retirar pessoalmente; a médica só manda o pedido antes." }
+          ]
+        },
+        { "text": "Na saída, você fica pensando quando deveria ligar para o 911." },
+        {
+          "prompt": "Quando é o caso de ligar para o 911?",
+          "options": [
+            { "text": "Numa emergência grave, como dor no peito ou falta de ar", "why": "Isso. O 911 (ou o pronto-socorro) é para emergências; o «urgent care», para problemas como o seu." },
+            { "text": "Sempre que você se sentir mal", "why": "O 911 é só para emergências. Para uma dor de garganta, o certo é o «urgent care» ou um médico comum." },
+            { "text": "Nunca — turistas não podem ligar para o 911", "why": "Qualquer pessoa nos Estados Unidos pode e deve ligar para o 911 numa emergência." }
+          ]
+        }
+      ]
+    }
+  }
+}

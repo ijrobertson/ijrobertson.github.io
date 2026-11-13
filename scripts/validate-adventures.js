@@ -95,6 +95,46 @@ for (const entry of entries) {
     }
   });
   if (choices === 0) problem(file, 'needs at least one choice step');
+
+  // Optional Spanish/Portuguese explanations (see README "Translations").
+  const OWN = { Spanish: 'es', Portuguese: 'pt' }[s.language];
+  for (const [lang, o] of Object.entries(s.i18n || {})) {
+    const iw = `${file} → i18n.${lang}`;
+    if (!['es', 'pt'].includes(lang)) { problem(iw, 'language must be "es" or "pt"'); continue; }
+    if (lang === OWN) problem(iw, `a ${s.language} scenario shouldn't be explained in ${s.language}`);
+    for (const f of ['title', 'summary', 'setting', 'varietyNote']) if (!isText(o[f])) problem(iw, `missing "${f}"`);
+    if (!Array.isArray(o.objectives) || o.objectives.length !== (s.objectives || []).length) problem(iw, 'objectives must match the English list item for item');
+    if (!Array.isArray(o.cultureNotes) || o.cultureNotes.length !== (s.cultureNotes || []).length) problem(iw, 'cultureNotes must match the English list item for item');
+    for (const p of s.phrases || []) {
+      const po = (o.phrases || {})[p.id];
+      if (!po) { problem(iw, `missing phrase "${p.id}"`); continue; }
+      if (!isText(po.translation)) problem(iw, `phrase "${p.id}" needs a "translation"`);
+      if (p.exampleTranslation && !isText(po.exampleTranslation)) problem(iw, `phrase "${p.id}" needs an "exampleTranslation"`);
+      if (p.note && !isText(po.note)) problem(iw, `phrase "${p.id}" needs a "note"`);
+      if ((p.alsoHeard || []).length !== (po.alsoHeard || []).length) problem(iw, `phrase "${p.id}" alsoHeard must match item for item`);
+    }
+    for (const id of Object.keys(o.phrases || {})) if (!phraseIds.has(id)) problem(iw, `unknown phrase "${id}"`);
+    const steps = s.steps || [];
+    if (!Array.isArray(o.steps) || o.steps.length !== steps.length) { problem(iw, `steps must match the English steps one for one (${steps.length})`); continue; }
+    steps.forEach((st, i) => {
+      const so = o.steps[i] || {};
+      const sw = `${iw} → steps[${i}]`;
+      if (st.type === 'scene' && !isText(so.text)) problem(sw, 'scene needs "text"');
+      if (st.type === 'line' && !isText(so.translation)) problem(sw, 'line needs "translation"');
+      if (st.type === 'choice') {
+        if (!isText(so.prompt)) problem(sw, 'choice needs "prompt"');
+        const opts = so.options || [];
+        if (opts.length !== (st.options || []).length) { problem(sw, 'options must match the English options one for one'); return; }
+        opts.forEach((oo, j) => {
+          if (!isText(oo.why)) problem(sw, `options[${j}] needs "why"`);
+          if (st.skill !== 'respond' && !isText(oo.text)) problem(sw, `options[${j}] needs "text" (a ${st.skill} question's options are explanations)`);
+          if (st.skill === 'respond' && oo.text) problem(sw, `options[${j}] must not translate "text" — respond options are what the learner says`);
+        });
+      }
+    });
+    const ie = (entry.i18n || {})[lang];
+    if (!ie || ie.title !== o.title || ie.summary !== o.summary) problem(`index.json → ${entry.id}`, `i18n.${lang} title/summary must match the scenario file`);
+  }
 }
 
 // Scenario files with no catalogue entry would never be shown.

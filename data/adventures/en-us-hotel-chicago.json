@@ -1,0 +1,350 @@
+{
+  "id": "en-us-hotel-chicago",
+  "title": "Checking in at a hotel in Chicago",
+  "language": "English",
+  "country": "United States",
+  "countryCode": "US",
+  "flag": "🇺🇸",
+  "variety": { "id": "en-US", "label": "American English" },
+  "difficulty": "beginner",
+  "estMinutes": 6,
+  "setting": "It's 4 p.m. in downtown Chicago. After a long trip, you walk into your hotel lobby with your suitcase. The front desk agent is friendly and efficient.",
+  "objectives": [
+    "Say whose name your booking is under",
+    "Understand requests for ID and a payment card",
+    "Know what a \"hold for incidentals\" is",
+    "Ask about checkout and find your way to the room"
+  ],
+  "varietyNote": "This is everyday American English. British English uses some different words in a hotel — a \"lift\" instead of an \"elevator\", for example — and in the US the \"first floor\" is the ground floor, while in the UK it's one floor up.",
+  "phrases": [
+    {
+      "id": "checking-in",
+      "text": "Hi, I'm checking in. The reservation is under García.",
+      "translation": "Hello, I've arrived — the booking is in the name García.",
+      "example": "Hi, I'm checking in — it should be under Patel.",
+      "exampleTranslation": "Hello, I've arrived; the booking should be in the name Patel.",
+      "note": "\"Under\" + a name is how you say whose name a booking is in.",
+      "alsoHeard": [
+        { "text": "I have a reservation under García.", "where": "Also very common" }
+      ]
+    },
+    {
+      "id": "id-and-card",
+      "text": "Can I see a photo ID and the card you'll be using?",
+      "translation": "Please show me an ID document with your photo, and your payment card.",
+      "example": "\"Here's my passport.\" \"Perfect, thank you.\"",
+      "exampleTranslation": "A passport counts as photo ID."
+    },
+    {
+      "id": "incidental-hold",
+      "text": "We'll put a hold on the card for incidentals.",
+      "translation": "We'll temporarily block some money on your card to cover any extra charges.",
+      "example": "There's a $100 hold for incidentals — it's released after checkout.",
+      "exampleTranslation": "The money is blocked, not charged, and freed after you leave.",
+      "note": "\"Incidentals\" are extras like room service or minibar items."
+    },
+    {
+      "id": "checkout-time",
+      "text": "What time is checkout?",
+      "translation": "When do I have to leave the room on the last day?",
+      "example": "Checkout is at 11, but you can ask for a late checkout.",
+      "exampleTranslation": "You must leave by 11 a.m., but you can ask to leave later."
+    },
+    {
+      "id": "elevators",
+      "text": "The elevators are just around the corner.",
+      "translation": "The lifts are close by, just around the corner.",
+      "example": "Take the elevator to the 14th floor.",
+      "exampleTranslation": "Go up to the 14th floor in the lift.",
+      "alsoHeard": [
+        { "text": "The lifts are just round the corner.", "where": "British English" }
+      ]
+    },
+    {
+      "id": "all-set",
+      "text": "You're all set.",
+      "translation": "Everything is done — you're ready to go.",
+      "example": "\"Here are your keys. You're all set!\"",
+      "exampleTranslation": "The check-in is complete."
+    }
+  ],
+  "cultureNotes": [
+    "Most US hotels ask for a credit or debit card at check-in and place a temporary hold for incidentals. It isn't a charge, but on a debit card the money can be unavailable for several days after checkout.",
+    "In the US the \"first floor\" is the ground floor — the floor at street level. In the UK and much of Europe, the first floor is one level up.",
+    "Tipping is common for some hotel services: a few dollars per bag for a bellhop, and many guests leave a few dollars a day for housekeeping. It isn't required.",
+    "Check-in is usually in the mid-afternoon and checkout in the late morning. Times vary by hotel, and you can always ask for an early check-in or a late checkout."
+  ],
+  "steps": [
+    { "type": "scene", "text": "You walk up to the front desk with your suitcase." },
+    { "type": "line", "speaker": "Front desk", "text": "Hi, welcome! Checking in?", "translation": "Hello, welcome! Are you here to check in?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "Your booking is in the name García. What do you say?",
+      "options": [
+        { "text": "Yes — the reservation is under García.", "correct": true, "why": "Natural and clear: \"under\" + the name is exactly how people say it." },
+        { "text": "Yes, I am reserved García.", "why": "\"I am reserved\" isn't how English works — say \"the reservation is under García\"." },
+        { "text": "García. Room. Now.", "why": "Very abrupt — it sounds rude, even if the agent understands you." }
+      ],
+      "phraseIds": ["checking-in"]
+    },
+    { "type": "line", "speaker": "Front desk", "text": "Great, I've got you here — three nights. Can I see a photo ID and the card you'll be using?", "translation": "I've found your booking for three nights. Please show me an ID with your photo and your payment card." },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What does the agent want?",
+      "options": [
+        { "text": "An ID document with your photo, and the card you'll pay with", "correct": true, "why": "Right — a passport or driver's license, plus your payment card." },
+        { "text": "A photo of you for the hotel's records", "why": "\"Photo ID\" means an ID document that has your photo on it, not a new picture." },
+        { "text": "Your business card", "why": "\"The card you'll be using\" is your payment card." }
+      ],
+      "phraseIds": ["id-and-card"]
+    },
+    { "type": "line", "speaker": "Front desk", "text": "Thank you. We'll put a $150 hold on the card for incidentals.", "translation": "We'll temporarily block $150 on your card to cover any extras." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "What happens to that $150?",
+      "options": [
+        { "text": "It's blocked for extras like room service, and released after checkout if you don't use it.", "correct": true, "why": "Exactly. It's normal at US hotels. On a debit card, it can take a few days for the money to come back." },
+        { "text": "It's an extra fee for staying in Chicago.", "why": "It isn't a fee — it's a temporary hold, not a charge." },
+        { "text": "It's a tip for the front desk.", "why": "It has nothing to do with tipping; it covers possible extra charges." }
+      ],
+      "phraseIds": ["incidental-hold"]
+    },
+    { "type": "scene", "text": "You nod. You'd like to know how long you can stay in the room on your last morning." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "What do you ask?",
+      "options": [
+        { "text": "What time is checkout?", "correct": true, "why": "Short, natural and exactly the question hotel staff expect." },
+        { "text": "When must I go out from the hotel?", "why": "Understandable, but it sounds as if you're being thrown out. Ask about \"checkout\"." },
+        { "text": "What hour is the exit?", "why": "A word-for-word translation — in English it's \"What time is checkout?\"." }
+      ],
+      "phraseIds": ["checkout-time"]
+    },
+    { "type": "line", "speaker": "Front desk", "text": "Checkout's at 11. You're in room 1412, on the 14th floor. The elevators are just around the corner.", "translation": "You must leave by 11 a.m. Your room, 1412, is on the 14th floor. The lifts are nearby, around the corner." },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "How do you get to your room?",
+      "options": [
+        { "text": "Take the elevators, which are just around the corner", "correct": true, "why": "Right — \"elevator\" is the American word; British English says \"lift\"." },
+        { "text": "Go out and walk around the corner of the street", "why": "\"Around the corner\" here means inside the hotel, just out of sight." },
+        { "text": "Go to another building", "why": "Your room is in this building — take the elevators." }
+      ],
+      "phraseIds": ["elevators"]
+    },
+    { "type": "line", "speaker": "Front desk", "text": "Here are your keys and the Wi-Fi password. You're all set!", "translation": "Here are your key cards and the Wi-Fi password. Everything is ready!" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What does \"You're all set\" mean?",
+      "options": [
+        { "text": "Check-in is finished — you're ready to go", "correct": true, "why": "Right. You'll hear \"You're all set\" whenever something has been done for you." },
+        { "text": "Your table is set for dinner", "why": "Nothing to do with tables — it means everything is done." },
+        { "text": "You need to sit down and wait", "why": "It means the opposite: you're free to go." }
+      ],
+      "phraseIds": ["all-set"]
+    },
+    { "type": "scene", "text": "A bellhop carries your suitcase up to your room on the 14th floor." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "He puts your bag down in the room. What's usual?",
+      "options": [
+        { "text": "Give him a small tip — a few dollars per bag is common.", "correct": true, "why": "Right. Tipping hotel staff for carrying bags is customary in the US, though never required by law." },
+        { "text": "Pay him the price of one night.", "why": "Far too much! A few dollars per bag is the custom." },
+        { "text": "Nothing — tipping hotel staff is offensive in the US.", "why": "Not at all — a tip is expected for this kind of service." }
+      ]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "Registrarse en un hotel de Chicago",
+      "summary": "Haz el check-in sin problemas, entiende el bloqueo en la tarjeta y encuentra tu habitación.",
+      "setting": "Son las 4 de la tarde en el centro de Chicago. Después de un viaje largo, entras en el vestíbulo del hotel con tu maleta. El recepcionista es amable y eficiente.",
+      "objectives": [
+        "Decir a nombre de quién está tu reserva",
+        "Entender cuando te piden identificación y una tarjeta de pago",
+        "Saber qué es un «hold for incidentals»",
+        "Preguntar por la hora de salida y llegar a tu habitación"
+      ],
+      "varietyNote": "Este es el inglés estadounidense de todos los días. El inglés británico usa otras palabras en un hotel —por ejemplo, «lift» en lugar de «elevator» para el ascensor—, y en Estados Unidos el «first floor» es la planta baja, mientras que en el Reino Unido es el piso de arriba.",
+      "phrases": {
+        "checking-in": { "translation": "Hola, vengo a registrarme. La reserva está a nombre de García.", "exampleTranslation": "Hola, vengo a registrarme; la reserva debería estar a nombre de Patel.", "note": "«Under» + un nombre es como se dice a nombre de quién está una reserva.", "alsoHeard": ["También muy común"] },
+        "id-and-card": { "translation": "Por favor, muéstreme un documento de identidad con foto y la tarjeta con la que va a pagar.", "exampleTranslation": "Un pasaporte sirve como identificación con foto." },
+        "incidental-hold": { "translation": "Vamos a bloquear temporalmente un importe en su tarjeta para cubrir posibles gastos extra.", "exampleTranslation": "El dinero queda bloqueado, no cobrado, y se libera cuando te vas.", "note": "Los «incidentals» son extras como el servicio de habitaciones o el minibar." },
+        "checkout-time": { "translation": "¿A qué hora hay que dejar la habitación?", "exampleTranslation": "Hay que dejar la habitación antes de las 11, pero puedes pedir una salida más tarde." },
+        "elevators": { "translation": "Los ascensores están ahí mismo, a la vuelta de la esquina.", "exampleTranslation": "Sube en el ascensor hasta el piso 14.", "alsoHeard": ["Inglés británico"] },
+        "all-set": { "translation": "Ya está todo listo.", "exampleTranslation": "El check-in ha terminado." }
+      },
+      "cultureNotes": [
+        "La mayoría de los hoteles de Estados Unidos piden una tarjeta de crédito o débito al registrarte y bloquean temporalmente un importe para gastos extra. No es un cobro, pero con una tarjeta de débito ese dinero puede quedar sin poder usarse varios días después de la salida.",
+        "En Estados Unidos, el «first floor» es la planta baja, la que está a nivel de la calle. En el Reino Unido y en gran parte de Europa, el primer piso es el de arriba.",
+        "Es habitual dar propina por algunos servicios del hotel: unos pocos dólares por maleta al botones, y muchos huéspedes dejan unos dólares al día para el personal de limpieza. No es obligatorio.",
+        "El check-in suele ser a media tarde y la salida a media mañana. Los horarios varían según el hotel, y siempre puedes pedir entrar antes o salir más tarde."
+      ],
+      "steps": [
+        { "text": "Te acercas a la recepción con tu maleta." },
+        { "translation": "¡Hola, bienvenido! ¿Viene a registrarse?" },
+        {
+          "prompt": "Tu reserva está a nombre de García. ¿Qué dices?",
+          "options": [
+            { "why": "Natural y claro: «under» + el nombre es exactamente como se dice." },
+            { "why": "«I am reserved» no funciona en inglés: di «the reservation is under García»." },
+            { "why": "Muy brusco: suena maleducado, aunque el recepcionista te entienda." }
+          ]
+        },
+        { "translation": "Perfecto, aquí está su reserva: tres noches. ¿Me enseña un documento de identidad con foto y la tarjeta con la que va a pagar?" },
+        {
+          "prompt": "¿Qué quiere el recepcionista?",
+          "options": [
+            { "text": "Un documento de identidad con tu foto y la tarjeta con la que vas a pagar", "why": "Correcto: un pasaporte o un permiso de conducir, más tu tarjeta de pago." },
+            { "text": "Una foto tuya para los archivos del hotel", "why": "«Photo ID» significa un documento de identidad con tu foto, no una foto nueva." },
+            { "text": "Tu tarjeta de visita", "why": "«The card you'll be using» es tu tarjeta de pago." }
+          ]
+        },
+        { "translation": "Gracias. Vamos a bloquear 150 dólares en la tarjeta para gastos extra." },
+        {
+          "prompt": "¿Qué pasa con esos 150 dólares?",
+          "options": [
+            { "text": "Queda bloqueado para extras como el servicio de habitaciones y se libera después de la salida si no lo usas.", "why": "Exacto. Es normal en los hoteles de Estados Unidos. Con una tarjeta de débito, el dinero puede tardar unos días en volver." },
+            { "text": "Es una tasa extra por alojarte en Chicago.", "why": "No es una tasa: es un bloqueo temporal, no un cobro." },
+            { "text": "Es una propina para la recepción.", "why": "No tiene nada que ver con la propina: cubre posibles gastos extra." }
+          ]
+        },
+        { "text": "Asientes. Quieres saber hasta qué hora puedes quedarte en la habitación la última mañana." },
+        {
+          "prompt": "¿Qué preguntas?",
+          "options": [
+            { "why": "Breve, natural y justo la pregunta que espera el personal del hotel." },
+            { "why": "Se entiende, pero parece que te están echando. Pregunta por el «checkout»." },
+            { "why": "Es una traducción palabra por palabra; en inglés se dice «What time is checkout?»." }
+          ]
+        },
+        { "translation": "La salida es a las 11. Está en la habitación 1412, en el piso 14. Los ascensores están ahí mismo, a la vuelta de la esquina." },
+        {
+          "prompt": "¿Cómo llegas a tu habitación?",
+          "options": [
+            { "text": "En los ascensores, que están a la vuelta de la esquina", "why": "Correcto: «elevator» es la palabra estadounidense; en inglés británico se dice «lift»." },
+            { "text": "Salir y doblar la esquina de la calle", "why": "Aquí «around the corner» significa dentro del hotel, justo donde no lo ves." },
+            { "text": "Ir a otro edificio", "why": "Tu habitación está en este edificio: sube en los ascensores." }
+          ]
+        },
+        { "translation": "Aquí tiene sus llaves y la contraseña del wifi. ¡Ya está todo listo!" },
+        {
+          "prompt": "¿Qué significa «You're all set»?",
+          "options": [
+            { "text": "El check-in ha terminado: ya puedes irte", "why": "Correcto. Oirás «You're all set» siempre que terminen de hacer algo por ti." },
+            { "text": "Tu mesa está puesta para la cena", "why": "No tiene nada que ver con mesas: significa que todo está hecho." },
+            { "text": "Tienes que sentarte y esperar", "why": "Significa lo contrario: ya puedes irte." }
+          ]
+        },
+        { "text": "Un botones te sube la maleta a la habitación, en el piso 14." },
+        {
+          "prompt": "Deja tu maleta en la habitación. ¿Qué es lo habitual?",
+          "options": [
+            { "text": "Darle una pequeña propina: lo habitual son unos pocos dólares por maleta.", "why": "Correcto. En Estados Unidos es costumbre dar propina a quien te lleva las maletas, aunque la ley nunca lo exige." },
+            { "text": "Pagarle el precio de una noche.", "why": "¡Demasiado! La costumbre son unos pocos dólares por maleta." },
+            { "text": "Nada: en Estados Unidos dar propina al personal del hotel ofende.", "why": "En absoluto: por este tipo de servicio se espera una propina." }
+          ]
+        }
+      ]
+    },
+    "pt": {
+      "title": "Fazendo check-in num hotel em Chicago",
+      "summary": "Faça o check-in sem complicação, entenda o bloqueio no cartão e encontre o seu quarto.",
+      "setting": "São 4 da tarde no centro de Chicago. Depois de uma longa viagem, você entra no saguão do hotel com a sua mala. O recepcionista é simpático e eficiente.",
+      "objectives": [
+        "Dizer em nome de quem está a sua reserva",
+        "Entender quando pedem documento e cartão de pagamento",
+        "Saber o que é um «hold for incidentals»",
+        "Perguntar o horário do check-out e chegar ao seu quarto"
+      ],
+      "varietyNote": "Este é o inglês americano do dia a dia. O inglês britânico usa outras palavras num hotel — por exemplo, «lift» em vez de «elevator» para o elevador —, e nos Estados Unidos o «first floor» é o térreo, enquanto no Reino Unido é o andar de cima.",
+      "phrases": {
+        "checking-in": { "translation": "Oi, vim fazer o check-in. A reserva está em nome de García.", "exampleTranslation": "Oi, vim fazer o check-in; a reserva deve estar em nome de Patel.", "note": "«Under» + um nome é como se diz em nome de quem está uma reserva.", "alsoHeard": ["Também muito comum"] },
+        "id-and-card": { "translation": "Por favor, me mostre um documento com foto e o cartão que você vai usar para pagar.", "exampleTranslation": "O passaporte vale como documento com foto." },
+        "incidental-hold": { "translation": "Vamos bloquear temporariamente um valor no seu cartão para cobrir possíveis gastos extras.", "exampleTranslation": "O dinheiro fica bloqueado, não cobrado, e é liberado depois que você sai.", "note": "Os «incidentals» são extras como serviço de quarto ou frigobar." },
+        "checkout-time": { "translation": "Qual é o horário do check-out?", "exampleTranslation": "É preciso sair até as 11, mas você pode pedir um check-out mais tarde." },
+        "elevators": { "translation": "Os elevadores ficam logo ali, virando o corredor.", "exampleTranslation": "Pegue o elevador até o 14º andar.", "alsoHeard": ["Inglês britânico"] },
+        "all-set": { "translation": "Está tudo pronto.", "exampleTranslation": "O check-in está concluído." }
+      },
+      "cultureNotes": [
+        "A maioria dos hotéis nos Estados Unidos pede um cartão de crédito ou débito no check-in e bloqueia temporariamente um valor para gastos extras. Não é uma cobrança, mas num cartão de débito o dinheiro pode ficar indisponível por alguns dias depois do check-out.",
+        "Nos Estados Unidos, o «first floor» é o térreo, o andar no nível da rua. No Reino Unido e em boa parte da Europa, o primeiro andar é o de cima.",
+        "É comum dar gorjeta por alguns serviços do hotel: alguns dólares por mala para o carregador, e muitos hóspedes deixam alguns dólares por dia para a camareira. Não é obrigatório.",
+        "O check-in costuma ser no meio da tarde e o check-out no fim da manhã. Os horários variam de hotel para hotel, e você sempre pode pedir para entrar mais cedo ou sair mais tarde."
+      ],
+      "steps": [
+        { "text": "Você vai até a recepção com a sua mala." },
+        { "translation": "Oi, seja bem-vindo! Veio fazer o check-in?" },
+        {
+          "prompt": "A sua reserva está em nome de García. O que você diz?",
+          "options": [
+            { "why": "Natural e claro: «under» + o nome é exatamente como se diz." },
+            { "why": "«I am reserved» não funciona em inglês — diga «the reservation is under García»." },
+            { "why": "Muito brusco — soa mal-educado, mesmo que o recepcionista entenda." }
+          ]
+        },
+        { "translation": "Ótimo, achei aqui — três noites. Pode me mostrar um documento com foto e o cartão que vai usar?" },
+        {
+          "prompt": "O que o recepcionista quer?",
+          "options": [
+            { "text": "Um documento com a sua foto e o cartão com que você vai pagar", "why": "Isso — um passaporte ou carteira de motorista, mais o seu cartão de pagamento." },
+            { "text": "Uma foto sua para o arquivo do hotel", "why": "«Photo ID» significa um documento com a sua foto, não uma foto nova." },
+            { "text": "O seu cartão de visita", "why": "«The card you'll be using» é o seu cartão de pagamento." }
+          ]
+        },
+        { "translation": "Obrigado. Vamos bloquear 150 dólares no cartão para gastos extras." },
+        {
+          "prompt": "O que acontece com esses 150 dólares?",
+          "options": [
+            { "text": "Fica bloqueado para extras como serviço de quarto e é liberado depois do check-out se você não usar.", "why": "Exato. É normal nos hotéis americanos. Num cartão de débito, o dinheiro pode levar alguns dias para voltar." },
+            { "text": "É uma taxa extra por se hospedar em Chicago.", "why": "Não é uma taxa — é um bloqueio temporário, não uma cobrança." },
+            { "text": "É uma gorjeta para a recepção.", "why": "Não tem nada a ver com gorjeta; cobre possíveis gastos extras." }
+          ]
+        },
+        { "text": "Você concorda com a cabeça. Quer saber até que horas pode ficar no quarto na última manhã." },
+        {
+          "prompt": "O que você pergunta?",
+          "options": [
+            { "why": "Curta, natural e exatamente a pergunta que a equipe do hotel espera." },
+            { "why": "Dá para entender, mas parece que estão te expulsando. Pergunte sobre o «checkout»." },
+            { "why": "É uma tradução palavra por palavra — em inglês se diz «What time is checkout?»." }
+          ]
+        },
+        { "translation": "O check-out é às 11. O seu quarto é o 1412, no 14º andar. Os elevadores ficam logo ali, virando o corredor." },
+        {
+          "prompt": "Como você chega ao seu quarto?",
+          "options": [
+            { "text": "Pelos elevadores, que ficam logo ali, virando o corredor", "why": "Isso — «elevator» é a palavra americana; no inglês britânico se diz «lift»." },
+            { "text": "Sair e virar a esquina da rua", "why": "Aqui «around the corner» significa dentro do hotel, logo ali onde você não vê." },
+            { "text": "Ir para outro prédio", "why": "O seu quarto fica neste prédio — pegue os elevadores." }
+          ]
+        },
+        { "translation": "Aqui estão as suas chaves e a senha do Wi-Fi. Está tudo pronto!" },
+        {
+          "prompt": "O que significa «You're all set»?",
+          "options": [
+            { "text": "O check-in terminou — você já pode ir", "why": "Isso. Você vai ouvir «You're all set» sempre que terminarem de fazer algo por você." },
+            { "text": "A sua mesa está posta para o jantar", "why": "Não tem nada a ver com mesa — significa que está tudo feito." },
+            { "text": "Você precisa sentar e esperar", "why": "Significa o contrário: você já pode ir." }
+          ]
+        },
+        { "text": "Um carregador leva a sua mala até o quarto, no 14º andar." },
+        {
+          "prompt": "Ele deixa a sua mala no quarto. O que é o costume?",
+          "options": [
+            { "text": "Dar uma pequena gorjeta — o comum são alguns dólares por mala.", "why": "Isso. Nos Estados Unidos é costume dar gorjeta a quem leva as malas, embora a lei nunca exija." },
+            { "text": "Pagar a ele o valor de uma diária.", "why": "Demais! O costume são alguns dólares por mala." },
+            { "text": "Nada — nos Estados Unidos dar gorjeta à equipe do hotel é ofensivo.", "why": "De jeito nenhum — por esse tipo de serviço se espera uma gorjeta." }
+          ]
+        }
+      ]
+    }
+  }
+}

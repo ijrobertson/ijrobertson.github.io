@@ -86,6 +86,40 @@ Three step types:
   offered for saving on the completion screen.
 - Option order is shuffled when shown, so the correct one can be listed first.
 
+## Translations (`i18n`)
+
+The English text above is the explanation language. A scenario can also carry
+Spanish and Brazilian Portuguese explanations, shown when the learner picks
+Español or Português in the app's language picker:
+
+```json
+"i18n": {
+  "es": {
+    "title": "…", "summary": "…", "setting": "…", "varietyNote": "…",
+    "objectives": ["…"],      // same length and order as the English list
+    "cultureNotes": ["…"],    // same length and order as the English list
+    "phrases": { "can-i-get": { "translation": "…", "exampleTranslation": "…", "note": "…", "alsoHeard": ["where…"] } },
+    "steps": [                 // one entry per English step, in order
+      { "text": "…" },                       // scene
+      { "translation": "…" },                // line
+      { "prompt": "…", "options": [ { "why": "…" } ] }  // choice
+    ]
+  },
+  "pt": { … }
+}
+```
+
+- Only the *explanations* are translated. Never translate the target-language
+  text: line `text`, phrase `text`/`example`, or a `respond` option's `text`
+  (that's what the learner says). `meaning` and `culture` options are
+  explanations, so their `text` **is** translated.
+- `alsoHeard` holds just the translated `where` labels, in the same order.
+- `correct` flags and `phraseIds` stay in the English part only.
+- Copy `title` and `summary` into the scenario's `index.json` entry as
+  `"i18n": { "es": { "title", "summary" }, "pt": { … } }`.
+- Don't add the scenario's own language (no `es` on a Spanish scenario).
+- Anything missing falls back to English; the validator checks alignment.
+
 ## Before publishing a scenario
 
 Have a native speaker of that variety check the phrases, translations and

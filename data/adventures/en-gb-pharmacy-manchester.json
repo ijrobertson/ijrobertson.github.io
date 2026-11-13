@@ -1,0 +1,321 @@
+{
+  "id": "en-gb-pharmacy-manchester",
+  "title": "At the pharmacy in Manchester",
+  "language": "English",
+  "country": "United Kingdom",
+  "countryCode": "GB",
+  "flag": "🇬🇧",
+  "variety": { "id": "en-GB", "label": "British English" },
+  "difficulty": "beginner",
+  "estMinutes": 6,
+  "setting": "You've woken up with a cold on a rainy morning in Manchester, in the north of England. You pop into a small pharmacy near your hotel — the British also call it the \"chemist's\" — to ask for something to help.",
+  "objectives": [
+    "Ask for something for a common illness",
+    "Understand the pharmacist's questions",
+    "Recognise friendly northern English like \"love\" and \"ta\"",
+    "Know what a UK pharmacist can help with"
+  ],
+  "varietyNote": "This is British English as you'd hear it in Manchester. In the north of England, people often call strangers \"love\" and say \"ta\" for thanks — it's friendly, not rude. Americans would say \"drugstore\" or \"pharmacy\", and \"acetaminophen\" for what the British call paracetamol.",
+  "phrases": [
+    {
+      "id": "you-alright",
+      "text": "You alright?",
+      "translation": "Hello! (a greeting — like \"How can I help?\")",
+      "example": "\"You alright, love?\" \"Yeah, fine thanks.\"",
+      "exampleTranslation": "A casual greeting; it doesn't mean they think something is wrong.",
+      "note": "In much of the UK, \"(Are) you alright?\" is simply a way of saying hello.",
+      "alsoHeard": [
+        { "text": "Hiya!", "where": "A friendly hello, common in the north of England" }
+      ]
+    },
+    {
+      "id": "something-for",
+      "text": "Have you got anything for a cold?",
+      "translation": "Do you sell any medicine for a cold?",
+      "example": "Have you got anything for a headache?",
+      "exampleTranslation": "Do you sell any medicine for a headache?",
+      "alsoHeard": [
+        { "text": "Do you have anything for a cold?", "where": "Also common in the UK; the usual form in American English" }
+      ]
+    },
+    {
+      "id": "other-medication",
+      "text": "Are you taking any other medication?",
+      "translation": "Do you take any other medicines at the moment?",
+      "example": "\"Are you on any other medication?\" \"No, nothing.\"",
+      "exampleTranslation": "Another common way to ask the same thing."
+    },
+    {
+      "id": "gp",
+      "text": "If it's not cleared up in a week, see your GP.",
+      "translation": "If you aren't better in a week, see a family doctor.",
+      "example": "I've booked an appointment with my GP.",
+      "exampleTranslation": "I've made an appointment with my family doctor.",
+      "note": "GP stands for \"general practitioner\" — the family doctor in the UK."
+    },
+    {
+      "id": "love",
+      "text": "Here you go, love.",
+      "translation": "Here you are. (\"love\" is a friendly word, like \"dear\")",
+      "example": "\"Ta, love!\"",
+      "exampleTranslation": "\"Thanks, dear!\"",
+      "note": "Shop staff in the north of England often call customers \"love\" — men and women alike. It's warm, not flirty."
+    },
+    {
+      "id": "ta",
+      "text": "Ta very much!",
+      "translation": "Thanks very much! (informal)",
+      "example": "\"Here's your change.\" \"Ta!\"",
+      "exampleTranslation": "A short, casual thank you."
+    }
+  ],
+  "cultureNotes": [
+    "UK pharmacists are trained to advise on minor illnesses like colds, coughs and sore throats, so a pharmacy is often the first place to go — no appointment needed.",
+    "Everyday medicines like paracetamol are sold without a prescription, but in small packs, and the pharmacist may ask a few questions before selling some medicines.",
+    "In England, most adults pay a fixed charge for each item on an NHS prescription. Prescriptions are free in Scotland, Wales and Northern Ireland, and for many people in England, such as children and people over 60.",
+    "For a serious emergency in the UK, call 999 or go to A&E (Accident and Emergency) at a hospital."
+  ],
+  "steps": [
+    { "type": "scene", "text": "You walk into a small pharmacy near your hotel. The pharmacist looks up and smiles." },
+    { "type": "line", "speaker": "Pharmacist", "text": "You alright, love?", "translation": "Hello, how can I help?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What does the pharmacist mean?",
+      "options": [
+        { "text": "Hello — how can I help you?", "correct": true, "why": "Right. \"You alright?\" is a greeting, and \"love\" is just friendly." },
+        { "text": "You look ill — are you okay?", "why": "It's an ordinary greeting — she'd say it to anyone." },
+        { "text": "Are you in love?", "why": "\"Love\" here is a friendly way to address someone, like \"dear\"." }
+      ],
+      "phraseIds": ["you-alright", "love"]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You have a cold. How do you ask for help?",
+      "options": [
+        { "text": "Hiya — have you got anything for a cold?", "correct": true, "why": "Natural British English: \"Have you got anything for…?\"" },
+        { "text": "I want cold medicine. Quick.", "why": "Understandable, but it sounds rude. Ask a question instead." },
+        { "text": "Do you have something against the cold?", "why": "\"Against the cold\" sounds as if you want a warm coat! Say \"for a cold\"." }
+      ],
+      "phraseIds": ["something-for"]
+    },
+    { "type": "line", "speaker": "Pharmacist", "text": "Course. Are you taking any other medication at the moment?", "translation": "Of course. Are you taking any other medicines right now?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "Why does the pharmacist ask this?",
+      "options": [
+        { "text": "To check the medicine is safe with anything else you take", "correct": true, "why": "Exactly — some medicines don't mix. It's a routine question." },
+        { "text": "To sell you more medicine", "why": "It's a safety question, not a sales pitch." },
+        { "text": "Because cold medicine needs a prescription", "why": "Common cold remedies don't need a prescription; the question is about safety." }
+      ],
+      "phraseIds": ["other-medication"]
+    },
+    { "type": "scene", "text": "You say you're not taking anything else." },
+    { "type": "line", "speaker": "Pharmacist", "text": "Right. Paracetamol for the aches and the fever, and some lozenges for your throat. Plenty of fluids, and if it's not cleared up in a week, see your GP.", "translation": "Paracetamol for the pain and fever, and some throat sweets. Drink a lot, and if you're not better in a week, see a family doctor." },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What is a \"GP\"?",
+      "options": [
+        { "text": "A family doctor", "correct": true, "why": "Right — GP stands for \"general practitioner\", your local doctor in the UK." },
+        { "text": "A kind of throat lozenge", "why": "The lozenges are the throat sweets. A GP is a doctor." },
+        { "text": "A bigger pharmacy in the city centre", "why": "A GP is a doctor, not a pharmacy." }
+      ],
+      "phraseIds": ["gp"]
+    },
+    { "type": "line", "speaker": "Pharmacist", "text": "That's £6.20. Here you go, love.", "translation": "That costs £6.20. Here you are." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You pay and take the bag. How do you thank her like a local?",
+      "options": [
+        { "text": "Ta very much!", "correct": true, "why": "Perfect — \"ta\" is a casual British thank you, especially common in the north." },
+        { "text": "Okay. Goodbye forever.", "why": "Very dramatic! A simple \"Ta\" or \"Thanks\" is enough." },
+        { "text": "I am most grateful for your services.", "why": "Grammatically fine, but far too formal for a quick visit to the chemist's." }
+      ],
+      "phraseIds": ["ta", "love"]
+    },
+    { "type": "line", "speaker": "Pharmacist", "text": "No worries. Hope you feel better soon!", "translation": "No problem. I hope you get well soon!" },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "A week later, your cold is worse. Where should you go?",
+      "options": [
+        { "text": "Back to the pharmacy for advice, or book an appointment with a GP", "correct": true, "why": "Right — the pharmacist can tell you if you need a doctor. For a serious emergency, call 999." },
+        { "text": "Straight to A&E at the hospital", "why": "A&E is for serious emergencies, not a cold that's taking a while to clear up." },
+        { "text": "Nowhere — UK pharmacies can't help visitors", "why": "Pharmacists help everyone, visitors included." }
+      ]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "En la farmacia en Mánchester",
+      "summary": "Pide algo para el resfriado, responde a las preguntas de la farmacéutica y di «ta».",
+      "setting": "Te has levantado resfriado una mañana lluviosa en Mánchester, en el norte de Inglaterra. Entras un momento en una pequeña farmacia cerca de tu hotel —los británicos también la llaman «chemist's»— para pedir algo que te alivie.",
+      "objectives": [
+        "Pedir algo para una enfermedad leve",
+        "Entender las preguntas de la farmacéutica",
+        "Reconocer expresiones amables del norte de Inglaterra como «love» y «ta»",
+        "Saber en qué te puede ayudar un farmacéutico en el Reino Unido"
+      ],
+      "varietyNote": "Este es el inglés británico tal como se oye en Mánchester. En el norte de Inglaterra, la gente suele llamar «love» (cariño) a los desconocidos y decir «ta» para dar las gracias: es algo amable, no de mala educación. Los estadounidenses dirían «drugstore» o «pharmacy», y «acetaminophen» para lo que los británicos llaman paracetamol.",
+      "phrases": {
+        "you-alright": { "translation": "¡Hola! (un saludo, como «¿en qué le puedo ayudar?»)", "exampleTranslation": "Un saludo informal; no significa que piensen que te pasa algo.", "note": "En gran parte del Reino Unido, «(Are) you alright?» es simplemente una forma de decir hola.", "alsoHeard": ["Un «hola» amistoso, común en el norte de Inglaterra"] },
+        "something-for": { "translation": "¿Tiene algo para el resfriado?", "exampleTranslation": "¿Tiene algo para el dolor de cabeza?", "alsoHeard": ["También común en el Reino Unido; la forma habitual en inglés estadounidense"] },
+        "other-medication": { "translation": "¿Está tomando algún otro medicamento?", "exampleTranslation": "Otra forma habitual de preguntar lo mismo." },
+        "gp": { "translation": "Si no se le ha pasado en una semana, vaya a su médico de cabecera.", "exampleTranslation": "He pedido cita con mi médico de cabecera.", "note": "GP significa «general practitioner»: el médico de familia en el Reino Unido." },
+        "love": { "translation": "Aquí tiene, cariño.", "exampleTranslation": "«¡Gracias, cariño!»", "note": "En el norte de Inglaterra, los dependientes suelen llamar «love» a los clientes, hombres y mujeres por igual. Es cariñoso, no un coqueteo." },
+        "ta": { "translation": "¡Muchas gracias! (informal)", "exampleTranslation": "Un «gracias» corto e informal." }
+      },
+      "cultureNotes": [
+        "Los farmacéuticos del Reino Unido están preparados para aconsejar sobre enfermedades leves como resfriados, tos o dolor de garganta, así que la farmacia suele ser el primer sitio al que ir, sin necesidad de cita.",
+        "Los medicamentos comunes, como el paracetamol, se venden sin receta, pero en cajas pequeñas, y el farmacéutico puede hacerte algunas preguntas antes de venderte ciertos medicamentos.",
+        "En Inglaterra, la mayoría de los adultos paga una tarifa fija por cada medicamento de una receta del NHS (la sanidad pública). Las recetas son gratuitas en Escocia, Gales e Irlanda del Norte, y para mucha gente en Inglaterra, como los niños y los mayores de 60 años.",
+        "Ante una emergencia grave en el Reino Unido, llama al 999 o ve a A&E (urgencias) de un hospital."
+      ],
+      "steps": [
+        { "text": "Entras en una pequeña farmacia cerca de tu hotel. La farmacéutica levanta la vista y sonríe." },
+        { "translation": "¡Hola, cariño! ¿Qué necesitas?" },
+        {
+          "prompt": "¿Qué quiere decir la farmacéutica?",
+          "options": [
+            { "text": "Hola, ¿en qué te puedo ayudar?", "why": "Correcto. «You alright?» es un saludo, y «love» es solo una forma cariñosa de hablar." },
+            { "text": "Tienes mala cara, ¿estás bien?", "why": "Es un saludo normal: se lo diría a cualquiera." },
+            { "text": "¿Estás enamorado?", "why": "Aquí «love» es una forma amable de dirigirse a alguien, como «cariño»." }
+          ]
+        },
+        {
+          "prompt": "Estás resfriado. ¿Cómo pides ayuda?",
+          "options": [
+            { "why": "Inglés británico natural: «Have you got anything for…?»" },
+            { "why": "Se entiende, pero suena maleducado. Mejor haz una pregunta." },
+            { "why": "«Against the cold» suena a que quieres un abrigo. Di «for a cold»." }
+          ]
+        },
+        { "translation": "Claro. ¿Estás tomando algún otro medicamento ahora mismo?" },
+        {
+          "prompt": "¿Por qué pregunta esto la farmacéutica?",
+          "options": [
+            { "text": "Para comprobar que el medicamento es seguro con lo demás que tomas", "why": "Exacto: algunos medicamentos no se pueden combinar. Es una pregunta rutinaria." },
+            { "text": "Para venderte más medicamentos", "why": "Es una pregunta de seguridad, no de ventas." },
+            { "text": "Porque los medicamentos para el resfriado necesitan receta", "why": "Los remedios habituales para el resfriado no necesitan receta; la pregunta es por seguridad." }
+          ]
+        },
+        { "text": "Le dices que no tomas nada más." },
+        { "translation": "Bien. Paracetamol para los dolores y la fiebre, y unas pastillas para la garganta. Bebe mucho líquido y, si no se te ha pasado en una semana, ve a tu médico de cabecera." },
+        {
+          "prompt": "¿Qué es un «GP»?",
+          "options": [
+            { "text": "Un médico de cabecera", "why": "Correcto: GP significa «general practitioner», el médico de tu barrio en el Reino Unido." },
+            { "text": "Un tipo de pastilla para la garganta", "why": "Las «lozenges» son las pastillas para la garganta. Un GP es un médico." },
+            { "text": "Una farmacia más grande en el centro", "why": "Un GP es un médico, no una farmacia." }
+          ]
+        },
+        { "translation": "Son 6,20 libras. Aquí tienes, cariño." },
+        {
+          "prompt": "Pagas y coges la bolsa. ¿Cómo le das las gracias como un local?",
+          "options": [
+            { "why": "Perfecto: «ta» es un «gracias» británico informal, muy común en el norte." },
+            { "why": "¡Muy dramático! Basta con un simple «Ta» o «Thanks»." },
+            { "why": "Gramaticalmente correcto, pero demasiado formal para una visita rápida a la farmacia." }
+          ]
+        },
+        { "translation": "De nada. ¡Que te mejores pronto!" },
+        {
+          "prompt": "Una semana después, el resfriado ha empeorado. ¿Adónde deberías ir?",
+          "options": [
+            { "text": "Volver a la farmacia para pedir consejo, o pedir cita con un médico de cabecera", "why": "Correcto: el farmacéutico te puede decir si necesitas un médico. Para una emergencia grave, llama al 999." },
+            { "text": "Directamente a urgencias (A&E) del hospital", "why": "A&E es para emergencias graves, no para un resfriado que tarda en curarse." },
+            { "text": "A ningún sitio: las farmacias del Reino Unido no atienden a visitantes", "why": "Los farmacéuticos atienden a todo el mundo, visitantes incluidos." }
+          ]
+        }
+      ]
+    },
+    "pt": {
+      "title": "Na farmácia em Manchester",
+      "summary": "Peça algo para o resfriado, responda às perguntas da farmacêutica e diga «ta».",
+      "setting": "Você acordou resfriado numa manhã chuvosa em Manchester, no norte da Inglaterra. Você dá uma passada numa farmacinha perto do hotel — os britânicos também chamam de «chemist's» — para pedir algo que ajude.",
+      "objectives": [
+        "Pedir algo para uma doença comum",
+        "Entender as perguntas da farmacêutica",
+        "Reconhecer expressões simpáticas do norte da Inglaterra como «love» e «ta»",
+        "Saber com o que um farmacêutico pode ajudar no Reino Unido"
+      ],
+      "varietyNote": "Este é o inglês britânico como se ouve em Manchester. No norte da Inglaterra, as pessoas costumam chamar desconhecidos de «love» (querido/querida) e dizer «ta» para agradecer — é simpatia, não falta de educação. Os americanos diriam «drugstore» ou «pharmacy», e «acetaminophen» para o que os britânicos chamam de paracetamol.",
+      "phrases": {
+        "you-alright": { "translation": "Oi! (um cumprimento — como «Posso ajudar?»)", "exampleTranslation": "Um cumprimento informal; não quer dizer que acham que algo está errado.", "note": "Em boa parte do Reino Unido, «(Are) you alright?» é só um jeito de dizer oi.", "alsoHeard": ["Um «oi» simpático, comum no norte da Inglaterra"] },
+        "something-for": { "translation": "Você tem alguma coisa para resfriado?", "exampleTranslation": "Você tem alguma coisa para dor de cabeça?", "alsoHeard": ["Também comum no Reino Unido; a forma usual no inglês americano"] },
+        "other-medication": { "translation": "Você está tomando algum outro remédio?", "exampleTranslation": "Outro jeito comum de perguntar a mesma coisa." },
+        "gp": { "translation": "Se não passar em uma semana, procure o seu clínico geral.", "exampleTranslation": "Marquei uma consulta com o meu clínico geral.", "note": "GP quer dizer «general practitioner»: o médico de família no Reino Unido." },
+        "love": { "translation": "Aqui está, querido.", "exampleTranslation": "«Valeu, querida!»", "note": "No norte da Inglaterra, os atendentes costumam chamar os clientes de «love», homens e mulheres. É carinho, não paquera." },
+        "ta": { "translation": "Muito obrigado! (informal)", "exampleTranslation": "Um «obrigado» curto e informal." }
+      },
+      "cultureNotes": [
+        "Os farmacêuticos do Reino Unido são preparados para orientar sobre doenças leves como resfriado, tosse e dor de garganta, então a farmácia costuma ser o primeiro lugar a procurar — sem precisar marcar hora.",
+        "Remédios comuns, como o paracetamol, são vendidos sem receita, mas em caixas pequenas, e o farmacêutico pode fazer algumas perguntas antes de vender certos remédios.",
+        "Na Inglaterra, a maioria dos adultos paga uma taxa fixa por item de uma receita do NHS (o sistema público de saúde). As receitas são gratuitas na Escócia, no País de Gales e na Irlanda do Norte, e para muita gente na Inglaterra, como crianças e pessoas com mais de 60 anos.",
+        "Numa emergência grave no Reino Unido, ligue para o 999 ou vá ao A&E (pronto-socorro) de um hospital."
+      ],
+      "steps": [
+        { "text": "Você entra numa farmacinha perto do hotel. A farmacêutica levanta os olhos e sorri." },
+        { "translation": "Oi, querido! Posso ajudar?" },
+        {
+          "prompt": "O que a farmacêutica quer dizer?",
+          "options": [
+            { "text": "Oi — posso ajudar?", "why": "Isso. «You alright?» é um cumprimento, e «love» é só um jeito carinhoso de falar." },
+            { "text": "Você está com uma cara péssima — tudo bem?", "why": "É um cumprimento comum — ela diria isso para qualquer um." },
+            { "text": "Você está apaixonado?", "why": "Aqui «love» é um jeito simpático de chamar alguém, como «querido»." }
+          ]
+        },
+        {
+          "prompt": "Você está resfriado. Como você pede ajuda?",
+          "options": [
+            { "why": "Inglês britânico natural: «Have you got anything for…?»" },
+            { "why": "Dá para entender, mas soa mal-educado. Faça uma pergunta." },
+            { "why": "«Against the cold» parece que você quer um casaco! Diga «for a cold»." }
+          ]
+        },
+        { "translation": "Claro. Você está tomando algum outro remédio no momento?" },
+        {
+          "prompt": "Por que a farmacêutica pergunta isso?",
+          "options": [
+            { "text": "Para conferir se o remédio é seguro junto com o que você já toma", "why": "Exato — alguns remédios não combinam. É uma pergunta de rotina." },
+            { "text": "Para vender mais remédio para você", "why": "É uma pergunta de segurança, não de vendas." },
+            { "text": "Porque remédio para resfriado precisa de receita", "why": "Os remédios comuns para resfriado não precisam de receita; a pergunta é por segurança." }
+          ]
+        },
+        { "text": "Você diz que não está tomando mais nada." },
+        { "translation": "Certo. Paracetamol para as dores e a febre, e umas pastilhas para a garganta. Beba bastante líquido e, se não passar em uma semana, procure o seu clínico geral." },
+        {
+          "prompt": "O que é um «GP»?",
+          "options": [
+            { "text": "Um clínico geral (médico de família)", "why": "Isso — GP quer dizer «general practitioner», o médico do seu bairro no Reino Unido." },
+            { "text": "Um tipo de pastilha para a garganta", "why": "As «lozenges» são as pastilhas para a garganta. Um GP é um médico." },
+            { "text": "Uma farmácia maior no centro", "why": "Um GP é um médico, não uma farmácia." }
+          ]
+        },
+        { "translation": "Dá 6,20 libras. Aqui está, querido." },
+        {
+          "prompt": "Você paga e pega a sacola. Como agradecer do jeito local?",
+          "options": [
+            { "why": "Perfeito — «ta» é um «obrigado» britânico informal, muito comum no norte." },
+            { "why": "Dramático demais! Um simples «Ta» ou «Thanks» já basta." },
+            { "why": "Gramaticalmente certo, mas formal demais para uma passada rápida na farmácia." }
+          ]
+        },
+        { "translation": "Imagina. Melhoras!" },
+        {
+          "prompt": "Uma semana depois, o resfriado piorou. Aonde você deve ir?",
+          "options": [
+            { "text": "Voltar à farmácia para pedir orientação, ou marcar uma consulta com um clínico geral", "why": "Isso — o farmacêutico pode dizer se você precisa de um médico. Numa emergência grave, ligue para o 999." },
+            { "text": "Direto para o pronto-socorro (A&E) do hospital", "why": "O A&E é para emergências graves, não para um resfriado que está demorando a passar." },
+            { "text": "Lugar nenhum — farmácias no Reino Unido não atendem visitantes", "why": "Os farmacêuticos atendem todo mundo, inclusive visitantes." }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -31,7 +31,7 @@ export function loadCatalogue() {
         if (!res.ok) throw new Error(`Adventures catalogue: HTTP ${res.status}`);
         return res.json();
       })
-      .then((data) => (Array.isArray(data.adventures) ? data.adventures : []))
+      .then((data) => (Array.isArray(data.adventures) ? data.adventures.map(localizeEntry) : []))
       .catch((err) => {
         cataloguePromise = null; // let a later call retry (e.g. after reconnecting)
         throw err;
@@ -46,7 +46,72 @@ export async function loadAdventure(id) {
   const res = await fetch(`${DATA_DIR}/${id}.json`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Adventure ${id}: HTTP ${res.status}`);
-  return res.json();
+  return localizeAdventure(await res.json());
+}
+
+// ── Interface language (js/i18n.js) ─────────────────────────────────────
+// A scenario (and its catalogue entry) may carry an optional "i18n" section
+// with Spanish ("es") / Portuguese ("pt") versions of its EXPLANATIONS: title,
+// summary, setting, objectives, variety note, culture notes, phrase meanings
+// and notes, translations of what people say, question prompts, feedback, and
+// the answer options of "meaning"/"culture" questions (which are explanations
+// too). It never replaces what is being learned: the lines people say, the
+// phrases themselves, or the options of "respond" questions. Which option is
+// correct, ids and order are never touched. With no overlay for the current
+// interface language (or in English) the content is returned unchanged.
+// Format and checks: data/adventures/README.md, scripts/validate-adventures.js.
+function overlayFor(item) {
+  const lang = typeof window !== 'undefined' && window.lbI18n && window.lbI18n.lang;
+  if (!lang || lang === 'en' || !item || !item.i18n) return null;
+  return item.i18n[lang] || null;
+}
+
+function localizeEntry(entry) {
+  const o = overlayFor(entry);
+  if (!o) return entry;
+  return { ...entry, title: o.title || entry.title, summary: o.summary || entry.summary };
+}
+
+export function localizeAdventure(a) {
+  const o = overlayFor(a);
+  if (!o) return a;
+  const same = (list, base) => Array.isArray(list) && Array.isArray(base) && list.length === base.length;
+  const out = { ...a };
+  for (const k of ['title', 'summary', 'setting', 'varietyNote']) if (o[k]) out[k] = o[k];
+  if (same(o.objectives, a.objectives)) out.objectives = o.objectives;
+  if (same(o.cultureNotes, a.cultureNotes)) out.cultureNotes = o.cultureNotes;
+  out.phrases = (a.phrases || []).map((p) => {
+    const po = o.phrases && o.phrases[p.id];
+    if (!po) return p;
+    return {
+      ...p,
+      translation: po.translation || p.translation,
+      exampleTranslation: po.exampleTranslation || p.exampleTranslation,
+      note: po.note || p.note,
+      alsoHeard: (p.alsoHeard || []).map((h, i) => (po.alsoHeard && po.alsoHeard[i] ? { ...h, where: po.alsoHeard[i] } : h)),
+    };
+  });
+  if (same(o.steps, a.steps)) {
+    out.steps = a.steps.map((s, i) => {
+      const so = o.steps[i];
+      if (!so) return s;
+      if (s.type === 'scene') return { ...s, text: so.text || s.text };
+      if (s.type === 'line') return { ...s, translation: so.translation || s.translation };
+      if (s.type === 'choice') {
+        return {
+          ...s,
+          prompt: so.prompt || s.prompt,
+          options: s.options.map((opt, j) => {
+            const oo = so.options && so.options[j];
+            if (!oo) return opt;
+            return { ...opt, why: oo.why || opt.why, text: s.skill !== 'respond' && oo.text ? oo.text : opt.text };
+          }),
+        };
+      }
+      return s;
+    });
+  }
+  return out;
 }
 
 // ── Progress ────────────────────────────────────────────────────────────
