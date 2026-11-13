@@ -1,0 +1,238 @@
+{
+  "id": "pt-pt-eletrico-lisboa",
+  "title": "Riding tram 28 in Lisbon",
+  "language": "Portuguese",
+  "country": "Portugal",
+  "countryCode": "PT",
+  "flag": "🇵🇹",
+  "variety": { "id": "pt-PT", "label": "European Portuguese" },
+  "difficulty": "beginner",
+  "estMinutes": 6,
+  "setting": "You're in Lisbon's Baixa (downtown) and want to ride the famous yellow tram 28 up towards São Jorge Castle. A crowd is waiting at the stop, and the old tram rattles round the corner.",
+  "objectives": [
+    "Ask whether a tram goes where you want",
+    "Understand where to get off",
+    "Validate your ticket or card",
+    "Get through a crowded tram politely"
+  ],
+  "varietyNote": "This is European Portuguese as heard in Lisbon. Transport words are very different from Brazil's: a tram is an \"elétrico\" (\"bonde\" in Brazil), a bus is an \"autocarro\" (\"ônibus\"), and a stop is a \"paragem\" (\"ponto\" or \"parada\").",
+  "phrases": [
+    {
+      "id": "eletrico",
+      "text": "o elétrico",
+      "translation": "the tram",
+      "example": "Apanhei o elétrico para a Graça.",
+      "exampleTranslation": "I caught the tram to Graça.",
+      "note": "In Portugal, \"apanhar\" (to catch) is the usual verb for taking transport.",
+      "alsoHeard": [
+        { "text": "o bonde", "where": "Brazilian Portuguese" }
+      ]
+    },
+    {
+      "id": "vai-para",
+      "text": "Este elétrico vai para o castelo?",
+      "translation": "Does this tram go to the castle?",
+      "example": "Desculpe, este autocarro vai para Belém?",
+      "exampleTranslation": "Excuse me, does this bus go to Belém?"
+    },
+    {
+      "id": "paragem",
+      "text": "Em que paragem saio?",
+      "translation": "Which stop do I get off at?",
+      "example": "Saia na próxima paragem.",
+      "exampleTranslation": "Get off at the next stop.",
+      "alsoHeard": [
+        { "text": "Em que ponto eu desço?", "where": "Brazilian Portuguese" }
+      ]
+    },
+    {
+      "id": "a-bordo",
+      "text": "Se comprar o bilhete a bordo, é mais caro.",
+      "translation": "If you buy the ticket on board, it's more expensive.",
+      "example": "Tenho cartão, não preciso de bilhete.",
+      "exampleTranslation": "I have a card, I don't need a ticket.",
+      "note": "A ticket bought from the driver costs quite a bit more than a trip on a rechargeable card."
+    },
+    {
+      "id": "validar",
+      "text": "Tem de validar o cartão.",
+      "translation": "You have to validate your card.",
+      "example": "Não se esqueça de validar.",
+      "exampleTranslation": "Don't forget to validate.",
+      "note": "\"Validar\" means tapping your card on the reader when you get on, even if it's already topped up."
+    },
+    {
+      "id": "com-licenca",
+      "text": "Com licença, saio aqui.",
+      "translation": "Excuse me, I'm getting off here.",
+      "example": "Com licença, posso passar?",
+      "exampleTranslation": "Excuse me, can I get past?"
+    }
+  ],
+  "cultureNotes": [
+    "Tram 28 is a Lisbon icon and gets very crowded, especially in the middle of the day. Going early in the morning makes the ride much more pleasant.",
+    "Crowded trams are a favourite spot for pickpockets. Keep your bag closed and in front of you, and your phone in an inside pocket.",
+    "A rechargeable transport card is much cheaper than buying single tickets on board. You can buy and top it up at metro stations.",
+    "Portuguese people appreciate politeness on crowded transport: \"Com licença\" to get past and \"Desculpe\" if you bump into someone."
+  ],
+  "steps": [
+    { "type": "scene", "text": "A yellow tram with \"28\" on the front stops in front of you. You want to be sure it's going the right way." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You ask the woman next to you. What do you say?",
+      "options": [
+        { "text": "Desculpe, este elétrico vai para o castelo?", "correct": true, "why": "Polite and natural in Lisbon — \"elétrico\" is the word for tram here." },
+        { "text": "Desculpe, este bonde vai para o castelo?", "why": "\"Bonde\" is Brazilian. She'll understand you, but in Portugal it's \"elétrico\"." },
+        { "text": "Desculpe, este comboio vai para o castelo?", "why": "A \"comboio\" is a train. A tram is an \"elétrico\"." }
+      ],
+      "phraseIds": ["eletrico", "vai-para"]
+    },
+    { "type": "line", "speaker": "Woman", "text": "Vai, sim. Saia no Miradouro de Santa Luzia e depois suba a pé. É pertinho.", "translation": "Yes, it does. Get off at the Santa Luzia viewpoint and then walk up. It's very close." },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "Where should you get off?",
+      "options": [
+        { "text": "At the Santa Luzia viewpoint, then walk a short way up to the castle", "correct": true, "why": "Right — \"saia\" = get off, \"suba a pé\" = walk up, \"pertinho\" = very close." },
+        { "text": "At the castle gate — the tram goes right to the door", "why": "She said to get off at the viewpoint and walk up." },
+        { "text": "At the last stop, then take a taxi", "why": "No taxi needed — it's \"pertinho\", very close on foot." }
+      ],
+      "phraseIds": ["paragem"]
+    },
+    { "type": "line", "speaker": "Woman", "text": "Já tem bilhete? Se comprar a bordo, é mais caro.", "translation": "Do you already have a ticket? If you buy it on board, it's more expensive." },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What is she warning you about?",
+      "options": [
+        { "text": "Tickets bought on the tram cost more than using a transport card", "correct": true, "why": "Right — \"a bordo\" means on board, and \"mais caro\" more expensive." },
+        { "text": "You can't get on without a paper ticket", "why": "You can buy one on board — it just costs more." },
+        { "text": "The tram is free today", "why": "Not free — she's comparing prices." }
+      ],
+      "phraseIds": ["a-bordo"]
+    },
+    { "type": "scene", "text": "Luckily, you have a rechargeable card with credit. You climb aboard." },
+    { "type": "line", "speaker": "Driver", "text": "Tem de validar o cartão, se faz favor.", "translation": "You have to validate your card, please." },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What do you need to do?",
+      "options": [
+        { "text": "Tap your card on the reader", "correct": true, "why": "Right — \"validar\" means tapping it on the reader, even when it already has credit." },
+        { "text": "Show your passport", "why": "No ID needed — just validate your card." },
+        { "text": "Buy a new card from the driver", "why": "Your card is fine — you just need to tap it." }
+      ],
+      "phraseIds": ["validar"]
+    },
+    { "type": "scene", "text": "The tram is packed. As it climbs through Alfama, you notice your bag has slid round behind you and is half open." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "What's the sensible thing to do?",
+      "options": [
+        { "text": "Close your bag and keep it in front of you — crowded trams attract pickpockets.", "correct": true, "why": "Right. Tram 28 is well known for pickpockets, so keep valuables close." },
+        { "text": "Don't worry — pickpocketing doesn't happen in Portugal.", "why": "Lisbon is generally safe, but pickpockets do target busy tourist trams." },
+        { "text": "Hold your phone up high so nobody can reach it.", "why": "That just shows it off! Keep it in an inside pocket." }
+      ]
+    },
+    { "type": "scene", "text": "You see the Santa Luzia viewpoint. People are standing between you and the door." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "What do you say to get past?",
+      "options": [
+        { "text": "Com licença, saio aqui.", "correct": true, "why": "Polite and exactly what people say: \"Excuse me, I'm getting off here.\"" },
+        { "text": "Saiam da frente!", "why": "\"Get out of the way!\" is rude. Use \"Com licença\"." },
+        { "text": "Com licença, desço aqui no ponto.", "why": "Understood, but \"ponto\" and \"descer\" here sound Brazilian. In Lisbon: \"Com licença, saio aqui\"." }
+      ],
+      "phraseIds": ["com-licenca"]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "es": {
+      "title": "En el tranvía 28 de Lisboa",
+      "summary": "Comprueba que el tranvía va hacia donde quieres, valida tu tarjeta y bájate en la parada correcta.",
+      "setting": "Estás en la Baixa (el centro) de Lisboa y quieres subir en el famoso tranvía amarillo 28 hacia el Castillo de San Jorge. Hay mucha gente esperando en la parada, y el viejo tranvía aparece traqueteando por la esquina.",
+      "objectives": [
+        "Preguntar si un tranvía va adonde quieres",
+        "Entender dónde bajarte",
+        "Validar tu billete o tu tarjeta",
+        "Moverte con educación por un tranvía lleno"
+      ],
+      "varietyNote": "Este es el portugués europeo tal como se oye en Lisboa. Las palabras del transporte son muy distintas de las de Brasil: el tranvía es «elétrico» («bonde» en Brasil), el autobús es «autocarro» («ônibus») y la parada es «paragem» («ponto» o «parada»).",
+      "phrases": {
+        "eletrico": { "translation": "el tranvía", "exampleTranslation": "Tomé el tranvía a Graça.", "note": "En Portugal, «apanhar» es el verbo normal para tomar un transporte.", "alsoHeard": ["Portugués de Brasil"] },
+        "vai-para": { "translation": "¿Este tranvía va al castillo?", "exampleTranslation": "Disculpe, ¿este autobús va a Belém?" },
+        "paragem": { "translation": "¿En qué parada me bajo?", "exampleTranslation": "Bájese en la próxima parada.", "alsoHeard": ["Portugués de Brasil"] },
+        "a-bordo": { "translation": "Si compra el billete a bordo, es más caro.", "exampleTranslation": "Tengo tarjeta, no necesito billete.", "note": "Un billete comprado al conductor cuesta bastante más que un viaje con una tarjeta recargable." },
+        "validar": { "translation": "Tiene que validar la tarjeta.", "exampleTranslation": "No se olvide de validar.", "note": "«Validar» significa acercar la tarjeta al lector al subir, aunque ya la hayas cargado." },
+        "com-licenca": { "translation": "Con permiso, me bajo aquí.", "exampleTranslation": "Con permiso, ¿puedo pasar?" }
+      },
+      "cultureNotes": [
+        "El tranvía 28 es un icono de Lisboa y se llena muchísimo, sobre todo a mediodía. Ir temprano por la mañana hace el viaje mucho más agradable.",
+        "Los tranvías llenos son el sitio favorito de los carteristas. Lleva el bolso cerrado y por delante, y el teléfono en un bolsillo interior.",
+        "Una tarjeta de transporte recargable sale mucho más barata que comprar billetes sueltos a bordo. Puedes comprarla y recargarla en las estaciones de metro.",
+        "Los portugueses valoran la educación en el transporte lleno: «Com licença» para pasar y «Desculpe» si chocas con alguien."
+      ],
+      "steps": [
+        { "text": "Un tranvía amarillo con el número «28» delante se para frente a ti. Quieres asegurarte de que va en la dirección correcta." },
+        {
+          "prompt": "Le preguntas a la señora que tienes al lado. ¿Qué dices?",
+          "options": [
+            { "why": "Educado y natural en Lisboa: «elétrico» es la palabra para tranvía aquí." },
+            { "why": "«Bonde» es de Brasil. Te entenderá, pero en Portugal se dice «elétrico»." },
+            { "why": "Un «comboio» es un tren. El tranvía es «elétrico»." }
+          ]
+        },
+        { "translation": "Sí. Bájese en el Mirador de Santa Luzia y después suba a pie. Está muy cerca." },
+        {
+          "prompt": "¿Dónde tienes que bajarte?",
+          "options": [
+            { "text": "En el Mirador de Santa Luzia, y después subir a pie un poco hasta el castillo", "why": "Correcto: «saia» = bájese, «suba a pé» = suba a pie, «pertinho» = muy cerca." },
+            { "text": "En la puerta del castillo: el tranvía llega hasta la entrada", "why": "Dijo que te bajes en el mirador y subas a pie." },
+            { "text": "En la última parada, y después tomar un taxi", "why": "No hace falta taxi: está «pertinho», muy cerca a pie." }
+          ]
+        },
+        { "translation": "¿Ya tiene billete? Si lo compra a bordo, es más caro." },
+        {
+          "prompt": "¿De qué te avisa?",
+          "options": [
+            { "text": "Los billetes comprados en el tranvía cuestan más que usar una tarjeta de transporte", "why": "Correcto: «a bordo» significa dentro del tranvía, y «mais caro», más caro." },
+            { "text": "No puedes subir sin billete de papel", "why": "Puedes comprarlo a bordo; solo que cuesta más." },
+            { "text": "Hoy el tranvía es gratis", "why": "No es gratis: está comparando precios." }
+          ]
+        },
+        { "text": "Por suerte, tienes una tarjeta recargable con saldo. Te subes al tranvía." },
+        { "translation": "Tiene que validar la tarjeta, por favor." },
+        {
+          "prompt": "¿Qué tienes que hacer?",
+          "options": [
+            { "text": "Pasar la tarjeta por el lector", "why": "Correcto: «validar» significa acercarla al lector, aunque ya tenga saldo." },
+            { "text": "Enseñar el pasaporte", "why": "No hace falta documento: solo valida la tarjeta." },
+            { "text": "Comprar una tarjeta nueva al conductor", "why": "Tu tarjeta sirve: solo tienes que pasarla por el lector." }
+          ]
+        },
+        { "text": "El tranvía va lleno. Mientras sube por Alfama, te das cuenta de que el bolso se te ha ido hacia atrás y está medio abierto." },
+        {
+          "prompt": "¿Qué es lo más sensato?",
+          "options": [
+            { "text": "Cerrar el bolso y llevarlo por delante: los tranvías llenos atraen a los carteristas.", "why": "Correcto. El 28 es conocido por los carteristas, así que lleva tus cosas de valor cerca." },
+            { "text": "No te preocupes: en Portugal no hay carteristas.", "why": "Lisboa es en general segura, pero los carteristas sí actúan en los tranvías turísticos llenos." },
+            { "text": "Levantar el teléfono bien alto para que nadie lo alcance.", "why": "¡Así solo lo estás enseñando! Guárdalo en un bolsillo interior." }
+          ]
+        },
+        { "text": "Ves el Mirador de Santa Luzia. Hay gente de pie entre tú y la puerta." },
+        {
+          "prompt": "¿Qué dices para pasar?",
+          "options": [
+            { "why": "Educado y justo lo que dice la gente: «Con permiso, me bajo aquí»." },
+            { "why": "«¡Quítense de en medio!» es grosero. Usa «Com licença»." },
+            { "why": "Se entiende, pero «ponto» y «descer» aquí suenan a Brasil. En Lisboa: «Com licença, saio aqui»." }
+          ]
+        }
+      ]
+    }
+  }
+}

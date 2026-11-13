@@ -1,0 +1,235 @@
+{
+  "id": "es-es-tren-madrid",
+  "title": "Buying a train ticket in Madrid",
+  "language": "Spanish",
+  "country": "Spain",
+  "countryCode": "ES",
+  "flag": "🇪🇸",
+  "variety": { "id": "es-ES", "label": "Spanish from Spain" },
+  "difficulty": "intermediate",
+  "estMinutes": 7,
+  "setting": "You're at Madrid's Atocha station, planning a day trip to Toledo — about half an hour away by high-speed train. You go to the ticket office (\"la taquilla\").",
+  "objectives": [
+    "Buy a return ticket and say when you want to travel",
+    "Ask when the next train leaves",
+    "Choose a window or aisle seat",
+    "Find your platform and get through the luggage check"
+  ],
+  "varietyNote": "This is the Spanish of Spain, as you'd hear it in Madrid. A ticket is a \"billete\" in Spain but usually a \"boleto\" in Latin America, and a platform is \"vía\" or \"andén\" in Spain.",
+  "phrases": [
+    {
+      "id": "ida-y-vuelta",
+      "text": "Un billete de ida y vuelta a Toledo, por favor.",
+      "translation": "A return ticket to Toledo, please.",
+      "example": "Dos billetes de ida a Sevilla, por favor.",
+      "exampleTranslation": "Two one-way tickets to Seville, please.",
+      "note": "\"Ida\" = one way; \"ida y vuelta\" = return (round trip).",
+      "alsoHeard": [
+        { "text": "Un boleto de ida y vuelta…", "where": "Latin America" }
+      ]
+    },
+    {
+      "id": "proximo-tren",
+      "text": "¿A qué hora sale el próximo tren?",
+      "translation": "What time does the next train leave?",
+      "example": "¿A qué hora sale el próximo tren a Toledo?",
+      "exampleTranslation": "What time does the next train to Toledo leave?"
+    },
+    {
+      "id": "ventanilla-pasillo",
+      "text": "¿Ventanilla o pasillo?",
+      "translation": "Window or aisle?",
+      "example": "Ventanilla, si puede ser.",
+      "exampleTranslation": "A window seat, if possible."
+    },
+    {
+      "id": "de-que-via",
+      "text": "¿De qué vía sale?",
+      "translation": "Which platform does it leave from?",
+      "example": "Perdone, ¿de qué vía sale el tren de Toledo?",
+      "exampleTranslation": "Excuse me, which platform does the Toledo train leave from?",
+      "note": "Departure boards often only show the \"vía\" shortly before departure."
+    },
+    {
+      "id": "control-equipaje",
+      "text": "Hay que pasar el control de equipaje.",
+      "translation": "You have to go through the luggage check.",
+      "example": "Pase la maleta por el escáner, por favor.",
+      "exampleTranslation": "Put your suitcase through the scanner, please."
+    },
+    {
+      "id": "con-antelacion",
+      "text": "con antelación",
+      "translation": "in advance",
+      "example": "Es mejor comprar los billetes con antelación.",
+      "exampleTranslation": "It's better to buy tickets in advance."
+    }
+  ],
+  "cultureNotes": [
+    "High-speed and many long-distance trains in Spain have assigned seats, so you choose (or are given) a seat when you buy your ticket.",
+    "Before boarding high-speed trains at big stations like Atocha, your luggage goes through an X-ray scanner, a bit like at an airport. Arrive a little early.",
+    "Spanish trains are generally punctual. Tickets for popular routes can sell out, especially on weekends, so it's worth buying in advance online or in the app.",
+    "Spain uses the 24-hour clock for timetables: \"las catorce y cuarto\" is 2:15 p.m."
+  ],
+  "steps": [
+    { "type": "scene", "text": "There's a short queue at the ticket office. When it's your turn, the clerk looks up." },
+    { "type": "line", "speaker": "Clerk", "text": "Buenos días. ¿Adónde va?", "translation": "Good morning. Where are you going?" },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You want to go to Toledo and come back the same evening. What do you say?",
+      "options": [
+        { "text": "Un billete de ida y vuelta a Toledo, por favor.", "correct": true, "why": "Perfect: \"ida y vuelta\" is a return ticket." },
+        { "text": "Un billete de ida a Toledo, por favor.", "why": "\"Ida\" alone is one way — you'd have to buy another ticket to come back." },
+        { "text": "Un billete de vuelta y vuelta a Toledo.", "why": "Close, but the phrase is \"ida y vuelta\" — going and coming back." }
+      ],
+      "phraseIds": ["ida-y-vuelta"]
+    },
+    { "type": "line", "speaker": "Clerk", "text": "¿Para hoy? ¿Y la vuelta a qué hora?", "translation": "For today? And what time do you want to come back?" },
+    { "type": "scene", "text": "You'd like to leave as soon as possible, and come back around 7 in the evening." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "First, ask when the next train leaves.",
+      "options": [
+        { "text": "Sí, para hoy. ¿A qué hora sale el próximo tren?", "correct": true, "why": "Clear and natural. \"Salir\" is the verb for a train leaving." },
+        { "text": "Sí, para hoy. ¿Cuándo va el tren afuera?", "why": "A word-for-word mix-up — trains \"salen\" (leave); \"ir afuera\" means to go outside." },
+        { "text": "Sí, para hoy. ¿A qué hora llega el tren?", "why": "\"Llega\" asks when it arrives, not when it leaves." }
+      ],
+      "phraseIds": ["proximo-tren"]
+    },
+    { "type": "line", "speaker": "Clerk", "text": "Hay uno a las once y veinte. La vuelta, a las diecinueve y cinco. ¿Ventanilla o pasillo?", "translation": "There's one at 11:20. The return is at 19:05 (7:05 p.m.). Window or aisle?" },
+    {
+      "type": "choice",
+      "skill": "meaning",
+      "prompt": "What time is your return train, and what is she asking now?",
+      "options": [
+        { "text": "7:05 p.m., and whether you want a window or an aisle seat", "correct": true, "why": "Right — \"diecinueve y cinco\" is 19:05 on the 24-hour clock, and \"ventanilla o pasillo\" is window or aisle." },
+        { "text": "9:05 p.m., and whether you want to sit near the bar", "why": "Nineteen (\"diecinueve\") is 19:00, so 7 p.m. And \"pasillo\" is the aisle, not the bar." },
+        { "text": "11:20, and whether you want a ticket with a view", "why": "11:20 is your train there. The return is at 19:05, and she's asking about window or aisle." }
+      ],
+      "phraseIds": ["ventanilla-pasillo"]
+    },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You'd like a window seat. What do you say?",
+      "options": [
+        { "text": "Ventanilla, si puede ser.", "correct": true, "why": "\"Si puede ser\" (if possible) is a polite, very Spanish touch." },
+        { "text": "Ventana, por favor.", "why": "You'll be understood, but on trains and planes the window seat is \"ventanilla\"." },
+        { "text": "Pasillo, si puede ser.", "why": "That's the aisle — you wanted the window!" }
+      ],
+      "phraseIds": ["ventanilla-pasillo"]
+    },
+    { "type": "scene", "text": "You pay and take your ticket. On the departure board, the Toledo train doesn't show a platform yet." },
+    {
+      "type": "choice",
+      "skill": "respond",
+      "prompt": "You ask a station worker which platform the train leaves from.",
+      "options": [
+        { "text": "Perdone, ¿de qué vía sale el tren de Toledo?", "correct": true, "why": "Polite (\"perdone\" with a stranger) and exactly the right question." },
+        { "text": "Perdone, ¿de qué vida sale el tren de Toledo?", "why": "\"Vida\" means life! The platform is \"vía\"." },
+        { "text": "¿El tren? ¿Dónde?", "why": "Too vague — say which train, and ask about the \"vía\"." }
+      ],
+      "phraseIds": ["de-que-via"]
+    },
+    { "type": "line", "speaker": "Station worker", "text": "Todavía no ha salido en el panel. Pero primero hay que pasar el control de equipaje, por allí.", "translation": "It isn't on the board yet. But first you have to go through the luggage check, over there." },
+    {
+      "type": "choice",
+      "skill": "culture",
+      "prompt": "Why is there a luggage check for a train?",
+      "options": [
+        { "text": "Big Spanish stations scan luggage before high-speed trains — arrive a little early.", "correct": true, "why": "Right. It's quick, but it can mean a short queue before boarding." },
+        { "text": "Because your ticket is for an international train.", "why": "Toledo is in Spain — the check is normal for high-speed trains at big stations." },
+        { "text": "Because they think you're carrying too much.", "why": "It isn't personal — everyone's luggage goes through the scanner." }
+      ],
+      "phraseIds": ["control-equipaje"]
+    }
+  ],
+  "related": {},
+  "i18n": {
+    "pt": {
+      "title": "Comprando uma passagem de trem em Madri",
+      "summary": "Compre uma passagem de ida e volta para Toledo, escolha o assento e encontre a sua plataforma.",
+      "setting": "Você está na estação de Atocha, em Madri, planejando um passeio de um dia a Toledo — mais ou menos meia hora de trem de alta velocidade. Você vai até a bilheteria («la taquilla»).",
+      "objectives": [
+        "Comprar uma passagem de ida e volta e dizer quando quer viajar",
+        "Perguntar quando sai o próximo trem",
+        "Escolher janela ou corredor",
+        "Encontrar a sua plataforma e passar pela inspeção de bagagem"
+      ],
+      "varietyNote": "Este é o espanhol da Espanha, como se ouve em Madri. Uma passagem é «billete» na Espanha, mas normalmente «boleto» na América Latina, e a plataforma é «vía» ou «andén» na Espanha.",
+      "phrases": {
+        "ida-y-vuelta": { "translation": "Uma passagem de ida e volta para Toledo, por favor.", "exampleTranslation": "Duas passagens só de ida para Sevilha, por favor.", "note": "«Ida» = só ida; «ida y vuelta» = ida e volta.", "alsoHeard": ["América Latina"] },
+        "proximo-tren": { "translation": "A que horas sai o próximo trem?", "exampleTranslation": "A que horas sai o próximo trem para Toledo?" },
+        "ventanilla-pasillo": { "translation": "Janela ou corredor?", "exampleTranslation": "Janela, se possível." },
+        "de-que-via": { "translation": "De qual plataforma ele sai?", "exampleTranslation": "Com licença, de qual plataforma sai o trem para Toledo?", "note": "Os painéis de partida muitas vezes só mostram a «vía» pouco antes da partida." },
+        "control-equipaje": { "translation": "É preciso passar pela inspeção de bagagem.", "exampleTranslation": "Passe a mala pelo raio-X, por favor." },
+        "con-antelacion": { "translation": "com antecedência", "exampleTranslation": "É melhor comprar as passagens com antecedência." }
+      },
+      "cultureNotes": [
+        "Nos trens de alta velocidade e em muitos de longa distância na Espanha os assentos são marcados, então você escolhe (ou recebe) um lugar ao comprar a passagem.",
+        "Antes de embarcar nos trens de alta velocidade em estações grandes como Atocha, a bagagem passa por um raio-X, parecido com o de um aeroporto. Chegue um pouco antes.",
+        "Os trens espanhóis costumam ser pontuais. As passagens das rotas mais procuradas podem esgotar, principalmente nos fins de semana, então vale a pena comprar com antecedência pela internet ou pelo aplicativo.",
+        "A Espanha usa o horário de 24 horas nos quadros de horários: «las catorce y cuarto» é 14h15."
+      ],
+      "steps": [
+        { "text": "Tem uma fila pequena na bilheteria. Quando chega a sua vez, a atendente levanta os olhos." },
+        { "translation": "Bom dia. Para onde o senhor vai?" },
+        {
+          "prompt": "Você quer ir a Toledo e voltar na mesma noite. O que você diz?",
+          "options": [
+            { "why": "Perfeito: «ida y vuelta» é uma passagem de ida e volta." },
+            { "why": "«Ida» sozinho é só ida — você teria que comprar outra passagem para voltar." },
+            { "why": "Quase, mas a expressão é «ida y vuelta» — ida e volta." }
+          ]
+        },
+        { "translation": "Para hoje? E a volta, a que horas?" },
+        { "text": "Você quer sair o quanto antes e voltar por volta das 7 da noite." },
+        {
+          "prompt": "Primeiro, pergunte quando sai o próximo trem.",
+          "options": [
+            { "why": "Claro e natural. «Salir» é o verbo usado para o trem partir." },
+            { "why": "Uma confusão palavra por palavra — os trens «salen» (partem); «ir afuera» quer dizer ir lá para fora." },
+            { "why": "«Llega» pergunta quando ele chega, não quando sai." }
+          ]
+        },
+        { "translation": "Tem um às onze e vinte. A volta, às dezenove e cinco. Janela ou corredor?" },
+        {
+          "prompt": "A que horas é o trem de volta, e o que ela está perguntando agora?",
+          "options": [
+            { "text": "Às 19h05, e se você quer janela ou corredor", "why": "Isso — «diecinueve y cinco» é 19h05 no horário de 24 horas, e «ventanilla o pasillo» é janela ou corredor." },
+            { "text": "Às 21h05, e se você quer sentar perto do bar", "why": "Dezenove («diecinueve») é 19h, ou seja, 7 da noite. E «pasillo» é o corredor, não o bar." },
+            { "text": "Às 11h20, e se você quer uma passagem com vista", "why": "11h20 é o trem de ida. A volta é às 19h05, e ela pergunta se você quer janela ou corredor." }
+          ]
+        },
+        {
+          "prompt": "Você quer a janela. O que você diz?",
+          "options": [
+            { "why": "«Si puede ser» (se possível) é um toque educado e bem espanhol." },
+            { "why": "Vão te entender, mas em trens e aviões o assento da janela é «ventanilla»." },
+            { "why": "Isso é o corredor — você queria a janela!" }
+          ]
+        },
+        { "text": "Você paga e pega a passagem. No painel de partidas, o trem para Toledo ainda não mostra a plataforma." },
+        {
+          "prompt": "Você pergunta a um funcionário da estação de qual plataforma sai o trem.",
+          "options": [
+            { "why": "Educado («perdone» com um desconhecido) e exatamente a pergunta certa." },
+            { "why": "«Vida» é vida mesmo! A plataforma é «vía»." },
+            { "why": "Vago demais — diga qual trem e pergunte pela «vía»." }
+          ]
+        },
+        { "translation": "Ainda não apareceu no painel. Mas antes é preciso passar pela inspeção de bagagem, ali." },
+        {
+          "prompt": "Por que tem inspeção de bagagem para um trem?",
+          "options": [
+            { "text": "As grandes estações espanholas passam a bagagem no raio-X antes dos trens de alta velocidade — chegue um pouco antes.", "why": "Isso. É rápido, mas pode haver uma filinha antes do embarque." },
+            { "text": "Porque a sua passagem é para um trem internacional.", "why": "Toledo fica na Espanha — a inspeção é normal para trens de alta velocidade em estações grandes." },
+            { "text": "Porque acham que você está levando bagagem demais.", "why": "Não é nada pessoal — a bagagem de todo mundo passa pelo raio-X." }
+          ]
+        }
+      ]
+    }
+  }
+}
