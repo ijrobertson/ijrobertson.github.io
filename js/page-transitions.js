@@ -46,7 +46,13 @@
     // Switching between bottom-nav tabs: no animation at all, like a native
     // tab bar. A page ignores taps while a transition is playing, so the
     // fade made a quick second tap on the bar do nothing.
-    if (from === 0 && to === 0) { vt.skipTransition(); return; }
+    if (from === 0 && to === 0) {
+      // skipTransition() rejects these promises; nothing is waiting on them.
+      if (vt.ready) vt.ready.catch(function () {});
+      if (vt.finished) vt.finished.catch(function () {});
+      vt.skipTransition();
+      return;
+    }
     if (!vt.types || from === null || to === null || from === to) return;
     vt.types.add(to > from ? "lb-forward" : "lb-back");
   });
