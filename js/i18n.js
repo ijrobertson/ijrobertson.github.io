@@ -59,7 +59,9 @@
   var mixed = (table && table.mixed) || {};
   var patterns = ((table && table.patterns) || []).map(function (p) { return [new RegExp(p[0]), p[1]]; });
   var reverse = {};
-  Object.keys(dict).forEach(function (k) { reverse[dict[k]] = k; });
+  // Keyed on the normalised form (whitespace collapsed, as toEnglish() looks
+  // it up) so French thin spaces before ? ! : ; still match.
+  Object.keys(dict).forEach(function (k) { reverse[dict[k].replace(/\s+/g, " ").trim()] = k; });
 
   // Country and language names: a fixed, reviewed table per language in
   // js/i18n-strings.js (not the browser's own name data, which differs
