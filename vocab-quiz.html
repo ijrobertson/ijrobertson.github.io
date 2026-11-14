@@ -170,6 +170,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .quiz-gap-sentence .gap-filled { color: #0b6664; border-bottom: 3px solid #20bcba; font-weight: 800; }
         .quiz-listen-btn { width: 84px; height: 84px; border-radius: 50%; border: none; background: #20bcba; color: white; font-size: 2rem; box-shadow: 0 8px 20px -8px rgba(17,52,72,0.4); cursor: pointer; }
         .quiz-listen-btn:active { transform: scale(0.95); }
+        /* Listen questions: show the written word if the audio can't be heard. */
+        .quiz-listen-reveal { margin-top: 0.9rem; }
+        .quiz-reveal-btn { background: none; border: 2px solid #e7e9e7; border-radius: 999px; padding: 0.4rem 1rem; font-size: 0.9rem; font-weight: 700; color: #0b6664; cursor: pointer; }
+        .quiz-reveal-btn:hover, .quiz-reveal-btn:focus-visible { border-color: #20bcba; }
         .quiz-reveal { margin-top: 0.75rem; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--pb-teal-dark); }
         .quiz-reveal-sub { font-size: 0.95rem; color: #5f6b72; margin-top: 0.25rem; }
         .answer-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
@@ -1213,6 +1217,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // uses one (see startStaticQuiz), otherwise the deck's English meaning.
         let meaningLang = null;
         const lbT = (s) => (window.lbI18n ? window.lbI18n.t(s) : s);
+        // The written word (and romanisation) for a listen question.
+        function listenRevealHtml(word, isRtl) {
+            return `<div class="quiz-reveal"${isRtl ? ' dir="rtl"' : ''} translate="no">${escapeHtml(word.term)}</div>${word.transliteration ? `<div class="quiz-reveal-sub" translate="no">${escapeHtml(word.transliteration)}</div>` : ''}`;
+        }
+
         function meaningOf(word) {
             return (meaningLang && word.meanings && word.meanings[meaningLang]) || word.translation;
         }
@@ -1353,8 +1362,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             } else if (q.type === 'gap') {
                 document.getElementById('quizTermCard').innerHTML = `<div class="quiz-gap-sentence"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.gap.before)}<span class="gap">&nbsp;</span>${escapeHtml(q.gap.after)}</div>`;
             } else if (q.type === 'listen') {
-                document.getElementById('quizTermCard').innerHTML = `<button type="button" class="quiz-listen-btn" id="quizListenBtn" aria-label="${escapeHtml(lbT('Play the word'))}"><i class="fas fa-volume-up"></i></button>`;
+                document.getElementById('quizTermCard').innerHTML = `<button type="button" class="quiz-listen-btn" id="quizListenBtn" aria-label="${escapeHtml(lbT('Play the word'))}"><i class="fas fa-volume-up"></i></button>
+                    <div class="quiz-listen-reveal" id="quizListenReveal"><button type="button" class="quiz-reveal-btn" id="quizRevealBtn"><i class="fas fa-eye"></i> ${escapeHtml(lbT('Show the word'))}</button></div>`;
                 document.getElementById('quizListenBtn').addEventListener('click', () => speakWord(q.word.term));
+                // For when the audio can't be heard (muted phone, no voice, noisy place).
+                document.getElementById('quizRevealBtn').addEventListener('click', () => {
+                    document.getElementById('quizListenReveal').innerHTML = listenRevealHtml(q.word, isRtl);
+                });
                 speakWord(q.word.term);
             } else {
                 document.getElementById('quizTermCard').innerHTML = `
@@ -1396,7 +1410,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     card.innerHTML = `<div class="quiz-gap-sentence"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.gap.before)}<span class="gap-filled">${escapeHtml(q.gap.word)}</span>${escapeHtml(q.gap.after)}</div>
                         <div class="quiz-reveal-sub">${escapeHtml(q.word.term)} — ${escapeHtml(meaningOf(q.word))}</div>`;
                 } else {
-                    card.insertAdjacentHTML('beforeend', `<div class="quiz-reveal"${isRtl ? ' dir="rtl"' : ''}>${escapeHtml(q.word.term)}</div>${q.word.transliteration ? `<div class="quiz-reveal-sub">${escapeHtml(q.word.transliteration)}</div>` : ''}`);
+                    const slot = document.getElementById('quizListenReveal');
+                    if (slot) slot.innerHTML = listenRevealHtml(q.word, isRtl);
+                    else card.insertAdjacentHTML('beforeend', listenRevealHtml(q.word, isRtl));
                 }
             }
             if (q.isAI && q.explanation) {
