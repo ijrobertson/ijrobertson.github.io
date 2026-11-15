@@ -1119,6 +1119,28 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             color: #5f6b72;
         }
 
+        .messages-loading {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 160px;
+            color: var(--pb-teal);
+            font-size: 1.6rem;
+            opacity: 0.6;
+        }
+
+        .messages-retry-btn {
+            margin-top: 0.9rem;
+            border: none;
+            border-radius: 999px;
+            padding: 0.55rem 1.4rem;
+            background: var(--pb-teal);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
         @media (max-width: 992px) {
             .messages-container {
                 display: flex;
@@ -2325,6 +2347,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // message (see loadMessages()) was adding a real, avoidable network
         // round-trip before a just-sent message could even render.
         const senderAvatarCache = new Map();
+        // Sender avatars currently being fetched (so two snapshots don't fetch twice).
+        const avatarFetchInFlight = new Set();
+        // Bumped on every loadMessages() so a slower listener/fetch from a
+        // previous open (or a previous retry) can never paint over the current one.
+        let messagesOpenToken = 0;
+        // While a chat is first opening, keep it pinned to the newest message
+        // until this time (ms) — see openConversation.
+        let pinToBottomUntil = 0;
 
         // Audio messaging state
         const audioPlayers = new Map(); // msgId -> HTMLAudioElement
@@ -2820,6 +2850,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // the chatPanel render, which fetches for real and patches the
             // header in place once it resolves either way.
             let otherUser = userCache.get(otherUserId) || { name: 'Unknown User', avatar_url: '', isInstructor: false };
+            // Their avatar is already known from the conversation list — no
+            // need for loadMessages to fetch it again before showing bubbles.
+            if (otherUser.avatar_url && !senderAvatarCache.has(otherUserId)) senderAvatarCache.set(otherUserId, otherUser.avatar_url);
 
             // Mobile: switch to chat panel view
             const messagesContainer = document.querySelector('.messages-container');
@@ -2848,7 +2881,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <i class="fas fa-video"></i>
                     </button>
                 </div>
-                <div class="messages-area" id="messagesArea"></div>
+                <div class="messages-area" id="messagesArea"><div class="messages-loading" role="status" aria-label="Loading…"><i class="fas fa-circle-notch fa-spin"></i></div></div>
                 <button type="button" class="jump-to-bottom-btn" id="jumpToBottomBtn" aria-label="Jump to latest messages" title="Jump to latest messages">
                     <i class="fas fa-chevron-down"></i>
                 </button>
@@ -3171,6 +3204,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 setJumpToBottomVisible(!nearBottom);
             });
 
+            // Stay on the newest message while the chat first opens. Photos,
+            // images and avatars finish loading AFTER the first render and push
+            // the content down, which used to leave the view stuck partway up
+            // the history — looking like the chat hadn't loaded — until it was
+            // reopened with everything cached. The pin ends as soon as the
+            // person touches/scrolls the messages themselves.
+            pinToBottomUntil = Date.now() + 4000;
+            const releaseBottomPin = () => { pinToBottomUntil = 0; };
+            messagesAreaEl.addEventListener('touchstart', releaseBottomPin, { passive: true });
+            messagesAreaEl.addEventListener('wheel', releaseBottomPin, { passive: true });
+            messagesAreaEl.addEventListener('mousedown', releaseBottomPin);
+            messagesAreaEl.addEventListener('load', () => {
+                if (Date.now() < pinToBottomUntil) messagesAreaEl.scrollTop = messagesAreaEl.scrollHeight;
+            }, true); // 'load' doesn't bubble — capture it from every <img> inside
+
             // Reply preview bar's cancel (×) button — see clearReplyTarget.
             document.getElementById('replyPreviewCancel').addEventListener('click', clearReplyTarget);
             document.getElementById('editPreviewCancel').addEventListener('click', cancelEditingMessage);
@@ -3421,7 +3469,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // visually jump the view down by exactly that added height.
                 messagesArea.scrollTop = prevScrollTop + (messagesArea.scrollHeight - prevScrollHeight);
                 endedNearBottom = wasNearBottom;
-            } else if (wasNearBottom) {
+            } else if (wasNearBottom || Date.now() < pinToBottomUntil) {
                 messagesArea.scrollTop = messagesArea.scrollHeight;
                 endedNearBottom = true;
             } else {
@@ -4007,11 +4055,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
-        async function loadMessages(conversationId) {
-            // Unsubscribe from previous conversation
+        async function loadMessages(conversationId, attempt = 0) {
+            // Unsubscribe from previous conversation (or a stalled attempt)
             if (unsubscribeMessages) {
                 unsubscribeMessages();
+                unsubscribeMessages = null;
             }
+            const openToken = ++messagesOpenToken;
 
             // Fresh pagination state for this open — any "Load earlier"
             // history from a previous visit to this conversation doesn't
@@ -4022,86 +4072,67 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             hasMoreOlderByConv.delete(conversationId);
             loadingEarlierByConv.delete(conversationId);
 
+            // Bounded to the most recent MESSAGE_PAGE_SIZE messages, not the
+            // entire history (full history is on demand — see
+            // loadEarlierMessages / the "Load earlier" button).
+            const q = query(
+                collection(db, 'conversations', conversationId, 'messages'),
+                orderBy('timestamp', 'desc'),
+                limit(MESSAGE_PAGE_SIZE)
+            );
+
+            // If no first snapshot arrives (a listener that stalls on a flaky
+            // or just-woken connection — the "tap out and back in" symptom),
+            // reconnect automatically, then offer a retry.
+            let gotFirstSnapshot = false;
+            const stallTimer = setTimeout(() => {
+                if (gotFirstSnapshot || openToken !== messagesOpenToken || activeConversationId !== conversationId) return;
+                if (attempt < 2) loadMessages(conversationId, attempt + 1);
+                else showMessagesLoadError(conversationId);
+            }, 8000);
+
             try {
-                // Bounded to the most recent MESSAGE_PAGE_SIZE messages, not
-                // the entire history. An unbounded orderBy('asc') query here
-                // used to download and fully re-render a conversation's
-                // COMPLETE history on every single open — and again on every
-                // single new message, since onSnapshot re-fires this whole
-                // callback — which is what actually made opening a
-                // long-running conversation feel slow, and got worse the
-                // older the conversation got. Every mainstream chat app
-                // works this way: a bounded live "recent messages" window,
-                // with full history available on demand — see
-                // loadEarlierMessages/the "Load earlier" button in
-                // renderMessageList for that on-demand half.
-                const q = query(
-                    collection(db, 'conversations', conversationId, 'messages'),
-                    orderBy('timestamp', 'desc'),
-                    limit(MESSAGE_PAGE_SIZE)
-                );
+                unsubscribeMessages = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+                    // A listener from an earlier open/attempt — ignore.
+                    if (openToken !== messagesOpenToken) return;
+                    // THE "blank chat until you tap out and back in" bug: on a
+                    // stale connection (app just resumed, network blip) Firestore
+                    // answers instantly from its local cache — which is EMPTY for
+                    // a chat not opened this session — and the real messages only
+                    // follow once it reconnects. Rendering that empty answer left
+                    // a blank chat. So an empty cache-only result is not "loaded":
+                    // the spinner stays until the server answers.
+                    if (!gotFirstSnapshot && snapshot.metadata.fromCache && snapshot.empty) return;
+                    // includeMetadataChanges is only needed for that server
+                    // confirmation — skip later snapshots where no message changed.
+                    if (gotFirstSnapshot && snapshot.docChanges().length === 0) return;
+                    gotFirstSnapshot = true;
+                    clearTimeout(stallTimer);
 
-                unsubscribeMessages = onSnapshot(q, async (snapshot) => {
-                    // Collect all messages and prepare data fetch promises
-                    const messages = [];
-                    const senderDataPromises = new Map();
+                    // Newest-first (desc) keeps the live window pinned to the
+                    // most recent messages — reverse to chronological order.
+                    const messages = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })).reverse();
 
-                    snapshot.docs.forEach((docSnap) => {
-                        const message = { id: docSnap.id, ...docSnap.data() };
-                        messages.push(message);
-
-                        // Already have this sender's avatar from an earlier snapshot
-                        // (or already fetching it in this same pass) — nothing to do.
-                        if (senderAvatarCache.has(message.senderId) || senderDataPromises.has(message.senderId)) return;
-
-                        senderDataPromises.set(message.senderId,
-                            (async () => {
-                                try {
-                                    const [userDoc, instructorDoc] = await Promise.all([
-                                        getDoc(doc(db, 'users', message.senderId)),
-                                        getDoc(doc(db, 'instructors', message.senderId))
-                                    ]);
-                                    const data = instructorDoc.exists() ? instructorDoc.data()
-                                               : userDoc.exists()       ? userDoc.data()
-                                               : null;
-                                    return data ? (data.avatar_url || null) : null;
-                                } catch (error) {
-                                    console.error('Error loading sender:', error);
-                                    return null;
-                                }
-                            })()
-                        );
-                    });
-
-                    // Fetch only newly-seen senders' data in parallel, and cache it —
-                    // on every subsequent snapshot (e.g. the one right after you send
-                    // a message) this loop has nothing left to do, so rendering isn't
-                    // gated on a network round-trip anymore.
-                    for (const [senderId, promise] of senderDataPromises) {
-                        senderAvatarCache.set(senderId, await promise);
-                    }
-
-                    // The query is newest-first (desc) so the live window
-                    // stays pinned to the most recent MESSAGE_PAGE_SIZE
-                    // messages as new ones arrive — reverse back to
-                    // chronological order for storage/render.
-                    messages.reverse();
+                    // Avatars never hold up the messages: bubbles render right
+                    // away with the default avatar, and any sender we haven't
+                    // got a photo for yet is fetched in the background and
+                    // patched in with a re-render. (This used to await those
+                    // fetches before rendering anything, so one slow profile
+                    // request left the whole chat blank.)
+                    const missingSenders = [...new Set(messages.map((m) => m.senderId))]
+                        .filter((id) => id && !senderAvatarCache.has(id) && !avatarFetchInFlight.has(id));
+                    if (missingSenders.length) fetchSenderAvatars(missingSenders, conversationId, openToken);
 
                     // Only set this from the FIRST snapshot of this live
-                    // window (not every snapshot) — a full page on that
-                    // first look means there's probably more before it,
-                    // which stays true regardless of how the live window's
-                    // own size fluctuates afterward as new messages arrive.
-                    // A real "Load earlier" fetch (see loadEarlierMessages)
-                    // is what actually resolves this one way or the other.
+                    // window — a full page on that first look means there's
+                    // probably more before it (loadEarlierMessages resolves it).
                     if (!hasMoreOlderByConv.has(conversationId)) {
                         hasMoreOlderByConv.set(conversationId, snapshot.docs.length === MESSAGE_PAGE_SIZE);
                     }
 
                     lastServerMessagesByConv.set(conversationId, messages);
 
-                    // Non-blocking — only actually writes anything if this
-                    // conversation has unread incoming messages, see above.
+                    // Non-blocking — only writes if there are unread incoming messages.
                     markIncomingMessagesRead(conversationId, messages);
 
                     // Any optimistic message whose real doc has now landed (matched
@@ -4115,10 +4146,59 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
 
                     renderMessageList(conversationId);
+                }, (error) => {
+                    // The listener itself failed (network/permission). Without
+                    // this the chat just stayed blank.
+                    console.error('Messages listener error:', error);
+                    clearTimeout(stallTimer);
+                    if (openToken !== messagesOpenToken) return;
+                    if (!gotFirstSnapshot) showMessagesLoadError(conversationId);
                 });
             } catch (error) {
                 console.error('Error loading messages:', error);
+                clearTimeout(stallTimer);
+                showMessagesLoadError(conversationId);
             }
+        }
+
+        // Background avatar fetch for senders loadMessages hasn't seen yet;
+        // re-renders once they arrive, if that chat is still the one open.
+        async function fetchSenderAvatars(senderIds, conversationId, openToken) {
+            senderIds.forEach((id) => avatarFetchInFlight.add(id));
+            await Promise.all(senderIds.map(async (senderId) => {
+                try {
+                    const [userDoc, instructorDoc] = await Promise.all([
+                        getDoc(doc(db, 'users', senderId)),
+                        getDoc(doc(db, 'instructors', senderId))
+                    ]);
+                    const data = instructorDoc.exists() ? instructorDoc.data() : userDoc.exists() ? userDoc.data() : null;
+                    senderAvatarCache.set(senderId, data ? (data.avatar_url || null) : null);
+                } catch (error) {
+                    console.error('Error loading sender:', error);
+                } finally {
+                    avatarFetchInFlight.delete(senderId);
+                }
+            }));
+            if (openToken === messagesOpenToken) renderMessageList(conversationId);
+        }
+
+        // Shown in place of the messages when they can't be loaded, with a
+        // retry that resubscribes without leaving the chat.
+        function showMessagesLoadError(conversationId) {
+            if (activeConversationId !== conversationId) return;
+            const area = document.getElementById('messagesArea');
+            if (!area) return;
+            area.innerHTML = `<div class="empty-state messages-load-error">
+                <i class="fas fa-wifi"></i>
+                <h3>Couldn't load this conversation</h3>
+                <p>Check your connection and try again.</p>
+                <button type="button" class="messages-retry-btn" id="messagesRetryBtn">Try again</button>
+            </div>`;
+            document.getElementById('messagesRetryBtn').addEventListener('click', () => {
+                area.innerHTML = '<div class="messages-loading" role="status"><i class="fas fa-circle-notch fa-spin"></i></div>';
+                pinToBottomUntil = Date.now() + 4000;
+                loadMessages(conversationId);
+            });
         }
 
         // On-demand history fetch for whatever's older than the live

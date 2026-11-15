@@ -1012,7 +1012,9 @@ window.LB_I18N_STRINGS = {
       "Loading your lessons…": "Cargando tus clases…",
       "Loading your next lesson…": "Cargando tu próxima clase…",
       "Loading your notebook...": "Cargando tu cuaderno...",
-      "Show the word": "Mostrar la palabra"
+      "Show the word": "Mostrar la palabra",
+      "Couldn't load this conversation": "No se pudo cargar esta conversación",
+      "Try again": "Intentar de nuevo"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Explora a nuestros {0}profesores{/0} para reservar tu primera clase.",
@@ -2468,7 +2470,9 @@ window.LB_I18N_STRINGS = {
       "Loading your lessons…": "Carregando suas aulas…",
       "Loading your next lesson…": "Carregando sua próxima aula…",
       "Loading your notebook...": "Carregando seu caderno...",
-      "Show the word": "Mostrar a palavra"
+      "Show the word": "Mostrar a palavra",
+      "Couldn't load this conversation": "Não foi possível carregar esta conversa",
+      "Try again": "Tentar novamente"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Veja nossos {0}professores{/0} para agendar sua primeira aula!",
@@ -3924,7 +3928,9 @@ window.LB_I18N_STRINGS = {
       "Loading your lessons…": "Chargement de vos cours…",
       "Loading your next lesson…": "Chargement de votre prochain cours…",
       "Loading your notebook...": "Chargement de votre carnet...",
-      "Show the word": "Afficher le mot"
+      "Show the word": "Afficher le mot",
+      "Couldn't load this conversation": "Impossible de charger cette conversation",
+      "Try again": "Réessayer"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Parcourez nos {0}professeurs{/0} pour réserver votre premier cours !",
@@ -5380,7 +5386,9 @@ window.LB_I18N_STRINGS = {
       "Loading your lessons…": "جارٍ تحميل دروسك…",
       "Loading your next lesson…": "جارٍ تحميل درسك القادم…",
       "Loading your notebook...": "جارٍ تحميل دفترك...",
-      "Show the word": "إظهار الكلمة"
+      "Show the word": "إظهار الكلمة",
+      "Couldn't load this conversation": "تعذّر تحميل هذه المحادثة",
+      "Try again": "حاول مرة أخرى"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "تصفّح {0}المعلمين{/0} لحجز درسك الأول!",
