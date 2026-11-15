@@ -507,7 +507,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
 
     .toggle-switch input:checked + .toggle-slider {
-      background-color: #3b5998;
+      background-color: #20bcba; /* brand teal (was #3b5998) */
     }
 
     .toggle-switch input:checked + .toggle-slider:before {
@@ -719,6 +719,117 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .del-btn-confirm:hover { background: #a93226; }
     .del-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
     .del-error { font-size: 0.8rem; color: #c0392b; margin-top: 1rem; display: none; }
+
+    /* ── Settings layout (2026-11-14) ────────────────────────────────────
+       Same design as the app's Settings page. Grouped, collapsible sections
+       in place of one long form. Every field and button is the same element
+       (same id) as before; only the layout changed. Sections are <details>,
+       so closed sections' fields are still in the page and still saved. */
+    .settings-page { max-width: 680px; margin: 1.5rem auto 3rem; padding: 0 1rem; }
+    /* The desktop navbar is taller than body's top padding: clear it. */
+    @media (min-width: 768px) { .settings-page { margin-top: 3rem; } }
+    .st-hero {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(17, 52, 72, 0.08);
+    }
+    .st-hero-text { min-width: 0; flex: 1; }
+    .st-hero-name { font-size: 1.2rem; font-weight: 700; color: #113448; line-height: 1.25; overflow-wrap: anywhere; }
+    .st-hero-sub { font-size: 0.88rem; color: #4a6272; margin-top: 2px; line-height: 1.4; }
+    .st-hero-sub:empty { display: none; }
+    .st-hero .small-note { margin-top: 6px; font-size: 0.8rem; color: #6b7f8c; line-height: 1.4; }
+
+    .st-group-label {
+      margin: 1.6rem 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #4a6272;
+    }
+    .st-card, .st-list {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(17, 52, 72, 0.08);
+      overflow: hidden;
+    }
+    .st-card-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.9rem 1rem; border-bottom: 1px solid #eef1f3; }
+    .st-card-body { padding: 1rem; }
+
+    .st-icon {
+      flex: 0 0 34px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #e6f7f7;
+      color: #0b6664;
+      font-size: 0.95rem;
+    }
+    .st-title { font-weight: 600; color: #113448; font-size: 1rem; }
+
+    .st-list > * + * { border-top: 1px solid #eef1f3; }
+    .st-section > summary {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.9rem 1rem;
+      cursor: pointer;
+      list-style: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .st-section > summary:hover { background: #f7fafb; }
+    .st-section > summary::-webkit-details-marker { display: none; }
+    .st-section > summary::marker { content: ""; }
+    .st-section > summary:focus-visible { outline: 2px solid #20bcba; outline-offset: -2px; }
+    .st-summary-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .st-sub { font-size: 0.84rem; color: #6b7f8c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .st-chevron { color: #9aaab4; font-size: 0.8rem; transition: transform 0.2s ease; }
+    .st-section[open] > summary .st-chevron { transform: rotate(180deg); }
+    .st-body { padding: 0 1rem 1.1rem; }
+    .st-body > label:first-child { margin-top: 0.25rem; }
+    .st-help { font-size: 0.84rem; color: #6b7f8c; margin: 0 0 0.75rem; line-height: 1.5; }
+    .st-help-last { margin: 0.5rem 0 0; }
+
+    .st-toggle-row { display: flex; align-items: center; gap: 1rem; padding: 0.7rem 0; }
+    .st-toggle-row + .st-toggle-row { border-top: 1px solid #eef1f3; }
+    .st-toggle-row > label:first-child { flex: 1; margin: 0; font-weight: 500; color: #113448; cursor: pointer; line-height: 1.4; }
+    .st-toggle-row > label:first-child i { width: 1.25rem; margin-right: 0.4rem; color: #20bcba; text-align: center; }
+    .st-toggle-row .toggle-switch { margin: 0; flex-shrink: 0; }
+
+    /* Save stays in view at the bottom of the window while the sections
+       above scroll, so its messages (including photo uploads) are seen. */
+    .st-savebar {
+      position: sticky;
+      bottom: 12px;
+      z-index: 5;
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #dfe7eb;
+      box-shadow: 0 4px 18px rgba(17, 52, 72, 0.14);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .st-danger .st-icon { background: #fdecea; color: #c0392b; }
+    .st-danger .st-title { color: #c0392b; }
+    .settings-page .st-hero .avatar-preview { width: 84px; height: 84px; border-width: 3px; }
+    .settings-page .st-hero .avatar-edit-btn { width: 30px; height: 30px; bottom: 0; right: 0; }
+    .st-body textarea { min-height: 110px; }
+    .st-savebar .status { margin: 0; font-size: 0.88rem; text-align: center; }
+    .st-savebar .status:empty { display: none; }
+    .st-savebar .save-btn { margin: 0; min-width: 220px; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -886,104 +997,278 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
   <!-- ── end setup modal ──────────────────────────────────── -->
 
-  <div class="page">
-    <div class="profile-card">
-      <!-- Left / editable fields -->
-      <div class="profile-left">
-        <div class="section-title">Your Profile</div>
+  <div class="page settings-page">
 
-        <label for="name">Full Name</label>
-        <input id="name" type="text" placeholder="Your full name" />
-
-        <label for="native_country">Native Country</label>
-        <select id="native_country">
-          <!-- populated dynamically -->
-        </select>
-
-        <label for="spokenLanguage">Languages I Speak</label>
-        <select id="spokenLanguage" style="margin-bottom: 0.5rem;"></select>
-        <div id="languages_spoken" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
-
-        <label for="learningLanguage">Languages I'm Learning</label>
-        <select id="learningLanguage" style="margin-bottom: 0.5rem;"></select>
-        <div id="languages_learning" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
-
-        <label for="about_me">About Me</label>
-        <textarea id="about_me" placeholder="Tell us a bit about yourself"></textarea>
-
-        <label>My Interests <span style="font-size:0.8rem;font-weight:400;color:#888;">(optional)</span></label>
-        <div class="interests-grid" id="interests-grid" style="margin-bottom:1rem;"></div>
-
-        <label for="student-timezone" style="margin-top: 1.5rem;">My Timezone</label>
-        <p style="font-size: 0.82rem; color: #777; margin: 0.2rem 0 0.4rem;">Used to display lesson times correctly when you book with instructors in other time zones.</p>
-        <select id="student-timezone-select" style="margin-bottom: 1.5rem;">
-          <option value="">Select your timezone...</option>
-        </select>
-
-        <div class="section-title" style="margin-top: 1.5rem; font-size: 1.1rem;">Notification Settings</div>
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-          <label for="emailNotifications" style="margin: 0; flex: 1; cursor: pointer;">
-            <i class="fas fa-envelope" style="margin-right: 0.5rem; color: #3b5998;"></i>
-            Email me when I receive messages
-          </label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="emailNotifications" checked />
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-          <label for="acceptingRequests" style="margin: 0; flex: 1; cursor: pointer;">
-            <i class="fas fa-user-check" style="margin-right: 0.5rem; color: #20bcba;"></i>
-            Accepting language exchange requests &amp; messages from new users
-          </label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="acceptingRequests" checked />
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <button class="save-btn" id="save-profile">Save Profile</button>
-        <div class="status" id="status-msg"></div>
+    <!-- Profile summary: photo (same upload controls as before) + name -->
+    <div class="st-hero">
+      <div class="avatar-container">
+        <img id="avatarPreview" class="avatar-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Avatar" />
+        <button type="button" class="avatar-edit-btn" id="avatar-edit-btn" title="Change photo">
+          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        </button>
+        <input type="file" id="avatar" accept="image/*" />
       </div>
-
-      <!-- Right / avatar -->
-      <div class="profile-right">
-        <div class="section-title">Profile Picture</div>
-        <div class="profile-picture-wrapper">
-          <div class="avatar-container">
-            <img id="avatarPreview" class="avatar-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E" alt="Avatar" />
-            <button type="button" class="avatar-edit-btn" id="avatar-edit-btn" title="Change photo">
-              <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-            </button>
-            <input type="file" id="avatar" accept="image/*" />
-          </div>
-          <div class="small-note">Click the pencil to change your photo.</div>
-        </div>
+      <div class="st-hero-text">
+        <div class="st-hero-name" data-summary="hero-name">Your profile</div>
+        <div class="st-hero-sub" data-summary="hero-sub"></div>
+        <div class="small-note">Click the pencil to change your photo.</div>
       </div>
     </div>
 
-    <!-- Upcoming Lessons Section -->
-    <div class="profile-card" style="margin-top: 2rem;">
-      <h3 style="color: var(--primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-        <i class="fas fa-calendar-check"></i> My Upcoming Lessons
-      </h3>
-      <div id="student-bookings" style="min-height: 100px;">
+    <!-- Lessons -->
+    <div class="st-group-label">Lessons</div>
+    <div class="st-card">
+      <div class="st-card-head">
+        <span class="st-icon"><i class="fas fa-calendar-check"></i></span>
+        <span class="st-title">My Upcoming Lessons</span>
+      </div>
+      <div id="student-bookings" class="st-card-body" style="min-height: 100px;">
         <p style="text-align: center; color: #999;">Loading...</p>
       </div>
     </div>
 
-    <!-- Danger Zone -->
-    <div class="danger-card">
-      <div class="danger-header">
-        <i class="fas fa-exclamation-triangle"></i>
-        <h3>Danger Zone</h3>
-      </div>
-      <p>Permanently delete your Lingua Bud account and all associated data. This action is irreversible and cannot be undone.</p>
-      <button class="btn-delete-account" id="open-delete-modal">
-        <i class="fas fa-trash-alt"></i> Delete My Account
-      </button>
+    <!-- Profile -->
+    <div class="st-group-label">Profile</div>
+    <div class="st-list">
+      <details class="st-section" data-section="about">
+        <summary>
+          <span class="st-icon"><i class="fas fa-user"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">About You</span>
+            <span class="st-sub" data-summary="about">Name, country and bio</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <label for="name">Full Name</label>
+          <input id="name" type="text" placeholder="Your full name" />
+
+          <label for="native_country">Native Country</label>
+          <select id="native_country">
+            <!-- populated dynamically -->
+          </select>
+
+          <label for="about_me">About Me</label>
+          <textarea id="about_me" placeholder="Tell us a bit about yourself"></textarea>
+        </div>
+      </details>
+
+      <details class="st-section" data-section="languages">
+        <summary>
+          <span class="st-icon"><i class="fas fa-language"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Languages</span>
+            <span class="st-sub" data-summary="languages">What you speak and are learning</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <label for="spokenLanguage">Languages I Speak</label>
+          <select id="spokenLanguage" style="margin-bottom: 0.5rem;"></select>
+          <div id="languages_spoken" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;"></div>
+
+          <label for="learningLanguage">Languages I'm Learning</label>
+          <select id="learningLanguage" style="margin-bottom: 0.5rem;"></select>
+          <div id="languages_learning" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.25rem;"></div>
+        </div>
+      </details>
+
+      <details class="st-section" data-section="interests">
+        <summary>
+          <span class="st-icon"><i class="fas fa-heart"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">My Interests</span>
+            <span class="st-sub" data-summary="interests">Optional &middot; helps match exchange partners</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <p class="st-help">Pick any that apply (optional) &mdash; helps find compatible exchange partners.</p>
+          <div class="interests-grid" id="interests-grid"></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- Preferences -->
+    <div class="st-group-label">Preferences</div>
+    <div class="st-list">
+      <details class="st-section" data-section="notifications">
+        <summary>
+          <span class="st-icon"><i class="fas fa-bell"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Notifications &amp; Privacy</span>
+            <span class="st-sub" data-summary="notifications">Message emails and new requests</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <div class="st-toggle-row">
+            <label for="emailNotifications">
+              <i class="fas fa-envelope"></i>
+              Email me when I receive messages
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="emailNotifications" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="st-toggle-row">
+            <label for="acceptingRequests">
+              <i class="fas fa-user-check"></i>
+              Accepting language exchange requests &amp; messages from new users
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="acceptingRequests" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <p class="st-help st-help-last">These save with the Save Profile button.</p>
+        </div>
+      </details>
+
+      <details class="st-section" data-section="timezone">
+        <summary>
+          <span class="st-icon"><i class="fas fa-globe"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">My Timezone</span>
+            <span class="st-sub" data-summary="timezone">Used to show lesson times correctly</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <p class="st-help">Used to display lesson times correctly when you book with instructors in other time zones.</p>
+          <select id="student-timezone-select">
+            <option value="">Select your timezone...</option>
+          </select>
+        </div>
+      </details>
+    </div>
+
+    <!-- Save: stays in view at the bottom of the window while scrolling the
+         sections above, so its messages (including photo uploads) are seen. -->
+    <div class="st-savebar">
+      <div class="status" id="status-msg"></div>
+      <button class="save-btn" id="save-profile">Save Profile</button>
+    </div>
+
+    <!-- Account -->
+    <div class="st-group-label">Account</div>
+    <div class="st-list">
+      <details class="st-section st-danger" data-section="account">
+        <summary>
+          <span class="st-icon"><i class="fas fa-exclamation-triangle"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Delete Account</span>
+            <span class="st-sub">Permanently remove your account and data</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <p class="st-help">Permanently delete your Lingua Bud account and all associated data. This action is irreversible and cannot be undone.</p>
+          <button class="btn-delete-account" id="open-delete-modal">
+            <i class="fas fa-trash-alt"></i> Delete My Account
+          </button>
+        </div>
+      </details>
     </div>
   </div>
+
+  <script>
+    // Settings layout helpers. Read-only with respect to the profile: this
+    // only writes the one-line summaries under each section title and, when
+    // Save reports a missing field, opens that field's section. All loading
+    // and saving is still done by the page's module script below.
+    (function () {
+      var page = document.querySelector('.settings-page');
+      if (!page) return;
+      function $(id) { return document.getElementById(id); }
+      function optText(sel) {
+        if (!sel || !sel.value) return '';
+        var opt = sel.options[sel.selectedIndex];
+        return (opt && opt.text) || sel.value;
+      }
+      function tags(id) {
+        var box = $(id);
+        if (!box) return [];
+        return Array.prototype.map.call(box.querySelectorAll('.tag > span:first-child'), function (s) {
+          return s.textContent.trim();
+        }).filter(Boolean);
+      }
+      Array.prototype.forEach.call(page.querySelectorAll('[data-summary]'), function (el) {
+        el.setAttribute('data-default', el.textContent);
+      });
+      function set(key, text) {
+        Array.prototype.forEach.call(page.querySelectorAll('[data-summary="' + key + '"]'), function (el) {
+          var value = text || el.getAttribute('data-default');
+          if (el.textContent !== value) el.textContent = value;
+        });
+      }
+      function checked(id) { var el = $(id); return !!(el && el.checked); }
+
+      function refresh() {
+        var name = ($('name') && $('name').value.trim()) || '';
+        var country = optText($('native_country'));
+        var spoken = tags('languages_spoken');
+        var learning = tags('languages_learning');
+        set('hero-name', name);
+        set('hero-sub', [country, learning.length ? 'Learning ' + learning.join(', ') : ''].filter(Boolean).join(' · '));
+        set('about', [name, country].filter(Boolean).join(' · '));
+        set('languages', [
+          spoken.length ? 'Speaks ' + spoken.join(', ') : '',
+          learning.length ? 'Learning ' + learning.join(', ') : ''
+        ].filter(Boolean).join(' · '));
+        var interests = $('interests-grid') ? $('interests-grid').querySelectorAll('.interest-pill.selected').length : 0;
+        set('interests', interests ? interests + ' selected' : '');
+        set('notifications', [
+          'Message emails ' + (checked('emailNotifications') ? 'on' : 'off'),
+          checked('acceptingRequests') ? 'Open to new requests' : 'Not accepting new requests'
+        ].join(' · '));
+        set('timezone', optText($('student-timezone-select')));
+      }
+
+      var queued = false;
+      function queue() {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; refresh(); });
+      }
+      // Fields are filled in by script (no input events), but each fill also
+      // re-renders the language tags / interests / photo, which this sees.
+      new MutationObserver(queue).observe(page, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'src'] });
+      page.addEventListener('input', queue, true);
+      page.addEventListener('change', queue, true);
+      refresh();
+
+      // Save checks required fields and reports the first missing one in
+      // #status-msg (in red). Open that section so the field can be seen.
+      var RULES = [
+        [/full name|native country|about me/i, 'about', function (t) {
+          return /full name/i.test(t) ? 'name' : /country/i.test(t) ? 'native_country' : 'about_me';
+        }],
+        [/language/i, 'languages', function (t) { return /speak/i.test(t) ? 'spokenLanguage' : 'learningLanguage'; }],
+        [/timezone/i, 'timezone', function () { return 'student-timezone-select'; }]
+      ];
+      var status = $('status-msg');
+      if (status) new MutationObserver(function () {
+        var text = status.textContent || '';
+        if (!text || status.style.color !== 'red') return;
+        if (/profile picture/i.test(text)) {
+          page.querySelector('.st-hero').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        for (var i = 0; i < RULES.length; i++) {
+          if (!RULES[i][0].test(text)) continue;
+          var section = page.querySelector('.st-section[data-section="' + RULES[i][1] + '"]');
+          if (!section) return;
+          section.open = true;
+          var field = $(RULES[i][2](text));
+          (field || section).scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (field) setTimeout(function () { try { field.focus({ preventScroll: true }); } catch (e) {} }, 350);
+          return;
+        }
+      }).observe(status, { childList: true, characterData: true, subtree: true });
+    })();
+  </script>
 
   <!-- Cancel Booking Modal -->
   <div class="cancel-backdrop" id="cancel-backdrop">
