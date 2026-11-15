@@ -261,14 +261,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .instructors-hero {
             background: linear-gradient(135deg, #20bcba 0%, #1a9d9b 100%);
             color: white;
-            padding: 4.25rem 0 4rem;
+            padding: 4.5rem 0 4rem;
             margin-top: -1px;
+            overflow: hidden;
         }
 
         .instructors-hero h1 {
-            font-size: 2.5rem;
+            font-size: 2.6rem;
             font-weight: 700;
-            margin-bottom: 0.75rem;
+            line-height: 1.15;
+            margin-bottom: 0.9rem;
             color: white;
         }
 
@@ -278,22 +280,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             color: white;
         }
 
+        .ih-grid {
+            display: grid;
+            grid-template-columns: 1.05fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            max-width: 1100px;
+            margin: 0 auto 2.75rem;
+        }
         .instructors-hero .ih-sub {
-            max-width: 680px;
-            margin: 0 auto 1.25rem;
-            font-size: 1.1rem;
+            max-width: 480px;
+            margin: 0 0 1.4rem;
+            font-size: 1.15rem;
             line-height: 1.55;
         }
 
         /* Trust chips: brand navy so they stand out on the teal hero */
         .ih-trust {
             list-style: none;
-            margin: 0 auto 2rem;
+            margin: 0;
             padding: 0;
             display: flex;
             flex-wrap: wrap;
-            justify-content: center;
             gap: 0.5rem;
+            max-width: 520px;
         }
         .ih-trust li {
             display: inline-flex;
@@ -309,6 +319,70 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             color: #ffffff;
         }
         .ih-trust li i { color: #20bcba; }
+
+        /* Picture of a lesson: a video call window with a speech bubble
+           and a booking confirmation floating around it */
+        /* direction: ltr — the picture looks the same in every language,
+           including Arabic; its text lines use dir="auto". */
+        .ih-visual { position: relative; max-width: 470px; width: 100%; margin-left: auto; direction: ltr; }
+        .ih-call {
+            background: #113448;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(11, 52, 72, 0.35);
+        }
+        .ih-call-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.9rem; background: #0d2a3a; }
+        .ih-dots { display: flex; gap: 6px; }
+        .ih-dots span { width: 10px; height: 10px; border-radius: 50%; }
+        /* Browser-window dots, same colours as the homepage mockup */
+        .ih-dots span:nth-child(1) { background: #ff5f57; }
+        .ih-dots span:nth-child(2) { background: #febc2e; }
+        .ih-dots span:nth-child(3) { background: #28c840; }
+        .ih-live { background: #20bcba; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.65rem; border-radius: 999px; letter-spacing: 0.3px; }
+        .ih-call-main { position: relative; aspect-ratio: 4 / 3; }
+        .ih-call-main > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ih-call-name {
+            position: absolute; right: 0.8rem; top: 0.8rem;
+            background: rgba(17, 52, 72, 0.75); color: #fff;
+            font-size: 0.78rem; font-weight: 600; padding: 0.25rem 0.7rem; border-radius: 6px;
+        }
+        .ih-call-pip {
+            position: absolute; right: 0.8rem; bottom: 0.8rem; width: 30%;
+            aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.85); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+        .ih-call-pip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ih-call-pip span {
+            position: absolute; left: 4px; bottom: 4px;
+            background: rgba(17, 52, 72, 0.75); color: #fff; font-size: 0.62rem; font-weight: 600;
+            padding: 0.05rem 0.4rem; border-radius: 4px;
+        }
+        .ih-bubble {
+            position: absolute; top: 3.2rem; left: -1.75rem;
+            background: #ffffff; color: #113448; font-weight: 700; font-size: 0.92rem;
+            padding: 0.55rem 0.95rem; border-radius: 16px 16px 16px 4px;
+            box-shadow: 0 8px 24px rgba(11, 52, 72, 0.25);
+            animation: ihFloat 4s ease-in-out infinite;
+        }
+        .ih-toast {
+            position: absolute; bottom: -1.1rem; left: -1.25rem;
+            display: flex; align-items: center; gap: 0.6rem; text-align: left;
+            background: #ffffff; color: #113448; padding: 0.6rem 0.9rem; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(11, 52, 72, 0.25);
+            animation: ihFloat 4s ease-in-out 2s infinite;
+        }
+        .ih-toast i { color: #20bcba; font-size: 1.35rem; }
+        .ih-toast span { display: flex; flex-direction: column; font-size: 0.78rem; color: #4a6272; line-height: 1.3; }
+        .ih-toast strong { color: #113448; font-size: 0.88rem; }
+        @keyframes ihFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @media (prefers-reduced-motion: reduce) { .ih-bubble, .ih-toast { animation: none; } }
+
+        @media (max-width: 991px) {
+            .ih-grid { grid-template-columns: 1fr; gap: 2.25rem; text-align: center; }
+            .instructors-hero .ih-sub { margin-left: auto; margin-right: auto; }
+            .ih-trust { justify-content: center; margin: 0 auto; }
+            .ih-visual { margin: 0 auto; max-width: 420px; }
+        }
 
         /* How booking works */
         .ih-steps {
@@ -775,8 +849,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             .filter-group select, .filter-group input[type="text"] { width: 100%; min-width: 0; margin-top: auto; }
 
             .instructors-hero { padding: 2rem 0 3rem; }
+            .instructors-hero h1 { font-size: 1.9rem; }
             .instructors-hero .ih-sub { font-size: 1rem; margin-bottom: 1rem; }
-            .ih-trust { gap: 0.4rem; margin-bottom: 1.25rem; }
+            .ih-grid { gap: 1.75rem; margin-bottom: 2rem; }
+            .ih-trust { gap: 0.4rem; }
+            .ih-visual { max-width: 300px; }
+            .ih-call-name { display: none; }
+            .ih-bubble { font-size: 0.8rem; left: -0.75rem; top: 2.4rem; padding: 0.4rem 0.75rem; }
+            .ih-toast { left: -0.75rem; padding: 0.45rem 0.7rem; }
+            .ih-toast i { font-size: 1.1rem; }
             .ih-trust li { font-size: 0.8rem; padding: 0.3rem 0.7rem; }
             /* Phones: the three steps as one compact row (number + title). */
             .ih-steps { gap: 0.5rem; }
@@ -1313,29 +1394,54 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </nav>
     <!-- end of navbar -->
 
-    <!-- Hero: what the page is, why trust it, and how booking works -->
+    <!-- Hero: what the page is, a picture of a lesson, and how booking works -->
     <div class="instructors-hero">
-        <div class="container text-center">
-            <h1>Find Your Perfect Language Instructor</h1>
-            <p class="ih-sub">Private 1-on-1 video lessons with verified teachers from around the world. Try any instructor free for 15 minutes, then book lessons at times that suit you.</p>
-            <ul class="ih-trust">
-                <li><i class="fas fa-chalkboard-teacher"></i> 75+ Verified Instructors</li>
-                <li><i class="fas fa-globe"></i> 10 Languages</li>
-                <li><i class="fas fa-gift"></i> Free 15-Min Trial</li>
-                <li><i class="fas fa-shield-alt"></i> Background Reviewed</li>
-            </ul>
+        <div class="container">
+            <div class="ih-grid">
+                <div class="ih-text">
+                    <h1>Find Your Perfect Language Instructor</h1>
+                    <p class="ih-sub">1-on-1 video lessons with verified teachers from around the world. Try anyone free for 15 minutes.</p>
+                    <ul class="ih-trust">
+                        <li><i class="fas fa-chalkboard-teacher"></i> 75+ Verified Instructors</li>
+                        <li><i class="fas fa-globe"></i> 10 Languages</li>
+                        <li><i class="fas fa-gift"></i> Free 15-Min Trial</li>
+                        <li><i class="fas fa-shield-alt"></i> Background Reviewed</li>
+                    </ul>
+                </div>
+
+                <!-- Picture of a lesson (decorative): instructor on video, student in the corner -->
+                <div class="ih-visual" aria-hidden="true">
+                    <div class="ih-call">
+                        <div class="ih-call-bar">
+                            <span class="ih-dots"><span></span><span></span><span></span></span>
+                            <span class="ih-live" dir="auto">&#9679; Live lesson</span>
+                        </div>
+                        <div class="ih-call-main">
+                            <img src="images/online_teacher.jpg" alt="" width="1000" height="750">
+                            <span class="ih-call-name" dir="auto">Your instructor</span>
+                            <div class="ih-call-pip">
+                                <img src="images/online_student.jpg" alt="" width="400" height="300">
+                                <span dir="auto">You</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ih-bubble" dir="auto">&iexcl;Hola! &iquest;C&oacute;mo est&aacute;s?</div>
+                    <div class="ih-toast"><i class="fas fa-check-circle"></i><span dir="auto"><strong>Free trial booked</strong><span>Tue &middot; 6:00 PM</span></span></div>
+                </div>
+            </div>
+
             <ol class="ih-steps">
                 <li>
                     <span class="ih-num">1</span>
-                    <span class="ih-step-text"><strong>Choose an instructor</strong><span>Filter by language, price and availability, and watch their intro videos.</span></span>
+                    <span class="ih-step-text"><strong>Choose an instructor</strong><span>Compare languages, prices and intro videos.</span></span>
                 </li>
                 <li>
                     <span class="ih-num">2</span>
-                    <span class="ih-step-text"><strong>Book a free trial</strong><span>Open any profile and tap <b>Free 15 Minute Trial</b>, then pick a time. No payment needed.</span></span>
+                    <span class="ih-step-text"><strong>Book a free trial</strong><span>Open any profile and tap <b>Free 15 Minute Trial</b>. No payment needed.</span></span>
                 </li>
                 <li>
                     <span class="ih-num">3</span>
-                    <span class="ih-step-text"><strong>Meet on video</strong><span>Join your lesson right here in Lingua Bud. Nothing else to install.</span></span>
+                    <span class="ih-step-text"><strong>Meet on video</strong><span>Right here in Lingua Bud. Nothing else to install.</span></span>
                 </li>
             </ol>
         </div>
