@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<!--
+  Install page — what app.linguabud.com/ opens (firebase.json redirects "/"
+  here on the app site). Shows the right way to install for the device:
+    - already running as the installed app → straight into the app (/home)
+    - Android / desktop Chrome → a real "Install the app" button
+      (beforeinstallprompt), or the browser-menu steps if it doesn't fire
+    - iPhone/iPad → the three Share → Add to Home Screen steps (Apple allows
+      no install button), or "open in Safari" inside Instagram/Facebook etc.
+    - computer → QR code to scan with a phone, plus "use it in the browser"
+  Text is plain English in the markup; js/i18n.js translates it (es/pt/fr/ar).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Get the App - Lingua Bud</title>
+<meta name="description" content="Install Lingua Bud on your phone: chat with language partners and instructors, daily quizzes, Adventures and message alerts. Free, no app store needed.">
+<meta property="og:site_name" content="Lingua Bud">
+<meta property="og:title" content="Get the Lingua Bud app">
+<meta property="og:description" content="Learn languages with real people — right from your home screen. Free, no app store needed.">
+<meta property="og:image" content="https://linguabud.com/images/homepage_functionpic.jpg">
+<meta property="og:url" content="https://app.linguabud.com">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://app.linguabud.com/">
+<script>
+  // Opened from the installed app (e.g. iOS used this page as the start
+  // URL): go straight in — never show install steps inside the app.
+  (function () {
+    var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    if (standalone) location.replace('/home');
+  })();
+</script>
+<link rel="icon" href="images/NuevoFavicon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b6664">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lingua Bud">
+<link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600&display=swap&subset=latin-ext" rel="stylesheet">
+<link href="css/fontawesome-all.css" rel="stylesheet">
+<script src="js/i18n-strings.js"></script>
+<script src="js/i18n.js"></script>
+<style>
+  :root {
+    --teal: #20bcba;
+    --teal-deep: #0b6664;
+    --navy: #113448;
+    --ink: #2b3a42;
+    --muted: #5f6b72;
+    --line: #e3eef0;
+    --tint: #eef8f8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background: #f6fafa;
+    color: var(--ink);
+    font: 400 16px/1.55 "Open Sans", system-ui, -apple-system, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .hero {
+    background: linear-gradient(135deg, var(--navy) 0%, #14506a 55%, var(--teal-deep) 100%);
+    color: #fff;
+    text-align: center;
+    padding: calc(36px + env(safe-area-inset-top)) 20px 92px;
+  }
+  .app-icon {
+    width: 76px; height: 76px;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    display: block; margin: 0 auto 16px;
+  }
+  .hero h1 {
+    font: 700 1.6rem/1.25 Montserrat, sans-serif;
+    margin: 0 0 8px;
+  }
+  .hero p { margin: 0 auto; max-width: 30em; text-wrap: balance; color: rgba(255, 255, 255, 0.85); }
+  main {
+    max-width: 480px;
+    margin: -64px auto 0;
+    padding: 0 16px calc(32px + env(safe-area-inset-bottom));
+  }
+  .card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(17, 52, 72, 0.12);
+    padding: 24px 22px;
+  }
+  .card h2 {
+    font: 700 1.1rem/1.3 Montserrat, sans-serif;
+    color: var(--navy);
+    margin: 0 0 16px;
+    text-align: center;
+    text-wrap: balance;
+  }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    border: none; border-radius: 12px;
+    padding: 15px 18px;
+    font: 700 1rem/1.2 Montserrat, sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-primary { background: var(--teal-deep); color: #fff; }
+  .btn-primary:active { background: #095553; }
+  .btn-secondary { background: var(--tint); color: var(--teal-deep); margin-top: 12px; }
+  .steps { list-style: none; margin: 0; padding: 0; }
+  .steps li {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 12px 0;
+  }
+  .steps li + li { border-top: 1px solid var(--line); }
+  .step-num {
+    flex: 0 0 30px; height: 30px; border-radius: 50%;
+    background: var(--tint); color: var(--teal-deep);
+    font: 700 0.95rem/30px Montserrat, sans-serif; text-align: center;
+  }
+  .step-text { flex: 1; padding-top: 3px; }
+  .step-text strong { display: block; color: var(--navy); font-weight: 600; }
+  .step-text span { display: block; color: var(--muted); font-size: 0.88rem; }
+  .step-icon {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px;
+    background: var(--tint); color: var(--teal-deep);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-icon svg { width: 20px; height: 20px; }
+  .note { color: var(--muted); font-size: 0.88rem; text-align: center; margin: 14px 0 0; }
+  .done { text-align: center; color: var(--teal-deep); font-weight: 600; }
+  .done i { font-size: 2rem; display: block; margin-bottom: 8px; }
+  .qr {
+    display: block; width: 184px; height: 184px; margin: 0 auto 12px;
+    border-radius: 12px; border: 1px solid var(--line); padding: 6px; background: #fff;
+  }
+  .features {
+    list-style: none; margin: 22px 0 0; padding: 0 6px;
+  }
+  .features li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 7px 0; color: var(--ink);
+  }
+  .features i { width: 22px; text-align: center; color: var(--teal); }
+  .alt-link {
+    display: block; text-align: center; margin-top: 22px;
+    color: var(--teal-deep); font-weight: 600; text-decoration: none;
+  }
+  .alt-link:hover { text-decoration: underline; }
+  [hidden] { display: none !important; }
+  @media (min-width: 720px) {
+    .hero { padding-top: 56px; }
+    .hero h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <img class="app-icon" src="icons/icon-192.png" alt="" width="76" height="76">
+    <h1>Get the Lingua Bud app</h1>
+    <p>Learn languages with real people — right from your home screen.</p>
+  </header>
+
+  <main>
+    <div class="card">
+
+      <!-- Android, or any browser that offers its own install prompt -->
+      <section id="promptInstall" hidden>
+        <h2>Install Lingua Bud</h2>
+        <button type="button" class="btn btn-primary" id="installBtn"><i class="fas fa-download" aria-hidden="true"></i><span>Install the app</span></button>
+        <p class="note">Free — no app store needed</p>
+      </section>
+
+      <!-- Android browser without an install prompt (or it was dismissed) -->
+      <section id="androidSteps" hidden>
+        <h2>Add it to your home screen</h2>
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-text"><strong>Open your browser's menu</strong><span>The ⋮ button, usually in the top corner.</span></div></li>
+          <li><div class="step-num">2</div><div class="step-text"><strong>Choose “Install app” or “Add to Home screen”</strong></div></li>
+          <li><div class="step-num">3</div><div class="step-text"><strong>Confirm when asked</strong><span>Lingua Bud will appear on your home screen like any other app.</span></div></li>
+        </ol>
+      </section>
+
+      <!-- iPhone / iPad in Safari (or another browser that can add to the home screen) -->
+      <section id="iosSteps" hidden>
+        <h2>Add it to your home screen in 3 taps</h2>
+        <ol class="steps">
+          <li>
+            <div class="step-num">1</div>
+            <div class="step-text"><strong>Tap the Share button</strong><span>In the toolbar. If you don't see it, tap ••• first.</span></div>
+            <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></div>
+          </li>
+          <li>
+            <div class="step-num">2</div>
+            <div class="step-text"><strong>Choose “Add to Home Screen”</strong><span>You may need to scroll down to find it.</span></div>
+            <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8.5v7"/><path d="M8.5 12h7"/></svg></div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
+            <div class="step-text"><strong>Tap “Add”</strong><span>Lingua Bud will appear on your home screen like any other app.</span></div>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Inside Instagram / Facebook / TikTok etc., where installing isn't possible -->
+      <section id="inAppSteps" hidden>
+        <h2>Open this page in your browser first</h2>
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-text"><strong>Tap the ••• menu</strong><span>Usually in the top or bottom corner.</span></div></li>
+          <li><div class="step-num">2</div><div class="step-text"><strong>Choose “Open in browser”</strong><span>On iPhone it may say “Open in Safari”.</span></div></li>
+        </ol>
+        <button type="button" class="btn btn-secondary" id="copyLinkBtn"><i class="fas fa-copy" aria-hidden="true"></i><span id="copyLinkLabel">Copy the link instead</span></button>
+      </section>
+
+      <!-- Computer -->
+      <section id="desktopSteps" hidden>
+        <h2>Get the app on your phone</h2>
+        <img class="qr" src="images/app-qr.svg" alt="QR code for app.linguabud.com" width="184" height="184">
+        <p class="note">Scan this code with your phone's camera.</p>
+      </section>
+
+      <!-- After a successful install from the prompt -->
+      <section id="installedMsg" hidden>
+        <p class="done"><i class="fas fa-check-circle" aria-hidden="true"></i><span>Lingua Bud is installed — open it from your home screen.</span></p>
+      </section>
+
+      <ul class="features">
+        <li><i class="fas fa-comments" aria-hidden="true"></i><span>Chat with language partners and instructors</span></li>
+        <li><i class="fas fa-compass" aria-hidden="true"></i><span>Daily quizzes and Adventures</span></li>
+        <li><i class="fas fa-bell" aria-hidden="true"></i><span>Message alerts on your phone</span></li>
+      </ul>
+    </div>
+
+    <a class="alt-link" id="browserLink" href="/home">Continue in the browser</a>
+  </main>
+
+<script>
+(function () {
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(ua);
+  // In-app browsers (social apps) can't install web apps.
+  var inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|Twitter|LinkedInApp|Snapchat|TikTok|musical_ly|BytedanceWebview|Pinterest|GSA\//.test(ua);
+  var isMobile = isIOS || isAndroid;
+
+  function show(id) {
+    ['promptInstall', 'androidSteps', 'iosSteps', 'inAppSteps', 'desktopSteps', 'installedMsg'].forEach(function (s) {
+      document.getElementById(s).hidden = s !== id;
+    });
+  }
+
+  var deferredPrompt = null;
+  var fallback = inApp ? 'inAppSteps' : isIOS ? 'iosSteps' : isAndroid ? 'androidSteps' : 'desktopSteps';
+  show(fallback);
+
+  if (!isMobile) document.getElementById('browserLink').textContent = 'Or use Lingua Bud in your browser';
+
+  // Chrome/Edge/Samsung Internet offer a real install prompt — use it when
+  // available (on a computer the QR code stays the main option).
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (isMobile) {
+      show('promptInstall');
+    } else {
+      var btn = document.getElementById('desktopInstallBtn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'desktopInstallBtn';
+        btn.className = 'btn btn-secondary';
+        btn.innerHTML = '<i class="fas fa-desktop" aria-hidden="true"></i><span>Install on this computer</span>';
+        btn.addEventListener('click', runPrompt);
+        document.getElementById('desktopSteps').appendChild(btn);
+      }
+    }
+  });
+
+  function runPrompt() {
+    if (!deferredPrompt) return;
+    var p = deferredPrompt;
+    deferredPrompt = null;
+    p.prompt();
+    p.userChoice.then(function (choice) {
+      if (choice && choice.outcome === 'accepted') return; // 'appinstalled' shows the message
+      // Dismissed: the prompt can't be shown again, so show the menu steps.
+      show(fallback);
+      var btn = document.getElementById('desktopInstallBtn');
+      if (btn) btn.remove();
+    }).catch(function () { show(fallback); });
+  }
+  document.getElementById('installBtn').addEventListener('click', runPrompt);
+
+  window.addEventListener('appinstalled', function () { show('installedMsg'); });
+
+  document.getElementById('copyLinkBtn').addEventListener('click', function () {
+    var label = document.getElementById('copyLinkLabel');
+    var url = 'https://' + location.host + '/';
+    var done = function () { label.textContent = 'Link copied — paste it into your browser'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, function () { prompt('', url); });
+    } else {
+      prompt('', url);
+    }
+  });
+
+  // The service worker makes the installed app fast/offline-capable from the
+  // first launch (and some browsers require one before offering install).
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { scope: '/' }).catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>

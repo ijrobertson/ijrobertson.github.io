@@ -6,9 +6,11 @@
     "serve": "npx serve .",
     "emulator": "firebase emulators:start --export-on-exit --import=./firebase-emulator-data",
     "dev": "npm run serve & npm run emulator",
-    "deploy:pwa": "firebase deploy --only hosting && npm run check:secrets",
-    "deploy:pwa-test": "firebase hosting:channel:deploy pwa-ios-test --expires 30d",
-    "check:secrets": "bash scripts/check-hosting-secrets.sh"
+    "deploy:pwa": "firebase deploy --only hosting:main && npm run check:secrets",
+    "deploy:pwa-test": "firebase hosting:channel:deploy pwa-ios-test --only main --expires 30d",
+    "check:secrets": "bash scripts/check-hosting-secrets.sh",
+    "deploy:app-test": "firebase hosting:channel:deploy app-test --only app --expires 30d",
+    "deploy:app": "firebase deploy --only hosting:app && npm run check:secrets -- https://linguabud-app.web.app && npm run check:secrets -- https://app.linguabud.com"
   },
   "private": true
 }

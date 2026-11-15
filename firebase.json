@@ -1,65 +1,135 @@
 {
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/.*/**",
-      "**/node_modules/**",
-      "functions/**",
-      "firebase-emulator-data/**",
-      "firestore.rules",
-      "firestore.indexes.json",
-      "storage.rules"
-    ],
-    "cleanUrls": true,
-    "trailingSlash": false,
-    "redirects": [
-      {
-        "source": "/:path*.html",
-        "destination": "/:path*",
-        "type": 301
-      }
-    ],
-    "headers": [
-      {
-        "source": "/sw.js",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "**/!(*.*)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(html|js|css|json)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      }
-    ]
-  },
+  "hosting": [
+    {
+      "target": "main",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/.*/**",
+        "**/node_modules/**",
+        "functions/**",
+        "firebase-emulator-data/**",
+        "firestore.rules",
+        "firestore.indexes.json",
+        "storage.rules"
+      ],
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "redirects": [
+        {
+          "source": "/:path*.html",
+          "destination": "/:path*",
+          "type": 301
+        }
+      ],
+      "headers": [
+        {
+          "source": "/sw.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/!(*.*)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(html|js|css|json)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "app",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/.*/**",
+        "**/node_modules/**",
+        "functions/**",
+        "firebase-emulator-data/**",
+        "firestore.rules",
+        "firestore.indexes.json",
+        "storage.rules"
+      ],
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "redirects": [
+        {
+          "source": "/",
+          "destination": "/get-app",
+          "type": 302
+        },
+        {
+          "source": "/:path*.html",
+          "destination": "/:path*",
+          "type": 301
+        }
+      ],
+      "headers": [
+        {
+          "source": "/sw.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/!(*.*)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(html|js|css|json)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
