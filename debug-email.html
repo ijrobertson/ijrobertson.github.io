@@ -1,84 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
-<!-- Google Analytics 4 (stream G-97N8DRKFF2) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-97N8DRKFF2"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-97N8DRKFF2');</script>
-<!-- End Google Tag Manager -->
     <meta charset="utf-8">
     <meta name="robots" content="noindex">
-    <title>Email Debug - Lingua Bud</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
-        .error { color: red; }
-        .success { color: green; }
-    </style>
+    <title>Redirecting to Lingua Bud</title>
+    <meta http-equiv="refresh" content="0; url=https://linguabud.com/">
+    <script>location.replace("/" + location.search + location.hash);</script>
 </head>
 <body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCWL99PL"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
-<h1>🔍 Email Notification Debug</h1>
-<div id="output">Loading...</div>
-
-<script type="module">
-import { db, auth, doc, getDoc, onAuthStateChanged } from './lib/firebaseClient.js';
-
-onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        document.getElementById('output').innerHTML = '<p class="error">❌ Not logged in. Please <a href="login">login first</a>.</p>';
-        return;
-    }
-
-    const output = document.getElementById('output');
-    output.innerHTML = '<p>Checking user data...</p>';
-
-    try {
-        // Check users collection
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const instructorDoc = await getDoc(doc(db, 'instructors', user.uid));
-
-        let html = `<h3>Logged in as: ${user.email}</h3>`;
-
-        html += `<h4>Firebase Auth Email:</h4>`;
-        html += `<pre>${user.email}</pre>`;
-
-        html += `<h4>Users Collection Document:</h4>`;
-        if (userDoc.exists()) {
-            const data = userDoc.data();
-            html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            html += data.email ?
-                `<p class="success">✅ Email field found: ${data.email}</p>` :
-                `<p class="error">❌ No email field in users document!</p>`;
-        } else {
-            html += `<p class="error">❌ User document NOT FOUND in users collection</p>`;
-        }
-
-        html += `<h4>Instructors Collection Document:</h4>`;
-        if (instructorDoc.exists()) {
-            const data = instructorDoc.data();
-            html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            html += data.email ?
-                `<p class="success">✅ Email field found: ${data.email}</p>` :
-                `<p class="error">❌ No email field in instructors document!</p>`;
-        } else {
-            html += `<p>ℹ️ Not found in instructors collection (this is OK if you're a student)</p>`;
-        }
-
-        output.innerHTML = html;
-    } catch (error) {
-        output.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
-        console.error(error);
-    }
-});
-</script>
+    <p>This page has moved to <a href="https://linguabud.com/">linguabud.com/</a>.</p>
 </body>
 </html>
