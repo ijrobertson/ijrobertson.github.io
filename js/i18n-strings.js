@@ -1068,7 +1068,13 @@ window.LB_I18N_STRINGS = {
       "Install on this computer": "Instalar en este equipo",
       "Add Lingua Bud to your home screen": "Agrega Lingua Bud a tu pantalla de inicio",
       "Get message alerts and open Lingua Bud in one tap.": "Recibe avisos de mensajes y abre Lingua Bud con un solo toque.",
-      "Show me how": "Muéstrame cómo"
+      "Show me how": "Muéstrame cómo",
+      "Search chats": "Buscar chats",
+      "Close search": "Cerrar búsqueda",
+      "No chats match your search": "Ningún chat coincide con tu búsqueda",
+      "Copy link": "Copiar enlace",
+      "Open link": "Abrir enlace",
+      "Copy message": "Copiar mensaje"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Explora a nuestros {0}profesores{/0} para reservar tu primera clase.",
@@ -2582,7 +2588,13 @@ window.LB_I18N_STRINGS = {
       "Install on this computer": "Instalar neste computador",
       "Add Lingua Bud to your home screen": "Adicione o Lingua Bud à sua tela inicial",
       "Get message alerts and open Lingua Bud in one tap.": "Receba alertas de mensagens e abra o Lingua Bud com um só toque.",
-      "Show me how": "Mostre como"
+      "Show me how": "Mostre como",
+      "Search chats": "Buscar conversas",
+      "Close search": "Fechar busca",
+      "No chats match your search": "Nenhuma conversa corresponde à sua busca",
+      "Copy link": "Copiar link",
+      "Open link": "Abrir link",
+      "Copy message": "Copiar mensagem"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Veja nossos {0}professores{/0} para agendar sua primeira aula!",
@@ -4095,7 +4107,13 @@ window.LB_I18N_STRINGS = {
       "Install on this computer": "Installer sur cet ordinateur",
       "Add Lingua Bud to your home screen": "Ajoutez Lingua Bud à votre écran d'accueil",
       "Get message alerts and open Lingua Bud in one tap.": "Recevez les alertes de messages et ouvrez Lingua Bud d'un simple geste.",
-      "Show me how": "Montrez-moi comment"
+      "Show me how": "Montrez-moi comment",
+      "Search chats": "Rechercher des conversations",
+      "Close search": "Fermer la recherche",
+      "No chats match your search": "Aucune conversation ne correspond à votre recherche",
+      "Copy link": "Copier le lien",
+      "Open link": "Ouvrir le lien",
+      "Copy message": "Copier le message"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Parcourez nos {0}professeurs{/0} pour réserver votre premier cours !",
@@ -5609,7 +5627,13 @@ window.LB_I18N_STRINGS = {
       "Install on this computer": "التثبيت على هذا الكمبيوتر",
       "Add Lingua Bud to your home screen": "أضِف Lingua Bud إلى شاشتك الرئيسية",
       "Get message alerts and open Lingua Bud in one tap.": "استقبل تنبيهات الرسائل وافتح Lingua Bud بلمسة واحدة.",
-      "Show me how": "أرني الطريقة"
+      "Show me how": "أرني الطريقة",
+      "Search chats": "البحث في المحادثات",
+      "Close search": "إغلاق البحث",
+      "No chats match your search": "لا توجد محادثات تطابق بحثك",
+      "Copy link": "نسخ الرابط",
+      "Open link": "فتح الرابط",
+      "Copy message": "نسخ الرسالة"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "تصفّح {0}المعلمين{/0} لحجز درسك الأول!",

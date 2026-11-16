@@ -322,6 +322,75 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             padding: 1.35rem 1.5rem;
             font-size: 1.2rem;
             font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-height: 4.15rem;
+        }
+        .conversations-title { flex: 1; min-width: 0; }
+        .conv-search-btn {
+            flex: 0 0 auto;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: -0.35rem 0;
+        }
+        .conv-search-btn:hover { background: rgba(255, 255, 255, 0.28); }
+        .conversations-header.searching .conversations-title,
+        .conversations-header.searching .conv-search-btn { display: none; }
+        .conv-search-bar {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #fff;
+            border-radius: 999px;
+            padding: 0 0.35rem 0 0.9rem;
+            height: 40px;
+            margin: -0.45rem 0;
+            color: #5f6b72;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+        .conv-search-bar[hidden] { display: none; }
+        .conv-search-bar input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--pb-teal-dark);
+            font-size: 16px; /* 16px+ stops iOS zooming in on focus */
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .conv-search-bar input::-webkit-search-cancel-button { display: none; }
+        .conv-search-close {
+            flex: 0 0 auto;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: #eef3f3;
+            color: #5f6b72;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .conv-search-empty {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            color: #5f6b72;
+            font-size: 0.92rem;
         }
 
         .conversations-list {
@@ -493,6 +562,34 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         .lb-sheet-item:hover, .lb-sheet-item:focus-visible { background: #f4f6f7; outline: none; }
         .lb-sheet-item i { width: 20px; text-align: center; color: #39728f; }
+        .lb-sheet-item-detail {
+            margin-inline-start: auto;
+            max-width: 55%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #8a979e;
+            font-size: 0.8rem;
+            font-weight: 400;
+        }
+        .lb-sheet-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 0.25rem 0.75rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 12px;
+            background: #eef8f8;
+            color: var(--pb-teal-deep);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .lb-sheet-link span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
         .lb-sheet-item.danger, .lb-sheet-item.danger i { color: #d64545; }
         @keyframes lb-sheet-fade { from { opacity: 0; } }
         @keyframes lb-sheet-up { from { transform: translateY(100%); } }
@@ -2030,7 +2127,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- Conversations List -->
         <div class="conversations-panel">
             <div class="conversations-header">
-                <i class="fas fa-envelope"></i> Messages
+                <span class="conversations-title"><i class="fas fa-envelope"></i> Messages</span>
+                <button type="button" class="conv-search-btn" id="convSearchBtn" aria-label="Search chats" aria-controls="convSearchBar" aria-expanded="false">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                </button>
+                <!-- Chat search: filters the list by the other person's name
+                     (and the last message) — see applyConversationFilter(). -->
+                <div class="conv-search-bar" id="convSearchBar" hidden>
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input type="search" id="convSearchInput" placeholder="Search chats" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search chats">
+                    <button type="button" class="conv-search-close" id="convSearchClose" aria-label="Close search">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
             <div class="conversations-list" id="conversationsList">
                 <!-- Placeholder rows until renderConversations() fills the list
@@ -2766,9 +2875,73 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             Object.values(existing).forEach(el => el.remove());
             // Remove any lingering empty-state placeholder
             conversationsList.querySelectorAll('.empty-state, .is-skeleton').forEach(el => el.remove());
+            // Keep an open search applied as the list updates live
+            applyConversationFilter();
 
             updateUnreadJumpBadge(conversations);
         }
+
+        // ===== CHAT SEARCH =====
+        // Filters the already-loaded chat list (no extra reads) by the other
+        // person's name and the last message. Accent- and case-insensitive,
+        // so "jose" finds "José".
+        function normalizeForSearch(text) {
+            return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        }
+
+        function applyConversationFilter() {
+            const input = document.getElementById('convSearchInput');
+            const q = input && !document.getElementById('convSearchBar').hidden ? normalizeForSearch(input.value) : '';
+            let shown = 0;
+            conversationsList.querySelectorAll('.conversation-item[data-conv-id]').forEach((item) => {
+                const name = item.querySelector('.conversation-name')?.textContent || '';
+                const last = item.querySelector('.conversation-last-message')?.textContent || '';
+                const match = !q || normalizeForSearch(name + ' ' + last).includes(q);
+                item.style.display = match ? '' : 'none';
+                if (match) shown++;
+            });
+            let empty = conversationsList.querySelector('.conv-search-empty');
+            if (q && shown === 0 && conversationsList.querySelector('.conversation-item[data-conv-id]')) {
+                if (!empty) {
+                    empty = document.createElement('div');
+                    empty.className = 'conv-search-empty';
+                    empty.textContent = 'No chats match your search';
+                }
+                conversationsList.appendChild(empty);
+            } else if (empty) {
+                empty.remove();
+            }
+        }
+
+        (function setupConversationSearch() {
+            const header = document.querySelector('.conversations-header');
+            const btn = document.getElementById('convSearchBtn');
+            const bar = document.getElementById('convSearchBar');
+            const input = document.getElementById('convSearchInput');
+            const close = document.getElementById('convSearchClose');
+            if (!header || !btn || !bar || !input || !close) return;
+            const open = () => {
+                bar.hidden = false;
+                header.classList.add('searching');
+                btn.setAttribute('aria-expanded', 'true');
+                input.focus();
+            };
+            const shut = () => {
+                input.value = '';
+                bar.hidden = true;
+                header.classList.remove('searching');
+                btn.setAttribute('aria-expanded', 'false');
+                applyConversationFilter();
+                btn.focus({ preventScroll: true });
+            };
+            btn.addEventListener('click', open);
+            close.addEventListener('click', shut);
+            input.addEventListener('input', applyConversationFilter);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') shut();
+                if (e.key === 'Enter') input.blur(); // hide the keyboard to see results
+            });
+        })();
 
         // WhatsApp-style floating "N unread" badge — counts CONVERSATIONS with
         // at least one unread message (not total unread message count, which
@@ -3599,15 +3772,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Don't hijack existing interactive targets (reactions, links,
                 // join-call, audio controls) — long-press/swipe only applies
                 // to the bubble itself.
-                if (e.target.closest('a, button, .audio-player, .reply-quote')) return;
+                // Exception: a link inside the message text — holding it opens
+                // the menu with "Copy link" (iOS's own link menu is switched
+                // off on bubbles, see .message-content -webkit-touch-callout),
+                // while a normal tap still opens it.
+                const pressedLink = e.target.closest('a.message-link');
+                if (!pressedLink && e.target.closest('a, button, .audio-player, .reply-quote')) return;
                 const el = e.target.closest('.message');
                 if (!el) return;
 
-                gesture = { el, msgId: el.dataset.msgId, startX: e.clientX, startY: e.clientY, dx: 0, dragging: false };
+                gesture = { el, msgId: el.dataset.msgId, startX: e.clientX, startY: e.clientY, dx: 0, dragging: false, link: pressedLink ? pressedLink.href : null };
                 gesture.longPressTimer = setTimeout(() => {
                     if (!gesture || gesture.dragging) return;
                     suppressNextClick = true;
-                    const { el: gEl, msgId } = gesture;
+                    const { el: gEl, msgId, link } = gesture;
                     gesture = null;
                     gEl.classList.add('swipe-releasing');
                     // Long-press opens the actions menu (react, reply, copy,
@@ -3615,7 +3793,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const message = lookupMessage(msgId);
                     if (message) {
                         if (navigator.vibrate) { try { navigator.vibrate(15); } catch (err) {} }
-                        openMessageMenu(conversationId, gEl, message);
+                        openMessageMenu(conversationId, gEl, message, { link });
                     }
                     setTimeout(() => gEl.classList.remove('swipe-releasing'), 200);
                 }, LONG_PRESS_MS);
@@ -3700,6 +3878,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 btn.className = `lb-sheet-item${item.danger ? ' danger' : ''}`;
                 btn.innerHTML = `<i class="fas ${item.icon}" aria-hidden="true"></i><span></span>`;
                 btn.querySelector('span').textContent = item.label;
+                if (item.detail) {
+                    // e.g. which link a "Copy link" row copies — not translated
+                    const detail = document.createElement('small');
+                    detail.className = 'lb-sheet-item-detail';
+                    detail.setAttribute('translate', 'no');
+                    detail.dir = 'ltr';
+                    detail.textContent = item.detail;
+                    btn.appendChild(detail);
+                }
                 btn.addEventListener('click', () => {
                     closeActionSheet();
                     item.onSelect();
@@ -3763,19 +3950,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // The long-press menu for one message bubble: quick reactions, then
         // Reply / Copy / Edit / Delete as they apply. Deleted and still-sending
         // messages have nothing to act on.
-        function openMessageMenu(conversationId, el, message) {
+        // Every link in a message's text, as the hrefs linkifyMessageText makes.
+        function messageLinks(message) {
+            if (message.type === 'audio' || !message.text) return [];
+            const tmp = document.createElement('div');
+            tmp.innerHTML = linkifyMessageText(message.text);
+            return [...new Set([...tmp.querySelectorAll('a.message-link')].map((a) => a.href))];
+        }
+
+        function openMessageMenu(conversationId, el, message, { link = null } = {}) {
             if (message.deleted || message._status) return;
             const isMine = message.senderId === currentUser.uid;
             const copyText = message.type === 'audio' ? (message.transcript || '') : (message.text || '');
+            // Held a link → that link; otherwise any links in the message
+            // (up to 3) get their own "Copy link" row.
+            const links = link ? [link] : messageLinks(message).slice(0, 3);
             const mine = Object.entries(message.reactions || {})
                 .filter(([, uids]) => Array.isArray(uids) && uids.includes(currentUser.uid))
                 .map(([emoji]) => emoji);
 
-            const items = [
-                { label: 'Reply', icon: 'fa-reply', onSelect: () => setReplyTarget(message) },
-            ];
+            const items = [];
+            if (link) {
+                items.push({ label: 'Copy link', icon: 'fa-link', onSelect: () => copyMessageText(link, 'Link copied') });
+                items.push({ label: 'Open link', icon: 'fa-external-link-alt', onSelect: () => window.open(link, '_blank', 'noopener') });
+            }
+            items.push({ label: 'Reply', icon: 'fa-reply', onSelect: () => setReplyTarget(message) });
             if (copyText) {
-                items.push({ label: 'Copy', icon: 'fa-copy', onSelect: () => copyMessageText(copyText) });
+                items.push({ label: link ? 'Copy message' : 'Copy', icon: 'fa-copy', onSelect: () => copyMessageText(copyText) });
+            }
+            if (!link) {
+                links.forEach((url) => items.push({
+                    label: 'Copy link', icon: 'fa-link',
+                    detail: links.length > 1 ? url.replace(/^https?:\/\//, '').replace(/\/$/, '') : '',
+                    onSelect: () => copyMessageText(url, 'Link copied'),
+                }));
             }
             if (canEditMessage(message)) {
                 items.push({ label: 'Edit', icon: 'fa-pencil-alt', onSelect: () => startEditingMessage(conversationId, message) });
@@ -3787,9 +3995,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const reactions = `<div class="lb-sheet-reactions">${QUICK_EMOJIS.map((emoji) =>
                 `<button type="button" data-emoji="${emoji}" class="${mine.includes(emoji) ? 'mine' : ''}" aria-label="React ${emoji}">${emoji}</button>`).join('')}</div>`;
 
+            // The held link, shown above the actions so it's clear which one.
+            const linkPreview = link
+                ? `<div class="lb-sheet-link" translate="no" dir="ltr"><i class="fas fa-link" aria-hidden="true"></i><span>${escapeHtml(link.replace(/^https?:\/\//, ''))}</span></div>`
+                : '';
+
             el.classList.add('is-menu-target');
             openActionSheet({
-                content: reactions,
+                content: linkPreview + reactions,
                 items,
                 onClose: () => el.classList.remove('is-menu-target'),
             });
@@ -3801,10 +4014,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
         }
 
-        async function copyMessageText(text) {
+        async function copyMessageText(text, doneLabel = 'Copied') {
             try {
                 await navigator.clipboard.writeText(text);
-                showToast('Copied');
+                showToast(doneLabel);
             } catch (err) {
                 console.error('Copy failed:', err);
                 showToast("Couldn't copy");
