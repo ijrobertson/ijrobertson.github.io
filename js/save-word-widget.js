@@ -95,7 +95,7 @@ function injectStyles() {
     .lb-savewd-modal label { display: block; font-size: 0.8rem; font-weight: 700; color: #113448; margin: 0.7rem 0 0.3rem; }
     .lb-savewd-modal input, .lb-savewd-modal textarea {
       width: 100%; box-sizing: border-box; border: 2px solid #e7e9e7; border-radius: 10px;
-      padding: 0.5rem 0.7rem; font-size: 0.92rem; font-family: inherit;
+      padding: 0.5rem 0.7rem; font-size: 16px; font-family: inherit;
     }
     .lb-savewd-modal input:focus, .lb-savewd-modal textarea:focus { outline: none; border-color: #20bcba; }
     .lb-savewd-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.1rem; }
