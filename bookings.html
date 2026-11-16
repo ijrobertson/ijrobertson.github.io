@@ -1606,7 +1606,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 if (reviewedBookingIds.has(booking.id)) {
                     reviewFooterHtml = `<button class="btn-rate reviewed" disabled><i class="fas fa-star"></i> Reviewed</button>`;
                 } else {
-                    reviewFooterHtml = `<button class="btn-rate" onclick="openReviewModal('${escapeAttr(booking.id)}', '${escapeAttr(otherName)}')"><i class="fas fa-star"></i> Rate Lesson</button>`;
+                    reviewFooterHtml = `<button class="btn-rate" onclick="openReviewModal(${jsArg(booking.id)}, ${jsArg(otherName)})"><i class="fas fa-star"></i> Rate Lesson</button>`;
                 }
             }
 
@@ -1649,12 +1649,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <button class="${btnClass}"
                             ${btnDisabled ? 'disabled' : ''}
                             data-join-btn="${escapeAttr(booking.id)}"
-                            onclick="joinLesson('${escapeAttr(channelName)}', ${btnDisabled})">
+                            onclick="joinLesson(${jsArg(channelName)}, ${btnDisabled})">
                         ${btnHtml}
                     </button>
                     ${reviewFooterHtml}
                     ${status === 'upcoming' ? `<button class="btn-cancel-lesson" data-cancel-id="${escapeAttr(booking.id)}" data-cancel-name="${escapeAttr(otherName)}" data-cancel-time="${escapeAttr(lessonTime.toISOString())}" data-cancel-amount="${booking.amount || ''}" data-cancel-currency="${escapeAttr(booking.currency || '')}" data-cancel-role="${escapeAttr(booking.myRole)}" data-booking-type="${escapeAttr(booking.bookingType || 'lesson')}"><i class="fas fa-times"></i> Cancel</button>` : ''}
-                    ${booking.myRole === 'instructor' ? `<button class="btn-send-homework" data-hw-booking="${escapeAttr(booking.id)}" onclick="openHomeworkModal('${escapeAttr(booking.id)}', '${escapeAttr(booking.studentId || '')}', '${escapeAttr(otherName)}')"><i class="fas fa-book-open"></i> Homework</button>` : ''}
+                    ${booking.myRole === 'instructor' ? `<button class="btn-send-homework" data-hw-booking="${escapeAttr(booking.id)}" onclick="openHomeworkModal(${jsArg(booking.id)}, ${jsArg(booking.studentId || '')}, ${jsArg(otherName)})"><i class="fas fa-book-open"></i> Homework</button>` : ''}
                 </div>
             `;
 
@@ -1899,8 +1899,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ===== HELPERS =====
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text || '';
-            return div.innerHTML;
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // A value for an inline onclick="fn(…)" argument: a JSON string
+        // literal, HTML-escaped for the attribute, so no name can break out
+        // of the quotes (e.g. one ending in a backslash).
+        function jsArg(v) {
+            return escapeHtml(JSON.stringify(String(v == null ? '' : v)));
         }
 
         function escapeAttr(text) {
@@ -2055,7 +2062,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             const pdfEl = document.getElementById('hwViewPdf');
             pdfEl.innerHTML = hw.pdfUrl
-                ? `<a class="hw-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> <span${hw.pdfName ? ' translate="no"' : ''}>${escapeHtml(hw.pdfName || 'Download')}</span></a>`
+                ? `<a class="hw-pdf-link" href="${escapeHtml(/^https:\/\//i.test(String(hw.pdfUrl)) ? hw.pdfUrl : '#')}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> <span${hw.pdfName ? ' translate="no"' : ''}>${escapeHtml(hw.pdfName || 'Download')}</span></a>`
                 : '';
 
             document.getElementById('hwViewBackdrop').classList.add('active');
@@ -2110,7 +2117,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             ${dueStr ? `<span class="hw-due-badge">${lbF('Due: {date}', { date: escapeHtml(dueStr) })}</span>` : ''}
                         </div>
                         ${hw.notes ? `<div class="hw-card-notes" translate="no">${escapeHtml(hw.notes)}</div>` : ''}
-                        ${hw.pdfUrl ? `<a class="hw-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> <span${hw.pdfName ? ' translate="no"' : ''}>${escapeHtml(hw.pdfName || 'Download')}</span></a>` : ''}
+                        ${hw.pdfUrl ? `<a class="hw-pdf-link" href="${escapeHtml(/^https:\/\//i.test(String(hw.pdfUrl)) ? hw.pdfUrl : '#')}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> <span${hw.pdfName ? ' translate="no"' : ''}>${escapeHtml(hw.pdfName || 'Download')}</span></a>` : ''}
                         <div>
                             ${hw.completedByStudent
                                 ? `<span class="hw-completed-tag"><i class="fas fa-check-circle"></i> Completed</span>`

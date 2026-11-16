@@ -690,8 +690,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function escHtml(str) {
             const d = document.createElement('div');
-            d.textContent = str;
-            return d.innerHTML;
+            d.textContent = str == null ? '' : String(str);
+            return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         // Prefer real browser back (preserves the Connect page's scroll

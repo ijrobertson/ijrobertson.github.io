@@ -177,7 +177,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               const b = snap.docs[0].data();
               const dt = b.dateTime?.toDate ? b.dateTime.toDate() : new Date(b.dateTime);
               detailBox.innerHTML = `
-                <p><strong>Instructor:</strong> ${b.instructorName || 'Your instructor'}</p>
+                <p><strong>Instructor:</strong> ${String(b.instructorName || 'Your instructor').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
                 <p><strong>Date:</strong> ${dt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Time:</strong> ${dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
                 ${b.amount ? `<p><strong>Amount:</strong> ${(b.amount / 100).toFixed(2)} ${(b.currency || 'USD').toUpperCase()}</p>` : ''}`;

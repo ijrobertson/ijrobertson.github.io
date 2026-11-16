@@ -1143,7 +1143,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             card.innerHTML = `
                 <img class="request-avatar"
-                     src="${avatar}"
+                     src="${escapeHtml(avatar)}"
                      onerror="this.src='${DEFAULT_AVATAR}'"
                      alt="${name}">
                 <div class="request-name" translate="no">${name}</div>
@@ -1320,8 +1320,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // ===== HELPERS =====
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text || '';
-            return div.innerHTML;
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function escapeAttr(text) {
