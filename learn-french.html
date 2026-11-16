@@ -1203,26 +1203,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // Makes profile text safe inside page markup (text and attribute="…").
+        function lbEsc(v) {
+            return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
         function buildPartnerCard(u) {
             const card = document.createElement('div');
             card.className = 'profile-card';
 
-            const spoken   = (u.languages_spoken   || []).map(l => `<span class="profile-language-tag">${l}</span>`).join('');
-            const learning = (u.languages_learning || []).map(l => `<span class="profile-language-tag">${l}</span>`).join('');
+            const spoken   = (u.languages_spoken   || []).map(l => `<span class="profile-language-tag">${lbEsc(l)}</span>`).join('');
+            const learning = (u.languages_learning || []).map(l => `<span class="profile-language-tag">${lbEsc(l)}</span>`).join('');
 
             card.innerHTML = `
                 <div class="profile-card-image">
                     <img class="profile-card-avatar"
-                         src="${u.avatar_url || AVT}"
-                         alt="${u.name || 'Language Partner'}"
+                         src="${lbEsc(u.avatar_url || AVT)}"
+                         alt="${lbEsc(u.name || 'Language Partner')}"
                          onerror="this.src='${AVT}'">
                 </div>
                 <div class="profile-card-body">
-                    <div class="profile-card-name">${u.name || 'Language Partner'}</div>
-                    <div class="profile-card-country"><i class="fas fa-globe-americas"></i> ${u.country || 'Worldwide'}</div>
+                    <div class="profile-card-name">${lbEsc(u.name || 'Language Partner')}</div>
+                    <div class="profile-card-country"><i class="fas fa-globe-americas"></i> ${lbEsc(u.country || 'Worldwide')}</div>
                     ${spoken ? `<div class="language-section"><div class="language-section-title">Speaks</div><div class="profile-card-languages">${spoken}</div></div>` : ''}
                     ${learning ? `<div class="language-section"><div class="language-section-title">Learning</div><div class="profile-card-languages">${learning}</div></div>` : ''}
-                    <div class="profile-card-bio">${u.about_me || 'Looking for a language exchange partner to practice and grow together!'}</div>
+                    <div class="profile-card-bio">${lbEsc(u.about_me || 'Looking for a language exchange partner to practice and grow together!')}</div>
                 </div>`;
             card.addEventListener('click', () => { window.location.href = `learner-profile?uid=${u.id}`; });
             return card;
@@ -1332,15 +1337,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const card = document.createElement('div');
             card.className = 'profile-card';
 
-            const langs = (i.languages_teaching || []).map(l => `<span class="profile-language-tag">${l}</span>`).join('');
+            const langs = (i.languages_teaching || []).map(l => `<span class="profile-language-tag">${lbEsc(l)}</span>`).join('');
             const countryHtml = i.native_country
-                ? `<div class="profile-card-country"><i class="fas fa-globe-americas"></i> ${i.native_country}</div>`
+                ? `<div class="profile-card-country"><i class="fas fa-globe-americas"></i> ${lbEsc(i.native_country)}</div>`
                 : '';
             const _csMap = {USD:'$',EUR:'€',GBP:'£',CAD:'$',AUD:'$'};
             const _cCode = (i.currency || 'USD').trim();
             const _cSym = _csMap[_cCode] || '';
             const priceHtml = i.price_per_lesson
-                ? `<div class="profile-card-price"><i class="fas fa-tag"></i> ${_cCode} ${_cSym}${i.price_per_lesson}/hour</div>`
+                ? `<div class="profile-card-price"><i class="fas fa-tag"></i> ${lbEsc(_cCode)} ${_cSym}${lbEsc(i.price_per_lesson)}/hour</div>`
                 : '';
             const starsHtml = i.reviewCount
                 ? `<div class="profile-card-rating" style="display:flex;align-items:center;gap:4px;margin:4px 0;">${renderStarsHtml(i.averageRating)}<span style="font-size:0.82rem;color:#666;"> ${i.averageRating.toFixed(1)} (${i.reviewCount})</span></div>`
@@ -1350,26 +1355,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             card.innerHTML = `
                 ${hasVideo
                     ? `<div class="card-video-container">
-                           <video class="card-video-el" src="${i.intro_video_url}" muted loop playsinline preload="metadata"></video>
+                           <video class="card-video-el" src="${lbEsc(i.intro_video_url)}" muted loop playsinline preload="metadata"></video>
                            <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
                            <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
                            <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
                        </div>`
                     : `<div class="profile-card-image">
                            <img class="profile-card-avatar"
-                                src="${i.avatar_url || AVT}"
-                                alt="${i.name || 'Instructor'}"
+                                src="${lbEsc(i.avatar_url || AVT)}"
+                                alt="${lbEsc(i.name || 'Instructor')}"
                                 onerror="this.src='${AVT}'">
                            <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
                        </div>`
                 }
                 <div class="profile-card-body">
-                    <div class="profile-card-name">${i.name || 'French Instructor'}</div>
+                    <div class="profile-card-name">${lbEsc(i.name || 'French Instructor')}</div>
                     ${countryHtml}
                     ${priceHtml}
                     ${starsHtml}
                     <div class="profile-card-languages">${langs}</div>
-                    ${i.about_me ? `<div class="profile-card-about-label">About</div><div class="profile-card-bio">${i.about_me}</div>` : ''}
+                    ${i.about_me ? `<div class="profile-card-about-label">About</div><div class="profile-card-bio">${lbEsc(i.about_me)}</div>` : ''}
                 </div>`;
             // Card click → dedicated profile page in new tab
             card.addEventListener('click', () => {

@@ -1008,25 +1008,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // "I want to learn X" → show users who speak X
             learningFilter.innerHTML = `<option value="">All Languages</option>`;
             Array.from(spokenLanguages).sort().forEach(lang => {
-                learningFilter.innerHTML += `<option value="${lang}">${lang}</option>`;
+                learningFilter.innerHTML += `<option value="${escapeHtml(lang)}">${escapeHtml(lang)}</option>`;
             });
 
             // "They want to learn X" → show users who are learning X
             speakingFilter.innerHTML = `<option value="">All Languages</option>`;
             Array.from(learningLanguages).sort().forEach(lang => {
-                speakingFilter.innerHTML += `<option value="${lang}">${lang}</option>`;
+                speakingFilter.innerHTML += `<option value="${escapeHtml(lang)}">${escapeHtml(lang)}</option>`;
             });
 
             countryFilter.innerHTML = `<option value="">Any Country</option>`;
             Array.from(countries).sort().forEach(country => {
-                countryFilter.innerHTML += `<option value="${country}">${country}</option>`;
+                countryFilter.innerHTML += `<option value="${escapeHtml(country)}">${escapeHtml(country)}</option>`;
             });
         }
 
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function renderUsers() {
@@ -1079,7 +1079,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             let cardHTML = `
                 <div class="user-card-header">
-                    <img class="user-card-avatar" src="${avatar}" alt="${name}" onerror="this.src=window.DEFAULT_AVATAR">
+                    <img class="user-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" onerror="this.src=window.DEFAULT_AVATAR">
                     <div class="user-card-name">${name}</div>
                     <div class="user-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>
                 </div>

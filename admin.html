@@ -1684,7 +1684,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         ? `<div id="report-detail-${r.id}">
                                <span class="report-detail-preview">${preview}</span>
                                <span class="report-detail-full" style="display:none;">${escHtml(fullDetails)}</span>
-                               <button class="btn-sm-icon" title="Expand" onclick="toggleReportDetail('${r.id}')" style="margin-left:4px;">
+                               <button class="btn-sm-icon" title="Expand" onclick="toggleReportDetail(${jsArg(r.id)})" style="margin-left:4px;">
                                    <i class="fas fa-expand-alt"></i>
                                </button>
                            </div>`
@@ -1699,10 +1699,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <td style="max-width:220px;">${detailsHtml}</td>
                         <td>${date}</td>
                         <td style="white-space:nowrap;">
-                            <button class="btn-unflag" style="margin-right:4px;" onclick="dismissReport('${r.id}')">Dismiss</button>
-                            <button class="btn-flag" style="margin-right:4px;" onclick="flagReportedUser('${escHtml(r.reportedUserId || '')}','${escHtml(r.reportedUserName || '')}')">Flag User</button>
-                            <button class="btn-ban" style="margin-right:4px;" onclick="doBan('${escHtml(r.reportedUserId || '')}','${escHtml(r.reportedUserName || '')}')">Ban</button>
-                            <button class="btn-delete" onclick="deleteReportedUser('${escHtml(r.reportedUserId || '')}','${escHtml(r.reportedUserName || '')}')">Delete User</button>
+                            <button class="btn-unflag" style="margin-right:4px;" onclick="dismissReport(${jsArg(r.id)})">Dismiss</button>
+                            <button class="btn-flag" style="margin-right:4px;" onclick="flagReportedUser(${jsArg(r.reportedUserId || '')},${jsArg(r.reportedUserName || '')})">Flag User</button>
+                            <button class="btn-ban" style="margin-right:4px;" onclick="doBan(${jsArg(r.reportedUserId || '')},${jsArg(r.reportedUserName || '')})">Ban</button>
+                            <button class="btn-delete" onclick="deleteReportedUser(${jsArg(r.reportedUserId || '')},${jsArg(r.reportedUserName || '')})">Delete User</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -1829,10 +1829,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     const joined   = i.createdAt ? new Date(i.createdAt).toLocaleDateString() : '—';
                     const avatar   = i.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
                     const actions  = status === 'pending'
-                        ? `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(displayName(i))}')">Approve</button>
-                           <button class="btn-decline ml-1" onclick="doDecline('${i.id}','${escHtml(displayName(i))}')">Decline</button>`
-                        : `<button class="btn-approve" onclick="doApprove('${i.id}','${escHtml(displayName(i))}')">Re-approve</button>
-                       <button class="btn-decline ml-1" onclick="doRemoveApplication('${i.id}','${escHtml(displayName(i))}')">Remove</button>`;
+                        ? `<button class="btn-approve" onclick="doApprove(${jsArg(i.id)},${jsArg(displayName(i))})">Approve</button>
+                           <button class="btn-decline ml-1" onclick="doDecline(${jsArg(i.id)},${jsArg(displayName(i))})">Decline</button>`
+                        : `<button class="btn-approve" onclick="doApprove(${jsArg(i.id)},${jsArg(displayName(i))})">Re-approve</button>
+                       <button class="btn-decline ml-1" onclick="doRemoveApplication(${jsArg(i.id)},${jsArg(displayName(i))})">Remove</button>`;
                     const dataJson = escHtml(JSON.stringify(i));
                     return `<tr>
                         <td><img src="${escHtml(avatar)}" class="table-avatar" style="margin-right:8px;">${escHtml(displayName(i))}<br><small style="color:#999;">${escHtml(i.email || '')}</small></td>
@@ -1892,7 +1892,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <td>${escHtml(joined)}</td>
                     <td>${instructorTypeBadge}</td>
                     <td><button class="btn-detail-view" onclick="openAppDetail(this)" data-instructor="${dataJson}">View Details</button></td>
-                    <td><button class="btn-decline" onclick="doDecline('${i.id}','${escHtml(displayName(i))}')">Revoke</button></td>
+                    <td><button class="btn-decline" onclick="doDecline(${jsArg(i.id)},${jsArg(displayName(i))})">Revoke</button></td>
                 </tr>`;
             }).join('');
         }
@@ -2048,9 +2048,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <td>${escHtml(u.email || '—')}</td>
                         <td>${escHtml(flaggedAt)}${u.flagReason ? `<br><small style="color:#842029;">${escHtml(u.flagReason)}</small>` : ''}</td>
                         <td style="white-space:nowrap;">
-                            <button class="btn-unflag mr-1" onclick="doUnflag('${u.id}','${u.userCollection}','${escHtml(u.name || '')}')">Unflag</button>
-                            <button class="btn-ban mr-1" onclick="doBan('${u.id}','${escHtml(u.name || '')}')">Ban</button>
-                            <button class="btn-delete" onclick="doDelete('${u.id}','${escHtml(u.name || '')}')">Delete Account</button>
+                            <button class="btn-unflag mr-1" onclick="doUnflag(${jsArg(u.id)},${jsArg(u.userCollection)},${jsArg(u.name || '')})">Unflag</button>
+                            <button class="btn-ban mr-1" onclick="doBan(${jsArg(u.id)},${jsArg(u.name || '')})">Ban</button>
+                            <button class="btn-delete" onclick="doDelete(${jsArg(u.id)},${jsArg(u.name || '')})">Delete Account</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -2148,11 +2148,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <td>${escHtml(learning)}</td>
                     <td>${escHtml(joined)}</td>
                     <td>
-                        <button class="btn-flag mr-1" title="${flagLabel} user" onclick="doFlagUser('${u.id}','users','${escHtml(u.name || '')}',${!u.flagged})">
+                        <button class="btn-flag mr-1" title="${flagLabel} user" onclick="doFlagUser(${jsArg(u.id)},'users',${jsArg(u.name || '')},${!u.flagged})">
                             ${flagLabel}
                         </button>
-                        <button class="btn-ban mr-1" onclick="doBan('${u.id}','${escHtml(u.name || '')}')">Ban</button>
-                        <button class="btn-delete" onclick="doDelete('${u.id}','${escHtml(u.name || '')}')">Delete</button>
+                        <button class="btn-ban mr-1" onclick="doBan(${jsArg(u.id)},${jsArg(u.name || '')})">Ban</button>
+                        <button class="btn-delete" onclick="doDelete(${jsArg(u.id)},${jsArg(u.name || '')})">Delete</button>
                     </td>
                 </tr>`;
             }).join('');
@@ -2238,9 +2238,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <td><small>${escHtml(learning)}</small></td>
                     <td><small>${escHtml(joined)}</small></td>
                     <td style="white-space:nowrap;">
-                        <button class="btn-flag mr-1" onclick="doFlagUser('${u.id}','${u._col}','${escHtml(u.name || '')}',${!u.flagged})">${flagLabel}</button>
-                        <button class="btn-ban mr-1" onclick="doBan('${u.id}','${escHtml(u.name || '')}')">Ban</button>
-                        <button class="btn-delete" onclick="doDeleteFromAllUsers('${u.id}','${escHtml(u.name || '')}')">Delete</button>
+                        <button class="btn-flag mr-1" onclick="doFlagUser(${jsArg(u.id)},${jsArg(u._col)},${jsArg(u.name || '')},${!u.flagged})">${flagLabel}</button>
+                        <button class="btn-ban mr-1" onclick="doBan(${jsArg(u.id)},${jsArg(u.name || '')})">Ban</button>
+                        <button class="btn-delete" onclick="doDeleteFromAllUsers(${jsArg(u.id)},${jsArg(u.name || '')})">Delete</button>
                     </td>
                 </tr>`;
             }).join('');
@@ -2328,7 +2328,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             refundCell = `<span style="color:#198754;font-size:0.8rem;">✓ Refunded${refundedAmt ? ' ' + refundedAmt : ''}</span>`;
                         } else {
                             const errTitle = b.refundError ? escHtml(b.refundError) : 'Refund was not issued automatically';
-                            refundCell = `<button class="btn-approve" style="font-size:0.75rem;padding:3px 8px;background:#dc3545;" onclick="issueRefund('${escHtml(b.id)}')" title="${errTitle}">Issue Refund</button>`;
+                            refundCell = `<button class="btn-approve" style="font-size:0.75rem;padding:3px 8px;background:#dc3545;" onclick="issueRefund(${jsArg(b.id)})" title="${errTitle}">Issue Refund</button>`;
                         }
                     } else if (b.status === 'cancelled' && b.refundPercent === 0) {
                         refundCell = '<span style="color:#999;font-size:0.8rem;">No refund</span>';
@@ -2489,10 +2489,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <td class="msg-preview">${escHtml(preview)}${m.message && m.message.length > 80 ? '…' : ''}</td>
                         <td>${escHtml(dt)}</td>
                         <td>
-                            <button class="btn-sm-icon" title="Expand" onclick="toggleMsg('${m.id}','${escHtml((m.message||'').replace(/'/g,"\\'"))}')">
+                            <button class="btn-sm-icon" title="Expand" onclick="toggleMsg(${jsArg(m.id)},${jsArg(m.message||'')})">
                                 <i class="fas fa-expand-alt"></i>
                             </button>
-                            ${!m.read ? `<button class="btn-approve ml-1" style="font-size:0.75rem;" onclick="doMarkRead('${m.id}')">Mark Read</button>` : '<span style="color:#aaa;font-size:0.8rem;">Read</span>'}
+                            ${!m.read ? `<button class="btn-approve ml-1" style="font-size:0.75rem;" onclick="doMarkRead(${jsArg(m.id)})">Mark Read</button>` : '<span style="color:#aaa;font-size:0.8rem;">Read</span>'}
                         </td>
                     </tr>
                     <tr id="msg-full-${m.id}"><td colspan="5" class="msg-full" id="msg-text-${m.id}"></td></tr>`;
@@ -2593,7 +2593,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <td><strong style="color:#113448;">${escHtml(amt)}</strong></td>
                             <td>${escHtml(rate)}</td>
                             <td>
-                                <button class="btn-approve" onclick="doMarkWisePaid('${escHtml(g.instructorId)}', '${escHtml(g.instructorName)}', '${escHtml(amt)}')">
+                                <button class="btn-approve" onclick="doMarkWisePaid(${jsArg(g.instructorId)}, ${jsArg(g.instructorName)}, ${jsArg(amt)})">
                                     <i class="fas fa-check"></i> Mark as Paid
                                 </button>
                             </td>
@@ -2933,6 +2933,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         });
 
         // ── Helpers ───────────────────────────────────────────────────────
+        // A value for an inline onclick="fn(…)" argument: a JSON string literal,
+        // then HTML-escaped for the attribute. (escHtml alone isn't enough
+        // there — the browser decodes &#39; back to ' before running the JS.)
+        function jsArg(v) {
+            return escHtml(JSON.stringify(String(v == null ? '' : v)));
+        }
+
         function escHtml(str) {
             return String(str || '')
                 .replace(/&/g, '&amp;')

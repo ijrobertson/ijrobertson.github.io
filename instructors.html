@@ -1863,8 +1863,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function renderInstructors() {
@@ -1978,7 +1978,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                    <div class="instructor-card-body">`
                 : `<div class="instructor-card-header">
                        <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
-                       <img class="instructor-card-avatar" src="${avatar}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
+                       <img class="instructor-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
                        <div class="instructor-card-name">${name}</div>
                        ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
                        <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>

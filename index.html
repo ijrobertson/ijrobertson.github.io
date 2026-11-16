@@ -3068,7 +3068,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             card.innerHTML = `
                 <div class="profile-card-image">
-                    <img class="profile-card-avatar" src="${avatar}" alt="${name}" loading="lazy">
+                    <img class="profile-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" loading="lazy">
                 </div>
                 <div class="profile-card-body">
                     <div class="profile-card-name">${name}</div>
@@ -3101,8 +3101,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const symbols = {USD:'$',EUR:'€',GBP:'£',CAD:'CA$',AUD:'A$'};
             const code = (instructor.currency || 'USD').trim();
             return symbols[code]
-                ? `${symbols[code]}${instructor.price_per_lesson} / hour`
-                : `${code} ${instructor.price_per_lesson} / hour`;
+                ? `${symbols[code]}${escapeHtml(instructor.price_per_lesson)} / hour`
+                : `${escapeHtml(code)} ${escapeHtml(instructor.price_per_lesson)} / hour`;
         }
 
         // Create instructor profile card
@@ -3127,7 +3127,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                            <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
                        </div>`
                     : `<div class="profile-card-image">
-                           <img class="profile-card-avatar" src="${avatar}" alt="${name}" loading="lazy">
+                           <img class="profile-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" loading="lazy">
                            <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
                        </div>`
                 }
@@ -3255,8 +3255,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Escape HTML to prevent XSS
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         // ── Instructor profile modal ──────────────────────────────────────

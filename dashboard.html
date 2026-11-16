@@ -3717,7 +3717,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     function escHtml(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
     function copyReferralLink() {
@@ -4338,7 +4338,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       else { notesEl.style.display = 'none'; }
       const pdfEl = document.getElementById('hw-view-pdf');
       pdfEl.innerHTML = hw.pdfUrl
-        ? `<a class="hw-view-pdf-link" href="${hw.pdfUrl}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> ${escapeHtmlInst(hw.pdfName || 'Download')}</a>`
+        ? `<a class="hw-view-pdf-link" href="${escHtml(/^https:\/\//i.test(String(hw.pdfUrl)) ? hw.pdfUrl : '#')}" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> ${escapeHtmlInst(hw.pdfName || 'Download')}</a>`
         : '';
       document.getElementById('hw-view-backdrop').classList.add('active');
     }
