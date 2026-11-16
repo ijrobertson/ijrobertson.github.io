@@ -5,7 +5,7 @@
     - already running as the installed app → straight into the app (/home)
     - Android / desktop Chrome → a real "Install the app" button
       (beforeinstallprompt), or the browser-menu steps if it doesn't fire
-    - iPhone/iPad → the three Share → Add to Home Screen steps (Apple allows
+    - iPhone/iPad → page menu → Share → Add to Home Screen → Add (Apple allows
       no install button), or "open in Safari" inside Instagram/Facebook etc.
     - computer → QR code to scan with a phone, plus "use it in the browser"
   Text is plain English in the markup; js/i18n.js translates it (es/pt/fr/ar).
@@ -151,10 +151,12 @@
     color: var(--teal-deep); font-weight: 600; text-decoration: none;
   }
   .alt-link:hover { text-decoration: underline; }
-  /* ---- Animated iPhone guide (iosSteps) — a looping mock of Safari:
-     tap Share → tap "Add to Home Screen" → tap "Add". 9s per loop. ---- */
+  /* ---- Animated iPhone guide (iosSteps) — a looping mock of Safari
+     (2026-11-16, current iOS layout): tap the page-menu button at the left
+     of the address bar → tap "Share" → tap "Add to Home Screen" → tap
+     "Add". 12s per loop. ---- */
   .mock {
-    position: relative; width: 230px; height: 286px; margin: 0 auto 18px;
+    position: relative; width: 230px; height: 300px; margin: 0 auto 18px;
     border-radius: 26px; border: 7px solid var(--navy); overflow: hidden;
     background: #fff; box-shadow: 0 10px 26px rgba(17, 52, 72, 0.18);
     font-family: -apple-system, system-ui, sans-serif;
@@ -164,53 +166,74 @@
   .mock-page .bar { height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--navy), var(--teal-deep)); margin-bottom: 12px; }
   .mock-page .line { height: 9px; border-radius: 5px; background: #e6eef0; margin-bottom: 8px; }
   .mock-toolbar {
-    position: absolute; left: 0; right: 0; bottom: 0; height: 44px;
+    position: absolute; left: 0; right: 0; bottom: 0; height: 48px;
     background: #f4f6f7; border-top: 1px solid #dde3e6;
-    display: flex; align-items: center; justify-content: space-around; color: #2f7cf6;
+    display: flex; align-items: center; gap: 6px; padding: 0 8px; color: #2f7cf6;
   }
-  .mock-toolbar svg { width: 18px; height: 18px; }
-  .mock-share { position: relative; }
+  .mock-toolbar > svg { width: 17px; height: 17px; flex: 0 0 auto; }
+  .mock-addr {
+    flex: 1; display: flex; align-items: center; gap: 6px; height: 32px; min-width: 0;
+    background: #fff; border-radius: 16px; padding: 0 9px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    font-size: 10.5px; color: #1c1c1e;
+  }
+  .mock-addr .url { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mock-pm { position: relative; display: flex; color: #1c1c1e; }
+  .mock-pm svg { width: 15px; height: 15px; }
+  .mock-menu {
+    position: absolute; left: 10px; bottom: 54px; width: 150px;
+    background: #fff; border-radius: 12px; padding: 5px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transform-origin: 20% 100%;
+    animation: mockMenu 12s infinite;
+  }
+  .mock-menu .mock-row { margin-bottom: 2px; background: transparent; padding: 7px 8px; }
+  .mock-menu .mock-row.target { animation: mockShareHi 12s infinite; }
   .mock-sheet {
     position: absolute; left: 0; right: 0; bottom: 0; height: 78%;
     background: #f2f2f6; border-radius: 16px 16px 0 0; padding: 14px 10px;
     box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.12);
-    animation: mockSheet 9s infinite;
+    animation: mockSheet 12s infinite;
   }
   .mock-row { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 9px; padding: 9px 10px; margin-bottom: 6px; font-size: 11.5px; color: #1c1c1e; }
   .mock-row .ic { width: 16px; height: 16px; border-radius: 4px; background: #d9dee2; flex: 0 0 auto; }
   .mock-row .ph { height: 8px; border-radius: 4px; background: #e3e7ea; flex: 1; }
   .mock-row.target { position: relative; font-weight: 600; }
   .mock-row.target svg { width: 16px; height: 16px; color: #1c1c1e; flex: 0 0 auto; }
+  .mock-sheet .mock-row.target { animation: mockRowHi 12s infinite; }
   .mock-dialog {
     position: absolute; inset: 0; background: #f2f2f6; padding: 12px 10px;
-    animation: mockDialog 9s infinite;
+    animation: mockDialog 12s infinite;
   }
   .mock-dialog-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #2f7cf6; margin-bottom: 14px; }
   .mock-dialog-head b { position: relative; font-weight: 700; }
   .mock-dialog-app { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 10px; padding: 10px; font-size: 12px; color: #1c1c1e; font-weight: 600; }
   .mock-dialog-app img { width: 34px; height: 34px; border-radius: 8px; }
   .tap {
-    position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px;
+    position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px;
     border-radius: 50%; background: rgba(32, 188, 186, 0.35); border: 2px solid var(--teal);
     pointer-events: none; opacity: 0;
   }
-  .tap-1 { animation: mockTap1 9s infinite; }
-  .tap-2 { animation: mockTap2 9s infinite; left: auto; right: 6px; margin-left: 0; }
-  .tap-3 { animation: mockTap3 9s infinite; }
-  @keyframes mockSheet { 0%, 26% { transform: translateY(105%); } 32%, 66% { transform: translateY(0); } 72%, 100% { transform: translateY(0); } }
-  @keyframes mockDialog { 0%, 64% { opacity: 0; transform: translateY(12px); } 70%, 96% { opacity: 1; transform: none; } 100% { opacity: 0; } }
-  @keyframes mockTap1 { 0%, 8% { opacity: 0; transform: scale(1.6); } 14%, 22% { opacity: 1; transform: scale(1); } 26%, 100% { opacity: 0; transform: scale(0.8); } }
-  @keyframes mockTap2 { 0%, 42% { opacity: 0; transform: scale(1.6); } 48%, 58% { opacity: 1; transform: scale(1); } 62%, 100% { opacity: 0; transform: scale(0.8); } }
-  @keyframes mockTap3 { 0%, 76% { opacity: 0; transform: scale(1.6); } 82%, 90% { opacity: 1; transform: scale(1); } 94%, 100% { opacity: 0; transform: scale(0.8); } }
-  .mock-row.target { animation: mockRowHi 9s infinite; }
-  @keyframes mockRowHi { 0%, 44% { background: #fff; } 48%, 62% { background: #dff4f4; } 66%, 100% { background: #fff; } }
+  .tap-1 { animation: mockTap1 12s infinite; }
+  .tap-s { animation: mockTapS 12s infinite; left: auto; right: 4px; margin-left: 0; }
+  .tap-2 { animation: mockTap2 12s infinite; left: auto; right: 6px; margin-left: 0; }
+  .tap-3 { animation: mockTap3 12s infinite; }
+  @keyframes mockTap1 { 0%, 4% { opacity: 0; transform: scale(1.6); } 8%, 13% { opacity: 1; transform: scale(1); } 16%, 100% { opacity: 0; transform: scale(0.8); } }
+  @keyframes mockMenu { 0%, 14% { opacity: 0; transform: scale(0.9); } 18%, 37% { opacity: 1; transform: none; } 41%, 100% { opacity: 0; transform: scale(0.96); } }
+  @keyframes mockTapS { 0%, 24% { opacity: 0; transform: scale(1.6); } 28%, 34% { opacity: 1; transform: scale(1); } 37%, 100% { opacity: 0; transform: scale(0.8); } }
+  @keyframes mockShareHi { 0%, 27% { background: transparent; } 29%, 36% { background: #dff4f4; } 39%, 100% { background: transparent; } }
+  @keyframes mockSheet { 0%, 38% { transform: translateY(105%); } 44%, 100% { transform: translateY(0); } }
+  @keyframes mockTap2 { 0%, 50% { opacity: 0; transform: scale(1.6); } 54%, 61% { opacity: 1; transform: scale(1); } 65%, 100% { opacity: 0; transform: scale(0.8); } }
+  @keyframes mockRowHi { 0%, 53% { background: #fff; } 55%, 63% { background: #dff4f4; } 66%, 100% { background: #fff; } }
+  @keyframes mockDialog { 0%, 67% { opacity: 0; transform: translateY(12px); } 72%, 96% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+  @keyframes mockTap3 { 0%, 77% { opacity: 0; transform: scale(1.6); } 81%, 89% { opacity: 1; transform: scale(1); } 93%, 100% { opacity: 0; transform: scale(0.8); } }
   @media (prefers-reduced-motion: reduce) {
-    .mock-sheet, .mock-dialog, .tap, .mock-row.target { animation: none; }
-    .mock-dialog { display: none; }
-    .tap-2 { opacity: 1; }
+    .mock-menu, .mock-sheet, .mock-dialog, .tap, .mock-row.target, .mock-menu .mock-row.target { animation: none; }
+    .mock-sheet, .mock-dialog { display: none; }
+    .tap-1, .tap-s { opacity: 1; }
   }
-  /* Safari on iPhone keeps Share in the bottom toolbar (or under •••) —
-     a gentle arrow points down at it. */
+  /* Safari on iPhone keeps the address bar (with its menu button) at the
+     bottom — a gentle arrow points down at it. */
   .toolbar-hint {
     position: fixed; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom));
     transform: translateX(-50%);
@@ -259,7 +282,7 @@
 
       <!-- iPhone / iPad in Safari (or another browser that can add to the home screen) -->
       <section id="iosSteps" hidden>
-        <h2>Add it to your home screen in 3 taps</h2>
+        <h2>Add it to your home screen in 4 taps</h2>
         <!-- Looping demo. Labels mimic the phone's own iOS wording (set by the
              script below from the interface language), so translate="no". -->
         <div class="mock" aria-hidden="true" translate="no">
@@ -269,10 +292,14 @@
           </div>
           <div class="mock-toolbar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.35"><path d="M9 5l7 7-7 7"/></svg>
-            <span class="mock-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg><span class="tap tap-1"></span></span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"/></svg>
+            <div class="mock-addr"><span class="mock-pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg><span class="tap tap-1"></span></span><span class="url">app.linguabud.com</span></div>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="12" height="12" rx="2"/><path d="M8 7V5h12v12h-2"/></svg>
+          </div>
+          <div class="mock-menu">
+            <div class="mock-row"><span class="ic"></span><span class="ph"></span></div>
+            <div class="mock-row"><span class="ic"></span><span class="ph" style="flex:.75"></span></div>
+            <div class="mock-row target"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg><span id="mockShare">Share</span><span class="tap tap-s"></span></div>
+            <div class="mock-row"><span class="ic"></span><span class="ph" style="flex:.6"></span></div>
           </div>
           <div class="mock-sheet">
             <div class="mock-row"><span class="ic"></span><span class="ph"></span></div>
@@ -289,16 +316,21 @@
         <ol class="steps">
           <li>
             <div class="step-num">1</div>
-            <div class="step-text"><strong>Tap the Share button</strong><span>In the toolbar. If you don't see it, tap ••• first.</span></div>
-            <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></div>
+            <div class="step-text"><strong>Tap the menu button next to the address</strong><span>The ☰ icon at the left of the address bar. You can also press and hold the address bar.</span></div>
+            <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></div>
           </li>
           <li>
             <div class="step-num">2</div>
+            <div class="step-text"><strong>Tap “Share”</strong><span>Don't see the menu button? Then Safari shows Share right in the toolbar: tap it and go to step 3.</span></div>
+            <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></div>
+          </li>
+          <li>
+            <div class="step-num">3</div>
             <div class="step-text"><strong>Choose “Add to Home Screen”</strong><span>You may need to scroll down to find it.</span></div>
             <div class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8.5v7"/><path d="M8.5 12h7"/></svg></div>
           </li>
           <li>
-            <div class="step-num">3</div>
+            <div class="step-num">4</div>
             <div class="step-text"><strong>Tap “Add”</strong><span>Lingua Bud will appear on your home screen like any other app.</span></div>
           </li>
         </ol>
@@ -354,19 +386,21 @@
   // iOS's own button labels for the demo, in the interface language (which
   // follows the phone's language) — what people will actually see.
   var IOS_LABELS = {
-    en: ['Add to Home Screen', 'Cancel', 'Add'],
-    es: ['Agregar a inicio', 'Cancelar', 'Agregar'],
-    pt: ['Adicionar à Tela de Início', 'Cancelar', 'Adicionar'],
-    fr: ['Sur l\u2019écran d\u2019accueil', 'Annuler', 'Ajouter'],
-    ar: ['إضافة إلى الشاشة الرئيسية', 'إلغاء', 'إضافة']
+    en: ['Add to Home Screen', 'Cancel', 'Add', 'Share'],
+    es: ['Agregar a inicio', 'Cancelar', 'Agregar', 'Compartir'],
+    pt: ['Adicionar à Tela de Início', 'Cancelar', 'Adicionar', 'Compartilhar'],
+    fr: ['Sur l\u2019écran d\u2019accueil', 'Annuler', 'Ajouter', 'Partager'],
+    ar: ['إضافة إلى الشاشة الرئيسية', 'إلغاء', 'إضافة', 'مشاركة']
   };
   var labels = IOS_LABELS[(window.lbI18n && window.lbI18n.lang) || 'en'] || IOS_LABELS.en;
   document.getElementById('mockA2HS').textContent = labels[0];
   document.getElementById('mockCancel').textContent = labels[1];
   document.getElementById('mockAdd').textContent = labels[2];
+  document.getElementById('mockShare').textContent = labels[3];
 
   // Safari (not Chrome/Firefox/Edge for iOS, whose Share button is at the
-  // top): point at the bottom toolbar where Share — or ••• — lives.
+  // top): point at the bottom bar, where the address bar's menu button
+  // (or, in older layouts, Share) lives.
   var iosSafari = isIOS && !inApp && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
   if (iosSafari) {
     var hint = document.createElement('div');
