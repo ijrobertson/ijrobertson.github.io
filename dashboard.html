@@ -1725,6 +1725,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <option value="">Select your timezone...</option>
           </select>
 
+          <label for="minNoticeHours">Minimum Booking Notice</label>
+          <select id="minNoticeHours" style="margin-bottom: 0.5rem;">
+            <option value="2">2 hours</option>
+            <option value="4">4 hours</option>
+            <option value="6">6 hours</option>
+            <option value="12" selected>12 hours (recommended)</option>
+            <option value="24">24 hours</option>
+            <option value="48">48 hours</option>
+          </select>
+          <p style="font-size: 0.9rem; color: #666; margin-bottom: 1.5rem;">
+            Students can't book a lesson or free trial that starts sooner than this.
+          </p>
+
           <div class="st-subsection">
             <label style="display: block; margin-bottom: 1rem;">Weekly Schedule</label>
             <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
@@ -2862,7 +2875,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         });
         saves.push(
           setDoc(doc(db, 'instructor_availability', currentUser.uid),
-            { timezone, weeklySchedule, dateOverrides, updatedAt: new Date().toISOString() },
+            { timezone, minNoticeHours: Number(document.getElementById('minNoticeHours').value), weeklySchedule, dateOverrides, updatedAt: new Date().toISOString() },
             { merge: true })
         );
 
@@ -3087,6 +3100,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           doc(db, 'instructor_availability', currentUser.uid),
           {
             timezone,
+            minNoticeHours: Number(document.getElementById('minNoticeHours').value),
             weeklySchedule,
             blockedDates: cleanedBlockedDates,
             dateOverrides: cleanedDateOverrides,
@@ -3112,6 +3126,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (docSnap.exists()) {
           const data = docSnap.data();
           document.getElementById('timezone').value = data.timezone || '';
+          if (data.minNoticeHours) document.getElementById('minNoticeHours').value = String(data.minNoticeHours);
 
           weeklyScheduleData = data.weeklySchedule || {
             monday: [], tuesday: [], wednesday: [], thursday: [],

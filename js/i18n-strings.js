@@ -368,6 +368,11 @@ window.LB_I18N_STRINGS = {
       "For security, please sign out and sign back in before deleting your account.": "Por seguridad, cierra sesión y vuelve a iniciarla antes de eliminar tu cuenta.",
       "Something went wrong. Please try again.": "Algo salió mal. Inténtalo de nuevo.",
       "Stay in the loop": "Mantente al día",
+      "Minimum Booking Notice": "Antelación mínima para reservar",
+      "12 hours (recommended)": "12 horas (recomendado)",
+      "Students can't book a lesson or free trial that starts sooner than this.": "Los estudiantes no podrán reservar una clase ni una prueba gratis que empiece antes de este plazo.",
+      "Never miss a booking": "No te pierdas ninguna reserva",
+      "Turn on notifications to hear right away when a student books a lesson or sends you a message.": "Activa las notificaciones para enterarte al instante cuando un estudiante reserve una clase o te envíe un mensaje.",
       "Get notified about new messages and daily practice reminders.": "Recibe avisos de mensajes nuevos y recordatorios diarios para practicar.",
       "Enable": "Activar",
       "Not now": "Ahora no",
@@ -1097,6 +1102,8 @@ window.LB_I18N_STRINGS = {
       "Share this link on social media, WhatsApp, or email. The student must sign up and complete a paid lesson with you for the credit to apply.": "Comparte este enlace en redes sociales, WhatsApp o por correo. Para que el crédito cuente, el estudiante debe registrarse y completar una clase pagada {0}contigo{/0}."
     },
     patterns: [
+      ["^(\\d+) hours$", "$1 horas"],
+      ["^Lessons must be booked at least (\\d+) hours in advance\\.$", "Las clases deben reservarse con al menos $1 horas de antelación."],
       ["^(\\d+) min$", "$1 min"],
       ["^· (\\d+) min$", "· $1 min"],
       ["^Custom hours: (.+) — click to edit$", "Horario especial: $1 (toca para editar)"],
@@ -1888,6 +1895,11 @@ window.LB_I18N_STRINGS = {
       "For security, please sign out and sign back in before deleting your account.": "Por segurança, saia e entre de novo na sua conta antes de excluí-la.",
       "Something went wrong. Please try again.": "Algo deu errado. Tente novamente.",
       "Stay in the loop": "Fique por dentro",
+      "Minimum Booking Notice": "Antecedência mínima para agendamento",
+      "12 hours (recommended)": "12 horas (recomendado)",
+      "Students can't book a lesson or free trial that starts sooner than this.": "Os alunos não poderão agendar uma aula ou aula experimental que comece antes desse prazo.",
+      "Never miss a booking": "Não perca nenhum agendamento",
+      "Turn on notifications to hear right away when a student books a lesson or sends you a message.": "Ative as notificações para saber na hora quando um aluno agendar uma aula ou enviar uma mensagem para você.",
       "Get notified about new messages and daily practice reminders.": "Receba avisos de novas mensagens e lembretes diários de prática.",
       "Enable": "Ativar",
       "Not now": "Agora não",
@@ -2617,6 +2629,8 @@ window.LB_I18N_STRINGS = {
       "Share this link on social media, WhatsApp, or email. The student must sign up and complete a paid lesson with you for the credit to apply.": "Compartilhe este link nas redes sociais, no WhatsApp ou por e-mail. Para o crédito valer, o aluno precisa se cadastrar e concluir uma aula paga {0}com você{/0}."
     },
     patterns: [
+      ["^(\\d+) hours$", "$1 horas"],
+      ["^Lessons must be booked at least (\\d+) hours in advance\\.$", "As aulas devem ser agendadas com pelo menos $1 horas de antecedência."],
       ["^(\\d+) min$", "$1 min"],
       ["^· (\\d+) min$", "· $1 min"],
       ["^Custom hours: (.+) — click to edit$", "Horário especial: $1 (toque para editar)"],
@@ -3408,6 +3422,11 @@ window.LB_I18N_STRINGS = {
       "For security, please sign out and sign back in before deleting your account.": "Par sécurité, déconnectez-vous puis reconnectez-vous avant de supprimer votre compte.",
       "Something went wrong. Please try again.": "Une erreur s'est produite. Veuillez réessayer.",
       "Stay in the loop": "Restez informé",
+      "Minimum Booking Notice": "Délai minimum de réservation",
+      "12 hours (recommended)": "12 heures (recommandé)",
+      "Students can't book a lesson or free trial that starts sooner than this.": "Les élèves ne pourront pas réserver un cours ou un essai gratuit qui commence avant ce délai.",
+      "Never miss a booking": "Ne manquez aucune réservation",
+      "Turn on notifications to hear right away when a student books a lesson or sends you a message.": "Activez les notifications pour savoir tout de suite quand un élève réserve un cours ou vous envoie un message.",
       "Get notified about new messages and daily practice reminders.": "Recevez une notification pour les nouveaux messages et les rappels d'entraînement.",
       "Enable": "Activer",
       "Not now": "Plus tard",
@@ -4136,6 +4155,8 @@ window.LB_I18N_STRINGS = {
       "Share this link on social media, WhatsApp, or email. The student must sign up and complete a paid lesson with you for the credit to apply.": "Partagez ce lien sur les réseaux sociaux, WhatsApp ou par e-mail. Pour que le crédit s'applique, l'élève doit s'inscrire et terminer un cours payé {0}avec vous{/0}."
     },
     patterns: [
+      ["^(\\d+) hours$", "$1 heures"],
+      ["^Lessons must be booked at least (\\d+) hours in advance\\.$", "Les cours doivent être réservés au moins $1 heures à l'avance."],
       ["^(\\d+) min$", "$1 min"],
       ["^· (\\d+) min$", "· $1 min"],
       ["^Custom hours: (.+) — click to edit$", "Horaires spécifiques : $1 — touchez pour modifier"],
@@ -4927,6 +4948,11 @@ window.LB_I18N_STRINGS = {
       "For security, please sign out and sign back in before deleting your account.": "لأسباب أمنية، يُرجى تسجيل الخروج ثم الدخول مجددًا قبل حذف حسابك.",
       "Something went wrong. Please try again.": "حدث خطأ ما. يُرجى المحاولة مرة أخرى.",
       "Stay in the loop": "ابقَ على اطّلاع",
+      "Minimum Booking Notice": "الحد الأدنى لمهلة الحجز",
+      "12 hours (recommended)": "12 ساعة (موصى به)",
+      "Students can't book a lesson or free trial that starts sooner than this.": "لن يتمكن الطلاب من حجز درس أو تجربة مجانية تبدأ قبل هذه المدة.",
+      "Never miss a booking": "لا تفوّت أي حجز",
+      "Turn on notifications to hear right away when a student books a lesson or sends you a message.": "فعِّل الإشعارات لتعرف فورًا عندما يحجز طالب درسًا أو يرسل إليك رسالة.",
       "Get notified about new messages and daily practice reminders.": "تلقَّ إشعارات بالرسائل الجديدة وتذكيرات التدريب اليومية.",
       "Enable": "تفعيل",
       "Not now": "ليس الآن",
@@ -5656,6 +5682,8 @@ window.LB_I18N_STRINGS = {
       "Share this link on social media, WhatsApp, or email. The student must sign up and complete a paid lesson with you for the credit to apply.": "شارك هذا الرابط على وسائل التواصل أو واتساب أو البريد الإلكتروني. ليُحتسب الرصيد، يجب أن يسجّل الطالب ويُكمل درسًا مدفوعًا {0}معك{/0}."
     },
     patterns: [
+      ["^(\\d+) hours$", "%1{one:ساعة واحدة|two:ساعتان|few:# ساعات|many:# ساعة|other:# ساعة}"],
+      ["^Lessons must be booked at least (\\d+) hours in advance\\.$", "يجب حجز الدروس قبل موعدها بـ%1{one:ساعة واحدة|two:ساعتين|few:# ساعات|many:# ساعة|other:# ساعة} على الأقل."],
       ["^(\\d+) min$", "%1{one:دقيقة واحدة|two:دقيقتان|few:# دقائق|many:# دقيقة|other:# دقيقة}"],
       ["^· (\\d+) min$", "· %1{one:دقيقة واحدة|two:دقيقتان|few:# دقائق|many:# دقيقة|other:# دقيقة}"],
       ["^Custom hours: (.+) — click to edit$", "ساعات خاصة: $1 — اضغط للتعديل"],

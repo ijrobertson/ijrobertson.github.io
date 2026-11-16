@@ -93,6 +93,26 @@ function shouldShowSoftAsk() {
   }
 }
 
+// Instructors get their own reminder (2026-11-16): a missed booking costs
+// them a student, so unlike the one-time student ask it comes back a week
+// after "Not now", for as long as notifications are still undecided. Kept on
+// a separate key so instructors who already dismissed the old one-time banner
+// still see this one. A denied native prompt is never re-asked (the browser
+// wouldn't show it anyway).
+const INSTRUCTOR_ASK_KEY = 'lb_push_instructor_ask_at';
+const INSTRUCTOR_ASK_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function shouldShowInstructorAsk() {
+  if (!isStandalonePWA()) return false;
+  if (Notification.permission !== 'default') return false;
+  try {
+    const last = parseInt(localStorage.getItem(INSTRUCTOR_ASK_KEY) || '0', 10);
+    return !last || (Date.now() - last) > INSTRUCTOR_ASK_INTERVAL_MS;
+  } catch (e) {
+    return false;
+  }
+}
+
 function markSoftAskShown() {
   try { localStorage.setItem(SOFT_ASK_SHOWN_KEY, '1'); } catch (e) {}
 }
@@ -105,11 +125,18 @@ async function resolvePreferenceDocRef(uid) {
   return instructorSnap.exists() ? doc(db, 'instructors', uid) : doc(db, 'users', uid);
 }
 
-function showSoftAskBanner(uid) {
+function showSoftAskBanner(uid, { instructor = false } = {}) {
   // Mark as shown immediately (not after a decision) — if the user reloads
   // mid-thought, or navigates away without tapping either button, it still
   // won't reappear. A missed opportunity is far less annoying than a nag.
   markSoftAskShown();
+  if (instructor) {
+    try { localStorage.setItem(INSTRUCTOR_ASK_KEY, String(Date.now())); } catch (e) {}
+  }
+  const title = instructor ? 'Never miss a booking' : 'Stay in the loop';
+  const text = instructor
+    ? 'Turn on notifications to hear right away when a student books a lesson or sends you a message.'
+    : 'Get notified about new messages and daily practice reminders.';
 
   const banner = document.createElement('div');
   banner.className = 'lb-push-softask';
@@ -121,8 +148,8 @@ function showSoftAskBanner(uid) {
     'opacity:0', 'transition:opacity 200ms ease',
   ].join(';'));
   banner.innerHTML = `
-    <div style="font-weight:700;font-size:1rem;color:#113448;margin-bottom:0.3rem;">Stay in the loop</div>
-    <div style="font-size:0.88rem;color:#5f6b72;margin-bottom:0.9rem;line-height:1.4;">Get notified about new messages and daily practice reminders.</div>
+    <div style="font-weight:700;font-size:1rem;color:#113448;margin-bottom:0.3rem;">${title}</div>
+    <div style="font-size:0.88rem;color:#5f6b72;margin-bottom:0.9rem;line-height:1.4;">${text}</div>
     <div style="display:flex;gap:0.6rem;">
       <button type="button" id="lb-push-softask-enable" style="flex:1;border:none;border-radius:999px;padding:0.6rem 1rem;font-weight:700;font-size:0.9rem;cursor:pointer;background:#0b6664;color:#fff;">Enable</button>
       <button type="button" id="lb-push-softask-dismiss" style="border:none;border-radius:999px;padding:0.6rem 1rem;font-weight:700;font-size:0.9rem;cursor:pointer;background:#eef1f0;color:#5f6b72;">Not now</button>
@@ -223,8 +250,13 @@ export async function initPush(uid, { onForegroundMessage } = {}) {
         console.error('Push token refresh error:', e);
       }
     }
-  } else if (shouldShowSoftAsk()) {
-    showSoftAskBanner(uid);
+  } else if (Notification.permission === 'default' && isStandalonePWA()) {
+    // Only undecided, installed-app users get here, so the extra read is rare.
+    let isInstructor = false;
+    try { isInstructor = (await getDoc(doc(db, 'instructors', uid))).exists(); } catch (e) {}
+    if (isInstructor ? shouldShowInstructorAsk() : shouldShowSoftAsk()) {
+      showSoftAskBanner(uid, { instructor: isInstructor });
+    }
   }
 }
 
