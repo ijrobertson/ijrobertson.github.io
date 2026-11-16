@@ -2802,10 +2802,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             item.dataset.convId = conv.id;
             if (activeConversationId === conv.id) item.classList.add('active');
             item.innerHTML = `
-                <img class="conversation-avatar" src="${otherUser.avatar_url || DEFAULT_AVATAR}" onerror="this.src=DEFAULT_AVATAR" alt="${otherUser.name}">
+                <img class="conversation-avatar" src="${escapeHtml(otherUser.avatar_url || DEFAULT_AVATAR)}" onerror="this.src=DEFAULT_AVATAR" alt="${escapeHtml(otherUser.name)}">
                 <div class="conversation-info">
-                    <div class="conversation-name" translate="no">${otherUser.name}</div>
-                    <div class="conversation-last-message"${conv.lastMessage ? ' translate="no"' : ''}>${conv.lastMessage || 'No messages yet'}</div>
+                    <div class="conversation-name" translate="no">${escapeHtml(otherUser.name)}</div>
+                    <div class="conversation-last-message"${conv.lastMessage ? ' translate="no"' : ''}>${conv.lastMessage ? escapeHtml(conv.lastMessage) : 'No messages yet'}</div>
                 </div>
                 <div class="conv-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
                     <div class="conversation-time">${formatTime(conv.lastMessageTime)}</div>
@@ -3045,9 +3045,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <button class="chat-back-btn" id="chatBackBtn" title="Back to conversations" aria-label="Back to conversations">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <img class="chat-header-avatar" src="${otherUser.avatar_url || DEFAULT_AVATAR}" onerror="this.src=DEFAULT_AVATAR" alt="${otherUser.name}">
+                    <img class="chat-header-avatar" src="${escapeHtml(otherUser.avatar_url || DEFAULT_AVATAR)}" onerror="this.src=DEFAULT_AVATAR" alt="${escapeHtml(otherUser.name)}">
                     <div class="chat-header-info">
-                        <h3><a href="${profileUrl}" class="chat-header-name-link" title="View profile" translate="no">${otherUser.name || 'Unknown User'}</a></h3>
+                        <h3><a href="${profileUrl}" class="chat-header-name-link" title="View profile" translate="no">${escapeHtml(otherUser.name || 'Unknown User')}</a></h3>
                         <div class="chat-status" id="chatStatus"></div>
                     </div>
                     <button type="button" class="chat-header-call-btn" id="videoCallBtn" title="Start video call with this user">
@@ -3556,7 +3556,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 messageEl.dataset.msgId  = message.id;
                 messageEl.dataset.convId = conversationId;
 
-                const reactBtn = `<button class="react-trigger" data-msg-id="${message.id}" data-conv-id="${conversationId}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
+                const reactBtn = `<button class="react-trigger" data-msg-id="${escapeHtml(message.id)}" data-conv-id="${escapeHtml(conversationId)}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
                 const reactionChips = renderReactions(message.reactions, currentUser.uid);
 
                 if (message.deleted) {
@@ -3566,7 +3566,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     // sense. No reactions, reply quote or react button.
                     messageEl.classList.add('is-deleted');
                     messageEl.innerHTML = `
-                        <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                        <img class="message-avatar" src="${escapeHtml(senderAvatar)}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                         <div class="msg-col">
                             <div class="message-content message-deleted">
                                 <p class="message-text"><i class="fas fa-ban"></i>${isSent ? 'You deleted this message' : 'This message was deleted'}</p>
@@ -3584,12 +3584,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     // — the real upload hasn't landed).
                     const imgSrc = message.imageUrl || message._previewUrl;
                     messageEl.innerHTML = `
-                        <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                        <img class="message-avatar" src="${escapeHtml(senderAvatar)}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                         <div class="msg-col">
                             ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                             <div class="message-content message-image-content">
                                 <div class="message-image-wrap${isPending ? ' is-pending' : ''}${isFailed ? ' is-failed' : ''}">
-                                    <img class="message-image" src="${imgSrc}" alt="Shared image" loading="lazy">
+                                    <img class="message-image" src="${escapeHtml(imgSrc)}" alt="Shared image" loading="lazy">
                                     ${isPending ? `<div class="image-upload-overlay"><i class="fas fa-circle-notch fa-spin"></i>${message._uploadProgress ? ' ' + message._uploadProgress + '%' : ''}</div>` : ''}
                                 </div>
                                 ${message.text ? `<p class="message-text image-caption" translate="no">${linkifyMessageText(message.text)}</p>` : ''}
@@ -3602,7 +3602,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 } else if (message.type === 'video_call_request') {
                     const safeChannel = escapeHtml(message.channelName || '');
                     messageEl.innerHTML = `
-                        <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                        <img class="message-avatar" src="${escapeHtml(senderAvatar)}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                         <div class="msg-col">
                             ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                             <div class="message-content video-call-request-card">
@@ -3617,7 +3617,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     `;
                 } else {
                     messageEl.innerHTML = `
-                        <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                        <img class="message-avatar" src="${escapeHtml(senderAvatar)}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                         <div class="msg-col">
                             ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                             <div class="message-content">
@@ -3713,7 +3713,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // The quote stores a copy of the original's text; once that
             // original is deleted, don't keep showing what it said.
             const preview = renderedMessagesById.get(replyTo.messageId)?.deleted ? 'Deleted message' : replyTo.preview;
-            return `<div class="reply-quote" data-jump-to="${replyTo.messageId}">
+            return `<div class="reply-quote" data-jump-to="${escapeHtml(replyTo.messageId)}">
                 <div class="reply-quote-name" translate="no">${escapeHtml(replyTo.senderName)}</div>
                 <div class="reply-quote-text" translate="no">${escapeHtml(preview)}</div>
             </div>`;
@@ -4714,10 +4714,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (lightboxEl) lightboxEl.style.display = 'none';
         }
 
+        // Makes user-written text safe to put inside page markup — both as
+        // element text and inside attribute="…" quotes (hence the quotes
+        // too; the textContent trick alone leaves " and ' as they are).
         function escapeHtml(text) {
             const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         // Matches http(s):// URLs and bare www.-prefixed domains (incl. links to
@@ -4820,9 +4823,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 .map(([emoji, uids]) => {
                     const mine = uids.includes(uid);
                     return `<button class="reaction-chip ${mine ? 'mine' : ''}"
-                        data-emoji="${emoji}"
+                        data-emoji="${escapeHtml(emoji)}"
                         title="${uids.length} reaction${uids.length !== 1 ? 's' : ''}">
-                        <span class="r-emoji">${emoji}</span>
+                        <span class="r-emoji">${escapeHtml(emoji)}</span>
                         <span class="r-count">${uids.length}</span>
                     </button>`;
                 })
@@ -4866,45 +4869,45 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     data-transcript="${escapeHtml(transcript)}"
                     data-audio-lang="${myMemoryLang}"
                     data-lang-label="${langLabel}"
-                    data-msg-id="${msgId}">
+                    data-msg-id="${escapeHtml(msgId)}">
                     <i class="fas fa-language"></i> Translate
                 </button>`;
 
             const reactionChips = renderReactions(message.reactions, currentUser.uid);
 
             return `
-                <img class="message-avatar" src="${senderAvatar}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
+                <img class="message-avatar" src="${escapeHtml(senderAvatar)}" onerror="this.src=DEFAULT_AVATAR" alt="Avatar">
                 <div class="msg-col">
                     ${message.replyTo ? renderReplyQuote(message.replyTo) : ''}
                     <div class="message-content audio-message-content">
-                        <div class="audio-player" id="audioPlayer-${msgId}">
-                            <button class="audio-play-btn" id="playBtn-${msgId}"
+                        <div class="audio-player" id="audioPlayer-${escapeHtml(msgId)}">
+                            <button class="audio-play-btn" id="playBtn-${escapeHtml(msgId)}"
                                 data-audio-url="${escapeHtml(audioUrl)}"
-                                data-msg-id="${msgId}"
+                                data-msg-id="${escapeHtml(msgId)}"
                                 aria-label="Play audio message">
                                 <i class="fas fa-play"></i>
                             </button>
                             <div class="audio-progress-container">
-                                <div class="audio-waveform" data-msg-id="${msgId}">
-                                    <div class="audio-progress-bar" id="progressBar-${msgId}"></div>
+                                <div class="audio-waveform" data-msg-id="${escapeHtml(msgId)}">
+                                    <div class="audio-progress-bar" id="progressBar-${escapeHtml(msgId)}"></div>
                                 </div>
                                 <div class="audio-time">
-                                    <span id="currentTime-${msgId}">0:00</span> / ${formatDuration(duration)}
+                                    <span id="currentTime-${escapeHtml(msgId)}">0:00</span> / ${formatDuration(duration)}
                                 </div>
                             </div>
                             <div class="speed-controls">
-                                <button class="speed-btn active" data-speed="1" data-msg-id="${msgId}">1x</button>
-                                <button class="speed-btn" data-speed="1.5" data-msg-id="${msgId}">1.5x</button>
-                                <button class="speed-btn" data-speed="2" data-msg-id="${msgId}">2x</button>
+                                <button class="speed-btn active" data-speed="1" data-msg-id="${escapeHtml(msgId)}">1x</button>
+                                <button class="speed-btn" data-speed="1.5" data-msg-id="${escapeHtml(msgId)}">1.5x</button>
+                                <button class="speed-btn" data-speed="2" data-msg-id="${escapeHtml(msgId)}">2x</button>
                             </div>
                         </div>
                         ${translateBtnHtml}
-                        <div class="translation-panel" id="translationPanel-${msgId}" style="display:none;"></div>
+                        <div class="translation-panel" id="translationPanel-${escapeHtml(msgId)}" style="display:none;"></div>
                         <div class="message-time">${formatTime(message.timestamp)}</div>
                     </div>
                     <div class="message-reactions">${reactionChips}</div>
                 </div>
-                <button class="react-trigger" data-msg-id="${msgId}" data-conv-id="${conversationId}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
+                <button class="react-trigger" data-msg-id="${escapeHtml(msgId)}" data-conv-id="${escapeHtml(conversationId)}" aria-label="Add reaction" title="Add reaction">🙂</button>`;
         }
 
         function getAudioElement(msgId, url) {
@@ -4938,7 +4941,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // currently-loaded window. See renderReplyQuote.
             const quoteEl = e.target.closest('.reply-quote');
             if (quoteEl) {
-                const targetEl = document.querySelector(`.message[data-msg-id="${quoteEl.dataset.jumpTo}"]`);
+                const targetEl = document.querySelector(`.message[data-msg-id="${CSS.escape(quoteEl.dataset.jumpTo || '')}"]`);
                 if (targetEl) {
                     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     targetEl.classList.add('flash-highlight');
