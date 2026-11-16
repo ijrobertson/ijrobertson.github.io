@@ -695,6 +695,27 @@ exports.sendBookingNotification = onDocumentCreated(
       // Format payment amount (only relevant for paid lessons)
       const amountStr = amount ? `$${(amount / 100).toFixed(2)} ${(currency || 'USD').toUpperCase()}` : '';
 
+      // Phone/app notification to the instructor (only reaches devices where
+      // they turned notifications on). Own try/catch: a push failure must
+      // never stop the emails below.
+      try {
+        const shortDate = lessonDate.toLocaleDateString('en-US', {
+          weekday: 'short', month: 'short', day: 'numeric', timeZone: instructorTz
+        });
+        const shortTime = lessonDate.toLocaleTimeString('en-US', {
+          hour: 'numeric', minute: '2-digit', timeZone: instructorTz
+        });
+        const isTrial = bookingType === 'free_trial';
+        await sendPushToUser(admin.firestore(), instructorId, {
+          url: '/bookings',
+          tag: `lb-booking-${event.params.bookingId}`,
+          title: isTrial ? 'New free trial booked' : 'New lesson booked',
+          body: `${studentName} booked ${isTrial ? 'a free trial' : 'a lesson'} for ${shortDate} at ${shortTime}`,
+        });
+      } catch (pushError) {
+        console.error('Error sending booking push notification:', pushError);
+      }
+
       // Calendar invite data (Google Calendar URL + .ics attachment)
       const trialInstructorCalendar = buildCalendarData(
         event.params.bookingId, lessonDate, 15,

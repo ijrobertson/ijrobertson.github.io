@@ -445,7 +445,9 @@ self.addEventListener("push", (event) => {
         // within 5 minutes of each other, which is exactly what iOS Safari
         // treats as a "silent push" and revokes the subscription over — see
         // functions/index.js's sendMessageNotification for the full story.
-        tag: payload.conversationId ? `lb-conversation-${payload.conversationId}` : "lb-push",
+        // Booking pushes send their own per-booking tag so two bookings (or a
+        // booking and a quiz reminder) never silently replace each other.
+        tag: payload.conversationId ? `lb-conversation-${payload.conversationId}` : (payload.tag || "lb-push"),
         renotify: false,
       });
     })()
