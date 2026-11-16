@@ -2492,6 +2492,85 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // User data cache — avoids re-fetching Firestore on every conversation list update
         const userCache = new Map();
+        let earlyConversationDoc = null; // set when opened from a notification — see onAuthStateChanged
+
+        // Names/photos of chat partners kept on this device between visits
+        // (2026-11-16). Without it every visit to Messages fetched 2 profile
+        // docs per chat (130 reads for 65 chats) BEFORE the list could show,
+        // and a chat opened from a notification queued behind all of them.
+        // Now the list paints from what we already know and refreshFromNetwork
+        // checks for name/photo changes a few at a time in the background.
+        const STORED_USERS_KEY = 'lb_chat_users_v1';
+        const storedUserIds = new Set();   // seeded from storage, not yet re-checked this visit
+        const storedConvPartner = new Map(); // conversationId -> other participant, for notification opens
+        let storedUsersOwner = null;
+        function loadStoredUsers(uid) {
+            storedUsersOwner = uid;
+            try {
+                const raw = JSON.parse(localStorage.getItem(STORED_USERS_KEY) || 'null');
+                if (!raw || raw.owner !== uid || !raw.users) return;
+                for (const [convId, other] of Object.entries(raw.convs || {})) {
+                    if (typeof other === 'string') storedConvPartner.set(convId, other);
+                }
+                for (const [id, u] of Object.entries(raw.users)) {
+                    if (!userCache.has(id) && u && typeof u.name === 'string') {
+                        userCache.set(id, { name: u.name, avatar_url: u.avatar_url || '', isInstructor: !!u.isInstructor });
+                        storedUserIds.add(id);
+                    }
+                }
+            } catch (e) { /* storage unavailable or corrupt — just fetch as before */ }
+        }
+        let saveStoredUsersTimer = null;
+        function saveStoredUsers() {
+            clearTimeout(saveStoredUsersTimer);
+            saveStoredUsersTimer = setTimeout(() => {
+                if (!storedUsersOwner) return;
+                try {
+                    const users = {};
+                    userCache.forEach((u, id) => { if (u && u.name && u.name !== 'Unknown User') users[id] = u; });
+                    const convs = {};
+                    conversationsById.forEach((conv, convId) => {
+                        const other = (conv.participants || []).find(id => id !== storedUsersOwner);
+                        if (other) convs[convId] = other;
+                    });
+                    localStorage.setItem(STORED_USERS_KEY, JSON.stringify({ owner: storedUsersOwner, users, convs }));
+                } catch (e) {}
+            }, 500);
+        }
+        // Re-checks stored partners in the background, a few at a time, after
+        // the list and any open chat have had first go at the connection.
+        let storedRefreshStarted = false;
+        function refreshStoredUsersInBackground() {
+            if (storedRefreshStarted || storedUserIds.size === 0) return;
+            storedRefreshStarted = true;
+            const queue = [...storedUserIds];
+            const worker = async () => {
+                while (queue.length) {
+                    const id = queue.shift();
+                    storedUserIds.delete(id);
+                    const before = userCache.get(id);
+                    userCache.delete(id);
+                    const fresh = await getCachedUser(id);
+                    if (fresh.name === 'Unknown User' && before) { userCache.set(id, before); continue; } // fetch failed — keep what we had
+                    if (!before || before.name !== fresh.name || before.avatar_url !== fresh.avatar_url) {
+                        patchConversationRowsFor(id, fresh);
+                    }
+                }
+                saveStoredUsers();
+            };
+            setTimeout(() => { for (let i = 0; i < 3; i++) worker(); }, 3000);
+        }
+        function patchConversationRowsFor(userId, user) {
+            conversationsById.forEach((conv, convId) => {
+                if (!(conv.participants || []).includes(userId)) return;
+                const row = conversationsList.querySelector(`.conversation-item[data-conv-id="${CSS.escape(convId)}"]`);
+                if (!row) return;
+                const nameEl = row.querySelector('.conversation-name');
+                if (nameEl) nameEl.textContent = user.name;
+                const img = row.querySelector('.conversation-avatar');
+                if (img) { img.src = user.avatar_url || DEFAULT_AVATAR; img.alt = user.name; }
+            });
+        }
 
         // Mobile: initialize in conversations-open state so conversations show first
         (function initMobileView() {
@@ -2561,6 +2640,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (user) {
                 currentUser = user;
                 console.log('🔐 User authenticated:', user.uid);
+                loadStoredUsers(user.uid);
+
+                // Opened from a message notification: start fetching that chat
+                // now, alongside the profile load below, instead of after it.
+                // The early messages listener is the same query loadMessages
+                // uses, so when the chat opens Firestore already has (or is
+                // already fetching) its messages; it is dropped once the real
+                // listener has taken over.
+                const earlyConversationId = new URLSearchParams(window.location.search).get('conversationId');
+                if (earlyConversationId) {
+                    earlyConversationDoc = getDoc(doc(db, 'conversations', earlyConversationId)).catch(() => null);
+                    try {
+                        const stopEarly = onSnapshot(
+                            query(collection(db, 'conversations', earlyConversationId, 'messages'), orderBy('timestamp', 'desc'), limit(MESSAGE_PAGE_SIZE)),
+                            () => {}, () => {}
+                        );
+                        setTimeout(stopEarly, 20000);
+                    } catch (e) {}
+                }
 
                 // A message for the conversation already open on screen already
                 // showed up via the existing onSnapshot listener — no need to
@@ -2573,8 +2671,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
                 startPresenceHeartbeat(user.uid);
 
-                // Load profile picture — check both collections in parallel; prefer instructors
-                try {
+                // Load profile picture — check both collections in parallel; prefer instructors.
+                // Not awaited here: the chat list and a notification-opened chat
+                // no longer wait for it (only the header avatar and role need it).
+                const profilePromise = (async () => { try {
                     const [usersSnap, instructorsSnap] = await Promise.all([
                         getDoc(doc(db, 'users', user.uid)),
                         getDoc(doc(db, 'instructors', user.uid))
@@ -2604,7 +2704,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     if (shell) shell.setAttribute('role', isInstructor ? 'instructor' : 'student');
                 } catch (error) {
                     console.error('Error loading profile:', error);
-                }
+                } })();
 
                 // Show profile nav and hide sign in button
                 console.log('👁️ Showing profile nav wrapper');
@@ -2666,9 +2766,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             console.error('❌ Error starting conversation:', error);
                             alert('Error starting conversation: ' + error.message);
                         }
+                    } else if (notifConversationId && storedConvPartner.has(notifConversationId)) {
+                        // Known chat: open it straight away, no fetch needed first.
+                        openConversation(notifConversationId, storedConvPartner.get(notifConversationId));
                     } else if (notifConversationId) {
                         try {
-                            const convSnap = await getDoc(doc(db, 'conversations', notifConversationId));
+                            const convSnap = (await earlyConversationDoc) || await getDoc(doc(db, 'conversations', notifConversationId));
                             if (convSnap.exists()) {
                                 const otherUserId = (convSnap.data().participants || []).find(id => id !== currentUser.uid);
                                 if (otherUserId) openConversation(notifConversationId, otherUserId);
@@ -2691,6 +2794,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 loadPendingRequests();
 
                 await deepLinkPromise;
+                await profilePromise;
             } else {
                 window.location.href = 'login';
             }
@@ -2699,6 +2803,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Logout
         logoutLink.addEventListener('click', async (e) => {
             e.preventDefault();
+            try { localStorage.removeItem(STORED_USERS_KEY); } catch (err) {}
             await signOut(auth);
             window.location.href = 'index';
         });
@@ -2739,11 +2844,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         let conversationListGesturesReady = false;
 
-        async function loadConversations() {
+        // The chat-list listener, plus a watchdog (2026-11-16): a listener
+        // can stall without ever answering or erroring (seen locally ~1 load
+        // in 10, and the "Messages won't load until I close the app" report),
+        // which used to leave the skeleton rows up forever. Same recovery as
+        // loadMessages: resubscribe after 8s, twice, then offer a retry.
+        let unsubscribeConversations = null;
+        let conversationsAttemptToken = 0;
+        async function loadConversations(attempt = 0) {
             if (!conversationListGesturesReady) {
                 conversationListGesturesReady = true;
                 setupConversationListGestures();
             }
+            if (unsubscribeConversations) { unsubscribeConversations(); unsubscribeConversations = null; }
+            const token = ++conversationsAttemptToken;
+            let gotFirst = false;
+            const stallTimer = setTimeout(() => {
+                if (gotFirst || token !== conversationsAttemptToken) return;
+                if (attempt < 2) loadConversations(attempt + 1);
+                else showConversationsLoadError();
+            }, 8000);
             try {
                 const q = query(
                     collection(db, 'conversations'),
@@ -2751,7 +2871,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     orderBy('lastMessageTime', 'desc')
                 );
 
-                onSnapshot(q, (snapshot) => {
+                unsubscribeConversations = onSnapshot(q, (snapshot) => {
+                    if (token !== conversationsAttemptToken) return;
+                    gotFirst = true;
+                    clearTimeout(stallTimer);
                     const conversations = [];
                     snapshot.forEach((doc) => {
                         conversations.push({ id: doc.id, ...doc.data() });
@@ -2760,6 +2883,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     renderConversations(conversations);
                 }, (error) => {
                     console.error('Error loading conversations:', error);
+                    clearTimeout(stallTimer);
+                    if (token !== conversationsAttemptToken) return;
                     conversationsList.innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -2769,7 +2894,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
             } catch (error) {
                 console.error('Error loading conversations:', error);
+                clearTimeout(stallTimer);
             }
+        }
+
+        function showConversationsLoadError() {
+            // Only replace the skeleton; never wipe a list that's already showing.
+            if (conversationsList.querySelector('.conversation-item[data-conv-id]')) return;
+            conversationsList.innerHTML = `
+                <div class="empty-state conversations-load-error">
+                    <i class="fas fa-wifi"></i>
+                    <h3>Couldn't load your conversations</h3>
+                    <p>Check your connection and try again.</p>
+                    <button type="button" class="messages-retry-btn" id="conversationsRetryBtn">Try again</button>
+                </div>`;
+            document.getElementById('conversationsRetryBtn').addEventListener('click', () => {
+                conversationsList.innerHTML = '<div class="messages-loading" role="status"><i class="fas fa-circle-notch fa-spin"></i></div>';
+                loadConversations();
+            });
         }
 
         // Fetch a user's display data from Firestore, preferring the instructors collection.
@@ -2788,6 +2930,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     ? { name: data.name || 'Unknown User', avatar_url: data.avatar_url || '', isInstructor: instructorDoc.exists() }
                     : { name: 'Unknown User', avatar_url: '', isInstructor: false };
                 userCache.set(userId, result);
+                saveStoredUsers();
                 return result;
             } catch {
                 return { name: 'Unknown User', avatar_url: '' };
@@ -2815,7 +2958,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return item;
         }
 
+        // Snapshots can arrive while a render is still waiting on profile
+        // fetches; two renders interleaving their DOM work could duplicate
+        // rows. So only one runs at a time, and only the newest pending list
+        // is rendered after it.
+        let renderingConversations = false;
+        let pendingConversations = null;
         async function renderConversations(conversations) {
+            if (renderingConversations) { pendingConversations = conversations; return; }
+            renderingConversations = true;
+            try {
+                await renderConversationsNow(conversations);
+            } finally {
+                renderingConversations = false;
+            }
+            if (pendingConversations) {
+                const next = pendingConversations;
+                pendingConversations = null;
+                renderConversations(next);
+            } else {
+                refreshStoredUsersInBackground();
+            }
+        }
+
+        async function renderConversationsNow(conversations) {
             conversationsById.clear();
             conversations.forEach((conv) => conversationsById.set(conv.id, conv));
             if (conversations.length === 0) {
@@ -2879,6 +3045,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             applyConversationFilter();
 
             updateUnreadJumpBadge(conversations);
+            saveStoredUsers();
         }
 
         // ===== CHAT SEARCH =====
@@ -3215,6 +3382,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // warm connection) until leaving and reopening gave everything
             // time to resolve.
             loadMessages(conversationId);
+            // Reopening a chat already seen this visit: show the messages we
+            // already have right away (Firestore's memory cache drops them as
+            // soon as the chat is closed, so the listener has to go back to
+            // the server). The listener's first answer replaces them.
+            if ((lastServerMessagesByConv.get(conversationId) || []).length) {
+                renderMessageList(conversationId);
+            }
 
             // Check if the other user is blocking new messages — runs
             // concurrently with the messages above, not before them.
