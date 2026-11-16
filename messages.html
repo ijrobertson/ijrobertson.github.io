@@ -4298,6 +4298,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     lastMessageTime: new Date(),
                     unreadCount: newUnreadCount
                 }, { merge: true });
+                // Marks this browser as an engaged user (js/install-nudge.js).
+                try { localStorage.setItem('lb-engaged', '1'); } catch (_) {}
 
                 // No further action on success — the real message arrives through
                 // the live listener above, which retires this pending entry.

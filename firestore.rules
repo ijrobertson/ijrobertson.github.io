@@ -183,6 +183,19 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Installed-app usage (Admin → Analytics → Mobile App). Written by
+    // lib/firebaseClient.js when someone opens the installed app; only the
+    // owner can write, only these fields; admins (and the owner) can read.
+    match /appInstalls/{userId} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == userId
+                      || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      allow create, update: if request.auth != null && request.auth.uid == userId
+                  && request.resource.data.keys().hasOnly(['platform', 'firstOpenedAt', 'lastOpenedAt'])
+                  && request.resource.data.platform in ['ios', 'android', 'desktop'];
+      allow delete: if false;
+    }
+
     // Admins collection — only an admin can verify their own status
     // New admins must be added via Firebase Console or Admin SDK
     match /admins/{adminId} {

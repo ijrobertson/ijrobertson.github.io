@@ -1065,7 +1065,10 @@ window.LB_I18N_STRINGS = {
       "Message alerts on your phone": "Avisos de mensajes en tu teléfono",
       "Continue in the browser": "Continuar en el navegador",
       "Or use Lingua Bud in your browser": "O usa Lingua Bud en tu navegador",
-      "Install on this computer": "Instalar en este equipo"
+      "Install on this computer": "Instalar en este equipo",
+      "Add Lingua Bud to your home screen": "Agrega Lingua Bud a tu pantalla de inicio",
+      "Get message alerts and open Lingua Bud in one tap.": "Recibe avisos de mensajes y abre Lingua Bud con un solo toque.",
+      "Show me how": "Muéstrame cómo"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Explora a nuestros {0}profesores{/0} para reservar tu primera clase.",
@@ -2576,7 +2579,10 @@ window.LB_I18N_STRINGS = {
       "Message alerts on your phone": "Alertas de mensagens no seu celular",
       "Continue in the browser": "Continuar no navegador",
       "Or use Lingua Bud in your browser": "Ou use o Lingua Bud no navegador",
-      "Install on this computer": "Instalar neste computador"
+      "Install on this computer": "Instalar neste computador",
+      "Add Lingua Bud to your home screen": "Adicione o Lingua Bud à sua tela inicial",
+      "Get message alerts and open Lingua Bud in one tap.": "Receba alertas de mensagens e abra o Lingua Bud com um só toque.",
+      "Show me how": "Mostre como"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Veja nossos {0}professores{/0} para agendar sua primeira aula!",
@@ -4086,7 +4092,10 @@ window.LB_I18N_STRINGS = {
       "Message alerts on your phone": "Alertes de messages sur votre téléphone",
       "Continue in the browser": "Continuer dans le navigateur",
       "Or use Lingua Bud in your browser": "Ou utilisez Lingua Bud dans votre navigateur",
-      "Install on this computer": "Installer sur cet ordinateur"
+      "Install on this computer": "Installer sur cet ordinateur",
+      "Add Lingua Bud to your home screen": "Ajoutez Lingua Bud à votre écran d'accueil",
+      "Get message alerts and open Lingua Bud in one tap.": "Recevez les alertes de messages et ouvrez Lingua Bud d'un simple geste.",
+      "Show me how": "Montrez-moi comment"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "Parcourez nos {0}professeurs{/0} pour réserver votre premier cours !",
@@ -5597,7 +5606,10 @@ window.LB_I18N_STRINGS = {
       "Message alerts on your phone": "تنبيهات الرسائل على هاتفك",
       "Continue in the browser": "المتابعة في المتصفح",
       "Or use Lingua Bud in your browser": "أو استخدم Lingua Bud في متصفحك",
-      "Install on this computer": "التثبيت على هذا الكمبيوتر"
+      "Install on this computer": "التثبيت على هذا الكمبيوتر",
+      "Add Lingua Bud to your home screen": "أضِف Lingua Bud إلى شاشتك الرئيسية",
+      "Get message alerts and open Lingua Bud in one tap.": "استقبل تنبيهات الرسائل وافتح Lingua Bud بلمسة واحدة.",
+      "Show me how": "أرني الطريقة"
     },
     mixed: {
       "Browse instructors to book your first lesson!": "تصفّح {0}المعلمين{/0} لحجز درسك الأول!",

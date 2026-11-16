@@ -1483,6 +1483,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function showResults() {
             showScreen('results');
+            // Marks this browser as an engaged user (js/install-nudge.js).
+            try { localStorage.setItem('lb-engaged', '1'); } catch (_) {}
             recordQuizAttempt();
             document.getElementById('resultsScoreNum').textContent = `${score} / ${questions.length} correct`;
             const isRtl = RTL_LANGUAGES.includes(selectedLanguage);

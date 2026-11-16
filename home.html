@@ -51,6 +51,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <script src="js/page-transitions.js"></script>
     <!-- Windows has no flag emoji (🇲🇽 shows as "MX") — see js/flag-emoji.js. -->
     <script src="js/flag-emoji.js"></script>
+    <!-- "Add to your home screen" reminder card (phone browsers only) -->
+    <script src="js/install-nudge.js" defer></script>
 
     <!-- Favicon -->
     <link rel="icon" href="images/NuevoFavicon.png">
@@ -185,6 +187,48 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
            deliberately the boldest card on the page so it reads as THE main
            action, with Continue Learning below staying in its existing quieter
            white-card style so the two don't visually compete). ===== */
+        /* "Add to your home screen" reminder — js/install-nudge.js decides
+           when to show it (phone browser, engaged, not dismissed). */
+        .install-nudge {
+            position: relative;
+            display: flex;
+            gap: 0.9rem;
+            align-items: flex-start;
+            background: #fff;
+            border: 1px solid #dceeee;
+            border-radius: 16px;
+            padding: 1rem 2.4rem 1rem 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 14px rgba(17, 52, 72, 0.06);
+        }
+        .install-nudge-icon { width: 48px; height: 48px; border-radius: 12px; flex: 0 0 auto; }
+        .install-nudge-text h3 { font-size: 1rem; font-weight: 700; color: var(--pb-teal-dark); margin: 0.1rem 0 0.25rem; }
+        .install-nudge-text p { font-size: 0.88rem; color: #5f6b72; margin: 0 0 0.7rem; }
+        .install-nudge-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+        .install-nudge-btn {
+            display: inline-block;
+            background: var(--pb-teal-deep);
+            color: #fff;
+            border: none;
+            border-radius: 999px;
+            padding: 0.45rem 1.1rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .install-nudge-btn:hover, .install-nudge-btn:focus { color: #fff; text-decoration: none; }
+        .install-nudge-later {
+            background: none; border: none; padding: 0.45rem 0.4rem;
+            color: #5f6b72; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+        }
+        .install-nudge-close {
+            position: absolute; top: 0.5rem; inset-inline-end: 0.5rem;
+            width: 30px; height: 30px; border-radius: 50%;
+            background: none; border: none; color: #8a979e; cursor: pointer;
+        }
+        [dir="rtl"] .install-nudge { padding: 1rem 1rem 1rem 2.4rem; }
+
         .quiz-primary-card {
             background: linear-gradient(135deg, var(--pb-teal-dark) 0%, var(--pb-navy-light) 100%);
             border-radius: 28px; padding: 2rem 1.75rem; color: white; position: relative; overflow: hidden;
@@ -559,6 +603,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
          presentation of Culture Guides progress; Quick Actions — every one
          of its links duplicated an existing bottom-nav tab). -->
     <div class="activity-container">
+
+        <!-- "Add to your home screen" reminder, filled by js/install-nudge.js -->
+        <div id="installNudgeSlot"></div>
 
         <!-- ===== LANGUAGE QUIZZES (existing vocab-quiz.html) — primary action ===== -->
         <div class="quiz-primary-card">
