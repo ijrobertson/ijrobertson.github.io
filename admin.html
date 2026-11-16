@@ -938,6 +938,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
                     </div>
 
+                    <!-- Mobile App (installed PWA at app.linguabud.com) — from the
+                         appInstalls collection, stamped by lib/firebaseClient.js
+                         when a logged-in person opens the installed app. -->
+                    <h6 class="analytics-section-label"><i class="fas fa-mobile-alt" style="color:#20bcba;margin-right:6px;"></i>Mobile App</h6>
+                    <div class="overview-grid mb-2">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-mobile-alt"></i></div>
+                            <div><div class="mini-stat-val" id="app-total">—</div><div class="mini-stat-lbl">People Using the App</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-user-check"></i></div>
+                            <div><div class="mini-stat-val" id="app-active7">—</div><div class="mini-stat-lbl">Opened the App (7 days)</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-plus-circle"></i></div>
+                            <div><div class="mini-stat-val" id="app-new-month">—</div><div class="mini-stat-lbl">New App Users This Month</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fab fa-apple"></i></div>
+                            <div><div class="mini-stat-val" id="app-ios">—</div><div class="mini-stat-lbl">iPhone / iPad</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fab fa-android"></i></div>
+                            <div><div class="mini-stat-val" id="app-android">—</div><div class="mini-stat-lbl">Android</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-desktop"></i></div>
+                            <div><div class="mini-stat-val" id="app-desktop">—</div><div class="mini-stat-lbl">Computer</div></div>
+                        </div>
+                    </div>
+                    <div class="analytics-note mb-4">Counts people who opened the installed app while logged in (tracking started 15 Nov 2026). People who installed it but never logged in aren't counted.</div>
+
                     <!-- Messaging -->
                     <h6 class="analytics-section-label"><i class="fas fa-comments" style="color:#3b82f6;margin-right:6px;"></i>Messaging</h6>
                     <div class="overview-grid mb-2">
@@ -2948,8 +2980,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         };
 
         // ── Analytics ────────────────────────────────────────────────────
+        // ── Mobile App stats (appInstalls/{uid}: platform, firstOpenedAt, lastOpenedAt) ──
+        async function loadAppStats() {
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            try {
+                const snap = await getCollection('appInstalls');
+                const now = Date.now();
+                const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+                const ms = (v) => v ? (v.toDate ? v.toDate().getTime() : new Date(v).getTime()) : 0;
+                let active7 = 0, newMonth = 0, ios = 0, android = 0, desktop = 0;
+                snap.forEach(d => {
+                    const a = d.data();
+                    if (now - ms(a.lastOpenedAt) <= 7 * 24 * 60 * 60 * 1000) active7++;
+                    if (ms(a.firstOpenedAt) >= startOfMonth) newMonth++;
+                    if (a.platform === 'ios') ios++;
+                    else if (a.platform === 'android') android++;
+                    else desktop++;
+                });
+                set('app-total', snap.size); set('app-active7', active7); set('app-new-month', newMonth);
+                set('app-ios', ios); set('app-android', android); set('app-desktop', desktop);
+            } catch (e) {
+                console.error('Analytics: app stats error', e);
+                ['app-total', 'app-active7', 'app-new-month', 'app-ios', 'app-android', 'app-desktop'].forEach(id => set(id, '—'));
+            }
+        }
+
         async function loadAnalytics() {
             loadMessagingInsights(); // independent — renders its own section when ready
+            loadAppStats();         // independent too
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
