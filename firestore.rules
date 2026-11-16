@@ -196,6 +196,23 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Daily usage counts (Admin → App Analytics). Written by
+    // lib/firebaseClient.js: appUsage/{uid}_{YYYY-MM-DD}. Owner writes only
+    // their own day doc, only these fields; admins read.
+    match /appUsage/{docId} {
+      allow read: if request.auth != null
+                  && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow create, update: if request.auth != null
+                  && docId == request.auth.uid + '_' + request.resource.data.date
+                  && request.resource.data.uid == request.auth.uid
+                  && request.resource.data.date is string
+                  && request.resource.data.date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+                  && request.resource.data.keys().hasOnly(['uid', 'date', 'platform', 'installed', 'pages', 'quizzes', 'adventures', 'lastAt'])
+                  && request.resource.data.platform in ['ios', 'android', 'desktop']
+                  && (!('pages' in request.resource.data) || request.resource.data.pages.size() <= 60);
+      allow delete: if false;
+    }
+
     // Admins collection — only an admin can verify their own status
     // New admins must be added via Firebase Console or Admin SDK
     match /admins/{adminId} {
@@ -362,6 +379,9 @@ service cloud.firestore {
     // js/adventures.js). Same owner-only shape as cultureProgress.
     match /adventureProgress/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Admins may read (Admin → App Analytics Adventure stats).
+      allow read: if request.auth != null
+                  && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     // AI Travel Journey (mock planner, see js/travel-planner.js) — one doc per
@@ -405,7 +425,9 @@ service cloud.firestore {
     // SDK) reads recent attempts to avoid repeating topics and to naturally
     // reinforce vocabulary/grammar the learner has struggled with.
     match /quizAttempts/{attemptId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Owner, or an admin (Admin → App Analytics quiz stats).
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId
+                  || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
 

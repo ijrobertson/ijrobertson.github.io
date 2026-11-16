@@ -1176,7 +1176,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <img class="profile-card-avatar"
                          src="${lbEsc(u.avatar_url || AVT)}"
                          alt="${lbEsc(u.name || 'Language Partner')}"
-                         onerror="this.src='${AVT}'">
+                         data-fallback="${lbEsc(AVT)}" onerror="this.onerror=null;this.src=this.dataset.fallback">
                 </div>
                 <div class="profile-card-body">
                     <div class="profile-card-name">${lbEsc(u.name || 'Language Partner')}</div>
@@ -1263,7 +1263,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                            <img class="profile-card-avatar"
                                 src="${lbEsc(i.avatar_url || AVT)}"
                                 alt="${lbEsc(i.name || 'Instructor')}"
-                                onerror="this.src='${AVT}'">
+                                data-fallback="${lbEsc(AVT)}" onerror="this.onerror=null;this.src=this.dataset.fallback">
                            <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.35rem;"></i> View Profile</div>
                        </div>`
                 }

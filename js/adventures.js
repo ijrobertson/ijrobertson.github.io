@@ -142,6 +142,8 @@ export async function recordCompletion(uid, adventureId, score, total) {
     attempts: (previous.attempts || 0) + 1,
   };
   await setDoc(doc(db, 'adventureProgress', uid), { completed: { [adventureId]: entry } }, { merge: true });
+  // Admin → App Analytics Adventure count (lib/firebaseClient.js).
+  if (typeof window !== 'undefined' && window.lbTrackUsage) window.lbTrackUsage('adventure');
   return entry;
 }
 
