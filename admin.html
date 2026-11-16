@@ -346,6 +346,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .mi-bar-col:hover .mi-bar-tip { display: block; }
         .mi-axis { display: flex; gap: 6px; margin-top: 5px; }
         .mi-axis span { flex: 1; text-align: center; font-size: 0.68rem; color: #999; white-space: nowrap; overflow: hidden; }
+        /* App Analytics daily chart: up to 90 bars, so tighter gaps; labels only every few days */
+        .aa-chart, .aa-axis { gap: 2px; }
+        .aa-axis span { overflow: visible; }
         .mi-role { font-size: 0.72rem; font-weight: 600; border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
         .mi-role.student { background: #f0fffe; color: #0b6664; border: 1px solid #99e6e5; }
         .mi-role.instructor { background: #eef2f6; color: #113448; border: 1px solid #c9d4df; }
@@ -484,6 +487,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     </div>
                     <div class="admin-tab" data-tab="deleted-accounts">Deleted Accounts</div>
                     <div class="admin-tab" data-tab="analytics">Analytics</div>
+                    <div class="admin-tab" data-tab="app-analytics">App Analytics</div>
                     <div class="admin-tab" data-tab="overview">Overview</div>
                 </div>
             </div>
@@ -938,38 +942,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
                     </div>
 
-                    <!-- Mobile App (installed PWA at app.linguabud.com) — from the
-                         appInstalls collection, stamped by lib/firebaseClient.js
-                         when a logged-in person opens the installed app. -->
-                    <h6 class="analytics-section-label"><i class="fas fa-mobile-alt" style="color:#20bcba;margin-right:6px;"></i>Mobile App</h6>
-                    <div class="overview-grid mb-2">
-                        <div class="mini-stat">
-                            <div class="mini-stat-icon icon-teal"><i class="fas fa-mobile-alt"></i></div>
-                            <div><div class="mini-stat-val" id="app-total">—</div><div class="mini-stat-lbl">People Using the App</div></div>
-                        </div>
-                        <div class="mini-stat">
-                            <div class="mini-stat-icon icon-teal"><i class="fas fa-user-check"></i></div>
-                            <div><div class="mini-stat-val" id="app-active7">—</div><div class="mini-stat-lbl">Opened the App (7 days)</div></div>
-                        </div>
-                        <div class="mini-stat">
-                            <div class="mini-stat-icon icon-teal"><i class="fas fa-plus-circle"></i></div>
-                            <div><div class="mini-stat-val" id="app-new-month">—</div><div class="mini-stat-lbl">New App Users This Month</div></div>
-                        </div>
-                        <div class="mini-stat">
-                            <div class="mini-stat-icon icon-blue"><i class="fab fa-apple"></i></div>
-                            <div><div class="mini-stat-val" id="app-ios">—</div><div class="mini-stat-lbl">iPhone / iPad</div></div>
-                        </div>
-                        <div class="mini-stat">
-                            <div class="mini-stat-icon icon-blue"><i class="fab fa-android"></i></div>
-                            <div><div class="mini-stat-val" id="app-android">—</div><div class="mini-stat-lbl">Android</div></div>
-                        </div>
-                        <div class="mini-stat">
-                            <div class="mini-stat-icon icon-blue"><i class="fas fa-desktop"></i></div>
-                            <div><div class="mini-stat-val" id="app-desktop">—</div><div class="mini-stat-lbl">Computer</div></div>
-                        </div>
-                    </div>
-                    <div class="analytics-note mb-4">Counts people who opened the installed app while logged in (tracking started 15 Nov 2026). People who installed it but never logged in aren't counted.</div>
-
                     <!-- Messaging -->
                     <h6 class="analytics-section-label"><i class="fas fa-comments" style="color:#3b82f6;margin-right:6px;"></i>Messaging</h6>
                     <div class="overview-grid mb-2">
@@ -1203,6 +1175,144 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             </table>
                         </div>
                     </div>
+                </div>
+
+                <!-- ===== APP ANALYTICS (app.linguabud.com usage) =====
+                     Daily usage from appUsage/{uid}_{date} (stamped by the app's
+                     lib/firebaseClient.js: page views, quiz/Adventure finishes),
+                     plus quizAttempts, adventureProgress and appInstalls.
+                     Counts only — nothing anyone wrote is read here. -->
+                <div class="tab-pane" id="tab-app-analytics">
+                    <div class="analytics-section-label mi-header" style="margin-top:0;">
+                        <span><i class="fas fa-chart-line" style="color:#20bcba;margin-right:6px;"></i>App Usage</span>
+                        <select id="aa-period" onchange="renderAppAnalytics()" aria-label="App Analytics period">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+                    <div class="overview-grid mb-3">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-users"></i></div>
+                            <div><div class="mini-stat-val" id="aa-active">—</div><div class="mini-stat-lbl">People Who Used the App</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-sun"></i></div>
+                            <div><div class="mini-stat-val" id="aa-today">—</div><div class="mini-stat-lbl">Active Today</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-redo"></i></div>
+                            <div><div class="mini-stat-val" id="aa-returning">—</div><div class="mini-stat-lbl" id="aa-returning-lbl">Came Back on 2+ Days</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-eye"></i></div>
+                            <div><div class="mini-stat-val" id="aa-views">—</div><div class="mini-stat-lbl">Page Views</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-graduation-cap"></i></div>
+                            <div><div class="mini-stat-val" id="aa-quizzes">—</div><div class="mini-stat-lbl">Quizzes Finished</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-compass"></i></div>
+                            <div><div class="mini-stat-val" id="aa-adventures">—</div><div class="mini-stat-lbl">Adventures Finished</div></div>
+                        </div>
+                    </div>
+                    <div class="mi-grid">
+                        <div class="mi-card">
+                            <h6>People active each day</h6>
+                            <div id="aa-daily"><div class="profiles-loading" style="color:#999;font-size:0.85rem;">Loading…</div></div>
+                        </div>
+                        <div class="mi-card">
+                            <h6>Most used pages</h6>
+                            <div style="overflow-x:auto;">
+                                <table class="admin-table">
+                                    <thead><tr><th>Page</th><th>Views</th><th>People</th><th>Share</th></tr></thead>
+                                    <tbody id="aa-pages"><tr class="loading-row"><td colspan="4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="analytics-section-label"><i class="fas fa-fire" style="color:#20bcba;margin-right:6px;"></i>Daily Streaks</h6>
+                    <div class="overview-grid mb-2">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-fire"></i></div>
+                            <div><div class="mini-stat-val" id="aa-streak3">—</div><div class="mini-stat-lbl">On a 3+ Day Streak</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-trophy"></i></div>
+                            <div><div class="mini-stat-val" id="aa-streak-max">—</div><div class="mini-stat-lbl" id="aa-streak-max-lbl">Longest Current Streak</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-calendar-check"></i></div>
+                            <div><div class="mini-stat-val" id="aa-avgdays">—</div><div class="mini-stat-lbl">Avg. Active Days per Person</div></div>
+                        </div>
+                    </div>
+                    <div class="analytics-note mb-3">A streak = using the app on consecutive days (each person's own calendar day), counting today or yesterday.</div>
+
+                    <div class="mi-grid">
+                        <div class="mi-card">
+                            <h6>Quizzes by language</h6>
+                            <div style="overflow-x:auto;">
+                                <table class="admin-table">
+                                    <thead><tr><th>Language</th><th>Quizzes</th><th>People</th><th>Avg. score</th></tr></thead>
+                                    <tbody id="aa-quiz-langs"><tr class="loading-row"><td colspan="4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="mi-card">
+                            <h6>Most played Adventures (all time)</h6>
+                            <div style="overflow-x:auto;">
+                                <table class="admin-table">
+                                    <thead><tr><th>Adventure</th><th>Plays</th><th>People</th><th>Last played</th></tr></thead>
+                                    <tbody id="aa-adv"><tr class="loading-row"><td colspan="4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile App (installed PWA at app.linguabud.com) — from the
+                         appInstalls collection, stamped by lib/firebaseClient.js
+                         when a logged-in person opens the installed app. -->
+                    <h6 class="analytics-section-label"><i class="fas fa-mobile-alt" style="color:#20bcba;margin-right:6px;"></i>Installed App (home-screen)</h6>
+                    <div class="overview-grid mb-2">
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-mobile-alt"></i></div>
+                            <div><div class="mini-stat-val" id="app-total">—</div><div class="mini-stat-lbl">People Using the App</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-user-check"></i></div>
+                            <div><div class="mini-stat-val" id="app-active7">—</div><div class="mini-stat-lbl">Opened the App (7 days)</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-plus-circle"></i></div>
+                            <div><div class="mini-stat-val" id="app-new-month">—</div><div class="mini-stat-lbl">New App Users This Month</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fab fa-apple"></i></div>
+                            <div><div class="mini-stat-val" id="app-ios">—</div><div class="mini-stat-lbl">iPhone / iPad</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fab fa-android"></i></div>
+                            <div><div class="mini-stat-val" id="app-android">—</div><div class="mini-stat-lbl">Android</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-desktop"></i></div>
+                            <div><div class="mini-stat-val" id="app-desktop">—</div><div class="mini-stat-lbl">Computer</div></div>
+                        </div>
+                    </div>
+                    <div class="analytics-note mb-4">Counts people who opened the installed app while logged in (tracking started 15 Nov 2026). People who installed it but never logged in aren't counted.</div>
+
+                    <div class="mi-card mb-2">
+                        <h6>People using the app</h6>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table">
+                                <thead><tr><th>Person</th><th>Role</th><th>Last active</th><th>Active days</th><th>Streak</th><th>Page views</th><th>Quizzes</th><th>Adventures</th><th>Most used page</th><th>Device</th></tr></thead>
+                                <tbody id="aa-people"><tr class="loading-row"><td colspan="10"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="analytics-note">Counts only — no messages, notebook entries or other content are read. Daily usage (pages, streaks) is recorded from 15 Nov 2026; quiz and Adventure history goes back further. Quizzes finished in the period come from quiz records.</div>
                 </div>
 
                 <div class="tab-pane" id="tab-overview">
@@ -1557,6 +1667,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     if (name === 'referrals')        loadAdminReferrals();
                     if (name === 'deleted-accounts') loadDeletedAccounts();
                     if (name === 'analytics')        loadAnalytics();
+                    if (name === 'app-analytics')    loadAppAnalytics();
                     if (name === 'overview')         loadOverview();
                 }
             });
@@ -3012,9 +3123,195 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // ── App Analytics tab ────────────────────────────────────────────
+        // appUsage/{uid}_{YYYY-MM-DD}: { uid, date, platform, installed,
+        // pages: {page: views}, quizzes, adventures } — one doc per person per
+        // day (their local date), written by the app. Fetched once (last 120
+        // days, so streaks can run past the chosen period); the period
+        // selector only re-renders.
+        let aaData = null;
+        const AA_PAGE_NAMES = {
+            home: 'Learn (Home)', messages: 'Messages', connect: 'Connect', friends: 'Friends',
+            instructors: 'Instructors', 'instructor-profile': 'Instructor profiles', 'learner-profile': 'Learner profiles',
+            'vocab-quiz': 'Quizzes', adventures: 'Adventures (list)', adventure: 'Adventures (playing)',
+            notebook: 'Notebook', bookings: 'Bookings', 'student-dashboard': 'Settings (student)',
+            dashboard: 'Instructor dashboard', calendar: 'Calendar', earnings: 'Earnings',
+            'culture-guides': 'Culture Guides', 'culture-guide': 'Culture Guide', 'culture-lesson': 'Culture lesson',
+            'travel-journey': 'Travel Journey', 'video-call': 'Video calls', login: 'Login', index: 'Website home',
+            'get-app': 'Install page', admin: 'Admin'
+        };
+        const aaPageName = (p) => AA_PAGE_NAMES[p] || p;
+        const aaDay = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        const aaDaysAgo = (n) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - n); return aaDay(d); };
+        const aaMs = (v) => v ? (v.toDate ? v.toDate().getTime() : new Date(v).getTime()) : 0;
+        // "en-gb-pub-london" → "Pub London · EN-GB"
+        const aaPrettyId = (id) => {
+            const m = String(id).match(/^([a-z]{2})-([a-z]{2})-(.+)$/);
+            const words = (t) => t.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            return m ? `${words(m[3])} · ${m[1].toUpperCase()}-${m[2].toUpperCase()}` : words(String(id));
+        };
+
+        window.loadAppAnalytics = async function() {
+            loadAppStats(); // installed-app (home-screen) section
+            try {
+                const [usageSnap, usersSnap, instSnap, quizSnap, advSnap] = await Promise.all([
+                    fetchWithRetry(() => getDocs(query(collection(db, 'appUsage'), where('date', '>=', aaDaysAgo(120))))),
+                    getCollection('users'),
+                    getCollection('instructors'),
+                    getCollection('quizAttempts').catch(() => null),
+                    getCollection('adventureProgress').catch(() => null),
+                ]);
+                const names = {}, instructorIds = new Set();
+                usersSnap.forEach(d => { const u = d.data(); names[d.id] = u.name || u.email || d.id; });
+                instSnap.forEach(d => { const u = d.data(); instructorIds.add(d.id); names[d.id] = u.name || names[d.id] || u.email || d.id; });
+                aaData = {
+                    usage: usageSnap.docs.map(d => d.data()).filter(u => u && u.uid && u.date),
+                    names, instructorIds,
+                    quizzes: quizSnap ? quizSnap.docs.map(d => d.data()) : null,
+                    adventures: advSnap ? advSnap.docs.map(d => ({ uid: d.id, ...d.data() })) : null,
+                };
+                renderAppAnalytics();
+            } catch (e) {
+                console.error('App Analytics load error', e);
+                document.getElementById('aa-daily').innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>Couldn't load app usage: ${escHtml(e.code || e.message)}</div>`;
+            }
+        };
+
+        window.renderAppAnalytics = function() {
+            if (!aaData) return;
+            const days = parseInt(document.getElementById('aa-period').value, 10) || 30;
+            const start = aaDaysAgo(days - 1), today = aaDaysAgo(0), yesterday = aaDaysAgo(1);
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            const inPeriod = aaData.usage.filter(u => u.date >= start && u.date <= today);
+
+            // Per person + per page + per day
+            const people = {}, pages = {}, perDay = {};
+            for (let i = days - 1; i >= 0; i--) perDay[aaDaysAgo(i)] = new Set();
+            let views = 0, quizzesUsage = 0, adventuresUsage = 0;
+            inPeriod.forEach(u => {
+                const p = people[u.uid] || (people[u.uid] = { days: new Set(), views: 0, quizzes: 0, adventures: 0, pages: {}, last: '', platform: u.platform, installed: false });
+                p.days.add(u.date);
+                if (u.date >= p.last) { p.last = u.date; p.platform = u.platform || p.platform; }
+                if (u.installed) p.installed = true;
+                p.quizzes += u.quizzes || 0; p.adventures += u.adventures || 0;
+                quizzesUsage += u.quizzes || 0; adventuresUsage += u.adventures || 0;
+                Object.entries(u.pages || {}).forEach(([pg, n]) => {
+                    n = Number(n) || 0; views += n; p.views += n; p.pages[pg] = (p.pages[pg] || 0) + n;
+                    const pr = pages[pg] || (pages[pg] = { views: 0, people: new Set() }); pr.views += n; pr.people.add(u.uid);
+                });
+                if (perDay[u.date]) perDay[u.date].add(u.uid);
+            });
+
+            // Streaks use all fetched days (not just the period)
+            const allDays = {};
+            aaData.usage.forEach(u => { (allDays[u.uid] = allDays[u.uid] || new Set()).add(u.date); });
+            const streakOf = (uid) => {
+                const ds = allDays[uid]; if (!ds) return 0;
+                let n = 0; const d = new Date(); d.setHours(12, 0, 0, 0);
+                if (!ds.has(today)) { if (!ds.has(yesterday)) return 0; d.setDate(d.getDate() - 1); }
+                while (ds.has(aaDay(d))) { n++; d.setDate(d.getDate() - 1); }
+                return n;
+            };
+            const uids = Object.keys(people);
+            const streaks = Object.keys(allDays).map(uid => [uid, streakOf(uid)]);
+            const best = streaks.reduce((a, b) => (b[1] > a[1] ? b : a), [null, 0]);
+
+            // Quizzes in period (quiz records are the full history)
+            const startMs = new Date(start + 'T00:00:00').getTime();
+            const quizzesInPeriod = aaData.quizzes ? aaData.quizzes.filter(q => aaMs(q.completedAt) >= startMs) : null;
+
+            set('aa-active', uids.length);
+            set('aa-today', perDay[today] ? perDay[today].size : 0);
+            const returning = uids.filter(id => people[id].days.size >= 2).length;
+            set('aa-returning', uids.length ? `${returning} (${Math.round(returning / uids.length * 100)}%)` : '0');
+            set('aa-views', views.toLocaleString());
+            set('aa-quizzes', quizzesInPeriod ? quizzesInPeriod.length : quizzesUsage);
+            set('aa-adventures', adventuresUsage);
+            set('aa-streak3', streaks.filter(([, n]) => n >= 3).length);
+            set('aa-streak-max', best[1] ? `${best[1]} day${best[1] === 1 ? '' : 's'}` : '0');
+            set('aa-streak-max-lbl', best[1] ? `Longest Current Streak · ${aaData.names[best[0]] || 'someone'}` : 'Longest Current Streak');
+            set('aa-avgdays', uids.length ? (uids.reduce((a, id) => a + people[id].days.size, 0) / uids.length).toFixed(1) : '0');
+
+            // Daily chart — one series; values in each bar's tooltip
+            const dayKeys = Object.keys(perDay);
+            const counts = dayKeys.map(k => perDay[k].size);
+            const max = Math.max(1, ...counts);
+            const showVals = dayKeys.length <= 14;
+            const every = Math.ceil(dayKeys.length / 10);
+            const fmt = (k) => { const [y, m, d] = k.split('-').map(Number); return `${m}/${d}`; };
+            document.getElementById('aa-daily').innerHTML = `
+                <div class="mi-chart aa-chart" role="img" aria-label="People active each day: ${dayKeys.map((k, i) => fmt(k) + ' ' + counts[i]).join(', ')}">
+                    ${dayKeys.map((k, i) => `<div class="mi-bar-col">
+                        <span class="mi-bar-tip">${fmt(k)}${k === today ? ' (today)' : ''}: ${counts[i]} ${counts[i] === 1 ? 'person' : 'people'}</span>
+                        ${showVals ? `<span class="mi-bar-val">${counts[i]}</span>` : ''}
+                        <div class="mi-bar" style="height:${Math.round(counts[i] / max * 125)}px;"></div>
+                    </div>`).join('')}
+                </div>
+                <div class="mi-axis aa-axis">${dayKeys.map((k, i) => `<span>${i % every === 0 || i === dayKeys.length - 1 ? fmt(k) : ''}</span>`).join('')}</div>`;
+
+            // Pages
+            const pageRows = Object.entries(pages).sort((a, b) => b[1].views - a[1].views);
+            document.getElementById('aa-pages').innerHTML = pageRows.length ? pageRows.slice(0, 15).map(([pg, r]) => {
+                const pct = views ? Math.round(r.views / views * 100) : 0;
+                return `<tr><td>${escHtml(aaPageName(pg))}</td><td>${r.views}</td><td>${r.people.size}</td>
+                    <td><div class="mi-share"><div class="mi-share-track"><div class="mi-share-fill" style="width:${pct}%"></div></div><span class="mi-share-pct">${pct}%</span></div></td></tr>`;
+            }).join('') : '<tr><td colspan="4"><div class="empty-state"><i class="fas fa-mobile-alt"></i>No app usage recorded in this period yet.</div></td></tr>';
+
+            // Quizzes by language
+            const ql = document.getElementById('aa-quiz-langs');
+            if (!quizzesInPeriod) {
+                ql.innerHTML = '<tr><td colspan="4"><div class="empty-state">Quiz records aren\'t readable yet (database permission pending).</div></td></tr>';
+            } else {
+                const byLang = {};
+                quizzesInPeriod.forEach(q => {
+                    const L = q.language || 'Unknown';
+                    const r = byLang[L] || (byLang[L] = { n: 0, people: new Set(), pct: 0 });
+                    r.n++; r.people.add(q.userId);
+                    if (q.totalQuestions) r.pct += (Number(q.score) || 0) / q.totalQuestions;
+                });
+                const rows = Object.entries(byLang).sort((a, b) => b[1].n - a[1].n);
+                ql.innerHTML = rows.length ? rows.map(([L, r]) => `<tr><td>${escHtml(L)}</td><td>${r.n}</td><td>${r.people.size}</td><td>${Math.round(r.pct / r.n * 100)}%</td></tr>`).join('')
+                    : '<tr><td colspan="4"><div class="empty-state"><i class="fas fa-graduation-cap"></i>No quizzes finished in this period.</div></td></tr>';
+            }
+
+            // Adventures (all time — progress keeps total plays per adventure)
+            const av = document.getElementById('aa-adv');
+            if (!aaData.adventures) {
+                av.innerHTML = '<tr><td colspan="4"><div class="empty-state">Adventure records aren\'t readable yet (database permission pending).</div></td></tr>';
+            } else {
+                const byAdv = {};
+                aaData.adventures.forEach(a => Object.entries(a.completed || {}).forEach(([id, e]) => {
+                    const r = byAdv[id] || (byAdv[id] = { plays: 0, people: 0, last: 0 });
+                    r.plays += Number(e.attempts) || 1; r.people++; r.last = Math.max(r.last, aaMs(e.completedAt));
+                }));
+                const rows = Object.entries(byAdv).sort((a, b) => b[1].plays - a[1].plays).slice(0, 15);
+                av.innerHTML = rows.length ? rows.map(([id, r]) => `<tr><td>${escHtml(aaPrettyId(id))}</td><td>${r.plays}</td><td>${r.people}</td><td>${r.last ? new Date(r.last).toLocaleDateString() : '—'}</td></tr>`).join('')
+                    : '<tr><td colspan="4"><div class="empty-state"><i class="fas fa-compass"></i>No Adventures finished yet.</div></td></tr>';
+            }
+
+            // People
+            const roleLbl = (id) => aaData.instructorIds.has(id) ? '<span class="mi-role instructor">Instructor</span>' : '<span class="mi-role student">Student</span>';
+            const dev = { ios: '<i class="fab fa-apple" title="iPhone / iPad"></i>', android: '<i class="fab fa-android" title="Android"></i>', desktop: '<i class="fas fa-desktop" title="Computer"></i>' };
+            const peopleRows = uids.sort((a, b) => (people[b].last.localeCompare(people[a].last)) || (people[b].views - people[a].views));
+            document.getElementById('aa-people').innerHTML = peopleRows.length ? peopleRows.map(id => {
+                const p = people[id];
+                const top = Object.entries(p.pages).sort((a, b) => b[1] - a[1])[0];
+                const st = streakOf(id);
+                return `<tr>
+                    <td>${escHtml(aaData.names[id] || id)}</td>
+                    <td>${roleLbl(id)}</td>
+                    <td>${p.last === today ? 'Today' : p.last === yesterday ? 'Yesterday' : escHtml(fmt(p.last))}</td>
+                    <td>${p.days.size}</td>
+                    <td>${st ? st + (st >= 3 ? ' 🔥' : '') : '—'}</td>
+                    <td>${p.views}</td><td>${p.quizzes || '—'}</td><td>${p.adventures || '—'}</td>
+                    <td>${top ? escHtml(aaPageName(top[0])) : '—'}</td>
+                    <td>${dev[p.platform] || ''}${p.installed ? ' <span class="mi-role student" title="Opened the installed (home-screen) app">App</span>' : ''}</td>
+                </tr>`;
+            }).join('') : '<tr><td colspan="10"><div class="empty-state"><i class="fas fa-users"></i>Nobody has used the app in this period yet.</div></td></tr>';
+        };
+
         async function loadAnalytics() {
             loadMessagingInsights(); // independent — renders its own section when ready
-            loadAppStats();         // independent too
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
