@@ -116,8 +116,15 @@ service cloud.firestore {
 
     // Bookings
     match /bookings/{bookingId} {
-      // Any authenticated user can read bookings (needed to check instructor availability)
-      allow read: if request.auth != null;
+      // Only the booking's student, its instructor, or an admin (2026-11-17).
+      // Was any signed-in user, which let any new account read every booking
+      // (names, times, amounts, payment IDs). Availability comes from the
+      // bookedSlots mirror; every app/website query filters on studentId or
+      // instructorId == the signed-in user, which this rule allows.
+      allow read: if request.auth != null && (
+                    resource.data.studentId == request.auth.uid
+                    || resource.data.instructorId == request.auth.uid
+                    || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
 
       // Students can create bookings (including Stripe payment fields:
       // paymentIntentId, paymentStatus, amount, currency)
