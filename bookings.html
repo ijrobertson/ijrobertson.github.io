@@ -999,6 +999,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
 
+        window.DEFAULT_AVATAR = DEFAULT_AVATAR; // inline onerror= handlers only see globals
+
         let currentUser = null;
         let joinTimerInterval = null;
 
@@ -1340,7 +1342,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="lesson-card-header">
                     <img class="lesson-instructor-avatar"
                          src="${escapeAttr(avatar)}"
-                         onerror="this.src='${DEFAULT_AVATAR}'"
+                         onerror="this.onerror=null; this.src=window.DEFAULT_AVATAR"
                          alt="${escapeAttr(otherName)}">
                     <div class="lesson-instructor-info">
                         <h4>${escapeHtml(roleLabel)} ${otherNameHtml}</h4>

@@ -734,6 +734,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
 
+        window.DEFAULT_AVATAR = DEFAULT_AVATAR; // inline onerror= handlers only see globals
+
         const PAGE_SIZE = 6;
         let currentUser = null;
         let allFriends = [];       // all loaded friend profiles
@@ -914,7 +916,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="friend-card-header">
                     <img class="friend-avatar"
                          src="${escapeAttr(avatar)}"
-                         onerror="this.src='${DEFAULT_AVATAR}'"
+                         onerror="this.onerror=null; this.src=window.DEFAULT_AVATAR"
                          alt="${name}">
                     <div class="friend-name">${name}</div>
                     ${country ? `<div class="friend-country"><i class="fas fa-map-marker-alt" style="color:#20bcba;margin-right:4px;"></i>${country}</div>` : ''}
@@ -1087,7 +1089,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             card.innerHTML = `
                 <img class="request-avatar"
                      src="${escapeHtml(avatar)}"
-                     onerror="this.src='${DEFAULT_AVATAR}'"
+                     onerror="this.onerror=null; this.src=window.DEFAULT_AVATAR"
                      alt="${name}">
                 <div class="request-name">${name}</div>
                 ${roleBadge}

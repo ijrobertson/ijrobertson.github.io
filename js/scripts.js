@@ -63,6 +63,12 @@
     });
 
 
+    // Pages that load this file without js/morphext.min.js (bookings,
+    // friends, instructor-profile, instructor-apply) used to throw on the
+    // call below, which ended this script there. Stop at the same point
+    // without the error, so those pages behave exactly as before.
+    if (!$.fn.Morphext) return;
+
     /* Rotating Text - Morphtext */
 	$("#js-rotating").Morphext({
 		// The [in] animation type. Refer to Animate.css for a list of available animations.
