@@ -5764,3 +5764,48 @@ exports.syncPublicUser = onDocumentWritten('users/{uid}', (event) =>
   syncPublicCopy(event, 'publicUsers', publicUserCopy));
 exports.syncPublicInstructor = onDocumentWritten('instructors/{uid}', (event) =>
   syncPublicCopy(event, 'publicInstructors', publicInstructorCopy));
+
+// ── Email open/click tracking (2026-11-17) ───────────────────────────────────
+// For campaign emails that need follow-up (first: instructors who haven't
+// finished payment setup). Each recipient gets a random token stored in
+// emailRecipients/{token} by the send script; the email's 1×1 image hits
+// ?a=open and its buttons hit ?a=click&to=<key>, which records the event and
+// redirects. Only these destinations are allowed (no open redirect).
+// Opens are approximate: Apple Mail can load images without the person
+// reading, and some apps block images. Clicks are reliable.
+const EMAIL_LINK_TARGETS = {
+  settings: 'https://linguabud.com/dashboard',
+  app: 'https://app.linguabud.com',
+  instructors: 'https://linguabud.com/instructors',
+  home: 'https://linguabud.com',
+};
+const TRACKING_GIF = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+exports.emailTrack = onRequest({ cors: false }, async (req, res) => {
+  const token = String(req.query.t || '');
+  const action = req.query.a === 'click' ? 'click' : 'open';
+  const dest = EMAIL_LINK_TARGETS[String(req.query.to || '')] || EMAIL_LINK_TARGETS.home;
+  if (/^[a-f0-9]{32}$/.test(token)) {
+    try {
+      const ref = admin.firestore().collection('emailRecipients').doc(token);
+      await admin.firestore().runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) return;
+        const now = new Date();
+        const d = snap.data();
+        const update = action === 'click'
+          ? { clicks: (d.clicks || 0) + 1, lastClickAt: now, ...(d.firstClickAt ? {} : { firstClickAt: now }), lastClickTo: String(req.query.to || '') }
+          : { opens: (d.opens || 0) + 1, lastOpenAt: now, ...(d.firstOpenAt ? {} : { firstOpenAt: now }) };
+        tx.update(ref, update);
+      });
+    } catch (e) {
+      console.error('[emailTrack]', e.message);
+    }
+  }
+  if (action === 'click') {
+    res.redirect(302, dest);
+  } else {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Content-Type', 'image/gif');
+    res.status(200).send(TRACKING_GIF);
+  }
+});
