@@ -1143,7 +1143,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function loadEnglishPartners() {
             const grid = document.getElementById('partnersGrid');
             try {
-                const snap = await getDocs(collection(db, 'users'));
+                const snap = await getDocs(collection(db, 'publicUsers'));
                 const users = [];
                 snap.forEach(d => {
                     const data = { id: d.id, ...d.data() };
@@ -1200,7 +1200,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Instructors can only be booked once their payout account is connected
         function isPaymentReady(instructor) {
             return (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) ||
-                   (instructor.payoutMethod === 'wise' && !!instructor.wiseEmail);
+                   ((instructor.payoutMethod === 'wise' && !!instructor.wiseEmail) || instructor.paymentReady === true);
         }
 
         function getNextAvailableDate(availability) {
@@ -1249,7 +1249,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const grid = document.getElementById('instructorsGrid');
             try {
                 const [snap, availSnap] = await Promise.all([
-                    getDocs(collection(db, 'instructors')),
+                    getDocs(collection(db, 'publicInstructors')),
                     getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] }))
                 ]);
                 const availabilityMap = {};

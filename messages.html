@@ -1851,8 +1851,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (userCache.has(userId)) return userCache.get(userId);
             try {
                 const [userDoc, instructorDoc] = await Promise.all([
-                    getDoc(doc(db, 'users', userId)),
-                    getDoc(doc(db, 'instructors', userId))
+                    getDoc(doc(db, 'publicUsers', userId)),
+                    getDoc(doc(db, 'publicInstructors', userId))
                 ]);
                 const isInstructor = instructorDoc.exists();
                 const data = isInstructor ? instructorDoc.data()
@@ -1949,7 +1949,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         async function checkMessagingBlocked(otherUserId) {
             const [uDoc, sentSnap, receivedSnap] = await Promise.all([
-                getDoc(doc(db, 'users', otherUserId)),
+                getDoc(doc(db, 'publicUsers', otherUserId)),
                 getDocs(query(collection(db, 'friendRequests'),
                     where('fromId', '==', currentUser.uid), where('toId', '==', otherUserId), where('status', '==', 'accepted'))),
                 getDocs(query(collection(db, 'friendRequests'),
@@ -3429,8 +3429,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                     // Fetch both users from both collections in parallel
                     const [recipientUserDoc, recipientInstructorDoc, currentUserUserDoc, currentUserInstructorDoc] = await Promise.all([
-                        getDoc(doc(db, 'users', recipientId)),
-                        getDoc(doc(db, 'instructors', recipientId)),
+                        getDoc(doc(db, 'publicUsers', recipientId)),
+                        getDoc(doc(db, 'publicInstructors', recipientId)),
                         getDoc(doc(db, 'users', currentUser.uid)),
                         getDoc(doc(db, 'instructors', currentUser.uid))
                     ]);

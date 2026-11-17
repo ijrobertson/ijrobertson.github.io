@@ -11,14 +11,50 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Public copies of users/ and instructors/ with only the fields other
+    // people may see (allowlist in functions/publicProfiles.js). Written only
+    // by the syncPublicUser / syncPublicInstructor triggers.
+    match /publicUsers/{userId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /publicInstructors/{instructorId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Instructors collection
     match /instructors/{instructorId} {
       // Anyone can read instructor profiles (for browsing)
       allow read: if true;
 
-      // Only the instructor can write their own profile
-      allow write: if request.auth != null
-                   && request.auth.uid == instructorId;
+      // Set only by Cloud Functions / admins (Admin SDK bypasses these rules).
+      // If instructors could edit them on their own profile they could approve
+      // themselves, zero out (or invert) the platform commission, redirect
+      // payouts, or inflate their rating.
+      function adminOnlyInstructorFields() {
+        return ['status', 'isApproved', 'approvedAt', 'approvedBy', 'commissionRate',
+                'isFoundingInstructor', 'wiseEmail', 'manualPayout', 'stripeAccountId',
+                'lessonsCount', 'referralToken', 'averageRating', 'reviewCount',
+                'googleCalendar', 'flagged'];
+      }
+
+      // New profiles (application / first dashboard save) start as pending
+      allow create: if request.auth != null
+                    && request.auth.uid == instructorId
+                    && request.resource.data.get('status', 'pending') == 'pending'
+                    && !request.resource.data.keys().hasAny(adminOnlyInstructorFields().removeAll(['status']))
+                    && request.resource.data.get('payoutMethod', 'stripe') == 'stripe';
+
+      // Instructors edit their own profile, but not the fields above. Switching
+      // to Wise goes through saveWisePayoutMethod; the dashboard may only set 'stripe'.
+      allow update: if request.auth != null
+                    && request.auth.uid == instructorId
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(adminOnlyInstructorFields())
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['payoutMethod'])
+                        || request.resource.data.payoutMethod == 'stripe');
+
+      allow delete: if request.auth != null && request.auth.uid == instructorId;
     }
 
     // Conversations collection
@@ -50,9 +86,18 @@ service cloud.firestore {
                       && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
                       && request.auth.uid == request.resource.data.senderId;
 
-        // Users can update their own messages (e.g., mark as read)
+        // Participants can update messages, but only the sender can change
+        // what a message says (edit / delete-for-everyone, see messages.html)
+        // — the other person can only mark it read or react to it. senderId
+        // can never be rewritten. (Before this, any participant could rewrite
+        // any field of the other person's messages.)
         allow update: if request.auth != null
-                      && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+                      && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants
+                      && request.resource.data.senderId == resource.data.senderId
+                      && (
+                        request.auth.uid == resource.data.senderId
+                        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'reactions'])
+                      );
       }
     }
 
@@ -70,21 +115,38 @@ service cloud.firestore {
       // Anyone can read overrides
       allow read: if true;
 
-      // Only the instructor can write their own overrides
-      allow write: if request.auth != null
-                   && request.auth.uid == request.resource.data.instructorId;
+      // Only the instructor can write their own overrides (and can't take over
+      // or delete another instructor's by rewriting instructorId)
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.instructorId;
+      allow update: if request.auth != null
+                    && request.auth.uid == resource.data.instructorId
+                    && request.auth.uid == request.resource.data.instructorId;
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.instructorId;
     }
 
     // Bookings
     match /bookings/{bookingId} {
-      // Any authenticated user can read bookings (needed to check instructor availability)
-      allow read: if request.auth != null;
+      // Only the booking's student, its instructor, or an admin (2026-11-17).
+      // Was any signed-in user, which let any new account read every booking
+      // (names, times, amounts, payment IDs). Availability comes from the
+      // bookedSlots mirror; every app/website query filters on studentId or
+      // instructorId == the signed-in user, which this rule allows.
+      allow read: if request.auth != null && (
+                    resource.data.studentId == request.auth.uid
+                    || resource.data.instructorId == request.auth.uid
+                    || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
 
       // Students can create bookings (including Stripe payment fields:
       // paymentIntentId, paymentStatus, amount, currency)
+      // Only for a future slot — a booking dated in the past would count as a
+      // "finished lesson" straight away (e.g. for posting a review).
       allow create: if request.auth != null
                     && request.auth.uid == request.resource.data.studentId
-                    && request.resource.data.status == "confirmed";
+                    && request.resource.data.status == "confirmed"
+                    && request.resource.data.dateTime is timestamp
+                    && request.resource.data.dateTime > request.time;
 
       // Either party can cancel; instructor/student can mark booking as seen
       allow update: if request.auth != null && (
@@ -101,6 +163,14 @@ service cloud.firestore {
                       (request.auth.uid == resource.data.studentId
                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentSeen']))
                     );
+    }
+
+    // Taken lesson slots (instructorId + time only), mirrored from confirmed
+    // bookings by the syncBookedSlot Cloud Function so booking pages can grey
+    // out taken times without reading other people's bookings.
+    match /bookedSlots/{bookingId} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // Friend / Partner Requests
@@ -120,10 +190,46 @@ service cloud.firestore {
                     && request.resource.data.status in ['accepted', 'declined'];
     }
 
+    // Google Calendar OAuth tokens (see functions/index.js getGoogleCalendarTokens).
+    // Cloud Functions only — these grant access to the instructor's calendar.
+    match /googleCalendarTokens/{instructorId} {
+      allow read, write: if false;
+    }
+
     // Email log collection (only Cloud Functions can write)
     match /emailLog/{logId} {
       // No client reads or writes - this is for server-side logging only
       allow read, write: if false;
+    }
+
+    // Installed-app usage (Admin → Analytics → Mobile App). Written by
+    // lib/firebaseClient.js when someone opens the installed app; only the
+    // owner can write, only these fields; admins (and the owner) can read.
+    match /appInstalls/{userId} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == userId
+                      || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      allow create, update: if request.auth != null && request.auth.uid == userId
+                  && request.resource.data.keys().hasOnly(['platform', 'firstOpenedAt', 'lastOpenedAt'])
+                  && request.resource.data.platform in ['ios', 'android', 'desktop'];
+      allow delete: if false;
+    }
+
+    // Daily usage counts (Admin → App Analytics). Written by
+    // lib/firebaseClient.js: appUsage/{uid}_{YYYY-MM-DD}. Owner writes only
+    // their own day doc, only these fields; admins read.
+    match /appUsage/{docId} {
+      allow read: if request.auth != null
+                  && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow create, update: if request.auth != null
+                  && docId == request.auth.uid + '_' + request.resource.data.date
+                  && request.resource.data.uid == request.auth.uid
+                  && request.resource.data.date is string
+                  && request.resource.data.date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+                  && request.resource.data.keys().hasOnly(['uid', 'date', 'platform', 'installed', 'pages', 'quizzes', 'adventures', 'lastAt'])
+                  && request.resource.data.platform in ['ios', 'android', 'desktop']
+                  && (!('pages' in request.resource.data) || request.resource.data.pages.size() <= 60);
+      allow delete: if false;
     }
 
     // Admins collection — only an admin can verify their own status
@@ -163,12 +269,9 @@ service cloud.firestore {
       // Anyone can read reviews (they are public on instructor profiles)
       allow read: if true;
 
-      // Only authenticated users can create a review, and only as themselves
-      allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.studentId;
-
-      // Reviews cannot be edited or deleted
-      allow update, delete: if false;
+      // Written only by the submitReview Cloud Function, which checks the
+      // student actually had (and finished) a lesson with the instructor
+      allow create, update, delete: if false;
     }
 
     // Earnings — per-lesson earnings records written by Cloud Functions
@@ -264,6 +367,113 @@ service cloud.firestore {
       allow write: if false; // Cloud Functions only
     }
 
+    // Vocabulary notebook — personal word/phrase collection (Learn tab)
+    match /notebook/{entryId} {
+      // Only the owner can read, create, update, or delete their own entries
+      allow read, delete: if request.auth != null
+                         && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null
+                   && request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth != null
+                   && request.auth.uid == resource.data.userId
+                   && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Push notification device tokens — one doc per user, keyed by uid, holding
+    // a map of active FCM tokens. No public read (unlike users/instructors):
+    // device tokens are more sensitive than a display email.
+    match /fcmTokens/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Culture Guide lesson completion — one doc per user, keyed by uid, holding
+    // a map of { [countryId]: { completedLessons: [...], updatedAt } }. Same
+    // shape as fcmTokens: single owner-keyed doc, no public read.
+    match /cultureProgress/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Lingua Bud Adventures progress — one doc per user, keyed by uid:
+    // { completed: { [adventureId]: {...} }, prefs: {...} } (see
+    // js/adventures.js). Same owner-only shape as cultureProgress.
+    match /adventureProgress/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Admins may read (Admin → App Analytics Adventure stats).
+      allow read: if request.auth != null
+                  && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // AI Travel Journey (mock planner, see js/travel-planner.js) — one doc per
+    // user holding their current trip inputs + generated itinerary + completion
+    // for the itinerary's non-module days (instructor practice, final checklist).
+    // Completion for module days is read from cultureProgress instead of
+    // duplicated here. Same single-owner-doc shape as fcmTokens/cultureProgress.
+    match /travelJourneys/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Personalized quiz profile (vocab-quiz.html "Quiz Preferences") — one doc
+    // per user holding a map of { [language]: { previousExperience,
+    // selfAssessedLevel, effectiveLevel, interests, goals, goalsOther,
+    // setupSkippedAt?, createdAt, updatedAt } }, one entry per language the
+    // learner has configured/skipped setup for. Same single-owner-doc shape as
+    // fcmTokens/cultureProgress/travelJourneys.
+    match /quizProfiles/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // AI-generated quizzes (Phase 2, see functions/index.js's
+    // generatePersonalizedQuiz) — always created by the Cloud Function via
+    // the Admin SDK (which bypasses these rules entirely), never directly by
+    // the client, so no create/delete rule is needed. Owner-read, plus
+    // owner-update restricted to flipping `status` — that's how
+    // vocab-quiz.html's findReadyQuiz() marks a Phase 4 pre-generated
+    // (source:'scheduled') quiz as consumed once the learner actually starts
+    // it, so a later Start Quiz click that same day doesn't reuse it again.
+    match /quizzes/{quizId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null
+                   && request.auth.uid == resource.data.userId
+                   && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+    }
+
+    // Quiz attempt history (Phase 3, written by the client in vocab-quiz.html's
+    // recordQuizAttempt() right after a round is scored) — one doc per
+    // completed quiz, flat like notebook. Immutable history: create + read
+    // only, no update/delete. generatePersonalizedQuiz (Cloud Function, Admin
+    // SDK) reads recent attempts to avoid repeating topics and to naturally
+    // reinforce vocabulary/grammar the learner has struggled with.
+    match /quizAttempts/{attemptId} {
+      // Owner, or an admin (Admin → App Analytics quiz stats).
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId
+                  || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Personalized quiz notification schedule (Phase 4) — one doc per user:
+    // { enabled, preferredTime: "HH:mm" (learner's local time, paired with
+    // users/{uid}.timezone), days: { monday: [...languages], ... },
+    // lastSentDateKey, lastSentAt }. Same single-owner-doc shape as
+    // quizProfiles/cultureProgress/travelJourneys. lastSentDateKey/lastSentAt
+    // are written by sendScheduledQuizNotifications (Admin SDK, bypasses
+    // these rules) but the client still needs write access for its own
+    // enabled/preferredTime/days edits, so this stays a plain owner
+    // read/write rather than split by field.
+    match /quizSchedules/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Presence (online / last-seen) — one doc per user, keyed by uid, holding
+    // { online: bool, lastSeenAt }. Any signed-in user can read it (needed to
+    // show a conversation partner's status in messages.html), but only the
+    // owner can write their own — same owner-write shape as fcmTokens, just
+    // with broader read since presence is inherently about being visible to
+    // whoever you're talking to, not private like a device token.
+    match /presence/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Homework assignments — sent by instructors to students
     match /homework/{homeworkId} {
       allow read: if request.auth != null && (
@@ -271,8 +481,12 @@ service cloud.firestore {
         resource.data.instructorId == request.auth.uid ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
+      // Instructors only, not pending/declined applicants (each one emails the
+      // student). Older approved instructors may have no status field at all.
       allow create: if request.auth != null &&
-        request.resource.data.instructorId == request.auth.uid;
+        request.resource.data.instructorId == request.auth.uid &&
+        exists(/databases/$(database)/documents/instructors/$(request.auth.uid)) &&
+        !(get(/databases/$(database)/documents/instructors/$(request.auth.uid)).data.get('status', '') in ['pending', 'declined']);
       allow update: if request.auth != null &&
         request.auth.uid == resource.data.studentId &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seenByStudent', 'completedByStudent', 'completedAt']);

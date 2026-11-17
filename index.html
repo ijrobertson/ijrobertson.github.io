@@ -2730,13 +2730,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Most recently active first (lastActiveAt is stamped by
                 // lib/firebaseClient.js); extra headroom because non-students
                 // and students without a photo are filtered out below
-                const q = query(collection(db, 'users'), orderBy('lastActiveAt', 'desc'), limit(60));
+                const q = query(collection(db, 'publicUsers'), orderBy('lastActiveAt', 'desc'), limit(60));
                 const docs = (await getDocs(q)).docs;
                 // orderBy skips accounts never stamped with lastActiveAt, so
                 // top up from the unordered list if that leaves too few cards
                 if (docs.filter(d => d.data().role === 'student' && d.data().avatar_url && !PLACEHOLDER_PHOTO_UIDS.has(d.id)).length < 6) {
                     const seen = new Set(docs.map(d => d.id));
-                    (await getDocs(query(collection(db, 'users'), limit(30)))).docs
+                    (await getDocs(query(collection(db, 'publicUsers'), limit(30)))).docs
                         .forEach(d => { if (!seen.has(d.id)) docs.push(d); });
                 }
 
@@ -2789,7 +2789,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Instructors can only be booked once their payout account is connected
         function isPaymentReady(instructor) {
             return (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) ||
-                   (instructor.payoutMethod === 'wise' && !!instructor.wiseEmail);
+                   ((instructor.payoutMethod === 'wise' && !!instructor.wiseEmail) || instructor.paymentReady === true);
         }
 
         // Hand-picked instructors, in display order. They sit directly below
@@ -2826,7 +2826,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function loadInstructors() {
             try {
                 const [instructorSnap, availSnap] = await Promise.all([
-                    getDocs(collection(db, 'instructors')),
+                    getDocs(collection(db, 'publicInstructors')),
                     getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] }))
                 ]);
 
@@ -2945,7 +2945,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function fetchStudentsByLanguage(language) {
             if (!studentLanguageCache.has(language)) {
                 const snap = await getDocs(query(
-                    collection(db, 'users'),
+                    collection(db, 'publicUsers'),
                     where('languages_spoken', 'array-contains', language),
                     limit(100)
                 ));

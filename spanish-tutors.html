@@ -709,9 +709,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const SYM = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
         const esc = (t) => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML.replace(/"/g, '&quot;'); };
         const excerpt = (t) => { t = (t || '').replace(/\s+/g, ' ').trim(); if (t.length <= 170) return t; return t.slice(0, 170).replace(/\s+\S*$/, '').replace(/[,.;:]+$/, '') + '…'; };
-        const bookable = (i) => (i.chargesEnabled === true && i.payoutsEnabled === true) || (i.payoutMethod === 'wise' && !!i.wiseEmail);
+        const bookable = (i) => (i.chargesEnabled === true && i.payoutsEnabled === true) || ((i.payoutMethod === 'wise' && !!i.wiseEmail) || i.paymentReady === true);
         try {
-            const snap = await getDocs(collection(db, 'instructors'));
+            const snap = await getDocs(collection(db, 'publicInstructors'));
             const list = [];
             snap.forEach((d) => {
                 const i = { id: d.id, ...d.data() };

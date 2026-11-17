@@ -5043,3 +5043,26 @@ function buildUnsubPage(message, success) {
 </body>
 </html>`;
 }
+
+// ── Public profile copies (2026-11-17) ───────────────────────────────────────
+// users/{uid} and instructors/{uid} hold private fields (email, Wise/PayPal
+// payout emails, Stripe account IDs, referral tokens, marketing flags) but
+// were world-readable, so anyone could collect every member's email. Pages
+// that show OTHER people now read these copies instead, which carry only the
+// fields listed here (an allowlist: a private field added later can't leak
+// by accident). The originals become owner/admin-only once every page reads
+// the copies. Backfill: functions/backfill-public-profiles.js.
+const { publicUserCopy, publicInstructorCopy } = require('./publicProfiles');
+async function syncPublicCopy(event, publicCollection, makeCopy) {
+  const after = event.data && event.data.after;
+  const ref = admin.firestore().collection(publicCollection).doc(event.params.uid);
+  if (!after || !after.exists) {
+    await ref.delete().catch(() => {});
+    return;
+  }
+  await ref.set(makeCopy(after.data()));
+}
+exports.syncPublicUser = onDocumentWritten('users/{uid}', (event) =>
+  syncPublicCopy(event, 'publicUsers', publicUserCopy));
+exports.syncPublicInstructor = onDocumentWritten('instructors/{uid}', (event) =>
+  syncPublicCopy(event, 'publicInstructors', publicInstructorCopy));

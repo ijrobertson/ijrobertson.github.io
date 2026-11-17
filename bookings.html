@@ -1108,7 +1108,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const avatarMap = {};
                 await Promise.all(instructorIds.map(async (id) => {
                     try {
-                        const snap = await getDoc(doc(db, 'instructors', id));
+                        const snap = await getDoc(doc(db, 'publicInstructors', id));
                         if (snap.exists()) avatarMap[id] = snap.data().avatar_url || null;
                     } catch (e) {}
                 }));
@@ -1120,7 +1120,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const studentNameMap = {};
                 await Promise.all(studentIds.map(async (id) => {
                     try {
-                        const snap = await getDoc(doc(db, 'users', id));
+                        const snap = await getDoc(doc(db, 'publicUsers', id));
                         if (snap.exists() && snap.data().name) studentNameMap[id] = snap.data().name;
                     } catch (e) {}
                 }));

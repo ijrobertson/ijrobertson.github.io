@@ -837,7 +837,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         async function loadProfile(uid) {
             try {
-                const snap = await getDoc(doc(db, 'instructors', uid));
+                const snap = await getDoc(doc(db, 'publicInstructors', uid));
                 if (!snap.exists()) throw new Error('not found');
 
                 const p = snap.data();
@@ -924,7 +924,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     bookBtn.disabled = true;
                 } else if (
                     (p.chargesEnabled === true && p.payoutsEnabled === true) ||
-                    (p.payoutMethod === 'wise' && p.wiseEmail)
+                    ((p.payoutMethod === 'wise' && p.wiseEmail) || p.paymentReady === true)
                 ) {
                     bookBtn.addEventListener('click', () => {
                         openBookingModal(uid, p.name || 'Instructor');
@@ -1309,7 +1309,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('pay-price').textContent = 'Loading...';
 
             try {
-                const instructorSnap = await getDoc(doc(db, 'instructors', currentInstructorId));
+                const instructorSnap = await getDoc(doc(db, 'publicInstructors', currentInstructorId));
                 const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
                 const currency = instructorData.currency || 'USD';
                 const csMap    = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
@@ -1410,7 +1410,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 if (paymentIntent && paymentIntent.status === 'succeeded') {
                     const studentTZ = studentStoredTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
                     const [instructorSnap, studentSnap] = await Promise.all([
-                        getDoc(doc(db, 'instructors', currentInstructorId)),
+                        getDoc(doc(db, 'publicInstructors', currentInstructorId)),
                         getDoc(doc(db, 'users', auth.currentUser.uid))
                     ]);
                     const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
@@ -1643,7 +1643,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             try {
                 const studentTZ = studentStoredTZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const [instructorSnap, studentSnap] = await Promise.all([
-                    getDoc(doc(db, 'instructors', currentInstructorId)),
+                    getDoc(doc(db, 'publicInstructors', currentInstructorId)),
                     getDoc(doc(db, 'users', auth.currentUser.uid))
                 ]);
                 const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};

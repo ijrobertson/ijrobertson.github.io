@@ -1707,7 +1707,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Instructors can only be booked once their payout account is connected
         function isPaymentReady(instructor) {
             return (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) ||
-                   (instructor.payoutMethod === 'wise' && !!instructor.wiseEmail);
+                   ((instructor.payoutMethod === 'wise' && !!instructor.wiseEmail) || instructor.paymentReady === true);
         }
 
         // Approximate USD value of one unit of each currency instructors can
@@ -1771,7 +1771,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             try {
                 // Fetch instructors and availability in parallel
                 const [instructorSnap, availSnap] = await Promise.all([
-                    getDocs(collection(db, 'instructors')),
+                    getDocs(collection(db, 'publicInstructors')),
                     getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] }))
                 ]);
 
@@ -2390,7 +2390,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             try {
                 // Fetch price and currency from instructor doc for immediate display
-                const instructorSnap = await getDoc(doc(db, 'instructors', currentInstructorId));
+                const instructorSnap = await getDoc(doc(db, 'publicInstructors', currentInstructorId));
                 const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
                 const currency = instructorData.currency || 'USD';
                 const _csMap = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
@@ -2507,7 +2507,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         if (paymentIntent && paymentIntent.status === 'succeeded') {
                             const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
                             const [instructorSnap, studentSnap] = await Promise.all([
-                                getDoc(doc(db, 'instructors', currentInstructorId)),
+                                getDoc(doc(db, 'publicInstructors', currentInstructorId)),
                                 getDoc(doc(db, 'users', auth.currentUser.uid))
                             ]);
                             const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
@@ -2733,7 +2733,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const profileBookBtn = document.getElementById('profileBookBtn');
             const instructorReady =
                 (instructor.chargesEnabled === true && instructor.payoutsEnabled === true) ||
-                (instructor.payoutMethod === 'wise' && instructor.wiseEmail);
+                ((instructor.payoutMethod === 'wise' && instructor.wiseEmail) || instructor.paymentReady === true);
             if (instructorReady) {
                 profileBookBtn.disabled = false;
                 profileBookBtn.innerHTML = '<i class="fas fa-calendar-check"></i> Book Lesson';
