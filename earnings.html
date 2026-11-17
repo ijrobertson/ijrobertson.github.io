@@ -569,7 +569,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (booking?.studentName) return booking.studentName;
             if (!studentId) return 'Student';
             if (!studentNameCache.has(studentId)) {
-                studentNameCache.set(studentId, getDoc(doc(db, 'users', studentId))
+                studentNameCache.set(studentId, getDoc(doc(db, 'publicUsers', studentId))
                     .then(s => (s.exists() && s.data().name) || 'Student')
                     .catch(() => 'Student'));
             }

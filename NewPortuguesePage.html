@@ -1130,7 +1130,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function loadPortuguesePartners() {
             const grid = document.getElementById('partnersGrid');
             try {
-                const snap = await getDocs(query(collection(db, 'users'), limit(40)));
+                const snap = await getDocs(query(collection(db, 'publicUsers'), limit(40)));
                 const users = [];
                 snap.forEach(d => {
                     const data = { id: d.id, ...d.data() };
@@ -1190,7 +1190,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function loadPortugueseInstructors() {
             const grid = document.getElementById('instructorsGrid');
             try {
-                const snap = await getDocs(query(collection(db, 'instructors'), limit(40)));
+                const snap = await getDocs(query(collection(db, 'publicInstructors'), limit(40)));
                 const instructors = [];
                 snap.forEach(d => {
                     const data = d.data();

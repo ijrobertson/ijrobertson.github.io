@@ -878,9 +878,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Fetch each friend's profile (check instructors then users)
                 const profiles = await Promise.all([...friendIds].map(async (fid) => {
                     try {
-                        const instSnap = await getDoc(doc(db, 'instructors', fid));
+                        const instSnap = await getDoc(doc(db, 'publicInstructors', fid));
                         if (instSnap.exists()) return { uid: fid, ...instSnap.data(), role: 'instructor' };
-                        const userSnap = await getDoc(doc(db, 'users', fid));
+                        const userSnap = await getDoc(doc(db, 'publicUsers', fid));
                         if (userSnap.exists()) return { uid: fid, ...userSnap.data(), role: 'student' };
                     } catch (e) {}
                     return null;
@@ -1036,8 +1036,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const myAvatar = myData.avatar_url || '';
 
                 const [friendInstSnap, friendUserSnap] = await Promise.all([
-                    getDoc(doc(db, 'instructors', friendUid)),
-                    getDoc(doc(db, 'users', friendUid))
+                    getDoc(doc(db, 'publicInstructors', friendUid)),
+                    getDoc(doc(db, 'publicUsers', friendUid))
                 ]);
                 const friendData = friendInstSnap.exists() ? friendInstSnap.data() : (friendUserSnap.exists() ? friendUserSnap.data() : {});
                 const friendAvatar = friendData.avatar_url || '';
@@ -1088,9 +1088,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Enrich with sender profiles
                 const enriched = await Promise.all(requests.map(async (req) => {
                     try {
-                        const instSnap = await getDoc(doc(db, 'instructors', req.fromId));
+                        const instSnap = await getDoc(doc(db, 'publicInstructors', req.fromId));
                         if (instSnap.exists()) return { ...req, profile: instSnap.data(), senderRole: 'instructor' };
-                        const userSnap = await getDoc(doc(db, 'users', req.fromId));
+                        const userSnap = await getDoc(doc(db, 'publicUsers', req.fromId));
                         if (userSnap.exists()) return { ...req, profile: userSnap.data(), senderRole: 'student' };
                     } catch (e) {}
                     return req;

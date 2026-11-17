@@ -2455,7 +2455,7 @@ async function maybeShowRatingPopup() {
     const otherUid = parts.find(p => p !== state.currentUser.uid);
     if (!otherUid) return;
 
-    const instrSnap = await getDoc(doc(db, 'instructors', otherUid));
+    const instrSnap = await getDoc(doc(db, 'publicInstructors', otherUid));
     if (!instrSnap.exists()) return;
 
     const instrName = instrSnap.data().name || 'Your Instructor';

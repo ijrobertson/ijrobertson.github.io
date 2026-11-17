@@ -2663,7 +2663,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Load students from users collection
         async function loadStudents() {
             try {
-                const q = query(collection(db, 'users'), limit(30));
+                const q = query(collection(db, 'publicUsers'), limit(30));
                 const querySnapshot = await getDocs(q);
 
                 allStudents = [];
@@ -2719,7 +2719,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function loadInstructors() {
             try {
                 const [instructorSnap, availSnap] = await Promise.all([
-                    getDocs(collection(db, 'instructors')),
+                    getDocs(collection(db, 'publicInstructors')),
                     getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] }))
                 ]);
 
@@ -2742,8 +2742,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 // Prioritize payment-ready instructors, then those with an intro video
                 allInstructors.sort((a, b) => {
-                    const aReady = (a.chargesEnabled === true && a.payoutsEnabled === true) || (a.payoutMethod === 'wise' && !!a.wiseEmail) ? 1 : 0;
-                    const bReady = (b.chargesEnabled === true && b.payoutsEnabled === true) || (b.payoutMethod === 'wise' && !!b.wiseEmail) ? 1 : 0;
+                    const aReady = (a.chargesEnabled === true && a.payoutsEnabled === true) || (a.payoutMethod === 'wise' && !!a.wiseEmail) || a.paymentReady === true ? 1 : 0;
+                    const bReady = (b.chargesEnabled === true && b.payoutsEnabled === true) || (b.payoutMethod === 'wise' && !!b.wiseEmail) || b.paymentReady === true ? 1 : 0;
                     if (bReady !== aReady) return bReady - aReady;
                     const aHasVideo = !!a.intro_video_url ? 1 : 0;
                     const bHasVideo = !!b.intro_video_url ? 1 : 0;
