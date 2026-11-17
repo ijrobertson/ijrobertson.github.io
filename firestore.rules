@@ -39,7 +39,12 @@ service cloud.firestore {
         return ['status', 'isApproved', 'approvedAt', 'approvedBy', 'commissionRate',
                 'isFoundingInstructor', 'wiseEmail', 'manualPayout', 'stripeAccountId',
                 'lessonsCount', 'referralToken', 'averageRating', 'reviewCount',
-                'googleCalendar', 'flagged'];
+                'googleCalendar', 'flagged',
+                // Payment status (2026-11-17): set from Stripe's own answer by
+                // getStripeConnectDashboard / the Stripe webhook, never by the
+                // instructor — otherwise they could mark themselves bookable.
+                'chargesEnabled', 'payoutsEnabled', 'stripeOnboardingComplete',
+                'stripeMode', 'stripeAccountId_test', 'paypalEmail', 'manualPayoutNote'];
       }
 
       // New profiles (application / first dashboard save) start as pending
