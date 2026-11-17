@@ -2464,6 +2464,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // While a chat is first opening, keep it pinned to the newest message
         // until this time (ms) — see openConversation.
         let pinToBottomUntil = 0;
+        // Whether the person is reading the newest messages (2026-11-16). Only
+        // their own scrolling changes it — NOT the chat getting shorter when
+        // the keyboard opens, which used to leave the newest messages hidden
+        // under the keyboard (and the view somewhere up in the history).
+        let chatStuckToBottom = true;
+        let lastChatTouchAt = 0; // last touch/wheel/mouse on the messages — see the scroll listener
+        function keepChatAtBottom() {
+            if (!chatStuckToBottom) return;
+            const a = document.getElementById('messagesArea');
+            if (a) a.scrollTop = a.scrollHeight;
+        }
 
         // Audio messaging state
         const audioPlayers = new Map(); // msgId -> HTMLAudioElement
@@ -2607,6 +2618,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (!vv) return;
             panel.style.height = vv.height + 'px';
             panel.style.top = vv.offsetTop + 'px';
+            keepChatAtBottom();
         }
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', syncChatPanelToViewport);
@@ -3548,6 +3560,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             });
             messagesAreaEl.addEventListener('scroll', () => {
                 const nearBottom = messagesAreaEl.scrollHeight - messagesAreaEl.scrollTop - messagesAreaEl.clientHeight <= NEAR_BOTTOM_THRESHOLD;
+                // Only a scroll the person made counts; scroll events caused by
+                // the area resizing (keyboard) or re-rendering are ignored.
+                if (Date.now() - lastChatTouchAt < 1500 || nearBottom) chatStuckToBottom = nearBottom;
                 setJumpToBottomVisible(!nearBottom);
             });
 
@@ -3558,7 +3573,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // reopened with everything cached. The pin ends as soon as the
             // person touches/scrolls the messages themselves.
             pinToBottomUntil = Date.now() + 4000;
-            const releaseBottomPin = () => { pinToBottomUntil = 0; };
+            chatStuckToBottom = true;
+            const releaseBottomPin = () => { pinToBottomUntil = 0; lastChatTouchAt = Date.now(); };
             messagesAreaEl.addEventListener('touchstart', releaseBottomPin, { passive: true });
             messagesAreaEl.addEventListener('wheel', releaseBottomPin, { passive: true });
             messagesAreaEl.addEventListener('mousedown', releaseBottomPin);
@@ -3816,7 +3832,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // visually jump the view down by exactly that added height.
                 messagesArea.scrollTop = prevScrollTop + (messagesArea.scrollHeight - prevScrollHeight);
                 endedNearBottom = wasNearBottom;
-            } else if (wasNearBottom || Date.now() < pinToBottomUntil) {
+            } else if (wasNearBottom || chatStuckToBottom || Date.now() < pinToBottomUntil) {
                 messagesArea.scrollTop = messagesArea.scrollHeight;
                 endedNearBottom = true;
             } else {
