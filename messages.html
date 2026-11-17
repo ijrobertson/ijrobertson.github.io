@@ -2545,7 +2545,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // re-inserting markup) so a URL containing "&" or similar doesn't get
         // mangled by escaping running twice or matching against already-escaped
         // entities.
-        const MESSAGE_URL_REGEX = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+\.[a-z]{2,}[^\s<>"']*)/gi;
+        // Third form (2026-11-17): bare domains like "app.linguabud.com" or
+        // "linguabud.com/instructors", limited to common endings so ordinary
+        // words with a dot aren't linked; an email's domain is skipped below.
+        const MESSAGE_URL_REGEX = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+\.[a-z]{2,}[^\s<>"']*|(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:com|net|org|io|app|co|edu|gov|info|me|tv|ly|us|uk|ca|au|in|br|mx|ar|cl|ec|pe|ve|es|fr|de|it|pt|eg)\b(?:\/[^\s<>"']*)?)/gi;
 
         function linkifyMessageText(text) {
             const str = text == null ? '' : String(text);
@@ -2554,6 +2557,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             MESSAGE_URL_REGEX.lastIndex = 0;
             let match;
             while ((match = MESSAGE_URL_REGEX.exec(str)) !== null) {
+                // A bare domain right after "@" (an email address) or glued to
+                // other text isn't a link on its own.
+                const before = match.index > 0 ? str[match.index - 1] : '';
+                if (!/^(https?:|www\.)/i.test(match[0]) && /[@\w.\/-]/.test(before)) continue;
                 html += escapeHtml(str.slice(lastIndex, match.index));
 
                 // Trailing punctuation (a period ending the sentence, a closing
