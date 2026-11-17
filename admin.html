@@ -1034,29 +1034,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         </div>
                     </div>
 
-                    <!-- Video Calls -->
+                    <!-- Video Calls (2026-11-17): real calls from callDiagnostics, which
+                         every join on video-call writes (start, 2-minute snapshots, leave).
+                         A "call" = two or more people in the same room at the same time. -->
                     <h6 class="analytics-section-label"><i class="fas fa-video" style="color:#3b82f6;margin-right:6px;"></i>Video Calls</h6>
                     <div class="overview-grid mb-2">
                         <div class="mini-stat">
                             <div class="mini-stat-icon icon-blue"><i class="fas fa-video"></i></div>
-                            <div><div class="mini-stat-val" id="an-calls-today">—</div><div class="mini-stat-lbl">Lessons Scheduled Today</div></div>
+                            <div><div class="mini-stat-val" id="an-calls-today">—</div><div class="mini-stat-lbl">Video Calls Today</div></div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-blue"><i class="fas fa-clock"></i></div>
+                            <div><div class="mini-stat-val" id="an-call-mins-today">—</div><div class="mini-stat-lbl">Call Time Today</div></div>
                         </div>
                         <div class="mini-stat">
                             <div class="mini-stat-icon icon-teal"><i class="fas fa-video"></i></div>
-                            <div><div class="mini-stat-val" id="an-calls-month">—</div><div class="mini-stat-lbl">Lessons Scheduled This Month</div></div>
+                            <div><div class="mini-stat-val" id="an-calls-month">—</div><div class="mini-stat-lbl">Video Calls This Month</div></div>
                         </div>
-                        <div class="mini-stat analytics-na">
-                            <div class="mini-stat-icon icon-red"><i class="fas fa-clock"></i></div>
-                            <div><div class="mini-stat-val" id="an-call-mins-today">N/A</div><div class="mini-stat-lbl">Call Minutes Today</div></div>
+                        <div class="mini-stat">
+                            <div class="mini-stat-icon icon-teal"><i class="fas fa-clock"></i></div>
+                            <div><div class="mini-stat-val" id="an-call-hours-month">—</div><div class="mini-stat-lbl">Call Time This Month</div></div>
                         </div>
-                        <div class="mini-stat analytics-na">
-                            <div class="mini-stat-icon icon-red"><i class="fas fa-clock"></i></div>
-                            <div><div class="mini-stat-val" id="an-call-hours-month">N/A</div><div class="mini-stat-lbl">Call Hours This Month</div></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-5 mb-3">
+                            <div style="font-weight:600;color:#113448;margin-bottom:0.4rem;">By month</div>
+                            <div style="overflow-x:auto;"><table class="admin-table">
+                                <thead><tr><th>Month</th><th>Calls</th><th>Call time</th><th>No-shows</th></tr></thead>
+                                <tbody id="an-calls-by-month"><tr><td colspan="4" style="color:#999;">Loading…</td></tr></tbody>
+                            </table></div>
+                            <div style="font-weight:600;color:#113448;margin:1rem 0 0.4rem;">By day (last 30 days)</div>
+                            <div style="overflow-x:auto;max-height:260px;overflow-y:auto;"><table class="admin-table">
+                                <thead><tr><th>Day</th><th>Calls</th><th>Call time</th></tr></thead>
+                                <tbody id="an-calls-by-day"><tr><td colspan="3" style="color:#999;">Loading…</td></tr></tbody>
+                            </table></div>
+                        </div>
+                        <div class="col-md-7 mb-3">
+                            <div style="font-weight:600;color:#113448;margin-bottom:0.4rem;">Recent video call rooms (last 30 days)</div>
+                            <div style="overflow-x:auto;max-height:420px;overflow-y:auto;"><table class="admin-table">
+                                <thead><tr><th>When</th><th>Who joined</th><th>Type</th><th>Result</th></tr></thead>
+                                <tbody id="an-calls-recent"><tr><td colspan="4" style="color:#999;">Loading…</td></tr></tbody>
+                            </table></div>
                         </div>
                     </div>
                     <p class="analytics-note">
                         <i class="fas fa-info-circle"></i>
-                        Exact call duration requires Agora Cloud Recording API integration. Lesson counts are shown as a proxy for video call activity.
+                        From the call records the video call page saves for everyone who joins (since Oct 2, 2026). Call time is how long at least two people were in the call together, accurate to about 2 minutes. A no-show is a room where only one person ever joined. Your own test calls (only your accounts) are left out.
                     </p>
 
                 </div>
@@ -3310,7 +3333,133 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }).join('') : '<tr><td colspan="10"><div class="empty-state"><i class="fas fa-users"></i>Nobody has used the app in this period yet.</div></td></tr>';
         };
 
+        // ── Video call analytics (2026-11-17) ───────────────────────────────
+        // Built from callDiagnostics: one doc per person per join, with the
+        // join time and timestamped events (2-minute stats snapshots, 'left'
+        // on leaving). Joins in the same room (channel) within 30 minutes of
+        // each other form one "room session"; its call time is how long two
+        // or more different people were in it at once.
+        const CALL_TEST_UIDS = new Set([
+            'doxDE7putWSNb8FsQMJgctyVrHD3', // Ian Jack (linguabuddev@gmail.com)
+            '24RtkWWM0NfDjIwGncFiclltJw93', // Ian Robertson
+        ]);
+        function fmtCallTime(ms) {
+            const mins = Math.round(ms / 60000);
+            if (mins < 60) return `${mins} min`;
+            return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+        }
+        function buildCallSessions(docs) {
+            const joins = [];
+            docs.forEach((d) => {
+                const x = d.data();
+                const ev = Array.isArray(x.events) ? x.events : [];
+                const times = ev.map((e) => e && e.t).filter((t) => Number.isFinite(t));
+                const started = x.startedAt && x.startedAt.toDate ? x.startedAt.toDate().getTime() : (times.length ? Math.min(...times) : null);
+                if (!started || !x.channel) return;
+                const connected = ev.find((e) => e && (e.type === 'published' || (e.type === 'conn_state' && e.cur === 'CONNECTED')));
+                const from = connected && connected.t ? connected.t : started;
+                const to = Math.max(from, ...times);
+                joins.push({ uid: x.uid, name: x.name || 'Unknown', channel: x.channel, from, to });
+            });
+            const byChannel = new Map();
+            joins.forEach((j) => { if (!byChannel.has(j.channel)) byChannel.set(j.channel, []); byChannel.get(j.channel).push(j); });
+            const sessions = [];
+            byChannel.forEach((list, channel) => {
+                list.sort((a, b) => a.from - b.from);
+                let cur = null;
+                list.forEach((j) => {
+                    if (cur && j.from <= cur.end + 30 * 60000) { cur.joins.push(j); cur.end = Math.max(cur.end, j.to); }
+                    else { cur = { channel, start: j.from, end: j.to, joins: [j] }; sessions.push(cur); }
+                });
+            });
+            sessions.forEach((sn) => {
+                // time with >= 2 different people present (sweep over per-person intervals)
+                const pts = [];
+                sn.joins.forEach((j) => { pts.push([j.from, 1, j.uid]); pts.push([j.to, -1, j.uid]); });
+                pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+                const present = new Map(); let last = null; let together = 0;
+                pts.forEach(([t, delta, uid]) => {
+                    if (last !== null && [...present.values()].filter((n) => n > 0).length >= 2) together += t - last;
+                    present.set(uid, (present.get(uid) || 0) + delta);
+                    last = t;
+                });
+                sn.together = together;
+                sn.people = [...new Map(sn.joins.map((j) => [j.uid, j.name])).entries()];
+                sn.isCall = sn.people.length >= 2 && together >= 60000;
+                sn.isTest = sn.channel === 'ian-test' || sn.people.every(([uid]) => CALL_TEST_UIDS.has(uid));
+                sn.alone = sn.people.length === 1 ? sn.end - sn.start : 0;
+            });
+            return sessions.filter((sn) => !sn.isTest).sort((a, b) => b.start - a.start);
+        }
+        async function loadCallAnalytics() {
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+            const since = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+            try {
+                const snap = await getDocs(query(collection(db, 'callDiagnostics'), where('startedAt', '>=', since)));
+                const sessions = buildCallSessions(snap.docs);
+                const calls = sessions.filter((s) => s.isCall);
+                const sum = (list) => list.reduce((t, s) => t + s.together, 0);
+                const today = calls.filter((s) => s.start >= startOfToday);
+                const month = calls.filter((s) => s.start >= startOfMonth);
+                document.getElementById('an-calls-today').textContent = today.length;
+                document.getElementById('an-call-mins-today').textContent = fmtCallTime(sum(today));
+                document.getElementById('an-calls-month').textContent = month.length;
+                document.getElementById('an-call-hours-month').textContent = fmtCallTime(sum(month));
+
+                // By month (last 6 months, newest first)
+                const monthRows = [];
+                for (let i = 0; i < 6; i++) {
+                    const a = new Date(now.getFullYear(), now.getMonth() - i, 1).getTime();
+                    const b = new Date(now.getFullYear(), now.getMonth() - i + 1, 1).getTime();
+                    const inM = sessions.filter((s) => s.start >= a && s.start < b);
+                    const c = inM.filter((s) => s.isCall);
+                    monthRows.push(`<tr><td>${new Date(a).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td><td>${c.length}</td><td>${fmtCallTime(sum(c))}</td><td>${inM.filter((s) => !s.isCall).length}</td></tr>`);
+                }
+                document.getElementById('an-calls-by-month').innerHTML = monthRows.join('');
+
+                // By day (last 30 days, days with any call)
+                const dayMap = new Map();
+                calls.filter((s) => s.start >= now.getTime() - 30 * 864e5).forEach((s) => {
+                    const k = new Date(s.start).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    const v = dayMap.get(k) || { n: 0, t: 0 }; v.n++; v.t += s.together; dayMap.set(k, v);
+                });
+                document.getElementById('an-calls-by-day').innerHTML = dayMap.size
+                    ? [...dayMap.entries()].map(([k, v]) => `<tr><td>${k}</td><td>${v.n}</td><td>${fmtCallTime(v.t)}</td></tr>`).join('')
+                    : '<tr><td colspan="3" style="color:#999;">No video calls in the last 30 days.</td></tr>';
+
+                // Recent rooms, with the booking (if it was a lesson) to name who didn't show
+                const recent = sessions.filter((s) => s.start >= now.getTime() - 30 * 864e5);
+                const bookingCache = new Map();
+                const rows = await Promise.all(recent.map(async (s) => {
+                    let type = 'Chat call', booking = null;
+                    if (s.channel.startsWith('lesson-')) {
+                        const id = s.channel.slice(7);
+                        if (!bookingCache.has(id)) bookingCache.set(id, getDoc(doc(db, 'bookings', id)).then((b) => (b.exists() ? b.data() : null)).catch(() => null));
+                        booking = await bookingCache.get(id);
+                        type = booking && booking.bookingType === 'free_trial' ? 'Free trial' : 'Lesson';
+                    }
+                    const who = s.people.map(([, n]) => escHtml(n)).join(', ');
+                    let result;
+                    if (s.isCall) {
+                        result = `<span style="color:#0b6664;font-weight:600;">Call · ${fmtCallTime(s.together)} together</span>`;
+                    } else {
+                        const missing = booking ? [booking.studentName, booking.instructorName].filter((n) => n && !s.people.some(([, p]) => p === n)) : [];
+                        result = `<span style="color:#b45309;">${s.people.length === 1 ? `Waited ${fmtCallTime(s.alone)} alone` : 'Never in the call together'}${missing.length ? ` · ${escHtml(missing.join(', '))} didn't join` : ''}</span>`;
+                    }
+                    const when = new Date(s.start).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                    return `<tr><td style="white-space:nowrap;">${when}</td><td>${who}</td><td>${type}</td><td>${result}</td></tr>`;
+                }));
+                document.getElementById('an-calls-recent').innerHTML = rows.length ? rows.join('') : '<tr><td colspan="4" style="color:#999;">No video call activity in the last 30 days.</td></tr>';
+            } catch (e) {
+                console.error('Analytics: video call stats error', e);
+                ['an-calls-today', 'an-call-mins-today', 'an-calls-month', 'an-call-hours-month'].forEach((id) => { document.getElementById(id).textContent = 'Error'; });
+            }
+        }
+
         async function loadAnalytics() {
+            loadCallAnalytics();
             loadMessagingInsights(); // independent — renders its own section when ready
             const now = new Date();
             const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -3360,8 +3509,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 document.getElementById('an-lessons-month').textContent = lessonsMonth;
                 document.getElementById('an-revenue-today').textContent = '$' + (revToday / 100).toFixed(2);
                 document.getElementById('an-revenue-month').textContent = '$' + (revMonth / 100).toFixed(2);
-                document.getElementById('an-calls-today').textContent   = lessonsToday;
-                document.getElementById('an-calls-month').textContent   = lessonsMonth;
             } catch(e) { console.error('Analytics: booking stats error', e); }
 
             // ── Conversation count + message stats ────────────────────────
