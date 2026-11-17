@@ -4,8 +4,9 @@ service cloud.firestore {
 
     // Students/Users collection
     match /users/{userId} {
-      // Anyone can read user profiles (needed for homepage and Connect page)
-      allow read: if true;
+      // Owner and admins only (2026-11-17). Holds private fields (email,
+      // marketing flags); everyone else reads publicUsers/{userId}.
+      allow read: if request.auth != null && (request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
 
       // Users can only write/update their own profile
       allow write: if request.auth != null && request.auth.uid == userId;
@@ -25,8 +26,10 @@ service cloud.firestore {
 
     // Instructors collection
     match /instructors/{instructorId} {
-      // Anyone can read instructor profiles (for browsing)
-      allow read: if true;
+      // Owner and admins only (2026-11-17). Holds private fields (email, payout
+      // details, Stripe IDs, referral token); everyone else reads
+      // publicInstructors/{instructorId}.
+      allow read: if request.auth != null && (request.auth.uid == instructorId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
 
       // Set only by Cloud Functions / admins (Admin SDK bypasses these rules).
       // If instructors could edit them on their own profile they could approve
