@@ -98,6 +98,10 @@ function injectStyles() {
       padding: 0.5rem 0.7rem; font-size: 16px; font-family: inherit;
     }
     .lb-savewd-modal input:focus, .lb-savewd-modal textarea:focus { outline: none; border-color: #20bcba; }
+    .lb-savewd-hint { font-size: 0.78rem; color: #5f6b72; margin: 0.5rem 0 0.35rem; }
+    .lb-savewd-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 6.5rem; overflow-y: auto; margin-bottom: 0.2rem; }
+    .lb-savewd-chip { border: 1.5px solid #d9eeee; background: #f0fffe; color: #0b6664; border-radius: 999px; padding: 0.25rem 0.65rem; font-size: 0.85rem; cursor: pointer; }
+    .lb-savewd-chip.on { background: #20bcba; border-color: #20bcba; color: #fff; }
     .lb-savewd-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.1rem; }
     .lb-savewd-btn { border: none; border-radius: 999px; padding: 0.5rem 1.1rem; font-weight: 700; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
     .lb-savewd-btn-cancel { background: #eef1f0; color: #5f6b72; }
@@ -164,7 +168,7 @@ function showToast(message) {
   }, 2200);
 }
 
-function openSaveModal(term) {
+function openSaveModal(term, { pickFrom = '' } = {}) {
   removeExisting('.lb-savewd-overlay');
 
   const overlay = document.createElement('div');
@@ -190,6 +194,33 @@ function openSaveModal(term) {
   termInput.value = term;
   termInput.maxLength = 200;
   field('Word or phrase', termInput);
+
+  // From a chat message on a phone (where bubbles can't be text-selected):
+  // the message's words as chips — tap one to pick it (2026-11-17).
+  const words = [...new Set(String(pickFrom).split(/\s+/)
+    .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''))
+    .filter((w) => w.length > 1))].slice(0, 30);
+  if (words.length > 1) {
+    const hint = document.createElement('div');
+    hint.className = 'lb-savewd-hint';
+    hint.textContent = 'Tap a word to pick it';
+    const chips = document.createElement('div');
+    chips.className = 'lb-savewd-chips';
+    words.forEach((w) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'lb-savewd-chip';
+      chip.setAttribute('translate', 'no');
+      chip.textContent = w;
+      chip.addEventListener('click', () => {
+        termInput.value = w;
+        chips.querySelectorAll('.lb-savewd-chip').forEach((c) => c.classList.toggle('on', c === chip));
+      });
+      chips.appendChild(chip);
+    });
+    modal.appendChild(hint);
+    modal.appendChild(chips);
+  }
 
   const translationInput = document.createElement('input');
   translationInput.type = 'text';
@@ -340,8 +371,23 @@ function handleSelectionEnd(e) {
   showPill(rect, text);
 }
 
+// On the Messages page the floating pill got in the way of copying a message
+// or link (2026-11-17), so there "Save word" lives in the press-and-hold
+// message menu instead (messages.html calls window.lbSaveWord) and selecting
+// text no longer pops anything up. Lesson pages keep the pill.
+const MENU_ONLY = /\/messages(\.html)?$/i.test(location.pathname);
+window.lbSaveWord = function (term, opts = {}) {
+  const t = String(term || '').trim();
+  if (auth.currentUser) {
+    openSaveModal(t, opts);
+  } else {
+    showSignInTip({ left: window.innerWidth / 2, width: 0, top: window.innerHeight / 2, bottom: window.innerHeight / 2 });
+  }
+};
+
 function init() {
   injectStyles();
+  if (MENU_ONLY) return;
   document.addEventListener('mouseup', handleSelectionEnd);
   document.addEventListener('touchend', handleSelectionEnd);
   document.addEventListener('scroll', () => removeExisting('.lb-savewd-pill'), { passive: true });

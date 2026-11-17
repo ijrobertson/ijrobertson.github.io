@@ -5809,3 +5809,32 @@ exports.emailTrack = onRequest({ cors: false }, async (req, res) => {
     res.status(200).send(TRACKING_GIF);
   }
 });
+
+// ── Message time correction (2026-11-17) ─────────────────────────────────────
+// Messages are stamped with the sender's device clock (timestamp: new Date())
+// so they show instantly while sending — serverTimestamp() made just-sent
+// messages briefly vanish from the ordered chat. But a phone with a wrong
+// clock (one member's was 2 hours fast) then sorted its messages after later
+// replies. This fixes the stamp after the fact: if a new message's timestamp
+// is more than a minute away from when the server actually received it,
+// it's set to the server's time (original kept as clientTimestamp), and so is
+// the chat's lastMessageTime when it came from the same send. Clients see the
+// update through their listeners and the message moves into place.
+exports.normalizeMessageTime = onDocumentCreated('conversations/{convId}/messages/{msgId}', async (event) => {
+  const snap = event.data;
+  if (!snap) return;
+  const d = snap.data() || {};
+  const sent = d.timestamp && d.timestamp.toDate ? d.timestamp.toDate() : null;
+  const received = snap.createTime ? snap.createTime.toDate() : new Date(event.time);
+  if (!sent || Math.abs(sent - received) <= 60000) return;
+  const fixed = received; // a Date — stored as a Firestore timestamp
+  await snap.ref.update({ timestamp: fixed, clientTimestamp: d.timestamp });
+  const convRef = snap.ref.parent.parent;
+  await admin.firestore().runTransaction(async (tx) => {
+    const conv = await tx.get(convRef);
+    const last = conv.exists && conv.data().lastMessageTime;
+    const lastMs = last && last.toDate ? last.toDate().getTime() : null;
+    if (lastMs !== null && Math.abs(lastMs - sent.getTime()) <= 5000) tx.update(convRef, { lastMessageTime: fixed });
+  });
+  console.log(`[normalizeMessageTime] ${event.params.convId}/${event.params.msgId}: sender clock off by ${Math.round((sent - received) / 1000)}s, corrected`);
+});
