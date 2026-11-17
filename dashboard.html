@@ -3801,15 +3801,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
 
             if (chargesEnabled) {
-              // Cloud Function already synced Firestore, but write here too for safety
-              // (guards against older function versions being cached).
-              await setDoc(doc(db, 'instructors', currentUser.uid),
-                {
-                  stripeOnboardingComplete: true,
-                  chargesEnabled: true,
-                  payoutsEnabled: payoutsEnabled === true,
-                  payoutMethod: 'stripe'
-                }, { merge: true });
+              // getStripeConnectDashboard has already saved chargesEnabled /
+              // payoutsEnabled / stripeOnboardingComplete / payoutMethod from Stripe's
+              // own answer (and Stripe's account.updated webhook does too). The page
+              // no longer writes them itself: they are server-only, so an instructor
+              // can't mark themselves payment-ready (2026-11-17).
               renderStripeSection('connected');
               hideStripeOverlay();
             } else {
