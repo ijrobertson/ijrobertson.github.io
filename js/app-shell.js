@@ -427,6 +427,7 @@ const STYLE = `
 `;
 
 const ROLE_STORAGE_KEY = "lb-shell-role";
+const UNREAD_STORAGE_KEY = "lb-shell-unread"; // last unread-message count, shown on the next page at once
 const GLIDE_STORAGE_KEY = "lb-tab-glide";
 const GLIDE_DURATION = 380;
 const GLIDE_EASING = "cubic-bezier(0.32, 0.72, 0, 1)"; // iOS's own sheet curve
@@ -515,6 +516,11 @@ class LbAppShell extends HTMLElement {
     if (name === "role" && newValue) {
       try { localStorage.setItem(ROLE_STORAGE_KEY, newValue); } catch (e) {}
     }
+    // Remembered so the next page's tab bar shows the badge straight away
+    // instead of blank until that page's listener hears from the server.
+    if (name === "messages-unread" && newValue != null) {
+      try { localStorage.setItem(UNREAD_STORAGE_KEY, newValue); } catch (e) {}
+    }
     // The page's own script has now decided which tab is active (usually
     // after auth resolves) — that wins over the optimistic arrival guess,
     // but not over a tab the user has just tapped on their way out.
@@ -552,7 +558,9 @@ class LbAppShell extends HTMLElement {
   // a neighbouring label, but it's always one value, so every tab matches.
   _tabBoxes() {
     const nav = this.shadowRoot.querySelector("nav");
-    const labels = [...this.shadowRoot.querySelectorAll("a.tab span")].map((el) => el.getBoundingClientRect());
+    // Tab names only — not the Messages unread badge (also a span), which
+    // made 6 boxes for 5 tabs: half-width capsule and a slide to the left.
+    const labels = [...this.shadowRoot.querySelectorAll("a.tab span:not(.tab-badge)")].map((el) => el.getBoundingClientRect());
     if (!nav || !labels.length || !labels[0].width) return [];
     const navLeft = nav.getBoundingClientRect().left;
     // At least 8px clear of the screen edge and 10px clear of the next label.
@@ -652,7 +660,9 @@ class LbAppShell extends HTMLElement {
     const hideHeader = this.hasAttribute("hide-header");
     // A count since 2026-11-17 ("true" still accepted from older pages and
     // shows the highlight without a number).
-    const unreadAttr = this.getAttribute("messages-unread") || "0";
+    let unreadAttr = this.getAttribute("messages-unread");
+    if (unreadAttr == null) { try { unreadAttr = localStorage.getItem(UNREAD_STORAGE_KEY); } catch (e) {} }
+    unreadAttr = unreadAttr || "0";
     const unreadCount = /^\d+$/.test(unreadAttr) ? parseInt(unreadAttr, 10) : (unreadAttr === "true" ? -1 : 0);
     const messagesUnread = unreadCount !== 0;
     const unreadLabel = unreadCount > 99 ? "99+" : unreadCount > 0 ? String(unreadCount) : "";
@@ -837,6 +847,7 @@ class LbAppShell extends HTMLElement {
         // Dispatched rather than importing Firebase here — keeps this component
         // backend-agnostic. Each page listens and reuses its own existing
         // sign-out logic (see docs/PWA_PRD.md §15).
+        try { localStorage.removeItem(UNREAD_STORAGE_KEY); } catch (e) {}
         this.dispatchEvent(new CustomEvent("lb-logout", { bubbles: true, composed: true }));
       });
     }
@@ -858,7 +869,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v55"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v56"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
