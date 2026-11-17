@@ -381,6 +381,27 @@ const STYLE = `
      takes precedence over aria-current so it's visible even while the
      Messages tab happens to already be the active one mid-transition. */
   a.tab.unread { color: var(--danger); }
+  /* Unread count on the Messages icon (2026-11-17), like an app-icon badge.
+     Positioned over the icon's corner so it never changes the bar's layout. */
+  .tab-badge {
+    position: absolute;
+    top: 4px;
+    inset-inline-start: calc(50% + 4px);
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    border-radius: 9px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 17px;
+    text-align: center;
+    box-shadow: 0 0 0 2px var(--surface, #fff);
+    pointer-events: none;
+  }
+  .tab-badge[hidden] { display: none; }
   /* Immediate tap feedback (see pointerdown/up wiring in _render()) — a tab is
      a real <a href>, so the actual navigation can take a moment on a slow
      load; this gives instant confirmation the tap registered, distinct from
@@ -629,7 +650,12 @@ class LbAppShell extends HTMLElement {
     const notifications = parseInt(this.getAttribute("notifications") || "0", 10);
     const streak = parseInt(this.getAttribute("streak") || "0", 10);
     const hideHeader = this.hasAttribute("hide-header");
-    const messagesUnread = this.getAttribute("messages-unread") === "true";
+    // A count since 2026-11-17 ("true" still accepted from older pages and
+    // shows the highlight without a number).
+    const unreadAttr = this.getAttribute("messages-unread") || "0";
+    const unreadCount = /^\d+$/.test(unreadAttr) ? parseInt(unreadAttr, 10) : (unreadAttr === "true" ? -1 : 0);
+    const messagesUnread = unreadCount !== 0;
+    const unreadLabel = unreadCount > 99 ? "99+" : unreadCount > 0 ? String(unreadCount) : "";
     // Opt-in: absent on every existing page until that page's script sets it,
     // so this can't change behavior anywhere it isn't explicitly wired up.
     // An explicit URL rather than history.back() — pages reached via a deep
@@ -694,7 +720,7 @@ class LbAppShell extends HTMLElement {
             (item) => `
           <a class="tab${item.id === "messages" && messagesUnread ? " unread" : ""}" href="${item.href}" data-id="${item.id}" ${item.id === active ? 'aria-current="page"' : ""}>
             ${icon(item.icon)}
-            <span>${T(item.label)}</span>
+            <span>${T(item.label)}</span>${item.id === "messages" ? `<span class="tab-badge" aria-hidden="true"${unreadLabel ? "" : " hidden"}>${unreadLabel}</span>` : ""}
           </a>`
           )
           .join("")}
@@ -725,6 +751,8 @@ class LbAppShell extends HTMLElement {
         if (tab.dataset.id === active) tab.setAttribute("aria-current", "page");
         else tab.removeAttribute("aria-current");
         tab.classList.toggle("unread", tab.dataset.id === "messages" && messagesUnread);
+        const badge = tab.querySelector(".tab-badge");
+        if (badge) { badge.textContent = unreadLabel; badge.hidden = !unreadLabel; }
       });
     }
 
@@ -830,7 +858,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v54"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v55"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;

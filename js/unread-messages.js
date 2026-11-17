@@ -40,7 +40,12 @@ export function watchUnreadMessages(uid, shell) {
     where('participants', 'array-contains', uid)
   );
 
-  return onSnapshot(q, (snapshot) => {
+  // Only act on the server's answer (2026-11-17). On opening the app the
+  // first answer can come from the empty local cache, which read as "0
+  // unread" and cleared the home-screen badge the push had just set — and if
+  // the app was closed again before the server replied, it stayed cleared.
+  return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+    if (snapshot.metadata.fromCache) return;
     let total = 0;
     snapshot.forEach((docSnap) => {
       const conv = docSnap.data();
@@ -49,7 +54,7 @@ export function watchUnreadMessages(uid, shell) {
       // counts as one, like WhatsApp.
       else if (conv.markedUnread && conv.markedUnread[uid] === true) total += 1;
     });
-    shell.setAttribute('messages-unread', total > 0 ? 'true' : 'false');
+    shell.setAttribute('messages-unread', String(total)); // the tab shows the number
     setAppBadgeCount(total);
   });
 }

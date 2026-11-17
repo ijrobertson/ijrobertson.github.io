@@ -224,6 +224,8 @@ const TOKEN_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 function shouldRefreshToken() {
   try {
+    // One-time refresh after 2026-11-17 so every install records its origin.
+    if (!localStorage.getItem('lb_push_token_origin_v1')) { localStorage.setItem('lb_push_token_origin_v1', '1'); return true; }
     const last = localStorage.getItem(TOKEN_REFRESH_KEY);
     return !last || (Date.now() - parseInt(last, 10)) > TOKEN_REFRESH_INTERVAL_MS;
   } catch (e) {
@@ -270,6 +272,10 @@ async function registerToken(uid) {
         createdAt: serverTimestamp(),
         lastSeenAt: serverTimestamp(),
         userAgent: navigator.userAgent,
+        // Which install this token belongs to — each web address (and the
+        // installed app vs a browser tab) has its own push registration.
+        origin: location.host,
+        installedApp: isStandalonePWA(),
       },
     },
     updatedAt: serverTimestamp(),
@@ -289,8 +295,28 @@ async function registerToken(uid) {
  * conversation is already open); every other page gets a generic toast by
  * default rather than showing nothing.
  */
+// Uploads the service worker's log of received pushes (see sw.js logPush)
+// to fcmTokens/{uid}.pushLog, then clears it. Diagnostics only.
+async function uploadPushLog(uid) {
+  try {
+    const cache = await caches.open('lb-push-log');
+    const res = await cache.match('/__push-log');
+    if (!res) return;
+    const entries = await res.json();
+    if (!Array.isArray(entries) || !entries.length) return;
+    const tagged = entries.map((e) => ({ ...e, origin: location.host, installedApp: isStandalonePWA() }));
+    const ref = doc(db, 'fcmTokens', uid);
+    const prev = (await getDoc(ref)).data()?.pushLog || [];
+    await setDoc(ref, { pushLog: [...prev, ...tagged].slice(-40) }, { merge: true });
+    await cache.delete('/__push-log');
+  } catch (e) {
+    // never matters to the person using the app
+  }
+}
+
 export async function initPush(uid, { onForegroundMessage } = {}) {
   if (!pushSupported() || !uid) return;
+  uploadPushLog(uid);
 
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data?.type === 'lb-push-foreground') {

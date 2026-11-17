@@ -119,7 +119,7 @@ if (self.workbox) {
     // v21 (2026-11-03): video-call.html camera-off card + new asset versions (call reliability fixes).
     // v22 (same day): connect.html + index.html stop featuring a placeholder-photo account.
     // v23 (2026-11-06): messages.html voice notes send reliably in the installed iOS app.
-    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v54" })
+    new workbox.strategies.StaleWhileRevalidate({ cacheName: "linguabud-pages-v55" })
   );
 
   // Cache-first for same-origin static assets (shared CSS/JS libraries, app-shell.js,
@@ -192,7 +192,7 @@ if (self.workbox) {
       SAME_ORIGIN({ url }) &&
       ["style", "script", "image", "font"].includes(request.destination),
     new workbox.strategies.CacheFirst({
-      cacheName: "linguabud-assets-v68", // v68 (2026-11-17): lib/firebaseClient.js Google Analytics user_id, PAGES_CACHE_NAME sync (pages v54: GA4 tag on every app page); v67 (2026-11-17): PAGES_CACHE_NAME sync (pages v53: instructor Settings no longer writes Stripe status itself); v66 (2026-11-17): js/scripts.js stops quietly where morphext isn't loaded, PAGES_CACHE_NAME sync (pages v52: photo fallbacks in messages/friends); v65 (2026-11-17): video-call.js reads publicInstructors, PAGES_CACHE_NAME sync (pages v51: other people's profiles from publicUsers/publicInstructors); v64 (2026-11-16): push-notifications.js enable flow can no longer hang (time limits, clear outcome), i18n-strings.js outcome messages; v63 (2026-11-16): PAGES_CACHE_NAME sync (pages v50: chat stays on newest message when the keyboard opens); v62 (2026-11-16): i18n-strings.js new iPhone install steps (page menu → Share), PAGES_CACHE_NAME sync; v61 (2026-11-16): push-notifications.js instructor booking reminder, i18n-strings.js (reminder + booking notice), PAGES_CACHE_NAME sync; v60 (2026-11-16): js/save-word-widget.js input font 16px (stops iOS focus zoom), PAGES_CACHE_NAME sync; v59 (2026-11-15): lib/firebaseClient.js daily usage record (appUsage), js/adventures.js usage count, PAGES_CACHE_NAME sync; v58 (2026-11-15): PAGES_CACHE_NAME sync (pages v45: security escaping across profile/admin/booking pages); v57 (2026-11-15): PAGES_CACHE_NAME sync (pages v44: messages.html escaping fix); v56 (2026-11-15): i18n-strings.js chat search + Copy link, night.css, PAGES_CACHE_NAME sync; v55 (2026-11-15): new js/install-nudge.js, lib/firebaseClient.js installed-app stamp, i18n-strings.js reminder card, night.css, PAGES_CACHE_NAME sync; v54 (2026-11-15): i18n-strings.js install-page (get-app.html) strings, images/app-qr.svg; v53 (2026-11-15): Instructors header with lesson picture (i18n-strings.js, night.css, images/online_teacher.jpg + online_student.jpg), PAGES_CACHE_NAME sync; v52 (2026-11-14): i18n-strings.js "All Countries" / "Any Price" filter options; v51 (2026-11-14): i18n-strings.js Instructors header (how booking works), night.css, PAGES_CACHE_NAME sync; v50 (2026-11-14): i18n-strings.js chat load-error strings, night.css, PAGES_CACHE_NAME sync; v49 (2026-11-13): i18n-strings.js "Show the word", night.css, PAGES_CACHE_NAME sync; v48 (2026-11-13): i18n.js toEnglish() matches French thin spaces; v47 (2026-11-13): French interface (i18n.js fr, i18n-strings.js fr table), Arabic shown with the Egyptian flag; v46 (2026-11-13): Arabic interface (i18n.js RTL + plural forms, i18n-strings.js ar table, app-shell.js direction-aware header, new css/rtl.css), PAGES_CACHE_NAME sync; v45 (2026-11-13): adventures.js Spanish/Portuguese explanation overlays; v44 (2026-11-13): quiz question types (i18n-strings.js labels, PAGES_CACHE_NAME sync); v43 (2026-11-13): PAGES_CACHE_NAME sync (pages v35: vocab-quiz answer de-dup); v42 (2026-11-13): AI quizzes off — i18n-strings.js reminder text, PAGES_CACHE_NAME sync; v41 (2026-11-13): PAGES_CACHE_NAME sync in app-shell.js (pages v33: English word bank in vocab-quiz.html); v40 (2026-11-13): translations phase 2 batch C (instructor Settings, Calendar, Earnings); v39 (2026-11-13): translations phase 2 batch B (Friends, Instructors, instructor profile/booking), i18n.js word contexts; v38 (2026-11-13): translations phase 2 batch A (learning pages), i18n.js name rules; v37 (2026-11-12): interface language (new js/i18n.js + js/i18n-strings.js, app-shell.js language picker, flag-emoji.js on all shell pages); v36 (2026-11-12): night.css regenerated for the instructor Settings layout; v35 (2026-11-12): night.css regenerated for the new student Settings layout; page-transitions.js swallows skipped-transition rejections; v34 (2026-11-12): tab bar updates in place instead of rebuilding (lost taps), instant tab-to-tab switches (app-shell.js, page-transitions.js), PAGES_CACHE_NAME sync; v33 (2026-11-12): tab-bar capsule sized to each tab, symmetric at both screen edges (app-shell.js); v32 (2026-11-12): app-shell.js loads before first paint (tab bar no longer rises in during page change), label-width tabs + measured glider; v31 (2026-11-06): PAGES_CACHE_NAME sync in app-shell.js; v30 (2026-11-03): PAGES_CACHE_NAME sync in app-shell.js; v29 (2026-11-03): video-call.js/.css call reliability fixes (camera-off card, dropped-call notice, auto-rejoin, tab handover, muted hint); v28: tab-bar glider, one continuous slide (app-shell.js); v27: tokens.css overscroll-behavior (tab bar no longer bounces); v26: PAGES_CACHE_NAME sync in app-shell.js; v25: rollback of v24 (offline-cache change broke iPhone); v24: Firestore offline cache (lib/firebaseClient.js), Firebase preconnect (app-shell.js); v23: PAGES_CACHE_NAME sync in app-shell.js; v22: js/adventures.js, js/flag-emoji.js, tokens.css .flag-emoji, page-transitions depths; v21: video-call pre-join back/Not now buttons; v20: video-call.js/.css/.html synced with main (screen-share rewrite) + overlay layout; v19: video-call.js screen-share token uid; v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
+      cacheName: "linguabud-assets-v69", // v69 (2026-11-17): unread badge only from server answers + count on the Messages tab (app-shell.js, unread-messages.js), push-notifications.js token origin + push log upload, PAGES_CACHE_NAME sync; v68 (2026-11-17): lib/firebaseClient.js Google Analytics user_id, PAGES_CACHE_NAME sync (pages v54: GA4 tag on every app page); v67 (2026-11-17): PAGES_CACHE_NAME sync (pages v53: instructor Settings no longer writes Stripe status itself); v66 (2026-11-17): js/scripts.js stops quietly where morphext isn't loaded, PAGES_CACHE_NAME sync (pages v52: photo fallbacks in messages/friends); v65 (2026-11-17): video-call.js reads publicInstructors, PAGES_CACHE_NAME sync (pages v51: other people's profiles from publicUsers/publicInstructors); v64 (2026-11-16): push-notifications.js enable flow can no longer hang (time limits, clear outcome), i18n-strings.js outcome messages; v63 (2026-11-16): PAGES_CACHE_NAME sync (pages v50: chat stays on newest message when the keyboard opens); v62 (2026-11-16): i18n-strings.js new iPhone install steps (page menu → Share), PAGES_CACHE_NAME sync; v61 (2026-11-16): push-notifications.js instructor booking reminder, i18n-strings.js (reminder + booking notice), PAGES_CACHE_NAME sync; v60 (2026-11-16): js/save-word-widget.js input font 16px (stops iOS focus zoom), PAGES_CACHE_NAME sync; v59 (2026-11-15): lib/firebaseClient.js daily usage record (appUsage), js/adventures.js usage count, PAGES_CACHE_NAME sync; v58 (2026-11-15): PAGES_CACHE_NAME sync (pages v45: security escaping across profile/admin/booking pages); v57 (2026-11-15): PAGES_CACHE_NAME sync (pages v44: messages.html escaping fix); v56 (2026-11-15): i18n-strings.js chat search + Copy link, night.css, PAGES_CACHE_NAME sync; v55 (2026-11-15): new js/install-nudge.js, lib/firebaseClient.js installed-app stamp, i18n-strings.js reminder card, night.css, PAGES_CACHE_NAME sync; v54 (2026-11-15): i18n-strings.js install-page (get-app.html) strings, images/app-qr.svg; v53 (2026-11-15): Instructors header with lesson picture (i18n-strings.js, night.css, images/online_teacher.jpg + online_student.jpg), PAGES_CACHE_NAME sync; v52 (2026-11-14): i18n-strings.js "All Countries" / "Any Price" filter options; v51 (2026-11-14): i18n-strings.js Instructors header (how booking works), night.css, PAGES_CACHE_NAME sync; v50 (2026-11-14): i18n-strings.js chat load-error strings, night.css, PAGES_CACHE_NAME sync; v49 (2026-11-13): i18n-strings.js "Show the word", night.css, PAGES_CACHE_NAME sync; v48 (2026-11-13): i18n.js toEnglish() matches French thin spaces; v47 (2026-11-13): French interface (i18n.js fr, i18n-strings.js fr table), Arabic shown with the Egyptian flag; v46 (2026-11-13): Arabic interface (i18n.js RTL + plural forms, i18n-strings.js ar table, app-shell.js direction-aware header, new css/rtl.css), PAGES_CACHE_NAME sync; v45 (2026-11-13): adventures.js Spanish/Portuguese explanation overlays; v44 (2026-11-13): quiz question types (i18n-strings.js labels, PAGES_CACHE_NAME sync); v43 (2026-11-13): PAGES_CACHE_NAME sync (pages v35: vocab-quiz answer de-dup); v42 (2026-11-13): AI quizzes off — i18n-strings.js reminder text, PAGES_CACHE_NAME sync; v41 (2026-11-13): PAGES_CACHE_NAME sync in app-shell.js (pages v33: English word bank in vocab-quiz.html); v40 (2026-11-13): translations phase 2 batch C (instructor Settings, Calendar, Earnings); v39 (2026-11-13): translations phase 2 batch B (Friends, Instructors, instructor profile/booking), i18n.js word contexts; v38 (2026-11-13): translations phase 2 batch A (learning pages), i18n.js name rules; v37 (2026-11-12): interface language (new js/i18n.js + js/i18n-strings.js, app-shell.js language picker, flag-emoji.js on all shell pages); v36 (2026-11-12): night.css regenerated for the instructor Settings layout; v35 (2026-11-12): night.css regenerated for the new student Settings layout; page-transitions.js swallows skipped-transition rejections; v34 (2026-11-12): tab bar updates in place instead of rebuilding (lost taps), instant tab-to-tab switches (app-shell.js, page-transitions.js), PAGES_CACHE_NAME sync; v33 (2026-11-12): tab-bar capsule sized to each tab, symmetric at both screen edges (app-shell.js); v32 (2026-11-12): app-shell.js loads before first paint (tab bar no longer rises in during page change), label-width tabs + measured glider; v31 (2026-11-06): PAGES_CACHE_NAME sync in app-shell.js; v30 (2026-11-03): PAGES_CACHE_NAME sync in app-shell.js; v29 (2026-11-03): video-call.js/.css call reliability fixes (camera-off card, dropped-call notice, auto-rejoin, tab handover, muted hint); v28: tab-bar glider, one continuous slide (app-shell.js); v27: tokens.css overscroll-behavior (tab bar no longer bounces); v26: PAGES_CACHE_NAME sync in app-shell.js; v25: rollback of v24 (offline-cache change broke iPhone); v24: Firestore offline cache (lib/firebaseClient.js), Firebase preconnect (app-shell.js); v23: PAGES_CACHE_NAME sync in app-shell.js; v22: js/adventures.js, js/flag-emoji.js, tokens.css .flag-emoji, page-transitions depths; v21: video-call pre-join back/Not now buttons; v20: video-call.js/.css/.html synced with main (screen-share rewrite) + overlay layout; v19: video-call.js screen-share token uid; v18 (2026-10-20): video-call.js/.css auto-end forgotten calls; v17: webfonts/TwemojiCountryFlags.woff2; v16: lib/firebaseClient.js stamps users.lastActiveAt; v15: PAGES_CACHE_NAME sync in app-shell.js; v14: Earnings tab → earnings page (app-shell.js, page-transitions.js); v13: js/unread-messages.js counts chats marked unread; v12: press feedback (app-shell.js), directional slides (tokens.css + new js/page-transitions.js); v11: skeleton styles in css/tokens.css; v9 (2026-10-19): js/app-shell.js tab-bar glider; v10 same day: page transitions (css/tokens.css + app-shell parts)
       plugins: [new workbox.expiration.ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60, maxEntries: 200 })],
     })
   );
@@ -304,6 +304,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-assets-v65"),
       caches.delete("linguabud-assets-v66"),
       caches.delete("linguabud-assets-v67"),
+      caches.delete("linguabud-assets-v68"),
       caches.delete("linguabud-pages"),
       caches.delete("linguabud-pages-v2"),
       caches.delete("linguabud-pages-v3"),
@@ -357,6 +358,7 @@ self.addEventListener("activate", (event) => {
       caches.delete("linguabud-pages-v51"),
       caches.delete("linguabud-pages-v52"),
       caches.delete("linguabud-pages-v53"),
+      caches.delete("linguabud-pages-v54"),
     ])
   );
 });
@@ -367,6 +369,24 @@ self.addEventListener("activate", (event) => {
 // and known foreground/background double-notification pitfalls when mixing
 // `notification`+`data` payloads). The server always sends data-only FCM
 // messages, so this handler is always the one in control of what's shown.
+// Push delivery log (2026-11-17): the last 20 pushes this install received
+// and what happened to the badge/notification, kept in Cache Storage. The
+// app uploads it to fcmTokens/{uid}.pushLog on its next open
+// (js/push-notifications.js), so a missing badge can be traced to "never
+// arrived" vs "arrived but the badge call failed".
+const PUSH_LOG_CACHE = "lb-push-log";
+async function logPush(entry) {
+  try {
+    const cache = await caches.open(PUSH_LOG_CACHE);
+    const old = await cache.match("/__push-log");
+    const list = old ? await old.json() : [];
+    list.push(Object.assign({ t: Date.now() }, entry));
+    await cache.put("/__push-log", new Response(JSON.stringify(list.slice(-20)), { headers: { "Content-Type": "application/json" } }));
+  } catch (e) {
+    // Diagnostics only — never let this affect the notification itself.
+  }
+}
+
 self.addEventListener("push", (event) => {
   if (!event.data) return;
   let raw;
@@ -427,8 +447,10 @@ self.addEventListener("push", (event) => {
           try {
             if (n > 0) await self.navigator.setAppBadge(n);
             else await self.navigator.clearAppBadge();
-          } catch {
+            payload.__badge = "set:" + n;
+          } catch (e) {
             // Badge failures are cosmetic — never worth surfacing to the user.
+            payload.__badge = "error:" + ((e && e.name) || "unknown");
           }
         }
       }
@@ -441,8 +463,10 @@ self.addEventListener("push", (event) => {
         // Foreground: let the open page show its own in-app toast instead of
         // a redundant OS-level notification — see js/push-notifications.js.
         focused.postMessage({ type: "lb-push-foreground", payload });
+        await logPush({ badge: payload.__badge || ("setAppBadge" in self.navigator ? "no-count" : "unsupported"), shown: "foreground" });
         return;
       }
+      await logPush({ badge: payload.__badge || ("setAppBadge" in self.navigator ? "no-count" : "unsupported"), shown: "notification" });
       await self.registration.showNotification(payload.title, {
         body: payload.body,
         icon: "/icons/icon-192.png",

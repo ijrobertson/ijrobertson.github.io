@@ -5757,7 +5757,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 where('participants', 'array-contains', auth.currentUser.uid)
             );
 
-            onSnapshot(q, (snapshot) => {
+            // Server answers only — see js/unread-messages.js (an empty cached
+            // first answer used to clear the home-screen badge).
+            onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+                if (snapshot.metadata.fromCache) return;
                 _unreadMsgCount = 0;
                 snapshot.forEach((doc) => {
                     const conv = doc.data();
@@ -5774,7 +5777,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Same query/count this listener already computes — reused here
                 // rather than a second subscription via js/unread-messages.js.
                 const shellEl = document.getElementById('shell');
-                if (shellEl) shellEl.setAttribute('messages-unread', _unreadMsgCount > 0 ? 'true' : 'false');
+                if (shellEl) shellEl.setAttribute('messages-unread', String(_unreadMsgCount));
                 setAppBadgeCount(_unreadMsgCount);
 
                 if (messagesLink) {
