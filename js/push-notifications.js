@@ -125,6 +125,19 @@ async function resolvePreferenceDocRef(uid) {
   return instructorSnap.exists() ? doc(db, 'instructors', uid) : doc(db, 'users', uid);
 }
 
+function isIOS() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Replaces the banner's description with the outcome of tapping Enable.
+function showSoftAskResult(banner, text, ok) {
+  const desc = banner.querySelector('.lb-push-softask-text');
+  if (!desc) return;
+  desc.textContent = text;
+  desc.style.color = ok ? '#0b6664' : '#5f6b72';
+  desc.style.fontWeight = ok ? '700' : '400';
+}
+
 function showSoftAskBanner(uid, { instructor = false } = {}) {
   // Mark as shown immediately (not after a decision) — if the user reloads
   // mid-thought, or navigates away without tapping either button, it still
@@ -149,7 +162,7 @@ function showSoftAskBanner(uid, { instructor = false } = {}) {
   ].join(';'));
   banner.innerHTML = `
     <div style="font-weight:700;font-size:1rem;color:#113448;margin-bottom:0.3rem;">${title}</div>
-    <div style="font-size:0.88rem;color:#5f6b72;margin-bottom:0.9rem;line-height:1.4;">${text}</div>
+    <div class="lb-push-softask-text" style="font-size:0.88rem;color:#5f6b72;margin-bottom:0.9rem;line-height:1.4;">${text}</div>
     <div style="display:flex;gap:0.6rem;">
       <button type="button" id="lb-push-softask-enable" style="flex:1;border:none;border-radius:999px;padding:0.6rem 1rem;font-weight:700;font-size:0.9rem;cursor:pointer;background:#0b6664;color:#fff;">Enable</button>
       <button type="button" id="lb-push-softask-dismiss" style="border:none;border-radius:999px;padding:0.6rem 1rem;font-weight:700;font-size:0.9rem;cursor:pointer;background:#eef1f0;color:#5f6b72;">Not now</button>
@@ -166,18 +179,36 @@ function showSoftAskBanner(uid, { instructor = false } = {}) {
   banner.querySelector('#lb-push-softask-dismiss').addEventListener('click', removeBanner);
   banner.querySelector('#lb-push-softask-enable').addEventListener('click', async () => {
     const enableBtn = banner.querySelector('#lb-push-softask-enable');
+    const dismissBtn = banner.querySelector('#lb-push-softask-dismiss');
     enableBtn.disabled = true;
     enableBtn.textContent = 'Enabling…';
-    const granted = await requestPushPermissionAndRegister(uid);
-    if (granted) {
-      try {
-        const prefDocRef = await resolvePreferenceDocRef(uid);
-        await setDoc(prefDocRef, { messagePushEnabled: true, dailyReminderEnabled: true }, { merge: true });
-      } catch (e) {
-        console.error('Error saving push preferences from soft-ask:', e);
-      }
+    const result = await enablePush(uid);
+    if (result === 'enabled' || result === 'pending') {
+      // Permission is what matters: if registering didn't finish, it's
+      // retried automatically on the next page load. Saved in the
+      // background so a slow connection can't hold the banner open.
+      resolvePreferenceDocRef(uid)
+        .then((ref) => setDoc(ref, { messagePushEnabled: true, dailyReminderEnabled: true }, { merge: true }))
+        .catch((e) => console.error('Error saving push preferences from soft-ask:', e));
+      showSoftAskResult(banner, 'Notifications are on', true);
+      enableBtn.textContent = '✓';
+      dismissBtn.remove();
+      setTimeout(removeBanner, 1800);
+      return;
     }
-    removeBanner();
+    if (result === 'denied') {
+      showSoftAskResult(banner, isIOS()
+        ? 'Notifications are turned off for Lingua Bud. To turn them on, open your iPhone Settings → Notifications → Lingua Bud.'
+        : "Notifications are blocked for Lingua Bud. You can allow them in your browser's site settings.", false);
+      dismissBtn.textContent = 'OK';
+      enableBtn.remove();
+      return;
+    }
+    // 'error' / 'unsupported': let them try again rather than leave the
+    // button stuck.
+    showSoftAskResult(banner, "Couldn't turn on notifications. Please try again.", false);
+    enableBtn.disabled = false;
+    enableBtn.textContent = 'Try again';
   });
 }
 
@@ -200,15 +231,40 @@ function shouldRefreshToken() {
   }
 }
 
+// Every step here can stall on a real phone (2026-11-16 report: the
+// "Enabling…" button never finished): serviceWorker.ready waits forever if
+// the worker failed to install (e.g. its workbox import didn't download on a
+// first launch), getToken talks to Google's push servers, and setDoc only
+// resolves once Firestore's server confirms. So each step has a time limit,
+// and the token save isn't waited on (Firestore keeps it queued and sends it
+// when the connection is back).
+function withTimeout(promise, ms, what) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${what} timed out after ${ms}ms`)), ms); }),
+  ]).finally(() => clearTimeout(timer));
+}
+
+async function getWorkerRegistration() {
+  // Make sure the worker is registered (harmless if it already is), then
+  // wait for it to be active.
+  // Not awaited: registering can itself stall (it downloads sw.js).
+  try { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}); } catch (e) {}
+  return withTimeout(navigator.serviceWorker.ready, 8000, 'service worker');
+}
+
 async function registerToken(uid) {
-  const swReg = await navigator.serviceWorker.ready;
+  const swReg = await getWorkerRegistration();
   const messaging = getMessaging(app);
-  const token = await getToken(messaging, { vapidKey: VAPID_PUBLIC_KEY, serviceWorkerRegistration: swReg });
+  const token = await withTimeout(
+    getToken(messaging, { vapidKey: VAPID_PUBLIC_KEY, serviceWorkerRegistration: swReg }),
+    20000, 'push token');
   if (!token) return null;
 
   // Nested-map merge: only adds/overwrites this one token's entry, leaving
   // any other device's token already on the doc untouched.
-  await setDoc(doc(db, 'fcmTokens', uid), {
+  setDoc(doc(db, 'fcmTokens', uid), {
     tokens: {
       [token]: {
         createdAt: serverTimestamp(),
@@ -217,9 +273,9 @@ async function registerToken(uid) {
       },
     },
     updatedAt: serverTimestamp(),
-  }, { merge: true });
-
-  try { localStorage.setItem(TOKEN_REFRESH_KEY, String(Date.now())); } catch (e) {}
+  }, { merge: true }).then(() => {
+    try { localStorage.setItem(TOKEN_REFRESH_KEY, String(Date.now())); } catch (e) {}
+  }).catch((e) => console.error('Saving push token failed:', e));
   return token;
 }
 
@@ -268,14 +324,38 @@ export async function initPush(uid, { onForegroundMessage } = {}) {
  * on a true return, and revert the toggle otherwise.
  */
 export async function requestPushPermissionAndRegister(uid) {
-  if (!pushSupported()) return false;
+  return (await enablePush(uid)) === 'enabled';
+}
+
+/**
+ * Same as above but says what happened, and never hangs:
+ *   'enabled'     — permission granted and this device registered
+ *   'denied'      — the person (or iOS) said no; only Settings can undo it
+ *   'pending'     — permission granted but registering didn't finish (slow or
+ *                   offline); initPush retries on the next page load because
+ *                   the daily refresh stamp is only written on success
+ *   'unsupported' — this browser can't do web push (e.g. iPhone Safari tab,
+ *                   not the installed app)
+ *   'error'       — permission request itself failed
+ */
+export async function enablePush(uid) {
+  if (!pushSupported()) return 'unsupported';
+  let permission;
   try {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return false;
-    const token = await registerToken(uid);
-    return !!token;
+    // Must be the first await after the tap: iOS only shows its prompt
+    // when it's tied directly to the gesture.
+    permission = await Notification.requestPermission();
   } catch (e) {
-    console.error('Push permission/registration error:', e);
-    return false;
+    console.error('Push permission error:', e);
+    return 'error';
+  }
+  if (permission === 'denied') return 'denied';
+  if (permission !== 'granted') return 'error';
+  try {
+    const token = await registerToken(uid);
+    return token ? 'enabled' : 'pending';
+  } catch (e) {
+    console.error('Push registration error:', e);
+    return 'pending';
   }
 }
