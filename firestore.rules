@@ -15,6 +15,14 @@ service cloud.firestore {
     // Public copies of users/ and instructors/ with only the fields other
     // people may see (allowlist in functions/publicProfiles.js). Written only
     // by the syncPublicUser / syncPublicInstructor triggers.
+    // Email campaign recipients + open/click tracking (2026-11-17). Written
+    // only by the send script (Admin SDK) and the emailTrack function.
+    match /emailRecipients/{token} {
+      allow read: if request.auth != null
+                  && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if false;
+    }
+
     match /publicUsers/{userId} {
       allow read: if true;
       allow write: if false;

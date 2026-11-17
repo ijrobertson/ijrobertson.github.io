@@ -1082,6 +1082,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         From the call records the video call page saves for everyone who joins (since Oct 2, 2026). Call time is how long at least two people were in the call together, accurate to about 2 minutes. A no-show is a room where only one person ever joined. Your own test calls (only your accounts) are left out.
                     </p>
 
+                    <!-- Email follow-up (2026-11-17): who opened / clicked a tracked
+                         campaign email (emailRecipients, written by the send script and
+                         the emailTrack function) and whether they then finished payment
+                         setup (publicInstructors.paymentReady). -->
+                    <h6 class="analytics-section-label" style="margin-top:1.5rem;"><i class="fas fa-envelope-open-text" style="color:#20bcba;margin-right:6px;"></i>Email Follow-up</h6>
+                    <div class="d-flex align-items-center flex-wrap mb-2" style="gap:0.6rem;">
+                        <select id="an-email-campaign" style="padding:0.35rem 0.6rem;border:1px solid #d0d5dd;border-radius:6px;"></select>
+                        <span id="an-email-summary" style="color:#555;font-size:0.9rem;"></span>
+                    </div>
+                    <div style="overflow-x:auto;max-height:460px;overflow-y:auto;"><table class="admin-table">
+                        <thead><tr><th>Instructor</th><th>Sent</th><th>Opened</th><th>Clicked</th><th>Payment set up now</th></tr></thead>
+                        <tbody id="an-email-recipients"><tr><td colspan="5" style="color:#999;">Loading…</td></tr></tbody>
+                    </table></div>
+                    <p class="analytics-note">
+                        <i class="fas fa-info-circle"></i>
+                        "Opened" is approximate: some email apps (like Apple Mail) load images on their own, and others block them. "Clicked" means they used a button in the email. "Payment set up now" is checked live, so it shows who actually finished.
+                    </p>
+
                 </div>
 
                 <!-- ── Referrals Tab ──────────────────────────────────────── -->
@@ -3458,7 +3476,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // ── Email follow-up (2026-11-17) ─────────────────────────────────────
+        const EMAIL_CAMPAIGN_NAMES = { 'payment-setup-2026-11': 'Payment setup reminder (Nov 2026)' };
+        let emailRecipientsCache = [];
+        function fmtWhen(v) {
+            const d = v && v.toDate ? v.toDate() : (v ? new Date(v) : null);
+            return d ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+        }
+        async function renderEmailCampaign(campaign) {
+            const rows = emailRecipientsCache.filter((r) => r.campaign === campaign);
+            const ready = await Promise.all(rows.map((r) => getDoc(doc(db, 'publicInstructors', r.uid)).then((d) => d.exists() && d.data().paymentReady === true).catch(() => false)));
+            const yes = (t) => `<span style="color:#0b6664;font-weight:600;"><i class="fas fa-check"></i> ${t}</span>`;
+            const no = '<span style="color:#aaa;">—</span>';
+            const order = rows.map((r, i) => ({ r, ready: ready[i] }))
+                .sort((a, b) => (b.ready - a.ready) || ((b.r.clicks || 0) - (a.r.clicks || 0)) || ((b.r.opens || 0) - (a.r.opens || 0)) || String(a.r.name).localeCompare(String(b.r.name)));
+            document.getElementById('an-email-recipients').innerHTML = order.length ? order.map(({ r, ready }) => `<tr>
+                <td>${escHtml(r.name || '')}<br><small style="color:#999;">${escHtml(r.email || '')}${r.startedStripe ? ' · had started Stripe' : ''}</small></td>
+                <td style="white-space:nowrap;">${r.sendError ? '<span style="color:#c0392b;">Failed</span>' : fmtWhen(r.sentAt)}</td>
+                <td style="white-space:nowrap;">${r.opens ? yes(fmtWhen(r.firstOpenAt) + (r.opens > 1 ? ` (${r.opens}×)` : '')) : no}</td>
+                <td style="white-space:nowrap;">${r.clicks ? yes(fmtWhen(r.firstClickAt) + (r.clicks > 1 ? ` (${r.clicks}×)` : '')) : no}</td>
+                <td>${ready ? yes('Yes') : '<span style="color:#b45309;">Not yet</span>'}</td></tr>`).join('')
+                : '<tr><td colspan="5" style="color:#999;">No recipients.</td></tr>';
+            const n = rows.length, o = rows.filter((r) => r.opens).length, c = rows.filter((r) => r.clicks).length, p = ready.filter(Boolean).length;
+            document.getElementById('an-email-summary').textContent = n ? `${n} sent · ${o} opened · ${c} clicked · ${p} finished payment setup` : '';
+        }
+        async function loadEmailFollowup() {
+            const sel = document.getElementById('an-email-campaign');
+            try {
+                const snap = await getDocs(collection(db, 'emailRecipients'));
+                emailRecipientsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                const campaigns = [...new Set(emailRecipientsCache.map((r) => r.campaign))].sort().reverse();
+                if (!campaigns.length) {
+                    sel.style.display = 'none';
+                    document.getElementById('an-email-recipients').innerHTML = '<tr><td colspan="5" style="color:#999;">No tracked emails sent yet.</td></tr>';
+                    return;
+                }
+                sel.innerHTML = campaigns.map((c) => `<option value="${escHtml(c)}">${escHtml(EMAIL_CAMPAIGN_NAMES[c] || c)}</option>`).join('');
+                sel.onchange = () => renderEmailCampaign(sel.value);
+                await renderEmailCampaign(campaigns[0]);
+            } catch (e) {
+                console.error('Analytics: email follow-up error', e);
+                document.getElementById('an-email-recipients').innerHTML = '<tr><td colspan="5" style="color:#c0392b;">Could not load email results.</td></tr>';
+            }
+        }
+
         async function loadAnalytics() {
+            loadEmailFollowup();
             loadCallAnalytics();
             loadMessagingInsights(); // independent — renders its own section when ready
             const now = new Date();
