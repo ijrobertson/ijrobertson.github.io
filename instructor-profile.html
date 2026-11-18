@@ -732,6 +732,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const LB_H12 = !(window.lbI18n && window.lbI18n.locale);
         const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
         import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot, updateDoc } from './lib/firebaseClient.js';
+        import { rememberBooking } from './js/add-to-calendar.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
@@ -1468,7 +1469,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     ]);
                     const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
                     const studentData = studentSnap.exists() ? studentSnap.data() : {};
-                    await addDoc(collection(db, 'bookings'), {
+                    const newBookingRef = await addDoc(collection(db, 'bookings'), {
                         instructorId:      currentInstructorId,
                         studentId:         auth.currentUser.uid,
                         dateTime:          selectedSlot.startTime,
@@ -1490,6 +1491,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             referralDocId:         window._pendingReferralDocId
                         })
                     });
+                    // Add-to-calendar pop-up on the Bookings page (js/add-to-calendar.js)
+                    rememberBooking({ id: newBookingRef.id, start: selectedSlot.startTime, minutes: 60, instructorName: instructorData.name || currentInstructorName, trial: false });
                     selectedSlot   = null;
                     stripeElements = null;
                     stripeInstance = null;
@@ -1703,7 +1706,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
                 const studentData    = studentSnap.exists() ? studentSnap.data() : {};
 
-                await addDoc(collection(db, 'bookings'), {
+                const newBookingRef = await addDoc(collection(db, 'bookings'), {
                     instructorId:       currentInstructorId,
                     studentId:          auth.currentUser.uid,
                     dateTime:           trialSelectedSlot.startTime,
@@ -1717,6 +1720,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     studentName:        studentData.name || auth.currentUser.displayName || auth.currentUser.email,
                     instructorSeen:     false
                 });
+                // Add-to-calendar pop-up on the Bookings page (js/add-to-calendar.js)
+                rememberBooking({ id: newBookingRef.id, start: trialSelectedSlot.startTime, minutes: 15, instructorName: instructorData.name || currentInstructorName, trial: true });
 
                 trialSelectedSlot = null;
                 window.location.href = 'bookings';

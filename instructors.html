@@ -1564,6 +1564,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const LB_H12 = !(window.lbI18n && window.lbI18n.locale);
         const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
+        import { rememberBooking } from './js/add-to-calendar.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
@@ -2505,7 +2506,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
                             const studentData = studentSnap.exists() ? studentSnap.data() : {};
 
-                            await addDoc(collection(db, 'bookings'), {
+                            const newBookingRef = await addDoc(collection(db, 'bookings'), {
                                 instructorId: currentInstructorId,
                                 studentId: auth.currentUser.uid,
                                 dateTime: selectedSlot.startTime,
@@ -2523,6 +2524,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 instructorSeen: false,
                                 studentSeen: false
                             });
+                            // Add-to-calendar pop-up on the Bookings page (js/add-to-calendar.js)
+                            rememberBooking({ id: newBookingRef.id, start: selectedSlot.startTime, minutes: 60, instructorName: instructorData.name || currentInstructorName, trial: false });
 
                             // Reset payment step state
                             selectedSlot = null;
