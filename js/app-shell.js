@@ -1017,4 +1017,25 @@ if (!customElements.get("lb-app-shell")) {
   customElements.define("lb-app-shell", LbAppShell);
 }
 
+// iPhone home-screen app (2026-11-18): the edge swipe ("swipe right from the
+// left edge") is iOS's back gesture, which opened whichever tab you were on
+// before. On the main tab pages it now does nothing: a same-page history
+// entry absorbs the swipe and is put back. Only the iOS installed app
+// (navigator.standalone), only tab pages, so in-page Back buttons (e.g.
+// instructor profile -> Instructors) and browsers/Android are unaffected.
+(function guardTabSwipeBack() {
+  try {
+    if (window.navigator.standalone !== true || window.__lbTabGuard) return;
+    const TAB_PAGES = ["home", "connect", "instructors", "messages", "student-dashboard", "bookings", "earnings", "dashboard"];
+    const page = location.pathname.replace(/^\/+|\.html$|\/+$/g, "") || "home";
+    if (!TAB_PAGES.includes(page)) return;
+    window.__lbTabGuard = true;
+    const guard = () => history.pushState({ lbTabGuard: true }, "", location.href);
+    if (!(history.state && history.state.lbTabGuard)) guard();
+    window.addEventListener("popstate", (e) => {
+      if (!(e.state && e.state.lbTabGuard)) guard();
+    });
+  } catch (e) { /* never block the page */ }
+})();
+
 })();
