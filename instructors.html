@@ -1552,6 +1552,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
+        import { sortSpanishRecommended, lastActiveMapFrom, setAvailability as setCardAvailability } from './js/instructor-cards.js';
 
         // Stripe publishable key is fetched once from the backend and cached.
         // This keeps the key out of the HTML source; switching test↔live is a
@@ -1676,6 +1677,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // Availability map: instructorId → availability doc data
         let availabilityMap = {};
+        let instructorLastActive = {}; // uid -> ms, from publicUsers.lastActiveAt (Spanish order)
 
         // Returns the next Date with open slots within 14 days, or null
         function getNextAvailableDate(availability) {
@@ -1770,10 +1772,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function fetchInstructors() {
             try {
                 // Fetch instructors and availability in parallel
-                const [instructorSnap, availSnap] = await Promise.all([
+                const [instructorSnap, availSnap, activeSnap] = await Promise.all([
                     getDocs(collection(db, 'publicInstructors')),
-                    getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] }))
+                    getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] })),
+                    getDocs(query(collection(db, 'publicUsers'), where('role', '==', 'instructor'))).catch(() => ({ forEach() {} }))
                 ]);
+                instructorLastActive = lastActiveMapFrom(activeSnap);
 
                 // Build availability map
                 availabilityMap = {};
@@ -1898,6 +1902,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 priceDesc:   (a, b) => priceInUsd(b) - priceInUsd(a)
             };
             filtered.sort(sorters[sortFilter.value] || sorters.recommended);
+            // Spanish + Recommended (2026-11-18): Ian's six first, then by most
+            // recent sign-in — same order as spanish-tutors and learn-spanish.
+            if (selectedLang === 'Spanish' && (sortFilter.value || 'recommended') === 'recommended') {
+                setCardAvailability(availabilityMap);
+                sortSpanishRecommended(filtered, instructorLastActive);
+            }
 
             if (filtered.length === 0) {
                 instructorGrid.innerHTML = '<div class="no-results"><i class="fas fa-chalkboard-teacher" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No instructors found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';

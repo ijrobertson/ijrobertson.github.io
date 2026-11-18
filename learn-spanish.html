@@ -1121,6 +1121,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             onAuthStateChanged, signOut, doc, getDoc,
             where, onSnapshot
         } from './lib/firebaseClient.js';
+        import { setAvailability, sortSpanishRecommended, lastActiveMapFrom } from './js/instructor-cards.js';
 
         /* ── Default avatar SVG ─────────────────────────────── */
         const AVT = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e8f8f7'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2320bcba'/%3E%3Cellipse cx='50' cy='85' rx='28' ry='22' fill='%2320bcba'/%3E%3C/svg%3E";
@@ -1291,9 +1292,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function loadSpanishInstructors() {
             const grid = document.getElementById('instructorsGrid');
             try {
-                const [snap, availSnap] = await Promise.all([
+                const [snap, availSnap, activeSnap] = await Promise.all([
                     getDocs(collection(db, 'publicInstructors')),
-                    getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] }))
+                    getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] })),
+                    getDocs(query(collection(db, 'publicUsers'), where('role', '==', 'instructor'))).catch(() => ({ forEach() {} }))
                 ]);
                 const availabilityMap = {};
                 availSnap.docs.forEach(d => { availabilityMap[d.id] = d.data(); });
@@ -1311,6 +1313,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const spanishInstructors = instructors.filter(i => {
                     return (i.languages_teaching || []).some(isSpanish);
                 });
+                // Ian's order (2026-11-18): six pinned, then by most recent sign-in
+                // — shared with spanish-tutors and instructors?language=Spanish.
+                setAvailability(availabilityMap);
+                sortSpanishRecommended(spanishInstructors, lastActiveMapFrom(activeSnap));
 
                 grid.innerHTML = '';
                 if (spanishInstructors.length === 0) {

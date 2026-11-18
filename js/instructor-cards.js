@@ -277,5 +277,34 @@ function createInstructorCard(instructor) {
 
     return card;
 }
+// ── Spanish order (2026-11-18, Ian's choice) ─────────────────────────────
+// On spanish-tutors, learn-spanish and instructors?language=Spanish: these
+// six first, in this order, then every other Spanish instructor by most
+// recent sign-in (publicUsers.lastActiveAt), so long-inactive instructors
+// sink to the bottom and get fewer bookings they might miss.
+export const SPANISH_PINNED_IDS = [
+    'doxDE7putWSNb8FsQMJgctyVrHD3', // Ian Jack
+    'OEujQqqzQmQYetsjExPUWFdcK552', // Melany Quintana
+    'BnPoHjDVasZlWhhft8Ohr0eYJy22', // Veronica Monroy Martinez
+    'njp0QrFfRwhB76J7onZ3tt0YTym1', // Melissa
+    '2zo8BNoviLfo8Ld9JbxJUV8gJb62', // Alicia Velásquez
+    'E0ZH8A0BiQe51wwh2tuzaDkJUMd2', // Sara Hoyos
+];
+// lastActive: { [uid]: milliseconds } — see lastActiveMapFrom().
+export function sortSpanishRecommended(list, lastActive = {}) {
+    const rank = (id) => { const i = SPANISH_PINNED_IDS.indexOf(id); return i === -1 ? Infinity : i; };
+    return list.sort((a, b) => (rank(a.id) - rank(b.id))
+        || ((lastActive[b.id] || 0) - (lastActive[a.id] || 0))
+        || (recommendedScore(b) - recommendedScore(a)));
+}
+// Builds { uid: ms } from a publicUsers query snapshot (role == 'instructor').
+export function lastActiveMapFrom(snapshot) {
+    const map = {};
+    snapshot.forEach((d) => {
+        const t = d.data().lastActiveAt;
+        map[d.id] = t && t.toMillis ? t.toMillis() : (t ? new Date(t).getTime() || 0 : 0);
+    });
+    return map;
+}
 
 export { FEATURED_INSTRUCTOR_IDS, isPaymentReady, priceInUsd, formatPrice, recommendedScore, createInstructorCard, getNextAvailableDate, escapeHtml };
