@@ -962,6 +962,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             border-bottom-left-radius: 6px;
         }
 
+        .conversation-last-message .draft-label { color: var(--pb-teal-deep, #0b6664); font-weight: 700; } html[data-theme="night"] .conversation-last-message .draft-label { color: #20bcba; }
         .message-text {
             overflow-wrap: anywhere;
             word-break: break-word;
@@ -2303,6 +2304,39 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // of sending a new message. Reset on every conversation switch.
         let editingMessage = null;
 
+        // ----- Drafts (2026-11-18) -----
+        // Unsent text is kept per conversation (this device, this account) so
+        // leaving a chat, switching tabs or closing the app doesn't lose it,
+        // and the chat list shows "Draft: …" like WhatsApp. Cleared on send.
+        const DRAFT_PREFIX = 'lb-draft:';
+        function draftKey(conversationId) {
+            return currentUser && conversationId ? `${DRAFT_PREFIX}${currentUser.uid}:${conversationId}` : null;
+        }
+        function getDraft(conversationId) {
+            try { const k = draftKey(conversationId); return (k && localStorage.getItem(k)) || ''; } catch (e) { return ''; }
+        }
+        function setDraft(conversationId, text) {
+            try {
+                const k = draftKey(conversationId);
+                if (!k) return;
+                if (text && text.trim()) localStorage.setItem(k, text.slice(0, 5000));
+                else localStorage.removeItem(k);
+            } catch (e) { /* storage full/blocked: drafts just aren't kept */ }
+            updateDraftPreview(conversationId);
+        }
+        // Chat-list preview: "Draft: …" while a draft exists, else the last message.
+        function draftPreviewHtml(conversationId, lastMessage) {
+            const draft = getDraft(conversationId);
+            if (draft) return `<span class="draft-label">Draft:</span> <span translate="no">${escapeHtml(draft.replace(/\s+/g, ' '))}</span>`;
+            return lastMessage ? escapeHtml(lastMessage) : 'No messages yet';
+        }
+        function updateDraftPreview(conversationId) {
+            const el = document.querySelector(`.conversation-item[data-conv-id="${CSS.escape(conversationId)}"] .conversation-last-message`);
+            if (!el) return;
+            el.innerHTML = draftPreviewHtml(conversationId, el.dataset.lastMessage || '');
+            el.classList.toggle('has-draft', !!getDraft(conversationId));
+        }
+
         // How long after sending a text message it can still be edited —
         // same window WhatsApp uses, so a conversation can't be quietly
         // rewritten long after the other person has read and replied to it.
@@ -2974,7 +3008,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <img class="conversation-avatar" src="${escapeHtml(otherUser.avatar_url || DEFAULT_AVATAR)}" onerror="this.onerror=null; this.src=window.DEFAULT_AVATAR" alt="${escapeHtml(otherUser.name)}">
                 <div class="conversation-info">
                     <div class="conversation-name" translate="no">${escapeHtml(otherUser.name)}</div>
-                    <div class="conversation-last-message"${conv.lastMessage ? ' translate="no"' : ''}>${conv.lastMessage ? escapeHtml(conv.lastMessage) : 'No messages yet'}</div>
+                    <div class="conversation-last-message${getDraft(conv.id) ? ' has-draft' : ''}" data-last-message="${escapeHtml(conv.lastMessage || '')}"${conv.lastMessage && !getDraft(conv.id) ? ' translate="no"' : ''}>${draftPreviewHtml(conv.id, conv.lastMessage)}</div>
                 </div>
                 <div class="conv-meta" style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
                     <div class="conversation-time">${formatTime(conv.lastMessageTime)}</div>
@@ -3042,8 +3076,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 if (existing[conv.id]) {
                     // Update the mutable parts in-place — no DOM removal/re-creation
                     const item = existing[conv.id];
-                    item.querySelector('.conversation-last-message').textContent =
-                        conv.lastMessage || 'No messages yet';
+                    // Keeps a "Draft: …" preview if there's an unsent draft.
+                    item.querySelector('.conversation-last-message').dataset.lastMessage = conv.lastMessage || '';
+                    updateDraftPreview(conv.id);
                     item.querySelector('.conversation-time').textContent =
                         formatTime(conv.lastMessageTime);
                     const meta = item.querySelector('.conv-meta');
@@ -3441,7 +3476,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Auto-resize textarea and submit on Enter (Shift+Enter for newline)
             const messageInput = document.getElementById('messageInput');
+            // Bring back any unsent draft for this chat (no typing indicator).
+            const savedDraft = getDraft(conversationId);
+            if (savedDraft) {
+                messageInput.value = savedDraft;
+                requestAnimationFrame(() => {
+                    messageInput.style.height = 'auto';
+                    messageInput.style.height = Math.min(messageInput.scrollHeight, 160) + 'px';
+                });
+            }
             messageInput.addEventListener('input', () => {
+                if (!editingMessage) setDraft(conversationId, messageInput.value);
                 messageInput.style.height = 'auto';
                 messageInput.style.height = Math.min(messageInput.scrollHeight, 160) + 'px';
                 // Clearing the box back to empty stops the indicator right
@@ -4275,11 +4320,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         function cancelEditingMessage() {
             if (!editingMessage) return;
+            const editedConversationId = editingMessage.conversationId;
             editingMessage = null;
             const input = document.getElementById('messageInput');
             if (input) {
-                input.value = '';
+                // Back to the unsent draft (if any) that the edit temporarily replaced.
+                input.value = getDraft(editedConversationId);
                 input.style.height = 'auto';
+                if (input.value) input.style.height = Math.min(input.scrollHeight, 160) + 'px';
             }
             renderEditBar();
         }
@@ -4764,6 +4812,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // confirmed) works the same way it does in WhatsApp.
             input.value = '';
             input.style.height = 'auto';
+            setDraft(conversationId, '');
             stopTyping();
             // Tapping the Send button blurs the (previously-focused) input
             // the instant the tap registers, before this handler even runs —
