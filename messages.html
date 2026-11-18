@@ -1884,7 +1884,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
         .audio-player .audio-play-btn { grid-column: 1; grid-row: 1 / span 2; }
         .audio-player .audio-progress-container { display: contents; }
-        .audio-player .audio-waveform { grid-column: 2 / 4; grid-row: 1; margin-bottom: 0; height: 5px; }
+        .audio-player .audio-waveform { grid-column: 2 / 4; grid-row: 1; margin-bottom: 0; height: 5px; position: relative; overflow: visible; touch-action: none; }
+        /* Easy-to-grab strip around the thin bar: drag along it to scrub. */
+        .audio-player .audio-waveform::before { content: ''; position: absolute; left: -6px; right: -6px; top: -14px; bottom: -14px; }
+        .audio-player .audio-progress-bar { position: relative; border-radius: 3px; }
+        .audio-player .audio-progress-bar::after { content: ''; position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: #20bcba; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+        .audio-player .audio-waveform.scrubbing .audio-progress-bar { transition: none; }
+        .audio-player .audio-waveform.scrubbing .audio-progress-bar::after { transform: scale(1.3); }
+        /* The bubble keeps its width instead of sliding under the profile photo. */
+        .message:has(.audio-message-content) .msg-col { flex-shrink: 0; }
+        .message:has(.audio-message-content) { gap: 0.6rem; }
         .audio-player .audio-time { grid-column: 2; grid-row: 2; white-space: nowrap; }
         .audio-player .speed-controls { grid-column: 3; grid-row: 2; white-space: nowrap; justify-self: end; }
         @media (max-width: 360px) { /* smallest phones: speed buttons get their own row */
@@ -3628,6 +3637,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // Event delegation for audio player controls (persists across message re-renders)
             const messagesAreaEl = document.getElementById('messagesArea');
             messagesAreaEl.addEventListener('click', handleAudioClick);
+            setupAudioScrubbing(messagesAreaEl);
 
             // Swipe-left / long-press on a bubble to reply to it — see
             // setupMessageGestures. Delegated at the container level (like
@@ -5184,11 +5194,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <i class="fas fa-play"></i>
                             </button>
                             <div class="audio-progress-container">
-                                <div class="audio-waveform" data-msg-id="${escapeHtml(msgId)}">
+                                <div class="audio-waveform" data-msg-id="${escapeHtml(msgId)}" data-duration="${Number(duration) || 0}" data-audio-url="${escapeHtml(audioUrl)}" role="slider" aria-label="Voice message position" aria-valuemin="0" aria-valuemax="${Number(duration) || 0}" aria-valuenow="0" tabindex="0">
                                     <div class="audio-progress-bar" id="progressBar-${escapeHtml(msgId)}"></div>
                                 </div>
                                 <div class="audio-time">
-                                    <span id="currentTime-${escapeHtml(msgId)}">0:00</span> / ${formatDuration(duration)}
+                                    <span id="currentTime-${escapeHtml(msgId)}">0:00</span> / <span id="totalTime-${escapeHtml(msgId)}">${formatDuration(duration)}</span>
                                 </div>
                             </div>
                             <div class="speed-controls">
@@ -5212,10 +5222,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 audio.preload = 'metadata';
                 audioPlayers.set(msgId, audio);
 
+                // Show the real length once the browser knows it.
+                audio.addEventListener('loadedmetadata', () => {
+                    if (!isFinite(audio.duration) || audio.duration <= 0) return;
+                    const totalEl = document.getElementById(`totalTime-${msgId}`);
+                    if (totalEl) totalEl.textContent = formatDuration(audio.duration);
+                    const wf = document.querySelector(`.audio-waveform[data-msg-id="${CSS.escape(msgId)}"]`);
+                    if (wf) { wf.dataset.duration = String(audio.duration); wf.setAttribute('aria-valuemax', String(Math.round(audio.duration))); }
+                });
+
                 audio.addEventListener('timeupdate', () => {
                     const bar = document.getElementById(`progressBar-${msgId}`);
                     const timeEl = document.getElementById(`currentTime-${msgId}`);
-                    if (bar && audio.duration) bar.style.width = (audio.currentTime / audio.duration * 100) + '%';
+                    const dur = audioLength(audio, msgId);
+                    if (bar && dur && !bar.closest('.scrubbing')) bar.style.width = Math.min(100, audio.currentTime / dur * 100) + '%';
                     if (timeEl) timeEl.textContent = formatDuration(audio.currentTime);
                 });
 
@@ -5229,6 +5249,77 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
             }
             return audioPlayers.get(msgId);
+        }
+
+        // Length of a voice note: the browser's, or the length saved with the
+        // message when the browser can't tell (some recordings report Infinity).
+        function audioLength(audio, msgId) {
+            if (audio && isFinite(audio.duration) && audio.duration > 0) return audio.duration;
+            const wf = document.querySelector(`.audio-waveform[data-msg-id="${CSS.escape(msgId)}"]`);
+            return wf ? (parseFloat(wf.dataset.duration) || 0) : 0;
+        }
+
+        // ----- Scrubbing (2026-11-18): tap or drag along a voice note's bar
+        // to jump forward or back. Works before the note has been played.
+        function setAudioPosition(msgId, url, fraction) {
+            const audio = getAudioElement(msgId, url);
+            const apply = () => {
+                const dur = audioLength(audio, msgId);
+                if (!dur) return;
+                try { audio.currentTime = fraction * dur; } catch (e) { /* not seekable yet */ }
+            };
+            if (audio.readyState >= 1) apply();
+            else audio.addEventListener('loadedmetadata', apply, { once: true });
+            // Update the bar and clock straight away (don't wait for the audio).
+            const dur = audioLength(audio, msgId);
+            const bar = document.getElementById(`progressBar-${msgId}`);
+            const timeEl = document.getElementById(`currentTime-${msgId}`);
+            if (bar) bar.style.width = (fraction * 100) + '%';
+            if (timeEl && dur) timeEl.textContent = formatDuration(fraction * dur);
+            const wf = document.querySelector(`.audio-waveform[data-msg-id="${CSS.escape(msgId)}"]`);
+            if (wf && dur) wf.setAttribute('aria-valuenow', String(Math.round(fraction * dur)));
+        }
+        function setupAudioScrubbing(areaEl) {
+            if (areaEl.dataset.scrubReady) return;
+            areaEl.dataset.scrubReady = '1';
+            let scrub = null;
+            const fractionAt = (wf, clientX) => {
+                const r = wf.getBoundingClientRect();
+                return r.width ? Math.max(0, Math.min(1, (clientX - r.left) / r.width)) : 0;
+            };
+            areaEl.addEventListener('pointerdown', (e) => {
+                const wf = e.target.closest('.audio-waveform');
+                if (!wf || (e.button !== undefined && e.button !== 0)) return;
+                e.preventDefault();
+                e.stopPropagation(); // not a long-press / reply swipe
+                scrub = { wf, msgId: wf.dataset.msgId, url: wf.dataset.audioUrl, id: e.pointerId };
+                try { wf.setPointerCapture(e.pointerId); } catch (_) {}
+                wf.classList.add('scrubbing');
+                setAudioPosition(scrub.msgId, scrub.url, fractionAt(wf, e.clientX));
+            });
+            areaEl.addEventListener('pointermove', (e) => {
+                if (!scrub || e.pointerId !== scrub.id) return;
+                e.preventDefault();
+                setAudioPosition(scrub.msgId, scrub.url, fractionAt(scrub.wf, e.clientX));
+            });
+            const end = (e) => {
+                if (!scrub || (e && e.pointerId !== scrub.id)) return;
+                scrub.wf.classList.remove('scrubbing');
+                scrub = null;
+            };
+            areaEl.addEventListener('pointerup', end);
+            areaEl.addEventListener('pointercancel', end);
+            // Keyboard: arrow keys move 5 seconds.
+            areaEl.addEventListener('keydown', (e) => {
+                const wf = e.target.closest && e.target.closest('.audio-waveform');
+                if (!wf || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+                e.preventDefault();
+                const audio = getAudioElement(wf.dataset.msgId, wf.dataset.audioUrl);
+                const dur = audioLength(audio, wf.dataset.msgId);
+                if (!dur) return;
+                const t = Math.max(0, Math.min(dur, (audio.currentTime || 0) + (e.key === 'ArrowRight' ? 5 : -5)));
+                setAudioPosition(wf.dataset.msgId, wf.dataset.audioUrl, t / dur);
+            });
         }
 
         function handleAudioClick(e) {
@@ -5332,10 +5423,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (waveform) {
                 const msgId = waveform.dataset.msgId;
                 const audio = audioPlayers.get(msgId);
-                if (audio && audio.duration) {
-                    const rect = waveform.getBoundingClientRect();
-                    audio.currentTime = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * audio.duration;
-                }
+                // Taps and drags are handled by the scrub code (pointer events).
                 return;
             }
 
