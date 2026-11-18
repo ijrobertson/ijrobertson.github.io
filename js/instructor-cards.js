@@ -168,7 +168,7 @@ function createInstructorCard(instructor) {
            <div class="instructor-card-body">`
         : `<div class="instructor-card-header">
                <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
-               <img class="instructor-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
+               <img class="instructor-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" loading="lazy" decoding="async" onerror="this.src='https://via.placeholder.com/100'">
                <div class="instructor-card-name">${name}</div>
                ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
                <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>

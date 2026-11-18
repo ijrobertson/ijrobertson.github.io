@@ -1528,6 +1528,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </div>
 
+    <style>
+        /* "Show more" (2026-11-18): 12 at a time on computers, 6 on phones. */
+        .lb-more { text-align: center; margin: 0.5rem auto 3rem; padding: 0 16px; }
+        .lb-more-count { color: #5f6b72; font-size: 0.95rem; margin-bottom: 0.75rem; }
+        .lb-more-btn { background: #20bcba; color: #fff; border: 0; border-radius: 2rem; padding: 0.8rem 2.2rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+        .lb-more-btn:hover, .lb-more-btn:focus { background: #0b6664; outline: none; }
+    </style>
     <!-- Instructor Grid -->
     <div class="instructor-grid-container">
         <div class="instructor-grid" id="instructorGrid">
@@ -1537,6 +1544,75 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
     </div>
+
+    <div class="lb-more" id="showMoreBar" hidden>
+        <div class="lb-more-count" id="showMoreCount"></div>
+        <button type="button" class="lb-more-btn" id="showMoreBtn">Show more</button>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="text-container about">
+                        <h4>Few Words About Lingua Bud</h4>
+                        <p class="white">We're passionate about creating the best online community of language learners and providing them with the resources to become fluent.</p>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
+                <div class="col-md-2">
+                    <div class="text-container">
+                        <h4>Links</h4>
+                        <ul class="list-unstyled li-space-lg white">
+                            <li>
+                                <a class="white" href="language-learning-resources">Resources</a>
+                            </li>
+                            <li>
+                                <a class="white" href="terms-conditions">Terms &amp; Conditions</a>
+                            </li>
+                            <li>
+                                <a class="white" href="privacy-policy">Privacy Policy</a>
+                            </li>
+                        </ul>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
+                <div class="col-md-2">
+                    <div class="text-container">
+                        <h4>Languages</h4>
+                        <ul class="list-unstyled li-space-lg">
+                            <li><a class="white" href="learn-spanish">Spanish</a></li>
+                            <li><a class="white" href="learn-french">French</a></li>
+                            <li><a class="white" href="learn-portuguese">Portuguese</a></li>
+                        </ul>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
+                <div class="col-md-2">
+                    <div class="text-container">
+                        <h4>Connect</h4>
+                        <ul class="list-unstyled li-space-lg">
+                            <li><a class="white" href="connect">Find a Bud</a></li>
+                            <li><a class="white" href="instructors">Instructors</a></li>
+                            <li><a class="white" href="index#contact">Contact Us</a></li>
+                        </ul>
+                    </div> <!-- end of text-container -->
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+        </div> <!-- end of container -->
+    </div> <!-- end of footer -->
+    <!-- end of footer -->
+
+
+    <!-- Copyright -->
+    <div class="copyright">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <p class="p-small">Copyright &copy; 2026 <a href="https://inovatik.com">Lingua Bud, All Rights Reserved</a></p>
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+        </div> <!-- end of container -->
+    </div> <!-- end of copyright -->
+
 
     <!-- Scripts -->
     <script src="js/jquery.min.js"></script>
@@ -1794,7 +1870,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
                 populateLanguageOptions(allInstructors);
                 populateCountryOptions(allInstructors);
-                renderInstructors();
+                renderInstructors('initial');
 
                 // Auto-open booking modal if arriving from home page "Book Lesson"
                 const pendingBookId = sessionStorage.getItem('pendingBookInstructorId');
@@ -1872,7 +1948,47 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
-        function renderInstructors() {
+        // Show more (2026-11-18): a batch at a time, same as Connect. Filters,
+        // search and sort start over at the first batch; how far you got is
+        // remembered for Back from a profile (same filters only).
+        const PAGE_SIZE = window.matchMedia('(max-width: 767px)').matches ? 6 : 12;
+        const SHOWN_KEY = 'lb-instructors-shown';
+        let shownCount = PAGE_SIZE;
+        let lastFiltered = [];
+        const showMoreBar = document.getElementById('showMoreBar');
+        function filterKey() {
+            return [languageFilter.value, countryFilter.value, priceFilter.value, availabilityFilter.value, sortFilter.value, nameSearch.value.trim()].join('|');
+        }
+        function updateShowMore() {
+            const total = lastFiltered.length, shown = Math.min(shownCount, total);
+            showMoreBar.hidden = total === 0;
+            document.getElementById('showMoreCount').textContent = `Showing ${shown} of ${total} instructors`;
+            document.getElementById('showMoreBtn').hidden = shown >= total;
+        }
+        function appendInstructorCards(list) {
+            list.forEach(instructor => {
+                const card = createInstructorCard(instructor);
+                instructorGrid.appendChild(card);
+                const videoEl = card.querySelector('.card-video-el[data-src]');
+                if (videoEl && videoObserver) videoObserver.observe(videoEl);
+            });
+        }
+        function showMoreInstructors() {
+            const start = shownCount;
+            shownCount += PAGE_SIZE;
+            appendInstructorCards(lastFiltered.slice(start, shownCount));
+            try { sessionStorage.setItem(SHOWN_KEY, JSON.stringify({ n: shownCount, key: filterKey() })); } catch (e) {}
+            updateShowMore();
+        }
+        document.getElementById('showMoreBtn').addEventListener('click', showMoreInstructors);
+
+        function renderInstructors(mode) {
+            shownCount = PAGE_SIZE;
+            try {
+                const saved = JSON.parse(sessionStorage.getItem(SHOWN_KEY) || 'null');
+                if (mode === 'initial' && saved && saved.key === filterKey() && saved.n > PAGE_SIZE) shownCount = saved.n;
+                else if (mode !== 'initial') sessionStorage.removeItem(SHOWN_KEY);
+            } catch (e) {}
             const selectedLang = languageFilter.value;
             const selectedCountry = countryFilter.value;
             const maxPrice = parseFloat(priceFilter.value);
@@ -1914,6 +2030,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 sortByReviewsAndActivity(filtered, instructorLastActive);
             }
 
+            lastFiltered = filtered;
+            updateShowMore();
             if (filtered.length === 0) {
                 instructorGrid.innerHTML = '<div class="no-results"><i class="fas fa-chalkboard-teacher" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No instructors found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';
                 return;
@@ -1931,12 +2049,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
             }, { rootMargin: '200px 0px' });
 
-            filtered.forEach(instructor => {
-                const card = createInstructorCard(instructor);
-                instructorGrid.appendChild(card);
-                const videoEl = card.querySelector('.card-video-el[data-src]');
-                if (videoEl) videoObserver.observe(videoEl);
-            });
+            appendInstructorCards(filtered.slice(0, shownCount));
         }
 
         // Intro videos whose opening frames make a poor thumbnail (e.g. a white
@@ -1993,7 +2106,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                    <div class="instructor-card-body">`
                 : `<div class="instructor-card-header">
                        <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
-                       <img class="instructor-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" onerror="this.src='https://via.placeholder.com/100'">
+                       <img class="instructor-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" loading="lazy" decoding="async" onerror="this.src='https://via.placeholder.com/100'">
                        <div class="instructor-card-name">${name}</div>
                        ${priceDisplay ? `<div class="instructor-card-price">${priceDisplay}</div>` : ''}
                        <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>

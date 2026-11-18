@@ -393,6 +393,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             gap: 2rem;
         }
 
+        /* "Show more" (2026-11-18): 12 at a time on computers, 6 on phones. */
+        .lb-more { text-align: center; margin: 0.5rem auto 3rem; padding: 0 16px; }
+        .lb-more-count { color: #5f6b72; font-size: 0.95rem; margin-bottom: 0.75rem; }
+        .lb-more-btn { background: #20bcba; color: #fff; border: 0; border-radius: 2rem; padding: 0.8rem 2.2rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+        .lb-more-btn:hover, .lb-more-btn:focus { background: #0b6664; outline: none; }
         /* User Cards */
         .user-card {
             background: white;
@@ -888,6 +893,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </div>
         </div>
     </div>
+    <div class="lb-more" id="showMoreBar" hidden>
+        <div class="lb-more-count" id="showMoreCount"></div>
+        <button type="button" class="lb-more-btn" id="showMoreBtn">Show more</button>
+    </div>
 
     <!-- About language exchange (2026-11-18): visible text for people and
          search engines; the questions match the FAQPage data in <head>. -->
@@ -1113,7 +1122,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 console.log('Fetched users after filtering:', allUsers.length);
 
                 populateFilterOptions(allUsers);
-                renderUsers();
+                renderUsers('initial');
             } catch (error) {
                 console.error('Error fetching users - Full error:', error);
                 userGrid.innerHTML = `<div class="loading">Error loading users: ${error.message}<br><br>Please check the console for details.</div>`;
@@ -1158,7 +1167,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
-        function renderUsers() {
+        // Show more (2026-11-18): a batch at a time instead of every card (and
+        // every full-size photo) at once. Filters/search start over at the
+        // first batch; how far you got is remembered for Back from a profile.
+        const PAGE_SIZE = window.matchMedia('(max-width: 767px)').matches ? 6 : 12;
+        const SHOWN_KEY = 'lb-connect-shown';
+        let shownCount = PAGE_SIZE;
+        let lastFiltered = [];
+        const showMoreBar = document.getElementById('showMoreBar');
+        function updateShowMore() {
+            const total = lastFiltered.length, shown = Math.min(shownCount, total);
+            showMoreBar.hidden = total === 0;
+            document.getElementById('showMoreCount').textContent = `Showing ${shown} of ${total} language partners`;
+            document.getElementById('showMoreBtn').hidden = shown >= total;
+        }
+        function showMoreUsers() {
+            const start = shownCount;
+            shownCount += PAGE_SIZE;
+            lastFiltered.slice(start, shownCount).forEach(user => userGrid.appendChild(createUserCard(user)));
+            try { sessionStorage.setItem(SHOWN_KEY, String(shownCount)); } catch (e) {}
+            updateShowMore();
+        }
+        document.getElementById('showMoreBtn').addEventListener('click', showMoreUsers);
+
+        function renderUsers(mode) {
+            shownCount = PAGE_SIZE;
+            if (mode === 'initial') {
+                try { const saved = parseInt(sessionStorage.getItem(SHOWN_KEY), 10); if (saved > PAGE_SIZE) shownCount = saved; } catch (e) {}
+            } else {
+                try { sessionStorage.removeItem(SHOWN_KEY); } catch (e) {}
+            }
             const selectedLearning = learningFilter.value;
             const selectedSpeaking = speakingFilter.value;
             const selectedCountry = countryFilter.value;
@@ -1180,12 +1218,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 return matchesLearning && matchesSpeaking && matchesCountry && matchesName;
             });
 
+            lastFiltered = filtered;
+            updateShowMore();
             if (filtered.length === 0) {
                 userGrid.innerHTML = '<div class="no-results"><i class="fas fa-user-friends" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i><div>No language partners found matching your filters.</div><div style="margin-top: 0.5rem; color: #999;">Try adjusting your search criteria!</div></div>';
                 return;
             }
 
-            filtered.forEach(user => {
+            filtered.slice(0, shownCount).forEach(user => {
                 const card = createUserCard(user);
                 userGrid.appendChild(card);
             });
@@ -1208,7 +1248,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             let cardHTML = `
                 <div class="user-card-header">
-                    <img class="user-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" onerror="this.src=window.DEFAULT_AVATAR">
+                    <img class="user-card-avatar" src="${escapeHtml(avatar)}" alt="${name}" loading="lazy" decoding="async" onerror="this.src=window.DEFAULT_AVATAR">
                     <div class="user-card-name">${name}</div>
                     <div class="user-card-country"><i class="fas fa-map-marker-alt"></i> ${country}</div>
                 </div>
