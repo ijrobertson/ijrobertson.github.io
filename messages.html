@@ -2009,7 +2009,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             console.log('  - otherUserId:', otherUserId);
             console.log('  - chatPanel element:', chatPanel);
 
-            activeConversationId = conversationId;
+            activeConversationId = conversationId; window.__lbActiveConversationId = conversationId; // no banner for the chat on screen (js/message-banner.js)
 
             // Update active state
             document.querySelectorAll('.conversation-item').forEach(item => {
@@ -3749,5 +3749,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             );
         }
     </script>
+    <!-- New-message banner (same as the app) -->
+    <script type="module" src="js/message-banner.js"></script>
 </body>
 </html>
