@@ -5,6 +5,7 @@ const Stripe = require('stripe');
 const { randomUUID, createHash } = require('crypto');
 const { google } = require('googleapis');
 const { processLessonReminders } = require('./lessonReminders');
+const { processStreakReminders } = require('./streakReminders');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -4609,11 +4610,15 @@ async function processDailyReminders(db) {
 /**
  * Scheduled Cloud Function — runs daily at 15:00 UTC.
  */
-exports.sendDailyReminders = onSchedule('0 15 * * *', async () => {
-  console.log('[Push] sendDailyReminders: daily run starting');
+// Streak reminders (2026-11-18): runs hourly; each student gets at most one
+// a day, around 7 pm their time, only if they haven't practised yet — see
+// functions/streakReminders.js. (Was one fixed 15:00 UTC message for a
+// small pilot allowlist.)
+exports.sendDailyReminders = onSchedule('0 * * * *', async () => {
+  console.log('[Push] sendDailyReminders: hourly streak-reminder run starting');
   const db = admin.firestore();
   try {
-    const results = await processDailyReminders(db);
+    const results = await processStreakReminders(db, (uid, data) => sendPushToUser(db, uid, data));
     console.log('[Push] sendDailyReminders complete:', JSON.stringify(results));
   } catch (err) {
     console.error('[Push] sendDailyReminders fatal error:', err.message);
@@ -4630,7 +4635,9 @@ exports.runDailyRemindersNow = onCall(async (request) => {
   console.log('[Push] runDailyRemindersNow: admin-triggered run');
   const db = admin.firestore();
   try {
-    return await processDailyReminders(db);
+    // Optional { dryRun: true, at: ISO time } to preview who would get what.
+    const at = request.data && request.data.at ? new Date(request.data.at) : new Date();
+    return await processStreakReminders(db, (uid, data) => sendPushToUser(db, uid, data), { now: at, dryRun: !!(request.data && request.data.dryRun) });
   } catch (err) {
     console.error('[Push] runDailyRemindersNow error:', err.message);
     throw new HttpsError('internal', `Daily reminder run failed: ${err.message}`);
