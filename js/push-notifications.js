@@ -19,7 +19,7 @@
 // of that bridge. See sw.js for why (avoids a second copy of firebaseConfig
 // in a different SDK flavor inside the service worker).
 
-import { app, db, doc, getDoc, setDoc, serverTimestamp, getMessaging, getToken } from '../lib/firebaseClient.js';
+import { app, db, auth, doc, getDoc, setDoc, serverTimestamp, getMessaging, getToken } from '../lib/firebaseClient.js';
 
 // Safe to hardcode client-side — same public-config convention already used
 // for the Firebase API key in lib/firebaseClient.js.
@@ -37,35 +37,137 @@ function pushSupported() {
 // for that message, nothing is ever shown. Visual style matches the toast
 // pattern already used in js/save-word-widget.js / vocab-quiz.html.
 function showDefaultToast(payload) {
-  const existing = document.querySelector('.lb-push-toast');
-  if (existing) existing.remove();
-  const toast = document.createElement('div');
-  toast.className = 'lb-push-toast';
-  toast.setAttribute('style', [
-    'position:fixed', 'left:50%', 'bottom:96px', 'transform:translateX(-50%)',
-    'background:#113448', 'color:#fff', 'padding:12px 20px', 'border-radius:999px',
-    'font-size:14px', 'font-weight:600', 'font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
-    'z-index:2000', 'box-shadow:0 8px 20px -6px rgba(17,52,72,0.5)',
-    'opacity:0', 'transition:opacity 200ms ease', 'cursor:pointer', 'max-width:90vw',
-  ].join(';'));
-  toast.textContent = payload.body ? `${payload.title}: ${payload.body}` : payload.title;
-  toast.addEventListener('click', () => {
+  showMessageBanner(payload);
+}
+
+// ----- In-app notification banner (2026-11-18) -----
+// A card that slides down from the top, like an iPhone notification: the
+// sender's photo, their name, a two-line preview and "now". Tap opens it
+// (onOpen, or payload.url + conversationId); swipe up or wait 5 s to dismiss.
+const BANNER_CSS = `
+.lb-banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:3000;width:min(420px,calc(100vw - 24px));
+  transform:translate(-50%,-140%);transition:transform 320ms cubic-bezier(.2,.9,.25,1),opacity 220ms ease;opacity:0;
+  display:flex;align-items:center;gap:12px;padding:12px 14px;box-sizing:border-box;cursor:pointer;
+  background:rgba(255,255,255,0.96);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);
+  border:1px solid rgba(17,52,72,0.08);border-radius:18px;box-shadow:0 12px 32px -10px rgba(17,52,72,0.35),0 2px 6px rgba(17,52,72,0.08);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#113448;touch-action:none;user-select:none;-webkit-user-select:none}
+.lb-banner.show{transform:translate(-50%,0);opacity:1}
+.lb-banner-avatar{width:42px;height:42px;border-radius:50%;flex:0 0 42px;object-fit:cover;background:#e6f7f7;color:#0b6664;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;overflow:hidden}
+.lb-banner-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.lb-banner-main{flex:1;min-width:0}
+.lb-banner-top{display:flex;align-items:baseline;gap:8px}
+.lb-banner-title{flex:1;min-width:0;font-weight:700;font-size:15px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-banner-time{flex:0 0 auto;font-size:12px;color:#7a8a93}
+.lb-banner-body{margin-top:2px;font-size:14px;line-height:1.35;color:#41545f;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+html[data-theme="night"] .lb-banner{background:rgba(27,42,51,0.96);border-color:rgba(255,255,255,0.08);color:#e8f1f4}
+html[data-theme="night"] .lb-banner-body{color:#b9c7ce}
+html[data-theme="night"] .lb-banner-avatar{background:#22343f;color:#20bcba}
+[dir="rtl"] .lb-banner{direction:rtl}
+`;
+const MESSAGE_TITLE = / sent you a message$/;
+
+async function bannerAvatar(conversationId) {
+  try {
+    const me = auth.currentUser && auth.currentUser.uid;
+    if (!conversationId || !me) return '';
+    const conv = await getDoc(doc(db, 'conversations', conversationId));
+    const other = ((conv.exists() && conv.data().participants) || []).find((id) => id !== me);
+    if (!other) return '';
+    const [u, i] = await Promise.all([
+      getDoc(doc(db, 'publicUsers', other)).catch(() => null),
+      getDoc(doc(db, 'publicInstructors', other)).catch(() => null),
+    ]);
+    return (i && i.exists() && i.data().avatar_url) || (u && u.exists() && u.data().avatar_url) || '';
+  } catch (e) { return ''; }
+}
+
+export function showMessageBanner(payload, { onOpen } = {}) {
+  if (!payload || !payload.title) return;
+  if (!document.getElementById('lb-banner-style')) {
+    const st = document.createElement('style');
+    st.id = 'lb-banner-style';
+    st.textContent = BANNER_CSS;
+    document.head.appendChild(st);
+  }
+  document.querySelectorAll('.lb-banner, .lb-push-toast').forEach((el) => el.remove());
+
+  const isMessage = MESSAGE_TITLE.test(payload.title);
+  const name = isMessage ? payload.title.replace(MESSAGE_TITLE, '') : payload.title;
+  const banner = document.createElement('div');
+  banner.className = 'lb-banner';
+  banner.setAttribute('role', 'status');
+  banner.setAttribute('aria-live', 'polite');
+  banner.innerHTML = `
+    <div class="lb-banner-avatar" aria-hidden="true"></div>
+    <div class="lb-banner-main">
+      <div class="lb-banner-top"><div class="lb-banner-title"></div><div class="lb-banner-time">now</div></div>
+      <div class="lb-banner-body"></div>
+    </div>`;
+  const avatarEl = banner.querySelector('.lb-banner-avatar');
+  const titleEl = banner.querySelector('.lb-banner-title');
+  const bodyEl = banner.querySelector('.lb-banner-body');
+  titleEl.textContent = name;
+  if (isMessage) { titleEl.setAttribute('translate', 'no'); bodyEl.setAttribute('translate', 'no'); }
+  if (payload.body) bodyEl.textContent = payload.body; else bodyEl.remove();
+  if (isMessage) {
+    avatarEl.textContent = (name.trim()[0] || '?').toUpperCase();
+    bannerAvatar(payload.conversationId).then((url) => {
+      if (!url || !banner.isConnected) return;
+      const img = new Image();
+      img.alt = '';
+      img.onload = () => { avatarEl.textContent = ''; avatarEl.appendChild(img); };
+      img.src = url;
+    });
+  } else {
+    avatarEl.innerHTML = '<img src="/icons/icon-192.png" alt="" onerror="this.remove()">';
+  }
+
+  let timer = null;
+  const dismiss = () => {
+    clearTimeout(timer);
+    banner.classList.remove('show');
+    banner.style.transform = '';
+    setTimeout(() => banner.remove(), 340);
+  };
+  const open = () => {
+    dismiss();
+    if (onOpen) { onOpen(payload); return; }
     if (!payload.url) return;
-    // Same conversationId-as-query-param convention as sw.js's
-    // notificationclick handler, so messages.html can deep-link to the
-    // right thread instead of just opening the generic messages list.
     let url = payload.url;
-    if (payload.conversationId) {
-      url += (url.includes('?') ? '&' : '?') + 'conversationId=' + encodeURIComponent(payload.conversationId);
-    }
+    if (payload.conversationId) url += (url.includes('?') ? '&' : '?') + 'conversationId=' + encodeURIComponent(payload.conversationId);
     window.location.href = url;
+  };
+
+  // Tap to open; swipe up to dismiss.
+  let startY = null, dy = 0, moved = false;
+  banner.addEventListener('pointerdown', (e) => {
+    startY = e.clientY; dy = 0; moved = false;
+    clearTimeout(timer);
+    banner.style.transition = 'none';
+    try { banner.setPointerCapture(e.pointerId); } catch (_) {}
   });
-  document.body.appendChild(toast);
-  requestAnimationFrame(() => { toast.style.opacity = '1'; });
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 250);
-  }, 4000);
+  banner.addEventListener('pointermove', (e) => {
+    if (startY === null) return;
+    dy = Math.min(0, e.clientY - startY);
+    if (Math.abs(e.clientY - startY) > 6) moved = true;
+    banner.style.transform = `translate(-50%, ${dy}px)`;
+  });
+  const release = () => {
+    if (startY === null) return;
+    startY = null;
+    banner.style.transition = '';
+    if (dy < -30) { dismiss(); return; }
+    banner.style.transform = '';
+    if (!moved) { open(); return; }
+    timer = setTimeout(dismiss, 5000);
+  };
+  banner.addEventListener('pointerup', release);
+  banner.addEventListener('pointercancel', () => { startY = null; banner.style.transition = ''; banner.style.transform = ''; timer = setTimeout(dismiss, 5000); });
+
+  document.body.appendChild(banner);
+  requestAnimationFrame(() => requestAnimationFrame(() => banner.classList.add('show')));
+  timer = setTimeout(dismiss, 5000);
 }
 
 // ── First-launch soft ask ────────────────────────────────────────────────
