@@ -307,4 +307,20 @@ export function lastActiveMapFrom(snapshot) {
     return map;
 }
 
+// ── Reviews-and-activity order (2026-11-18, English pages) ────────────────
+// For english-tutors, learn-english and instructors?language=English:
+// 1) reviewed AND signed in within the last 30 days, 2) recently active,
+// 3) reviewed but not recently active, 4) everyone else. Within a group:
+// higher rating first (reviewed groups), then most recent sign-in.
+export function sortByReviewsAndActivity(list, lastActive = {}, recentDays = 30) {
+    const cutoff = Date.now() - recentDays * 86400000;
+    const reviewed = (i) => (i.reviewCount || 0) > 0;
+    const active = (i) => (lastActive[i.id] || 0) >= cutoff;
+    const group = (i) => (reviewed(i) && active(i) ? 0 : active(i) ? 1 : reviewed(i) ? 2 : 3);
+    return list.sort((a, b) => (group(a) - group(b))
+        || ((reviewed(a) && reviewed(b)) ? ((b.averageRating || 0) - (a.averageRating || 0)) || ((b.reviewCount || 0) - (a.reviewCount || 0)) : 0)
+        || ((lastActive[b.id] || 0) - (lastActive[a.id] || 0))
+        || (recommendedScore(b) - recommendedScore(a)));
+}
+
 export { FEATURED_INSTRUCTOR_IDS, isPaymentReady, priceInUsd, formatPrice, recommendedScore, createInstructorCard, getNextAvailableDate, escapeHtml };

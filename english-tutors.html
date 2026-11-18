@@ -82,7 +82,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           "name": "How much does an online English tutor cost?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Each instructor sets their own rate. English instructors on Lingua Bud currently charge between 5 and 35 per hour, priced in US dollars or euros. The rate is shown on every profile before you book."
+            "text": "Each instructor sets their own rate, shown on every profile before you book. English lessons on Lingua Bud currently start from about $5 per hour, priced in US dollars or euros, and every instructor offers a free 15-minute trial first."
           }
         },
         {
@@ -123,6 +123,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link href="css/swiper.css" rel="stylesheet">
 	<link href="css/magnific-popup.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
+    <link href="css/instructor-cards.css" rel="stylesheet">
 
 	<!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
@@ -497,17 +498,46 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </nav> <!-- end of navbar -->
 
 
-    <!-- Header -->
-    <header id="header" class="ex-header">
+    <!-- Hero (2026-11-18): same design as the Instructors page, English-specific.
+         Count and lowest price are filled in live below. -->
+    <div class="instructors-hero">
         <div class="container">
-            <div class="row">
-                <div class="col-md-12">
-                    <h1>Online English Tutors<span style="display:block;font-size:0.5em;font-weight:600;line-height:1.3;margin-top:0.4em;opacity:0.92;">1-on-1 lessons with a free 15-minute trial</span></h1>
+            <div class="ih-grid">
+                <div class="ih-text">
+                    <h1>Online English Tutors</h1>
+                    <p class="ih-sub">1-on-1 video lessons with English teachers from the US, the UK, Canada and more. Try any of them free for 15 minutes.</p>
+                    <ul class="ih-trust">
+                        <li><i class="fas fa-chalkboard-teacher"></i><span><span id="tp-count">21</span> English Instructors</span></li>
+                        <li><i class="fas fa-tag"></i><span>From <span id="tp-from">$5</span>/hour</span></li>
+                        <li><i class="fas fa-gift"></i> Free 15-Min Trial</li>
+                        <li><i class="fas fa-shield-alt"></i> Background Reviewed</li>
+                    </ul>
+                    <a class="tp-btn tp-hero-btn" href="#tutors" onclick="if(window.gtag)gtag('event','instructor_cta_click',{cta_target:'tutors_grid',page_slug:'english-tutors'})">Browse English tutors <i class="fas fa-arrow-down"></i></a>
+                </div>
+
+                <!-- Picture of a lesson (decorative): instructor on video, student in the corner -->
+                <div class="ih-visual" aria-hidden="true">
+                    <div class="ih-call">
+                        <div class="ih-call-bar">
+                            <span class="ih-dots"><span></span><span></span><span></span></span>
+                            <span class="ih-live">&#9679; Live lesson</span>
+                        </div>
+                        <div class="ih-call-main">
+                            <img src="images/online_teacher.jpg" alt="" width="1000" height="750">
+                            <span class="ih-call-name">Your English tutor</span>
+                            <div class="ih-call-pip">
+                                <img src="images/online_student.jpg" alt="" width="400" height="300">
+                                <span>You</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ih-bubble">Hi! How are you today?</div>
+                    <div class="ih-toast"><i class="fas fa-check-circle"></i><span><strong>Free trial booked</strong>Tue &middot; 6:00 PM</span></div>
                 </div>
             </div>
         </div>
-    </header>
-    <!-- end of header -->
+    </div>
+    <!-- end of hero -->
 
 
     <!-- Content -->
@@ -516,10 +546,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         .tp-wrap h2 { color: #113448; font-size: 1.6rem; font-weight: 700; margin: 2.5rem 0 0.8rem; }
         .tp-wrap p, .tp-wrap li { color: #444; font-size: 1rem; line-height: 1.7; }
         .tp-wrap a.tp-inline { color: #0b6664; font-weight: 600; text-decoration: underline; }
-        .tp-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1.5rem 0 0.5rem; }
-        .tp-fact { background: #f4fbfb; border: 1px solid #d9eeee; border-radius: 12px; padding: 1rem 1.1rem; }
-        .tp-fact strong { display: block; color: #0b6664; font-size: 1.35rem; line-height: 1.2; }
-        .tp-fact span { color: #113448; font-size: 0.9rem; }
         .tp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.1rem; margin-top: 1.2rem; }
         .tp-card { display: flex; gap: 0.9rem; background: #fff; border: 1px solid #d9eeee; border-radius: 14px; padding: 1.1rem; text-decoration: none; color: inherit; transition: box-shadow 0.2s, border-color 0.2s; }
         .tp-card:hover { border-color: #20bcba; box-shadow: 0 6px 18px rgba(17, 52, 72, 0.12); text-decoration: none; color: inherit; }
@@ -539,140 +565,587 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         .tp-steps li { background: #113448; color: #dff3f3; border-radius: 12px; padding: 1.1rem 1.2rem; counter-increment: tp; font-size: 0.95rem; }
         .tp-steps li::before { content: counter(tp); display: inline-block; width: 1.9rem; height: 1.9rem; line-height: 1.9rem; text-align: center; border-radius: 50%; background: #20bcba; color: #fff; font-weight: 700; margin-bottom: 0.5rem; }
         .tp-steps li strong { display: block; color: #fff; font-size: 1.05rem; margin-bottom: 0.2rem; }
+        .tp-hero-btn { margin-top: 1.4rem; }
+        .tp-hero-btn i { margin-left: 0.35rem; }
+        #tutors { scroll-margin-top: 90px; }
+        /* Same top bar as the Instructors page: always solid navy (not
+           transparent over the hero at the top), with room for it above. */
+        body { padding-top: 4.5rem; }
+        .navbar-custom { background-color: #113448 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .tp-grid.instructor-grid { display: grid; gap: 2rem; }
         .tp-faq h3 { color: #113448; font-size: 1.1rem; font-weight: 700; margin: 1.3rem 0 0.3rem; }
     </style>
     <div class="tp-wrap">
         <p>Learning English goes faster when you speak it with someone who can correct you. On Lingua Bud you can book private video lessons with English instructors from the United States, the United Kingdom, Canada, South Africa, and more, and try any of them free for 15 minutes before you pay for a lesson.</p>
 
-        <div class="tp-facts">
-            <div class="tp-fact"><strong id="tp-count">20</strong><span>English instructors to choose from</span></div>
-            <div class="tp-fact"><strong>5&ndash;35</strong><span>price per hour (USD or EUR)</span></div>
-            <div class="tp-fact"><strong>15 min</strong><span>free trial lesson</span></div>
-        </div>
 
-        <h2>Meet our English instructors</h2>
-        <p>Each profile shows the instructor's rate, availability, introduction video and reviews.</p>
-        <div class="tp-grid" id="tp-grid">
-                <a class="tp-card" href="instructor-profile?id=doxDE7putWSNb8FsQMJgctyVrHD3">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2FdoxDE7putWSNb8FsQMJgctyVrHD3?alt=media&amp;token=06285749-6e33-4b0a-a4cc-c27fb16997df" alt="Ian Jack, English instructor from Puerto Rico" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Ian Jack</div>
-                        <div class="tp-meta">Puerto Rico · USD $25/hour</div>
-                        <div class="tp-rating">★ 5.0 <span>(4 reviews)</span></div>
-                        <p class="tp-bio">Growing up as a Puerto Rican American and back and forth between the two lands, I experienced biculturalism firsthand. One of my favorite things in life is to share my…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=t2xxc2RWoQOZGcS5wpkxCnEmMrg1">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2Ft2xxc2RWoQOZGcS5wpkxCnEmMrg1?alt=media&amp;token=d082beeb-b5bb-44eb-b375-6a4babb562dc" alt="John Francis Kelly, English instructor from Thailand" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">John Francis Kelly</div>
-                        <div class="tp-meta">Thailand · USD $21/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">Hi there, my name is John and I am from the United Kingdom and Ireland. I am currently a full time Humanities &amp; Social Sciences professor in a public university. Before…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=E0ZH8A0BiQe51wwh2tuzaDkJUMd2">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2FE0ZH8A0BiQe51wwh2tuzaDkJUMd2?alt=media&amp;token=5c47676b-225b-4c89-abd5-c3f7347d3776" alt="Sara Hoyos, English instructor from Colombia" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Sara Hoyos</div>
-                        <div class="tp-meta">Colombia · USD $26/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">¡Hola!, soy una profesora de español nativa de Colombia con más de 2 años de experiencia ayudando a los estudiantes a construir confianza a través de conversaciones de…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=u8jkhhscZhUCLmmV53yAIHQ2gVf1">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2Fu8jkhhscZhUCLmmV53yAIHQ2gVf1?alt=media&amp;token=0288e521-7e4a-493e-ae73-ac5a4ede68eb" alt="Sara Harding, English instructor from United Arab Emirates" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Sara Harding</div>
-                        <div class="tp-meta">United Arab Emirates · USD $35/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">Hi! I’m Sara, originally from the UK, and have been proudly calling Dubai and Thailand home for the past 17years. Passionate about people and cultures, I bring a unique…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=dWvoLEeCbKanjCzu9OACtSmH5pm1">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2FdWvoLEeCbKanjCzu9OACtSmH5pm1?alt=media&amp;token=0b5fe892-6cb6-46ff-829a-5167092ae1ee" alt="Loris Francoletti, English instructor from Italy" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Loris Francoletti</div>
-                        <div class="tp-meta">Italy · EUR €15/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">Hello everyone, I&#x27;m Loris, and I can bring a truly global perspective to your English learning journey. Originally from Italy, I spent 13 years living and working in…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=X3Gd0XFUvoTKYy2jqLa966Q2NEp1">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2FX3Gd0XFUvoTKYy2jqLa966Q2NEp1?alt=media&amp;token=328d1d7d-ceef-41c8-a259-f5eb86204a60" alt="Sofia Androni, English instructor from Greece" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Sofia Androni</div>
-                        <div class="tp-meta">Greece · EUR €30/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">I am an English and Spanish teacher, as well as the owner of a language school, with a strong commitment to high-quality, personalized learning. Teaching for me, is it…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=WgY6CjuAidcmEHrP6mvY3zHhU912">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2FWgY6CjuAidcmEHrP6mvY3zHhU912?alt=media&amp;token=8b16daf2-6ed1-476d-8c1d-ea4e846390ce" alt="Libby Hill, English instructor from France" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Libby Hill</div>
-                        <div class="tp-meta">France · EUR €25/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">As a Business Communications Specialist and Language Facilitator, I get such a positive feeling and deep satisfaction from helping individuals hone their English…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=OVrlEDKWI9hLLGiBuvLSEduU9vq2">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2FOVrlEDKWI9hLLGiBuvLSEduU9vq2?alt=media&amp;token=f2c19738-a34c-476e-b3cc-a9867c6386d3" alt="Victoria Quintas, English instructor from Argentina" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Victoria Quintas</div>
-                        <div class="tp-meta">Argentina · USD $12/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">My name is Vicky and I’m from Buenos Aires, Argentina. I hold a degree in Bilingual Education and have over ten years of experience working as a Kindergarten teacher…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=jMA2QsWJfsb01NKtsIO8UCjbA4h2">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2FjMA2QsWJfsb01NKtsIO8UCjbA4h2?alt=media&amp;token=d5de9b21-5818-4e15-8dea-fa30e6617b9b" alt="Liam Day, English instructor from United Kingdom" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Liam Day</div>
-                        <div class="tp-meta">United Kingdom · GBP £25/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">Hi everyone, My name is Liam and I&#x27;m a qualified native speaker with 18 years of experience. My philosophy on teaching is that students should look forward to their…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=1Mt13bJuN8N7ksF0TNjqxBCe9202">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2F1Mt13bJuN8N7ksF0TNjqxBCe9202?alt=media&amp;token=e581bb9f-9a25-48f1-817f-abbb8d813698" alt="Mickey Ristic, English instructor from United Kingdom" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Mickey Ristic</div>
-                        <div class="tp-meta">United Kingdom · USD $25/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">Hello, and nice to meet you. My name is Teacher Mickey, and I have been teaching English online for more than 10 years. I am TEFL, TESOL, and CELTA certified, and I have…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=bcHa9vAOWkh9eOg5YBhCr5r09J72">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2FbcHa9vAOWkh9eOg5YBhCr5r09J72?alt=media&amp;token=dd1f8e88-538b-472e-a02d-94ff14340f0d" alt="kiki kaliani, English instructor from Greece" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">kiki kaliani</div>
-                        <div class="tp-meta">Greece · EUR €30/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">Hello! I’m Kiki, an experienced ESL teacher and an Australian citizen currently living in Greece. I truly love working with people from different cultures and helping…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
-                <a class="tp-card" href="instructor-profile?id=9KFlx9PQOyY22l7VtlITqLnhuhD3">
-                    <img class="tp-avatar" src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/avatars%2F9KFlx9PQOyY22l7VtlITqLnhuhD3?alt=media&amp;token=5f8784e9-71a6-494d-abe2-627d8e7460d0" alt="Clara Ferreira, English instructor from Chile" width="72" height="72" loading="lazy">
-                    <div class="tp-body">
-                        <div class="tp-name">Clara Ferreira</div>
-                        <div class="tp-meta">Chile · USD $15/hour</div>
-                        <div class="tp-rating tp-new">New instructor</div>
-                        <p class="tp-bio">Hi! I&#x27;m Clara, a Brazilian language teacher and polyglot passionate about helping students communicate confidently in new languages. I have over 6 years of online…</p>
-                        <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                    </div>
-                </a>
+        <h2 id="tutors">Meet our English instructors</h2>
+        <p>Watch their intro videos, compare rates and reviews, and book a free 15-minute trial with anyone you like.</p>
+        <div class="tp-grid instructor-grid" id="tp-grid">
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FdoxDE7putWSNb8FsQMJgctyVrHD3?alt=media&amp;token=3fc262db-dccc-480f-a6ff-f98bdf5a976e" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Ian Jack</div>
+               <div class="instructor-card-price">$25 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Puerto Rico</div>
+               <div class="instructor-card-rating">
+               <i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i><i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i><i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i><i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i><i class="fas fa-star" style="color:#f5a623;font-size:0.85em;"></i>
+               <span class="rating-count">5.0 (4)</span>
+           </div>
+               <div class="card-meta-row">
+        <span class="card-meta-item"><i class="fas fa-book-open"></i> 4 lessons</span>
+        <span class="card-meta-item next-avail"><i class="fas fa-calendar-check"></i> Available Today</span>
+    </div>
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">Spanish</span><span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Spanish</span><span class="language-tag">Portuguese</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">Growing up as a Puerto Rican American and back and forth between the two lands, I experienced biculturalism firsthand. One of my favorite things in life is to share my language and culture with others. I am passionate about helping others learn languages and look forward to connecting with like-minded people.</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=doxDE7putWSNb8FsQMJgctyVrHD3&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=doxDE7putWSNb8FsQMJgctyVrHD3" target="_blank" rel="noopener" data-instructor-id="doxDE7putWSNb8FsQMJgctyVrHD3">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FuYL2NRpgOxSaSGNqz3iPkCnpyt22?alt=media&amp;token=401dc571-37d7-44e7-8131-5b4df9bbaf92" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Sandra Lorena González</div>
+               <div class="instructor-card-price">$20 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Argentina</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">Spanish</span><span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">Spanish</span><span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">I'm passionate about languages as a tool for connection; I'm a teacher with a clear aim: to create engaging lessons to build confidence and make learning enjoyable.</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=uYL2NRpgOxSaSGNqz3iPkCnpyt22&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=uYL2NRpgOxSaSGNqz3iPkCnpyt22" target="_blank" rel="noopener" data-instructor-id="uYL2NRpgOxSaSGNqz3iPkCnpyt22">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FOVrlEDKWI9hLLGiBuvLSEduU9vq2?alt=media&amp;token=860a5373-e971-411e-902f-749a56b04c61" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Victoria Quintas</div>
+               <div class="instructor-card-price">$12 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Argentina</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               <div class="card-meta-row">
+        
+        <span class="card-meta-item next-avail"><i class="fas fa-calendar-check"></i> Available Today</span>
+    </div>
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">Spanish</span><span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">Spanish</span><span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">My name is Vicky and I’m from Buenos Aires, Argentina. I hold a degree in Bilingual Education and have over ten years of experience working as a Kindergarten teacher, private tutor and online Spanish teacher. Language has always been more than a subject to me — it’s a way of connecting with people, understanding different cultures and opening new doors. That passion is what drives every class I teach. What makes my lessons unique is the combination of structure and warmth: I create a relaxed, judgment-free space where students feel confident to speak from day one. Every lesson is personalized to your goals, your pace and your interests, because I believe that when learning feels relevant and enjoyable, progress happens naturally.</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=OVrlEDKWI9hLLGiBuvLSEduU9vq2&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=OVrlEDKWI9hLLGiBuvLSEduU9vq2" target="_blank" rel="noopener" data-instructor-id="OVrlEDKWI9hLLGiBuvLSEduU9vq2">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FYQW6oZ5e9ycWsAWeDaet5vMOeic2?alt=media&amp;token=fc85e124-27a7-4839-bc36-d3dea2b8f98d" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">B. Michael James Crowe</div>
+               <div class="instructor-card-price">$15 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Canada</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               <div class="card-meta-row">
+        
+        <span class="card-meta-item next-avail"><i class="fas fa-calendar-check"></i> Available Today</span>
+    </div>
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">French</span><span class="language-tag">Chinese (Traditional)</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">Hello, my name is Michael Crowe. I have taught English for 24 years, in 5 different countries. My passion for teaching has seen me teach students of all ages and levels in Universities, vocational schools, secondary and elementary schools, and even down to kindergartens. I have a lot of experience with online teaching, and tailoring my teaching to the needs of the specific student, in order to reach their goals. From conversation to grammar, business English to phonics, speaking to writing... Let's climb that hill together, and look forward to the next challenge!</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=YQW6oZ5e9ycWsAWeDaet5vMOeic2&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=YQW6oZ5e9ycWsAWeDaet5vMOeic2" target="_blank" rel="noopener" data-instructor-id="YQW6oZ5e9ycWsAWeDaet5vMOeic2">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FdWvoLEeCbKanjCzu9OACtSmH5pm1?alt=media&amp;token=80bdc170-89a2-430f-9676-0ce75580fd5f" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Loris Francoletti</div>
+               <div class="instructor-card-price">€15 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Italy</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               <div class="card-meta-row">
+        
+        <span class="card-meta-item next-avail"><i class="fas fa-calendar-check"></i> Available Today</span>
+    </div>
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Italian</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Italian</span><span class="language-tag">French</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">Hello everyone, I'm Loris, and I can bring a truly global perspective to your English learning journey. Originally from Italy, I spent 13 years living and working in Ireland, alongside time in London, Amsterdam and Seville. Having navigated the challenges of becoming fluent in a new language myself, I offer a unique, empathetic, and highly practical approach to teaching English.
+I have taught in diverse international settings, including in Cambodia and Vietnam, and I have extensive experience providing online and one-on-one lessons in Italy.
+I worked also as a mentor and coach for a multinational company. 
+My core philosophy is that learning should be fun, interactive, and directly relevant to your life, goals and interests. 
+Outside of teaching, I'm passionate about music (listening and playing guitar), film, art, food, and travel—all great subjects for dynamic conversation practice!</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=dWvoLEeCbKanjCzu9OACtSmH5pm1&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=dWvoLEeCbKanjCzu9OACtSmH5pm1" target="_blank" rel="noopener" data-instructor-id="dWvoLEeCbKanjCzu9OACtSmH5pm1">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FjMA2QsWJfsb01NKtsIO8UCjbA4h2?alt=media&amp;token=eac5ac81-a983-475d-8d17-ea245ff99331" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Liam Day</div>
+               <div class="instructor-card-price">£25 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> United Kingdom</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Spanish</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">Hi everyone,
+
+My name is Liam and I'm a qualified native speaker with 18 years of experience. My philosophy on teaching is that students should look forward to their lessons and come to class with a smile on their face. Therefore, I make the lessons fun and unpredictable and I pride myself on constructing the perfect personalised course for each of my students. 
+
+Some of my online students have been with me for 6 years and I like to form long term relationships with my students. Students usually choose to stay with me because of my flexibility and my extensive knowledge of English and of teaching methodology. 
+
+In my free time, I enjoy cooking, reading and travelling.</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=jMA2QsWJfsb01NKtsIO8UCjbA4h2&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=jMA2QsWJfsb01NKtsIO8UCjbA4h2" target="_blank" rel="noopener" data-instructor-id="jMA2QsWJfsb01NKtsIO8UCjbA4h2">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2Ft2xxc2RWoQOZGcS5wpkxCnEmMrg1?alt=media&amp;token=027cf4a7-b153-486a-b925-0cb06021c179" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">John Francis Kelly</div>
+               <div class="instructor-card-price">$21 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Thailand</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">Hi there, my name is John and I am from the United Kingdom and Ireland. I am currently a full time Humanities &amp; Social Sciences professor in a public university. Before that I  had my own business and previously, I was a senior manager in a Stock Exchange of London listed company.I have a Bachelor of Science Degree in Business, a Bachelors in Education, an additional Bachelor of Arts in Theology, a TEFL, a Business TEFL and completed my MBA in Business Administration and Management. I am currently studying for my Doctorate. I have been a teacher in Asia for almost 21 years and will be teaching online for 10 years in a few months. I am a fun loving, easy going and happy kind of person. I like to teach English, especially online, and I look forward to my lessons with my students. My student list includes factory workers, engineers, upper management, medical doctors, psychiatrists and many secondary &amp; upper primary school students. My classes are student centered and I always try to teach a topic that is relevant and of interest.
+
+I teach because it is the most effective and most enjoyable way to change the world. Teaching allows me to work on hearts and minds, to guide my students in becoming fluent, literate, engaged, creative,English speakers who want to join me in their efforts to master the English language and to make new friends.
+
+I can teach many different subjects including Eiken and TOEFL preparation and I also have extensive knowledge of the British and American curriculum. I love to teach Business English. Please contact me so that I may assist you in your continued learning. I look forward to both of us learning together..</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=t2xxc2RWoQOZGcS5wpkxCnEmMrg1&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=t2xxc2RWoQOZGcS5wpkxCnEmMrg1" target="_blank" rel="noopener" data-instructor-id="t2xxc2RWoQOZGcS5wpkxCnEmMrg1">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2F08OB0kuAHogSmJawgM8TUDpXDHB2?alt=media&amp;token=d93e95f0-e610-46d3-90e8-0cadc0124c0b" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Ezeka Jacinta</div>
+               <div class="instructor-card-price">$10 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Nigeria</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               <div class="card-meta-row">
+        
+        <span class="card-meta-item next-avail"><i class="fas fa-calendar-check"></i> Available Today</span>
+    </div>
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Igbo</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">A passionate English tutor helping students improve grammar, pronunciation,  speaking, listening, reading, writing and vocabulary development,  I help learners discover their potentials.</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=08OB0kuAHogSmJawgM8TUDpXDHB2&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=08OB0kuAHogSmJawgM8TUDpXDHB2" target="_blank" rel="noopener" data-instructor-id="08OB0kuAHogSmJawgM8TUDpXDHB2">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FunLoUOp4OWa0PMpyxz2jAXqn5lm2?alt=media&amp;token=55a2e746-e6ea-45b0-91ee-bbb742f07d0e" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Radhika Singh</div>
+               <div class="instructor-card-price">$5 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> South Africa</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">Hi, I’m Teacher Rad! I’m a children’s English teacher who creates fun and supportive lessons where children feel comfortable speaking and learning. My lessons are tailored to each child’s age, level and needs, helping them improve their speaking, pronunciation, reading, vocabulary and grammar. My goal is to help your child build confidence, enjoy English and make steady progress.</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=unLoUOp4OWa0PMpyxz2jAXqn5lm2&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=unLoUOp4OWa0PMpyxz2jAXqn5lm2" target="_blank" rel="noopener" data-instructor-id="unLoUOp4OWa0PMpyxz2jAXqn5lm2">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FX3Gd0XFUvoTKYy2jqLa966Q2NEp1?alt=media&amp;token=864e4170-7015-4abc-8bbe-efe08dc7009e" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Sofia Androni</div>
+               <div class="instructor-card-price">€30 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Greece</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               <div class="card-meta-row">
+        
+        <span class="card-meta-item next-avail"><i class="fas fa-calendar-check"></i> Available Tomorrow</span>
+    </div>
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Spanish</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Greek</span><span class="language-tag">Spanish</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">I am an English and Spanish teacher, as well as the owner of a language school, with a strong commitment to high-quality, personalized learning.
+Teaching for me, is it conscious and creative process-one that requires attention to detail, structure, and the deep understanding of which student's goals.
+I work with motivated learners who are looking for meaningful progress, whether that means improving fluency, preparing for exams, or communicating with confidence in professional or everyday contexts.
+My approach is structured yet flexible, always tailored to the individual, with a clear focus on helping you communicate with ease, clarity, and confidence. 
+If you value consistency, professionalism, and to refined learning experience, I would be glad to work with you.</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=X3Gd0XFUvoTKYy2jqLa966Q2NEp1&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=X3Gd0XFUvoTKYy2jqLa966Q2NEp1" target="_blank" rel="noopener" data-instructor-id="X3Gd0XFUvoTKYy2jqLa966Q2NEp1">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FvUIAeycvZTTRUuDfWbqPflryMt33?alt=media&amp;token=e08eb87c-45ed-4262-a5db-1ded7c3928b5" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Federica Campisi</div>
+               <div class="instructor-card-price">€25 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Spain</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               <div class="card-meta-row">
+        
+        <span class="card-meta-item next-avail"><i class="fas fa-calendar-check"></i> Available Today</span>
+    </div>
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Italian</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Italian</span><span class="language-tag">Spanish</span><span class="language-tag">French</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">Hello!
+My name is Federica and I have been a language teacher for over 9 years.
+I am originally from Italy but I love travelling and I have lived in Australia, New Zealand, Ireland, the UK and I am now living in Spain.
+I speak fluent English, Italian, Spanish and a little French. 
+I love movies, books, art and sports :)</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=vUIAeycvZTTRUuDfWbqPflryMt33&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=vUIAeycvZTTRUuDfWbqPflryMt33" target="_blank" rel="noopener" data-instructor-id="vUIAeycvZTTRUuDfWbqPflryMt33">
+                View Full Profile
+            </a>
+        </div>
+    </div>
+            <div class="instructor-card"><div class="card-video-container">
+               <video class="card-video-el" data-src="https://firebasestorage.googleapis.com/v0/b/linguabud-9a942.firebasestorage.app/o/instructor_videos%2FEC4dW3nzrpaEtrBE3r8CYJc78mi1?alt=media&amp;token=ca688c0c-cafd-4610-b206-952f9a5afedd" muted="" loop="" playsinline="" preload="metadata"></video>
+               <div class="card-hover-overlay"><i class="fas fa-external-link-alt" style="margin-right:0.4rem;"></i> View Full Profile</div>
+               <button class="card-play-btn" aria-label="Play intro video"><i class="fas fa-play"></i></button>
+               <button class="card-mute-btn" aria-label="Toggle mute"><i class="fas fa-volume-off"></i></button>
+           </div>
+           <div class="instructor-card-header" style="padding-top:1rem;">
+               <div class="instructor-card-name">Banna Kuyateh</div>
+               <div class="instructor-card-price">$20 / hour</div>
+               <div class="instructor-card-country"><i class="fas fa-map-marker-alt"></i> Gambia</div>
+               <span class="new-instructor-badge"><i class="fas fa-star"></i> New</span>
+               
+           </div>
+           <div class="instructor-card-body">
+            <div class="language-section">
+                <div class="language-section-title">Teaches</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span><span class="language-tag">Afrikaans</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">Speaks</div>
+                <div class="language-tags">
+                    <span class="language-tag">English</span>
+                </div>
+            </div>
+        
+            <div class="language-section">
+                <div class="language-section-title">About</div>
+                <div class="about-preview">I am Banna Kuyateh from the Gambia, also known as BK -of course short for my names. 
+I was born and came from the rural parts of the Gambia, until when I finished middle school and its a tradition for most people to move to the Urban areas in search of a brighter and better education and future. 
+For me: Dont hesitate ask!</div>
+            </div>
+        
+        </div>
+        <div class="instructor-card-footer" style="flex-direction: column; align-items: stretch;">
+            <a class="book-trial-btn" href="instructor-profile?id=EC4dW3nzrpaEtrBE3r8CYJc78mi1&amp;book=trial">
+                <i class="fas fa-gift"></i> Book Free Trial
+            </a>
+            <a class="view-profile-btn" href="instructor-profile?id=EC4dW3nzrpaEtrBE3r8CYJc78mi1" target="_blank" rel="noopener" data-instructor-id="EC4dW3nzrpaEtrBE3r8CYJc78mi1">
+                View Full Profile
+            </a>
+        </div>
+    </div>
         </div>
         <div class="tp-all">
             <a class="tp-btn" href="instructors?language=English" onclick="if(window.gtag)gtag('event','instructor_cta_click',{cta_target:'instructors',page_slug:'english-tutors'})">See all English instructors</a>
@@ -688,7 +1161,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="tp-faq">
             <h2>English tutoring: common questions</h2>
             <h3>How much does an online English tutor cost?</h3>
-            <p>Each instructor sets their own rate. English instructors on Lingua Bud currently charge between 5 and 35 per hour, priced in US dollars or euros. The rate is shown on every profile before you book.</p>
+            <p>Each instructor sets their own rate, shown on every profile before you book. English lessons on Lingua Bud currently start from about $5 per hour, priced in US dollars or euros, and every instructor offers a free 15-minute trial first.</p>
             <h3>Is the trial lesson really free?</h3>
             <p>Yes. You can book a free 15-minute trial from an instructor's profile to see whether their teaching style suits you. You need a free Lingua Bud account to book it.</p>
             <h3>How do the lessons take place?</h3>
@@ -702,45 +1175,39 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- end of content -->
 
 
-    <!-- Live instructor list: keeps the cards above current -->
+    <!-- Live instructor list (2026-11-18): same cards as the Instructors page; order = reviewed and/or recently
+         active first (js/instructor-cards.js); replaces the cards above,
+         which stay in the HTML for search engines. -->
     <script type="module">
-        import { db, collection, getDocs } from './lib/firebaseClient.js';
+        import { db, collection, getDocs, query, where } from './lib/firebaseClient.js';
+        import { setAvailability, createInstructorCard, observeCardVideo, isPaymentReady, priceInUsd, formatPrice, sortByReviewsAndActivity, lastActiveMapFrom } from './js/instructor-cards.js';
         const LANG = 'English', SHOWN = 12;
-        const SYM = { USD: '$', EUR: '€', GBP: '£', CAD: '$', AUD: '$' };
-        const esc = (t) => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML.replace(/"/g, '&quot;'); };
-        const excerpt = (t) => { t = (t || '').replace(/\s+/g, ' ').trim(); if (t.length <= 170) return t; return t.slice(0, 170).replace(/\s+\S*$/, '').replace(/[,.;:]+$/, '') + '…'; };
-        const bookable = (i) => (i.chargesEnabled === true && i.payoutsEnabled === true) || ((i.payoutMethod === 'wise' && !!i.wiseEmail) || i.paymentReady === true);
         try {
-            const snap = await getDocs(collection(db, 'publicInstructors'));
+            const [snap, availSnap, activeSnap] = await Promise.all([
+                getDocs(collection(db, 'publicInstructors')),
+                getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] })),
+                getDocs(query(collection(db, 'publicUsers'), where('role', '==', 'instructor'))).catch(() => ({ forEach() {} })),
+            ]);
+            const availability = {};
+            availSnap.docs.forEach((d) => { availability[d.id] = d.data(); });
+            setAvailability(availability);
             const list = [];
             snap.forEach((d) => {
                 const i = { id: d.id, ...d.data() };
-                if ((!i.status || i.status === 'approved') && Array.isArray(i.languages_teaching) && i.languages_teaching.includes(LANG) && bookable(i)) list.push(i);
+                if ((!i.status || i.status === 'approved') && Array.isArray(i.languages_teaching) && i.languages_teaching.includes(LANG) && isPaymentReady(i)) list.push(i);
             });
             if (list.length) {
-                list.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0) || (b.lessonsCount || 0) - (a.lessonsCount || 0) || (b.about_me || '').length - (a.about_me || '').length);
+                sortByReviewsAndActivity(list, lastActiveMapFrom(activeSnap));
                 document.getElementById('tp-count').textContent = list.length;
-                document.getElementById('tp-grid').innerHTML = list.slice(0, SHOWN).map((i) => {
-                    const cur = (i.currency || 'USD').trim();
-                    const p = parseFloat(i.price_per_lesson);
-                    const price = p ? `${cur} ${SYM[cur] || ''}${p}/hour` : '';
-                    const country = (i.native_country || '').trim();
-                    const name = (i.name || 'Instructor').trim();
-                    const rc = i.reviewCount || 0;
-                    const rating = rc
-                        ? `<div class="tp-rating">★ ${Number(i.averageRating || 0).toFixed(1)} <span>(${rc} review${rc !== 1 ? 's' : ''})</span></div>`
-                        : '<div class="tp-rating tp-new">New instructor</div>';
-                    return `<a class="tp-card" href="instructor-profile?id=${encodeURIComponent(i.id)}">
-                        <img class="tp-avatar" src="${esc(i.avatar_url || 'images/NuevoFavicon.png')}" alt="${esc(name + ', ' + LANG + ' instructor' + (country ? ' from ' + country : ''))}" width="72" height="72" loading="lazy">
-                        <div class="tp-body">
-                            <div class="tp-name">${esc(name)}</div>
-                            <div class="tp-meta">${esc([country, price].filter(Boolean).join(' · '))}</div>
-                            ${rating}
-                            <p class="tp-bio">${esc(excerpt(i.about_me))}</p>
-                            <span class="tp-link">View profile &amp; book a free trial &rarr;</span>
-                        </div>
-                    </a>`;
-                }).join('');
+                const cheapest = list.filter((i) => parseFloat(i.price_per_lesson) > 0).sort((a, b) => priceInUsd(a) - priceInUsd(b))[0];
+                if (cheapest) document.getElementById('tp-from').textContent = formatPrice(cheapest).replace(/\s*\/\s*hour$/, '');
+                const grid = document.getElementById('tp-grid');
+                grid.innerHTML = '';
+                list.slice(0, SHOWN).forEach((i) => {
+                    const card = createInstructorCard(i);
+                    grid.appendChild(card);
+                    observeCardVideo(card);
+                });
             }
         } catch (err) {
             console.error('Could not refresh instructor list:', err);

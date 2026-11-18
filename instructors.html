@@ -1552,7 +1552,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
-        import { sortSpanishRecommended, lastActiveMapFrom, setAvailability as setCardAvailability } from './js/instructor-cards.js';
+        import { sortSpanishRecommended, sortByReviewsAndActivity, lastActiveMapFrom, setAvailability as setCardAvailability } from './js/instructor-cards.js';
 
         // Stripe publishable key is fetched once from the backend and cached.
         // This keeps the key out of the HTML source; switching test↔live is a
@@ -1907,6 +1907,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if (selectedLang === 'Spanish' && (sortFilter.value || 'recommended') === 'recommended') {
                 setCardAvailability(availabilityMap);
                 sortSpanishRecommended(filtered, instructorLastActive);
+            } else if (selectedLang === 'English' && (sortFilter.value || 'recommended') === 'recommended') {
+                // English + Recommended: reviewed and/or recently active first.
+                setCardAvailability(availabilityMap);
+                sortByReviewsAndActivity(filtered, instructorLastActive);
             }
 
             if (filtered.length === 0) {

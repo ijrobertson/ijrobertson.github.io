@@ -1093,6 +1093,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             onAuthStateChanged, signOut, doc, getDoc,
             where, onSnapshot
         } from './lib/firebaseClient.js';
+        import { setAvailability, sortByReviewsAndActivity, lastActiveMapFrom } from './js/instructor-cards.js';
 
         const AVT = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e8f8f7'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2320bcba'/%3E%3Cellipse cx='50' cy='85' rx='28' ry='22' fill='%2320bcba'/%3E%3C/svg%3E";
 
@@ -1248,9 +1249,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function loadEnglishInstructors() {
             const grid = document.getElementById('instructorsGrid');
             try {
-                const [snap, availSnap] = await Promise.all([
+                const [snap, availSnap, activeSnap] = await Promise.all([
                     getDocs(collection(db, 'publicInstructors')),
-                    getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] }))
+                    getDocs(collection(db, 'instructor_availability')).catch(() => ({ docs: [] })),
+                    getDocs(query(collection(db, 'publicUsers'), where('role', '==', 'instructor'))).catch(() => ({ forEach() {} }))
                 ]);
                 const availabilityMap = {};
                 availSnap.docs.forEach(d => { availabilityMap[d.id] = d.data(); });
@@ -1267,6 +1269,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const englishInstructors = instructors.filter(i => {
                     return (i.languages_teaching || []).some(isEnglish);
                 });
+                // 2026-11-18: reviewed and/or recently active instructors first — shared
+                // with english-tutors and instructors?language=English.
+                setAvailability(availabilityMap);
+                sortByReviewsAndActivity(englishInstructors, lastActiveMapFrom(activeSnap));
                 grid.innerHTML = '';
                 if (englishInstructors.length === 0) {
                     grid.innerHTML = `<div class="profiles-empty">No English instructors yet.
