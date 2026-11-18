@@ -428,6 +428,21 @@ const STYLE = `
 
 const ROLE_STORAGE_KEY = "lb-shell-role";
 const UNREAD_STORAGE_KEY = "lb-shell-unread"; // last unread-message count, shown on the next page at once
+// Last streak the Learn page computed, with the day it was computed, so every
+// page's header can show it (2026-11-18). A streak counts days ending today
+// or yesterday, so a value saved yesterday is still right today; anything
+// older may be broken and isn't shown.
+const STREAK_STORAGE_KEY = "lb-shell-streak";
+function localDayNumber(d = new Date()) {
+  return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
+}
+function cachedStreak() {
+  try {
+    const v = JSON.parse(localStorage.getItem(STREAK_STORAGE_KEY) || "null");
+    if (v && Number.isFinite(v.n) && localDayNumber() - v.day <= 1) return v.n;
+  } catch (e) {}
+  return 0;
+}
 const GLIDE_STORAGE_KEY = "lb-tab-glide";
 const GLIDE_DURATION = 380;
 const GLIDE_EASING = "cubic-bezier(0.32, 0.72, 0, 1)"; // iOS's own sheet curve
@@ -518,6 +533,9 @@ class LbAppShell extends HTMLElement {
     }
     // Remembered so the next page's tab bar shows the badge straight away
     // instead of blank until that page's listener hears from the server.
+    if (name === "streak" && newValue != null) {
+      try { localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify({ n: parseInt(newValue, 10) || 0, day: localDayNumber() })); } catch (e) {}
+    }
     if (name === "messages-unread" && newValue != null) {
       try { localStorage.setItem(UNREAD_STORAGE_KEY, newValue); } catch (e) {}
     }
@@ -656,7 +674,8 @@ class LbAppShell extends HTMLElement {
     const gliderFrom = this._gliderPos();
     const pageTitle = this.getAttribute("page-title") || "Lingua Bud";
     const notifications = parseInt(this.getAttribute("notifications") || "0", 10);
-    const streak = parseInt(this.getAttribute("streak") || "0", 10);
+    const streakAttr = this.getAttribute("streak");
+    const streak = streakAttr != null ? (parseInt(streakAttr, 10) || 0) : cachedStreak();
     const hideHeader = this.hasAttribute("hide-header");
     // A count since 2026-11-17 ("true" still accepted from older pages and
     // shows the highlight without a number).
@@ -847,7 +866,7 @@ class LbAppShell extends HTMLElement {
         // Dispatched rather than importing Firebase here — keeps this component
         // backend-agnostic. Each page listens and reuses its own existing
         // sign-out logic (see docs/PWA_PRD.md §15).
-        try { localStorage.removeItem(UNREAD_STORAGE_KEY); } catch (e) {}
+        try { localStorage.removeItem(UNREAD_STORAGE_KEY); localStorage.removeItem(STREAK_STORAGE_KEY); } catch (e) {}
         this.dispatchEvent(new CustomEvent("lb-logout", { bubbles: true, composed: true }));
       });
     }
