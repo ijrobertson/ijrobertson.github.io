@@ -2395,7 +2395,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const createPI = httpsCallable(functions, 'createPaymentIntent');
                 const piResult = await createPI({
                     instructorId: currentInstructorId,
-                    idempotencyKey: crypto.randomUUID()
+                    idempotencyKey: crypto.randomUUID(),
+                    // Lesson time on the payment: lets the server book the lesson if this
+                    // page never saves it (closed tab, lost signal) — bookingRecovery.js
+                    lessonStart: (selectedSlot && selectedSlot.startTime) ? new Date(selectedSlot.startTime).toISOString() : null,
+                    instructorTimezone: (instructorAvailability && instructorAvailability.timezone) || null,
+                    studentTimezone: (typeof studentStoredTZ !== 'undefined' && studentStoredTZ) || Intl.DateTimeFormat().resolvedOptions().timeZone
                 });
                 const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
 
@@ -2478,6 +2483,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     payBookBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                     document.getElementById('payment-error-msg').style.display = 'none';
 
+                    let paymentSucceeded = false; // card charged: never offer to pay again
                     try {
                         const { error, paymentIntent } = await stripeInstance.confirmPayment({
                             elements: stripeElements,
@@ -2498,6 +2504,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         }
 
                         if (paymentIntent && paymentIntent.status === 'succeeded') {
+                            paymentSucceeded = true;
                             const studentTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
                             const [instructorSnap, studentSnap] = await Promise.all([
                                 getDoc(doc(db, 'publicInstructors', currentInstructorId)),
@@ -2544,6 +2551,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                     } catch (err) {
                         console.error('Payment error:', err);
+                        if (paymentSucceeded) {
+                            // Paid, but the booking couldn't be saved here. The server books it
+                            // within a few minutes from the payment (bookingRecovery.js).
+                            const okEl = document.getElementById('payment-error-msg');
+                            okEl.textContent = 'Your payment went through. We are confirming your booking now, and it will appear in your Bookings within 15 minutes.';
+                            okEl.style.cssText += ';display:block;background:#e6f7f7;color:#0b6664;border-color:#20bcba;';
+                            payBookBtn.style.display = 'none';
+                            setTimeout(() => { window.location.href = 'bookings'; }, 7000);
+                            return;
+                        }
                         const errEl = document.getElementById('payment-error-msg');
                         errEl.innerHTML = '<strong><i class="fas fa-exclamation-circle"></i> Payment Unsuccessful</strong><br><span style="font-size:0.85rem; display:block; margin-top:0.3rem;">Your payment could not be processed. Please try again or use a different payment method.</span>';
                         errEl.style.display = 'block';
