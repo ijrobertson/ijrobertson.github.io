@@ -2409,7 +2409,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const pubKey = await getStripePublishableKey();
                 stripeInstance = Stripe(pubKey);
                 stripeElements = stripeInstance.elements({ clientSecret });
-                const paymentElement = stripeElements.create('payment');
+                const paymentElement = stripeElements.create('payment', {
+                    // 2026-11-18: stacked list instead of side-scrolling tabs (Klarna
+                    // was cut in half); first 3 shown, the rest behind "More".
+                    // Apple Pay / Google Pay appear first where the device has them.
+                    layout: { type: 'accordion', defaultCollapsed: false, radios: true, spacedAccordionItems: false, visibleAccordionItemsCount: 3 },
+                    paymentMethodOrder: ['apple_pay', 'google_pay', 'card', 'link']
+                });
                 paymentElement.mount('#payment-element');
 
                 document.getElementById('payment-element-loading').style.display = 'none';
