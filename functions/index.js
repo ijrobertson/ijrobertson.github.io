@@ -6,6 +6,7 @@ const { randomUUID, createHash } = require('crypto');
 const { google } = require('googleapis');
 const { processLessonReminders } = require('./lessonReminders');
 const { processStreakReminders } = require('./streakReminders');
+const { noteMissingBooking, processBookingRecovery } = require('./bookingRecovery');
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -2973,6 +2974,21 @@ exports.createPaymentIntent = onCall(async (request) => {
   const { instructorId, idempotencyKey } = request.data;
   const uid = request.auth.uid;
 
+  // Lesson time (2026-11-18): kept on the payment so the lesson can still be
+  // booked if the student's browser never saves the booking — see
+  // bookingRecovery.js. Optional: older pages don't send it.
+  const lessonMeta = {};
+  {
+    const ls = request.data.lessonStart ? new Date(request.data.lessonStart) : null;
+    if (ls && !isNaN(ls.getTime()) && ls.getTime() > Date.now() - 86400000 && ls.getTime() < Date.now() + 400 * 86400000) {
+      lessonMeta.lessonStart = ls.toISOString();
+      for (const k of ['instructorTimezone', 'studentTimezone']) {
+        const v = request.data[k];
+        if (typeof v === 'string' && v && v.length <= 60) lessonMeta[k] = v;
+      }
+    }
+  }
+
   if (!instructorId) {
     throw new HttpsError('invalid-argument', 'instructorId is required');
   }
@@ -3119,6 +3135,7 @@ exports.createPaymentIntent = onCall(async (request) => {
         instructorId,
         studentId:              uid,
         payoutMethod:           'stripe',
+        ...lessonMeta,
         lessonAmount:           String(lessonAmountCents),
         studentPlatformFee:     String(studentFeeCents),
         commissionRate:         String(commissionRate),
@@ -3141,6 +3158,7 @@ exports.createPaymentIntent = onCall(async (request) => {
         instructorId,
         studentId:                uid,
         payoutMethod:             'wise',
+        ...lessonMeta,
         wiseEmail,
         lessonAmount:             String(lessonAmountCents),
         studentPlatformFee:       String(studentFeeCents),
@@ -3901,6 +3919,9 @@ exports.stripeWebhook = onRequest({ cors: false }, async (req, res) => {
           // Redirect-based payment: booking not yet created client-side.
           // Metadata holds instructorId + studentId for manual recovery if needed.
           console.warn(`No booking found for paymentIntentId ${pi.id}. Metadata:`, pi.metadata);
+          // Usually the browser saves it a moment later; if not, the lesson is
+          // booked by recoverMissingBookings (bookingRecovery.js).
+          try { await noteMissingBooking(pi); } catch (e) { console.error('[BookingRecovery] could not note missing booking:', e.message); }
         }
 
         // ── Mark referral as credited when the associated payment succeeds ──
@@ -5742,6 +5763,16 @@ function buildUnsubPage(message, success) {
 </body>
 </html>`;
 }
+
+/**
+ * Paid-lesson safety net: books any paid lesson whose booking the student's
+ * browser never saved (see bookingRecovery.js). Does nothing when there are
+ * no waiting payments.
+ */
+exports.recoverMissingBookings = onSchedule('every 2 minutes', async () => {
+  const results = await processBookingRecovery(getStripe);
+  if (results.length) console.log('[BookingRecovery]', JSON.stringify(results));
+});
 
 // Queued message emails (see queueMessageEmail) — defined down here because
 // onSchedule is imported further up the file than the message helpers.
