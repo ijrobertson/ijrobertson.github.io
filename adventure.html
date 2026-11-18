@@ -13,7 +13,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
-    <meta name="description" content="A Lingua Bud Adventure — practise real phrases in a realistic scene, with cultural tips and instant feedback.">
+    <meta name="description" content="A Lingua Bud Adventure — practice real phrases in a realistic scene, with cultural tips and instant feedback.">
     <meta name="author" content="Lingua Bud">
     <meta name="robots" content="noindex">
     <title>Adventure - Lingua Bud</title>
@@ -94,7 +94,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         .adv-container { max-width: 640px; margin: 1.25rem auto 0; padding: 0 1rem; }
 
-        /* Prepare → Practise → Review */
+        /* Prepare → Practice → Review */
         .stage-track { display: flex; gap: 0.4rem; margin-bottom: 1rem; }
         .stage { flex: 1; text-align: center; font-size: 0.75rem; font-weight: 700; color: #9aa5a9; }
         .stage::before { content: ""; display: block; height: 5px; border-radius: 999px; background: #e7e9e7; margin-bottom: 0.35rem; }
@@ -389,7 +389,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // finished = the run is over, so every stage shows complete.
         function stageTrack(current, { finished = false } = {}) {
-            const stages = ['Prepare', 'Practise', 'Review'];
+            const stages = ['Prepare', 'Practice', 'Review'];
             const i = stages.indexOf(current);
             return `<div class="stage-track" aria-label="Step ${i + 1} of 3: ${current}">
                 ${stages.map((s, j) => `<div class="stage ${j < i || finished ? 'done' : j === i ? 'current' : ''}">${s}</div>`).join('')}
@@ -408,7 +408,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <p translate="no">${escapeHtml(adventure.setting)}</p>
                 </div>
                 <div class="adv-card">
-                    <div class="adv-card-label"><i class="fas fa-bullseye"></i> You'll practise</div>
+                    <div class="adv-card-label"><i class="fas fa-bullseye"></i> You'll practice</div>
                     <ul class="objectives">
                         ${(adventure.objectives || []).map(o => `<li><i class="fas fa-check"></i><span translate="no">${escapeHtml(o)}</span></li>`).join('')}
                     </ul>
@@ -512,7 +512,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             synth.speak(utter);
         }
 
-        // ===== 2. PRACTISE — the conversation =====
+        // ===== 2. PRACTICE — the conversation =====
         function shuffle(list) {
             const a = list.slice();
             for (let i = a.length - 1; i > 0; i--) {
@@ -525,7 +525,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function startRun() {
             const total = adventure.steps.filter(s => s.type === 'choice').length;
             run = { stepIndex: 0, score: 0, total, asked: 0, missed: new Set() };
-            content.innerHTML = `${stageTrack('Practise')}<div class="convo" id="convo"></div>`;
+            content.innerHTML = `${stageTrack('Practice')}<div class="convo" id="convo"></div>`;
             track('adventure_started');
             scrollToEl(document.querySelector('.adv-hero'));
             advance();
@@ -685,7 +685,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 <h2 class="section-heading">Keep going</h2>
                 <div class="actions">
-                    <a class="btn-lb-pill" href="connect"><i class="fas fa-user-friends"></i> Practise with a language partner</a>
+                    <a class="btn-lb-pill" href="connect"><i class="fas fa-user-friends"></i> Practice with a language partner</a>
                     <a class="btn-lb-pill btn-lb-pill-outline" href="instructors"><i class="fas fa-chalkboard-teacher"></i> Book a lesson with an instructor</a>
                     ${related.cultureGuide && related.cultureLesson ? `<a class="btn-lb-pill btn-lb-pill-outline" href="culture-lesson?country=${encodeURIComponent(related.cultureGuide)}&lesson=${encodeURIComponent(related.cultureLesson)}"><i class="fas fa-globe"></i> Related culture lesson</a>` : ''}
                     <button type="button" class="btn-lb-pill btn-lb-pill-outline" id="replayBtn"><i class="fas fa-redo"></i> Play again</button>
