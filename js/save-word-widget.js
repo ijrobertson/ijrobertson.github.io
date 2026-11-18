@@ -296,6 +296,7 @@ function openSaveModal(term, { pickFrom = '' } = {}) {
       });
       close();
       showToast('Saved to your notebook!');
+      if (window.lbMarkActiveDay) window.lbMarkActiveDay(); // streak (2026-11-18)
     } catch (e) {
       console.error('Save word error:', e);
       errorEl.textContent = 'Something went wrong saving this word. Please try again.';

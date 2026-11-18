@@ -720,7 +720,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // so they run concurrently instead of adding a third round-trip
             // to the critical path of the very first thing shown on launch.
             await loadProfileBasics(user);
-            await Promise.all([loadNextLesson(), loadVocabSummary(), loadCultureSummary(), loadTravelJourneySummary(), loadAdventuresSummary()]);
+            await Promise.all([loadNextLesson(), loadVocabSummary(), loadCultureSummary(), loadTravelJourneySummary(), loadAdventuresSummary(), loadLearningActivity()]);
             updateStreakAndGoal();
         });
 
@@ -1056,11 +1056,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
         }
 
+        // ===== STREAK: quizzes, Adventures, Culture Guides (2026-11-18) =====
+        // Besides lessons and saved words (above), a finished quiz, Adventure
+        // or Culture Guide lesson counts as a streak day. Sources: the days
+        // marked on users/{uid}.activeDays when those finish (lib/firebaseClient
+        // markActiveDay), plus the records that already existed — every
+        // quizAttempts finish time, and the latest finish of each Adventure /
+        // latest lesson per Culture Guide country — so earlier activity counts.
+        async function loadLearningActivity() {
+            const toDate = (v) => (v && v.toDate ? v.toDate() : (v ? new Date(v) : null));
+            const add = (d) => { if (d && !isNaN(d)) activeDates.add(dateKey(d)); };
+            await Promise.all([
+                getDoc(doc(db, 'users', currentUser.uid)).then((snap) => {
+                    Object.keys((snap.exists() && snap.data().activeDays) || {}).forEach((k) => {
+                        const [y, m, d] = k.split('-').map(Number);
+                        if (y && m && d) add(new Date(y, m - 1, d));
+                    });
+                }).catch(() => {}),
+                getDocs(query(collection(db, 'quizAttempts'), where('userId', '==', currentUser.uid)))
+                    .then((snap) => snap.forEach((d) => add(toDate(d.data().completedAt)))).catch(() => {}),
+                getDoc(doc(db, 'adventureProgress', currentUser.uid)).then((snap) => {
+                    Object.values((snap.exists() && snap.data().completed) || {}).forEach((e) => add(toDate(e && e.completedAt)));
+                }).catch(() => {}),
+                getDoc(doc(db, 'cultureProgress', currentUser.uid)).then((snap) => {
+                    Object.values((snap.exists() && snap.data()) || {}).forEach((c) => add(toDate(c && c.updatedAt)));
+                }).catch(() => {}),
+            ]);
+        }
+
         // ===== STREAK / WEEKLY GOAL =====
         // Runs once loadNextLesson() and loadVocabSummary() have both populated
         // activeDates/lessonsThisWeek. Streak = consecutive days (ending today or
         // yesterday, so it doesn't look "broken" before the user's had a chance to
-        // act today) with a completed lesson or a saved word — see docs/PWA_PRD.md
+        // act today) with a completed lesson, a saved word, or (since
+        // 2026-11-18) a finished quiz / Adventure / Culture Guide lesson — see docs/PWA_PRD.md
         // §302 on why this stays a plain, honest count with no fake urgency.
         function computeStreak() {
             let count = 0;
@@ -1078,6 +1107,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const streak = computeStreak();
             const shell = document.getElementById('shell');
             if (shell) shell.setAttribute('streak', String(streak));
+            // Remember whether today already counts, so finishing a quiz later
+            // today doesn't add a second day (lib/firebaseClient bumpStreakCache).
+            try {
+                const today = new Date();
+                localStorage.setItem('lb-shell-streak', JSON.stringify({
+                    n: streak,
+                    day: Math.floor((today.getTime() - today.getTimezoneOffset() * 60000) / 86400000),
+                    counted: activeDates.has(dateKey(today)),
+                }));
+            } catch (e) {}
 
             const section = document.getElementById('weeklyGoalSection');
             const container = document.getElementById('weeklyGoalContainer');

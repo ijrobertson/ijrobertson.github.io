@@ -23,5 +23,6 @@ export async function markLessonComplete(uid, countryId, lessonId) {
   await setDoc(doc(db, 'cultureProgress', uid), {
     [countryId]: { completedLessons: updated, updatedAt: serverTimestamp() }
   }, { merge: true });
+  if (typeof window !== 'undefined' && window.lbMarkActiveDay) window.lbMarkActiveDay(); // streak (2026-11-18)
   return updated;
 }
