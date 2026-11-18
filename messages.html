@@ -362,6 +362,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             flex: 1;
             min-height: 0; /* lets this shrink inside a JS-sized .chat-panel on mobile, see its comment */
             overflow-y: auto;
+            overflow-x: hidden; /* the chat itself never scrolls sideways */
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
@@ -389,6 +390,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
 
         .message-content {
+            /* Long unbroken text (IDs, links) wraps inside the bubble instead of
+               widening it past the screen and making the chat scroll sideways. */
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
             background: white;
             padding: 0.75rem 1rem;
             border-radius: 12px;
@@ -402,6 +408,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
 
         .message-text {
+            overflow-wrap: anywhere;
+            word-break: break-word;
             margin: 0;
             line-height: 1.5;
             color: inherit;
