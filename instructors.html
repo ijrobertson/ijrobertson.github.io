@@ -1552,6 +1552,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
+        import { rememberBooking } from './js/add-to-calendar.js';
         import { sortSpanishRecommended, sortByReviewsAndActivity, lastActiveMapFrom, setAvailability as setCardAvailability } from './js/instructor-cards.js';
 
         // Stripe publishable key is fetched once from the backend and cached.
@@ -2533,7 +2534,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             const instructorData = instructorSnap.exists() ? instructorSnap.data() : {};
                             const studentData = studentSnap.exists() ? studentSnap.data() : {};
 
-                            await addDoc(collection(db, 'bookings'), {
+                            const newBookingRef = await addDoc(collection(db, 'bookings'), {
                                 instructorId: currentInstructorId,
                                 studentId: auth.currentUser.uid,
                                 dateTime: selectedSlot.startTime,
@@ -2551,6 +2552,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 instructorSeen: false,
                                 studentSeen: false
                             });
+                            // Add-to-calendar pop-up on the Bookings page (js/add-to-calendar.js)
+                            rememberBooking({ id: newBookingRef.id, start: selectedSlot.startTime, minutes: 60, instructorName: instructorData.name || currentInstructorName, trial: false });
 
                             // Reset payment step state
                             selectedSlot = null;
