@@ -215,6 +215,31 @@ if (self.workbox) {
     })
   );
 
+  // Google Fonts (2026-11-19). Every app page's <head> loads its font
+  // stylesheet from fonts.googleapis.com, which blocks the page's first
+  // render; with cross-page View Transitions the old page stays frozen (taps
+  // ignored) until the new one renders — on a stalled connection that was
+  // ~a minute. Keep copies so changing pages never waits on Google:
+  // stylesheets served from cache and refreshed in the background, font
+  // files cached for a year (their URLs are versioned).
+  workbox.routing.registerRoute(
+    ({ url }) => url.origin === "https://fonts.googleapis.com",
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: "linguabud-google-fonts-css",
+      plugins: [new workbox.cacheableResponse.CacheableResponsePlugin({ statuses: [0, 200] })],
+    })
+  );
+  workbox.routing.registerRoute(
+    ({ url }) => url.origin === "https://fonts.gstatic.com",
+    new workbox.strategies.CacheFirst({
+      cacheName: "linguabud-google-fonts",
+      plugins: [
+        new workbox.cacheableResponse.CacheableResponsePlugin({ statuses: [0, 200] }),
+        new workbox.expiration.ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 365 * 24 * 60 * 60 }),
+      ],
+    })
+  );
+
   // Offline fallback: only for same-origin navigations with no network and no cache.
   workbox.routing.setCatchHandler(async ({ event }) => {
     if (event.request.mode === "navigate" && SAME_ORIGIN({ url: new URL(event.request.url) })) {
