@@ -340,6 +340,10 @@ const STYLE = `
     width: 60px;
     height: 46px;
     pointer-events: none;
+    /* Slides use transform only (translate + scale, see _placeGlider), which
+       the GPU runs smoothly even while the next page is loading. */
+    transform-origin: 0 50%;
+    will-change: transform;
   }
   .glider.hidden { visibility: hidden; }
   .glider-pill {
@@ -348,6 +352,27 @@ const STYLE = `
     height: 100%;
     border-radius: 999px;
     background: rgba(32, 188, 186, 0.18); /* brand teal #20bcba, tinted */
+  }
+  /* Glass look (2026-11-18, like Apple Music / WhatsApp), only where the
+     browser can blend colors; older phones keep the solid bar and tint. */
+  @supports (background: color-mix(in srgb, red 50%, transparent)) {
+    nav {
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      border-top-color: color-mix(in srgb, var(--border) 70%, transparent);
+      -webkit-backdrop-filter: saturate(180%) blur(28px);
+      backdrop-filter: saturate(180%) blur(28px);
+    }
+    .glider-pill {
+      box-sizing: border-box;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 55%, transparent) 0%, transparent 60%),
+        color-mix(in srgb, var(--accent, #20bcba) 17%, transparent);
+      border: 1px solid color-mix(in srgb, var(--surface) 65%, transparent);
+      box-shadow:
+        inset 0 1px 0 color-mix(in srgb, var(--surface) 80%, transparent),
+        0 6px 16px -8px rgba(17, 52, 72, 0.35),
+        0 1px 3px rgba(17, 52, 72, 0.08);
+    }
   }
   a.tab {
     position: relative;
@@ -366,7 +391,7 @@ const STYLE = `
     color: var(--ink-500);
     font-size: 11px;
     font-weight: 600;
-    transition: color var(--lb-duration-fast, 150ms) var(--lb-ease-out, ease-out);
+    transition: color 260ms cubic-bezier(0.32, 0.72, 0, 1);
   }
   a.tab svg {
     width: 22px;
@@ -444,8 +469,18 @@ function cachedStreak() {
   return 0;
 }
 const GLIDE_STORAGE_KEY = "lb-tab-glide";
-const GLIDE_DURATION = 380;
-const GLIDE_EASING = "cubic-bezier(0.32, 0.72, 0, 1)"; // iOS's own sheet curve
+const GLIDE_DURATION = 520;
+// A gentle spring (2026-11-18): starts from rest, ~1% settle, as a linear()
+// curve where the browser supports it; otherwise iOS's own sheet curve.
+const GLIDE_EASING = (() => {
+  const Z = 0.82, W = 8, WD = W * Math.sqrt(1 - Z * Z); // damping, stiffness
+  const spring = (t) => 1 - Math.exp(-Z * W * t) * (Math.cos(WD * t) + (Z * W / WD) * Math.sin(WD * t));
+  const pts = [];
+  for (let i = 0; i <= 40; i++) pts.push(i === 40 ? "1" : spring(i / 40).toFixed(4));
+  const curve = `linear(${pts.join(", ")})`;
+  try { if (window.CSS && CSS.supports("animation-timing-function", curve)) return curve; } catch (e) {}
+  return "cubic-bezier(0.32, 0.72, 0, 1)";
+})();
 const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 // ── Glider hand-off between pages ───────────────────────────────────────
@@ -613,9 +648,9 @@ class LbAppShell extends HTMLElement {
     if (!glider || glider.classList.contains("hidden") || !glider.offsetWidth) return null;
     const boxes = this._tabBoxes();
     if (!boxes.length) return null;
-    const style = getComputedStyle(glider);
-    const matrix = new DOMMatrixReadOnly(style.transform);
-    return this._pxToPos(matrix.m41 + parseFloat(style.width) / 2, boxes);
+    const nav = this.shadowRoot.querySelector("nav");
+    const r = glider.getBoundingClientRect();
+    return this._pxToPos(r.left - nav.getBoundingClientRect().left + r.width / 2, boxes);
   }
 
   // Puts the glider under the active tab. Called after every render, and a
@@ -639,11 +674,13 @@ class LbAppShell extends HTMLElement {
     const tab = this.shadowRoot.querySelector("a.tab");
     glider.style.top = `${tab.offsetTop + 4}px`;
     glider.style.height = `${tab.offsetHeight - 8}px`;
-    const at = (pos) => {
-      const { c, w } = this._boxAt(pos, boxes);
-      return { transform: `translateX(${(c - w / 2).toFixed(2)}px)`, width: `${w.toFixed(2)}px` };
-    };
-    Object.assign(glider.style, at(index));
+    // At rest: the real width, no scaling. Mid-slide: the same width scaled,
+    // so only transform animates (GPU) — no per-frame layout.
+    const rest = this._boxAt(index, boxes);
+    const frame = (c, w, sy = 1) => ({ transform: `translateX(${(c - w / 2).toFixed(2)}px) scale(${(w / rest.w).toFixed(4)}, ${sy})` });
+    const at = (pos) => { const { c, w } = this._boxAt(pos, boxes); return frame(c, w); };
+    glider.style.width = `${rest.w.toFixed(2)}px`;
+    glider.style.transform = `translateX(${(rest.c - rest.w / 2).toFixed(2)}px)`;
     if (REDUCED_MOTION.matches) return;
     const resuming = this._slide?.to === index && Date.now() - this._slide.startedAt < GLIDE_DURATION;
     if (!resuming) {
@@ -651,8 +688,11 @@ class LbAppShell extends HTMLElement {
       this._slide = { from: fromPos, to: index, startedAt: Date.now() };
     }
     const { from, startedAt } = this._slide;
+    // Liquid stretch: a little wider and flatter mid-way, more for longer slides.
+    const mid = this._boxAt((from + index) / 2, boxes);
+    const stretch = 1 + Math.min(0.22, 0.07 * Math.abs(index - from));
     const slide = glider.animate(
-      [at(from), at(index)],
+      [at(from), { ...frame(mid.c, mid.w * stretch, 1 - (stretch - 1) * 0.35), offset: 0.45 }, at(index)],
       { duration: GLIDE_DURATION, easing: GLIDE_EASING }
     );
     slide.currentTime = Date.now() - startedAt;
