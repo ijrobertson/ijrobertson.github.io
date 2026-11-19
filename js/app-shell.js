@@ -353,25 +353,20 @@ const STYLE = `
     border-radius: 999px;
     background: rgba(32, 188, 186, 0.18); /* brand teal #20bcba, tinted */
   }
-  /* Glass look (2026-11-18, like Apple Music / WhatsApp), only where the
-     browser can blend colors; older phones keep the solid bar and tint. */
+  /* Translucent glass capsule (2026-11-18), only where the browser can blend
+     colors; older phones keep the plain tint. The bar itself stays solid
+     white (dark in night mode): a see-through bar picked up the teal/blue
+     cards scrolling behind it on Learn and Instructors. */
   @supports (background: color-mix(in srgb, red 50%, transparent)) {
-    nav {
-      background: color-mix(in srgb, var(--surface) 88%, transparent);
-      border-top-color: color-mix(in srgb, var(--border) 70%, transparent);
-      -webkit-backdrop-filter: saturate(180%) blur(28px);
-      backdrop-filter: saturate(180%) blur(28px);
-    }
     .glider-pill {
       box-sizing: border-box;
       background:
-        linear-gradient(180deg, color-mix(in srgb, var(--surface) 55%, transparent) 0%, transparent 60%),
-        color-mix(in srgb, var(--accent, #20bcba) 17%, transparent);
-      border: 1px solid color-mix(in srgb, var(--surface) 65%, transparent);
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 40%, transparent) 0%, transparent 70%),
+        color-mix(in srgb, var(--accent, #20bcba) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent, #20bcba) 16%, transparent);
       box-shadow:
-        inset 0 1px 0 color-mix(in srgb, var(--surface) 80%, transparent),
-        0 6px 16px -8px rgba(17, 52, 72, 0.35),
-        0 1px 3px rgba(17, 52, 72, 0.08);
+        inset 0 1px 0 color-mix(in srgb, var(--surface) 55%, transparent),
+        0 3px 10px -6px rgba(17, 52, 72, 0.18);
     }
   }
   a.tab {
