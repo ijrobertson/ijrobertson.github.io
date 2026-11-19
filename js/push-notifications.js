@@ -423,6 +423,23 @@ async function uploadPushLog(uid) {
   }
 }
 
+// What this device's notifications look like (2026-11-19), so a "not
+// getting notifications" report can be checked: fcmTokens/{uid}.pushStatus
+// keyed by origin + phone/computer. Diagnostics only.
+async function recordPushStatus(uid, extra = {}) {
+  try {
+    let subscribed = null;
+    try {
+      const reg = await withTimeout(navigator.serviceWorker.getRegistration('/'), 4000, 'registration');
+      subscribed = reg ? !!(await reg.pushManager.getSubscription()) : false;
+    } catch (e) {}
+    const ua = navigator.userAgent || '';
+    const device = /iPhone|iPad|iPod/.test(ua) ? 'ios' : /Android/.test(ua) ? 'android' : /Windows/.test(ua) ? 'windows' : /Macintosh/.test(ua) ? 'mac' : 'other';
+    const key = `${location.host}|${device}|${isStandalonePWA() ? 'app' : 'browser'}`.replace(/\./g, '_');
+    await setDoc(doc(db, 'fcmTokens', uid), { pushStatus: { [key]: { permission: Notification.permission, subscribed, at: serverTimestamp(), ...extra } } }, { merge: true });
+  } catch (e) { /* diagnostics only */ }
+}
+
 export async function initPush(uid, { onForegroundMessage } = {}) {
   if (!pushSupported() || !uid) return;
   uploadPushLog(uid);
@@ -434,13 +451,22 @@ export async function initPush(uid, { onForegroundMessage } = {}) {
   });
 
   if (Notification.permission === 'granted') {
-    if (shouldRefreshToken()) {
+    // Self-repair (2026-11-19): if the phone has silently lost its push
+    // subscription (iOS cancels it after a few "silent" pushes, while Settings
+    // still says Allowed), sign up again now instead of waiting a day.
+    let lost = false;
+    try {
+      const reg = await withTimeout(navigator.serviceWorker.getRegistration('/'), 4000, 'registration');
+      lost = !!reg && !(await reg.pushManager.getSubscription());
+    } catch (e) {}
+    if (lost || shouldRefreshToken()) {
       try {
         await registerToken(uid);
       } catch (e) {
         console.error('Push token refresh error:', e);
       }
     }
+    recordPushStatus(uid, { repaired: lost });
   } else if (Notification.permission === 'default' && isStandalonePWA()) {
     // Only undecided, installed-app users get here, so the extra read is rare.
     let isInstructor = false;
