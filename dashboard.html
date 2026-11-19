@@ -508,6 +508,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
 
     .blocked-cal-header h4 {
+      flex: 1 1 auto;
+      min-width: 0;
+      text-align: center;
+      white-space: nowrap;
+      padding: 0 0.75rem;
       margin: 0;
       font-size: 1rem;
       font-weight: 700;
@@ -515,8 +520,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
 
     .cal-nav-btn {
-      width: 34px;
-      height: 34px;
+      /* Overrides the page-wide button rule (min-width 120px, padding, margins)
+         that made the two arrows different sizes and squeezed the month. */
+      flex: 0 0 36px;
+      width: 36px;
+      min-width: 0;
+      height: 36px;
+      padding: 0;
+      margin: 0;
       border: 1px solid #ccc;
       border-radius: 6px;
       background: #fff;
@@ -994,9 +1005,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       border-left: 4px solid #20bcba;
       margin-bottom: 1rem;
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: flex-start;
       gap: 1rem;
+    }
+    .booking-inst-info { flex: 1 1 200px; min-width: 0; }
+    .booking-inst-tz { color: #bbb; font-size: 0.82rem; overflow-wrap: anywhere; }
+    .booking-inst-actions { display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; }
+    /* Page-wide button rule adds min-width/margins; keep these compact. */
+    .booking-inst-actions button { margin: 0; min-width: 0; }
+    @media (max-width: 520px) {
+      /* Phones: buttons go under the lesson details, full width. */
+      .booking-inst-actions { flex: 1 1 100%; }
+      .booking-inst-actions button { width: 100%; }
     }
     .booking-card-inst h5 {
       margin: 0 0 0.4rem;
@@ -1009,6 +1031,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       font-size: 0.9rem;
       margin: 0.2rem 0;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 0.5rem;
     }
@@ -3406,7 +3429,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       card.className = 'booking-card-inst';
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       card.innerHTML = `
-        <div>
+        <div class="booking-inst-info">
           <h5${booking.studentName ? ' translate="no"' : ''}>${escapeHtmlInst(booking.studentName || 'Student')}</h5>
           <div class="booking-detail-inst">
             <i class="fas fa-calendar" style="color:#20bcba;width:14px;"></i>
@@ -3415,14 +3438,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="booking-detail-inst">
             <i class="fas fa-clock" style="color:#20bcba;width:14px;"></i>
             ${booking.dateTime.toLocaleTimeString(LB_LOCALE, { hour: 'numeric', minute: '2-digit', hour12: LB_H12 })}
-            <span style="color:#bbb;font-size:0.82rem;">(${tz})</span>
+            <span class="booking-inst-tz">(${tz})</span>
           </div>
           <div class="booking-detail-inst">
             <i class="fas fa-hourglass-half" style="color:#20bcba;width:14px;"></i>
             60 minutes
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:0.5rem;flex-shrink:0;">
+        <div class="booking-inst-actions">
           <button class="send-homework-btn" data-hw-booking="${booking.id}"><i class="fas fa-book-open"></i> Homework</button>
           <button class="cancel-lesson-btn"><i class="fas fa-times"></i> Cancel</button>
         </div>
