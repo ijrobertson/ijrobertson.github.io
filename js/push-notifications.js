@@ -19,7 +19,7 @@
 // of that bridge. See sw.js for why (avoids a second copy of firebaseConfig
 // in a different SDK flavor inside the service worker).
 
-import { app, db, auth, doc, getDoc, setDoc, serverTimestamp, getMessaging, getToken } from '../lib/firebaseClient.js';
+import { app, db, auth, doc, getDoc, setDoc, serverTimestamp, getMessaging, getToken, deleteToken } from '../lib/firebaseClient.js';
 
 // Safe to hardcode client-side — same public-config convention already used
 // for the Firebase API key in lib/firebaseClient.js.
@@ -372,12 +372,28 @@ const LAST_TOKEN_KEY = 'lb_push_token_last';
 async function registerToken(uid, { onlyIfChanged = false } = {}) {
   const swReg = await getWorkerRegistration();
   const messaging = getMessaging(app);
-  const token = await withTimeout(
+  const fetchToken = () => withTimeout(
     getToken(messaging, { vapidKey: VAPID_PUBLIC_KEY, serviceWorkerRegistration: swReg }),
     20000, 'push token');
+  let token = await fetchToken();
   if (!token) return null;
   let lastToken = null;
   try { lastToken = localStorage.getItem(LAST_TOKEN_KEY + ':' + uid); } catch (e) {}
+  // Dead token (2026-11-19): this device saved this token before, but the
+  // server no longer has it — the server removes tokens Google reports as
+  // no longer registered (e.g. iOS cancelled the subscription). The SDK
+  // would keep returning it, so drop it and get a brand-new one.
+  if (lastToken === token) {
+    try {
+      const snap = await getDoc(doc(db, 'fcmTokens', uid));
+      const known = snap.exists() && snap.data().tokens && snap.data().tokens[token];
+      if (!known) {
+        try { await withTimeout(deleteToken(messaging), 10000, 'delete token'); } catch (e) {}
+        const fresh = await fetchToken();
+        if (fresh) { token = fresh; lastToken = null; }
+      }
+    } catch (e) { /* keep the current token */ }
+  }
   if (onlyIfChanged && lastToken === token) return token;
 
   // Nested-map merge: only adds/overwrites this one token's entry, leaving
