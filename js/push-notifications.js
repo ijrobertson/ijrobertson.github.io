@@ -365,13 +365,20 @@ async function getWorkerRegistration() {
   return withTimeout(navigator.serviceWorker.ready, 8000, 'service worker');
 }
 
-async function registerToken(uid) {
+// The token this device last saved (2026-11-19): when the phone's push
+// subscription is replaced (iOS cancelling one), getToken() returns a new
+// token, and it's saved straight away instead of at the next daily refresh.
+const LAST_TOKEN_KEY = 'lb_push_token_last';
+async function registerToken(uid, { onlyIfChanged = false } = {}) {
   const swReg = await getWorkerRegistration();
   const messaging = getMessaging(app);
   const token = await withTimeout(
     getToken(messaging, { vapidKey: VAPID_PUBLIC_KEY, serviceWorkerRegistration: swReg }),
     20000, 'push token');
   if (!token) return null;
+  let lastToken = null;
+  try { lastToken = localStorage.getItem(LAST_TOKEN_KEY + ':' + uid); } catch (e) {}
+  if (onlyIfChanged && lastToken === token) return token;
 
   // Nested-map merge: only adds/overwrites this one token's entry, leaving
   // any other device's token already on the doc untouched.
@@ -389,7 +396,7 @@ async function registerToken(uid) {
     },
     updatedAt: serverTimestamp(),
   }, { merge: true }).then(() => {
-    try { localStorage.setItem(TOKEN_REFRESH_KEY, String(Date.now())); } catch (e) {}
+    try { localStorage.setItem(TOKEN_REFRESH_KEY, String(Date.now())); localStorage.setItem(LAST_TOKEN_KEY + ':' + uid, token); } catch (e) {}
   }).catch((e) => console.error('Saving push token failed:', e));
   return token;
 }
@@ -459,12 +466,12 @@ export async function initPush(uid, { onForegroundMessage } = {}) {
       const reg = await withTimeout(navigator.serviceWorker.getRegistration('/'), 4000, 'registration');
       lost = !!reg && !(await reg.pushManager.getSubscription());
     } catch (e) {}
-    if (lost || shouldRefreshToken()) {
-      try {
-        await registerToken(uid);
-      } catch (e) {
-        console.error('Push token refresh error:', e);
-      }
+    // Every load: confirm this device's current token (cheap — the SDK
+    // caches it) and save it at once if it changed; full refresh daily.
+    try {
+      await registerToken(uid, { onlyIfChanged: !lost && !shouldRefreshToken() });
+    } catch (e) {
+      console.error('Push token refresh error:', e);
     }
     recordPushStatus(uid, { repaired: lost });
   } else if (Notification.permission === 'default' && isStandalonePWA()) {
