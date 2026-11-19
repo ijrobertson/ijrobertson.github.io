@@ -184,6 +184,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .section-icon.icon-navy { background: linear-gradient(135deg, var(--pb-teal-dark), var(--pb-navy-light)); box-shadow: 0 6px 14px -4px rgba(17, 52, 72, 0.4); }
         .section-header h2 { font-family: 'Baloo 2', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--pb-teal-dark); margin: 0; }
         hr.section-divider { border: none; border-top: 2px solid #e7e9e7; margin: 2.5rem 0; }
+        /* Upcoming Lessons at the top of the page (a lesson is booked). */
+        #lessonsBlock.at-top { margin-bottom: 1.75rem; }
+        #lessonsBlock.at-top hr.section-divider { display: none; }
 
         /* ===== LANGUAGE QUIZZES (primary action — see docs/PWA_PRD.md Learn-tab
            redesign, 2026-09-03: this is now the first thing below the hero,
@@ -630,12 +633,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <span class="lb-sr-only">Loading today's adventure…</span>
         </div>
 
+        <!-- ===== UPCOMING LESSONS (next booked lesson) — 2026-11-18: moved to
+             the top (above the quizzes) while a lesson is booked, back here at
+             the bottom once it's over; see placeLessonsBlock(). ===== -->
+        <div id="lessonsBlock">
         <hr class="section-divider">
-
-        <!-- ===== CONTINUE LEARNING (next booked lesson) ===== -->
         <div class="section-header">
             <div class="section-icon"><i class="fas fa-calendar-check"></i></div>
-            <h2>Continue Learning</h2>
+            <h2>Upcoming Lessons</h2>
         </div>
         <div id="nextLessonContainer">
             <!-- Placeholder until loadNextLesson() renders the real card. -->
@@ -651,6 +656,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <span class="lb-skel lb-skel-line" style="width:70%;"></span>
             </div>
             <span class="lb-sr-only">Loading your next lesson…</span>
+        </div>
         </div>
 
     </div>
@@ -810,7 +816,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return d;
         }
 
-        async function loadNextLesson() {
+        // Upcoming Lessons placement (2026-11-18): top of the page while a
+        // lesson is booked and not over, bottom otherwise. The end time of the
+        // next lesson is remembered so the page opens with it already in place.
+        const NEXT_LESSON_KEY = 'lb-next-lesson-end';
+        let lessonsMoveTimer = null;
+        function placeLessonsBlock(atTop) {
+            const block = document.getElementById('lessonsBlock');
+            const container = document.querySelector('.activity-container');
+            if (!block || !container) return;
+            if (atTop) {
+                const slot = document.getElementById('installNudgeSlot');
+                if (slot && slot.nextElementSibling !== block) slot.after(block);
+            } else if (container.lastElementChild !== block) {
+                container.appendChild(block);
+            }
+            block.classList.toggle('at-top', !!atTop);
+        }
+        try { const end = parseInt(localStorage.getItem(NEXT_LESSON_KEY), 10); if (end > Date.now()) placeLessonsBlock(true); } catch (e) {}
+
+        async function loadNextLesson({ refresh = false } = {}) {
             const container = document.getElementById('nextLessonContainer');
             try {
                 const [studentSnap, instructorSnap] = await Promise.all([
@@ -833,7 +858,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 // Streak + weekly goal both count a completed lesson as "activity" —
                 // see updateStreakAndGoal(), called once this and loadVocabSummary() resolve.
                 const weekStart = startOfWeek(new Date());
-                bookings.forEach(b => {
+                if (!refresh) bookings.forEach(b => {
                     const t = getLessonTime(b);
                     if (getLessonStatus(t) !== 'completed') return;
                     activeDates.add(dateKey(t));
@@ -841,8 +866,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 });
 
                 const upcoming = bookings
-                    .filter(b => getLessonStatus(getLessonTime(b)) !== 'completed')
+                    .filter(b => getLessonStatus(getLessonTime(b), b.durationMinutes || 60) !== 'completed')
                     .sort((a, b) => getLessonTime(a) - getLessonTime(b));
+
+                // Top while booked; back to the bottom when the lesson ends
+                // (re-checked at that moment if the page is still open).
+                clearTimeout(lessonsMoveTimer);
+                if (upcoming.length) {
+                    const first = upcoming[0];
+                    const end = getLessonTime(first).getTime() + (first.durationMinutes || 60) * 60000;
+                    try { localStorage.setItem(NEXT_LESSON_KEY, String(end)); } catch (e) {}
+                    placeLessonsBlock(true);
+                    if (end - Date.now() < 86400000) lessonsMoveTimer = setTimeout(() => loadNextLesson({ refresh: true }), Math.max(1000, end - Date.now() + 1000));
+                } else {
+                    try { localStorage.removeItem(NEXT_LESSON_KEY); } catch (e) {}
+                    placeLessonsBlock(false);
+                }
 
                 if (upcoming.length === 0) {
                     container.innerHTML = isInstructorRole
@@ -853,7 +892,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 const next = upcoming[0];
                 const lessonTime = getLessonTime(next);
-                const status = getLessonStatus(lessonTime);
+                const status = getLessonStatus(lessonTime, next.durationMinutes || 60);
                 let otherName = next.myRole === 'student' ? (next.instructorName || lbT('Your instructor')) : (next.studentName || next.studentEmail || lbT('Your student'));
 
                 // Best-effort: fetch the other party's current display name/avatar
@@ -874,7 +913,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <img class="lesson-instructor-avatar" src="${avatar ? escapeHtml(avatar) : DEFAULT_AVATAR}" alt="">
                             <div class="lesson-instructor-info">
                                 <h4>${lbF(next.myRole === 'student' ? 'Learning with {name}' : 'Teaching {name}', { name: escapeHtml(otherName) })}</h4>
-                                <span>${next.bookingType === 'trial' ? 'Free trial lesson' : 'Lesson'}</span>
+                                <span>${(next.bookingType === 'free_trial' || next.bookingType === 'trial') ? 'Free trial lesson' : 'Lesson'}</span>
                             </div>
                         </div>
                         <div class="lesson-card-body">
