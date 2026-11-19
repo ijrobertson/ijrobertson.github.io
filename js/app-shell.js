@@ -389,6 +389,9 @@ const STYLE = `
     color: var(--ink-500);
     font-size: 11px;
     font-weight: 600;
+    /* Pinned (2026-11-19): was inherited from the page — 25px wherever
+       styles.css loads, but Earnings doesn't load it, so its bar was shorter. */
+    line-height: 25px;
     transition: color 260ms cubic-bezier(0.32, 0.72, 0, 1);
   }
   a.tab svg {
