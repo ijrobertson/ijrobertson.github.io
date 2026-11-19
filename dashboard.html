@@ -1011,6 +1011,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       gap: 1rem;
     }
     .booking-inst-info { flex: 1 1 200px; min-width: 0; }
+    /* Student name opens their profile (same as the Home lesson card). */
+    .booking-inst-student-link {
+      color: #0b6664; text-decoration: underline; text-decoration-thickness: 2px;
+      text-underline-offset: 3px; text-decoration-color: #20bcba;
+    }
+    .booking-inst-student-link:hover, .booking-inst-student-link:focus { color: #20bcba; }
     .booking-inst-tz { color: #bbb; font-size: 0.82rem; overflow-wrap: anywhere; }
     .booking-inst-actions { display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; }
     /* Page-wide button rule adds min-width/margins; keep these compact. */
@@ -3430,7 +3436,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       card.innerHTML = `
         <div class="booking-inst-info">
-          <h5${booking.studentName ? ' translate="no"' : ''}>${escapeHtmlInst(booking.studentName || 'Student')}</h5>
+          <h5${booking.studentName ? ' translate="no"' : ''}>${booking.studentId
+            ? `<a class="booking-inst-student-link" href="learner-profile?uid=${encodeURIComponent(booking.studentId)}">${escapeHtmlInst(booking.studentName || 'Student')}</a>`
+            : escapeHtmlInst(booking.studentName || 'Student')}</h5>
           <div class="booking-detail-inst">
             <i class="fas fa-calendar" style="color:#20bcba;width:14px;"></i>
             ${booking.dateTime.toLocaleDateString(LB_LOCALE, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
