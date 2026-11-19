@@ -2713,6 +2713,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function showPushToast(payload) {
             // Same banner as every other page (js/push-notifications.js); here a
             // tap opens the chat in place instead of reloading the page.
+            // Not a chat (e.g. a friend request): the banner's normal link.
+            if (!payload.conversationId) { showMessageBanner(payload); return; }
             showMessageBanner(payload, { onOpen: async () => {
                 if (!payload.conversationId) return;
                 const convSnap = await getDoc(doc(db, 'conversations', payload.conversationId));

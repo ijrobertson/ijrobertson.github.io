@@ -66,13 +66,17 @@ html[data-theme="night"] .lb-banner-avatar{background:#22343f;color:#20bcba}
 [dir="rtl"] .lb-banner{direction:rtl}
 `;
 const MESSAGE_TITLE = / sent you a message$/;
+const FRIEND_TITLE = / sent you a friend request$/; // 2026-11-18
 
-async function bannerAvatar(conversationId) {
+async function bannerAvatar(conversationId, fromUid) {
   try {
     const me = auth.currentUser && auth.currentUser.uid;
-    if (!conversationId || !me) return '';
-    const conv = await getDoc(doc(db, 'conversations', conversationId));
-    const other = ((conv.exists() && conv.data().participants) || []).find((id) => id !== me);
+    if ((!conversationId && !fromUid) || !me) return '';
+    let other = fromUid || null;
+    if (!other) {
+      const conv = await getDoc(doc(db, 'conversations', conversationId));
+      other = ((conv.exists() && conv.data().participants) || []).find((id) => id !== me);
+    }
     if (!other) return '';
     const [u, i] = await Promise.all([
       getDoc(doc(db, 'publicUsers', other)).catch(() => null),
@@ -92,8 +96,11 @@ export function showMessageBanner(payload, { onOpen } = {}) {
   }
   document.querySelectorAll('.lb-banner, .lb-push-toast').forEach((el) => el.remove());
 
-  const isMessage = MESSAGE_TITLE.test(payload.title);
-  const name = isMessage ? payload.title.replace(MESSAGE_TITLE, '') : payload.title;
+  const isFriendRequest = FRIEND_TITLE.test(payload.title);
+  const isMessage = MESSAGE_TITLE.test(payload.title) || isFriendRequest;
+  const name = isFriendRequest ? payload.title.replace(FRIEND_TITLE, '')
+             : isMessage ? payload.title.replace(MESSAGE_TITLE, '') : payload.title;
+  if (isFriendRequest) payload = { ...payload, body: 'Sent you a friend request' };
   const banner = document.createElement('div');
   banner.className = 'lb-banner';
   banner.setAttribute('role', 'status');
@@ -108,11 +115,11 @@ export function showMessageBanner(payload, { onOpen } = {}) {
   const titleEl = banner.querySelector('.lb-banner-title');
   const bodyEl = banner.querySelector('.lb-banner-body');
   titleEl.textContent = name;
-  if (isMessage) { titleEl.setAttribute('translate', 'no'); bodyEl.setAttribute('translate', 'no'); }
+  if (isMessage) { titleEl.setAttribute('translate', 'no'); if (!isFriendRequest) bodyEl.setAttribute('translate', 'no'); }
   if (payload.body) bodyEl.textContent = payload.body; else bodyEl.remove();
   if (isMessage) {
     avatarEl.textContent = (name.trim()[0] || '?').toUpperCase();
-    bannerAvatar(payload.conversationId).then((url) => {
+    bannerAvatar(payload.conversationId, payload.fromUid).then((url) => {
       if (!url || !banner.isConnected) return;
       const img = new Image();
       img.alt = '';

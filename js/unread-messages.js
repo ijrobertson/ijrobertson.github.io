@@ -44,7 +44,20 @@ export function watchUnreadMessages(uid, shell) {
   // first answer can come from the empty local cache, which read as "0
   // unread" and cleared the home-screen badge the push had just set — and if
   // the app was closed again before the server replied, it stayed cleared.
-  return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+  // Pending friend requests (2026-11-18): red ring + count on the account
+  // button (app-shell "profile-alerts"); clears when accepted/declined.
+  const stopRequests = onSnapshot(
+    query(collection(db, 'friendRequests'), where('toId', '==', uid)),
+    { includeMetadataChanges: true },
+    (snap) => {
+      if (snap.metadata.fromCache) return;
+      const pending = snap.docs.filter((d) => d.data().status === 'pending').length;
+      shell.setAttribute('profile-alerts', String(pending));
+    },
+    () => { /* offline / signed out: keep the last known count */ }
+  );
+
+  const stopMessages = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
     if (snapshot.metadata.fromCache) return;
     let total = 0;
     snapshot.forEach((docSnap) => {
@@ -57,4 +70,5 @@ export function watchUnreadMessages(uid, shell) {
     shell.setAttribute('messages-unread', String(total)); // the tab shows the number
     setAppBadgeCount(total);
   });
+  return () => { stopMessages(); stopRequests(); };
 }

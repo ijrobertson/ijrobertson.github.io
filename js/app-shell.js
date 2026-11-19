@@ -213,6 +213,9 @@ const STYLE = `
     cursor: pointer;
   }
   .icon-btn svg { width: 22px; height: 22px; }
+  /* Account button with something waiting (friend requests): red ring. */
+  #profileMenuBtn.has-alert { color: var(--danger); border-radius: 50%; box-shadow: 0 0 0 2px var(--danger); }
+  .profile-dropdown .menu-count { display: inline-block; min-width: 18px; height: 18px; margin-inline-start: 8px; padding: 0 5px; box-sizing: border-box; border-radius: 9px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; vertical-align: 1px; }
   .badge {
     position: absolute;
     top: -2px;
@@ -448,6 +451,7 @@ const STYLE = `
 
 const ROLE_STORAGE_KEY = "lb-shell-role";
 const UNREAD_STORAGE_KEY = "lb-shell-unread"; // last unread-message count, shown on the next page at once
+const ALERTS_STORAGE_KEY = "lb-shell-alerts"; // pending friend requests (2026-11-18), shown on the next page at once
 // Last streak the Learn page computed, with the day it was computed, so every
 // page's header can show it (2026-11-18). A streak counts days ending today
 // or yesterday, so a value saved yesterday is still right today; anything
@@ -506,7 +510,7 @@ function readGlideArrival() {
 
 class LbAppShell extends HTMLElement {
   static get observedAttributes() {
-    return ["role", "active", "page-title", "notifications", "streak", "hide-header", "messages-unread", "back-href"];
+    return ["role", "active", "page-title", "notifications", "streak", "hide-header", "messages-unread", "back-href", "profile-alerts"];
   }
 
   connectedCallback() {
@@ -568,6 +572,9 @@ class LbAppShell extends HTMLElement {
     }
     if (name === "messages-unread" && newValue != null) {
       try { localStorage.setItem(UNREAD_STORAGE_KEY, newValue); } catch (e) {}
+    }
+    if (name === "profile-alerts" && newValue != null) {
+      try { localStorage.setItem(ALERTS_STORAGE_KEY, newValue); } catch (e) {}
     }
     // The page's own script has now decided which tab is active (usually
     // after auth resolves) — that wins over the optimistic arrival guess,
@@ -725,6 +732,13 @@ class LbAppShell extends HTMLElement {
     // An explicit URL rather than history.back() — pages reached via a deep
     // link (push notification, bookmark) may have no history entry to pop.
     const backHref = this.getAttribute("back-href");
+    // Things waiting in the account menu (2026-11-18): pending friend
+    // requests, set by js/unread-messages.js. Red ring + count on the
+    // account button, count next to Friends in the menu.
+    let alertsAttr = this.getAttribute("profile-alerts");
+    if (alertsAttr == null) { try { alertsAttr = localStorage.getItem(ALERTS_STORAGE_KEY); } catch (e) {} }
+    const profileAlerts = Math.max(0, parseInt(alertsAttr || "0", 10) || 0);
+    const alertsLabel = profileAlerts > 9 ? "9+" : String(profileAlerts);
     const items = this._nav || NAV_BY_ROLE[role];
     const menuItems = this._profileMenu || PROFILE_MENU_BY_ROLE[role];
     // Interface language picker (flag button, left of the bell).
@@ -761,13 +775,15 @@ class LbAppShell extends HTMLElement {
             ${notifications > 0 ? `<span class="badge">${notifications > 9 ? "9+" : notifications}</span>` : ""}
           </button>
           <div class="profile-menu-wrap">
-            <button class="icon-btn" type="button" id="profileMenuBtn" aria-label="${T("Account menu")}" aria-expanded="${this._menuOpen ? "true" : "false"}">
+            <button class="icon-btn${profileAlerts ? " has-alert" : ""}" type="button" id="profileMenuBtn" aria-label="${T("Account menu")}${profileAlerts ? ` (${profileAlerts})` : ""}" aria-expanded="${this._menuOpen ? "true" : "false"}">
               ${icon("profile")}
+              ${profileAlerts ? `<span class="badge">${alertsLabel}</span>` : ""}
             </button>
             <div class="profile-dropdown${this._menuOpen ? " open" : ""}" role="menu">
               ${menuItems
                 .map((item) => {
-                  const link = `<a href="${item.href}" role="menuitem" data-id="${item.id}" class="${item.id === "logout" ? "menu-logout" : ""}">${T(item.label)}</a>`;
+                  const count = item.id === "friends" && profileAlerts ? `<span class="menu-count">${alertsLabel}</span>` : "";
+                  const link = `<a href="${item.href}" role="menuitem" data-id="${item.id}" class="${item.id === "logout" ? "menu-logout" : ""}">${T(item.label)}${count}</a>`;
                   // Night mode switch sits just above Logout
                   return item.id === "logout" && window.lbTheme ? nightToggle + link : link;
                 })
@@ -901,7 +917,7 @@ class LbAppShell extends HTMLElement {
         // Dispatched rather than importing Firebase here — keeps this component
         // backend-agnostic. Each page listens and reuses its own existing
         // sign-out logic (see docs/PWA_PRD.md §15).
-        try { localStorage.removeItem(UNREAD_STORAGE_KEY); localStorage.removeItem(STREAK_STORAGE_KEY); } catch (e) {}
+        try { localStorage.removeItem(UNREAD_STORAGE_KEY); localStorage.removeItem(STREAK_STORAGE_KEY); localStorage.removeItem(ALERTS_STORAGE_KEY); } catch (e) {}
         this.dispatchEvent(new CustomEvent("lb-logout", { bubbles: true, composed: true }));
       });
     }
@@ -923,7 +939,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v67"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v68"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;

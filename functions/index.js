@@ -637,6 +637,36 @@ exports.sendMessageNotification = onDocumentCreated(
   });
 
 /**
+ * Friend request push (2026-11-18): "<name> sent you a friend request" to
+ * the recipient's devices; tap opens /friends. One per sender→recipient
+ * while a request is pending (repeat requests don't re-notify).
+ */
+exports.sendFriendRequestNotification = onDocumentCreated('friendRequests/{requestId}', async (event) => {
+  try {
+    const r = event.data && event.data.data();
+    if (!r || r.status !== 'pending' || !r.toId || !r.fromId || r.toId === r.fromId) return null;
+    const db = admin.firestore();
+    const earlier = await db.collection('friendRequests')
+      .where('fromId', '==', r.fromId).where('toId', '==', r.toId).get();
+    if (earlier.docs.some((d) => d.id !== event.params.requestId && d.data().status === 'pending')) return null;
+    let name = String(r.fromName || '').trim();
+    if (!name) {
+      const pu = await db.collection('publicUsers').doc(r.fromId).get();
+      name = (pu.exists && pu.data().name) || 'Someone';
+    }
+    await sendPushToUser(db, r.toId, {
+      url: '/friends',
+      title: `${name.slice(0, 60)} sent you a friend request`,
+      body: 'Tap to accept or decline.',
+      fromUid: r.fromId,
+    });
+  } catch (err) {
+    console.error('[FriendRequestPush] failed:', err.message);
+  }
+  return null;
+});
+
+/**
  * Sends an email to the instructor when a student books and pays for a lesson
  */
 exports.sendBookingNotification = onDocumentCreated(
