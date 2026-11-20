@@ -2493,6 +2493,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
         window.escHtml = escHtml;
 
+        // Plain-language lines for held/skipped payouts (2026-11-19).
+        function wiseRunSummary(r) {
+            const lines = [];
+            if (r.lowBalance) {
+                Object.entries(r.lowBalance).forEach(([cur, x]) => {
+                    lines.push(`<div style="margin-top:0.5rem;padding:0.5rem 0.7rem;border-radius:6px;background:#fee2e2;color:#991b1b;"><strong>Wise balance too low — nothing was sent in ${escHtml(cur)}.</strong> Add at least ${escHtml(((x.neededCents - x.haveCents) / 100).toFixed(2))} ${escHtml(cur)} to Wise (it holds ${escHtml((x.haveCents / 100).toFixed(2))}), then press the button again.</div>`);
+                });
+            }
+            const waiting = (r.details || []).filter(d => d.reason === 'lesson has not happened yet').length;
+            if (waiting) lines.push(`<div style="margin-top:0.5rem;">⏳ <strong>${waiting}</strong> payout${waiting === 1 ? '' : 's'} waiting for the lesson to finish (paid on a later run).</div>`);
+            const other = (r.details || []).filter(d => (d.status === 'held' || d.status === 'skipped') && d.reason !== 'lesson has not happened yet' && !/balance too low/.test(d.reason || ''));
+            if (other.length) lines.push(`<div style="margin-top:0.5rem;">⚠️ ${other.length} held for review: ${escHtml([...new Set(other.map(d => d.reason))].join('; '))}</div>`);
+            return lines.join('');
+        }
+
         // ── Wise: trigger automated payout run ────────────────────────────
         window.triggerWisePayouts = async function() {
             const btn      = document.getElementById('runWisePayoutsBtn');
@@ -2514,6 +2529,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     ✅ Processed: <strong>${r.processed}</strong> &nbsp;
                     ❌ Failed: <strong>${r.failed}</strong> &nbsp;
                     ⏭ Skipped: <strong>${r.skipped}</strong>
+                    ${wiseRunSummary(r)}
                     ${r.details && r.details.length ? `<details style="margin-top:0.5rem;"><summary style="cursor:pointer;font-size:0.8rem;">Details</summary><pre style="font-size:0.75rem;margin:0.5rem 0 0;white-space:pre-wrap;overflow:auto;">${escHtml(JSON.stringify(r.details, null, 2))}</pre></details>` : ''}
                 `;
                 // Refresh tables

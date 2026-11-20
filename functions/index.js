@@ -4498,7 +4498,10 @@ async function processWisePayouts(db) {
       delete byInstructor[group.instructorId];
     }
   }
-  if (Object.keys(shortfalls).length) await sendWiseLowBalanceAlert(shortfalls);
+  if (Object.keys(shortfalls).length) {
+    results.lowBalance = shortfalls; // shown on the Admin page after a manual run
+    await sendWiseLowBalanceAlert(shortfalls);
+  }
 
   for (const group of Object.values(byInstructor)) {
     const { instructorId, instructorName, wiseEmail, currency, docs, totalCents } = group;
