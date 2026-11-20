@@ -1626,6 +1626,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/validator.min.js"></script>
     <script src="js/scripts.js"></script>
     <script src="js/profile-gate.js"></script>
+    <script src="js/video-preview.js"></script>
 
     <script type="module">
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
@@ -2053,11 +2054,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             appendInstructorCards(filtered.slice(0, shownCount));
         }
 
-        // Intro videos whose opening frames make a poor thumbnail (e.g. a white
-        // title screen): show and start them this many seconds in instead.
-        const VIDEO_PREVIEW_START_SECONDS = {
-            'njp0QrFfRwhB76J7onZ3tt0YTym1': 0.5 // Melissa
-        };
 
         function createInstructorCard(instructor) {
             const spoken = instructor.languages_spoken || [];
@@ -2187,7 +2183,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                     // Seek to first frame so mobile browsers render a thumbnail
                     // instead of showing a black screen before the user hits play.
-                    videoEl.currentTime = VIDEO_PREVIEW_START_SECONDS[instructor.id] || 0.001;
+                    videoEl.currentTime = window.lbVideoPreviewStart ? window.lbVideoPreviewStart(instructor.id) : 0.001;
                 });
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();

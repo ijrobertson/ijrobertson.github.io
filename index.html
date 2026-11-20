@@ -2620,7 +2620,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/morphext.min.js"></script> <!-- Morphtext rotating text in the header -->
     <script src="js/isotope.pkgd.min.js"></script> <!-- Isotope for filter -->
     <script src="js/validator.min.js"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
-    <script src="js/scripts.js"></script> <!-- Custom scripts -->
+    <script src="js/scripts.js"></script>
+    <script src="js/video-preview.js"></script> <!-- Custom scripts -->
 
     <!-- Firebase Module Script -->
     <script type="module">
@@ -3090,11 +3091,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return card;
         }
 
-        // Intro videos whose opening frames make a poor thumbnail (e.g. a white
-        // title screen): show and start them this many seconds in instead.
-        const VIDEO_PREVIEW_START_SECONDS = {
-            'njp0QrFfRwhB76J7onZ3tt0YTym1': 0.5 // Melissa
-        };
 
         function formatInstructorPrice(instructor) {
             if (!instructor.price_per_lesson) return '';
@@ -3187,7 +3183,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                     // Seek to first frame so mobile browsers render a thumbnail
                     // instead of showing a black screen before the user hits play.
-                    videoEl.currentTime = VIDEO_PREVIEW_START_SECONDS[instructor.id] || 0.001;
+                    videoEl.currentTime = window.lbVideoPreviewStart ? window.lbVideoPreviewStart(instructor.id) : 0.001;
                 });
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();

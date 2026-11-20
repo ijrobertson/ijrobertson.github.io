@@ -1084,6 +1084,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/isotope.pkgd.min.js"></script>
     <script src="js/validator.min.js"></script>
     <script src="js/scripts.js"></script>
+    <script src="js/video-preview.js"></script>
 
 
     <!-- Firebase Module Script -->
@@ -1347,7 +1348,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                     // Seek to first frame so mobile browsers render a thumbnail
                     // instead of showing a black screen before the user hits play.
-                    videoEl.currentTime = 0.001;
+                    videoEl.currentTime = window.lbVideoPreviewStart ? window.lbVideoPreviewStart(i.id) : 0.001;
                 });
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
