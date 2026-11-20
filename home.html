@@ -372,6 +372,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             padding: 1.35rem 1.5rem; display: flex; align-items: center; gap: 1rem;
         }
         .lesson-instructor-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.35); flex-shrink: 0; background: #2c6e8a; }
+        .lesson-avatar-link { display: block; flex-shrink: 0; border-radius: 50%; }
         .lesson-instructor-info h4 { font-family: 'Baloo 2', sans-serif; color: white; font-size: 1.1rem; font-weight: 700; margin: 0 0 0.2rem; line-height: 1.3; }
         /* Instructor view: tappable student name (opens their profile). */
         .lesson-student-link {
@@ -905,7 +906,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 let avatar = null;
                 try {
                     if (next.myRole === 'student' && next.instructorId) {
-                        const snap = await getDoc(doc(db, 'instructors', next.instructorId));
+                        // publicInstructors: students can't read instructors/{id} since the 2026-11-17 privacy fix.
+                        const snap = await getDoc(doc(db, 'publicInstructors', next.instructorId));
                         if (snap.exists()) { avatar = snap.data().avatar_url || null; otherName = snap.data().name || otherName; }
                     } else if (next.myRole === 'instructor' && next.studentId) {
                         // publicUsers: instructors can't read users/{id} since the 2026-11-17 privacy fix.
@@ -914,15 +916,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                 } catch (e) {}
 
-                // Instructors: the student's name links to their profile.
+                const profileHref = (next.myRole === 'instructor' && next.studentId)
+                    ? `learner-profile?uid=${encodeURIComponent(next.studentId)}`
+                    : (next.myRole === 'student' && next.instructorId)
+                        ? `instructor-profile?id=${encodeURIComponent(next.instructorId)}`
+                        : '';
+                window.DEFAULT_AVATAR_SRC = DEFAULT_AVATAR;
+
+                // The other person's name links to their profile (student → instructor
+                // profile, instructor → learner profile).
                 const studentLink = (next.myRole === 'instructor' && next.studentId)
                     ? `<a class="lesson-student-link" href="learner-profile?uid=${encodeURIComponent(next.studentId)}" translate="no">${escapeHtml(otherName)}</a>`
-                    : escapeHtml(otherName);
+                    : (next.myRole === 'student' && next.instructorId)
+                        ? `<a class="lesson-student-link" href="instructor-profile?id=${encodeURIComponent(next.instructorId)}" translate="no">${escapeHtml(otherName)}</a>`
+                        : escapeHtml(otherName);
 
                 container.innerHTML = `
                     <div class="lesson-card">
                         <div class="lesson-card-header">
-                            <img class="lesson-instructor-avatar" src="${avatar ? escapeHtml(avatar) : DEFAULT_AVATAR}" alt="">
+                            ${profileHref ? `<a href="${profileHref}" class="lesson-avatar-link" aria-hidden="true" tabindex="-1">` : ''}<img class="lesson-instructor-avatar" src="${avatar ? escapeHtml(avatar) : DEFAULT_AVATAR}" alt="" onerror="this.onerror=null;this.src=DEFAULT_AVATAR_SRC;">${profileHref ? '</a>' : ''}
                             <div class="lesson-instructor-info">
                                 <h4>${lbF(next.myRole === 'student' ? 'Learning with {name}' : 'Teaching {name}', { name: studentLink })}</h4>
                                 <span>${(next.bookingType === 'free_trial' || next.bookingType === 'trial') ? 'Free trial lesson' : 'Lesson'}</span>
