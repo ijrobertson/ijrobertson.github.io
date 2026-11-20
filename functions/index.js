@@ -4113,6 +4113,15 @@ async function unpayableEarningReason(db, earning, seenPaymentIntents) {
   const booking = bookingSnap.data();
   if (booking.instructorId !== earning.instructorId) return 'booking is for a different instructor';
 
+  // Pay only for lessons that are over (2026-11-19): the weekly run used to
+  // pay for lessons still days away, so a later cancellation refunded the
+  // student from the platform's pocket after the instructor was already paid.
+  // Applies to late-cancel compensation too (paid after the slot passes).
+  const lessonStart = booking.dateTime && booking.dateTime.toDate ? booking.dateTime.toDate() : null;
+  if (!lessonStart) return 'booking has no lesson time';
+  const lessonEndMs = lessonStart.getTime() + (booking.durationMinutes || 60) * 60000;
+  if (lessonEndMs > Date.now()) return 'lesson has not happened yet';
+
   const pi = await getVerifiedPaymentIntent(booking);
   if (!pi) return 'payment could not be verified with Stripe';
   if (earning.paymentIntentId && earning.paymentIntentId !== pi.id) return 'payment does not match booking';
@@ -4379,6 +4388,52 @@ async function fundWiseTransfer(transferId) {
  * reduces instructorEarningsCents (partial refund) BEFORE this runs, so we
  * never pay out for cancelled lessons.
  */
+/** Per currency, how much the payouts need vs. what the Wise balance holds.
+ *  Returns only currencies that are short. If the balance can't be read, the
+ *  run goes ahead as before (the funding step itself still guards). */
+async function wiseBalanceShortfalls(profileId, groups) {
+  const needed = {};
+  for (const g of groups) {
+    if (!g.wiseEmail || g.totalCents < 50) continue;
+    needed[g.currency] = (needed[g.currency] || 0) + g.totalCents;
+  }
+  if (!Object.keys(needed).length) return {};
+  let balances;
+  try {
+    balances = await wiseRequest('GET', `/v4/profiles/${profileId}/balances?types=STANDARD`);
+  } catch (err) {
+    console.warn('[Wise] Balance check failed, continuing without it:', err.message);
+    return {};
+  }
+  const have = {};
+  (Array.isArray(balances) ? balances : []).forEach(b => {
+    if (b && b.currency && b.amount) have[b.currency.toUpperCase()] = Math.round(Number(b.amount.value) * 100);
+  });
+  const out = {};
+  for (const [cur, cents] of Object.entries(needed)) {
+    // Small margin for Wise's own transfer fees, which come out of the balance.
+    const neededWithFees = cents + Math.max(100, Math.ceil(cents * 0.02));
+    if ((have[cur] || 0) < neededWithFees) out[cur] = { neededCents: neededWithFees, haveCents: have[cur] || 0 };
+  }
+  return out;
+}
+
+async function sendWiseLowBalanceAlert(shortfalls) {
+  try {
+    const lines = Object.entries(shortfalls).map(([cur, x]) =>
+      `${cur}: payouts need about ${(x.neededCents / 100).toFixed(2)}, Wise holds ${(x.haveCents / 100).toFixed(2)} — add at least ${((x.neededCents - x.haveCents) / 100).toFixed(2)}`);
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: 'Lingua Bud <notifications@linguabud.com>',
+      to: 'ianjack1643@gmail.com',
+      subject: 'Action needed: top up Wise so instructors can be paid',
+      text: `This week's Wise payouts were NOT sent because the Wise balance is too low.\n\n${lines.join('\n')}\n\nNothing was marked failed: the earnings are still pending. After topping up Wise, open the Admin page and press "Run Wise Payouts Now" (or wait for next Sunday's run).\n\n— Lingua Bud payouts`,
+    });
+  } catch (err) {
+    console.error('[Wise] Low-balance alert email failed:', err.message);
+  }
+}
+
 async function processWisePayouts(db) {
   const profileId = getWiseProfileId();
   const now       = admin.firestore.FieldValue.serverTimestamp();
@@ -4428,6 +4483,22 @@ async function processWisePayouts(db) {
     byInstructor[e.instructorId].docs.push(docSnap);
     byInstructor[e.instructorId].totalCents += (e.instructorEarningsCents || 0);
   });
+
+  // Wise balance check (2026-11-19). Student payments land in Stripe and go
+  // to the platform's bank, not Wise, so the Wise balance has to be topped up
+  // by hand. If it can't cover a currency's payouts, send none in that
+  // currency: they stay 'pending' for the next run (instead of 'failed', which
+  // is never retried) and the admin gets an email with the amount to add.
+  const shortfalls = await wiseBalanceShortfalls(profileId, Object.values(byInstructor));
+  for (const [cur, info] of Object.entries(shortfalls)) {
+    for (const group of Object.values(byInstructor)) {
+      if (group.currency !== cur) continue;
+      results.skipped++;
+      results.details.push({ instructorId: group.instructorId, status: 'held', reason: `Wise ${cur} balance too low`, totalCents: group.totalCents });
+      delete byInstructor[group.instructorId];
+    }
+  }
+  if (Object.keys(shortfalls).length) await sendWiseLowBalanceAlert(shortfalls);
 
   for (const group of Object.values(byInstructor)) {
     const { instructorId, instructorName, wiseEmail, currency, docs, totalCents } = group;
