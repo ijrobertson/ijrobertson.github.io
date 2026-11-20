@@ -1625,6 +1625,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/isotope.pkgd.min.js"></script>
     <script src="js/validator.min.js"></script>
     <script src="js/scripts.js"></script>
+    <script src="js/profile-gate.js"></script>
 
     <script type="module">
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
@@ -2265,12 +2266,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // BOOKING MODAL FUNCTIONS
 
+        // Booking profile gate (2026-11-19, js/profile-gate.js): a student needs
+        // a profile photo and a bio before booking a lesson or free trial.
+        // Instructors (instructors/{uid} exists) are never stopped here.
+        async function bookingProfileReady(instructorId, intent) {
+            if (!window.lbProfileGate || !auth.currentUser) return true;
+            const uid = auth.currentUser.uid;
+            return window.lbProfileGate.ensure({
+                load: async () => {
+                    let snap;
+                    try { snap = await getDocFromServer(doc(db, 'users', uid)); }
+                    catch (e) { snap = await getDoc(doc(db, 'users', uid)); }
+                    const data = snap.exists() ? snap.data() : null;
+                    if (window.lbProfileGate.missing(data).length) {
+                        const instr = await getDoc(doc(db, 'instructors', uid));
+                        if (instr.exists()) return { avatar_url: 'instructor', about_me: 'instructor' };
+                    }
+                    return data;
+                },
+                // ?book= reopens the same calendar once the profile is done.
+                returnTo: 'instructor-profile?id=' + encodeURIComponent(instructorId) + '&book=' + intent
+            });
+        }
+
         async function openBookingModal(instructorId, instructorName) {
             // Check authentication
             if (!auth.currentUser) {
                 window.location.href = `instructor-profile?id=${encodeURIComponent(instructorId)}&book=lesson`;
                 return;
             }
+
+            if (!(await bookingProfileReady(instructorId, 'lesson'))) return;
 
             currentInstructorId = instructorId;
             currentInstructorName = instructorName;

@@ -1674,6 +1674,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     // Track if this is a new user (first time saving)
     let isNewUser = false;
+    let loadedProfile = null; // users/{uid} as loaded (null = no profile yet)
+
+    // Arrived from the booking profile check (js/profile-gate.js):
+    // ?complete=booking&return=instructor-profile?id=…&book=trial  After the
+    // photo and bio are saved, the student goes back there (the booking
+    // calendar reopens) instead of to Connect.
+    const pageParams = new URLSearchParams(window.location.search);
+    const fromBooking = pageParams.get('complete') === 'booking';
+    const bookingReturn = (() => {
+      const r = pageParams.get('return') || '';
+      return /^[a-z0-9-]+(\?[^#]*)?$/i.test(r) ? r : '';
+    })();
+    // The saved photo (not the on-screen one, which may be a cached image).
+    function savedAvatar() {
+      const url = loadedProfile && loadedProfile.avatar_url;
+      return typeof url === 'string' && /^https:\/\//i.test(url) ? url : null;
+    }
+    function goBackToBooking(statusEl) {
+      if (!fromBooking || !bookingReturn) return false;
+      if (statusEl) {
+        statusEl.textContent = 'Profile complete! Taking you back to book your lesson...';
+        statusEl.style.color = 'green';
+      }
+      setTimeout(() => { window.location.href = bookingReturn; }, 1200);
+      return true;
+    }
 
     // Load user profile
     async function loadProfile() {
@@ -1684,6 +1710,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         if (docSnap.exists()) {
           const profile = docSnap.data();
+          loadedProfile = profile;
           studentProfile = profile; // cache for booking card display
           console.log('✅ Profile data loaded:', profile);
 
@@ -1729,7 +1756,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           renderInterestsGrid('interests-grid', selectedInterests);
 
           // Show setup modal if profile is incomplete (missing about_me or avatar)
-          const isIncomplete = !profile.about_me || !profile.avatar_url;
+          // Blank bios (spaces only) count as missing, same as the booking check.
+          const isIncomplete = !(profile.about_me || '').trim() || !profile.avatar_url;
           isNewUser = isIncomplete;
         } else {
           // No profile document exists yet
@@ -1917,6 +1945,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       try {
         await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
         console.log('✅ Profile saved successfully!');
+        if (goBackToBooking(statusEl)) return;
         statusEl.textContent = 'Saved! Redirecting to Connect page...';
         statusEl.style.color = 'green';
 
@@ -1997,7 +2026,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         learningSel.appendChild(o2);
       });
 
+      if (fromBooking) {
+        const sub = document.querySelector('#setupModal .setup-subtitle');
+        if (sub) sub.textContent = 'To book lessons and free trials, your profile needs a photo and a short bio. All fields are required.';
+      }
+
       // Pre-populate from existing profile data (e.g. set during signup)
+      const existingAbout = document.getElementById('about_me').value;
+      if (existingAbout) document.getElementById('setup-about').value = existingAbout;
+      if (savedAvatar()) document.getElementById('setup-avatar-preview').src = savedAvatar();
+
       const existingName = document.getElementById('name').value;
       if (existingName) document.getElementById('setup-name').value = existingName;
 
@@ -2082,16 +2120,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (setupSpokenLangs.length === 0) { errorEl.textContent = 'Please add at least one language you speak.'; return; }
       if (setupLearningLangs.length === 0) { errorEl.textContent = 'Please add at least one language you\'re learning.'; return; }
       if (!about) { errorEl.textContent = 'Please write something in About Me.'; return; }
-      if (!setupAvatarFile) { errorEl.textContent = 'Please upload a profile picture.'; return; }
+      // A photo already on the profile counts (only the bio may be missing).
+      const keptAvatar = !setupAvatarFile ? savedAvatar() : null;
+      if (!setupAvatarFile && !keptAvatar) { errorEl.textContent = 'Please upload a profile picture.'; return; }
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Saving...';
 
       try {
-        progressEl.textContent = 'Uploading profile picture...';
-        const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
-        await uploadBytes(avatarRef, setupAvatarFile);
-        const avatarUrl = await getDownloadURL(avatarRef);
+        let avatarUrl = keptAvatar;
+        if (!avatarUrl) {
+          progressEl.textContent = 'Uploading profile picture...';
+          const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
+          await uploadBytes(avatarRef, setupAvatarFile);
+          avatarUrl = await getDownloadURL(avatarRef);
+        }
 
         progressEl.textContent = 'Saving profile...';
         const profileData = {
@@ -2109,6 +2152,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
+        // Existing students (sent here by the booking profile check) keep
+        // their sign-up date and email choice.
+        if (loadedProfile) {
+          ['emailNotifications', 'createdAt'].forEach(k => {
+            if (loadedProfile[k] !== undefined) delete profileData[k];
+          });
+        }
 
         await setDoc(doc(db, 'users', currentUser.uid), profileData, { merge: true });
 
@@ -2127,6 +2177,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         safeSetStorage('student_avatar', avatarUrl);
 
         isNewUser = false;
+        loadedProfile = { ...(loadedProfile || {}), ...profileData };
+        if (fromBooking && bookingReturn) {
+          progressEl.textContent = 'Profile complete! Taking you back to book your lesson...';
+          progressEl.style.color = 'green';
+          setTimeout(() => { window.location.href = bookingReturn; }, 1200);
+          return;
+        }
         document.getElementById('setupModal').style.display = 'none';
 
       } catch (err) {
