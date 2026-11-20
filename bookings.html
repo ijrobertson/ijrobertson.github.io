@@ -1315,15 +1315,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     bookings.filter(b => b.myRole === 'instructor').map(b => b.studentId).filter(Boolean)
                 )];
                 const studentNameMap = {};
+                const studentAvatarMap = {};
                 await Promise.all(studentIds.map(async (id) => {
                     try {
                         const snap = await getDoc(doc(db, 'publicUsers', id));
                         if (snap.exists() && snap.data().name) studentNameMap[id] = snap.data().name;
+                        if (snap.exists() && snap.data().avatar_url) studentAvatarMap[id] = snap.data().avatar_url;
                     } catch (e) {}
                 }));
 
                 bookings.forEach(b => {
                     b.instructorAvatar = avatarMap[b.instructorId] || null;
+                    // The photo shown is the OTHER person's (2026-11-19): instructors
+                    // used to see their own photo on every lesson.
+                    b.otherAvatar = b.myRole === 'instructor'
+                        ? (studentAvatarMap[b.studentId] || null)
+                        : b.instructorAvatar;
                     if (b.myRole === 'instructor' && studentNameMap[b.studentId]) {
                         b.studentName = studentNameMap[b.studentId];
                     }
@@ -1568,7 +1575,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const lessonTime = getLessonTime(booking);
             const status = getLessonStatus(lessonTime, durationMinutes);
             const channelName = `lesson-${booking.id}`;
-            const avatar = booking.instructorAvatar || DEFAULT_AVATAR;
+            const avatar = booking.otherAvatar || DEFAULT_AVATAR;
             const otherName = booking.myRole === 'student'
                 ? (booking.instructorName || 'Instructor')
                 : (booking.studentName || 'Student');
