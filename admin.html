@@ -2498,7 +2498,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const lines = [];
             if (r.lowBalance) {
                 Object.entries(r.lowBalance).forEach(([cur, x]) => {
-                    lines.push(`<div style="margin-top:0.5rem;padding:0.5rem 0.7rem;border-radius:6px;background:#fee2e2;color:#991b1b;"><strong>Wise balance too low — nothing was sent in ${escHtml(cur)}.</strong> Add at least ${escHtml(((x.neededCents - x.haveCents) / 100).toFixed(2))} ${escHtml(cur)} to Wise (it holds ${escHtml((x.haveCents / 100).toFixed(2))}), then press the button again.</div>`);
+                    lines.push(`<div style="margin-top:0.5rem;padding:0.5rem 0.7rem;border-radius:6px;background:#fee2e2;color:#991b1b;"><strong>Wise ${escHtml(cur)} balance too low — nothing was sent.</strong> All payouts are paid from it. Add at least ${escHtml(((x.neededCents - x.haveCents) / 100).toFixed(2))} ${escHtml(cur)} to Wise (it holds ${escHtml((x.haveCents / 100).toFixed(2))}), then press the button again.</div>`);
                 });
             }
             const waiting = (r.details || []).filter(d => d.reason === 'lesson has not happened yet').length;

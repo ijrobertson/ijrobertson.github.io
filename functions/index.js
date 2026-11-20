@@ -4342,13 +4342,20 @@ async function createWiseRecipient(profileId, instructorName, wiseEmail, currenc
   });
 }
 
-/** Step 2 — Create a fixed-rate quote (same source/target currency = no FX fee).
- *  targetAmount ensures the instructor receives exactly the promised amount;
- *  Wise fees are charged to the platform balance on top of that. */
+/** Every payout is paid from the platform's USD balance (2026-11-19, Ian's
+ *  choice): only one balance needs topping up. EUR/GBP instructors still
+ *  receive exactly their amount; Wise converts and its fee comes out of the
+ *  USD balance on top. */
+const WISE_SOURCE_CURRENCY = 'USD';
+
+/** Step 2 — Create a fixed-rate quote from the USD balance.
+ *  targetAmount ensures the instructor receives exactly the promised amount
+ *  in their currency; Wise fees (and conversion, for non-USD) are charged to
+ *  the platform's USD balance on top of that. */
 async function createWiseQuote(profileId, currency, amountDecimal) {
   return wiseRequest('POST', '/v1/quotes', {
     profile:      parseInt(profileId, 10),
-    source:       currency.toUpperCase(),
+    source:       WISE_SOURCE_CURRENCY,
     target:       currency.toUpperCase(),
     rateType:     'FIXED',
     targetAmount: amountDecimal,
@@ -4409,13 +4416,29 @@ async function wiseBalanceShortfalls(profileId, groups) {
   (Array.isArray(balances) ? balances : []).forEach(b => {
     if (b && b.currency && b.amount) have[b.currency.toUpperCase()] = Math.round(Number(b.amount.value) * 100);
   });
-  const out = {};
+  // Everything is paid from USD: add up what each currency costs in USD.
+  let usdCents = 0;
   for (const [cur, cents] of Object.entries(needed)) {
-    // Small margin for Wise's own transfer fees, which come out of the balance.
-    const neededWithFees = cents + Math.max(100, Math.ceil(cents * 0.02));
-    if ((have[cur] || 0) < neededWithFees) out[cur] = { neededCents: neededWithFees, haveCents: have[cur] || 0 };
+    if (cur === WISE_SOURCE_CURRENCY) { usdCents += cents; continue; }
+    let rate;
+    try {
+      const rates = await wiseRequest('GET', `/v1/rates?source=${encodeURIComponent(cur)}&target=${WISE_SOURCE_CURRENCY}`);
+      rate = Number(Array.isArray(rates) && rates[0] && rates[0].rate);
+    } catch (err) {
+      console.warn(`[Wise] Rate ${cur}->USD failed, continuing without the balance check:`, err.message);
+      return {};
+    }
+    if (!(rate > 0)) return {};
+    usdCents += Math.ceil(cents * rate * 1.02); // + margin for rate movement
   }
-  return out;
+  // Wise's own fee comes out of the balance on top of each transfer (about
+  // $0.55-0.65 per transfer, checked 2026-11-19): allow $1 per instructor + 1%.
+  const transferCount = groups.filter(g => g.wiseEmail && g.totalCents >= 50).length;
+  const neededWithFees = usdCents + transferCount * 100 + Math.ceil(usdCents * 0.01);
+  const haveUsd = have[WISE_SOURCE_CURRENCY] || 0;
+  return haveUsd < neededWithFees
+    ? { [WISE_SOURCE_CURRENCY]: { neededCents: neededWithFees, haveCents: haveUsd } }
+    : {};
 }
 
 async function sendWiseLowBalanceAlert(shortfalls) {
@@ -4490,9 +4513,10 @@ async function processWisePayouts(db) {
   // currency: they stay 'pending' for the next run (instead of 'failed', which
   // is never retried) and the admin gets an email with the amount to add.
   const shortfalls = await wiseBalanceShortfalls(profileId, Object.values(byInstructor));
-  for (const [cur, info] of Object.entries(shortfalls)) {
+  for (const cur of Object.keys(shortfalls)) {
     for (const group of Object.values(byInstructor)) {
-      if (group.currency !== cur) continue;
+      // All payouts come from the USD balance, so a USD shortfall holds all of them.
+      if (cur !== WISE_SOURCE_CURRENCY && group.currency !== cur) continue;
       results.skipped++;
       results.details.push({ instructorId: group.instructorId, status: 'held', reason: `Wise ${cur} balance too low`, totalCents: group.totalCents });
       delete byInstructor[group.instructorId];
