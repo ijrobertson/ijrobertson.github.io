@@ -51,6 +51,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
     <script src="js/profile-gate.js"></script>
+    <script src="js/video-preview.js"></script>
 
     <!-- Favicon  -->
     <link rel="icon" href="images/NuevoFavicon.png">
@@ -2047,7 +2048,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                     // Seek to first frame so mobile browsers render a thumbnail
                     // instead of showing a black screen before the user hits play.
-                    videoEl.currentTime = 0.001;
+                    videoEl.currentTime = window.lbVideoPreviewStart ? window.lbVideoPreviewStart(instructor.id) : 0.001;
                 });
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();

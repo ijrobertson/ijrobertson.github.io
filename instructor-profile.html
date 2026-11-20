@@ -48,6 +48,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
     <script src="js/profile-gate.js"></script>
+    <script src="js/video-preview.js"></script>
 
     <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
     <link rel="manifest" href="manifest.json">
@@ -1030,7 +1031,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     // Seek to first frame after metadata loads so mobile browsers
                     // show a thumbnail instead of a black screen before the user plays.
                     introVideo.addEventListener('loadedmetadata', () => {
-                        introVideo.currentTime = 0.001;
+                        introVideo.currentTime = window.lbVideoPreviewStart ? window.lbVideoPreviewStart(uid) : 0.001;
                     }, { once: true });
                     document.getElementById('videoSection').style.display = '';
                 }
