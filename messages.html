@@ -1648,6 +1648,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             getDownloadURL,
             reconnectFirestore
         } from './lib/firebaseClient.js';
+        import { messagingBlocked, isApprovedInstructor } from './js/messaging-access.js';
 
         const conversationsList = document.getElementById('conversationsList');
         const chatPanel = document.getElementById('chatPanel');
@@ -1991,16 +1992,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             conversationsList.querySelectorAll('.empty-state').forEach(el => el.remove());
         }
 
-        async function checkMessagingBlocked(otherUserId) {
-            const [uDoc, sentSnap, receivedSnap] = await Promise.all([
-                getDoc(doc(db, 'publicUsers', otherUserId)),
-                getDocs(query(collection(db, 'friendRequests'),
-                    where('fromId', '==', currentUser.uid), where('toId', '==', otherUserId), where('status', '==', 'accepted'))),
-                getDocs(query(collection(db, 'friendRequests'),
-                    where('toId', '==', currentUser.uid), where('fromId', '==', otherUserId), where('status', '==', 'accepted')))
-            ]);
-            if (!uDoc.exists() || uDoc.data().acceptingRequests !== false) return false;
-            return sentSnap.empty && receivedSnap.empty; // true = blocked (not friends)
+        // "Not accepting new requests" (2026-11-19): approved instructors and
+        // anyone with an existing conversation are never blocked — see
+        // js/messaging-access.js.
+        async function checkMessagingBlocked(otherUserId, conversationId) {
+            return messagingBlocked(currentUser.uid, otherUserId, { conversationId });
         }
 
         async function openConversation(conversationId, otherUserId, event = null) {
@@ -2191,7 +2187,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             // concurrently with the messages loaded above, not before them.
             (async () => {
                 try {
-                    const blocked = await checkMessagingBlocked(otherUserId);
+                    const blocked = await checkMessagingBlocked(otherUserId, conversationId);
                     if (activeConversationId !== conversationId) return; // switched away already
                     if (blocked) {
                         document.getElementById('notAcceptingNotice').style.display = 'block';

@@ -605,6 +605,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             collection, query, where, serverTimestamp,
             onSnapshot
         } from './lib/firebaseClient.js';
+        import { messagingBlocked, isApprovedInstructor } from './js/messaging-access.js';
 
         const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
 
@@ -851,7 +852,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     btn.innerHTML = '<i class="fas fa-check"></i> Request Sent';
                     btn.disabled = true;
                     btn.style.background = '#28a745';
-                    if (profileData && profileData.acceptingRequests === false) {
+                    if (profileData && profileData.acceptingRequests === false
+                        && await messagingBlocked(currentUser.uid, profileUid, { otherPublic: profileData })) {
                         disableMsgBtn();
                     } else {
                         enableMsgBtn();
@@ -862,15 +864,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 console.error('Error checking friend requests:', e);
             }
 
-            // Not accepting requests from new users
+            // Not accepting requests from new users. Exchange requests stay off;
+            // messages are still open to approved instructors and to anyone
+            // they already have a conversation with (js/messaging-access.js).
             if (profileData && profileData.acceptingRequests === false) {
                 btn.textContent = 'Not Accepting Requests';
                 btn.className = 'btn-exchange partners';
                 btn.disabled = true;
                 document.getElementById('exchangeCard').querySelector('h4').textContent = 'Not Accepting New Connections';
-                document.getElementById('exchangeSubtext').textContent =
-                    `${profileData.name || 'This user'} is not currently accepting exchange requests or messages from new users.`;
-                disableMsgBtn();
+                let blocked = true;
+                try { blocked = await messagingBlocked(currentUser.uid, profileUid, { otherPublic: profileData }); } catch (e) { console.error('Message access check failed:', e); }
+                if (blocked) {
+                    document.getElementById('exchangeSubtext').textContent =
+                        `${profileData.name || 'This user'} is not currently accepting exchange requests or messages from new users.`;
+                    disableMsgBtn();
+                } else {
+                    document.getElementById('exchangeSubtext').textContent =
+                        `${profileData.name || 'This user'} is not currently accepting exchange requests, but you can still send them a message.`;
+                    enableMsgBtn();
+                }
                 return;
             }
 
