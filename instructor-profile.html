@@ -47,6 +47,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <script src="js/app-shell.js"></script>
     <script src="js/theme.js"></script>
     <script src="js/page-transitions.js"></script>
+    <script src="js/profile-gate.js"></script>
 
     <!-- PWA installability (Phase 2, see docs/PWA_PRD.md §9/§12) -->
     <link rel="manifest" href="manifest.json">
@@ -1075,6 +1076,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // ── Booking functions ────────────────────────────────────────────────
 
+        // Booking profile gate (2026-11-19, js/profile-gate.js): a student needs
+        // a profile photo and a bio before booking a lesson or free trial.
+        // Instructors (instructors/{uid} exists) are never stopped here.
+        async function bookingProfileReady(instructorId) {
+            if (!window.lbProfileGate || !auth.currentUser) return true;
+            const uid = auth.currentUser.uid;
+            return window.lbProfileGate.ensure({
+                load: async () => {
+                    let snap;
+                    try { snap = await getDocFromServer(doc(db, 'users', uid)); }
+                    catch (e) { snap = await getDoc(doc(db, 'users', uid)); }
+                    const data = snap.exists() ? snap.data() : null;
+                    if (window.lbProfileGate.missing(data).length) {
+                        const instr = await getDoc(doc(db, 'instructors', uid));
+                        if (instr.exists()) return { avatar_url: 'instructor', about_me: 'instructor' };
+                    }
+                    return data;
+                },
+                returnTo: 'instructor-profile?id=' + encodeURIComponent(instructorId)
+            });
+        }
+
         async function openBookingModal(instructorId, instructorName) {
             if (!auth.currentUser) {
                 if (confirm('Please log in to book a lesson. Go to login page?')) {
@@ -1089,6 +1112,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 window.location.href = 'student-dashboard';
                 return;
             }
+
+            if (!(await bookingProfileReady(instructorId))) return;
 
             currentInstructorId   = instructorId;
             currentInstructorName = instructorName;
@@ -1551,6 +1576,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 window.location.href = 'student-dashboard';
                 return;
             }
+
+            if (!(await bookingProfileReady(instructorId))) return;
 
             currentInstructorId   = instructorId;
             currentInstructorName = instructorName;
