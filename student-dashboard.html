@@ -371,6 +371,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       gap: 1rem;
     }
 
+    /* Instructor photo on upcoming lesson cards (2026-11-19). */
+    .booking-instr-photo-link { flex-shrink: 0; border-radius: 50%; }
+    .booking-instr-photo {
+      width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+      border: 2px solid #20bcba; background: #e7e9e7; display: block;
+    }
+    .booking-info { flex: 1; min-width: 0; }
+    @media (max-width: 520px) {
+      /* Phones: photo + details on one row, Cancel full width underneath. */
+      .booking-card { flex-wrap: wrap; }
+      .booking-card .cancel-booking-btn { flex: 1 1 100%; width: 100%; }
+    }
+    .booking-instr-link { color: #0b6664; text-decoration: underline; text-decoration-color: #20bcba; text-underline-offset: 3px; }
+    .booking-instr-link:hover { color: #20bcba; }
     .booking-info h5 {
       margin: 0 0 0.5rem 0;
       color: #333;
@@ -2236,6 +2250,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           return;
         }
 
+        // Instructor photo + current name from the public profile (2026-11-19).
+        const instructorIds = [...new Set(futureBookings.map(b => b.instructorId).filter(Boolean))];
+        const publicInstr = {};
+        await Promise.all(instructorIds.map(async (id) => {
+          try {
+            const snap = await getDoc(doc(db, 'publicInstructors', id));
+            if (snap.exists()) publicInstr[id] = snap.data();
+          } catch (e) {}
+        }));
+        futureBookings.forEach(b => {
+          const p = publicInstr[b.instructorId] || {};
+          b.instructorAvatar = p.avatar_url || null;
+          if (p.name) b.instructorName = p.name;
+        });
+
         container.innerHTML = '';
         futureBookings.forEach(booking => {
           container.appendChild(createBookingCard(booking));
@@ -2247,6 +2276,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
+    const BOOKING_DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-6 0-8 3-8 4v2h16v-2c0-1-2-4-8-4z'/%3E%3C/svg%3E";
+
     function createBookingCard(booking) {
       const card = document.createElement('div');
       card.className = 'booking-card';
@@ -2256,9 +2287,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const studentTZ = (studentProfile && studentProfile.timezone)
         || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+      const profileHref = booking.instructorId ? `instructor-profile?id=${encodeURIComponent(booking.instructorId)}` : '';
+      const photo = `<img class="booking-instr-photo" src="${escapeHtml(booking.instructorAvatar || BOOKING_DEFAULT_AVATAR)}" alt="" onerror="this.onerror=null;this.src='${BOOKING_DEFAULT_AVATAR}';">`;
+      const nameHtml = profileHref
+        ? `<a class="booking-instr-link" href="${profileHref}">${escapeHtml(booking.instructorName)}</a>`
+        : escapeHtml(booking.instructorName);
+      const isTrial = booking.bookingType === 'free_trial' || booking.bookingType === 'trial';
+
       card.innerHTML = `
+        ${profileHref ? `<a href="${profileHref}" class="booking-instr-photo-link" aria-hidden="true" tabindex="-1">${photo}</a>` : photo}
         <div class="booking-info">
-          <h5>${escapeHtml(booking.instructorName)}</h5>
+          <h5>${nameHtml}</h5>
           <div class="booking-detail">
             <i class="fas fa-calendar"></i>
             ${dateTime.toLocaleDateString('en-US', { timeZone: studentTZ, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -2270,7 +2309,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <div class="booking-detail" style="color: var(--primary);">
             <i class="fas fa-hourglass-half"></i>
-            60 minutes
+            ${isTrial ? '15 minutes (free trial)' : `${booking.durationMinutes || 60} minutes`}
           </div>
         </div>
         <button class="cancel-booking-btn" data-booking-id="${booking.id}">
