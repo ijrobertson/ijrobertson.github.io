@@ -322,6 +322,43 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             color: white;
         }
 
+        /* ── Hero: real members over a dotted world map (2026-11-20) ── */
+        .connect-hero { position:relative; overflow:hidden; padding-bottom:3rem; }
+        .connect-hero::before { content:''; position:absolute; inset:0; pointer-events:none;
+            background:url(images/connect-world-dots.svg?v=2) center 55% / min(1180px, 100%) auto no-repeat; opacity:0.22; }
+        .connect-hero > .container { position:relative; z-index:1; }
+        .connect-hero-row { display:flex; align-items:center; gap:2rem; }
+        .connect-hero-text { flex:1 1 55%; text-align:left; }
+        /* thin black edge so the heading/subtitle stay readable over the white map dots */
+        .connect-hero h1, .connect-hero p {
+            text-shadow: -1px -1px 0 rgba(0,0,0,.55), 1px -1px 0 rgba(0,0,0,.55),
+                         -1px 1px 0 rgba(0,0,0,.55), 1px 1px 0 rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.3);
+        }
+        .hero-visual { flex:0 0 360px; height:240px; position:relative; }
+        @media (max-width: 767px) {
+            .connect-hero::before { background-size:250% auto; background-position:50% 92%; }
+            .connect-hero-row { flex-direction:column; gap:0.75rem; }
+            .connect-hero-text { text-align:center; }
+            .hero-visual { flex:none; width:100%; max-width:340px; height:170px; margin:0 auto 1rem; }
+        }
+        .hm-lines { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+        .hm-lines line { stroke:rgba(255,255,255,0.55); stroke-width:2; stroke-dasharray:4 6; animation:hmDash 1.6s linear infinite; }
+        @keyframes hmDash { to { stroke-dashoffset:-20; } }
+        .hm-av { position:absolute; border-radius:50%; border:3px solid #fff; background:rgba(255,255,255,0.25) center/cover no-repeat;
+                 box-shadow:0 6px 16px rgba(17,52,72,0.25); transform:translate(-50%,-50%); animation:hmFloat 5s ease-in-out infinite; }
+        .hm-av img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; opacity:0; transition:opacity .6s; }
+        .hm-av img.on { opacity:1; }
+        @keyframes hmFloat { 0%,100% { margin-top:0; } 50% { margin-top:-7px; } }
+        .hm-bubble { position:absolute; background:#fff; color:#113448; font-weight:700; font-size:0.85rem; line-height:1;
+                 padding:0.45rem 0.7rem; border-radius:14px; white-space:nowrap; box-shadow:0 4px 12px rgba(17,52,72,0.2);
+                 opacity:0; transform:translate(-50%,-100%) scale(.6); transition:opacity .35s, transform .35s cubic-bezier(.3,1.6,.6,1); pointer-events:none; }
+        .hm-bubble.show { opacity:1; transform:translate(-50%,-100%) scale(1); }
+        .hm-bubble::after { content:''; position:absolute; left:50%; bottom:-6px; margin-left:-6px;
+                 border:6px solid transparent; border-bottom:0; border-top-color:#fff; }
+        @media (prefers-reduced-motion: reduce) {
+            .hm-av, .hm-lines line { animation:none !important; }
+        }
+
         /* Filters Section */
         .filters-section {
             background: white;
@@ -846,11 +883,88 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- Hero Section -->
     <div class="connect-hero">
-        <div class="container text-center">
-            <h1>Find a Free Language Exchange Partner</h1>
-            <p>Practice with native speakers worldwide by chat, voice notes and video call. Free to join.</p>
+        <div class="container connect-hero-row">
+            <div class="connect-hero-text">
+                <h1>Find a Free Language Exchange Partner</h1>
+                <p>Practice with native speakers worldwide by chat, voice notes and video call. Free to join.</p>
+            </div>
+
+            <!-- Real members over the world map -->
+            <div class="hero-visual" id="heroMembers" aria-hidden="true">
+                <svg class="hm-lines" id="hmLines"></svg>
+            </div>
+
         </div>
     </div>
+
+
+    <script>
+    /* Connect hero: hand-picked members float over the world map, greeting in their language */
+    (function () {
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var box = document.getElementById('heroMembers');
+        var mobile = window.matchMedia('(max-width: 767px)').matches;
+        // slots: x%, y%, size px (desktop); mobile scales sizes down
+        var SLOTS = [[50, 50, 84], [18, 30, 58], [82, 28, 62], [14, 76, 50], [86, 74, 54], [36, 12, 42], [66, 90, 44]];
+        var LINKS = [[0, 1], [0, 2], [0, 3], [0, 4], [1, 5], [2, 5], [4, 6], [3, 6]];
+        var scale = mobile ? 0.72 : 1;
+        var svg = document.getElementById('hmLines');
+        svg.innerHTML = LINKS.map(function (l) {
+            var a = SLOTS[l[0]], b = SLOTS[l[1]];
+            return '<line x1="' + a[0] + '%" y1="' + a[1] + '%" x2="' + b[0] + '%" y2="' + b[1] + '%"/>';
+        }).join('');
+        var avs = SLOTS.map(function (s, i) {
+            var d = document.createElement('div');
+            d.className = 'hm-av';
+            var sz = Math.round(s[2] * scale);
+            d.style.cssText = 'left:' + s[0] + '%;top:' + s[1] + '%;width:' + sz + 'px;height:' + sz + 'px;animation-delay:' + (-i * 0.7) + 's';
+            box.appendChild(d);
+            return d;
+        });
+        var bubble = document.createElement('div');
+        bubble.className = 'hm-bubble';
+        box.appendChild(bubble);
+
+        // Hand-picked members (Ian's choice, 2026-11-20), in slot order: Ian in the centre.
+        var FEATURED = [
+            { uid: '24RtkWWM0NfDjIwGncFiclltJw93', hi: '¡Hola!' },    // Ian Robertson (Spanish)
+            { uid: 'lAcpAtRtvBZx7g6cPCqD9i5510g2', hi: 'مرحبا' },     // Fadi Thabet (Arabic)
+            { uid: 'mf988Ys1ZtOjPccsi1KxPoABZiF3', hi: 'Bonjour !' }, // Audrey Horn (French)
+            { uid: 'Gd59yJcHvTg5lovdcGcoFVSucuD2', hi: 'Olá!' },      // Matheus Mir Leite (Portuguese)
+            { uid: 'tiRYcegIameXjtkNO6dkmaaPnYQ2', hi: 'Ciao!' },     // Tessa Fieri (Italian)
+            { uid: 'NBpRFbrygxVo6JbuEZPQdTLXbTm1', hi: 'Hello!' },    // Jules Fieri De Vita (English)
+            { uid: '4QPbAqU78Qf0GQSxgfvlvOSFL4f1', hi: 'Habari!' }    // Severa Anyango (Swahili)
+        ];
+        bubble.setAttribute('dir', 'auto');
+        bubble.setAttribute('translate', 'no');
+
+        window.lbHeroMembers = function (byId) {
+            var people = FEATURED.map(function (f) { var u = byId[f.uid] || {}; return { avatar_url: u.avatar_url || u.avatar, hi: f.hi }; });
+            people.forEach(function (u, i) {
+                if (!u.avatar_url) return;
+                var img = new Image();
+                img.alt = '';
+                img.decoding = 'async';
+                img.onload = function () { img.classList.add('on'); };
+                img.src = u.avatar_url || u.avatar;
+                avs[i].appendChild(img);
+            });
+            if (!people.length) return;
+            var k = 0;
+            function greet() {
+                var idx = k++ % people.length, u = people[idx];
+                bubble.textContent = u.hi;
+                var s = SLOTS[idx];
+                bubble.style.left = s[0] + '%';
+                bubble.style.top = 'calc(' + s[1] + '% - ' + Math.round(s[2] * scale / 2 + 4) + 'px)';
+                bubble.classList.add('show');
+                setTimeout(function () { bubble.classList.remove('show'); }, 1700);
+            }
+            greet();
+            if (!reduced) setInterval(greet, 2300);
+        };
+    })();
+    </script>
 
     <!-- Filters Section -->
     <div class="container">
@@ -1118,6 +1232,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const activeMs = u => u.lastActiveAt?.toMillis ? u.lastActiveAt.toMillis() : 0;
                 const placeholder = u => PLACEHOLDER_PHOTO_UIDS.has(u.id) ? 1 : 0;
                 allUsers.sort((a, b) => (placeholder(a) - placeholder(b)) || (activeMs(b) - activeMs(a)));
+                if (window.lbHeroMembers) { const byId = {}; querySnapshot.forEach(d => { byId[d.id] = d.data(); }); window.lbHeroMembers(byId); }
 
                 console.log('Fetched users after filtering:', allUsers.length);
 
