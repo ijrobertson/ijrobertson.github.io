@@ -2444,7 +2444,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
           <div class="booking-detail" style="color: var(--primary);">
             <i class="fas fa-hourglass-half"></i>
-            60 minutes
+            ${booking.bookingType === 'free_trial'
+              ? '<span>15 minutes</span> · <span style="font-weight:600;">Free trial lesson</span>'
+              : '60 minutes'}
           </div>
         </div>
         <button class="cancel-booking-btn" data-booking-id="${booking.id}">
