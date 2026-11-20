@@ -1032,6 +1032,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import { db, auth, collection, getDocs, addDoc, onAuthStateChanged, signOut, doc, getDoc, query, where, onSnapshot, serverTimestamp } from './lib/firebaseClient.js';
+        import { isApprovedInstructor } from './js/messaging-access.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
         import { watchUnreadMessages } from './js/unread-messages.js';
@@ -1098,6 +1099,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         let allUsers = [];
         let currentUser = null;
+        // Approved instructors can message students who aren't accepting new
+        // requests (2026-11-19, js/messaging-access.js).
+        let viewerIsInstructor = false;
         let myName = '';
         let myAvatar = '';
 
@@ -1118,6 +1122,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
+                isApprovedInstructor(user.uid).then(v => {
+                    if (v && !viewerIsInstructor) { viewerIsInstructor = true; if (allUsers.length) { try { renderUsers(); } catch (e) {} } }
+                });
                 initPush(user.uid);
                 startPresenceHeartbeat(user.uid);
                 watchUnreadMessages(user.uid, document.getElementById('shell'));
@@ -1519,6 +1526,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 btn.className = 'btn-connect state-none';
                 btn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
                 btn.onclick = (e) => { e.stopPropagation(); window.location.href = 'login'; };
+            } else if (user.acceptingRequests === false && viewerIsInstructor) {
+                btn.className = 'btn-connect state-partners';
+                btn.innerHTML = '<i class="fas fa-comment"></i> Message';
+                btn.onclick = (e) => { e.stopPropagation(); window.location.href = `messages?with=${user.id}`; };
             } else if (user.acceptingRequests === false) {
                 btn.className = 'btn-connect state-disabled';
                 btn.disabled = true;
