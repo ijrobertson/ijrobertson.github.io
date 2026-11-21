@@ -1990,6 +1990,9 @@ exports.adminApproveInstructor = onCall(async (request) => {
 
               <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
 
+              <!-- Get the app -->
+              ${welcomeAppSectionHtml('instructor')}
+
               <!-- Tips -->
               <h2 style="font-size:17px;color:#113448;margin-bottom:12px;">A few tips for a great start</h2>
               <ul style="color:#555;font-size:14px;line-height:1.8;padding-left:20px;margin:0;">
@@ -2028,7 +2031,7 @@ exports.adminApproveInstructor = onCall(async (request) => {
             </div>
           </div>
         `,
-        text: `Hi ${snap.data().name || 'there'},\n\nWelcome to Lingua Bud — your instructor application has been approved!\n\n${isFoundingInstructor ? `FOUNDING INSTRUCTOR: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson, forever.\n\n` : `You keep ${keepPercent}% of every lesson you complete on Lingua Bud.\n\n`}${personalNoteText}GETTING STARTED\n\n1. Complete your profile\nMake sure your bio, languages, availability, and profile photo are up to date on your Dashboard.\n\n2. Connect a payment method to receive payouts\nLingua Bud supports two options:\n  - Stripe Connect: Go to your Dashboard and click "Connect with Stripe". Payouts go straight to your bank account on Stripe's standard schedule.\n  - Wise: Enter your Wise email in your Dashboard settings. Earnings are paid out weekly every Sunday.\nYou must complete at least one option before students can book with you.\n\n3. Check your Bookings tab\nAll upcoming and past lessons appear in the Bookings tab. You'll get an email each time a new lesson is booked.\n\nDashboard: https://linguabud.com/dashboard\nBookings: https://linguabud.com/bookings\n\nTIPS\n- Set a competitive lesson rate to attract your first students.\n- Write a warm, detailed bio highlighting your teaching experience.\n- Respond to student messages quickly — it leads to more bookings.\n- Encourage students to leave reviews after each lesson.\n\nQuestions? Email us at support@linguabud.com\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
+        text: `Hi ${snap.data().name || 'there'},\n\nWelcome to Lingua Bud — your instructor application has been approved!\n\n${isFoundingInstructor ? `FOUNDING INSTRUCTOR: You have a lifetime ${FOUNDING_INSTRUCTOR_RATE * 100}% commission rate — you keep ${keepPercent}% of every lesson, forever.\n\n` : `You keep ${keepPercent}% of every lesson you complete on Lingua Bud.\n\n`}${personalNoteText}GETTING STARTED\n\n1. Complete your profile\nMake sure your bio, languages, availability, and profile photo are up to date on your Dashboard.\n\n2. Connect a payment method to receive payouts\nLingua Bud supports two options:\n  - Stripe Connect: Go to your Dashboard and click "Connect with Stripe". Payouts go straight to your bank account on Stripe's standard schedule.\n  - Wise: Enter your Wise email in your Dashboard settings. Earnings are paid out weekly every Sunday.\nYou must complete at least one option before students can book with you.\n\n3. Check your Bookings tab\nAll upcoming and past lessons appear in the Bookings tab. You'll get an email each time a new lesson is booked.\n\nGET THE APP\nLingua Bud also has a mobile app for iPhone and Android. Get notified the moment a student books a lesson or sends you a message, check your schedule, and teach your lessons right from your phone. No app store needed: open https://app.linguabud.com on your phone and add it to your home screen in a few taps.\n\nDashboard: https://linguabud.com/dashboard\nBookings: https://linguabud.com/bookings\n\nTIPS\n- Set a competitive lesson rate to attract your first students.\n- Write a warm, detailed bio highlighting your teaching experience.\n- Respond to student messages quickly — it leads to more bookings.\n- Encourage students to leave reviews after each lesson.\n\nQuestions? Email us at support@linguabud.com\n\n— The Lingua Bud Team\nlinguabud.com | support@linguabud.com`
       });
     }
   } catch (e) {
@@ -5516,6 +5519,43 @@ exports.googleCalendarDisconnect = onCall(async (request) => {
  * Fires when a new document is created in the `users` collection (student signup).
  * Sends a welcome/engagement email introducing the Connect and Instructors features.
  */
+// ── "Get the app" section shared by the welcome emails (2026-11-20) ─────────
+// Table-based so it renders the same in Gmail/Outlook/Apple Mail. Brand colours only.
+function welcomeAppSectionHtml(role) {
+  const isInstructor = role === 'instructor';
+  const title = isInstructor ? 'Get booking alerts on your phone' : 'Take Lingua Bud with you';
+  const body = isInstructor
+    ? 'Lingua Bud also has a mobile app for iPhone and Android. Get notified the moment a student books a lesson or sends you a message, check your schedule, and teach your lessons right from your phone.'
+    : 'Lingua Bud also has a mobile app for iPhone and Android. Message your language partners, practice with quizzes, and join your lessons right from your phone, and get notified the moment someone replies.';
+  return `
+            <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 28px;">
+              <tr>
+                <td style="background:#113448;border-radius:8px;padding:22px 24px;">
+                  <table role="presentation" style="width:100%;border-collapse:collapse;">
+                    <tr>
+                      <td style="vertical-align:top;padding-right:16px;width:40px;">
+                        <div style="background:#20bcba;border-radius:50%;width:36px;height:36px;text-align:center;line-height:36px;font-size:18px;">&#128241;</div>
+                      </td>
+                      <td style="vertical-align:top;">
+                        <strong style="color:#ffffff;font-size:16px;display:block;margin-bottom:6px;">${title}</strong>
+                        <p style="margin:0;color:#d6e6ee;font-size:14px;line-height:1.6;">${body}</p>
+                        <p style="margin:10px 0 0;color:#d6e6ee;font-size:14px;line-height:1.6;">
+                          No app store needed: open <a href="https://app.linguabud.com" style="color:#20bcba;text-decoration:none;font-weight:bold;"><span style="color:#20bcba;">app.linguabud.com</span></a> on your phone and add it to your home screen in a few taps.
+                        </p>
+                        <p style="margin:14px 0 0;">
+                          <a href="https://app.linguabud.com"
+                             style="display:inline-block;background:#20bcba;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px;">
+                            Get the App &rarr;
+                          </a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>`;
+}
+
 exports.sendStudentWelcomeEmail = onDocumentCreated('users/{userId}', async (event) => {
   try {
     const user = event.data.data();
@@ -5614,6 +5654,9 @@ exports.sendStudentWelcomeEmail = onDocumentCreated('users/{userId}', async (eve
                 </td>
               </tr>
             </table>
+
+            <!-- Get the app -->
+            ${welcomeAppSectionHtml('student')}
 
             <hr style="border:none;border-top:1px solid #eee;margin:0 0 28px;" />
 
