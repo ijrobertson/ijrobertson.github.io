@@ -2654,9 +2654,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (loadingEl) loadingEl.style.display = 'none';
 
         if (user) {
+          // Speed (2026-11-20): fetch the role check and the instructor record at the
+          // same time instead of one after the other.
+          const rolePromise = getDoc(doc(db, 'users', user.uid));
+          const instrPromise = getDoc(doc(db, 'instructors', user.uid));
+          instrPromise.catch(() => {}); // awaited below; avoid an unhandled rejection if we redirect first
+
           // Guard: students must not access the instructor dashboard
           try {
-            const userRoleSnap = await getDoc(doc(db, 'users', user.uid));
+            const userRoleSnap = await rolePromise;
             if (userRoleSnap.exists() && userRoleSnap.data().role === 'student') {
               if (loadingEl) {
                 loadingEl.style.display = 'flex';
@@ -2672,7 +2678,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           currentUser = user;
 
           // Redirect pending/declined/no-profile instructors to the application page
-          const instructorSnap = await getDoc(doc(db, 'instructors', user.uid));
+          const instructorSnap = await instrPromise;
           if (!instructorSnap.exists()) {
             window.location.href = 'instructor-apply';
             return;
@@ -2703,8 +2709,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             console.error('Shell role detection error:', error);
           }
 
-          await loadProfile();
-          await loadAvailability();
+          // Profile and availability fill different fields, so load them together;
+          // the profile reuses the instructor record fetched above.
+          await Promise.all([loadProfile(instructorSnap), loadAvailability()]);
 
           // Arriving via a link to #availability (the Calendar tab's "Open more
           // times" prompt): the browser's own jump happened before the profile
@@ -2716,7 +2723,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
           // Check Stripe payment setup status — auto-create account if needed
           const urlParams = new URLSearchParams(window.location.search);
-          await checkStripePaymentStatus(urlParams.get('stripe') === 'success', instrData);
+          // Not awaited: when Stripe needs a server check (a slow function call) it
+          // used to hold up the lessons, referrals and calendar below.
+          checkStripePaymentStatus(urlParams.get('stripe') === 'success', instrData);
 
           // Load earnings summary, referrals, upcoming lessons, and calendar sync status
           loadReferrals();
@@ -2922,11 +2931,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    async function loadProfile() {
+    async function loadProfile(prefetchedSnap = null) {
       setStatus("Loading profile...");
 
       try {
-        const docSnap = await getDoc(doc(db, 'instructors', currentUser.uid));
+        const docSnap = prefetchedSnap || await getDoc(doc(db, 'instructors', currentUser.uid));
 
         // Clear fields first
         document.getElementById('name').value = "";
