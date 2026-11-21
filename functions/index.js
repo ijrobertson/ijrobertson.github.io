@@ -1949,22 +1949,12 @@ exports.adminApproveInstructor = onCall(async (request) => {
               <h2 style="font-size:17px;color:#113448;margin-bottom:16px;">Getting started — 3 simple steps</h2>
 
               <!-- Step 1 -->
-              <div style="display:flex;align-items:flex-start;margin-bottom:20px;">
-                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">1</div>
-                <div>
-                  <strong style="color:#113448;">Complete your instructor profile</strong>
-                  <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
+              ${emailStepHtml(1, 'Complete your instructor profile', `<p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
                     Head to your <a href="https://linguabud.com/dashboard" style="color:#20bcba;">Dashboard</a> and make sure your bio, languages, availability, and profile photo are up to date. A complete profile helps students find and choose you with confidence.
-                  </p>
-                </div>
-              </div>
+                  </p>`, 20)}
 
               <!-- Step 2 -->
-              <div style="display:flex;align-items:flex-start;margin-bottom:20px;">
-                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">2</div>
-                <div>
-                  <strong style="color:#113448;">Connect a payment method to receive payouts</strong>
-                  <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
+              ${emailStepHtml(2, 'Connect a payment method to receive payouts', `<p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
                     Lingua Bud supports two payout options — choose the one that works best for you:
                   </p>
                   <ul style="margin:8px 0 0;padding-left:18px;color:#555;font-size:14px;line-height:1.7;">
@@ -1973,20 +1963,12 @@ exports.adminApproveInstructor = onCall(async (request) => {
                   </ul>
                   <p style="margin:8px 0 0;color:#555;font-size:14px;line-height:1.5;">
                     You must complete at least one of these steps before students can book lessons with you.
-                  </p>
-                </div>
-              </div>
+                  </p>`, 20)}
 
               <!-- Step 3 -->
-              <div style="display:flex;align-items:flex-start;margin-bottom:8px;">
-                <div style="background:#20bcba;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:14px;line-height:28px;text-align:center;">3</div>
-                <div>
-                  <strong style="color:#113448;">Check your Bookings tab for upcoming lessons</strong>
-                  <p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
+              ${emailStepHtml(3, 'Check your Bookings tab for upcoming lessons', `<p style="margin:4px 0 0;color:#555;font-size:14px;line-height:1.5;">
                     Once students start booking with you, all upcoming and past lessons will appear in the <strong>Bookings</strong> tab on your Dashboard. You'll receive an email notification each time a new lesson is booked, so keep an eye on your inbox!
-                  </p>
-                </div>
-              </div>
+                  </p>`, 8)}
 
               <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
 
@@ -5519,6 +5501,24 @@ exports.googleCalendarDisconnect = onCall(async (request) => {
  * Fires when a new document is created in the `users` collection (student signup).
  * Sends a welcome/engagement email introducing the Connect and Instructors features.
  */
+// ── Numbered step with a round number circle, shared by instructor emails (2026-11-20) ──
+// Table-based: flexbox squeezes the circle into an oval in Gmail/Outlook.
+// bodyHtml may contain paragraphs or lists; callers escape any user-supplied text.
+function emailStepHtml(n, title, bodyHtml, marginBottom = 18) {
+  return `
+            <table role="presentation" style="width:100%;border-collapse:collapse;margin-bottom:${marginBottom}px;">
+              <tr>
+                <td style="vertical-align:top;width:44px;padding-right:12px;">
+                  <div style="background:#20bcba;color:#ffffff;font-weight:bold;font-size:14px;width:30px;height:30px;border-radius:50%;text-align:center;line-height:30px;">${n}</div>
+                </td>
+                <td style="vertical-align:top;">
+                  <strong style="color:#113448;font-size:15px;display:block;margin-bottom:4px;">${title}</strong>
+                  ${bodyHtml}
+                </td>
+              </tr>
+            </table>`;
+}
+
 // ── "Get the app" section shared by the welcome emails (2026-11-20) ─────────
 // Table-based so it renders the same in Gmail/Outlook/Apple Mail. Brand colours only.
 function welcomeAppSectionHtml(role) {
@@ -5562,6 +5562,11 @@ exports.sendStudentWelcomeEmail = onDocumentCreated('users/{userId}', async (eve
     const email = user.email;
     if (!email) {
       console.log('[WelcomeEmail] No email on new user doc, skipping.');
+      return null;
+    }
+    // Instructor applicants get the "thanks for applying" email (sendInstructorApplicationEmail) instead.
+    if (user.role === 'instructor_applicant') {
+      console.log(`[WelcomeEmail] ${email} is an instructor applicant, skipping student welcome.`);
       return null;
     }
 
@@ -5745,6 +5750,140 @@ exports.sendStudentWelcomeEmail = onDocumentCreated('users/{userId}', async (eve
     console.error('[WelcomeEmail] Error:', err);
     return null;
   }
+});
+
+// ── Instructor application received email (2026-11-20) ─────────────────────
+// Sent when an application is submitted (instructors/{uid} created with status 'pending'),
+// for brand-new applicants and for existing students who apply.
+function buildInstructorApplicationEmail(rawName) {
+  const esc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const firstName = (String(rawName || '').trim().split(/\s+/)[0]) || 'there';
+  const year = new Date().getFullYear();
+  const P = (t) => `<p style="margin:0;color:#555;font-size:14px;line-height:1.6;">${t}</p>`;
+  const step = (n, title, body) => emailStepHtml(n, title, P(body));
+  const subject = 'Thanks for applying to teach on Lingua Bud!';
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f4f7f6;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;background:#f4f7f6;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" style="width:600px;max-width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#20bcba;padding:36px 40px;text-align:center;">
+            <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:52px;margin-bottom:14px;display:block;margin-left:auto;margin-right:auto;" />
+            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;line-height:1.3;">We've received your application!</h1>
+            <p style="margin:10px 0 0;color:#e0fffe;font-size:15px;">Thank you for wanting to teach with Lingua Bud.</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="background:#ffffff;padding:40px;">
+            <p style="font-size:16px;color:#333;margin:0 0 8px;">Hi ${esc(firstName)},</p>
+            <p style="font-size:15px;color:#555;line-height:1.7;margin:0 0 28px;">
+              Thanks for applying to become an instructor on Lingua Bud! We're excited that you'd like to share
+              your language with learners around the world.
+            </p>
+
+            <h2 style="font-size:17px;color:#113448;margin:0 0 16px;">What happens next</h2>
+            ${step(1, 'We review your application', 'Our team personally reviews every application, including your profile and teaching experience. There is nothing you need to do in the meantime.')}
+            ${step(2, "You'll hear from us by email", "Once we've reviewed your application, we'll email you with our decision. Keep an eye on your inbox (and your spam folder, just in case).")}
+            ${step(3, 'Once approved, set up and start teaching', 'Your profile goes live for students to find. Add your availability and connect a payout method (Stripe or Wise) from your Dashboard, and students can start booking lessons and free 15-minute trials with you.')}
+
+            <hr style="border:none;border-top:1px solid #eee;margin:10px 0 28px;" />
+
+            <!-- Get the app -->
+            ${welcomeAppSectionHtml('instructor')}
+
+            <p style="font-size:14px;color:#555;line-height:1.7;margin:0;">
+              Questions about your application? Just email us at
+              <a href="mailto:support@linguabud.com" style="color:#20bcba;text-decoration:none;font-weight:bold;">support@linguabud.com</a>.
+              We're happy to help.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#113448;padding:28px 40px;text-align:center;">
+            <img src="https://linguabud.com/images/NewLogo8.png" alt="Lingua Bud" style="height:32px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;" />
+            <p style="margin:0;font-size:13px;color:#ffffff;line-height:1.8;">
+              The Lingua Bud Team<br />
+              <a href="https://linguabud.com" style="color:#20bcba;text-decoration:none;">linguabud.com</a>
+              &nbsp;|&nbsp;
+              <a href="mailto:support@linguabud.com" style="color:#20bcba;text-decoration:none;">support@linguabud.com</a>
+            </p>
+            <p style="margin:12px 0 0;font-size:12px;color:#8aaabb;line-height:1.5;">
+              You're receiving this email because you applied to become an instructor on Lingua Bud.
+            </p>
+            <p style="margin:8px 0 0;font-size:11px;color:#6a8898;">&copy; ${year} Lingua Bud</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+  const text = `Hi ${firstName},
+
+Thanks for applying to become an instructor on Lingua Bud! We're excited that you'd like to share your language with learners around the world.
+
+WHAT HAPPENS NEXT
+
+1. We review your application
+Our team personally reviews every application, including your profile and teaching experience. There is nothing you need to do in the meantime.
+
+2. You'll hear from us by email
+Once we've reviewed your application, we'll email you with our decision. Keep an eye on your inbox (and your spam folder, just in case).
+
+3. Once approved, set up and start teaching
+Your profile goes live for students to find. Add your availability and connect a payout method (Stripe or Wise) from your Dashboard, and students can start booking lessons and free 15-minute trials with you.
+
+GET THE APP
+Lingua Bud also has a mobile app for iPhone and Android. Get notified the moment a student books a lesson or sends you a message, check your schedule, and teach your lessons right from your phone. No app store needed: open https://app.linguabud.com on your phone and add it to your home screen in a few taps.
+
+Questions about your application? Email us at support@linguabud.com.
+
+— The Lingua Bud Team
+linguabud.com | support@linguabud.com`;
+  return { subject, html, text };
+}
+
+exports.sendInstructorApplicationEmail = onDocumentCreated('instructors/{instructorId}', async (event) => {
+  try {
+    const app = event.data && event.data.data();
+    if (!app || app.status !== 'pending') return null;   // only real submitted applications
+    const email = app.email;
+    if (!email) {
+      console.log('[ApplicationEmail] No email on application, skipping.');
+      return null;
+    }
+    const { subject, html, text } = buildInstructorApplicationEmail(app.name);
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const result = await resend.emails.send({
+      from: 'Lingua Bud <notifications@linguabud.com>',
+      to: email,
+      subject,
+      html,
+      text,
+    });
+    if (result.error) {
+      console.error('[ApplicationEmail] Resend error:', result.error);
+    } else {
+      console.log(`[ApplicationEmail] Sent to ${email}, id: ${result.data?.id}`);
+    }
+  } catch (err) {
+    console.error('[ApplicationEmail] Error:', err);
+  }
+  return null;
 });
 
 // ── Custom Password Reset Email ────────────────────────────────────────────
