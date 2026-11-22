@@ -942,7 +942,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v81"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v82"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
@@ -961,8 +961,15 @@ function prefetchSiblingTabs(items, activeId) {
   // fallback there. Either way this is deliberately delayed, not immediate:
   // it must never compete with the current page's own real network activity
   // (auth check, live listeners, images) for bandwidth/CPU right when it matters most.
-  if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 2000 });
-  else setTimeout(run, 1500);
+  // Started only after the window "load" event plus 3s: on a first visit over a
+  // slow phone connection the old 1.5-2s timer fired while the Firebase code
+  // was still downloading, and the ~75KB of other tabs slowed it down.
+  const later = () => setTimeout(() => {
+    if ("requestIdleCallback" in window) requestIdleCallback(run, { timeout: 2000 });
+    else run();
+  }, 3000);
+  if (document.readyState === "complete") later();
+  else window.addEventListener("load", later, { once: true });
 }
 
 // ── Force a stuck installed PWA to actually pick up a new deploy ────────

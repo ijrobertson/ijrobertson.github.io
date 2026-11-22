@@ -13,8 +13,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<!-- Google Analytics 4 (stream G-97N8DRKFF2); app_mode tells the installed app from a browser -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-97N8DRKFF2"></script>
+<!-- Google Analytics 4 (stream G-97N8DRKFF2); app_mode tells the installed app from a browser.
+     Speed: gtag.js (~180KB) is only fetched once the page has finished loading;
+     the config below is queued in dataLayer and still sent. -->
+<script>(function(){function go(){var j=document.createElement('script');j.async=true;j.src='https://www.googletagmanager.com/gtag/js?id=G-97N8DRKFF2';document.head.appendChild(j);}if(document.readyState==='complete')go();else window.addEventListener('load',function(){setTimeout(go,0);});})();</script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('set','user_properties',{app_mode:((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true)?'installed_app':'browser'});var lbGaUid=null;try{lbGaUid=localStorage.getItem('lb_ga_uid');}catch(e){}gtag('config','G-97N8DRKFF2',lbGaUid?{user_id:lbGaUid}:{});</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Get the App - Lingua Bud</title>
@@ -45,7 +47,9 @@
 <link href="https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap&subset=latin-ext" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600&display=swap&subset=latin-ext" rel="stylesheet">
 <link href="css/fontawesome-all.css" rel="stylesheet">
-<script src="js/i18n-strings.js"></script>
+<!-- Interface translations: only fetched when the chosen language is not English
+     (English never uses them). Same choice rule as detect() in js/i18n.js. -->
+<script>(function(){var l=null;try{l=localStorage.getItem('lb-lang');}catch(e){}if(!/^(en|es|pt|fr|ar)$/.test(l||'')){l='en';var p=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||'en'];for(var i=0;i<p.length;i++){var c=String(p[i]||'').toLowerCase().slice(0,2);if(/^(en|es|pt|fr|ar)$/.test(c)){l=c;break;}}}if(l!=='en')document.write('<script src="js/i18n-strings.js"><\/script>');})();</script>
 <script src="js/i18n.js"></script>
 <style>
   :root {

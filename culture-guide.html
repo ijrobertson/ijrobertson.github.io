@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-NCWL99PL');</script>
-<!-- Google Analytics 4 (stream G-97N8DRKFF2); app_mode tells the installed app from a browser -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-97N8DRKFF2"></script>
+<!-- Google Tag Manager + Google Analytics 4 (stream G-97N8DRKFF2); app_mode tells the installed app from a browser.
+     Speed: the two tag scripts (~700KB with the Facebook pixel GTM adds) are only
+     fetched once the page has finished loading, so on a slow phone connection they
+     no longer compete with the app's own code. Everything pushed to dataLayer
+     before then (gtm.start, page config, events) is queued and still sent. -->
+<script>window.dataLayer=window.dataLayer||[];dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});(function(){function go(){['https://www.googletagmanager.com/gtm.js?id=GTM-NCWL99PL','https://www.googletagmanager.com/gtag/js?id=G-97N8DRKFF2'].forEach(function(u){var j=document.createElement('script');j.async=true;j.src=u;document.head.appendChild(j);});}if(document.readyState==='complete')go();else window.addEventListener('load',function(){setTimeout(go,0);});})();</script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('set','user_properties',{app_mode:((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true)?'installed_app':'browser'});var lbGaUid=null;try{lbGaUid=localStorage.getItem('lb_ga_uid');}catch(e){}gtag('config','G-97N8DRKFF2',lbGaUid?{user_id:lbGaUid}:{});</script>
 <!-- End Google Tag Manager -->
     <meta charset="utf-8">
+    <!-- Speed: start downloading the Firebase code straight away instead of only
+         after the page's own script asks for lib/firebaseClient.js (URLs must match its imports). -->
+    <link rel="modulepreload" href="lib/firebaseClient.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.0/firebase-functions.js">
+    <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
     <meta name="description" content="Short, modular lessons on a country's culture — greetings, food, transport, and more.">
     <meta name="author" content="Lingua Bud">
@@ -33,7 +40,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Windows has no flag emoji — see js/flag-emoji.js (language picker flags). -->
     <script src="js/flag-emoji.js"></script>
     <!-- Interface language (English / Español / Português): see js/i18n.js -->
-    <script src="js/i18n-strings.js"></script>
+    <!-- Interface translations: only fetched when the chosen language is not English
+         (English never uses them). Same choice rule as detect() in js/i18n.js. -->
+    <script>(function(){var l=null;try{l=localStorage.getItem('lb-lang');}catch(e){}if(!/^(en|es|pt|fr|ar)$/.test(l||'')){l='en';var p=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||'en'];for(var i=0;i<p.length;i++){var c=String(p[i]||'').toLowerCase().slice(0,2);if(/^(en|es|pt|fr|ar)$/.test(c)){l=c;break;}}}if(l!=='en')document.write('<script src="js/i18n-strings.js"><\/script>');})();</script>
     <script src="js/i18n.js"></script>
     <script src="js/app-shell.js"></script>
     <script src="js/theme.js"></script>
