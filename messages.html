@@ -2573,6 +2573,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         let recordingSendInFlight = false; // guards against a double tap sending twice
         let recordingLanguage = 'en-US'; // BCP-47 tag for SpeechRecognition
 
+        // Keep the screen on while a voice note is recording. When the phone
+        // auto-locks, iOS suspends the page and the mic goes with it, cutting
+        // the recording off after ~15-30s of not touching the screen.
+        let recordingWakeLock = null;
+        let recordingActive = false;
+        async function acquireRecordingWakeLock() {
+            if (!recordingActive || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+            if (recordingWakeLock && !recordingWakeLock.released) return;
+            try {
+                recordingWakeLock = await navigator.wakeLock.request('screen');
+                if (!recordingActive) { recordingWakeLock.release().catch(() => {}); recordingWakeLock = null; }
+            } catch (e) {
+                console.warn('Screen wake lock unavailable:', e);
+            }
+        }
+        function releaseRecordingWakeLock() {
+            recordingActive = false;
+            const lock = recordingWakeLock;
+            recordingWakeLock = null;
+            if (lock && !lock.released) lock.release().catch(() => {});
+        }
+        // The browser drops the lock whenever the page is hidden (app switch,
+        // notification centre); take it again on return if still recording.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') acquireRecordingWakeLock();
+        });
+
         // Supported languages: BCP-47 tag → { label, myMemory ISO code }
         const AUDIO_LANGUAGES = {
             'en-US': { label: 'EN', name: 'English',    myMemory: 'en' },
@@ -5594,6 +5621,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
                 }
 
+                recordingActive = true;
+                acquireRecordingWakeLock();
+
                 // Show recording UI
                 recordingStartTime = Date.now();
                 recordingSendInFlight = false;
@@ -5622,6 +5652,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         function cancelRecording(stream) {
+            releaseRecordingWakeLock();
             if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
             if (speechRecognition) { const sr = speechRecognition; speechRecognition = null; sr.onend = null; sr.stop(); }
             clearInterval(recordingTimerInterval);
@@ -5640,6 +5671,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         async function stopAndSendRecording(stream, conversationId) {
             if (!mediaRecorder || recordingSendInFlight) return;
             recordingSendInFlight = true;
+            releaseRecordingWakeLock();
             const recorder = mediaRecorder;
             const duration = (Date.now() - recordingStartTime) / 1000;
 
