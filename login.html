@@ -404,6 +404,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <label for="age-checkbox">I confirm that I am 18 years old or older</label>
     </div>
 
+    <!-- Parent/guardian account (2026-11-22): lessons for a child. The parent
+         still confirms they're 18+ above. Enforced in firestore.rules. -->
+    <div id="parent-checkbox-container" class="checkbox-container" style="display: none;">
+      <input type="checkbox" id="parent-checkbox" />
+      <label for="parent-checkbox">I'm a parent or guardian creating this account to book lessons for my child
+        <span style="display:block;font-size:0.8rem;color:#666;margin-top:2px;">Parent accounts don't appear on Connect, and only instructors you book with can message you.</span></label>
+    </div>
+
     <div id="terms-checkbox-container" class="checkbox-container" style="display: none;">
       <input type="checkbox" id="terms-checkbox" />
       <label for="terms-checkbox">I agree to the <a href="terms-conditions" target="_blank">Terms and Conditions</a> and <a href="privacy-policy" target="_blank">Privacy Policy</a></label>
@@ -540,6 +548,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           userData = snap.data();
           role = userData.role;
           if (role) safeSetStorage('user_role_cache', role);
+          safeSetStorage('lb-account-type', userData.accountType || '');
         }
       } catch(e) {
         role = safeGetStorage('user_role_cache');
@@ -638,6 +647,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const countryCont    = document.getElementById('country-container');
   const countryEl      = document.getElementById('signup-country');
   const ageCont        = document.getElementById('age-checkbox-container');
+  const parentCont     = document.getElementById('parent-checkbox-container');
+  const parentBox      = document.getElementById('parent-checkbox');
   // Invite code (referral program, js/referral.js): pre-filled from an invite
   // link opened on this device; typing one covers links opened elsewhere
   // (e.g. inside WhatsApp, whose browser doesn't share this one's memory).
@@ -712,6 +723,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     langSection.style.display  = isSignup ? 'block' : 'none';
     ageCont.style.display      = isSignup ? 'flex'  : 'none';
     inviteCont.style.display   = isSignup ? 'block' : 'none';
+    parentCont.style.display   = isSignup ? 'flex'  : 'none';
+    parentBox.checked = false;
     termsCont.style.display    = isSignup ? 'flex'  : 'none';
     document.getElementById('instructor-cta').style.display = isSignup ? 'block' : 'none';
     document.getElementById('forgot-password-btn').style.display = isSignup ? 'none' : 'block';
@@ -841,6 +854,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           languages_learning: learningLangs,
           hasLoggedIn: false
         };
+        // Parent/guardian account: permanently off Connect and closed to
+        // messages from anyone but instructors (enforced in firestore.rules).
+        if (parentBox.checked) {
+          userData.accountType = 'parent';
+          userData.acceptingRequests = false;
+        }
+        safeSetStorage('lb-account-type', parentBox.checked ? 'parent' : '');
         await setDoc(doc(db, 'users', user.uid), userData);
 
         // ── Invite (referral program) — see js/referral.js ──────────────
@@ -873,6 +893,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             userData = snap.data();
             role = userData.role;
             if (role) safeSetStorage('user_role_cache', role);
+            safeSetStorage('lb-account-type', userData.accountType || '');
           }
         } catch(firestoreErr) {
           // Firestore unavailable (offline/slow mobile) — use cached role

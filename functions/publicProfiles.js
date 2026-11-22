@@ -29,7 +29,18 @@ function publicInstructorCopy(data) {
     || (data.payoutMethod === 'wise' && !!data.wiseEmail);
   return out;
 }
+// Parent accounts (2026-11-22, booking lessons for a child): only what an
+// instructor needs to recognise them in Messages and Calendar is public — no
+// bio, country, languages or interests — plus the markers the pages use to
+// keep them off Connect and closed to messages from anyone but instructors.
+const PARENT_PUBLIC_FIELDS = ['name', 'avatar_url', 'role', 'timezone', 'createdAt', 'lastActiveAt'];
 function publicUserCopy(data) {
+  if (data && data.accountType === 'parent') {
+    const out = pickPublic(data, PARENT_PUBLIC_FIELDS);
+    out.accountType = 'parent';
+    out.acceptingRequests = false;
+    return out;
+  }
   return pickPublic(data, PUBLIC_USER_FIELDS);
 }
 

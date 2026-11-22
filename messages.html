@@ -5996,6 +5996,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 </p>
                             </div>
                         `;
+                        // On phones the chat list is showing and the chat panel is
+                        // hidden, so the notice above was never seen (2026-11-22,
+                        // found while testing parent accounts). Show it above the list too.
+                        if (window.innerWidth <= 767) {
+                            const list = document.getElementById('conversationsList');
+                            if (list && !document.getElementById('blockedRecipientNotice')) {
+                                const n = document.createElement('div');
+                                n.id = 'blockedRecipientNotice';
+                                n.setAttribute('role', 'status');
+                                n.style.cssText = 'margin:12px;padding:12px 14px;border-radius:8px;background:#fff3cd;color:#856404;font-size:0.92rem;line-height:1.45;';
+                                n.innerHTML = '<i class="fas fa-info-circle" style="margin-right:6px;"></i>This user is not currently accepting messages from new connections.';
+                                list.parentNode.insertBefore(n, list);
+                            }
+                        }
                         return;
                     }
 

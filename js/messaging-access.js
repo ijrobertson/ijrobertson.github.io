@@ -27,6 +27,15 @@ export async function isApprovedInstructor(uid) {
   return p;
 }
 
+/** True when uid is a parent/guardian account (public marker, set by the server). */
+export async function isParentAccount(uid) {
+  if (!uid) return false;
+  try {
+    const s = await getDoc(doc(db, 'publicUsers', uid));
+    return s.exists() && s.data().accountType === 'parent';
+  } catch (e) { return false; }
+}
+
 /** True when the two users are accepted language partners. */
 async function arePartners(myUid, otherUid) {
   const [sent, received] = await Promise.all([
@@ -65,7 +74,14 @@ export async function messagingBlocked(myUid, otherUid, { otherPublic, conversat
     const s = await getDoc(doc(db, 'publicUsers', otherUid));
     other = s.exists() ? s.data() : null;
   }
-  if (!other || other.acceptingRequests !== false) return false;
+  if (!other) return false;
+  // Parent/guardian accounts (2026-11-22): only approved instructors may
+  // message them, and they may only message approved instructors — no
+  // exceptions for partners or earlier chats. firestore.rules enforces the
+  // same thing when a chat is created; this just explains it on screen.
+  if (other.accountType === 'parent') return !(await isApprovedInstructor(myUid));
+  if (await isParentAccount(myUid)) return !(await isApprovedInstructor(otherUid));
+  if (other.acceptingRequests !== false) return false;
   if (await isApprovedInstructor(myUid)) return false;
   if (await arePartners(myUid, otherUid)) return false;
   if (await haveChatted(myUid, otherUid, conversationId)) return false;

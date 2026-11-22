@@ -108,6 +108,9 @@ const NAV_BY_ROLE = {
     { id: "settings", label: "Settings", icon: "profile", href: "dashboard" },
   ],
 };
+// Parent/guardian accounts (2026-11-22, lessons for a child): a student
+// account without Connect (language exchange with other adults).
+NAV_BY_ROLE.parent = NAV_BY_ROLE.student.filter((item) => item.id !== "connect");
 
 // Replaces the marketing navbar's profile dropdown, minus Settings (that's now
 // a primary bottom tab, see above — keeping it here too would just be a
@@ -128,6 +131,7 @@ const PROFILE_MENU_BY_ROLE = {
     { id: "logout", label: "Logout", href: "#" },
   ],
 };
+PROFILE_MENU_BY_ROLE.parent = PROFILE_MENU_BY_ROLE.student.filter((item) => item.id !== "friends");
 
 const STYLE = `
   :host {
@@ -594,7 +598,11 @@ class LbAppShell extends HTMLElement {
     if (!role) {
       try { role = localStorage.getItem(ROLE_STORAGE_KEY); } catch (e) {}
     }
-    return role === "instructor" ? "instructor" : "student";
+    if (role === "instructor") return "instructor";
+    // Parent accounts are students to every page; the tab bar alone tells them
+    // apart, from the account type login/Settings remember on this device.
+    try { if (localStorage.getItem("lb-account-type") === "parent") return "parent"; } catch (e) {}
+    return "student";
   }
 
   get navItems() {
@@ -768,7 +776,7 @@ class LbAppShell extends HTMLElement {
           <p class="title">${T(pageTitle)}</p>
         </div>
         <div class="header-right">
-          ${role === "student" && streak > 0
+          ${(role === "student" || role === "parent") && streak > 0
             ? `<span class="streak">${icon("flame")}${streak}</span>`
             : ""
           }
@@ -942,7 +950,7 @@ class LbAppShell extends HTMLElement {
 // link hints, but the Cache API and fetch() are both solid there.
 // MUST stay in sync with sw.js's pages cache name if that's ever bumped —
 // a mismatch just makes this silently a no-op, not a functional break.
-const PAGES_CACHE_NAME = "linguabud-pages-v86"; // MUST match sw.js's pages cacheName exactly — see its own history comments
+const PAGES_CACHE_NAME = "linguabud-pages-v87"; // MUST match sw.js's pages cacheName exactly — see its own history comments
 
 function prefetchSiblingTabs(items, activeId) {
   if (!("caches" in window) || !("serviceWorker" in navigator)) return;
@@ -994,7 +1002,14 @@ function prefetchSiblingTabs(items, activeId) {
 //      the fresh HTML/JS/CSS immediately rather than only on some later visit.
 if ("serviceWorker" in navigator) {
   let reloadedForNewWorker = false;
+  // Only an UPDATE should reload. On someone's very first visit there is no
+  // controller yet, and the first worker claiming the page also fires
+  // controllerchange — which used to reload the page a few seconds into a
+  // first visit, wiping anything typed (e.g. a half-filled sign-up form).
+  // Found 2026-11-22 while testing sign-up.
+  const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController) return;
     if (reloadedForNewWorker) return;
     reloadedForNewWorker = true;
     window.location.reload();

@@ -2,14 +2,48 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Parent accounts (2026-11-22) ──────────────────────────────────────
+    // A parent/guardian account books lessons for a child. It is permanently
+    // closed to messages and friend requests from anyone except approved
+    // instructors (and admins), and can itself only start chats with them.
+    // users/{uid}.accountType == 'parent' — set at sign-up, never removable
+    // by the user (see the users rules below).
+    function isAdminUid(uid) {
+      return exists(/databases/$(database)/documents/admins/$(uid));
+    }
+    function isParentAccount(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+        && get(/databases/$(database)/documents/users/$(uid)).data.get('accountType', '') == 'parent';
+    }
+    function isApprovedInstructorUid(uid) {
+      return exists(/databases/$(database)/documents/publicInstructors/$(uid))
+        && get(/databases/$(database)/documents/publicInstructors/$(uid)).data.get('status', '') == 'approved';
+    }
+    // Two people may be connected unless one is a parent account and the
+    // other isn't an approved instructor or an admin.
+    function parentContactAllowed(a, b) {
+      return (!isParentAccount(a) || isApprovedInstructorUid(b) || isAdminUid(b))
+          && (!isParentAccount(b) || isApprovedInstructorUid(a) || isAdminUid(a));
+    }
+
     // Students/Users collection
     match /users/{userId} {
       // Owner and admins only (2026-11-17). Holds private fields (email,
       // marketing flags); everyone else reads publicUsers/{userId}.
       allow read: if request.auth != null && (request.auth.uid == userId || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
 
-      // Users can only write/update their own profile
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Users can only write their own profile. A parent account must stay
+      // "not accepting requests"; accountType can only be chosen at sign-up
+      // (create) and can never be changed or removed afterwards.
+      allow create: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.get('accountType', '') in ['', 'parent']
+                    && (request.resource.data.get('accountType', '') != 'parent'
+                        || request.resource.data.get('acceptingRequests', true) == false);
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.get('accountType', '') == resource.data.get('accountType', '')
+                    && (resource.data.get('accountType', '') != 'parent'
+                        || request.resource.data.get('acceptingRequests', true) == false);
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // Public copies of users/ and instructors/ with only the fields other
@@ -81,13 +115,20 @@ service cloud.firestore {
                     exists(/databases/$(database)/documents/admins/$(request.auth.uid))
                   );
 
-      // Users can create new conversations where they are a participant
+      // Users can create new conversations where they are a participant.
+      // Always two people; a parent account can only be in a chat with an
+      // approved instructor or an admin (see parentContactAllowed).
       allow create: if request.auth != null
-                    && request.auth.uid in request.resource.data.participants;
+                    && request.auth.uid in request.resource.data.participants
+                    && request.resource.data.participants.size() == 2
+                    && parentContactAllowed(request.resource.data.participants[0], request.resource.data.participants[1]);
 
-      // Users can update conversations they are a participant in
+      // Users can update conversations they are a participant in, but never
+      // change who is in it (2026-11-22: otherwise a chat could be re-pointed
+      // at someone who never agreed to it, e.g. a parent account).
       allow update: if request.auth != null
-                    && request.auth.uid in resource.data.participants;
+                    && request.auth.uid in resource.data.participants
+                    && request.resource.data.participants == resource.data.participants;
 
       // Messages subcollection
       match /messages/{messageId} {
@@ -191,9 +232,12 @@ service cloud.firestore {
 
     // Friend / Partner Requests
     match /friendRequests/{requestId} {
-      // Authenticated users can send a request (must be the sender)
+      // Authenticated users can send a request (must be the sender).
+      // Parent accounts can't send or receive language-partner requests.
       allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.fromId;
+                    && request.auth.uid == request.resource.data.fromId
+                    && !isParentAccount(request.resource.data.fromId)
+                    && !isParentAccount(request.resource.data.toId);
 
       // Sender and recipient can read the request
       allow read: if request.auth != null

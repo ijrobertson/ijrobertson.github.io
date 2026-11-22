@@ -1882,6 +1882,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const emailNotifications = profile.emailNotifications !== false;
           document.getElementById('emailNotifications').checked = emailNotifications;
           document.getElementById('acceptingRequests').checked = profile.acceptingRequests !== false;
+          // Parent/guardian account (2026-11-22): always closed to new
+          // requests — the database rules reject turning it back on.
+          if (profile.accountType === 'parent') {
+            const ar = document.getElementById('acceptingRequests');
+            ar.checked = false;
+            ar.disabled = true;
+            const row = ar.closest('.st-toggle-row');
+            if (row && !row.querySelector('.parent-lock-note')) {
+              const note = document.createElement('p');
+              note.className = 'parent-lock-note';
+              note.style.cssText = 'flex-basis:100%;margin:6px 0 0;font-size:0.82rem;color:#0b6664;';
+              note.textContent = 'Parent account: only instructors you book with can message you. This stays off to keep your child safe.';
+              row.style.flexWrap = 'wrap';
+              row.appendChild(note);
+            }
+          }
+          try { localStorage.setItem('lb-account-type', profile.accountType === 'parent' ? 'parent' : ''); } catch (e) {}
 
           // Push notification preferences — default OFF (can only become true
           // via a real browser permission grant, see js/push-notifications.js)
@@ -2144,12 +2161,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
         console.log('✅ Profile saved successfully!');
         if (goBackToBooking(statusEl)) return;
-        statusEl.textContent = 'Saved! Redirecting to Connect page...';
+        // Parent accounts don't use Connect (2026-11-22) — send them to Instructors.
+        let parentAcct = false;
+        try { parentAcct = localStorage.getItem('lb-account-type') === 'parent'; } catch (e) {}
+        statusEl.textContent = parentAcct ? 'Saved! Redirecting to Instructors...' : 'Saved! Redirecting to Connect page...';
         statusEl.style.color = 'green';
 
-        // Redirect to Connect page after saving
+        // Redirect after saving
         setTimeout(() => {
-          window.location.href = 'connect';
+          window.location.href = parentAcct ? 'instructors' : 'connect';
         }, 1500);
       } catch (error) {
         console.error('❌ Error saving profile:', error);
