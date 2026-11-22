@@ -1142,6 +1142,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const PLACEHOLDER_PHOTO_UIDS = new Set(['MXLJL7VgN6SgkmQyrNfCursXstJ2']);
 
         // Check authentication and load profile picture
+        // Parent/guardian accounts (2026-11-22) don't use Connect (language
+        // exchange with other adults) — this device remembers the account type
+        // from sign-in. firestore.rules blocks the contact itself either way.
+        try { if (localStorage.getItem('lb-account-type') === 'parent') location.replace('instructors'); } catch (e) {}
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -1229,7 +1234,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                     // Show student users; exclude current user if logged in
                     const isCurrentUser = currentUser && doc.id === currentUser.uid;
-                    if (!isCurrentUser && userData.role === 'student' && !userData.hasInstructorApplication) {
+                    if (!isCurrentUser && userData.role === 'student' && !userData.hasInstructorApplication && userData.accountType !== 'parent') { // parent accounts never listed (2026-11-22)
                         allUsers.push(userData);
                     }
                 });
