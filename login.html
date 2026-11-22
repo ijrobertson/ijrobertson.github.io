@@ -393,6 +393,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="lang-tags" id="learning-tags"></div>
     </div>
 
+    <div id="invite-container" style="display: none;">
+      <label for="invite-code">Invite code <span style="font-weight:normal;color:#888;">(optional)</span></label>
+      <input type="text" id="invite-code" placeholder="e.g. ANTONIA" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" />
+      <div id="invite-note" style="font-size:0.85rem;color:#0b6664;font-weight:600;margin-top:0.35rem;"></div>
+    </div>
+
     <div id="age-checkbox-container" class="checkbox-container" style="display: none;">
       <input type="checkbox" id="age-checkbox" />
       <label for="age-checkbox">I confirm that I am 18 years old or older</label>
@@ -450,6 +456,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     updateDoc,
     httpsCallable
   } from './lib/firebaseClient.js';
+  import { getStoredReferral, registerReferralCode, referralInstructorName } from './js/referral.js';
 
   // ── Safe storage helpers (localStorage throws in Safari Private Mode) ──────
   function safeGetStorage(key) {
@@ -631,6 +638,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const countryCont    = document.getElementById('country-container');
   const countryEl      = document.getElementById('signup-country');
   const ageCont        = document.getElementById('age-checkbox-container');
+  // Invite code (referral program, js/referral.js): pre-filled from an invite
+  // link opened on this device; typing one covers links opened elsewhere
+  // (e.g. inside WhatsApp, whose browser doesn't share this one's memory).
+  const inviteCont     = document.getElementById('invite-container');
+  const inviteInput    = document.getElementById('invite-code');
+  const inviteNote     = document.getElementById('invite-note');
+  const storedInvite   = getStoredReferral();
+  if (storedInvite) {
+    if (!/^[a-f0-9]{16}$/.test(storedInvite)) inviteInput.value = storedInvite; // a readable code, not an old link token
+    referralInstructorName(storedInvite).then((n) => { if (n) inviteNote.textContent = '✓ Invited by ' + n; });
+  }
   const termsCont      = document.getElementById('terms-checkbox-container');
   const ageBox         = document.getElementById('age-checkbox');
   const termsBox       = document.getElementById('terms-checkbox');
@@ -693,6 +711,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     countryCont.style.display  = isSignup ? 'block' : 'none';
     langSection.style.display  = isSignup ? 'block' : 'none';
     ageCont.style.display      = isSignup ? 'flex'  : 'none';
+    inviteCont.style.display   = isSignup ? 'block' : 'none';
     termsCont.style.display    = isSignup ? 'flex'  : 'none';
     document.getElementById('instructor-cta').style.display = isSignup ? 'block' : 'none';
     document.getElementById('forgot-password-btn').style.display = isSignup ? 'none' : 'block';
@@ -824,24 +843,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         };
         await setDoc(doc(db, 'users', user.uid), userData);
 
-        // ── Referral registration ────────────────────────────────────────
-        // If the student arrived via an instructor's referral link, the token
-        // was stored in localStorage on instructor-profile.html. Register it
-        // now (non-fatal — never blocks account creation on failure).
-        try {
-          const refToken   = safeGetStorage('lb_referral_token');
-          const refExpiry  = parseInt(safeGetStorage('lb_referral_expires') || '0', 10);
-          if (refToken && refExpiry > Date.now()) {
-            const registerReferral = httpsCallable(functions, 'registerReferral');
-            await registerReferral({ referralToken: refToken });
-            safeSetStorage('lb_referral_token',   '');
-            safeSetStorage('lb_referral_expires', '0');
-          }
-        } catch (refErr) {
-          console.warn('[Referral] Registration failed (non-fatal):', refErr.message);
+        // ── Invite (referral program) — see js/referral.js ──────────────
+        // A typed code wins, otherwise the remembered invite link. Never blocks
+        // account creation; the server decides eligibility.
+        let inviteMsg = '';
+        const inviteCode = (inviteInput.value || '').trim() || getStoredReferral();
+        if (inviteCode) {
+          const r = await registerReferralCode(inviteCode);
+          if (r.success) inviteMsg = '\n\n' + r.message;
+          else if (r.reason !== 'already_with_instructor') inviteMsg = '\n\nInvite code: ' + r.message + ' You can also add a code later in Settings.';
         }
 
-        alert('Account created! Please sign in.');
+        alert('Account created! Please sign in.' + inviteMsg);
         submitBtn.disabled = false;
         submitBtn.textContent = origText;
         toggleLink.click();
