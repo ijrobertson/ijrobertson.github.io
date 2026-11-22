@@ -1412,6 +1412,7 @@
     }
   </style>
     <link href="css/rtl.css" rel="stylesheet">
+<script src="js/avatar-resize.js"></script> <!-- shrinks profile photos before upload -->
 </head>
 <body>
     <!-- Kept first in <body> so the header and tab bar are in the page's first frame (see js/app-shell.js). -->
@@ -2587,7 +2588,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         setStatus("Uploading photo...");
         try {
           const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
-          await uploadBytes(avatarRef, file);
+          await uploadBytes(avatarRef, await window.lbShrinkAvatar(file)); // shrunk on the phone first — see js/avatar-resize.js
           const downloadURL = await getDownloadURL(avatarRef);
 
           await setDoc(doc(db, 'instructors', currentUser.uid),

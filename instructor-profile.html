@@ -67,8 +67,24 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Lingua Bud">
 
-    <!-- Stripe.js -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Stripe.js (~270KB): no longer render-blocking. It used to sit here as a
+         plain <script>, so nothing on the page appeared until it had downloaded
+         (~4s on a slow phone). Now it loads in the background a few seconds after
+         the page (still on every visit, for Stripe's fraud signals), or straight
+         away when someone starts paying; Stripe() calls wait for it via lbLoadStripe(). -->
+    <script>
+      window.lbLoadStripe = function () {
+        return window.__lbStripeP || (window.__lbStripeP = new Promise(function (resolve, reject) {
+          if (window.Stripe) return resolve(window.Stripe);
+          var s = document.createElement('script');
+          s.src = 'https://js.stripe.com/v3/';
+          s.onload = function () { window.Stripe ? resolve(window.Stripe) : reject(new Error('Stripe.js loaded without Stripe')); };
+          s.onerror = function () { window.__lbStripeP = null; reject(new Error('Stripe.js failed to load')); };
+          document.head.appendChild(s);
+        }));
+      };
+      window.addEventListener('load', function () { setTimeout(function () { window.lbLoadStripe().catch(function () {}); }, 3000); });
+    </script>
 
     <style>
         body { padding-top: calc(60px + env(safe-area-inset-top, 0)); background: #f8f9fa; } /* <lb-app-shell> header height + iOS notch/status-bar clearance, replaces marketing navbar's 4.5rem */
@@ -1377,6 +1393,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 return;
             }
             selectedSlot = slot;
+            window.lbLoadStripe().catch(() => {}); // download in parallel with the payment setup call below
             document.getElementById('booking-calendar').style.display = 'none';
             document.getElementById('booking-loading').style.display = 'none';
             document.getElementById('no-availability').style.display = 'none';
@@ -1437,7 +1454,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 }
 
                 const pubKey = await getStripePublishableKey();
-                stripeInstance = Stripe(pubKey);
+                stripeInstance = (await window.lbLoadStripe())(pubKey);
                 stripeElements = stripeInstance.elements({ clientSecret });
                 const paymentElement = stripeElements.create('payment', {
                     // 2026-11-18: stacked list instead of side-scrolling tabs (Klarna

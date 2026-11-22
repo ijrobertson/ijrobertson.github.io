@@ -231,6 +231,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Lingua Bud">
+<script src="js/avatar-resize.js"></script> <!-- shrinks profile photos before upload -->
 </head>
 <body data-spy="scroll" data-target=".fixed-top">
 <!-- Google Tag Manager (noscript) -->
@@ -710,7 +711,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 statusEl.style.color = '#555';
                 try {
                     const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
-                    await uploadBytes(avatarRef, file, { contentType: file.type || 'image/jpeg' });
+                    const small = await window.lbShrinkAvatar(file); // shrunk on the phone first — see js/avatar-resize.js
+                    await uploadBytes(avatarRef, small, { contentType: small.type || 'image/jpeg' });
                     uploadedAvatarUrl = await getDownloadURL(avatarRef);
                     statusEl.textContent = 'Photo uploaded ✓';
                     statusEl.style.color = '#198754';
@@ -898,7 +900,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 if (pendingAvatarFile && !uploadedAvatarUrl) {
                     btn.textContent = 'Uploading photo…';
                     const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
-                    await uploadBytes(avatarRef, pendingAvatarFile, { contentType: pendingAvatarFile.type || 'image/jpeg' });
+                    const small = await window.lbShrinkAvatar(pendingAvatarFile); // shrunk on the phone first — see js/avatar-resize.js
+                    await uploadBytes(avatarRef, small, { contentType: small.type || 'image/jpeg' });
                     uploadedAvatarUrl = await getDownloadURL(avatarRef);
                 }
 
