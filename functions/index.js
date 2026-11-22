@@ -1933,7 +1933,7 @@ const FOUNDING_INSTRUCTOR_LIMIT = 50;
 //   { endDate: <timestamp>, maxCreditsPerInstructor: <number> }
 // (either field optional; missing fields use the defaults below). Read by the
 // server only — clients see the values through getOrCreateReferralToken.
-const REFERRAL_DEFAULT_END_DATE = new Date('2027-05-22T00:00:00Z'); // relaunch + 6 months
+const REFERRAL_DEFAULT_END_DATE = new Date('2027-02-22T00:00:00Z'); // relaunch 2026-11-22 + 3 months (Ian)
 const REFERRAL_DEFAULT_MAX_CREDITS = 10;
 let referralProgramCache = null; // { at, value } — re-read at most once a minute
 async function getReferralProgram(db) {
