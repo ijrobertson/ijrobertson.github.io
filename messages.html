@@ -2668,6 +2668,89 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 } catch (e) {}
             }, 500);
         }
+        // The chat list and the newest messages of recent chats, kept on this
+        // device between visits (2026-11-22), so Messages paints straight away
+        // from what was last seen instead of waiting for Firestore's first
+        // answer (a full server round trip, slow on a phone connection). The
+        // live listeners still run as before and replace these within a moment.
+        // Same owner check and logout clearing as lb_chat_users_v1 above (and
+        // lib/firebaseClient.js signOut clears both on every page).
+        const STORED_LIST_KEY = 'lb_chat_list_v1';
+        const STORED_MSGS_KEY = 'lb_chat_msgs_v1';
+        const STORED_MSGS_CHATS = 20;     // chats whose messages are kept
+        const STORED_MSGS_PER_CHAT = 30;  // newest messages kept per chat
+        let storedConversations = null;   // list as last seen, for the first paint
+        let liveConversationsArrived = false;
+        const storedMessagesAt = new Map(); // conversationId -> when its messages were last saved
+        // Firestore Timestamps become plain milliseconds (every reader here
+        // already accepts a number: toMillis/formatTime/date separators).
+        function toStorable(value) {
+            if (value && typeof value.toMillis === 'function') return value.toMillis();
+            if (value instanceof Date) return value.getTime();
+            if (Array.isArray(value)) return value.map(toStorable);
+            if (value && typeof value === 'object') {
+                const out = {};
+                for (const [k, v] of Object.entries(value)) out[k] = toStorable(v);
+                return out;
+            }
+            return value;
+        }
+        function loadStoredChats(uid) {
+            try {
+                const list = JSON.parse(localStorage.getItem(STORED_LIST_KEY) || 'null');
+                if (list && list.owner === uid && Array.isArray(list.convs)) storedConversations = list.convs;
+                const msgs = JSON.parse(localStorage.getItem(STORED_MSGS_KEY) || 'null');
+                if (msgs && msgs.owner === uid && msgs.convs) {
+                    for (const [convId, entry] of Object.entries(msgs.convs)) {
+                        if (!entry || !Array.isArray(entry.msgs) || lastServerMessagesByConv.has(convId)) continue;
+                        lastServerMessagesByConv.set(convId, entry.msgs);
+                        storedMessagesAt.set(convId, entry.at || 0);
+                    }
+                }
+            } catch (e) { /* storage unavailable or corrupt — load from the network as before */ }
+        }
+        let saveStoredListTimer = null;
+        function saveStoredChatList(conversations) {
+            clearTimeout(saveStoredListTimer);
+            saveStoredListTimer = setTimeout(() => {
+                if (!storedUsersOwner) return;
+                try {
+                    const me = storedUsersOwner;
+                    const convs = conversations.map((c) => ({
+                        id: c.id,
+                        participants: c.participants || [],
+                        lastMessage: c.lastMessage || '',
+                        lastMessageTime: toStorable(c.lastMessageTime) || 0,
+                        unreadCount: { [me]: (c.unreadCount && c.unreadCount[me]) || 0 },
+                        ...(c.markedUnread && c.markedUnread[me] ? { markedUnread: { [me]: true } } : {}),
+                    }));
+                    localStorage.setItem(STORED_LIST_KEY, JSON.stringify({ owner: me, convs }));
+                } catch (e) {}
+            }, 500);
+        }
+        let saveStoredMsgsTimer = null;
+        function saveStoredMessages(conversationId) {
+            storedMessagesAt.set(conversationId, Date.now());
+            clearTimeout(saveStoredMsgsTimer);
+            saveStoredMsgsTimer = setTimeout(() => {
+                if (!storedUsersOwner) return;
+                try {
+                    const keep = [...storedMessagesAt.entries()]
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, STORED_MSGS_CHATS);
+                    const convs = {};
+                    for (const [convId, at] of keep) {
+                        const list = lastServerMessagesByConv.get(convId) || [];
+                        if (list.length) convs[convId] = { at, msgs: toStorable(list.slice(-STORED_MSGS_PER_CHAT)) };
+                    }
+                    localStorage.setItem(STORED_MSGS_KEY, JSON.stringify({ owner: storedUsersOwner, convs }));
+                } catch (e) {
+                    // Most likely storage full — drop the copy rather than keep a stale one.
+                    try { localStorage.removeItem(STORED_MSGS_KEY); } catch (e2) {}
+                }
+            }, 1000);
+        }
+
         // Re-checks stored partners in the background, a few at a time, after
         // the list and any open chat have had first go at the connection.
         let storedRefreshStarted = false;
@@ -2766,6 +2849,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 currentUser = user;
                 console.log('🔐 User authenticated:', user.uid);
                 loadStoredUsers(user.uid);
+                loadStoredChats(user.uid);
+                // Paint the chat list as last seen; the live listener (started
+                // below) updates it in place moments later.
+                if (storedConversations && storedConversations.length && !liveConversationsArrived) {
+                    renderConversations(storedConversations);
+                }
 
                 // Opened from a message notification: start fetching that chat
                 // now, alongside the profile load below, instead of after it.
@@ -2928,7 +3017,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // Logout
         logoutLink.addEventListener('click', async (e) => {
             e.preventDefault();
-            try { localStorage.removeItem(STORED_USERS_KEY); } catch (err) {}
+            try { localStorage.removeItem(STORED_USERS_KEY); localStorage.removeItem(STORED_LIST_KEY); localStorage.removeItem(STORED_MSGS_KEY); } catch (err) {}
             await signOut(auth);
             window.location.href = 'index';
         });
@@ -3005,7 +3094,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         conversations.push({ id: doc.id, ...doc.data() });
                     });
 
+                    liveConversationsArrived = true;
                     renderConversations(conversations);
+                    saveStoredChatList(conversations);
                 }, (error) => {
                     console.error('Error loading conversations:', error);
                     clearTimeout(stallTimer);
@@ -4667,6 +4758,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     }
 
                     lastServerMessagesByConv.set(conversationId, messages);
+                    saveStoredMessages(conversationId);
 
                     // Non-blocking — only writes if there are unread incoming messages.
                     markIncomingMessagesRead(conversationId, messages);
