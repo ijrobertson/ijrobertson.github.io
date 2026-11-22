@@ -1924,10 +1924,34 @@ const FOUNDING_INSTRUCTOR_RATE = 0.10; // 10% lifetime commission for first 50 i
 const FOUNDING_INSTRUCTOR_LIMIT = 50;
 
 // ── Referral Program ────────────────────────────────────────────────────────
-// Instructors can earn up to 10 commission-free lessons by referring students.
-// The program runs for 6 months from launch (2026-05-06 → 2026-11-06).
-const REFERRAL_PROGRAM_END_DATE = new Date('2026-11-06T00:00:00Z');
-const MAX_REFERRAL_CREDITS_PER_INSTRUCTOR = 10;
+// Instructors keep 100% of the first paid lesson from each new student they
+// bring (no commission; the platform keeps only the $1 student fee), up to a
+// cap per instructor. First run 2026-05-06 → 2026-11-06; relaunched 2026-11-22.
+//
+// The end date and cap can be changed WITHOUT a deploy by creating/editing the
+// Firestore doc config/referralProgram:
+//   { endDate: <timestamp>, maxCreditsPerInstructor: <number> }
+// (either field optional; missing fields use the defaults below). Read by the
+// server only — clients see the values through getOrCreateReferralToken.
+const REFERRAL_DEFAULT_END_DATE = new Date('2027-05-22T00:00:00Z'); // relaunch + 6 months
+const REFERRAL_DEFAULT_MAX_CREDITS = 10;
+let referralProgramCache = null; // { at, value } — re-read at most once a minute
+async function getReferralProgram(db) {
+  if (referralProgramCache && Date.now() - referralProgramCache.at < 60 * 1000) return referralProgramCache.value;
+  let endDate = REFERRAL_DEFAULT_END_DATE;
+  let maxCredits = REFERRAL_DEFAULT_MAX_CREDITS;
+  try {
+    const snap = await db.collection('config').doc('referralProgram').get();
+    const d = snap.exists ? snap.data() : {};
+    if (d.endDate && typeof d.endDate.toDate === 'function') endDate = d.endDate.toDate();
+    if (Number.isInteger(d.maxCreditsPerInstructor) && d.maxCreditsPerInstructor >= 0) maxCredits = d.maxCreditsPerInstructor;
+  } catch (err) {
+    console.error('[Referral] Could not read config/referralProgram, using defaults:', err.message);
+  }
+  const value = { endDate, maxCredits, active: Date.now() <= endDate.getTime() };
+  referralProgramCache = { at: Date.now(), value };
+  return value;
+}
 
 function getStripe() {
   return Stripe(process.env.STRIPE_SECRET_KEY);
@@ -2441,7 +2465,8 @@ exports.createPaymentIntent = onCall(async (request) => {
   let referralDocId          = null;
   let referralCreditApplied  = false;
 
-  if (new Date() <= REFERRAL_PROGRAM_END_DATE) {
+  const referralProgram = await getReferralProgram(db);
+  if (referralProgram.active) {
     try {
       const studentUserSnap = await db.collection('users').doc(uid).get();
       const referredByInstructorId = studentUserSnap.exists
@@ -2464,7 +2489,7 @@ exports.createPaymentIntent = onCall(async (request) => {
             .where('status',       '==', 'credited')
             .get();
 
-          if (creditedSnap.size < MAX_REFERRAL_CREDITS_PER_INSTRUCTOR) {
+          if (creditedSnap.size < referralProgram.maxCredits) {
             // Atomically lock the referral to prevent double-application on
             // concurrent payment attempts for the same student+instructor pair.
             const referralRef = referralSnap.docs[0].ref;
@@ -4200,10 +4225,37 @@ exports.runLessonRemindersNow = onCall(async (request) => {
 
 // ── Referral Program Functions ──────────────────────────────────────────────
 
+// Short, typeable invite code for an instructor ("ANTONIA", "ANTONIA2", …),
+// built from their first name. Stored in referralTokens/{CODE} next to the
+// older 16-hex link tokens (which keep working), so one lookup serves both.
+function referralCodeBase(name) {
+  const first = String(name || '').trim().split(/\s+/)[0] || '';
+  const letters = first.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+  return (letters.length >= 3 ? letters : 'TEACHER').slice(0, 10);
+}
+
+async function ensureReferralCode(db, uid, data) {
+  if (data.referralCode) return data.referralCode;
+  const base = referralCodeBase(data.name);
+  return db.runTransaction(async (tx) => {
+    // Reads first (transaction rule), then one write set.
+    for (let n = 1; n <= 99; n++) {
+      const code = n === 1 ? base : `${base}${n}`;
+      const ref = db.collection('referralTokens').doc(code);
+      const snap = await tx.get(ref);
+      if (snap.exists && snap.data().instructorId !== uid) continue; // taken by someone else
+      if (!snap.exists) tx.set(ref, { instructorId: uid, kind: 'code', createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      tx.update(db.collection('instructors').doc(uid), { referralCode: code });
+      return code;
+    }
+    throw new HttpsError('resource-exhausted', 'Could not create an invite code');
+  });
+}
+
 /**
- * Returns (or creates) a unique referral token for an approved instructor.
- * The token maps to the instructor's UID in the referralTokens collection.
- * Referral URL: https://linguabud.com/instructor-profile?id=UID&ref=TOKEN
+ * Returns (or creates) the approved instructor's referral link + invite code,
+ * plus the program's current terms for the dashboard.
+ * Link: https://linguabud.com/instructor-profile?id=UID&ref=CODE
  */
 exports.getOrCreateReferralToken = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
@@ -4219,113 +4271,151 @@ exports.getOrCreateReferralToken = onCall(async (request) => {
     throw new HttpsError('permission-denied', 'Only approved instructors can use the referral program');
   }
 
-  // Return existing token if already generated
-  if (data.referralToken) {
-    return {
-      token: data.referralToken,
-      referralUrl: `https://linguabud.com/instructor-profile?id=${uid}&ref=${data.referralToken}`
-    };
+  // Older random token (kept so links shared during the first run still work)
+  let token = data.referralToken || null;
+  if (!token) {
+    token = randomUUID().replace(/-/g, '').substring(0, 16);
+    const batch = db.batch();
+    batch.update(db.collection('instructors').doc(uid), { referralToken: token });
+    batch.set(db.collection('referralTokens').doc(token), {
+      instructorId: uid,
+      createdAt:    admin.firestore.FieldValue.serverTimestamp()
+    });
+    await batch.commit();
+    console.log(`[Referral] Token created for instructor ${uid}: ${token}`);
   }
 
-  // Generate a new 16-character hex token (collision-safe for this scale)
-  const token = randomUUID().replace(/-/g, '').substring(0, 16);
-
-  const batch = db.batch();
-  batch.update(db.collection('instructors').doc(uid), { referralToken: token });
-  batch.set(db.collection('referralTokens').doc(token), {
-    instructorId: uid,
-    createdAt:    admin.firestore.FieldValue.serverTimestamp()
-  });
-  await batch.commit();
-
-  console.log(`[Referral] Token created for instructor ${uid}: ${token}`);
+  const code = await ensureReferralCode(db, uid, data);
+  const program = await getReferralProgram(db);
   return {
     token,
-    referralUrl: `https://linguabud.com/instructor-profile?id=${uid}&ref=${token}`
+    code,
+    referralUrl: `https://linguabud.com/instructor-profile?id=${uid}&ref=${code}`,
+    program: {
+      active:     program.active,
+      endDate:    program.endDate.toISOString(),
+      maxCredits: program.maxCredits
+    }
   };
 });
 
 /**
- * Registers a referral when a newly signed-up student arrives via a referral link.
- * Called from the client immediately after createUserWithEmailAndPassword succeeds.
+ * Links a student to the instructor who invited them, from a referral link
+ * (referralToken) or a typed invite code (referralCode).
+ * Called after sign-up, when a signed-in student opens an invite link, and
+ * from the student's Settings ("Have an invite code?").
  *
- * Guards:
- *  - Token must exist in referralTokens
- *  - Student cannot refer themselves
- *  - Program must still be active (before REFERRAL_PROGRAM_END_DATE)
- *  - Student can only be referred once (first referral wins)
- *  - Instructor must have fewer than MAX_REFERRAL_CREDITS_PER_INSTRUCTOR credited referrals
+ * Guards (all server-side):
+ *  - The token/code must exist and belong to an approved instructor
+ *  - No self-referral, and instructor accounts can't be referred
+ *  - Program must be active (config/referralProgram or the defaults)
+ *  - A student can be referred only once, ever (first referral wins; a
+ *    deterministic doc id stops two simultaneous calls creating two)
+ *  - Only students who have never had a paid lesson on Lingua Bud
+ *  - Instructor must be under their credited-referral cap
+ * Returns { success, reason?, instructorId?, instructorName? }.
  */
 exports.registerReferral = onCall(async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in');
 
-  const { referralToken } = request.data;
-  if (!referralToken || typeof referralToken !== 'string') {
-    throw new HttpsError('invalid-argument', 'referralToken is required');
+  const raw = (request.data && (request.data.referralToken || request.data.referralCode)) || '';
+  if (typeof raw !== 'string' || !raw.trim() || raw.length > 64) {
+    throw new HttpsError('invalid-argument', 'An invite code is required');
   }
 
   const studentId = request.auth.uid;
   const db        = admin.firestore();
 
-  // Resolve token → instructor
-  const tokenSnap = await db.collection('referralTokens').doc(referralToken.trim()).get();
-  if (!tokenSnap.exists) {
-    console.log('[Referral] Unknown token:', referralToken);
+  // Resolve link token (exact) or typed code (case/space-insensitive) → instructor
+  const exact = raw.trim();
+  let tokenSnap = /^[A-Za-z0-9_-]+$/.test(exact) ? await db.collection('referralTokens').doc(exact).get() : null;
+  if (!tokenSnap || !tokenSnap.exists) {
+    const typed = exact.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    tokenSnap = typed ? await db.collection('referralTokens').doc(typed).get() : null;
+  }
+  if (!tokenSnap || !tokenSnap.exists) {
+    console.log('[Referral] Unknown code:', exact);
     return { success: false, reason: 'invalid_token' };
   }
+  const referralKey = tokenSnap.id;
   const { instructorId } = tokenSnap.data();
 
+  const instructorSnap = await db.collection('instructors').doc(instructorId).get();
+  const instructor = instructorSnap.exists ? instructorSnap.data() : null;
+  if (!instructor || (instructor.status !== 'approved' && instructor.isApproved !== true)) {
+    return { success: false, reason: 'invalid_token' };
+  }
+  const instructorName = instructor.name || '';
+
   if (instructorId === studentId) {
-    return { success: false, reason: 'self_referral' };
+    return { success: false, reason: 'self_referral', instructorName };
+  }
+  const ownInstructorSnap = await db.collection('instructors').doc(studentId).get();
+  if (ownInstructorSnap.exists) {
+    return { success: false, reason: 'instructor_account', instructorName };
   }
 
-  if (new Date() > REFERRAL_PROGRAM_END_DATE) {
-    return { success: false, reason: 'program_ended' };
+  const program = await getReferralProgram(db);
+  if (!program.active) {
+    return { success: false, reason: 'program_ended', instructorName };
   }
 
-  // Prevent a student from being attributed to more than one instructor
+  // Prevent a student from being attributed more than once (incl. first-run referrals)
   const existingSnap = await db.collection('referrals')
     .where('studentId', '==', studentId)
     .limit(1)
     .get();
   if (!existingSnap.empty) {
-    return { success: false, reason: 'already_referred' };
+    const sameInstructor = existingSnap.docs[0].data().instructorId === instructorId;
+    return { success: false, reason: sameInstructor ? 'already_with_instructor' : 'already_referred', instructorName };
   }
 
-  // Verify instructor hasn't hit their credit cap
+  // New students only: anyone who has already paid for a lesson isn't eligible.
+  // (earnings has one server-written doc per paid lesson.)
+  const paidSnap = await db.collection('earnings')
+    .where('studentId', '==', studentId)
+    .limit(1)
+    .get();
+  if (!paidSnap.empty) {
+    return { success: false, reason: 'already_had_lessons', instructorName };
+  }
+
   const creditedSnap = await db.collection('referrals')
     .where('instructorId', '==', instructorId)
     .where('status', '==', 'credited')
     .get();
-  if (creditedSnap.size >= MAX_REFERRAL_CREDITS_PER_INSTRUCTOR) {
-    return { success: false, reason: 'instructor_cap_reached' };
+  if (creditedSnap.size >= program.maxCredits) {
+    return { success: false, reason: 'instructor_cap_reached', instructorName };
   }
 
   const now = admin.firestore.FieldValue.serverTimestamp();
+  const referralRef = db.collection('referrals').doc(`student_${studentId}`);
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(referralRef);
+      if (snap.exists) throw new Error('ALREADY_REFERRED');
+      tx.create(referralRef, {
+        instructorId,
+        studentId,
+        referralToken:          referralKey,
+        status:                 'pending',
+        referredAt:             now,
+        qualifiedAt:            null,
+        creditedAt:             null,
+        creditUsedOnBookingId:  null,
+        lockedPaymentIntentId:  null,
+        lockedAt:               null
+      });
+      // Tag the student's user doc so createPaymentIntent can find the referral fast
+      tx.set(db.collection('users').doc(studentId), { referredByInstructorId: instructorId }, { merge: true });
+    });
+  } catch (err) {
+    if (err.message === 'ALREADY_REFERRED') return { success: false, reason: 'already_referred', instructorName };
+    throw err;
+  }
 
-  // Write referral document and tag the student for fast lookup at payment time
-  const batch = db.batch();
-  const referralRef = db.collection('referrals').doc();
-  batch.set(referralRef, {
-    instructorId,
-    studentId,
-    referralToken,
-    status:                 'pending',
-    referredAt:             now,
-    qualifiedAt:            null,
-    creditedAt:             null,
-    creditUsedOnBookingId:  null,
-    lockedPaymentIntentId:  null,
-    lockedAt:               null
-  });
-  // Tag the student's user doc so createPaymentIntent can look up the referral in O(1)
-  batch.set(db.collection('users').doc(studentId), {
-    referredByInstructorId: instructorId
-  }, { merge: true });
-  await batch.commit();
-
-  console.log(`[Referral] Registered: instructor=${instructorId} student=${studentId}`);
-  return { success: true, instructorId };
+  console.log(`[Referral] Registered: instructor=${instructorId} student=${studentId} via ${referralKey}`);
+  return { success: true, instructorId, instructorName };
 });
 
 /**

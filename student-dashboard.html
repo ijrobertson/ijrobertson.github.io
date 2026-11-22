@@ -1163,6 +1163,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </select>
         </div>
       </details>
+      <!-- Invite code (referral program, js/referral.js). Hidden until the
+           script at the end of the page knows whether this account already
+           joined through an instructor's invite. -->
+      <details class="st-section" data-section="invite" id="invite-section" hidden>
+        <summary>
+          <span class="st-icon"><i class="fas fa-ticket-alt"></i></span>
+          <span class="st-summary-text">
+            <span class="st-title">Invite Code</span>
+            <span class="st-sub" id="invite-sub">Invited by an instructor? Add their code</span>
+          </span>
+          <i class="fas fa-chevron-down st-chevron" aria-hidden="true"></i>
+        </summary>
+        <div class="st-body">
+          <div id="invite-form">
+            <p class="st-help">If an instructor shared an invite code with you (for example <strong>ANTONIA</strong>), enter it here. Codes are for new students and can be used once per account.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input type="text" id="invite-code-input" placeholder="Invite code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" style="flex:1;min-width:160px;font-size:16px;">
+              <button type="button" id="invite-apply-btn" style="padding:0.55rem 1.1rem;background:#20bcba;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Apply</button>
+            </div>
+          </div>
+          <p id="invite-status" style="margin:0.6rem 0 0;font-size:0.9rem;"></p>
+        </div>
+      </details>
     </div>
 
     <!-- Save: stays in view at the bottom of the window while scrolling the
@@ -2585,5 +2608,57 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </script>
     <!-- New-message banner (same as the app) -->
     <script type="module" src="js/message-banner.js"></script>
+  <!-- Invite code section (referral program) — self-contained, see js/referral.js -->
+  <script type="module">
+    import { auth, db, doc, getDoc, onAuthStateChanged } from './lib/firebaseClient.js';
+    import { applyStoredReferral, registerReferralCode } from './js/referral.js';
+    const section = document.getElementById('invite-section');
+    const form = document.getElementById('invite-form');
+    const input = document.getElementById('invite-code-input');
+    const btn = document.getElementById('invite-apply-btn');
+    const status = document.getElementById('invite-status');
+    const sub = document.getElementById('invite-sub');
+    function showLinked(name) {
+      form.hidden = true;
+      sub.textContent = name ? 'Joined through ' + name + "'s invite" : "Joined through an instructor's invite";
+      status.style.color = '#0b6664';
+      status.textContent = name ? '✓ Your account is linked to ' + name + "'s invite." : "✓ Your account is linked to an instructor's invite.";
+    }
+    function show(r) {
+      const ok = r.success || r.reason === 'already_with_instructor';
+      if (ok) showLinked(r.instructorName);
+      status.style.color = ok ? '#0b6664' : '#113448';
+      status.textContent = r.message; // the result itself, e.g. "You're connected with …"
+    }
+    async function linkedInstructorName(id) {
+      try { const s = await getDoc(doc(db, 'publicInstructors', id)); return s.exists() ? s.data().name : null; } catch (e) { return null; }
+    }
+    let started = false;
+    onAuthStateChanged(auth, async (user) => {
+      if (!user || started) return;
+      started = true;
+      // An invite link opened earlier on this device is applied first.
+      const stored = await applyStoredReferral();
+      let data = null;
+      try { const snap = await getDoc(doc(db, 'users', user.uid)); data = snap.exists() ? snap.data() : null; } catch (e) {}
+      if (!data) return; // not a student profile yet — leave the section hidden
+      section.hidden = false;
+      if (data.referredByInstructorId) {
+        showLinked(await linkedInstructorName(data.referredByInstructorId));
+        if (stored && stored.success) { section.open = true; status.textContent = stored.message; }
+      } else if (stored && !stored.success) {
+        show(stored);
+      }
+    });
+    btn.addEventListener('click', async () => {
+      const code = input.value.trim();
+      if (!code) { input.focus(); return; }
+      btn.disabled = true; status.style.color = '#666'; status.textContent = 'Checking…';
+      const r = await registerReferralCode(code);
+      btn.disabled = false;
+      show(r);
+    });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
+  </script>
 </body>
 </html>

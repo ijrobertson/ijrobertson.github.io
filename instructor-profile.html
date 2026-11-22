@@ -701,21 +701,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot, updateDoc } from './lib/firebaseClient.js';
+        import { rememberReferralFromUrl, applyStoredReferral, showReferralNotice } from './js/referral.js';
         import { rememberBooking } from './js/add-to-calendar.js';
 
-        // ── Referral token capture ──────────────────────────────────────────
-        // If a ?ref=TOKEN parameter is present, store it in localStorage for up
-        // to 30 days. The token is consumed in login.html after the student signs up.
-        (function captureReferralToken() {
-            try {
-                const params    = new URLSearchParams(window.location.search);
-                const refToken  = params.get('ref');
-                if (refToken && /^[a-f0-9]{16}$/i.test(refToken)) {
-                    localStorage.setItem('lb_referral_token',   refToken);
-                    localStorage.setItem('lb_referral_expires', String(Date.now() + 30 * 24 * 60 * 60 * 1000));
-                }
-            } catch (e) { /* localStorage unavailable — non-fatal */ }
-        })();
+        // ── Invite links (referral program) — see js/referral.js ─────────────
+        // ?ref=CODE (or an older 16-hex token) is remembered on this device for
+        // 30 days and applied once the person is signed in.
+        const referralFromUrl = rememberReferralFromUrl();
 
         // ── Booking state ───────────────────────────────────────────────────
         // Stripe publishable key fetched from backend and cached (no hardcoded key in source)
@@ -774,6 +766,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                // Already signed in when opening an invite link (e.g. account made
+                // earlier, or in the app): link them to this instructor now. The
+                // server decides eligibility; only good news is shown.
+                if (referralFromUrl) applyStoredReferral().then((r) => {
+                    if (r && (r.success || r.reason === 'already_with_instructor')) showReferralNotice(r.message);
+                });
                 profileNavWrapper.style.cssText = 'display: flex !important;';
                 signInWrapper.style.display = 'none';
 
