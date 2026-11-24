@@ -1597,6 +1597,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const LB_H12 = !(window.lbI18n && window.lbI18n.locale);
         const lbF = (template, vars) => window.lbI18n ? window.lbI18n.f(template, vars) : template.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
+        import { updatePaymentInvite } from './js/referral.js';
         import { rememberBooking } from './js/add-to-calendar.js';
         import './js/app-shell.js';
         import { initPush } from './js/push-notifications.js';
@@ -1808,6 +1809,49 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             return score;
         }
 
+        // ── Remember where you were (2026-11-23) ───────────────────────────
+        // Opening an instructor's profile is a full page change in the app, so
+        // coming back rebuilt this list from scratch: filters cleared, back at
+        // the top. Now the filters, the name search and the scroll position are
+        // kept for this session and put back once the list has loaded; the
+        // scroll only when returning from a profile (not on a fresh tab tap).
+        const LIST_STATE_KEY = 'lb-instructors-list';
+        const LIST_RETURN_KEY = 'lb-instructors-return';
+        function saveListState(openingProfile) {
+            try {
+                sessionStorage.setItem(LIST_STATE_KEY, JSON.stringify({
+                    lang: languageFilter.value, country: countryFilter.value,
+                    price: priceFilter.value, name: nameSearch.value,
+                    y: Math.round(window.scrollY || document.scrollingElement.scrollTop || 0),
+                    at: Date.now()
+                }));
+                if (openingProfile) sessionStorage.setItem(LIST_RETURN_KEY, '1');
+            } catch (e) {}
+        }
+        window.addEventListener('pagehide', () => saveListState(false));
+        function restoreListState() {
+            let st = null, returning = false;
+            try {
+                st = JSON.parse(sessionStorage.getItem(LIST_STATE_KEY) || 'null');
+                returning = sessionStorage.getItem(LIST_RETURN_KEY) === '1';
+                sessionStorage.removeItem(LIST_RETURN_KEY);
+            } catch (e) {}
+            if (!st || Date.now() - st.at > 3 * 60 * 60 * 1000) return;
+            const pick = (sel, v) => { if (v && [...sel.options].some(o => o.value === v)) sel.value = v; };
+            pick(languageFilter, st.lang); pick(countryFilter, st.country); pick(priceFilter, st.price);
+            if (st.name) nameSearch.value = st.name;
+            if (st.lang || st.country || st.price || st.name) renderInstructors();
+            if (!returning || !st.y) return;
+            if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+            // Cards (photos, videos) can still be settling, so place it a few
+            // times — until the person scrolls themselves.
+            let moved = false;
+            const stop = () => { moved = true; };
+            window.addEventListener('touchstart', stop, { once: true, passive: true });
+            window.addEventListener('wheel', stop, { once: true, passive: true });
+            [0, 120, 350, 800, 1500].forEach(ms => setTimeout(() => { if (!moved) window.scrollTo(0, st.y); }, ms));
+        }
+
         async function fetchInstructors() {
             try {
                 // Fetch instructors and availability in parallel
@@ -1830,6 +1874,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 populateLanguageOptions(allInstructors);
                 populateCountryOptions(allInstructors);
                 renderInstructors();
+                restoreListState();
 
                 // Auto-open booking modal if arriving from home page "Book Lesson"
                 const pendingBookId = sessionStorage.getItem('pendingBookInstructorId');
@@ -2059,6 +2104,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
             // Card click → dedicated profile page in new tab
             card.addEventListener('click', () => {
+                saveListState(true);
                 window.open(`instructor-profile?id=${instructor.id}`, '_blank');
             });
 
@@ -2066,6 +2112,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const viewProfileBtn = card.querySelector('.view-profile-btn');
             viewProfileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                saveListState(true);
                 window.open(`instructor-profile?id=${instructor.id}`, '_blank');
             });
 
@@ -2428,6 +2475,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('payment-element-loading').style.display = 'block';
             document.getElementById('payment-element-wrapper').style.display = 'none';
             document.getElementById('payment-element').innerHTML = '';
+            const payInviteEl = document.getElementById('pay-invite'); if (payInviteEl) payInviteEl.innerHTML = '';
             document.getElementById('payment-error-msg').style.display = 'none';
             document.getElementById('pay-lesson-price').textContent = 'Loading...';
             document.getElementById('pay-platform-fee').textContent = '$1.00';
@@ -2461,6 +2509,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     studentTimezone: (typeof studentStoredTZ !== 'undefined' && studentStoredTZ) || Intl.DateTimeFormat().resolvedOptions().timeZone
                 });
                 const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
+                // Invite code from this instructor: applying one links the student and
+                // re-creates this payment so the instructor keeps 100% (price unchanged).
+                updatePaymentInvite(document.getElementById('pay-invite'), {
+                    instructorId: currentInstructorId,
+                    creditApplied: piResult.data.referralCreditApplied === true,
+                    onApplied: () => confirmBooking(selectedSlot)
+                });
 
                 // Update with server-authoritative amounts only when all three are present
                 if (lessonAmount != null && studentPlatformFee != null && amount != null) {
@@ -3067,6 +3122,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <span id="pay-price"></span>
                             </div>
                         </div>
+                        <!-- Invite code (referral program) — filled by updatePaymentInvite, js/referral.js -->
+                        <div id="pay-invite"></div>
 
                         <hr style="margin: 1rem 0;">
 

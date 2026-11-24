@@ -63,15 +63,17 @@ export async function referralInstructorName(tokenOrCode) {
 }
 
 // Outcomes that will never change for this account → forget the stored link.
-const FINAL = new Set(['invalid_token', 'self_referral', 'instructor_account', 'program_ended',
+const FINAL = new Set(['invalid_token', 'self_referral', 'instructor_account', 'program_ended', 'wrong_instructor',
   'already_referred', 'already_with_instructor', 'already_had_lessons', 'instructor_cap_reached']);
 
 // → { success, reason?, instructorName?, message }
-export async function registerReferralCode(tokenOrCode) {
+// forInstructorId: only accept a code that belongs to this instructor (the
+// payment step, where the student is booking that instructor).
+export async function registerReferralCode(tokenOrCode, forInstructorId) {
   if (!auth.currentUser) return { success: false, reason: 'signed_out', message: 'Please sign in first.' };
   try {
     const call = httpsCallable(functions, 'registerReferral');
-    const { data } = await call({ referralCode: String(tokenOrCode || '').trim() });
+    const { data } = await call({ referralCode: String(tokenOrCode || '').trim(), ...(forInstructorId ? { instructorId: forInstructorId } : {}) });
     if (data.success || FINAL.has(data.reason)) clearStoredReferral();
     return { ...data, message: referralMessage(data) };
   } catch (err) {
@@ -96,6 +98,7 @@ export function referralMessage(r) {
     case 'already_referred':        return 'Your account is already linked to an instructor invite. An invite can only be used once per account.';
     case 'already_had_lessons':     return 'Invite codes are for new students. Your account has already had a paid lesson.';
     case 'invalid_token':           return "We couldn't find that invite code. Please check the spelling.";
+    case 'wrong_instructor':        return "That invite code belongs to a different instructor.";
     case 'self_referral':           return "You can't use your own invite code.";
     case 'instructor_account':      return 'Invite codes are for student accounts.';
     case 'program_ended':           return 'The invite program has ended.';
@@ -115,4 +118,63 @@ export function showReferralNotice(text, ok = true) {
     'box-shadow:0 6px 20px rgba(17,52,72,0.25);color:#fff;background:' + (ok ? '#0b6664' : '#113448') + ';';
   document.body.appendChild(el);
   setTimeout(() => { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 450); }, 6000);
+}
+
+// ── Invite code on the payment step (2026-11-23) ─────────────────────────
+// A small "Have an invite code from this instructor?" link under the price
+// summary. Applying a code links the student to the instructor they are
+// booking; the page then creates a fresh payment so the instructor keeps
+// 100% of it (the student's price doesn't change). Markup lives here so the
+// four booking modals (website + app, instructors + instructor-profile) share it.
+//   updatePaymentInvite(el, { instructorId, creditApplied, onApplied })
+//   el: the empty <div> in the payment step.
+let paymentInviteBusy = false;
+export async function updatePaymentInvite(el, { instructorId, creditApplied, onApplied }) {
+  if (!el) return;
+  el.innerHTML = '';
+  el.style.margin = '0.6rem 0 0.2rem';
+  const status = (text, ok) => {
+    const p = document.createElement('p');
+    p.style.cssText = 'margin:0.35rem 0 0;font-size:0.88rem;color:' + (ok ? '#0b6664' : '#113448') + ';';
+    p.textContent = text;
+    return p;
+  };
+  if (creditApplied) { el.appendChild(status('✓ Invite code applied — thank you!', true)); return; }
+  // Already linked to an instructor (any) → nothing to enter here.
+  try {
+    const snap = auth.currentUser ? await getDoc(doc(db, 'users', auth.currentUser.uid)) : null;
+    if (snap && snap.exists() && snap.data().referredByInstructorId) return;
+  } catch (e) { return; }
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.textContent = 'Have an invite code from this instructor?';
+  toggle.style.cssText = 'background:none;border:none;padding:0;color:#0b6664;font-size:0.9rem;font-weight:600;text-decoration:underline;cursor:pointer;';
+  const form = document.createElement('div');
+  form.hidden = true;
+  form.style.cssText = 'margin-top:0.45rem;';
+  form.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+    '<input type="text" class="pay-invite-input" placeholder="Invite code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" style="flex:1;min-width:140px;font-size:16px;padding:0.45rem 0.6rem;border:1px solid #ced4da;border-radius:6px;">' +
+    '<button type="button" class="pay-invite-apply" style="padding:0.45rem 1rem;background:#20bcba;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Apply</button></div>';
+  const msg = document.createElement('div');
+  el.append(toggle, form, msg);
+  const input = form.querySelector('.pay-invite-input');
+  const apply = form.querySelector('.pay-invite-apply');
+  toggle.addEventListener('click', () => { form.hidden = !form.hidden; if (!form.hidden) input.focus(); });
+  const go = async () => {
+    const code = input.value.trim();
+    if (!code || paymentInviteBusy) { input.focus(); return; }
+    paymentInviteBusy = true; apply.disabled = true;
+    msg.replaceChildren(status('Checking…'));
+    const r = await registerReferralCode(code, instructorId);
+    paymentInviteBusy = false; apply.disabled = false;
+    if (r.success || r.reason === 'already_with_instructor') {
+      msg.replaceChildren(status('✓ Invite code applied — updating your payment…', true));
+      form.hidden = true; toggle.hidden = true;
+      if (typeof onApplied === 'function') onApplied();
+    } else {
+      msg.replaceChildren(status(r.message, false));
+    }
+  };
+  apply.addEventListener('click', go);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
 }

@@ -3089,14 +3089,35 @@ exports.createPaymentIntent = onCall(async (request) => {
         : null;
 
       if (referredByInstructorId === instructorId) {
-        // Find a pending referral for this student+instructor pair
-        const referralSnap = await db.collection('referrals')
+        // This student+instructor pair's referral, if still usable
+        const pairSnap = await db.collection('referrals')
           .where('instructorId', '==', instructorId)
           .where('studentId',    '==', uid)
-          .where('status',       '==', 'pending')
-          .limit(1)
           .get();
+        const usable = pairSnap.docs.find(d => ['pending', 'locked'].includes(d.data().status));
 
+        // A referral still 'locked' to an earlier payment the student never
+        // finished (went back and picked another time, re-opened the payment
+        // step after entering an invite code, closed the window) used to keep
+        // the waiver forever. If that payment was never paid, cancel it so it
+        // can't be paid later, and move the waiver to this payment (2026-11-23).
+        let staleLockPiId = null;
+        if (usable && usable.data().status === 'locked' && usable.data().lockedPaymentIntentId) {
+          const oldPiId = usable.data().lockedPaymentIntentId;
+          try {
+            const oldPi = await stripe.paymentIntents.retrieve(oldPiId);
+            if (oldPi.status === 'canceled') {
+              staleLockPiId = oldPiId;
+            } else if (['requires_payment_method', 'requires_confirmation'].includes(oldPi.status)) {
+              const cancelled = await stripe.paymentIntents.cancel(oldPiId);
+              if (cancelled.status === 'canceled') staleLockPiId = oldPiId;
+            }
+          } catch (e) {
+            console.error(`[Referral] Could not check earlier payment ${oldPiId}:`, e.message);
+          }
+        }
+
+        const referralSnap = { empty: !usable || (usable.data().status === 'locked' && !staleLockPiId), docs: usable ? [usable] : [] };
         if (!referralSnap.empty) {
           // Verify instructor hasn't hit their 10-credit cap
           const creditedSnap = await db.collection('referrals')
@@ -3110,7 +3131,11 @@ exports.createPaymentIntent = onCall(async (request) => {
             const referralRef = referralSnap.docs[0].ref;
             const locked = await db.runTransaction(async (tx) => {
               const freshSnap = await tx.get(referralRef);
-              if (!freshSnap.exists || freshSnap.data().status !== 'pending') return false;
+              if (!freshSnap.exists) return false;
+              const fresh = freshSnap.data();
+              const free = fresh.status === 'pending'
+                || (staleLockPiId && fresh.status === 'locked' && fresh.lockedPaymentIntentId === staleLockPiId);
+              if (!free) return false;
               tx.update(referralRef, {
                 status:   'locked',
                 lockedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -5194,6 +5219,12 @@ exports.registerReferral = onCall(async (request) => {
     return { success: false, reason: 'invalid_token' };
   }
   const instructorName = instructor.name || '';
+
+  // From the payment step: the code must belong to the instructor being booked.
+  const forInstructor = request.data && typeof request.data.instructorId === 'string' ? request.data.instructorId : null;
+  if (forInstructor && forInstructor !== instructorId) {
+    return { success: false, reason: 'wrong_instructor' };
+  }
 
   if (instructorId === studentId) {
     return { success: false, reason: 'self_referral', instructorName };
