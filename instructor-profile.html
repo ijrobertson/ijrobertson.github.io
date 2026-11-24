@@ -558,6 +558,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             <div class="summary-row"><span>Platform Fee</span><span id="pay-platform-fee">$1.00</span></div>
                             <div class="summary-row total"><span>Total</span><span id="pay-price"></span></div>
                         </div>
+                        <!-- Invite code (referral program) — filled by updatePaymentInvite, js/referral.js -->
+                        <div id="pay-invite"></div>
                         <hr style="margin: 1rem 0;">
                         <h6 style="color: #333; margin-bottom: 1rem; font-weight: 700;">
                             <i class="fas fa-lock" style="color: #20bcba;"></i> Payment Details
@@ -701,7 +703,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import { auth, db, functions, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, collection, query, where, orderBy, limit, getDocs, httpsCallable, onSnapshot, updateDoc } from './lib/firebaseClient.js';
-        import { rememberReferralFromUrl, applyStoredReferral, showReferralNotice } from './js/referral.js';
+        import { rememberReferralFromUrl, applyStoredReferral, showReferralNotice, updatePaymentInvite } from './js/referral.js';
         import { rememberBooking } from './js/add-to-calendar.js';
 
         // ── Invite links (referral program) — see js/referral.js ─────────────
@@ -1353,6 +1355,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('payment-element-loading').style.display = 'block';
             document.getElementById('payment-element-wrapper').style.display = 'none';
             document.getElementById('payment-element').innerHTML = '';
+            const payInviteEl = document.getElementById('pay-invite'); if (payInviteEl) payInviteEl.innerHTML = '';
             document.getElementById('payment-error-msg').style.display = 'none';
             document.getElementById('pay-lesson-price').textContent = 'Loading...';
             document.getElementById('pay-platform-fee').textContent = '$1.00';
@@ -1385,6 +1388,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 const { clientSecret, lessonAmount, studentPlatformFee, amount,
                         referralCreditApplied: _refCredit, referralDocId: _refDocId,
                         paymentIntentId: _piId } = piResult.data;
+                // Invite code from this instructor: applying one links the student and
+                // re-creates this payment so the instructor keeps 100% (price unchanged).
+                updatePaymentInvite(document.getElementById('pay-invite'), {
+                    instructorId: currentInstructorId,
+                    creditApplied: piResult.data.referralCreditApplied === true,
+                    onApplied: () => confirmBooking(selectedSlot)
+                });
                 // Stash referral info for the booking doc written after payment confirms
                 window._pendingReferralCreditApplied = _refCredit === true;
                 window._pendingReferralDocId         = _refDocId || null;

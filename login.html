@@ -387,11 +387,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="lang-tags" id="learning-tags"></div>
     </div>
 
-    <div id="invite-container" style="display: none;">
-      <label for="invite-code">Invite code <span style="font-weight:normal;color:#888;">(optional)</span></label>
-      <input type="text" id="invite-code" placeholder="Invite code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" />
-      <div id="invite-note" style="font-size:0.85rem;color:#0b6664;font-weight:600;margin-top:0.35rem;"></div>
-    </div>
 
     <div id="age-checkbox-container" class="checkbox-container" style="display: none;">
       <input type="checkbox" id="age-checkbox" />
@@ -458,7 +453,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     updateDoc,
     httpsCallable
   } from './lib/firebaseClient.js';
-  import { getStoredReferral, registerReferralCode, referralInstructorName } from './js/referral.js';
+  import { getStoredReferral, registerReferralCode } from './js/referral.js';
 
   // ── Safe storage helpers (localStorage throws in Safari Private Mode) ──────
   function safeGetStorage(key) {
@@ -653,17 +648,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const ageCont        = document.getElementById('age-checkbox-container');
   const parentCont     = document.getElementById('parent-checkbox-container');
   const parentBox      = document.getElementById('parent-checkbox');
-  // Invite code (referral program, js/referral.js): pre-filled from an invite
-  // link opened on this device; typing one covers links opened elsewhere
-  // (e.g. inside WhatsApp, whose browser doesn't share this one's memory).
-  const inviteCont     = document.getElementById('invite-container');
-  const inviteInput    = document.getElementById('invite-code');
-  const inviteNote     = document.getElementById('invite-note');
-  const storedInvite   = getStoredReferral();
-  if (storedInvite) {
-    if (!/^[a-f0-9]{16}$/.test(storedInvite)) inviteInput.value = storedInvite; // a readable code, not an old link token
-    referralInstructorName(storedInvite).then((n) => { if (n) inviteNote.textContent = '✓ Invited by ' + n; });
-  }
   const termsCont      = document.getElementById('terms-checkbox-container');
   const ageBox         = document.getElementById('age-checkbox');
   const termsBox       = document.getElementById('terms-checkbox');
@@ -726,7 +710,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     countryCont.style.display  = isSignup ? 'block' : 'none';
     langSection.style.display  = isSignup ? 'block' : 'none';
     ageCont.style.display      = isSignup ? 'flex'  : 'none';
-    inviteCont.style.display   = isSignup ? 'block' : 'none';
     parentCont.style.display   = isSignup ? 'flex'  : 'none';
     parentBox.checked = false;
     termsCont.style.display    = isSignup ? 'flex'  : 'none';
@@ -870,10 +853,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         await setDoc(doc(db, 'users', user.uid), userData);
 
         // ── Invite (referral program) — see js/referral.js ──────────────
-        // A typed code wins, otherwise the remembered invite link. Never blocks
-        // account creation; the server decides eligibility.
+        // An invite link opened on this device (instructor-profile?ref=…) is
+        // applied here, silently. Typed codes go on the payment step (and in
+        // Settings), not on this form (2026-11-23). Never blocks account
+        // creation; the server decides eligibility.
         let inviteMsg = '';
-        const inviteCode = (inviteInput.value || '').trim() || getStoredReferral();
+        const inviteCode = getStoredReferral();
         if (inviteCode) {
           const r = await registerReferralCode(inviteCode);
           if (r.success) inviteMsg = '\n\n' + r.message;

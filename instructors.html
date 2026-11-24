@@ -1658,6 +1658,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module">
         import { db, auth, functions, collection, getDocs, onAuthStateChanged, signOut, doc, getDoc, getDocFromServer, addDoc, query, where, orderBy, limit, onSnapshot, httpsCallable } from './lib/firebaseClient.js';
+        import { updatePaymentInvite } from './js/referral.js';
         import { rememberBooking } from './js/add-to-calendar.js';
         import { sortSpanishRecommended, sortByReviewsAndActivity, lastActiveMapFrom, setAvailability as setCardAvailability } from './js/instructor-cards.js';
 
@@ -2562,6 +2563,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             document.getElementById('payment-element-loading').style.display = 'block';
             document.getElementById('payment-element-wrapper').style.display = 'none';
             document.getElementById('payment-element').innerHTML = '';
+            const payInviteEl = document.getElementById('pay-invite'); if (payInviteEl) payInviteEl.innerHTML = '';
             document.getElementById('payment-error-msg').style.display = 'none';
             document.getElementById('pay-lesson-price').textContent = 'Loading...';
             document.getElementById('pay-platform-fee').textContent = '$1.00';
@@ -2595,6 +2597,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     studentTimezone: (typeof studentStoredTZ !== 'undefined' && studentStoredTZ) || Intl.DateTimeFormat().resolvedOptions().timeZone
                 });
                 const { clientSecret, lessonAmount, studentPlatformFee, amount } = piResult.data;
+                // Invite code from this instructor: applying one links the student and
+                // re-creates this payment so the instructor keeps 100% (price unchanged).
+                updatePaymentInvite(document.getElementById('pay-invite'), {
+                    instructorId: currentInstructorId,
+                    creditApplied: piResult.data.referralCreditApplied === true,
+                    onApplied: () => confirmBooking(selectedSlot)
+                });
 
                 // Update with server-authoritative amounts only when all three are present
                 if (lessonAmount != null && studentPlatformFee != null && amount != null) {
@@ -3179,6 +3188,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <span id="pay-price"></span>
                             </div>
                         </div>
+                        <!-- Invite code (referral program) — filled by updatePaymentInvite, js/referral.js -->
+                        <div id="pay-invite"></div>
 
                         <hr style="margin: 1rem 0;">
 
